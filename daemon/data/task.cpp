@@ -3,22 +3,26 @@
 #include <QString>
 #include <QMap>
 #include <QtDebug>
+#include "pf/pfnode.h"
+#include "crontrigger.h"
 
 class TaskData : public QSharedData {
   friend class Task;
-  QString _id, _label;
+  QString _id, _label, _mean, _command, _target;
   TaskGroup _group;
   ParamSet _params;
   QSet<QString> _eventTriggers;
   QMap<QString,qint64> _resources;
-  QString _target;
+  quint32 _maxtaskinstance;
+  QList<CronTrigger> _cronTriggers;
 
 public:
   TaskData() { }
-  TaskData(const TaskData &other) : _id(other._id), _label(other._label),
-    _group(other._group), _params(other._params),
+  TaskData(const TaskData &other) : QSharedData(), _id(other._id),
+    _label(other._label), _mean(other._mean), _command(other._command),
+    _target(other._target), _group(other._group), _params(other._params),
     _eventTriggers(other._eventTriggers), _resources(other._resources),
-    _target(_target) { }
+    _maxtaskinstance(other._maxtaskinstance) { }
   ~TaskData() { }
 };
 
@@ -26,6 +30,47 @@ Task::Task() : d(new TaskData) {
 }
 
 Task::Task(const Task &other) : d(other.d) {
+}
+
+Task::Task(PfNode node) {
+  TaskData *td = new TaskData;
+  td->_id = node.attribute("id"); // LATER check uniqueness
+  td->_label = node.attribute("label", td->_id);
+  td->_mean = node.attribute("mean"); // LATER check validity
+  td->_command = node.attribute("command");
+  td->_target = node.attribute("target");
+  td->_maxtaskinstance = node.attribute("maxtaskinstance", "1").toInt();
+  if (td->_maxtaskinstance <= 0)
+    td->_maxtaskinstance = 1; // LATER warn
+  foreach (PfNode child, node.childrenByName("param")) {
+    QString key = child.attribute("key");
+    QString value = child.attribute("value");
+    if (key.isNull() || value.isNull()) {
+      // LATER warn
+    } else {
+      qDebug() << "configured task param" << key << "=" << value << "for task"
+               << td->_id;
+      td->_params.setValue(key, value);
+    }
+  }
+  foreach (PfNode child, node.childrenByName("trigger")) {
+    QString event = child.attribute("event");
+    if (!event.isNull()) {
+      td->_eventTriggers.insert(event);
+      qDebug() << "configured event trigger" << event << "on task" << td->_id;
+      continue;
+    }
+    QString cron = child.attribute("cron");
+    if (!cron.isNull()) {
+      CronTrigger trigger(cron);
+      td->_cronTriggers.append(trigger);
+      qDebug() << "configured cron trigger" << cron << "on task" << td->_id;
+      continue;
+      // LATER read misfire config
+    }
+  }
+  // TODO resources
+  d = td;
 }
 
 Task::~Task() {
@@ -55,6 +100,14 @@ QString Task::id() const {
 
 QString Task::fqtn() const {
   return d->_group.id()+"."+d->_id;
+}
+
+void Task::setTaskGroup(TaskGroup taskGroup) {
+  d->_group = taskGroup;
+}
+
+const QList<CronTrigger> Task::cronTriggers() const {
+  return d->_cronTriggers;
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {

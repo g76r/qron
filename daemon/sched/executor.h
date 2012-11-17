@@ -14,7 +14,9 @@ class Executor : public QObject {
   QThread *_thread;
 
 public:
-  explicit Executor(QObject *parent);
+  /** @param threadParent will be used as QThread parent
+    */
+  explicit Executor(QObject *threadParent);
   void setTemporary(bool temporary = true) { _isTemporary = temporary; }
   bool isTemporary() const { return _isTemporary; }
   

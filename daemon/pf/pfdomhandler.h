@@ -18,7 +18,7 @@ protected:
   bool _deleteNodesOnDelete;
 
 public:
-  // TODO add option to enable (or disable) loading of arrays as children
+  // LATER add option to enable (or disable) loading of arrays as children
   /** @param ignoreComments if set, won't receive comment() calls
     */
   PfDomHandler();

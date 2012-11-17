@@ -53,7 +53,7 @@ public:
     * Only support "file" and "qrc" schemes.
     * @return path, QString::isNull() if URL not supported (e.g. its scheme)
     */
-  // TODO support other schemes than "file" and "qrc"
+  // LATER support other schemes than "file" and "qrc"
   static QString url2path(const QUrl &url);
 };
 

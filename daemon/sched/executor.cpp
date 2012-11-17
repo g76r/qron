@@ -2,12 +2,13 @@
 #include <QThread>
 #include <QtDebug>
 
-Executor::Executor(QObject *parent) : QObject(parent), _isTemporary(false),
-  _thread(new QThread(parent)) {
+Executor::Executor(QObject *threadParent) : QObject(0), _isTemporary(false),
+  _thread(new QThread(threadParent)) {
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
+  //qDebug() << "creating new task executor" << this;
 }
 
 void Executor::execute(TaskRequest request, Host target) {

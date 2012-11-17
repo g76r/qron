@@ -22,14 +22,14 @@ class Scheduler : public QObject {
   QMap<QString,TaskGroup> _taskGroups;
   QMap<QString,Task> _tasks;
   QList<CronTrigger> _cronTriggers;
-  QList<HostGroup> _hostGroups;
-  QList<Host> _hosts;
+  QMap<QString,HostGroup> _hostGroups;
+  QMap<QString,Host> _hosts;
   QSet<QString> _setFlags;
   QList<TaskRequest> _queuedRequests;
   QList<Executor*> _executors;
 
 public:
-  explicit Scheduler(QObject *parent = 0);
+  explicit Scheduler(QObject *threadParent = 0);
   bool loadConfiguration(QIODevice *source, QString &errorString,
                          bool appendToCurrentConfig = true);
   void customEvent(QEvent *event);
@@ -81,7 +81,7 @@ private:
     * @see reevaluateQueuedRequests()
     */
   void startQueuedTasksIfPossible();
-  bool loadConfiguration(PfNode node, QString &errorString);
+  bool loadConfiguration(PfNode root, QString &errorString);
   Q_DISABLE_COPY(Scheduler)
 };
 

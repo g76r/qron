@@ -5,12 +5,11 @@
 #include <QtDebug>
 
 class ParamSetData : public QSharedData {
-  friend class ParamSet; // TODO cleanup the mix between friend and wrappers
+  friend class ParamSet; // LATER cleanup the mix between friend and wrappers
   ParamSet _parent;
   QHash<QString,QString> _params;
   bool _isNull;
 public:
-  // FIXME null ParamSet must be a singleton
   ParamSetData() : _parent(this), _isNull(true) { }
   ParamSetData(const ParamSetData &other) : _parent(other._parent),
     _params(other._params), _isNull(other._isNull) { }

@@ -7,12 +7,16 @@
 
 class TaskData;
 class QDebug;
+class PfNode;
+class TaskGroup;
+class CronTrigger;
 
 class Task {
   QSharedDataPointer<TaskData> d;
 public:
   Task();
   Task(const Task &other);
+  Task(PfNode node);
   ~Task();
   Task &operator =(const Task &other);
   const ParamSet params() const;
@@ -22,6 +26,8 @@ public:
     */
   QString fqtn() const;
   QString id() const;
+  void setTaskGroup(TaskGroup taskGroup);
+  const QList<CronTrigger> cronTriggers() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);
