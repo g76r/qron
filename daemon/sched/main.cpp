@@ -8,8 +8,10 @@ int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   Scheduler scheduler;
   QFile *file = new QFile("./qron.conf");
-  if (!scheduler.loadConfiguration(file)) {
-    qCritical() << "cannot load configuration, aborting";
+  QString errorString;
+  if (!scheduler.loadConfiguration(file, errorString)) {
+    qCritical() << "cannot load configuration:" << errorString;
+    qCritical() << "aborting";
     return 1;
   }
   file->deleteLater();

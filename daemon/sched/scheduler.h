@@ -14,6 +14,8 @@
 #include <QMap>
 #include "executor.h"
 
+class PfNode;
+
 class Scheduler : public QObject {
   Q_OBJECT
   ParamSet _globalParams;
@@ -28,7 +30,8 @@ class Scheduler : public QObject {
 
 public:
   explicit Scheduler(QObject *parent = 0);
-  bool loadConfiguration(QIODevice *source, bool appendToCurrentConfig = true);
+  bool loadConfiguration(QIODevice *source, QString &errorString,
+                         bool appendToCurrentConfig = true);
   void customEvent(QEvent *event);
 
 public slots:
@@ -78,6 +81,7 @@ private:
     * @see reevaluateQueuedRequests()
     */
   void startQueuedTasksIfPossible();
+  bool loadConfiguration(PfNode node, QString &errorString);
   Q_DISABLE_COPY(Scheduler)
 };
 

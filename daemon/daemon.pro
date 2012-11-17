@@ -2,7 +2,7 @@ QT       += core
 
 QT       -= gui
 
-TARGET = daemon
+TARGET = qrond
 CONFIG   += console
 CONFIG   -= app_bundle
 
@@ -17,7 +17,16 @@ SOURCES += sched/main.cpp \
     data/host.cpp \
     data/hostgroup.cpp \
     sched/taskrequest.cpp \
-    sched/executor.cpp
+    sched/executor.cpp \
+    pf/pfutils.cpp \
+    pf/pfparser.cpp \
+    pf/pfoptions.cpp \
+    pf/pfnode.cpp \
+    pf/pfhandler.cpp \
+    pf/pfdomhandler.cpp \
+    pf/pfcontent.cpp \
+    pf/pfarray.cpp \
+    util/ioutils.cpp
 
 HEADERS += \
     data/task.h \
@@ -28,4 +37,14 @@ HEADERS += \
     data/host.h \
     data/hostgroup.h \
     sched/taskrequest.h \
-    sched/executor.h
+    sched/executor.h \
+    pf/pfutils.h \
+    pf/pfparser.h \
+    pf/pfoptions.h \
+    pf/pfnode.h \
+    pf/pfinternals.h \
+    pf/pfhandler.h \
+    pf/pfdomhandler.h \
+    pf/pfcontent.h \
+    pf/pfarray.h \
+    util/ioutils.h

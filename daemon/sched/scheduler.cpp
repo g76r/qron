@@ -2,6 +2,8 @@
 #include <QtDebug>
 #include <QCoreApplication>
 #include <QEvent>
+#include "pf/pfparser.h"
+#include "pf/pfdomhandler.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
@@ -9,16 +11,41 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent) {
 }
 
 bool Scheduler::loadConfiguration(QIODevice *source,
+                                  QString &errorString,
                                   bool appendToCurrentConfig) {
   if (!source->isOpen())
     if (!source->open(QIODevice::ReadOnly)) {
-      qWarning() << "cannot read configuration" << source->errorString();
+      errorString = source->errorString();
+      qWarning() << "cannot read configuration" << errorString;
       return false;
     }
+  // LATER do something with appendToCurrentConfig
+  PfDomHandler pdh;
+  PfParser pp(&pdh);
+  pp.parse(source);
+  int n = pdh.roots().size();
+  if (n < 1) {
+    errorString = "empty configuration";
+    qWarning() << errorString;
+    return false;
+  }
+  foreach (PfNode root, pdh.roots()) {
+    if (root.name() == "qrontab") {
+      if (!loadConfiguration(root, errorString))
+        return false;
+    } else {
+      qWarning() << "ignoring node" << root.name()
+                 << "at configuration file top level";
+    }
+  }
+  return true;
+}
+
+bool Scheduler::loadConfiguration(PfNode node, QString &errorString) {
   // TODO read PF config
   // TODO set QTimers on CronTriggers to be notified on next trigger time
   // LATER fire cron triggers if they were missed since last task exec
-  return false;
+  return true;
 }
 
 void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
