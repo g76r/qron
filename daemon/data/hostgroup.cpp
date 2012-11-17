@@ -10,10 +10,10 @@ class HostGroupData : public QSharedData {
 public:
 };
 
-HostGroup::HostGroup() : data(new HostGroupData) {
+HostGroup::HostGroup() : d(new HostGroupData) {
 }
 
-HostGroup::HostGroup(const HostGroup &other) : data(other.data) {
+HostGroup::HostGroup(const HostGroup &other) : d(other.d) {
 }
 
 HostGroup::~HostGroup() {
@@ -21,6 +21,6 @@ HostGroup::~HostGroup() {
 
 HostGroup &HostGroup::operator=(const HostGroup &other) {
   if (this != &other)
-    data.operator=(other.data);
+    d.operator=(other.d);
   return *this;
 }

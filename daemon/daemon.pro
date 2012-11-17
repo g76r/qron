@@ -15,7 +15,8 @@ SOURCES += main.cpp \
     sched/scheduler.cpp \
     data/crontrigger.cpp \
     data/host.cpp \
-    data/hostgroup.cpp
+    data/hostgroup.cpp \
+    sched/taskrequest.cpp
 
 HEADERS += \
     data/task.h \
@@ -24,4 +25,5 @@ HEADERS += \
     sched/scheduler.h \
     data/crontrigger.h \
     data/host.h \
-    data/hostgroup.h
+    data/hostgroup.h \
+    sched/taskrequest.h

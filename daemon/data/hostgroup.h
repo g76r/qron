@@ -6,7 +6,7 @@
 class HostGroupData;
 
 class HostGroup {
-  QSharedDataPointer<HostGroupData> data;
+  QSharedDataPointer<HostGroupData> d;
 
 public:
   HostGroup();

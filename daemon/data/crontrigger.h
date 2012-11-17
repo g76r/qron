@@ -2,6 +2,7 @@
 #define CRONTRIGGER_H
 
 #include <QSharedData>
+#include "task.h"
 
 class CronTriggerData;
 
@@ -12,6 +13,8 @@ public:
   CronTrigger();
   CronTrigger(const CronTrigger &other);
   ~CronTrigger();
+  Task task() const;
+  QString cronExpression() const;
 };
 
 #endif // CRONTRIGGER_H

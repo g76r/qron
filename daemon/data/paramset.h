@@ -2,6 +2,7 @@
 #define PARAMSET_H
 
 #include <QSharedData>
+#include <QList>
 
 class ParamSetData;
 
@@ -17,7 +18,10 @@ public:
   void setParent(ParamSet parent);
   void setValue(const QString key, const QString value);
   QString value(const QString key) const;
+  const QSet<QString> keys() const;
   bool isNull() const;
 };
+
+QDebug operator<<(QDebug dbg, const ParamSet &params);
 
 #endif // PARAMSET_H

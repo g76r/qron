@@ -2,12 +2,13 @@
 #include <QSharedData>
 #include <QHash>
 #include <QString>
+#include <QtDebug>
 
 class ParamSetData : public QSharedData {
+  friend class ParamSet; // TODO cleanup the mix between friend and wrappers
   ParamSet _parent;
   QHash<QString,QString> _params;
   bool _isNull;
-
 public:
   ParamSetData() : _isNull(true) { }
   ParamSetData(const ParamSetData &other) : _parent(other._parent),
@@ -53,6 +54,21 @@ QString ParamSet::value(const QString key) const {
   return d->value(key);
 }
 
+const QSet<QString> ParamSet::keys() const {
+  QSet<QString> set = d->_params.keys().toSet();
+  if (!d->_parent.isNull())
+    set += d->_parent.keys();
+}
+
 bool ParamSet::isNull() const {
   return d->isNull();
+}
+
+QDebug operator<<(QDebug dbg, const ParamSet &params) {
+  dbg.nospace() << "{";
+  foreach(QString key, params.keys()) {
+    dbg.space() << key << "=" << params.value(key) << ",";
+  }
+  dbg.nospace() << "}";
+  return dbg.space();
 }
