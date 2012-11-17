@@ -12,6 +12,7 @@
 #include "data/hostgroup.h"
 #include "taskrequest.h"
 #include <QMap>
+#include "executor.h"
 
 class Scheduler : public QObject {
   Q_OBJECT
@@ -22,11 +23,13 @@ class Scheduler : public QObject {
   QList<HostGroup> _hostGroups;
   QList<Host> _hosts;
   QSet<QString> _setFlags;
-  QList<TaskRequest> _requestsQueue;
+  QList<TaskRequest> _queuedRequests;
+  QList<Executor*> _executors;
 
 public:
   explicit Scheduler(QObject *parent = 0);
-  void loadConfiguration(QIODevice *source, bool appendToCurrentConfig = true);
+  bool loadConfiguration(QIODevice *source, bool appendToCurrentConfig = true);
+  void customEvent(QEvent *event);
 
 public slots:
   /** Expicitely request task execution now.
@@ -49,10 +52,32 @@ public slots:
   /** Clear a flag.
     */
   void clearFlag(QString flag);
-  
+  /** Ask for queued requests to be reevaluated during next event loop
+    * iteration.
+    * This method must be called every time something occurs that could make a
+    * queued task runnable. Calling this method several time within the same
+    * event loop iteration will trigger reevaluation only once (same pattern as
+    * QWidget::update()).
+    */
+  void reevaluateQueuedRequests();
+
+private slots:
+  void taskFinished(TaskRequest request, Host target, bool success,
+                    int returnCode, QWeakPointer<Executor> executor);
+
 private:
-  bool tryRunTaskNow(TaskRequest request);
-  void runTaskNowAnyway(TaskRequest request);
+  /** Check if it is permitted for a task to run now, if yes start it.
+    * @return true if the task was started
+    */
+  bool tryStartTaskNow(TaskRequest request);
+  /** Start a task despite any constraint or limit. Even create a new executor
+    * thread if needed.
+    */
+  void startTaskNowAnyway(TaskRequest request);
+  /** Reevaluate queued requests and start any task that can be started.
+    * @see reevaluateQueuedRequests()
+    */
+  void startQueuedTasksIfPossible();
   Q_DISABLE_COPY(Scheduler)
 };
 

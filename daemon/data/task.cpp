@@ -10,7 +10,7 @@ class TaskData : public QSharedData {
   TaskGroup _group;
   ParamSet _params;
   QSet<QString> _eventTriggers;
-  QMap<QString,quint64> _resources;
+  QMap<QString,qint64> _resources;
   QString _target;
 
 public:

@@ -7,8 +7,9 @@
 class ParamSetData;
 
 class ParamSet {
+  friend class ParamSetData;
   QSharedDataPointer<ParamSetData> d;
-
+  ParamSet(ParamSetData *data);
 public:
   ParamSet();
   ParamSet(const ParamSet &other);

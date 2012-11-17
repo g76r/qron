@@ -10,7 +10,8 @@ class ParamSetData : public QSharedData {
   QHash<QString,QString> _params;
   bool _isNull;
 public:
-  ParamSetData() : _isNull(true) { }
+  // FIXME null ParamSet must be a singleton
+  ParamSetData() : _parent(this), _isNull(true) { }
   ParamSetData(const ParamSetData &other) : _parent(other._parent),
     _params(other._params), _isNull(other._isNull) { }
   QString value(const QString key) const {
@@ -29,6 +30,9 @@ ParamSet::ParamSet() : d(new ParamSetData()) {
 }
 
 ParamSet::ParamSet(const ParamSet &other) : d(other.d) {
+}
+
+ParamSet::ParamSet(ParamSetData *data) : d(data) {
 }
 
 ParamSet::~ParamSet() {

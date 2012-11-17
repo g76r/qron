@@ -1,10 +1,11 @@
 #include "host.h"
 #include <QSharedData>
 #include <QString>
+#include <QMap>
 
 class HostData : public QSharedData {
   QString _id, _label;
-
+  QMap<QString,qint64> _resources;
 public:
 };
 
