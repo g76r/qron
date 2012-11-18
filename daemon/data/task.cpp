@@ -63,8 +63,12 @@ Task::Task(PfNode node) {
     QString cron = child.attribute("cron");
     if (!cron.isNull()) {
       CronTrigger trigger(cron);
-      td->_cronTriggers.append(trigger);
-      qDebug() << "configured cron trigger" << cron << "on task" << td->_id;
+      if (trigger.isValid()) {
+        td->_cronTriggers.append(trigger);
+        qDebug() << "configured cron trigger" << cron << "on task" << td->_id;
+      } else
+        qWarning() << "ignoring invalid cron trigger" << cron << "parsed as"
+                   << trigger.parsedCronExpression() << "on task" << td->_id;
       continue;
       // LATER read misfire config
     }

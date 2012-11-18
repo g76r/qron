@@ -3,6 +3,7 @@
 
 #include <QSharedData>
 #include <QString>
+#include <QDateTime>
 
 class CronTriggerData;
 class Task;
@@ -18,6 +19,11 @@ public:
   Task task() const;
   void setTask(Task task);
   QString cronExpression() const;
+  QString parsedCronExpression() const;
+  /** Cron expression is valid (hence not null or empty). */
+  bool isValid() const;
+  QDateTime nextTrigger(QDateTime lastTrigger, QDateTime max) const;
+  QDateTime nextTrigger(QDateTime lastTrigger) const;
 };
 
 #endif // CRONTRIGGER_H
