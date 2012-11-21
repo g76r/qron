@@ -4,6 +4,7 @@
 #include <QSharedData>
 #include <QString>
 #include <QDateTime>
+#include <QMetaType>
 
 class CronTriggerData;
 class Task;
@@ -23,7 +24,14 @@ public:
   /** Cron expression is valid (hence not null or empty). */
   bool isValid() const;
   QDateTime nextTrigger(QDateTime lastTrigger, QDateTime max) const;
+  /** Syntaxic sugar with max = lastTrigger + 10 years */
   QDateTime nextTrigger(QDateTime lastTrigger) const;
+  /** Syntaxic sugar returning msecs from current time
+    * @return -1 if not available within 10 years
+    */
+  int nextTriggerMsecs(QDateTime lastTirgger) const;
 };
+
+Q_DECLARE_METATYPE(CronTrigger)
 
 #endif // CRONTRIGGER_H

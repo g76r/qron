@@ -13,6 +13,7 @@
 #include "taskrequest.h"
 #include <QMap>
 #include "executor.h"
+#include <QVariant>
 
 class PfNode;
 
@@ -47,7 +48,7 @@ public slots:
   void triggerEvent(QString event);
   /** Fire a cron trigger, triggering whatever this trigger is configured to do.
     */
-  void triggerTrigger(CronTrigger trigger);
+  void triggerTrigger(QVariant trigger);
   /** Set a flag, which will be evaluated by any following task constraints
     * evaluation.
     */
@@ -82,6 +83,8 @@ private:
     */
   void startQueuedTasksIfPossible();
   bool loadConfiguration(PfNode root, QString &errorString);
+  void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
+                              = QDateTime::currentDateTime());
   Q_DISABLE_COPY(Scheduler)
 };
 

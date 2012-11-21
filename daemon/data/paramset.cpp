@@ -11,8 +11,8 @@ class ParamSetData : public QSharedData {
   bool _isNull;
 public:
   ParamSetData() : _parent(this), _isNull(true) { }
-  ParamSetData(const ParamSetData &other) : _parent(other._parent),
-    _params(other._params), _isNull(other._isNull) { }
+  ParamSetData(const ParamSetData &other) : QSharedData(),
+    _parent(other._parent), _params(other._params), _isNull(other._isNull) { }
   QString value(const QString key) const {
     QString v = _params.value(key);
     return v.isNull() && !_parent.isNull() ? _parent.value(key) : v;
@@ -60,7 +60,8 @@ QString ParamSet::value(const QString key) const {
 const QSet<QString> ParamSet::keys() const {
   QSet<QString> set = d->_params.keys().toSet();
   if (!d->_parent.isNull())
-    set += d->_parent.keys();
+    set += d->_parent.keys(); // TODO parent should override child rather
+  return set;
 }
 
 bool ParamSet::isNull() const {
@@ -69,9 +70,10 @@ bool ParamSet::isNull() const {
 
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
-  foreach(QString key, params.keys()) {
-    dbg.space() << key << "=" << params.value(key) << ",";
-  }
+  if (!params.isNull())
+    foreach(QString key, params.keys()) {
+      dbg.space() << key << "=" << params.value(key) << ",";
+    }
   dbg.nospace() << "}";
   return dbg.space();
 }

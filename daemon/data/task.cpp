@@ -7,7 +7,7 @@
 #include "crontrigger.h"
 
 class TaskData : public QSharedData {
-  friend class Task;
+public:
   QString _id, _label, _mean, _command, _target;
   TaskGroup _group;
   ParamSet _params;
@@ -16,7 +16,6 @@ class TaskData : public QSharedData {
   quint32 _maxtaskinstance;
   QList<CronTrigger> _cronTriggers;
 
-public:
   TaskData() { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),

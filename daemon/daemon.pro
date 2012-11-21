@@ -26,7 +26,8 @@ SOURCES += sched/main.cpp \
     pf/pfdomhandler.cpp \
     pf/pfcontent.cpp \
     pf/pfarray.cpp \
-    util/ioutils.cpp
+    util/ioutils.cpp \
+    util/timerwithargument.cpp
 
 HEADERS += \
     data/task.h \
@@ -47,4 +48,5 @@ HEADERS += \
     pf/pfdomhandler.h \
     pf/pfcontent.h \
     pf/pfarray.h \
-    util/ioutils.h
+    util/ioutils.h \
+    util/timerwithargument.h

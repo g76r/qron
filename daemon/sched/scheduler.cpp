@@ -6,10 +6,13 @@
 #include "pf/pfdomhandler.h"
 #include "data/host.h"
 #include "data/hostgroup.h"
+#include "util/timerwithargument.h"
+#include <QMetaObject>
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
 Scheduler::Scheduler(QObject *parent) : QObject(parent) {
+  //qRegisterMetaType<CronTrigger>("CronTrigger");
 }
 
 bool Scheduler::loadConfiguration(QIODevice *source,
@@ -77,6 +80,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       } else {
         task.setTaskGroup(taskGroup);
         _tasks.insert(task.fqtn(), task);
+        // TODO Task::cronTriggers() is a very bad pattern, replace it
         foreach (CronTrigger trigger, task.cronTriggers()) {
           trigger.setTask(task);
           _cronTriggers.append(trigger);
@@ -131,8 +135,11 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       _executors.append(e);
     }
   }
-  // TODO set QTimers on CronTriggers to be notified on next trigger time
-  // LATER fire cron triggers if they were missed since last task exec
+  foreach (CronTrigger trigger, _cronTriggers) {
+    setTimerForCronTrigger(trigger);
+    // LATER fire cron triggers if they were missed since last task exec
+  }
+
   return true;
 }
 
@@ -162,17 +169,22 @@ void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
 void Scheduler::triggerEvent(QString event) {
   foreach (Task task, _tasks.values()) {
     if (task.eventTriggers().contains(event)) {
-      qDebug() << "event" << event << "triggers task" << task.fqtn();
+      qDebug() << "event" << event << "triggered task" << task.fqtn();
       requestTask(task.fqtn());
     }
   }
 }
 
-void Scheduler::triggerTrigger(CronTrigger trigger) {
-  Task task = trigger.task();
-  qDebug() << "trigger" << trigger.cronExpression() << "triggers task"
-           << task.fqtn();
-  requestTask(task.fqtn());
+void Scheduler::triggerTrigger(QVariant trigger) {
+  if (trigger.canConvert<CronTrigger>()) {
+    CronTrigger ct = qvariant_cast<CronTrigger>(trigger);
+    qDebug() << "trigger" << ct.cronExpression() << "triggered task"
+             << ct.task().fqtn();
+    requestTask(ct.task().fqtn());
+    // LATER this is theorically not accurate since it could miss a trigger
+    setTimerForCronTrigger(ct);
+  } else
+    qWarning() << "invalid internal object when triggering trigger";
 }
 
 void Scheduler::setFlag(QString flag) {
@@ -264,4 +276,19 @@ void Scheduler::startQueuedTasksIfPossible() {
     } else
       ++i;
   }
+}
+
+void Scheduler::setTimerForCronTrigger(CronTrigger trigger,
+                                       QDateTime previous) {
+  int ms = trigger.nextTriggerMsecs(previous);
+  if (ms >= 0) {
+    qDebug() << "setting cron timer" << ms << "ms for task"
+             << trigger.task().fqtn() << "from trigger "
+             << trigger.cronExpression() << "at" << QDateTime::currentDateTime()
+             << "previous" << previous << trigger.parsedCronExpression();
+    QVariant v;
+    v.setValue(trigger);
+    TimerWithArgument::singleShot(ms, this, "triggerTrigger", v);
+  }
+  // LATER handle cases were trigger is far away in the future
 }

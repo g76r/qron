@@ -21,32 +21,21 @@ class CronField {
   bool *_setValues;
 
 public:
-  CronField(int min, int max) : _min(min), _max(max) {
-    _setValues = new bool[_max-_min+1];
-  }
-
+  CronField(int min = 0, int max = 42) : _min(min), _max(max), // FIXME
+    _setValues(new bool[_max-_min+1]) { }
   CronField(const CronField &other) : _min(other._min),
-    _max(other._max) {
-    _setValues = new bool[_max-_min+1];
+    _max(other._max), _setValues(new bool[_max-_min+1]) {
     for (int i = 0; i <= _max-_min; ++i)
       _setValues[i] = other._setValues[i];
   }
-
-  ~CronField() {
-    delete _setValues;
-  }
-
-  void reset() {
-    setAll(false);
-  }
-
+  ~CronField() { delete _setValues; }
+  void reset() { setAll(false); }
   /** Set all values at a time */
   void setAll(bool value = true) {
     //qDebug() << "       set * " << value << _min << _max;
     for (int i = 0; i <= _max-_min; ++i)
       _setValues[i] = value;
   }
-
   /** Set several values at a time
     * @param start first value to set, -1 means min
     * @param stop last value to set, -1 means max
@@ -65,7 +54,6 @@ public:
       for (int i = start; i <= _max && i <= stop; i += modulo)
         _setValues[i-_min] = value;
   }
-
   QString toString() const {
     for (int i = 0; i <= _max-_min; ++i)
       if (!_setValues[i])
@@ -98,23 +86,19 @@ notstar:
     s = s.mid(1); // remove initial comma
     return s.isEmpty() ? "ERROR" : s;
   }
-
   operator QString() const { return toString(); }
-
   bool isNull() const {
     for (int i = 0; i <= _max-_min; ++i)
       if (_setValues[i])
         return false;
     return true;
   }
-
   bool isSet(int index) const {
-    return index >= _min && index <= _max && _setValues[index-_min];
-  }
+    return index >= _min && index <= _max && _setValues[index-_min]; }
 };
 
 class CronTriggerData : public QSharedData {
-  friend class CronTrigger;
+public:
   QString _cronExpression;
   Task _task;
   CronField _seconds, _minutes, _hours, _days, _months, _daysofweek;
@@ -125,7 +109,19 @@ class CronTriggerData : public QSharedData {
       _months(1, 12), _daysofweek(0, 6), _isValid(false) {
     parseCronExpression(cronExpression);
   }
+  CronTriggerData(const CronTriggerData &other) : QSharedData(),
+    _cronExpression(other._cronExpression), _task(other._task),
+    _seconds(other._seconds), _minutes(other._minutes), _hours(other._hours),
+    _days(other._days), _months(other._months), _daysofweek(other._daysofweek),
+    _isValid(other._isValid) {
+  }
+  QString toString() const {
+    return QString("%1 %2 %3 %4 %5 %6").arg(_seconds).arg(_minutes).arg(_hours)
+        .arg(_days).arg(_months).arg(_daysofweek);
+  }
+  operator QString() const { return toString(); }
 
+private:
   void parseCronExpression(QString cronExpression) {
     _cronExpression = cronExpression;
     _seconds.reset();
@@ -206,13 +202,6 @@ class CronTriggerData : public QSharedData {
       qWarning() << "unsupported cron trigger expression:" << cronExpression;
     }
   }
-
-  QString toString() const {
-    return QString("%1 %2 %3 %4 %5 %6").arg(_seconds).arg(_minutes).arg(_hours)
-        .arg(_days).arg(_months).arg(_daysofweek);
-  }
-
-  operator QString() const { return toString(); }
 };
 
 CronTrigger::CronTrigger(const QString cronExpression)
@@ -252,15 +241,22 @@ bool CronTrigger::isValid() const {
 }
 
 QDateTime CronTrigger::nextTrigger(QDateTime lastTrigger) const {
-  return nextTrigger(lastTrigger, QDateTime::currentDateTime().addYears(1));
+  return nextTrigger(lastTrigger, QDateTime::currentDateTime().addYears(10));
+}
+
+int CronTrigger::nextTriggerMsecs(QDateTime lastTrigger) const {
+  // LATER handle case were lastTrigger is far away in the past
+  QDateTime next = nextTrigger(lastTrigger,
+                               QDateTime::currentDateTime().addYears(10));
+  return next.isValid() ? QDateTime::currentDateTime().msecsTo(next) : -1;
 }
 
 QDateTime CronTrigger::nextTrigger(QDateTime lastTrigger, QDateTime max) const {
   if (!isValid())
     return QDateTime();
-  QDateTime next = lastTrigger.addSecs(1);
+  QDateTime next = QDateTime
+      ::fromMSecsSinceEpoch((lastTrigger.toMSecsSinceEpoch()/1000+1)*1000);
   while (next <= max) {
-    //qDebug() << "." << next;
     if (!d->_months.isSet(next.date().month())) {
       next = next.addMonths(1);
       next.setDate(QDate(next.date().year(), next.date().month(), 1));
@@ -277,8 +273,10 @@ QDateTime CronTrigger::nextTrigger(QDateTime lastTrigger, QDateTime max) const {
       next.setTime(QTime(next.time().hour(), next.time().minute(), 0));
     } else if (!d->_seconds.isSet(next.time().second())) {
       next = next.addSecs(1);
-    } else
+    } else {
+      //qDebug() << "        found next trigger:" << lastTrigger << next;
       return next;
+    }
   }
   return QDateTime();
 }
