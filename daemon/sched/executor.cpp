@@ -35,6 +35,23 @@ void Executor::doExecute(TaskRequest request, Host target) {
 }
 
 void Executor::execMean(TaskRequest request, Host target) {
+  execProcess(request, target,
+              request.params().splitAndEvaluate(request.task().command()));
+}
+
+void Executor::sshMean(TaskRequest request, Host target) {
+  QStringList cmdline;
+  cmdline << "ssh" << "-oUserKnownHostsFile=/dev/null"
+          << "-oGlobalKnownHostsFile=/dev/null" << "-oStrictHostKeyChecking=no"
+          << request.task().target() // TODO rather use Host
+          << request.params().evaluate(request.task().command());
+  // LATER support ssh options from params, such as port and keys
+  // LATER remove warning about known hosts file from stderr log
+  execProcess(request, target, cmdline);
+}
+
+void Executor::execProcess(TaskRequest request, Host target,
+                           QStringList cmdline) {
   _request = request;
   _target = target;
   _errBuf.clear();
@@ -55,21 +72,14 @@ void Executor::execMean(TaskRequest request, Host target) {
      env.insert(key, request.params().value(key));
    }
    _process->setProcessEnvironment(env);
-   QStringList args =
-       _request.params().splitAndEvaluate(_request.task().command());
-   if (!args.isEmpty()) {
-     QString program = args.takeFirst();
-     qDebug() << "about to start" << program << "with args" << args
+   if (!cmdline.isEmpty()) {
+     QString program = cmdline.takeFirst();
+     qDebug() << "about to start" << program << "with args" << cmdline
               << "using environment" << env.toStringList();
-     _process->start(program, args);
+     _process->start(program, cmdline);
    } else
      qWarning() << "cannot execute task with empty command"
                 << request.task().fqtn();
-}
-
-void Executor::sshMean(TaskRequest request, Host target) {
-  // TODO
-  emit taskFinished(request, target, false, 42, this);
 }
 
 void Executor::error(QProcess::ProcessError error) {

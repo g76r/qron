@@ -46,6 +46,7 @@ private:
   void execMean(TaskRequest request, Host target);
   void sshMean(TaskRequest request, Host target);
   void httpMean(TaskRequest request, Host target);
+  void execProcess(TaskRequest request, Host target, QStringList cmdline);
   Q_DISABLE_COPY(Executor)
 };
 
