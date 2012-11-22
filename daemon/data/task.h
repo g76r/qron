@@ -24,8 +24,12 @@ public:
   const QSet<QString> eventTriggers() const;
   /** Fully qualified task name (i.e. "taskGroupId.taskId")
     */
-  QString fqtn() const;
   QString id() const;
+  QString fqtn() const;
+  QString label() const;
+  QString mean() const;
+  QString command() const;
+  QString target() const;
   void setTaskGroup(TaskGroup taskGroup);
   const QList<CronTrigger> cronTriggers() const;
 };

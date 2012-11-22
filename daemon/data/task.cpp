@@ -105,6 +105,22 @@ QString Task::fqtn() const {
   return d->_group.id()+"."+d->_id;
 }
 
+QString Task::label() const {
+  return d->_label;
+}
+
+QString Task::mean() const {
+  return d->_mean;
+}
+
+QString Task::command() const {
+  return d->_command;
+}
+
+QString Task::target() const {
+  return d->_target;
+}
+
 void Task::setTaskGroup(TaskGroup taskGroup) {
   d->_group = taskGroup;
 }

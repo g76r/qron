@@ -53,14 +53,29 @@ void ParamSet::setValue(const QString key, const QString value) {
   d->setValue(key, value);
 }
 
-QString ParamSet::value(const QString key) const {
-  return d->value(key);
+QString ParamSet::rawValue(const QString key) const {
+  QString value = d->value(key);
+  //qDebug() << "    rawValue" << key << value << value.isNull() << isNull();
+  if (value.isNull() && !isNull())
+    return d->parent().rawValue(key);
+  return value;
+}
+
+QString ParamSet::evaluate(const QString rawValue) const {
+  // TODO parameters substitution
+  return rawValue;
+}
+
+QStringList ParamSet::splitAndEvaluate(const QString rawValue,
+                                       const QString separator) const {
+  // TODO parameters substitution
+  return rawValue.split(separator);
 }
 
 const QSet<QString> ParamSet::keys() const {
   QSet<QString> set = d->_params.keys().toSet();
   if (!d->_parent.isNull())
-    set += d->_parent.keys(); // TODO parent should override child rather
+    set += d->_parent.keys();
   return set;
 }
 

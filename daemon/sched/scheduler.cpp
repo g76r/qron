@@ -13,6 +13,9 @@
 
 Scheduler::Scheduler(QObject *parent) : QObject(parent) {
   //qRegisterMetaType<CronTrigger>("CronTrigger");
+  qRegisterMetaType<TaskRequest>("TaskRequest");
+  qRegisterMetaType<Host>("Host");
+  qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
 }
 
 bool Scheduler::loadConfiguration(QIODevice *source,
@@ -213,7 +216,11 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
   // LATER check flags
   // TODO check resources, choose target and consume resources
   // TODO start task if possible
-  reevaluateQueuedRequests();
+  if (runnable) {
+    Executor *exe = _executors.takeFirst();
+    exe->execute(request, Host());
+    reevaluateQueuedRequests();
+  }
   return runnable;
 }
 
