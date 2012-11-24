@@ -8,6 +8,10 @@
 #include "data/hostgroup.h"
 #include "util/timerwithargument.h"
 #include <QMetaObject>
+#include "log/log.h"
+#include "log/filelogger.h"
+#include <QFile>
+#include <stdio.h>
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
@@ -16,6 +20,9 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent) {
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
+  // TODO clearLoggers() and create loggers depending on config file
+  Log::addLogger(new FileLogger("/tmp/log0", Log::Debug, this));
+  Log::addLogger(new FileLogger("/tmp/info", Log::Info, this));
 }
 
 bool Scheduler::loadConfiguration(QIODevice *source,
@@ -24,7 +31,7 @@ bool Scheduler::loadConfiguration(QIODevice *source,
   if (!source->isOpen())
     if (!source->open(QIODevice::ReadOnly)) {
       errorString = source->errorString();
-      qWarning() << "cannot read configuration" << errorString;
+      Log::warning() << "cannot read configuration: " << errorString;
       return false;
     }
   // LATER do something with appendToCurrentConfig
@@ -34,7 +41,7 @@ bool Scheduler::loadConfiguration(QIODevice *source,
   int n = pdh.roots().size();
   if (n < 1) {
     errorString = "empty configuration";
-    qWarning() << errorString;
+    Log::warning() << errorString;
     return false;
   }
   foreach (PfNode root, pdh.roots()) {
@@ -42,8 +49,8 @@ bool Scheduler::loadConfiguration(QIODevice *source,
       if (!loadConfiguration(root, errorString))
         return false;
     } else {
-      qWarning() << "ignoring node" << root.name()
-                 << "at configuration file top level";
+      Log::warning() << "ignoring node '" << root.name()
+                     << "' at configuration file top level";
     }
   }
   return true;
@@ -62,8 +69,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     if (node.name() == "host") {
       Host host(node);
       _hosts.insert(host.id(), host);
-      qDebug() << "configured host" << host.id() << "with hostname"
-               << host.hostname();
+      Log::debug() << "configured host '" << host.id() << "' with hostname '"
+                   << host.hostname() << "'";
     } else if (node.name() == "hostgroup") {
       HostGroup group(node);
       foreach (PfNode child, node.childrenByName("host")) {
@@ -71,15 +78,18 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         if (!host.isNull())
           group.appendHost(host);
         else
-          qWarning() << "host" << child.contentAsString() << "not found, won't"
-                        "add it to hostgroup" << group.id();
+          Log::warning() << "host '" << child.contentAsString()
+                         << "' not found, won't add it to hostgroup '"
+                         << group.id() << "'";
       }
-      qDebug() << "configured hostgroup" << group.id() << group.hosts().size();
+      Log::debug() << "configured hostgroup '" << group.id() << "' with "
+                   << group.hosts().size() << " hosts";
     } else if (node.name() == "task") {
       Task task(node);
       TaskGroup taskGroup = _taskGroups.value(node.attribute("taskgroup"));
       if (taskGroup.isNull()) {
-        qWarning() << "ignoring task" << task.id() << "without taskgroup";
+        Log::warning() << "ignoring task '" << task.id()
+                       << "' without taskgroup";
       } else {
         task.setTaskGroup(taskGroup);
         _tasks.insert(task.fqtn(), task);
@@ -88,19 +98,19 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
           trigger.setTask(task);
           _cronTriggers.append(trigger);
         }
-        qDebug() << "configured task" << task;
+        Log::debug() << "configured task '" << task.fqtn() << "'";
       }
     } else if (node.name() == "taskgroup") {
       TaskGroup taskGroup(node);
       _taskGroups.insert(taskGroup.id(), taskGroup);
-      qDebug() << "configured taskgroup" << taskGroup;
+      Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
     } else if (node.name() == "param") {
       QString key = node.attribute("key");
       QString value = node.attribute("value");
       if (key.isNull() || value.isNull()) {
         // LATER warn
       } else {
-        qDebug() << "configured global param" << key << "=" << value;
+        Log::debug() << "configured global param " << key << "=" << value;
         _globalParams.setValue(key, value);
       }
     } else if (node.name() == "log") {
@@ -110,13 +120,13 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       int n = node.contentAsString().toInt(&ok);
       if (ok && n > 0) {
         if (!_executors.isEmpty()) {
-          qWarning() << "overriding maxtotaltasks" << _executors.size()
-                     << "with" << n;
+          Log::warning() << "overriding maxtotaltasks " << _executors.size()
+                         << " with " << n;
           foreach (Executor *e, _executors)
             e->deleteLater();
           _executors.clear();
         }
-        qDebug() << "configured" << n << "task executors";
+        Log::debug() << "configured " << n << " task executors";
         while (n--) {
           Executor *e = new Executor(this);
           connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
@@ -124,13 +134,14 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
           _executors.append(e);
         }
       } else {
-        qWarning() << "ignoring maxtotaltasks with incorrect value:"
-                   << node.contentAsString();
+        Log::warning() << "ignoring maxtotaltasks with incorrect value: "
+                       << node.contentAsString();
       }
     }
   }
   if (_executors.isEmpty()) {
-    qDebug() << "configured 16 task executors (default maxtotaltasks value)";
+    Log::debug() << "configured 16 task executors (default maxtotaltasks "
+                    "value)";
     for (int n = 16; n; --n) {
       Executor *e = new Executor(this);
       connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
@@ -149,12 +160,12 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
 void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   Task task = _tasks.value(fqtn);
   if (task.isNull()) {
-    qWarning() << "requested task not found:" << fqtn << params << force;
+    Log::warning() << "requested task not found: " << fqtn << params << force;
     return;
   }
   if (!params.parent().isNull()) {
-    qWarning() << "task requested with non null params' parent (parent will be "
-                  "ignored)";
+    Log::warning() << "task requested with non null params' parent (parent will"
+                      " be ignored)";
   }
   params.setParent(task.params());
   TaskRequest request(task, params);
@@ -163,7 +174,8 @@ void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   } else {
     // note: a request must always be queued even if the task can be started
     // immediately, to avoid the new tasks being started before queued ones
-    qDebug() << "queuing task" << task << params;
+    Log::debug() << "queuing task '" << task.fqtn() << "' with params "
+                 << params;
     _queuedRequests.append(request);
     reevaluateQueuedRequests();
   }
@@ -172,7 +184,8 @@ void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
 void Scheduler::triggerEvent(QString event) {
   foreach (Task task, _tasks.values()) {
     if (task.eventTriggers().contains(event)) {
-      qDebug() << "event" << event << "triggered task" << task.fqtn();
+      Log::debug() << "event '" << event << "' triggered task '" << task.fqtn()
+                   << "'";
       requestTask(task.fqtn());
     }
   }
@@ -181,26 +194,27 @@ void Scheduler::triggerEvent(QString event) {
 void Scheduler::triggerTrigger(QVariant trigger) {
   if (trigger.canConvert<CronTrigger>()) {
     CronTrigger ct = qvariant_cast<CronTrigger>(trigger);
-    qDebug() << "trigger" << ct.cronExpression() << "triggered task"
-             << ct.task().fqtn();
+    Log::debug() << "trigger '" << ct.cronExpression() << "' triggered task '"
+                 << ct.task().fqtn() << "'";
     requestTask(ct.task().fqtn());
     // LATER this is theorically not accurate since it could miss a trigger
     setTimerForCronTrigger(ct);
   } else
-    qWarning() << "invalid internal object when triggering trigger";
+    Log::warning() << "invalid internal object when triggering trigger";
 }
 
 void Scheduler::setFlag(QString flag) {
-  qDebug() << "setting flag" << flag << (_setFlags.contains(flag)
-                                         ? "which was already set anyway" : "");
+  Log::debug() << "setting flag '" << flag << "'"
+               << (_setFlags.contains(flag) ? " which was already set"
+                                            : "");
   _setFlags.insert(flag);
   reevaluateQueuedRequests();
 }
 
 void Scheduler::clearFlag(QString flag) {
-  qDebug() << "clearing flag" << flag << (_setFlags.contains(flag)
-                                          ? ""
-                                          : "which was already cleared anyway");
+  Log::debug() << "clearing flag '" << flag << "'"
+               << (_setFlags.contains(flag) ? ""
+                                            : " which was already cleared");
   _setFlags.remove(flag);
   reevaluateQueuedRequests();
 }
@@ -209,8 +223,9 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
   bool runnable = true;
   // check maxtotaltasks
   if (_executors.isEmpty()) {
-    qDebug() << "cannot execute task" << request.task() << "now because there "
-                "are already too many tasks running (maxtotaltasks)";
+    Log::debug() << "cannot execute task '" << request.task().fqtn()
+                 << "' now because there are already too many tasks running "
+                    "(maxtotaltasks reached)";
     runnable = false;
   }
   // LATER check flags
@@ -243,9 +258,6 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
 
 void Scheduler::taskFinished(TaskRequest request, Host target, bool success,
                              int returnCode, QWeakPointer<Executor> executor) {
-  qDebug() << "task" << request.task() << "finished"
-           << (success ? "successfully" : "in failure") << "with return code"
-           << returnCode << "on host"; // << target;
   Executor *e = executor.data();
   if (e) {
     if (e->isTemporary())
@@ -289,10 +301,12 @@ void Scheduler::setTimerForCronTrigger(CronTrigger trigger,
                                        QDateTime previous) {
   int ms = trigger.nextTriggerMsecs(previous);
   if (ms >= 0) {
-    qDebug() << "setting cron timer" << ms << "ms for task"
-             << trigger.task().fqtn() << "from trigger "
-             << trigger.cronExpression() << "at" << QDateTime::currentDateTime()
-             << "previous" << previous << trigger.parsedCronExpression();
+    Log::debug() << "setting cron timer " << ms << " ms for task '"
+                 << trigger.task().fqtn() << "' from trigger '"
+                 << trigger.cronExpression() << "' at "
+                 << QDateTime::currentDateTime() << " (previous exec was at "
+                 << previous << " and cron expression was parsed as '"
+                 << trigger.parsedCronExpression() << "'";
     QVariant v;
     v.setValue(trigger);
     TimerWithArgument::singleShot(ms, this, "triggerTrigger", v);

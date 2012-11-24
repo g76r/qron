@@ -17,6 +17,7 @@ public:
   TaskRequest &operator=(const TaskRequest &);
   const Task task() const;
   const ParamSet params() const;
+  quint64 id() const;
 };
 
 #endif // TASKREQUEST_H

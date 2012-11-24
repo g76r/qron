@@ -2,9 +2,9 @@
 #include "taskgroup.h"
 #include <QString>
 #include <QMap>
-#include <QtDebug>
 #include "pf/pfnode.h"
 #include "crontrigger.h"
+#include "log/log.h"
 
 class TaskData : public QSharedData {
 public:
@@ -47,8 +47,8 @@ Task::Task(PfNode node) {
     if (key.isNull() || value.isNull()) {
       // LATER warn
     } else {
-      qDebug() << "configured task param" << key << "=" << value << "for task"
-               << td->_id;
+      Log::debug() << "configured task param " << key << "=" << value
+                   << "for task '" << td->_id << "'";
       td->_params.setValue(key, value);
     }
   }
@@ -56,7 +56,8 @@ Task::Task(PfNode node) {
     QString event = child.attribute("event");
     if (!event.isNull()) {
       td->_eventTriggers.insert(event);
-      qDebug() << "configured event trigger" << event << "on task" << td->_id;
+      Log::debug() << "configured event trigger '" << event << "' on task '"
+                   << td->_id << "'";
       continue;
     }
     QString cron = child.attribute("cron");
@@ -64,10 +65,12 @@ Task::Task(PfNode node) {
       CronTrigger trigger(cron);
       if (trigger.isValid()) {
         td->_cronTriggers.append(trigger);
-        qDebug() << "configured cron trigger" << cron << "on task" << td->_id;
+        Log::debug() << "configured cron trigger '" << cron << "' on task '"
+                     << td->_id << "'";
       } else
-        qWarning() << "ignoring invalid cron trigger" << cron << "parsed as"
-                   << trigger.parsedCronExpression() << "on task" << td->_id;
+        Log::warning() << "ignoring invalid cron trigger '" << cron
+                       << "' parsed as '" << trigger.parsedCronExpression()
+                       << "' on task '" << td->_id;
       continue;
       // LATER read misfire config
     }

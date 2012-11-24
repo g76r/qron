@@ -92,3 +92,12 @@ QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "}";
   return dbg.space();
 }
+
+LogHelper operator <<(LogHelper lh, const ParamSet &params) {
+  lh << "{ ";
+  if (!params.isNull())
+    foreach(QString key, params.keys()) {
+      lh << key << "=" << params.value(key) << " ";
+    }
+  return lh << "}";
+}

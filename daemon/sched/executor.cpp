@@ -2,6 +2,7 @@
 #include <QThread>
 #include <QtDebug>
 #include <QMetaObject>
+#include <log/log.h>
 
 Executor::Executor(QObject *threadParent) : QObject(0), _isTemporary(false),
   _thread(new QThread(threadParent)), _process(0) {
@@ -19,7 +20,9 @@ void Executor::execute(TaskRequest request, Host target) {
 
 void Executor::doExecute(TaskRequest request, Host target) {
   const QString mean = request.task().mean();
-  qDebug() << "executing task" << request.task() << "with mean" << mean;
+  Log::info(request.task().fqtn(), request.id())
+      << "executing task '" << request.task().fqtn() << "' through mean '"
+      << mean << "'";
   if (mean == "exec")
     execMean(request, target);
   else if (mean == "ssh")
@@ -27,8 +30,8 @@ void Executor::doExecute(TaskRequest request, Host target) {
   else if (mean == "http")
     httpMean(request, target);
   else {
-    qDebug() << "cannot execute task with unknown mean" << mean << ":"
-             << request.task();
+    Log::error(request.task().fqtn(), request.id())
+        << "cannot execute task with unknown mean '" << mean << "'";
     emit taskFinished(request, target, false, 1, this);
   }
   // LATER add other means: https, postevent, setflag, clearflag
@@ -41,12 +44,15 @@ void Executor::execMean(TaskRequest request, Host target) {
 
 void Executor::sshMean(TaskRequest request, Host target) {
   QStringList cmdline;
+  // ssh options are set to avoid any host key check to make the connection
+  // successful even if the host is not known or if its key changed
+  // LATER make the host key bypass optional (since it's insecure)
+  // LATER support ssh options from params, such as port and keys
+  // LATER remove warning about known hosts file from stderr log
   cmdline << "ssh" << "-oUserKnownHostsFile=/dev/null"
           << "-oGlobalKnownHostsFile=/dev/null" << "-oStrictHostKeyChecking=no"
           << request.task().target() // TODO rather use Host
           << request.params().evaluate(request.task().command());
-  // LATER support ssh options from params, such as port and keys
-  // LATER remove warning about known hosts file from stderr log
   execProcess(request, target, cmdline);
 }
 
@@ -74,24 +80,31 @@ void Executor::execProcess(TaskRequest request, Host target,
    _process->setProcessEnvironment(env);
    if (!cmdline.isEmpty()) {
      QString program = cmdline.takeFirst();
-     qDebug() << "about to start" << program << "with args" << cmdline
-              << "using environment" << env.toStringList();
+     Log::debug(_request.task().fqtn(), _request.id())
+         << "about to run command '" << program << "' with args " << cmdline
+         << " and environment " << env.toStringList();
      _process->start(program, cmdline);
    } else
-     qWarning() << "cannot execute task with empty command"
-                << request.task().fqtn();
+     Log::warning() << "cannot execute task with empty command '"
+                    << request.task().fqtn() << "'";
 }
 
 void Executor::error(QProcess::ProcessError error) {
-  qDebug() << "task error" << error << _process->errorString();
+  Log::error(_request.task().fqtn(), _request.id())
+      << "task error #" << error << " : " << _process->errorString();
+  // LATER log duration and wait time
 }
 
 void Executor::finished(int exitCode, QProcess::ExitStatus exitStatus) {
   readyReadStandardError();
   readyReadStandardOutput();
-  //qDebug() << "task finished";
-  emit taskFinished(_request, _target, exitStatus == QProcess::NormalExit
-                    && exitCode == 0, exitCode, this);
+  bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
+  Log::info(_request.task().fqtn(), _request.id())
+      << "task '" << _request.task().fqtn() << "' finished "
+      << (success ? "successfully" : "in failure") << " with return code "
+      << exitCode << " on host '" << _target.hostname() << "'";
+  // LATER log duration and wait time
+  emit taskFinished(_request, _target, success, exitCode, this);
   _process->deleteLater();
   _process = 0;
   _errBuf.clear();
@@ -108,8 +121,8 @@ void Executor::readyReadStandardError() {
     while (((i = _errBuf.indexOf('\n')) >= 0)) {
       QString line = QString::fromUtf8(_errBuf.mid(0, i));
       _errBuf.remove(0, i+1);
-      // TODO clarify logs
-      qDebug() << "task error output:" << line.trimmed();
+      Log::warning(_request.task().fqtn(), _request.id())
+          << "task stderr: " << line.trimmed();
     }
   }
 }
@@ -117,10 +130,10 @@ void Executor::readyReadStandardError() {
 void Executor::readyReadStandardOutput() {
   _process->setReadChannel(QProcess::StandardOutput);
   while (!_process->read(1024).isEmpty());
-  // LATER make it possible to log stdout too
+  // LATER make it possible to log stdout too (as debug, depending on task cfg)
 }
 
 void Executor::httpMean(TaskRequest request, Host target) {
-  // TODO
+  // TODO http mean
   emit taskFinished(request, target, false, 42, this);
 }

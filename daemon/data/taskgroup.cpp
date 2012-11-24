@@ -33,8 +33,8 @@ TaskGroup::TaskGroup(PfNode node) {
     if (key.isNull() || value.isNull()) {
       // LATER warn
     } else {
-      qDebug() << "configured taskgroup param" << key << "=" << value
-               << "for taskgroup" << tgd->_id;
+      Log::debug() << "configured taskgroup param " << key << "=" << value
+                   << "for taskgroup '" << tgd->_id << "'";
       tgd->_params.setValue(key, value);
     }
   }

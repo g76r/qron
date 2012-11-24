@@ -27,7 +27,9 @@ SOURCES += sched/main.cpp \
     pf/pfcontent.cpp \
     pf/pfarray.cpp \
     util/ioutils.cpp \
-    util/timerwithargument.cpp
+    util/timerwithargument.cpp \
+    log/log.cpp \
+    log/filelogger.cpp
 
 HEADERS += \
     data/task.h \
@@ -49,4 +51,6 @@ HEADERS += \
     pf/pfcontent.h \
     pf/pfarray.h \
     util/ioutils.h \
-    util/timerwithargument.h
+    util/timerwithargument.h \
+    log/log.h \
+    log/filelogger.h

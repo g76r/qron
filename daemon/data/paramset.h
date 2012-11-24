@@ -4,6 +4,7 @@
 #include <QSharedData>
 #include <QList>
 #include <QStringList>
+#include "log/log.h"
 
 class ParamSetData;
 
@@ -47,5 +48,7 @@ public:
 };
 
 QDebug operator<<(QDebug dbg, const ParamSet &params);
+
+LogHelper operator <<(LogHelper lh, const ParamSet &params);
 
 #endif // PARAMSET_H

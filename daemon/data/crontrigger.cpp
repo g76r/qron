@@ -1,8 +1,8 @@
 #include "crontrigger.h"
 #include "task.h"
 #include <QRegExp>
-#include <QtDebug>
 #include <QStringList>
+#include "log/log.h"
 
 // LATER support for more complex cron expression such as those of Quartz
 // e.g. 0#3 = third sunday, 0L = last sunday, W = working day, etc.
@@ -21,7 +21,7 @@ class CronField {
   bool *_setValues;
 
 public:
-  CronField(int min = 0, int max = 42) : _min(min), _max(max), // FIXME
+  CronField(int min, int max) : _min(min), _max(max),
     _setValues(new bool[_max-_min+1]) { }
   CronField(const CronField &other) : _min(other._min),
     _max(other._max), _setValues(new bool[_max-_min+1]) {
@@ -198,9 +198,9 @@ private:
       _isValid = !(_seconds.isNull() || _minutes.isNull() || _hours.isNull()
                    || _days.isNull() || _months.isNull()
                    || _daysofweek.isNull());
-    } else {
-      qWarning() << "unsupported cron trigger expression:" << cronExpression;
-    }
+    } else
+      Log::warning() << "unsupported cron trigger expression: '"
+                     << cronExpression << "'";
   }
 };
 
