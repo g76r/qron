@@ -11,6 +11,8 @@ General Public License version 3, see LICENSE file content.
 
 === BUILD INSTRUCTIONS ===
 
+This program requires Qt >= 4.7 to be built.
+
 The git repository uses git submodules to handle libqtpf dependency, therefore
 you should use following steps to clone repository and submodules repositories:
 
@@ -21,4 +23,13 @@ git submodule update
 
 Then one should build libqtpf before qron since it's a dependency.
 This can be done with the top directory qmake project or with any external
-programm such as an IDE like Qt Creator.
+program such as an IDE like Qt Creator.
+For instance, these commands work on most modern linux distros:
+
+qmake
+make
+
+On some old distros that still use Qt 3 as the default, you may need to type:
+
+qmake-qt4
+make
