@@ -33,7 +33,7 @@ public:
     */
   QStringList valueAsStrings(const QString key,
                              const QString separator = " ") const {
-    return splitAndEvaluate(rawValue(key)); }
+    return splitAndEvaluate(rawValue(key), separator); }
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
   const QSet<QString> keys() const;

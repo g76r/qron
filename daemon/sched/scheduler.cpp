@@ -28,13 +28,13 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent) {
 bool Scheduler::loadConfiguration(QIODevice *source,
                                   QString &errorString,
                                   bool appendToCurrentConfig) {
+  Q_UNUSED(appendToCurrentConfig) // LATER implement appendToCurrentConfig
   if (!source->isOpen())
     if (!source->open(QIODevice::ReadOnly)) {
       errorString = source->errorString();
       Log::warning() << "cannot read configuration: " << errorString;
       return false;
     }
-  // LATER do something with appendToCurrentConfig
   PfDomHandler pdh;
   PfParser pp(&pdh);
   pp.parse(source);
@@ -57,6 +57,7 @@ bool Scheduler::loadConfiguration(QIODevice *source,
 }
 
 bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
+  Q_UNUSED(errorString) // currently no fatal error, only warnings
   QList<PfNode> children;
   children += root.childrenByName("log");
   children += root.childrenByName("taskgroup");
@@ -153,7 +154,6 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     setTimerForCronTrigger(trigger);
     // LATER fire cron triggers if they were missed since last task exec
   }
-
   return true;
 }
 
@@ -258,6 +258,10 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
 
 void Scheduler::taskFinished(TaskRequest request, Host target, bool success,
                              int returnCode, QWeakPointer<Executor> executor) {
+  Q_UNUSED(request)
+  Q_UNUSED(target)
+  Q_UNUSED(success)
+  Q_UNUSED(returnCode)
   Executor *e = executor.data();
   if (e) {
     if (e->isTemporary())

@@ -12,7 +12,7 @@ public:
   ParamSet _params;
   TaskRequestData(Task task = Task(), ParamSet params = ParamSet())
     : _id(newId()), _task(task), _params(params) { }
-  TaskRequestData(const TaskRequestData &other) : _id(other._id),
+  TaskRequestData(const TaskRequestData &other) : QSharedData(), _id(other._id),
     _task(other._task), _params(other._params) { }
   static quint64 newId() {
     QDateTime now = QDateTime::currentDateTime();
