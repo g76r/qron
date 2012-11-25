@@ -1,0 +1,8 @@
+#!/bin/bash
+D="$(dirname $0)"
+[ "$D" = "." ] && D="$(pwd)"
+export LD_LIBRARY_PATH="$D:$LD_LIBRARY_PATH"
+echo $LD_LIBRARY_PATH
+E="$(basename $0)"
+cd "$D"
+exec "$D/$E.bin" "$@"
