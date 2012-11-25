@@ -2,7 +2,7 @@
 #include "paramset.h"
 #include <QString>
 #include "task.h"
-#include "pf/pfnode.h"
+#include "pfnode.h"
 #include <QtDebug>
 
 class TaskGroupData : public QSharedData {

@@ -1,10 +1,19 @@
 QT       += core
-
 QT       -= gui
 
 TARGET = qrond
 CONFIG   += console
 CONFIG   -= app_bundle
+
+INCLUDEPATH += ../libqtpf
+LIBS += -lqtpf -L../libqtpf
+
+QMAKE_CXXFLAGS += -Wextra
+linux-g++ {
+  OBJECTS_DIR = ../daemon-build-linux/obj
+  RCC_DIR = ../daemon-build-linux/rcc
+  MOC_DIR = ../daemon-build-linux/moc
+}
 
 TEMPLATE = app
 
@@ -18,15 +27,6 @@ SOURCES += sched/main.cpp \
     data/hostgroup.cpp \
     sched/taskrequest.cpp \
     sched/executor.cpp \
-    pf/pfutils.cpp \
-    pf/pfparser.cpp \
-    pf/pfoptions.cpp \
-    pf/pfnode.cpp \
-    pf/pfhandler.cpp \
-    pf/pfdomhandler.cpp \
-    pf/pfcontent.cpp \
-    pf/pfarray.cpp \
-    util/ioutils.cpp \
     util/timerwithargument.cpp \
     log/log.cpp \
     log/filelogger.cpp
@@ -41,16 +41,6 @@ HEADERS += \
     data/hostgroup.h \
     sched/taskrequest.h \
     sched/executor.h \
-    pf/pfutils.h \
-    pf/pfparser.h \
-    pf/pfoptions.h \
-    pf/pfnode.h \
-    pf/pfinternals.h \
-    pf/pfhandler.h \
-    pf/pfdomhandler.h \
-    pf/pfcontent.h \
-    pf/pfarray.h \
-    util/ioutils.h \
     util/timerwithargument.h \
     log/log.h \
     log/filelogger.h

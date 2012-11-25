@@ -3,7 +3,7 @@
 #include <QString>
 #include "host.h"
 #include <QList>
-#include "pf/pfnode.h"
+#include "pfnode.h"
 
 class HostGroupData : public QSharedData {
   friend class HostGroup;

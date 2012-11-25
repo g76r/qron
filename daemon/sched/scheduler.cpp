@@ -2,8 +2,8 @@
 #include <QtDebug>
 #include <QCoreApplication>
 #include <QEvent>
-#include "pf/pfparser.h"
-#include "pf/pfdomhandler.h"
+#include "pfparser.h"
+#include "pfdomhandler.h"
 #include "data/host.h"
 #include "data/hostgroup.h"
 #include "util/timerwithargument.h"

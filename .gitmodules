@@ -1,0 +1,6 @@
+[submodule "libqtpf"]
+	path = libqtpf
+	#url = git@bitbucket.org:hallowyn/libqtpf.git
+	#url = https://github.com/g76r/libqtpf.git
+	url = git://github.com/g76r/libqtpf.git
+	pushURL = git@github.com:g76r/libqtpf.git

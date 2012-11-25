@@ -2,7 +2,7 @@
 #include "taskgroup.h"
 #include <QString>
 #include <QMap>
-#include "pf/pfnode.h"
+#include "pfnode.h"
 #include "crontrigger.h"
 #include "log/log.h"
 
