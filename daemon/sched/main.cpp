@@ -32,7 +32,6 @@ int main(int argc, char *argv[]) {
     Log::fatal() << "cannot load configuration: " << errorString;
     Log::fatal() << "qrond is aborting startup sequence";
     delete console;
-    delete logger;
     delete scheduler;
     delete config;
     return 1;
