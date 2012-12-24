@@ -293,12 +293,10 @@ void Scheduler::reevaluateQueuedRequests() {
 }
 
 void Scheduler::customEvent(QEvent *event) {
-  switch (event->type()) {
-  case REEVALUATE_QUEUED_REQUEST_EVENT:
+  if (event->type() == REEVALUATE_QUEUED_REQUEST_EVENT) {
     QCoreApplication::removePostedEvents(this, REEVALUATE_QUEUED_REQUEST_EVENT);
     startQueuedTasksIfPossible();
-    break;
-  default:
+  } else {
     QObject::customEvent(event);
   }
 }
