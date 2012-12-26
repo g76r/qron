@@ -15,8 +15,8 @@
 #include <QtDebug>
 #include <QCoreApplication>
 #include <QEvent>
-#include "pfparser.h"
-#include "pfdomhandler.h"
+#include "pf/pfparser.h"
+#include "pf/pfdomhandler.h"
 #include "data/host.h"
 #include "data/hostgroup.h"
 #include "util/timerwithargument.h"
@@ -167,6 +167,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     setTimerForCronTrigger(trigger);
     // LATER fire cron triggers if they were missed since last task exec
   }
+  emit tasksConfigurationReset(_taskGroups, _tasks);
+  // FIXME not only tasks
   return true;
 }
 

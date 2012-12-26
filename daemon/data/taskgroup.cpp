@@ -15,7 +15,7 @@
 #include "paramset.h"
 #include <QString>
 #include "task.h"
-#include "pfnode.h"
+#include "pf/pfnode.h"
 #include <QtDebug>
 
 class TaskGroupData : public QSharedData {
@@ -69,6 +69,14 @@ TaskGroup &TaskGroup::operator =(const TaskGroup &other) {
 
 QString TaskGroup::id() const {
   return d->_id;
+}
+
+QString TaskGroup::label() const {
+  return d->_label;
+}
+
+ParamSet TaskGroup::params() const {
+  return d->_params;
 }
 
 bool TaskGroup::isNull() const {

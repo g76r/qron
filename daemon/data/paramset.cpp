@@ -96,6 +96,16 @@ bool ParamSet::isNull() const {
   return d->isNull();
 }
 
+QString ParamSet::toString() const {
+  QString s;
+  s.append("{ ");
+  if (!isNull())
+    foreach(QString key, keys()) {
+      s.append(key).append("=").append(value(key)).append(" ");
+    }
+  return s.append("}");
+}
+
 QDebug operator<<(QDebug dbg, const ParamSet &params) {
   dbg.nospace() << "{";
   if (!params.isNull())

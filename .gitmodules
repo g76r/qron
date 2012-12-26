@@ -4,3 +4,6 @@
 	#url = https://github.com/g76r/libqtpf.git
 	url = git://github.com/g76r/libqtpf.git
 	pushURL = git@github.com:g76r/libqtpf.git
+[submodule "libqtssu"]
+	path = libqtssu
+	url = git@github.com:g76r/libqtssu.git

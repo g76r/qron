@@ -58,6 +58,7 @@ public:
   QStringList splitAndEvaluate(const QString rawValue,
                                const QString separator = " ") const;
   bool isNull() const;
+  QString toString() const;
 };
 
 QDebug operator<<(QDebug dbg, const ParamSet &params);

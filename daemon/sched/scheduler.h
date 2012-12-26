@@ -78,6 +78,10 @@ public slots:
     */
   void reevaluateQueuedRequests();
 
+signals:
+  void tasksConfigurationReset(const QMap<QString,TaskGroup> taskGroups,
+                               const QMap<QString,Task> tasks);
+
 private slots:
   void taskFinished(TaskRequest request, Host target, bool success,
                     int returnCode, QWeakPointer<Executor> executor);

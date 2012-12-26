@@ -11,15 +11,22 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
 
-QT       += core
+QT       += core network
 QT       -= gui
 
 TARGET = qrond
-CONFIG   += console
-CONFIG   -= app_bundle
+CONFIG += console largefile
+CONFIG -= app_bundle
 
-INCLUDEPATH += ../libqtpf
-LIBS += -lqtpf -L../libqtpf
+INCLUDEPATH += ../libqtpf ../libqtssu
+LIBS += -lqtpf -lqtssu
+win32:debug:LIBS += -L../../libqtpf/pf-build-windows/debug \
+  -L../../libqtpf/pfsql-build-windows/debug \
+  -L../../ssu-build-windows/debug
+win32:release:LIBS += -L../libqtpf/pf-build-windows/release \
+  -L../../libqtpf/pfsql-build-windows/release \
+  -L../../ssu-build-windows/release
+linux-g++:LIBS += -L../libqtpf/pf -L../libqtpf/pfsql -L../libqtssu
 
 QMAKE_CXXFLAGS += -Wextra
 linux-g++ {
@@ -47,7 +54,9 @@ SOURCES += sched/main.cpp \
     sched/executor.cpp \
     util/timerwithargument.cpp \
     log/log.cpp \
-    log/filelogger.cpp
+    log/filelogger.cpp \
+    ui/taskstreemodel.cpp \
+    ui/webconsole.cpp
 
 HEADERS += \
     data/task.h \
@@ -61,4 +70,6 @@ HEADERS += \
     sched/executor.h \
     util/timerwithargument.h \
     log/log.h \
-    log/filelogger.h
+    log/filelogger.h \
+    ui/taskstreemodel.h \
+    ui/webconsole.h

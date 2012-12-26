@@ -15,7 +15,7 @@
 #include <QSharedData>
 #include <QString>
 #include <QMap>
-#include "pfnode.h"
+#include "pf/pfnode.h"
 
 class HostData : public QSharedData {
   friend class Host;

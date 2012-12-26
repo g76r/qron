@@ -16,6 +16,7 @@
 
 #include <QSharedData>
 #include <QList>
+#include "paramset.h"
 
 class TaskGroupData;
 class Task;
@@ -33,6 +34,8 @@ public:
   TaskGroup &operator =(const TaskGroup &other);
   //QList<Task> tasks();
   QString id() const;
+  QString label() const;
+  ParamSet params() const;
   bool isNull() const;
 };
 
