@@ -3,7 +3,7 @@
 
 #include "httpd/httphandler.h"
 #include "taskstreemodel.h"
-#include "textview/treehtmlview.h"
+#include "textview/textview.h"
 #include "sched/scheduler.h"
 #include <QObject>
 
@@ -11,7 +11,8 @@ class WebConsole : public HttpHandler {
   Q_OBJECT
   Scheduler *_scheduler;
   TasksTreeModel *_tasksModel;
-  TreeHtmlView *_tasksView;
+  TextView *_htmlTasksView, *_csvTasksView;
+
 public:
   WebConsole(QObject *parent = 0);
   QString name() const;

@@ -1,8 +1,12 @@
 #include "webconsole.h"
+#include "textview/htmltableview.h"
+#include "textview/csvview.h"
 
 WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
-  _tasksModel(new TasksTreeModel(this)), _tasksView(new TreeHtmlView(this)) {
-  _tasksView->setModel(_tasksModel);
+  _tasksModel(new TasksTreeModel(this)),
+  _htmlTasksView(new HtmlTableView(this)), _csvTasksView(new CsvView(this)) {
+  _htmlTasksView->setModel(_tasksModel);
+  _csvTasksView->setModel(_tasksModel);
 }
 
 QString WebConsole::name() const {
@@ -10,21 +14,37 @@ QString WebConsole::name() const {
 }
 
 bool WebConsole::acceptRequest(const HttpRequest &req) {
-  const QString path = req.url().path();
-  return path.isEmpty() || path == "/" || path.startsWith("/console");
+  Q_UNUSED(req)
+  return true;
 }
 
 void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
-  const QString path = req.url().path();
-  if (path.isEmpty() || path == "/") {
-    // FIXME redirect
-  } else {
-    // FIXME
+  QString path = req.url().path();
+  while (path.size() && path.at(path.size()-1) == '/')
+    path.chop(1);
+  if (path.isEmpty()) {
+    res.redirect("/console");
+    return;
   }
-  res.setContentType("text/html");
-  res.output()->write("<html><head><title>Qron Web Console</title></head>\n"
-                      "<body>\n");
-  res.output()->write(_tasksView->text().toUtf8().constData());
+  if (path.startsWith("/console")) {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write("<html><head><title>Qron Web Console</title></head>\n"
+                        "<body>\n");
+    res.output()->write(_htmlTasksView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/csv/tasks/tree/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.output()->write(_csvTasksView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/tasks/tree/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlTasksView->text().toUtf8().constData());
+    return;
+  }
+  res.setStatus(404);
+  res.output()->write("Not found.");
 }
 
 void WebConsole::setScheduler(Scheduler *scheduler) {
