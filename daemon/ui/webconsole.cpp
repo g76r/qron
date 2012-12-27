@@ -1,12 +1,18 @@
 #include "webconsole.h"
-#include "textview/htmltableview.h"
-#include "textview/csvview.h"
 
 WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _tasksModel(new TasksTreeModel(this)),
-  _htmlTasksView(new HtmlTableView(this)), _csvTasksView(new CsvView(this)) {
+  _htmlTasksView(new HtmlTableView(this)), _csvTasksView(new CsvView(this)),
+  _wuiHandler(new TemplatingHttpHandler(this, "/console",
+                                        ":docroot/console")) {
   _htmlTasksView->setModel(_tasksModel);
+  _htmlTasksView->setTableClass("table table-condensed table-hover");
+  _htmlTasksView->setTrClassRole(TasksTreeModel::TrClassRole);
+  _htmlTasksView->setLinkRole(TasksTreeModel::LinkRole);
+  _htmlTasksView->setHtmlPrefixRole(TasksTreeModel::HtmlPrefixRole);
   _csvTasksView->setModel(_tasksModel);
+  _wuiHandler->addFilter("\\.html$");
+  _wuiHandler->addView("tasksConfig", _htmlTasksView);
 }
 
 QString WebConsole::name() const {
@@ -23,14 +29,15 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);
   if (path.isEmpty()) {
-    res.redirect("/console");
+    res.redirect("/console/");
     return;
   }
   if (path.startsWith("/console")) {
-    res.setContentType("text/html;charset=UTF-8");
+    /*res.setContentType("text/html;charset=UTF-8");
     res.output()->write("<html><head><title>Qron Web Console</title></head>\n"
                         "<body>\n");
-    res.output()->write(_htmlTasksView->text().toUtf8().constData());
+    res.output()->write(_htmlTasksView->text().toUtf8().constData());*/
+    _wuiHandler->handleRequest(req, res);
     return;
   }
   if (path == "/rest/csv/tasks/tree/v1") {

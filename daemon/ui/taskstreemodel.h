@@ -14,6 +14,11 @@ class TasksTreeModel : public QAbstractItemModel {
   QMap<QString,Task> _tasks;
 
 public:
+  static const int HtmlPrefixRole = Qt::UserRole;
+  static const int TrClassRole = Qt::UserRole+1;
+  static const int LinkRole = Qt::UserRole+2;
+
+public:
   explicit TasksTreeModel(QObject *parent = 0);
   ~TasksTreeModel();
   QModelIndex index(int row, int column, const QModelIndex &parent) const;

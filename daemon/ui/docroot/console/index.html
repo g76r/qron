@@ -1,0 +1,61 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Qron Web Console</title>
+    <link href="css/bootstrap.css" rel="stylesheet">
+    <style type="text/css">
+      body {
+        padding-top: 60px;
+        padding-bottom: 40px;
+      }
+    </style>
+    <link href="css/bootstrap-responsive.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="navbar navbar-inverse navbar-fixed-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="index.html">Qron Web Console</a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li class="active"><a href="index.html">Home</a></li>
+              <li><a href="about.html">About</a></li>
+              <li><a href="http://www.qron.eu/">Official Web Site</a></li>
+          </div>
+        </div>
+      </div>
+    </div>
+
+<!-- end of header -->
+
+    <div class="container">
+      <div class="row">
+        <div class="span8">
+          <h2>Last warnings and errors</h2>
+          <p>TODO
+        </div>
+        <div class="span4">
+          <h2>Hosts</h2>
+          <p>Hosts <i class="icon-folder-open"></i><i class="icon-hdd"></i>
+          <p><?view:hostsConfig?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <h2>Tasks</h2>
+          <p><?view:tasksConfig?>
+        </div>
+      </div>
+    </div>
+
+<!-- start of footer -->
+
+    <script src="js/bootstrap.js"></script>
+  </body>
+</html>
+

@@ -73,3 +73,6 @@ HEADERS += \
     log/filelogger.h \
     ui/taskstreemodel.h \
     ui/webconsole.h
+
+RESOURCES += \
+    ui/webconsole.qrc
