@@ -16,12 +16,17 @@
 #include <QString>
 #include <QMap>
 #include "pf/pfnode.h"
+#include "log/log.h"
 
 class HostData : public QSharedData {
   friend class Host;
   QString _id, _label, _hostname;
   QMap<QString,qint64> _resources;
 public:
+  HostData() { }
+  HostData(const HostData &other) : QSharedData(), _id(other._id),
+    _label(other._label), _hostname(other._hostname),
+    _resources(other._resources) { }
 };
 
 Host::Host() : d(new HostData) {
@@ -35,7 +40,18 @@ Host::Host(PfNode node) {
   hd->_id = node.attribute("id"); // LATER check uniqueness
   hd->_label = node.attribute("label", hd->_id);
   hd->_hostname = node.attribute("hostname", hd->_id);
-  // TODO resources
+  foreach (PfNode child, node.childrenByName("resource")) {
+    QString kind = child.attribute("kind");
+    qint64 quantity = child.attribute("quantity").toLong(0, 0);
+    if (kind.isNull())
+      Log::warning() << "ignoring resource with no or empty kind in host"
+                     << hd->_id;
+    else if (quantity <= 0)
+      Log::warning() << "ignoring resource of kind " << kind
+                     << "with incorrect quantity in host" << hd->_id;
+    else
+      hd->_resources.insert(kind, quantity);
+  }
   d = hd;
 }
 
@@ -58,4 +74,19 @@ QString Host::hostname() const {
 
 bool Host::isNull() const {
   return d->_id.isNull();
+}
+
+const QMap<QString,qint64> Host::resources() const {
+  return d->_resources;
+}
+
+QString Host::resourcesAsString() const {
+  QString s;
+  s.append("{ ");
+  if (!isNull())
+    foreach(QString key, d->_resources.keys()) {
+      s.append(key).append("=")
+          .append(QString::number(d->_resources.value(key))).append(" ");
+    }
+  return s.append("}");
 }

@@ -32,8 +32,10 @@ public:
   CronTrigger &operator =(const CronTrigger &other);
   Task task() const;
   void setTask(Task task);
+  /** Cron expression as it was initialy given */
   QString cronExpression() const;
-  QString parsedCronExpression() const;
+  /** Cron expression in a canonical/unique form */
+  QString canonicalCronExpression() const;
   /** Cron expression is valid (hence not null or empty). */
   bool isValid() const;
   QDateTime nextTrigger(QDateTime lastTrigger, QDateTime max) const;

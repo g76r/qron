@@ -324,7 +324,7 @@ void Scheduler::setTimerForCronTrigger(CronTrigger trigger,
                  << trigger.cronExpression() << "' at "
                  << QDateTime::currentDateTime() << " (previous exec was at "
                  << previous << " and cron expression was parsed as '"
-                 << trigger.parsedCronExpression() << "'";
+                 << trigger.canonicalCronExpression() << "'";
     QVariant v;
     v.setValue(trigger);
     TimerWithArgument::singleShot(ms, this, "triggerTrigger", v);

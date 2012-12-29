@@ -35,7 +35,6 @@ public:
     _target(other._target), _group(other._group), _params(other._params),
     _eventTriggers(other._eventTriggers), _resources(other._resources),
     _maxtaskinstance(other._maxtaskinstance) { }
-  ~TaskData() { }
 };
 
 Task::Task() : d(new TaskData) {
@@ -82,13 +81,25 @@ Task::Task(PfNode node) {
                      << td->_id << "'";
       } else
         Log::warning() << "ignoring invalid cron trigger '" << cron
-                       << "' parsed as '" << trigger.parsedCronExpression()
+                       << "' parsed as '" << trigger.canonicalCronExpression()
                        << "' on task '" << td->_id;
       continue;
       // LATER read misfire config
     }
   }
   // TODO resources
+  foreach (PfNode child, node.childrenByName("resource")) {
+    QString kind = child.attribute("kind");
+    qint64 quantity = child.attribute("quantity").toLong(0, 0);
+    if (kind.isNull())
+      Log::warning() << "ignoring resource with no or empty kind in task"
+                     << td->_id;
+    else if (quantity <= 0)
+      Log::warning() << "ignoring resource of kind " << kind
+                     << "with incorrect quantity in task" << td->_id;
+    else
+      td->_resources.insert(kind, quantity);
+  }
   d = td;
 }
 
@@ -143,6 +154,34 @@ void Task::setTaskGroup(TaskGroup taskGroup) {
 
 const QList<CronTrigger> Task::cronTriggers() const {
   return d->_cronTriggers;
+}
+
+const QMap<QString,qint64> Task::resources() const {
+  return d->_resources;
+}
+
+QString Task::resourcesAsString() const {
+  QString s;
+  s.append("{ ");
+  if (!isNull())
+    foreach(QString key, d->_resources.keys()) {
+      s.append(key).append("=")
+          .append(QString::number(d->_resources.value(key))).append(" ");
+    }
+  return s.append("}");
+}
+
+QString Task::triggersAsString() const {
+  QString s;
+  if (!isNull()) {
+    foreach (CronTrigger t, d->_cronTriggers)
+      s.append("[").append(t.cronExpression()).append("] ");
+    foreach (QString t, d->_eventTriggers)
+      s.append("\"").append(t).append("\" ");
+  }
+  if (!s.isEmpty())
+    s.chop(1); // remove last space
+  return s;
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {

@@ -72,8 +72,12 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
             return t.command();
           case 4:
             return t.target();
+          case 5:
+            return t.triggersAsString();
           case 6:
             return t.params().toString();
+          case 7:
+            return t.resourcesAsString();
           }
           break;
         case HtmlPrefixRole:

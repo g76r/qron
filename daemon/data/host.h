@@ -15,6 +15,7 @@
 #define HOST_H
 
 #include <QSharedDataPointer>
+#include <QMap>
 
 class HostData;
 class PfNode;
@@ -31,6 +32,9 @@ public:
   QString id() const;
   QString hostname() const;
   bool isNull() const;
+  /** Resources available. */
+  const QMap<QString,qint64> resources() const;
+  QString resourcesAsString() const;
 };
 
 #endif // HOST_H

@@ -128,11 +128,12 @@ public:
     _days(other._days), _months(other._months), _daysofweek(other._daysofweek),
     _isValid(other._isValid) {
   }
-  QString toString() const {
+  QString canonicalExpression() const {
     return QString("%1 %2 %3 %4 %5 %6").arg(_seconds).arg(_minutes).arg(_hours)
         .arg(_days).arg(_months).arg(_daysofweek);
   }
-  operator QString() const { return toString(); }
+  QString toString() const { return _cronExpression; }
+  operator QString() const { return _cronExpression; }
 
 private:
   void parseCronExpression(QString cronExpression) {
@@ -245,8 +246,8 @@ QString CronTrigger::cronExpression() const {
   return d->_cronExpression;
 }
 
-QString CronTrigger::parsedCronExpression() const {
-  return d->toString();
+QString CronTrigger::canonicalCronExpression() const {
+  return d->canonicalExpression();
 }
 
 bool CronTrigger::isValid() const {

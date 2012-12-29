@@ -45,6 +45,10 @@ public:
   QString target() const;
   void setTaskGroup(TaskGroup taskGroup);
   const QList<CronTrigger> cronTriggers() const;
+  /** Resources consumed. */
+  const QMap<QString,qint64> resources() const;
+  QString resourcesAsString() const;
+  QString triggersAsString() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

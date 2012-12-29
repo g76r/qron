@@ -84,6 +84,8 @@ QVariant TargetsTreeModel::data(const QModelIndex &index, int role) const {
             return i->_id;
           case 1:
             return h.hostname();
+          case 2:
+            return h.resourcesAsString();
           }
           break;
         case HtmlPrefixRole:
