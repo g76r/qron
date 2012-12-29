@@ -18,7 +18,7 @@
 #include "pf/pfparser.h"
 #include "pf/pfdomhandler.h"
 #include "data/host.h"
-#include "data/hostgroup.h"
+#include "data/cluster.h"
 #include "util/timerwithargument.h"
 #include <QMetaObject>
 #include "log/log.h"
@@ -76,7 +76,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   children += root.childrenByName("taskgroup");
   children += root.childrenByName("task");
   children += root.childrenByName("host");
-  children += root.childrenByName("hostgroup");
+  children += root.childrenByName("cluster");
   children += root.childrenByName("param");
   children += root.childrenByName("maxtotaltasks");
   foreach (PfNode node, children) {
@@ -85,22 +85,22 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       _hosts.insert(host.id(), host);
       Log::debug() << "configured host '" << host.id() << "' with hostname '"
                    << host.hostname() << "'";
-    } else if (node.name() == "hostgroup") {
-      HostGroup group(node);
+    } else if (node.name() == "cluster") {
+      Cluster cluster(node);
       foreach (PfNode child, node.childrenByName("host")) {
         Host host = _hosts.value(child.contentAsString());
         if (!host.isNull())
-          group.appendHost(host);
+          cluster.appendHost(host);
         else
           Log::warning() << "host '" << child.contentAsString()
-                         << "' not found, won't add it to hostgroup '"
-                         << group.id() << "'";
+                         << "' not found, won't add it to cluster '"
+                         << cluster.id() << "'";
       }
-      Log::debug() << "configured hostgroup '" << group.id() << "' with "
-                   << group.hosts().size() << " hosts";
+      Log::debug() << "configured cluster '" << cluster.id() << "' with "
+                   << cluster.hosts().size() << " hosts";
     } else if (node.name() == "task") {
       Task task(node);
-      TaskGroup taskGroup = _taskGroups.value(node.attribute("taskgroup"));
+      TaskGroup taskGroup = _tasksGroups.value(node.attribute("taskgroup"));
       if (taskGroup.isNull()) {
         Log::warning() << "ignoring task '" << task.id()
                        << "' without taskgroup";
@@ -116,7 +116,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       }
     } else if (node.name() == "taskgroup") {
       TaskGroup taskGroup(node);
-      _taskGroups.insert(taskGroup.id(), taskGroup);
+      _tasksGroups.insert(taskGroup.id(), taskGroup);
       Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
     } else if (node.name() == "param") {
       QString key = node.attribute("key");
@@ -167,8 +167,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     setTimerForCronTrigger(trigger);
     // LATER fire cron triggers if they were missed since last task exec
   }
-  emit tasksConfigurationReset(_taskGroups, _tasks);
-  // FIXME not only tasks
+  emit tasksConfigurationReset(_tasksGroups, _tasks);
+  emit hostsConfigurationReset(_clusters, _hosts);
   return true;
 }
 
@@ -285,7 +285,7 @@ void Scheduler::taskFinished(TaskRequest request, Host target, bool success,
       _executors.append(e);
   }
   // TODO give resources back
-  // LATER try resubmit if the host was not reachable (this can be usefull with hostgroups or when host become reachable again)
+  // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   reevaluateQueuedRequests();
 }
 

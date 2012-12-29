@@ -11,27 +11,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef TASKSTREEMODEL_H
-#define TASKSTREEMODEL_H
+#ifndef CLUSTER_H
+#define CLUSTER_H
 
-#include "treemodelwithstructure.h"
-#include "data/taskgroup.h"
-#include "data/task.h"
+#include <QSharedDataPointer>
+#include <QList>
 
-class TasksTreeModel : public TreeModelWithStructure {
-  Q_OBJECT
-  QMap<QString,TaskGroup> _groups;
-  QMap<QString,Task> _tasks;
+class ClusterData;
+class Host;
+class PfNode;
+
+class Cluster {
+  QSharedDataPointer<ClusterData> d;
 
 public:
-  explicit TasksTreeModel(QObject *parent = 0);
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-
-public slots:
-  void setAllTasksAndGroups(const QMap<QString,TaskGroup> groups,
-                            const QMap<QString,Task> tasks);
+  Cluster();
+  Cluster(const Cluster &other);
+  Cluster(PfNode node);
+  ~Cluster();
+  Cluster &operator=(const Cluster &other);
+  void appendHost(Host host);
+  const QList<Host> hosts() const;
+  QString id() const;
 };
 
-#endif // TASKSTREEMODEL_H
+#endif // CLUSTER_H

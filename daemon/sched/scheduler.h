@@ -22,7 +22,7 @@
 #include "data/task.h"
 #include "data/crontrigger.h"
 #include "data/host.h"
-#include "data/hostgroup.h"
+#include "data/cluster.h"
 #include "taskrequest.h"
 #include <QMap>
 #include "executor.h"
@@ -33,10 +33,10 @@ class PfNode;
 class Scheduler : public QObject {
   Q_OBJECT
   ParamSet _globalParams;
-  QMap<QString,TaskGroup> _taskGroups;
+  QMap<QString,TaskGroup> _tasksGroups;
   QMap<QString,Task> _tasks;
   QList<CronTrigger> _cronTriggers;
-  QMap<QString,HostGroup> _hostGroups;
+  QMap<QString,Cluster> _clusters;
   QMap<QString,Host> _hosts;
   QSet<QString> _setFlags;
   QList<TaskRequest> _queuedRequests;
@@ -79,8 +79,10 @@ public slots:
   void reevaluateQueuedRequests();
 
 signals:
-  void tasksConfigurationReset(const QMap<QString,TaskGroup> taskGroups,
+  void tasksConfigurationReset(const QMap<QString,TaskGroup> tasksGroups,
                                const QMap<QString,Task> tasks);
+  void hostsConfigurationReset(const QMap<QString,Cluster> clusters,
+                               const QMap<QString,Host> hosts);
 
 private slots:
   void taskFinished(TaskRequest request, Host target, bool success,

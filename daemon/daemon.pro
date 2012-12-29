@@ -49,14 +49,16 @@ SOURCES += sched/main.cpp \
     sched/scheduler.cpp \
     data/crontrigger.cpp \
     data/host.cpp \
-    data/hostgroup.cpp \
     sched/taskrequest.cpp \
     sched/executor.cpp \
     util/timerwithargument.cpp \
     log/log.cpp \
     log/filelogger.cpp \
     ui/taskstreemodel.cpp \
-    ui/webconsole.cpp
+    ui/webconsole.cpp \
+    ui/treemodelwithstructure.cpp \
+    ui/targetstreemodel.cpp \
+    data/cluster.cpp
 
 HEADERS += \
     data/task.h \
@@ -65,14 +67,16 @@ HEADERS += \
     sched/scheduler.h \
     data/crontrigger.h \
     data/host.h \
-    data/hostgroup.h \
     sched/taskrequest.h \
     sched/executor.h \
     util/timerwithargument.h \
     log/log.h \
     log/filelogger.h \
     ui/taskstreemodel.h \
-    ui/webconsole.h
+    ui/webconsole.h \
+    ui/treemodelwithstructure.h \
+    ui/targetstreemodel.h \
+    data/cluster.h
 
 RESOURCES += \
     ui/webconsole.qrc

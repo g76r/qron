@@ -11,28 +11,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HOSTGROUP_H
-#define HOSTGROUP_H
+#ifndef TARGETSTREEMODEL_H
+#define TARGETSTREEMODEL_H
 
-#include <QSharedDataPointer>
-#include <QList>
+#include "treemodelwithstructure.h"
+#include "data/cluster.h"
+#include "data/host.h"
 
-class HostGroupData;
-class Host;
-class PfNode;
-
-class HostGroup {
-  QSharedDataPointer<HostGroupData> d;
+class TargetsTreeModel : public TreeModelWithStructure {
+  Q_OBJECT
+  QMap<QString,Cluster> _clusters;
+  QMap<QString,Host> _hosts;
+  TreeItem *_clustersItem, *_hostsItem;
 
 public:
-  HostGroup();
-  HostGroup(const HostGroup &other);
-  HostGroup(PfNode node);
-  ~HostGroup();
-  HostGroup &operator=(const HostGroup &other);
-  void appendHost(Host host);
-  const QList<Host> hosts() const;
-  QString id() const;
+  explicit TargetsTreeModel(QObject *parent = 0);
+  int columnCount(const QModelIndex &parent) const;
+  QVariant data(const QModelIndex &index, int role) const;
+  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+
+public slots:
+  void setAllHostsAndGroups(const QMap<QString,Cluster> clusters,
+                            const QMap<QString,Host> hosts);
 };
 
-#endif // HOSTGROUP_H
+#endif // TARGETSTREEMODEL_H

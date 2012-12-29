@@ -11,51 +11,51 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "hostgroup.h"
+#include "cluster.h"
 #include <QSharedData>
 #include <QString>
 #include "host.h"
 #include <QList>
 #include "pf/pfnode.h"
 
-class HostGroupData : public QSharedData {
-  friend class HostGroup;
+class ClusterData : public QSharedData {
+  friend class Cluster;
   QString _id, _label;
   QList<Host> _hosts;
 public:
 };
 
-HostGroup::HostGroup() : d(new HostGroupData) {
+Cluster::Cluster() : d(new ClusterData) {
 }
 
-HostGroup::HostGroup(const HostGroup &other) : d(other.d) {
+Cluster::Cluster(const Cluster &other) : d(other.d) {
 }
 
-HostGroup::HostGroup(PfNode node) {
-  HostGroupData *hgd = new HostGroupData;
+Cluster::Cluster(PfNode node) {
+  ClusterData *hgd = new ClusterData;
   hgd->_id = node.attribute("id"); // LATER check uniqueness
   hgd->_label = node.attribute("label", hgd->_id);
   d = hgd;
 }
 
 
-HostGroup::~HostGroup() {
+Cluster::~Cluster() {
 }
 
-HostGroup &HostGroup::operator=(const HostGroup &other) {
+Cluster &Cluster::operator=(const Cluster &other) {
   if (this != &other)
     d.operator=(other.d);
   return *this;
 }
 
-void HostGroup::appendHost(Host host) {
+void Cluster::appendHost(Host host) {
   d->_hosts.append(host);
 }
 
-const QList<Host> HostGroup::hosts() const {
+const QList<Host> Cluster::hosts() const {
   return d->_hosts;
 }
 
-QString HostGroup::id() const {
+QString Cluster::id() const {
   return d->_id;
 }

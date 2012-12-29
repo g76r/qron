@@ -11,21 +11,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with Foobar.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "taskstreemodel.h"
-#include  <QtDebug>
+#include "targetstreemodel.h"
+#include <QtDebug>
+#include <QStringList>
 
-#define COLUMNS 8
+#define COLUMNS 3
 
-TasksTreeModel::TasksTreeModel(QObject *parent)
-  : TreeModelWithStructure(parent) {
+TargetsTreeModel::TargetsTreeModel(QObject *parent) :
+  TreeModelWithStructure(parent) {
+  _hostsItem = new TreeItem(_root, "Hosts", "hosts", 1, true);
+  _clustersItem = new TreeItem(_root, "Clusters", "clusters", 1, true);
 }
 
-int TasksTreeModel::columnCount(const QModelIndex &parent) const {
+int TargetsTreeModel::columnCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
   return COLUMNS;
 }
 
-QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
+QVariant TargetsTreeModel::data(const QModelIndex &index, int role) const {
   //qDebug() << "TasksTreeModel::data()" << index << index.isValid()
   //         << index.internalPointer();
   if (index.isValid()) {
@@ -34,21 +37,14 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
     if (i) {
       //qDebug() << "  " << i << i->_isStructure << i->_id << i->_path;
       if (i->_isStructure) {
-        TaskGroup g = _groups.value(i->_path);
+        Cluster g = _clusters.value(i->_path);
         switch(role) {
         case Qt::DisplayRole:
           switch(index.column()) {
           case 0:
-            //return QString("%1 %2 %3").arg((int)i).arg(g.id()).arg(i->_path);
-            return i->_path;
-          case 1:
-            return g.label();
-          case 6:
-            return g.params().toString();
+            return i->_id;
           }
           break;
-        case TrClassRole:
-          return "";
         case HtmlPrefixRole:
           if (index.column() == 0)
             return "<i class=\"icon-folder-open\"></i> ";
@@ -56,29 +52,44 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
         default:
           ;
         }
-      } else {
-        // task
-        Task t = _tasks.value(i->_path);
+      } else if (i->_parent == _clustersItem){
+        // cluster
+        Cluster c = _clusters.value(i->_id);
         switch(role) {
         case Qt::DisplayRole:
           switch(index.column()) {
           case 0:
             return i->_id;
           case 1:
-            return t.label();
-          case 2:
-            return t.mean();
-          case 3:
-            return t.command();
-          case 4:
-            return t.target();
-          case 6:
-            return t.params().toString();
+            QStringList hosts;
+            foreach (Host h, c.hosts())
+              hosts.append(h.id());
+            return hosts.join(" ");
           }
           break;
         case HtmlPrefixRole:
           if (index.column() == 0)
-            return "<i class=\"icon-cog\"></i> ";
+            return "<i class=\"icon-random\"></i> ";
+          break;
+        default:
+          ;
+        }
+      } else {
+        // host
+        Host h = _hosts.value(i->_id);
+        switch(role) {
+        case Qt::DisplayRole:
+          switch(index.column()) {
+          case 0:
+            return i->_id;
+          case 1:
+            return h.hostname();
+          }
+          break;
+        case HtmlPrefixRole:
+          if (index.column() == 0)
+            return "<i class=\"icon-hdd\"></i> ";
+          // icon-random
           break;
         default:
           ;
@@ -89,50 +100,38 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
   return QVariant();
 }
 
-QVariant TasksTreeModel::headerData(int section, Qt::Orientation orientation,
+QVariant TargetsTreeModel::headerData(int section, Qt::Orientation orientation,
                                     int role) const {
   if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
     switch(section) {
     case 0:
       return "Id";
     case 1:
-      return "Label";
+      return "Hostname / Hosts";
     case 2:
-      return "Mean";
-    case 3:
-      return "Command";
-    case 4:
-      return "Target";
-    case 5:
-      return "Triggers";
-    case 6:
-      return "Parameters";
-    case 7:
       return "Resources";
     }
   }
   return QVariant();
 }
 
-void TasksTreeModel::setAllTasksAndGroups(const QMap<QString,TaskGroup> groups,
-                                          const QMap<QString,Task> tasks) {
+void TargetsTreeModel::setAllHostsAndGroups(
+    const QMap<QString,Cluster> clusters, const QMap<QString,Host> hosts) {
   beginResetModel();
   QStringList names;
-  foreach(QString id, groups.keys())
+  foreach(QString id, clusters.keys())
     names << id;
   names.sort(); // get a sorted groups id list
   foreach(QString id, names)
-    getOrCreateItemByPath(id, true);
+    new TreeItem(_clustersItem, id, "clusters."+id, 2, false);
   names.clear();
-  foreach(QString id, tasks.keys())
+  foreach(QString id, hosts.keys())
     names << id;
   names.sort(); // get a sorted groups id list
   foreach(QString id, names)
-    getOrCreateItemByPath(id, false);
-  _groups = groups;
-  _tasks = tasks;
+    new TreeItem(_hostsItem, id, "hosts."+id, 2, false);
+  _clusters = clusters;
+  _hosts = hosts;
   endResetModel();
-  //qDebug() << "TasksTreeModel::setAllTasksAndGroups" << _root->_children.size()
-  //         << _groups.size() << _tasks.size()
-  //         << (_root->_children.size() ? _root->_children[0]->_id : "null");
+  qDebug() << "********" << clusters.keys() << hosts.keys();
 }
