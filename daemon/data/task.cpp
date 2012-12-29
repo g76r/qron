@@ -112,7 +112,7 @@ Task &Task::operator =(const Task &other) {
   return *this;
 }
 
-const ParamSet Task::params() const {
+ParamSet Task::params() const {
   return d->_params;
 }
 
@@ -120,7 +120,7 @@ bool Task::isNull() const {
   return d->_id.isNull();
 }
 
-const QSet<QString> Task::eventTriggers() const {
+QSet<QString> Task::eventTriggers() const {
   return d->_eventTriggers;
 }
 
@@ -152,11 +152,11 @@ void Task::setTaskGroup(TaskGroup taskGroup) {
   d->_group = taskGroup;
 }
 
-const QList<CronTrigger> Task::cronTriggers() const {
+QList<CronTrigger> Task::cronTriggers() const {
   return d->_cronTriggers;
 }
 
-const QMap<QString,qint64> Task::resources() const {
+QMap<QString, qint64> Task::resources() const {
   return d->_resources;
 }
 

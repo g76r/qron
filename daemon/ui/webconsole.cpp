@@ -14,29 +14,41 @@
 #include "webconsole.h"
 
 WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
-  _tasksModel(new TasksTreeModel(this)),
-  _hostsModel(new TargetsTreeModel(this)),
-  _htmlTasksView(new HtmlTableView(this)),
-  _htmlHostsView(new HtmlTableView(this)),
-  _csvTasksView(new CsvView(this)),
-  _csvHostsView(new CsvView(this)),
+  _tasksTreeModel(new TasksTreeModel(this)),
+  _targetsTreeModel(new TargetsTreeModel(this)),
+  _resourceAllocationModel(new ResourceAllocationModel(this)),
+  _htmlTasksTreeView(new HtmlTableView(this)),
+  _htmlTargetsTreeView(new HtmlTableView(this)),
+  _htmlResourceAllocationView(new HtmlTableView(this)),
+  _csvTasksTreeView(new CsvView(this)),
+  _csvTargetsTreeView(new CsvView(this)),
+  _csvResourceAllocationView(new CsvView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console",
                                         ":docroot/console")) {
-  _htmlTasksView->setModel(_tasksModel);
-  _htmlTasksView->setTableClass("table table-condensed table-hover");
-  _htmlTasksView->setTrClassRole(TasksTreeModel::TrClassRole);
-  _htmlTasksView->setLinkRole(TasksTreeModel::LinkRole);
-  _htmlTasksView->setHtmlPrefixRole(TasksTreeModel::HtmlPrefixRole);
-  _htmlHostsView->setModel(_hostsModel);
-  _htmlHostsView->setTableClass("table table-condensed table-hover");
-  _htmlHostsView->setTrClassRole(TargetsTreeModel::TrClassRole);
-  _htmlHostsView->setLinkRole(TargetsTreeModel::LinkRole);
-  _htmlHostsView->setHtmlPrefixRole(TargetsTreeModel::HtmlPrefixRole);
-  _csvTasksView->setModel(_tasksModel);
-  _csvHostsView->setModel(_hostsModel);
+  _htmlTasksTreeView->setModel(_tasksTreeModel);
+  _htmlTasksTreeView->setTableClass("table table-condensed table-hover");
+  _htmlTasksTreeView->setTrClassRole(TasksTreeModel::TrClassRole);
+  _htmlTasksTreeView->setLinkRole(TasksTreeModel::LinkRole);
+  _htmlTasksTreeView->setHtmlPrefixRole(TasksTreeModel::HtmlPrefixRole);
+  _htmlTargetsTreeView->setModel(_targetsTreeModel);
+  _htmlTargetsTreeView->setTableClass("table table-condensed table-hover");
+  _htmlTargetsTreeView->setTrClassRole(TargetsTreeModel::TrClassRole);
+  _htmlTargetsTreeView->setLinkRole(TargetsTreeModel::LinkRole);
+  _htmlTargetsTreeView->setHtmlPrefixRole(TargetsTreeModel::HtmlPrefixRole);
+  _htmlResourceAllocationView->setModel(_resourceAllocationModel);
+  _htmlResourceAllocationView->setTableClass("table table-condensed "
+                                             "table-hover table-bordered");
+  _htmlResourceAllocationView->setRowHeaders();
+  _htmlResourceAllocationView->setTopLeftHeader(QString::fromUtf8("Host × Resource"));
+  _htmlResourceAllocationView
+      ->setHtmlPrefixRole(ResourceAllocationModel::HtmlPrefixRole);
+  _csvTasksTreeView->setModel(_tasksTreeModel);
+  _csvTargetsTreeView->setModel(_targetsTreeModel);
+  _csvResourceAllocationView->setModel(_resourceAllocationModel);
   _wuiHandler->addFilter("\\.html$");
-  _wuiHandler->addView("taskstree", _htmlTasksView);
-  _wuiHandler->addView("targetstree", _htmlHostsView);
+  _wuiHandler->addView("taskstree", _htmlTasksTreeView);
+  _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
+  _wuiHandler->addView("resourceallocation", _htmlResourceAllocationView);
 }
 
 QString WebConsole::name() const {
@@ -66,12 +78,12 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   }
   if (path == "/rest/csv/tasks/tree/v1") {
     res.setContentType("text/csv;charset=UTF-8");
-    res.output()->write(_csvTasksView->text().toUtf8().constData());
+    res.output()->write(_csvTasksTreeView->text().toUtf8().constData());
     return;
   }
   if (path == "/rest/html/tasks/tree/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTasksView->text().toUtf8().constData());
+    res.output()->write(_htmlTasksTreeView->text().toUtf8().constData());
     return;
   }
   res.setStatus(404);
@@ -81,15 +93,23 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
 void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
-               _tasksModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
+               _tasksTreeModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
     disconnect(_scheduler, SIGNAL(hostsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
-               _hostsModel, SLOT(setAllHostsAndGroups(QMap<QString,Cluster>,QMap<QString,Host>)));
+               _targetsTreeModel, SLOT(setAllHostsAndGroups(QMap<QString,Cluster>,QMap<QString,Host>)));
+    disconnect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QMap<QString,QMap<QString,qint64> >)),
+               _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
+    disconnect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),
+               _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QMap<QString,qint64>)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
-            _tasksModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
+            _tasksTreeModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
     connect(_scheduler, SIGNAL(hostsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
-            _hostsModel, SLOT(setAllHostsAndGroups(QMap<QString,Cluster>,QMap<QString,Host>)));
+            _targetsTreeModel, SLOT(setAllHostsAndGroups(QMap<QString,Cluster>,QMap<QString,Host>)));
+    connect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QMap<QString,QMap<QString,qint64> >)),
+            _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
+    connect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),
+            _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QMap<QString,qint64>)));
   }
 }

@@ -64,7 +64,7 @@ void Executor::sshMean(TaskRequest request, Host target) {
   // LATER remove warning about known hosts file from stderr log
   cmdline << "ssh" << "-oUserKnownHostsFile=/dev/null"
           << "-oGlobalKnownHostsFile=/dev/null" << "-oStrictHostKeyChecking=no"
-          << request.task().target() // TODO rather use Host
+          << target.hostname()
           << request.params().evaluate(request.task().command());
   execProcess(request, target, cmdline);
 }

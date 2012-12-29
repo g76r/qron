@@ -33,7 +33,7 @@ public:
   QString hostname() const;
   bool isNull() const;
   /** Resources available. */
-  const QMap<QString,qint64> resources() const;
+  QMap<QString, qint64> resources() const;
   QString resourcesAsString() const;
 };
 

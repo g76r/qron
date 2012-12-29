@@ -31,8 +31,8 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllHostsAndGroups(const QMap<QString,Cluster> clusters,
-                            const QMap<QString,Host> hosts);
+  void setAllHostsAndGroups(QMap<QString,Cluster> clusters,
+                            QMap<QString,Host> hosts);
 };
 
 #endif // TARGETSTREEMODEL_H

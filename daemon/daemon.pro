@@ -58,7 +58,9 @@ SOURCES += sched/main.cpp \
     ui/webconsole.cpp \
     ui/treemodelwithstructure.cpp \
     ui/targetstreemodel.cpp \
-    data/cluster.cpp
+    data/cluster.cpp \
+    ui/resourceallocationmodel.cpp \
+    ui/textmatrixmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -76,7 +78,9 @@ HEADERS += \
     ui/webconsole.h \
     ui/treemodelwithstructure.h \
     ui/targetstreemodel.h \
-    data/cluster.h
+    data/cluster.h \
+    ui/resourceallocationmodel.h \
+    ui/textmatrixmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

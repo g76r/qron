@@ -20,9 +20,12 @@
 
 class ClusterData : public QSharedData {
   friend class Cluster;
-  QString _id, _label;
+  QString _id, _label, _method;
   QList<Host> _hosts;
 public:
+  ClusterData() { }
+  ClusterData(const ClusterData &other) : QSharedData(), _id(other._id),
+    _label(other._label), _method(other._method), _hosts(other._hosts) { }
 };
 
 Cluster::Cluster() : d(new ClusterData) {
@@ -35,9 +38,9 @@ Cluster::Cluster(PfNode node) {
   ClusterData *hgd = new ClusterData;
   hgd->_id = node.attribute("id"); // LATER check uniqueness
   hgd->_label = node.attribute("label", hgd->_id);
+  hgd->_method = node.attribute("method", "first"); // LATER check validity
   d = hgd;
 }
-
 
 Cluster::~Cluster() {
 }
@@ -58,4 +61,8 @@ const QList<Host> Cluster::hosts() const {
 
 QString Cluster::id() const {
   return d->_id;
+}
+
+QString Cluster::method() const {
+  return d->_method;
 }

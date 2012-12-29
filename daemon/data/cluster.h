@@ -33,6 +33,7 @@ public:
   void appendHost(Host host);
   const QList<Host> hosts() const;
   QString id() const;
+  QString method() const;
 };
 
 #endif // CLUSTER_H

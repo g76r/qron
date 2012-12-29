@@ -76,7 +76,7 @@ bool Host::isNull() const {
   return d->_id.isNull();
 }
 
-const QMap<QString,qint64> Host::resources() const {
+QMap<QString,qint64> Host::resources() const {
   return d->_resources;
 }
 

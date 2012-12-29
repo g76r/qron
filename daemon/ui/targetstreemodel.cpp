@@ -60,11 +60,13 @@ QVariant TargetsTreeModel::data(const QModelIndex &index, int role) const {
           switch(index.column()) {
           case 0:
             return i->_id;
-          case 1:
+          case 1: {
             QStringList hosts;
             foreach (Host h, c.hosts())
               hosts.append(h.id());
             return hosts.join(" ");
+          } case 2:
+            return c.method();
           }
           break;
         case HtmlPrefixRole:
@@ -109,16 +111,15 @@ QVariant TargetsTreeModel::headerData(int section, Qt::Orientation orientation,
     case 0:
       return "Id";
     case 1:
-      return "Hostname / Hosts";
+      return "Hostname/Hosts";
     case 2:
-      return "Resources";
+      return "Resources/Method";
     }
   }
   return QVariant();
 }
 
-void TargetsTreeModel::setAllHostsAndGroups(
-    const QMap<QString,Cluster> clusters, const QMap<QString,Host> hosts) {
+void TargetsTreeModel::setAllHostsAndGroups(QMap<QString, Cluster> clusters, QMap<QString, Host> hosts) {
   beginResetModel();
   QStringList names;
   foreach(QString id, clusters.keys())

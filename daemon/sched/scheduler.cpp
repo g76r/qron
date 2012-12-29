@@ -71,6 +71,7 @@ bool Scheduler::loadConfiguration(QIODevice *source,
 
 bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   Q_UNUSED(errorString) // currently no fatal error, only warnings
+  _resources.clear();
   QList<PfNode> children;
   children += root.childrenByName("log");
   children += root.childrenByName("taskgroup");
@@ -85,6 +86,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       _hosts.insert(host.id(), host);
       Log::debug() << "configured host '" << host.id() << "' with hostname '"
                    << host.hostname() << "'";
+      _resources.insert(host.id(), host.resources());
     } else if (node.name() == "cluster") {
       Cluster cluster(node);
       foreach (PfNode child, node.childrenByName("host")) {
@@ -170,6 +172,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   }
   emit tasksConfigurationReset(_tasksGroups, _tasks);
   emit hostsConfigurationReset(_clusters, _hosts);
+  emit hostResourceConfigurationChanged(_resources);
   return true;
 }
 
@@ -236,23 +239,54 @@ void Scheduler::clearFlag(QString flag) {
 }
 
 bool Scheduler::tryStartTaskNow(TaskRequest request) {
-  bool runnable = true;
-  // check maxtotaltasks
   if (_executors.isEmpty()) {
     Log::debug() << "cannot execute task '" << request.task().fqtn()
                  << "' now because there are already too many tasks running "
                     "(maxtotaltasks reached)";
-    runnable = false;
+    return false;
   }
   // LATER check flags
-  // TODO check resources, choose target and consume resources
-  // TODO start task if possible
-  if (runnable) {
-    Executor *exe = _executors.takeFirst();
-    exe->execute(request, Host());
-    reevaluateQueuedRequests();
+  QList<Host> hosts;
+  Host host = _hosts.value(request.task().target());
+  if (host.isNull())
+    hosts.append(_clusters.value(request.task().target()).hosts());
+  else
+    hosts.append(host);
+  if (hosts.isEmpty()) {
+    Log::error() << "cannot execute task '" << request.task().fqtn()
+                 << "' now because its target '" << request.task().target()
+                 << "' is not defined";
+    return false;
   }
-  return runnable;
+  // LATER implement other cluster balancing methods than "first"
+  QMap<QString,qint64> taskResources = request.task().resources();
+  foreach (Host h, hosts) {
+    QMap<QString,qint64> hostResources = _resources.value(h.id());
+    foreach (QString kind, taskResources.keys()) {
+      if (hostResources.value(kind) < taskResources.value(kind)) {
+        Log::info() << "lacks resource '" << kind << "' on host '" << h.id()
+                    << "' for task '" << request.task().id() << "' (need "
+                    << taskResources.value(kind) << ", have "
+                    << hostResources.value(kind) << ")";
+        goto nexthost;
+      }
+      Log::debug() << "resource '" << kind << "' ok on host '" << h.id()
+                   << "' for task '" << request.task().id();
+    }
+    foreach (QString kind, taskResources.keys())
+      hostResources.insert(kind, hostResources.value(kind)
+                            -taskResources.value(kind));
+    _resources.insert(h.id(), hostResources);
+    emit hostResourceAllocationChanged(h.id(), hostResources);
+    _executors.takeFirst()->execute(request, h);
+    reevaluateQueuedRequests();
+    return true;
+nexthost:;
+  }
+  Log::warning() << "cannot execute task '" << request.task().fqtn()
+                 << "' now because there is not enough resources on target '"
+                 << request.task().target() << "'";
+  return false;
 }
 
 void Scheduler::startTaskNowAnyway(TaskRequest request) {
@@ -265,9 +299,25 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
   } else {
     e = _executors.takeFirst();
   }
-  Host target;
-  // TODO consume resources, even setting them < 0
-  // TODO choose target
+  Host target = _hosts.value(request.task().target());
+  if (target.isNull()) {
+    QList<Host> hosts = _clusters.value(request.task().target()).hosts();
+    if (!hosts.isEmpty())
+      target = hosts.first(); // LATER implement other method than "first"
+  }
+  if (target.isNull()) {
+    Log::error() << "cannot execute task '" << request.task().fqtn()
+                 << "' now because its target '" << request.task().target()
+                 << "' is not defined";
+    return;
+  }
+  QMap<QString,qint64> taskResources = request.task().resources();
+  QMap<QString,qint64> hostResources = _resources.value(target.id());
+  foreach (QString kind, taskResources.keys())
+    hostResources.insert(kind, hostResources.value(kind)
+                          -taskResources.value(kind));
+  _resources.insert(target.id(), hostResources);
+  emit hostResourceAllocationChanged(target.id(), hostResources);
   e->execute(request, target);
   reevaluateQueuedRequests();
 }
@@ -285,7 +335,13 @@ void Scheduler::taskFinished(TaskRequest request, Host target, bool success,
     else
       _executors.append(e);
   }
-  // TODO give resources back
+  QMap<QString,qint64> taskResources = request.task().resources();
+  QMap<QString,qint64> hostResources = _resources.value(target.id());
+  foreach (QString kind, taskResources.keys())
+    hostResources.insert(kind, hostResources.value(kind)
+                          +taskResources.value(kind));
+  _resources.insert(target.id(), hostResources);
+  emit hostResourceAllocationChanged(target.id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   reevaluateQueuedRequests();
 }

@@ -38,6 +38,7 @@ class Scheduler : public QObject {
   QList<CronTrigger> _cronTriggers;
   QMap<QString,Cluster> _clusters;
   QMap<QString,Host> _hosts;
+  QMap<QString,QMap<QString,qint64> > _resources;
   QSet<QString> _setFlags;
   QList<TaskRequest> _queuedRequests;
   QList<Executor*> _executors;
@@ -79,10 +80,14 @@ public slots:
   void reevaluateQueuedRequests();
 
 signals:
-  void tasksConfigurationReset(const QMap<QString,TaskGroup> tasksGroups,
-                               const QMap<QString,Task> tasks);
-  void hostsConfigurationReset(const QMap<QString,Cluster> clusters,
-                               const QMap<QString,Host> hosts);
+  void tasksConfigurationReset(QMap<QString,TaskGroup> tasksGroups,
+                               QMap<QString,Task> tasks);
+  void hostsConfigurationReset(QMap<QString,Cluster> clusters,
+                               QMap<QString,Host> hosts);
+  void hostResourceAllocationChanged(QString host,
+                                     QMap<QString,qint64> resources);
+  void hostResourceConfigurationChanged(
+      QMap<QString,QMap<QString,qint64> > resources);
 
 private slots:
   void taskFinished(TaskRequest request, Host target, bool success,

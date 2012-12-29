@@ -21,14 +21,17 @@
 #include "sched/scheduler.h"
 #include "taskstreemodel.h"
 #include "targetstreemodel.h"
+#include "resourceallocationmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
   Scheduler *_scheduler;
-  TasksTreeModel *_tasksModel;
-  TargetsTreeModel *_hostsModel;
-  HtmlTableView *_htmlTasksView, *_htmlHostsView;
-  CsvView *_csvTasksView, *_csvHostsView;
+  TasksTreeModel *_tasksTreeModel;
+  TargetsTreeModel *_targetsTreeModel;
+  ResourceAllocationModel *_resourceAllocationModel;
+  HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView;
+  HtmlTableView *_htmlResourceAllocationView;
+  CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvResourceAllocationView;
   TemplatingHttpHandler *_wuiHandler;
 
 public:

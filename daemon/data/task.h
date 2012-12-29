@@ -32,9 +32,9 @@ public:
   Task(PfNode node);
   ~Task();
   Task &operator =(const Task &other);
-  const ParamSet params() const;
+  ParamSet params() const;
   bool isNull() const;
-  const QSet<QString> eventTriggers() const;
+  QSet<QString> eventTriggers() const;
   /** Fully qualified task name (i.e. "taskGroupId.taskId")
     */
   QString id() const;
@@ -44,9 +44,9 @@ public:
   QString command() const;
   QString target() const;
   void setTaskGroup(TaskGroup taskGroup);
-  const QList<CronTrigger> cronTriggers() const;
+  QList<CronTrigger> cronTriggers() const;
   /** Resources consumed. */
-  const QMap<QString,qint64> resources() const;
+  QMap<QString,qint64> resources() const;
   QString resourcesAsString() const;
   QString triggersAsString() const;
 };

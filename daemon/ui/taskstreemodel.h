@@ -30,8 +30,8 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllTasksAndGroups(const QMap<QString,TaskGroup> groups,
-                            const QMap<QString,Task> tasks);
+  void setAllTasksAndGroups(QMap<QString,TaskGroup> groups,
+                            QMap<QString,Task> tasks);
 };
 
 #endif // TASKSTREEMODEL_H
