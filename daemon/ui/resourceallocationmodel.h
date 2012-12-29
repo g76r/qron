@@ -2,16 +2,13 @@
 #define RESOURCEALLOCATIONMODEL_H
 
 #include "textmatrixmodel.h"
+#include "textviews.h"
 
 class ResourceAllocationModel : public TextMatrixModel {
   Q_OBJECT
 public:
   enum Mode { Configured, Allocated, Free, FreeOverConfigured,
               AllocatedOverConfigured };
-  static const int HtmlPrefixRole = Qt::UserRole;
-  static const int TrClassRole = Qt::UserRole+1;
-  static const int LinkRole = Qt::UserRole+2;
-
 private:
   Mode _mode;
   QMap<QString,QMap<QString,qint64> > _configured;

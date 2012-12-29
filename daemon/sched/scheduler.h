@@ -82,8 +82,8 @@ public slots:
 signals:
   void tasksConfigurationReset(QMap<QString,TaskGroup> tasksGroups,
                                QMap<QString,Task> tasks);
-  void hostsConfigurationReset(QMap<QString,Cluster> clusters,
-                               QMap<QString,Host> hosts);
+  void targetsConfigurationReset(QMap<QString,Cluster> clusters,
+                                 QMap<QString,Host> hosts);
   void hostResourceAllocationChanged(QString host,
                                      QMap<QString,qint64> resources);
   void hostResourceConfigurationChanged(

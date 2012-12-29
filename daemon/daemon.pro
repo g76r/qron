@@ -60,7 +60,9 @@ SOURCES += sched/main.cpp \
     ui/targetstreemodel.cpp \
     data/cluster.cpp \
     ui/resourceallocationmodel.cpp \
-    ui/textmatrixmodel.cpp
+    ui/textmatrixmodel.cpp \
+    ui/hostslistmodel.cpp \
+    ui/clusterslistmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -80,7 +82,10 @@ HEADERS += \
     ui/targetstreemodel.h \
     data/cluster.h \
     ui/resourceallocationmodel.h \
-    ui/textmatrixmodel.h
+    ui/textmatrixmodel.h \
+    ui/hostslistmodel.h \
+    ui/clusterslistmodel.h \
+    ui/textviews.h
 
 RESOURCES += \
     ui/webconsole.qrc

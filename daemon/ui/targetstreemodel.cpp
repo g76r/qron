@@ -45,7 +45,7 @@ QVariant TargetsTreeModel::data(const QModelIndex &index, int role) const {
             return i->_id;
           }
           break;
-        case HtmlPrefixRole:
+        case TextViews::HtmlPrefixRole:
           if (index.column() == 0)
             return "<i class=\"icon-folder-open\"></i> ";
           break;
@@ -69,7 +69,7 @@ QVariant TargetsTreeModel::data(const QModelIndex &index, int role) const {
             return c.method();
           }
           break;
-        case HtmlPrefixRole:
+        case TextViews::HtmlPrefixRole:
           if (index.column() == 0)
             return "<i class=\"icon-random\"></i> ";
           break;
@@ -90,7 +90,7 @@ QVariant TargetsTreeModel::data(const QModelIndex &index, int role) const {
             return h.resourcesAsString();
           }
           break;
-        case HtmlPrefixRole:
+        case TextViews::HtmlPrefixRole:
           if (index.column() == 0)
             return "<i class=\"icon-hdd\"></i> ";
           // icon-random
@@ -119,7 +119,7 @@ QVariant TargetsTreeModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void TargetsTreeModel::setAllHostsAndGroups(QMap<QString, Cluster> clusters, QMap<QString, Host> hosts) {
+void TargetsTreeModel::setAllHostsAndClusters(QMap<QString, Cluster> clusters, QMap<QString, Host> hosts) {
   beginResetModel();
   QStringList names;
   foreach(QString id, clusters.keys())

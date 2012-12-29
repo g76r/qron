@@ -22,16 +22,21 @@
 #include "taskstreemodel.h"
 #include "targetstreemodel.h"
 #include "resourceallocationmodel.h"
+#include "hostslistmodel.h"
+#include "clusterslistmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
   Scheduler *_scheduler;
   TasksTreeModel *_tasksTreeModel;
   TargetsTreeModel *_targetsTreeModel;
+  HostsListModel *_hostsListModel;
+  ClustersListModel *_clustersListModel;
   ResourceAllocationModel *_resourceAllocationModel;
-  HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView;
-  HtmlTableView *_htmlResourceAllocationView;
-  CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvResourceAllocationView;
+  HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
+  *_htmlClustersListView, *_htmlResourceAllocationView;
+  CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
+  *_csvClustersListView, *_csvResourceAllocationView;
   TemplatingHttpHandler *_wuiHandler;
 
 public:

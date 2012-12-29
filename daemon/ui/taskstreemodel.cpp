@@ -47,9 +47,9 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
             return g.params().toString();
           }
           break;
-        case TrClassRole:
+        case TextViews::TrClassRole:
           return "";
-        case HtmlPrefixRole:
+        case TextViews::HtmlPrefixRole:
           if (index.column() == 0)
             return "<i class=\"icon-folder-open\"></i> ";
           break;
@@ -80,7 +80,7 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
             return t.resourcesAsString();
           }
           break;
-        case HtmlPrefixRole:
+        case TextViews::HtmlPrefixRole:
           if (index.column() == 0)
             return "<i class=\"icon-cog\"></i> ";
           break;

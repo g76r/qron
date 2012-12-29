@@ -8,7 +8,7 @@ ResourceAllocationModel::ResourceAllocationModel(
 QVariant ResourceAllocationModel::headerData(
     int section, Qt::Orientation orientation, int role) const {
   switch(role) {
-  case HtmlPrefixRole:
+  case TextViews::HtmlPrefixRole:
     return orientation == Qt::Horizontal ? "<i class=\"icon-glass\"></i> "
                                          : "<i class=\"icon-hdd\"></i> ";
   default:

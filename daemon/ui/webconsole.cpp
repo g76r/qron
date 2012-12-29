@@ -16,39 +16,50 @@
 WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _tasksTreeModel(new TasksTreeModel(this)),
   _targetsTreeModel(new TargetsTreeModel(this)),
+  _hostsListModel(new HostsListModel(this)),
+  _clustersListModel(new ClustersListModel(this)),
   _resourceAllocationModel(new ResourceAllocationModel(this)),
   _htmlTasksTreeView(new HtmlTableView(this)),
   _htmlTargetsTreeView(new HtmlTableView(this)),
+  _htmlHostsListView(new HtmlTableView(this)),
+  _htmlClustersListView(new HtmlTableView(this)),
   _htmlResourceAllocationView(new HtmlTableView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
+  _csvHostsListView(new CsvView(this)),
+  _csvClustersListView(new CsvView(this)),
   _csvResourceAllocationView(new CsvView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console",
                                         ":docroot/console")) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
   _htmlTasksTreeView->setTableClass("table table-condensed table-hover");
-  _htmlTasksTreeView->setTrClassRole(TasksTreeModel::TrClassRole);
-  _htmlTasksTreeView->setLinkRole(TasksTreeModel::LinkRole);
-  _htmlTasksTreeView->setHtmlPrefixRole(TasksTreeModel::HtmlPrefixRole);
+  _htmlTasksTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlTargetsTreeView->setModel(_targetsTreeModel);
   _htmlTargetsTreeView->setTableClass("table table-condensed table-hover");
-  _htmlTargetsTreeView->setTrClassRole(TargetsTreeModel::TrClassRole);
-  _htmlTargetsTreeView->setLinkRole(TargetsTreeModel::LinkRole);
-  _htmlTargetsTreeView->setHtmlPrefixRole(TargetsTreeModel::HtmlPrefixRole);
+  _htmlTargetsTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlHostsListView->setModel(_hostsListModel);
+  _htmlHostsListView->setTableClass("table table-condensed table-hover");
+  _htmlHostsListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlClustersListView->setModel(_clustersListModel);
+  _htmlClustersListView->setTableClass("table table-condensed table-hover");
+  _htmlClustersListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlResourceAllocationView->setModel(_resourceAllocationModel);
   _htmlResourceAllocationView->setTableClass("table table-condensed "
                                              "table-hover table-bordered");
   _htmlResourceAllocationView->setRowHeaders();
-  _htmlResourceAllocationView->setTopLeftHeader(QString::fromUtf8("Host × Resource"));
-  _htmlResourceAllocationView
-      ->setHtmlPrefixRole(ResourceAllocationModel::HtmlPrefixRole);
+  //_htmlResourceAllocationView->setTopLeftHeader(QString::fromUtf8("Host × Resource"));
+  _htmlResourceAllocationView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
+  _csvHostsListView->setModel(_hostsListModel);
+  _csvClustersListView->setModel(_clustersListModel);
   _csvResourceAllocationView->setModel(_resourceAllocationModel);
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
   _wuiHandler->addView("resourceallocation", _htmlResourceAllocationView);
+  _wuiHandler->addView("hostslist", _htmlHostsListView);
+  _wuiHandler->addView("clusterslist", _htmlClustersListView);
 }
 
 QString WebConsole::name() const {
@@ -94,8 +105,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
                _tasksTreeModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
-    disconnect(_scheduler, SIGNAL(hostsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
-               _targetsTreeModel, SLOT(setAllHostsAndGroups(QMap<QString,Cluster>,QMap<QString,Host>)));
+    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
+               _targetsTreeModel, SLOT(setAllHostsAndClusters(QMap<QString,Cluster>,QMap<QString,Host>)));
+    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
+               _hostsListModel, SLOT(setAllHostsAndClusters(QMap<QString,Cluster>,QMap<QString,Host>)));
+    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
+               _clustersListModel, SLOT(setAllHostsAndClusters(QMap<QString,Cluster>,QMap<QString,Host>)));
     disconnect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QMap<QString,QMap<QString,qint64> >)),
                _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
     disconnect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),
@@ -105,8 +120,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
             _tasksTreeModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
-    connect(_scheduler, SIGNAL(hostsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
-            _targetsTreeModel, SLOT(setAllHostsAndGroups(QMap<QString,Cluster>,QMap<QString,Host>)));
+    connect(_scheduler, SIGNAL(targetsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
+            _targetsTreeModel, SLOT(setAllHostsAndClusters(QMap<QString,Cluster>,QMap<QString,Host>)));
+    connect(_scheduler, SIGNAL(targetsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
+            _hostsListModel, SLOT(setAllHostsAndClusters(QMap<QString,Cluster>,QMap<QString,Host>)));
+    connect(_scheduler, SIGNAL(targetsConfigurationReset(QMap<QString,Cluster>,QMap<QString,Host>)),
+            _clustersListModel, SLOT(setAllHostsAndClusters(QMap<QString,Cluster>,QMap<QString,Host>)));
     connect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QMap<QString,QMap<QString,qint64> >)),
             _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
     connect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),

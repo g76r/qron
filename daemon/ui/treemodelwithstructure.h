@@ -15,17 +15,13 @@
 #define TREEMODELWITHSTRUCTURE_H
 
 #include <QAbstractItemModel>
+#include "textviews.h"
 
 class TreeModelWithStructure : public QAbstractItemModel {
   Q_OBJECT
 protected:
   class TreeItem;
   TreeItem *_root;
-
-public:
-  static const int HtmlPrefixRole = Qt::UserRole;
-  static const int TrClassRole = Qt::UserRole+1;
-  static const int LinkRole = Qt::UserRole+2;
 
 public:
   explicit TreeModelWithStructure(QObject *parent = 0);

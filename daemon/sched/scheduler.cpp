@@ -171,7 +171,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     // LATER fire cron triggers if they were missed since last task exec
   }
   emit tasksConfigurationReset(_tasksGroups, _tasks);
-  emit hostsConfigurationReset(_clusters, _hosts);
+  emit targetsConfigurationReset(_clusters, _hosts);
   emit hostResourceConfigurationChanged(_resources);
   return true;
 }
