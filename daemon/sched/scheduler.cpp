@@ -96,6 +96,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
                          << "' not found, won't add it to cluster '"
                          << cluster.id() << "'";
       }
+      _clusters.insert(cluster.id(), cluster);
       Log::debug() << "configured cluster '" << cluster.id() << "' with "
                    << cluster.hosts().size() << " hosts";
     } else if (node.name() == "task") {
