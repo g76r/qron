@@ -121,17 +121,16 @@ void TargetsTreeModel::setAllHostsAndGroups(
   QStringList names;
   foreach(QString id, clusters.keys())
     names << id;
-  names.sort(); // get a sorted groups id list
+  names.sort(); // get a sorted clusters id list
   foreach(QString id, names)
     new TreeItem(_clustersItem, id, "clusters."+id, 2, false);
   names.clear();
   foreach(QString id, hosts.keys())
     names << id;
-  names.sort(); // get a sorted groups id list
+  names.sort(); // get a sorted hosts id list
   foreach(QString id, names)
     new TreeItem(_hostsItem, id, "hosts."+id, 2, false);
   _clusters = clusters;
   _hosts = hosts;
   endResetModel();
-  qDebug() << "********" << clusters.keys() << hosts.keys();
 }

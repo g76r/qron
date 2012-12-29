@@ -126,7 +126,7 @@ void TasksTreeModel::setAllTasksAndGroups(const QMap<QString,TaskGroup> groups,
   names.clear();
   foreach(QString id, tasks.keys())
     names << id;
-  names.sort(); // get a sorted groups id list
+  names.sort(); // get a sorted tasks id list
   foreach(QString id, names)
     getOrCreateItemByPath(id, false);
   _groups = groups;
