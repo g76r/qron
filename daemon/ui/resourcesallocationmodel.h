@@ -11,13 +11,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef RESOURCEALLOCATIONMODEL_H
-#define RESOURCEALLOCATIONMODEL_H
+#ifndef RESOURCESALLOCATIONMODEL_H
+#define RESOURCESALLOCATIONMODEL_H
 
 #include "textmatrixmodel.h"
 #include "textviews.h"
 
-class ResourceAllocationModel : public TextMatrixModel {
+class ResourcesAllocationModel : public TextMatrixModel {
   Q_OBJECT
 public:
   enum Mode { Configured, Allocated, Free, FreeOverConfigured,
@@ -27,9 +27,9 @@ private:
   QMap<QString,QMap<QString,qint64> > _configured;
 
 public:
-  explicit ResourceAllocationModel(
-      QObject *parent = 0, ResourceAllocationModel::Mode mode
-      = ResourceAllocationModel::FreeOverConfigured);
+  explicit ResourcesAllocationModel(
+      QObject *parent = 0, ResourcesAllocationModel::Mode mode
+      = ResourcesAllocationModel::FreeOverConfigured);
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
@@ -38,4 +38,4 @@ public slots:
   void setResourceConfiguration(QMap<QString,QMap<QString,qint64> > resources);
 };
 
-#endif // RESOURCEALLOCATIONMODEL_H
+#endif // RESOURCESALLOCATIONMODEL_H

@@ -18,12 +18,12 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _targetsTreeModel(new TargetsTreeModel(this)),
   _hostsListModel(new HostsListModel(this)),
   _clustersListModel(new ClustersListModel(this)),
-  _resourceAllocationModel(new ResourceAllocationModel(this)),
+  _resourceAllocationModel(new ResourcesAllocationModel(this)),
   _htmlTasksTreeView(new HtmlTableView(this)),
   _htmlTargetsTreeView(new HtmlTableView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
   _htmlClustersListView(new HtmlTableView(this)),
-  _htmlResourceAllocationView(new HtmlTableView(this)),
+  _htmlResourcesAllocationView(new HtmlTableView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
   _csvHostsListView(new CsvView(this)),
@@ -43,12 +43,12 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _htmlClustersListView->setModel(_clustersListModel);
   _htmlClustersListView->setTableClass("table table-condensed table-hover");
   _htmlClustersListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlResourceAllocationView->setModel(_resourceAllocationModel);
-  _htmlResourceAllocationView->setTableClass("table table-condensed "
+  _htmlResourcesAllocationView->setModel(_resourceAllocationModel);
+  _htmlResourcesAllocationView->setTableClass("table table-condensed "
                                              "table-hover table-bordered");
-  _htmlResourceAllocationView->setRowHeaders();
+  _htmlResourcesAllocationView->setRowHeaders();
   //_htmlResourceAllocationView->setTopLeftHeader(QString::fromUtf8("Host × Resource"));
-  _htmlResourceAllocationView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlResourcesAllocationView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -58,7 +58,7 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
-  _wuiHandler->addView("resourceallocation", _htmlResourceAllocationView);
+  _wuiHandler->addView("resourcesallocation", _htmlResourcesAllocationView);
   _wuiHandler->addView("hostslist", _htmlHostsListView);
   _wuiHandler->addView("clusterslist", _htmlClustersListView);
 }
@@ -131,7 +131,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   }
   if (path == "/rest/html/resources/allocation/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlResourceAllocationView->text().toUtf8().constData());
+    res.output()->write(_htmlResourcesAllocationView->text().toUtf8().constData());
     return;
   }
   res.setStatus(404);

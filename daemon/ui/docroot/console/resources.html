@@ -37,10 +37,10 @@
           <a class="brand" href="#">Qron Web Console</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li class="active"><a href="index.html">Home</a></li>
+              <li><a href="index.html">Home</a></li>
               <li><a href="config.html">Configuration</a></li>
               <li><a href="alerts.html">Alerts</a></li>
-              <li><a href="resources.html">Resources</a></li>
+              <li class="active"><a href="resources.html">Resources</a></li>
               <li><a href="schedule.html">Schedule</a></li>
               <li><a href="about.html">About</a></li>
           </div>
@@ -52,40 +52,20 @@
 
     <div class="container">
       <div class="row">
-        <div class="span8">
-          <h2>Recent events</h2>
-          <p>Coming soon...
-        </div>
-        <div class="span4">
-          <h2>Global information</h2>
-          <p>Coming soon...
+        <div class="span12">
+          <h2>Current resources allocation</h2>
+          <p>The table below shows resources currently availlable for every host depending on tasks currently executed.
+          <p><a class="btn" href="/rest/csv/resources/allocation/v1"><i class="icon-file"></i> CSV</a>
+          <a class="btn" href="/rest/html/resources/allocation/v1"><i class="icon-file"></i> HTML</a>
+          <p><?view:resourcesallocation?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
-          <h2>Tasks</h2>
-          <p><a class="btn btn-primary" href="config.html#tasks">Configuration &raquo;</a>
-          <a class="btn" href="/rest/csv/tasks/tree/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/tasks/tree/v1"><i class="icon-file"></i> HTML</a>
-          <a class="btn" href="/rest/csv/tasks/list/v1"><i class="icon-file"></i> CSV (flat list)</a>
-          <a class="btn" href="/rest/html/tasks/list/v1"><i class="icon-file"></i> HTML (flat list)</a>
-          <p><?view:taskstree?>
-        </div>
-      </div>
-      <div class="row">
-        <div class="span8">
-          <h2>Hosts</h2>
-          <p><a class="btn btn-primary" href="config.html#hosts">Configuration &raquo;</a>
-          <a class="btn" href="/rest/csv/hosts/list/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/hosts/list/v1"><i class="icon-file"></i> HTML</a>
-          <p><?view:hostslist?>
-        </div>
-        <div class="span4">
-          <h2>Clusters</h2>
-          <p><a class="btn btn-primary" href="config.html#clusters">Configuration &raquo;</a>
-          <a class="btn" href="/rest/csv/clusters/list/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/clusters/list/v1"><i class="icon-file"></i> HTML</a>
-          <p><?view:clusterslist?>
+          <h2>Resources configuration matrix</h2>
+          <p>The table below shows resources potential consumption according
+          to current configuration of tasks and hosts.
+          <p>Coming soon...<?view:resourcesmatrix?>
         </div>
       </div>
     </div>

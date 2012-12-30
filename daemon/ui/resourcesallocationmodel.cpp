@@ -11,14 +11,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "resourceallocationmodel.h"
+#include "resourcesallocationmodel.h"
 
-ResourceAllocationModel::ResourceAllocationModel(
-    QObject *parent, ResourceAllocationModel::Mode mode)
+ResourcesAllocationModel::ResourcesAllocationModel(
+    QObject *parent, ResourcesAllocationModel::Mode mode)
   : TextMatrixModel(parent), _mode(mode) {
 }
 
-QVariant ResourceAllocationModel::headerData(
+QVariant ResourcesAllocationModel::headerData(
     int section, Qt::Orientation orientation, int role) const {
   switch(role) {
   case TextViews::HtmlPrefixRole:
@@ -29,7 +29,7 @@ QVariant ResourceAllocationModel::headerData(
   }
 }
 
-void ResourceAllocationModel::setResourceAllocationForHost(
+void ResourcesAllocationModel::setResourceAllocationForHost(
     QString host, QMap<QString,qint64> resources) {
   if (_mode != Configured) {
     QMap<QString,qint64> hostConfigured = _configured.value(host);
@@ -57,7 +57,7 @@ void ResourceAllocationModel::setResourceAllocationForHost(
   }
 }
 
-void ResourceAllocationModel::setResourceConfiguration(
+void ResourcesAllocationModel::setResourceConfiguration(
     QMap<QString,QMap<QString,qint64> > resources) {
   _configured = resources;
   foreach (QString host, resources.keys()) {

@@ -21,7 +21,7 @@
 #include "sched/scheduler.h"
 #include "taskstreemodel.h"
 #include "targetstreemodel.h"
-#include "resourceallocationmodel.h"
+#include "resourcesallocationmodel.h"
 #include "hostslistmodel.h"
 #include "clusterslistmodel.h"
 
@@ -32,9 +32,9 @@ class WebConsole : public HttpHandler {
   TargetsTreeModel *_targetsTreeModel;
   HostsListModel *_hostsListModel;
   ClustersListModel *_clustersListModel;
-  ResourceAllocationModel *_resourceAllocationModel;
+  ResourcesAllocationModel *_resourceAllocationModel;
   HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
-  *_htmlClustersListView, *_htmlResourceAllocationView;
+  *_htmlClustersListView, *_htmlResourcesAllocationView;
   CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView;
   TemplatingHttpHandler *_wuiHandler;
