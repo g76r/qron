@@ -45,7 +45,7 @@ QVariant ClustersListModel::data(const QModelIndex &index, int role) const {
           hosts.append(h.id());
         return hosts.join(" ");
       } case 2:
-        return c.method();
+        return c.balancing();
       }
       break;
     case TextViews::HtmlPrefixRole:
