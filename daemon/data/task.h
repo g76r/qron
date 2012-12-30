@@ -49,6 +49,10 @@ public:
   QMap<QString,qint64> resources() const;
   QString resourcesAsString() const;
   QString triggersAsString() const;
+  QDateTime lastExecution() const;
+  void setLastExecution(const QDateTime timestamp) const;
+  QDateTime nextScheduledExecution() const;
+  void setNextScheduledExecution(const QDateTime timestamp) const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

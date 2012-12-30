@@ -147,7 +147,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         while (n--) {
           Executor *e = new Executor(this);
           connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
-                  this, SLOT(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
+                  this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
           _executors.append(e);
         }
       } else {
@@ -162,7 +162,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     for (int n = 16; n; --n) {
       Executor *e = new Executor(this);
       connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
-              this, SLOT(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
+              this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
       _executors.append(e);
     }
   }
@@ -279,6 +279,8 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     _resources.insert(h.id(), hostResources);
     emit hostResourceAllocationChanged(h.id(), hostResources);
     _executors.takeFirst()->execute(request, h);
+    request.task().setLastExecution(QDateTime::currentDateTime());
+    emit taskStarted(request, h);
     reevaluateQueuedRequests();
     return true;
 nexthost:;
@@ -295,7 +297,7 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
     e = new Executor(this);
     e->setTemporary();
     connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
-            this, SLOT(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
+            this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
   } else {
     e = _executors.takeFirst();
   }
@@ -319,10 +321,12 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
   _resources.insert(target.id(), hostResources);
   emit hostResourceAllocationChanged(target.id(), hostResources);
   e->execute(request, target);
+  request.task().setLastExecution(QDateTime::currentDateTime());
+  emit taskStarted(request, target);
   reevaluateQueuedRequests();
 }
 
-void Scheduler::taskFinished(TaskRequest request, Host target, bool success,
+void Scheduler::taskFinishing(TaskRequest request, Host target, bool success,
                              int returnCode, QWeakPointer<Executor> executor) {
   Q_UNUSED(request)
   Q_UNUSED(target)
@@ -344,6 +348,7 @@ void Scheduler::taskFinished(TaskRequest request, Host target, bool success,
   emit hostResourceAllocationChanged(target.id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   reevaluateQueuedRequests();
+  emit taskFinished(request, target, success, returnCode, executor);
 }
 
 void Scheduler::reevaluateQueuedRequests() {
@@ -384,6 +389,8 @@ void Scheduler::setTimerForCronTrigger(CronTrigger trigger,
     QVariant v;
     v.setValue(trigger);
     TimerWithArgument::singleShot(ms, this, "triggerTrigger", v);
+    trigger.task().setNextScheduledExecution(QDateTime::currentDateTime()
+                                             .addMSecs(ms));
   }
   // LATER handle cases were trigger is far away in the future
 }

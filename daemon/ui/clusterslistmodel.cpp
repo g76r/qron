@@ -23,7 +23,7 @@ ClustersListModel::ClustersListModel(QObject *parent)
 
 int ClustersListModel::rowCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
-  return _clusters.size();
+  return parent.isValid() ? 0 : _clusters.size();
 }
 
 int ClustersListModel::columnCount(const QModelIndex &parent) const {

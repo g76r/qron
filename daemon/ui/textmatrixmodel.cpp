@@ -18,7 +18,7 @@ TextMatrixModel::TextMatrixModel(QObject *parent) : QAbstractTableModel(parent) 
 
 int TextMatrixModel::rowCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
-  return _rowNames.size();
+  return parent.isValid() ? 0 : _rowNames.size();
 }
 
 int TextMatrixModel::columnCount(const QModelIndex &parent) const {

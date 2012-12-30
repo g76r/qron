@@ -23,7 +23,7 @@ TreeModelWithStructure::~TreeModelWithStructure() {
 }
 
 QModelIndex TreeModelWithStructure::index(int row, int column,
-                                  const QModelIndex &parent) const {
+                                          const QModelIndex &parent) const {
   if (parent.isValid()) {
     TreeItem *i = (TreeItem*)parent.internalPointer();
     if (i)
@@ -33,24 +33,37 @@ QModelIndex TreeModelWithStructure::index(int row, int column,
   return QModelIndex();
 }
 
+QModelIndex TreeModelWithStructure::indexByPath(const QString path) const {
+  return indexByItem(_root->descendantByPath(path));
+}
+
+QModelIndex TreeModelWithStructure::indexByItem(TreeItem *item) const {
+  if (item) {
+    TreeItem *p = item->_parent;
+    if (p)
+      return createIndex(p->childrenIndex(item), 0, item);
+  }
+  return QModelIndex();
+}
+
 QModelIndex TreeModelWithStructure::parent(const QModelIndex &child) const {
   if (child.isValid()) {
     TreeItem *i = (TreeItem*)child.internalPointer();
     if (i) {
       TreeItem *p = i->_parent;
-      if (p)
-        return createIndex(p->childrenIndex(i), 0, p);
+      if (p && p != _root) {
+        TreeItem *pp = p->_parent;
+        return createIndex(pp ? pp->childrenIndex(p) : 0, 0, p);
+      }
     }
   }
   return QModelIndex();
 }
 
 int TreeModelWithStructure::rowCount(const QModelIndex &parent) const {
-  //qDebug() << "TasksTreeModel::rowCount()" << parent << parent.isValid();
   if (parent.isValid()) {
     TreeItem *i = (TreeItem*)parent.internalPointer();
-    if (i)
-      return i->_children.size();
+    return i ? i->_children.size() : 0;
   }
   return _root->_children.size();
 }

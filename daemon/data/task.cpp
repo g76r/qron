@@ -28,13 +28,16 @@ public:
   QMap<QString,qint64> _resources;
   quint32 _maxtaskinstance;
   QList<CronTrigger> _cronTriggers;
+  mutable QDateTime _lastExecution, _nextScheduledExecution;
 
   TaskData() { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _group(other._group), _params(other._params),
     _eventTriggers(other._eventTriggers), _resources(other._resources),
-    _maxtaskinstance(other._maxtaskinstance) { }
+    _maxtaskinstance(other._maxtaskinstance),
+    _cronTriggers(other._cronTriggers), _lastExecution(other._lastExecution),
+    _nextScheduledExecution(other._nextScheduledExecution) { }
 };
 
 Task::Task() : d(new TaskData) {
@@ -175,13 +178,29 @@ QString Task::triggersAsString() const {
   QString s;
   if (!isNull()) {
     foreach (CronTrigger t, d->_cronTriggers)
-      s.append("[").append(t.cronExpression()).append("] ");
+      s.append("(").append(t.cronExpression()).append(") ");
     foreach (QString t, d->_eventTriggers)
-      s.append("\"").append(t).append("\" ");
+      s.append("^").append(t).append(" ");
   }
   if (!s.isEmpty())
     s.chop(1); // remove last space
   return s;
+}
+
+QDateTime Task::lastExecution() const {
+  return d->_lastExecution;
+}
+
+QDateTime Task::nextScheduledExecution() const {
+  return d->_nextScheduledExecution;
+}
+
+void Task::setLastExecution(const QDateTime timestamp) const {
+  d->_lastExecution = timestamp;
+}
+
+void Task::setNextScheduledExecution(const QDateTime timestamp) const {
+  d->_nextScheduledExecution = timestamp;
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {

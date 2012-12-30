@@ -54,6 +54,7 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _csvHostsListView->setModel(_hostsListModel);
   _csvClustersListView->setModel(_clustersListModel);
   _csvResourceAllocationView->setModel(_resourceAllocationModel);
+  _csvResourceAllocationView->setRowHeaders();
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
@@ -87,14 +88,50 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     _wuiHandler->handleRequest(req, res);
     return;
   }
+  // LATER optimize resource selection (avoid if/if/if)
   if (path == "/rest/csv/tasks/tree/v1") {
     res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvTasksTreeView->text().toUtf8().constData());
     return;
   }
   if (path == "/rest/html/tasks/tree/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTasksTreeView->text().toUtf8().constData());
+    return;
+  }
+  // TODO tasks list (not only tree)
+  if (path == "/rest/csv/hosts/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvHostsListView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/hosts/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlHostsListView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/csv/clusters/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvClustersListView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/clusters/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlClustersListView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/csv/resources/allocation/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvResourceAllocationView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/resources/allocation/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlResourceAllocationView->text().toUtf8().constData());
     return;
   }
   res.setStatus(404);
@@ -115,6 +152,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
     disconnect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),
                _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QMap<QString,qint64>)));
+    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest,Host)),
+               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
+               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -130,5 +171,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
     connect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),
             _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QMap<QString,qint64>)));
+    connect(_scheduler, SIGNAL(taskStarted(TaskRequest,Host)),
+            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
+            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
   }
 }

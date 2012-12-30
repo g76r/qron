@@ -29,9 +29,11 @@ public:
   QModelIndex index(int row, int column, const QModelIndex &parent) const;
   QModelIndex parent(const QModelIndex &child) const;
   int rowCount(const QModelIndex &parent) const;
+  QModelIndex indexByPath(const QString path) const;
 
 protected:
   TreeItem *getOrCreateItemByPath(QString path, bool isStructure);
+  QModelIndex indexByItem(TreeItem *item) const;
 };
 
 class TreeModelWithStructure::TreeItem {
@@ -65,7 +67,7 @@ public:
     return 0;
   }
   /** @return -1 if not found */
-  int childrenIndex(TreeItem *child) {
+  int childrenIndex(const TreeItem *child) {
     int i = 0;
     foreach(TreeItem *c, _children) {
       if (c == child)
@@ -73,6 +75,18 @@ public:
       ++i;
     }
     return -1;
+  }
+  /** @return 0 if not found */
+  TreeItem *descendantByPath(const QString path) {
+    // MAYDO optimize by decomposing path
+    if (_path == path)
+      return this;
+    foreach (TreeItem *c, _children) {
+      TreeItem *i = c->descendantByPath(path);
+      if (i)
+        return i;
+    }
+    return 0;
   }
 };
 

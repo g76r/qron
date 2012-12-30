@@ -88,9 +88,12 @@ signals:
                                      QMap<QString,qint64> resources);
   void hostResourceConfigurationChanged(
       QMap<QString,QMap<QString,qint64> > resources);
+  void taskStarted(TaskRequest request, Host host);
+  void taskFinished(TaskRequest request, Host target, bool success,
+                    int returnCode, QWeakPointer<Executor> executor);
 
 private slots:
-  void taskFinished(TaskRequest request, Host target, bool success,
+  void taskFinishing(TaskRequest request, Host target, bool success,
                     int returnCode, QWeakPointer<Executor> executor);
 
 private:

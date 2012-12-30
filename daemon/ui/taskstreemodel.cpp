@@ -12,9 +12,10 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "taskstreemodel.h"
-#include  <QtDebug>
+#include <QtDebug>
+#include <QDateTime>
 
-#define COLUMNS 8
+#define COLUMNS 10
 
 TasksTreeModel::TasksTreeModel(QObject *parent)
   : TreeModelWithStructure(parent) {
@@ -43,7 +44,7 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
             return i->_path;
           case 1:
             return g.label();
-          case 6:
+          case 8:
             return g.params().toString();
           }
           break;
@@ -75,8 +76,12 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
           case 5:
             return t.triggersAsString();
           case 6:
-            return t.params().toString();
+            return t.lastExecution();
           case 7:
+            return t.nextScheduledExecution();
+          case 8:
+            return t.params().toString();
+          case 9:
             return t.resourcesAsString();
           }
           break;
@@ -110,8 +115,12 @@ QVariant TasksTreeModel::headerData(int section, Qt::Orientation orientation,
     case 5:
       return "Triggers";
     case 6:
-      return "Parameters";
+      return "Last execution";
     case 7:
+      return "Next execution";
+    case 8:
+      return "Parameters";
+    case 9:
       return "Resources";
     }
   }
@@ -139,4 +148,14 @@ void TasksTreeModel::setAllTasksAndGroups(QMap<QString, TaskGroup> groups,
   //qDebug() << "TasksTreeModel::setAllTasksAndGroups" << _root->_children.size()
   //         << _groups.size() << _tasks.size()
   //         << (_root->_children.size() ? _root->_children[0]->_id : "null");
+}
+
+void TasksTreeModel::taskChanged(Task task) {
+  QModelIndex i = indexByPath(task.fqtn());
+  if (i.isValid())
+    emit dataChanged(i, i);
+}
+
+void TasksTreeModel::taskChanged(TaskRequest request) {
+  taskChanged(request.task());
 }

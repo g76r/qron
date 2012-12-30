@@ -17,6 +17,7 @@
 #include "treemodelwithstructure.h"
 #include "data/taskgroup.h"
 #include "data/task.h"
+#include "sched/taskrequest.h"
 
 class TasksTreeModel : public TreeModelWithStructure {
   Q_OBJECT
@@ -32,6 +33,8 @@ public:
 public slots:
   void setAllTasksAndGroups(QMap<QString,TaskGroup> groups,
                             QMap<QString,Task> tasks);
+  void taskChanged(Task task);
+  void taskChanged(TaskRequest request);
 };
 
 #endif // TASKSTREEMODEL_H

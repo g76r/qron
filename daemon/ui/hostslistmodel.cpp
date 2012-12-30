@@ -22,7 +22,7 @@ HostsListModel::HostsListModel(QObject *parent) : QAbstractListModel(parent) {
 
 int HostsListModel::rowCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
-  return _hosts.size();
+  return parent.isValid() ? 0 : _hosts.size();
 }
 
 int HostsListModel::columnCount(const QModelIndex &parent) const {

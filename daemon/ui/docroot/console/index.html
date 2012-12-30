@@ -61,22 +61,36 @@
       <div class="row">
         <div class="span12">
           <h2>Tasks</h2>
+          <p><a class="btn btn-primary" href="config.html#tasks">Configuration...</a>
+          <a class="btn" href="/rest/csv/tasks/tree/v1">CSV tasks tree</a>
+          <a class="btn" href="/rest/html/tasks/tree/v1">HTML tasks tree</a>
+          <a class="btn" href="/rest/csv/tasks/list/v1">CSV tasks list</a>
+          <a class="btn" href="/rest/html/tasks/list/v1">HTML tasks list</a>
           <p><?view:taskstree?>
         </div>
       </div>
       <div class="row">
         <div class="span8">
           <h2>Hosts</h2>
+          <p><a class="btn btn-primary" href="config.html#hosts">Configuration...</a>
+          <a class="btn" href="/rest/csv/hosts/list/v1">CSV hosts list</a>
+          <a class="btn" href="/rest/html/hosts/list/v1">HTML hosts list</a>
           <p><?view:hostslist?>
         </div>
         <div class="span4">
           <h2>Clusters</h2>
+          <p><a class="btn btn-primary" href="config.html#clusters">Configuration...</a>
+          <a class="btn" href="/rest/csv/clusters/list/v1">CSV clusters list</a>
+          <a class="btn" href="/rest/html/clusters/list/v1">HTML clusters list</a>
           <p><?view:clusterslist?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
-          <h2>Current resource allocation</h2>
+          <h2>Current resources allocation</h2>
+          <p><a class="btn btn-primary" href="resources.html">Resources...</a>
+          <a class="btn" href="/rest/csv/resources/allocation/v1">CSV resources allocation table</a>
+          <a class="btn" href="/rest/html/resources/allocation/v1">HTML resources allocation table</a>
           <p><?view:resourceallocation?>
         </div>
       </div>
