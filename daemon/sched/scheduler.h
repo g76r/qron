@@ -23,7 +23,7 @@
 #include "data/crontrigger.h"
 #include "data/host.h"
 #include "data/cluster.h"
-#include "taskrequest.h"
+#include "data/taskrequest.h"
 #include <QMap>
 #include "executor.h"
 #include <QVariant>

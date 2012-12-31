@@ -49,7 +49,7 @@ SOURCES += sched/main.cpp \
     sched/scheduler.cpp \
     data/crontrigger.cpp \
     data/host.cpp \
-    sched/taskrequest.cpp \
+    data/taskrequest.cpp \
     sched/executor.cpp \
     util/timerwithargument.cpp \
     log/log.cpp \
@@ -72,7 +72,7 @@ HEADERS += \
     sched/scheduler.h \
     data/crontrigger.h \
     data/host.h \
-    sched/taskrequest.h \
+    data/taskrequest.h \
     sched/executor.h \
     util/timerwithargument.h \
     log/log.h \

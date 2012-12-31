@@ -17,7 +17,7 @@
 #include "treemodelwithstructure.h"
 #include "data/taskgroup.h"
 #include "data/task.h"
-#include "sched/taskrequest.h"
+#include "data/taskrequest.h"
 
 class TasksTreeModel : public TreeModelWithStructure {
   Q_OBJECT
