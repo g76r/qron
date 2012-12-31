@@ -74,12 +74,12 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   Q_UNUSED(errorString) // currently no fatal error, only warnings
   _resources.clear();
   QList<PfNode> children;
+  children += root.childrenByName("param");
   children += root.childrenByName("log");
   children += root.childrenByName("taskgroup");
   children += root.childrenByName("task");
   children += root.childrenByName("host");
   children += root.childrenByName("cluster");
-  children += root.childrenByName("param");
   children += root.childrenByName("maxtotaltasks");
   foreach (PfNode node, children) {
     if (node.name() == "host") {
@@ -118,7 +118,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::debug() << "configured task '" << task.fqtn() << "'";
       }
     } else if (node.name() == "taskgroup") {
-      TaskGroup taskGroup(node);
+      TaskGroup taskGroup(node, _globalParams);
       _tasksGroups.insert(taskGroup.id(), taskGroup);
       Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
     } else if (node.name() == "param") {
@@ -205,6 +205,7 @@ void Scheduler::triggerEvent(QString event) {
     if (task.eventTriggers().contains(event)) {
       Log::debug() << "event '" << event << "' triggered task '" << task.fqtn()
                    << "'";
+      // LATER support params at trigger level
       requestTask(task.fqtn());
     }
   }
@@ -215,6 +216,7 @@ void Scheduler::triggerTrigger(QVariant trigger) {
     CronTrigger ct = qvariant_cast<CronTrigger>(trigger);
     Log::debug() << "trigger '" << ct.cronExpression() << "' triggered task '"
                  << ct.task().fqtn() << "'";
+    // LATER support params at trigger level
     requestTask(ct.task().fqtn());
     // LATER this is theorically not accurate since it could miss a trigger
     setTimerForCronTrigger(ct);

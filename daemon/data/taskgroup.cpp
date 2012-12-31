@@ -36,10 +36,11 @@ TaskGroup::TaskGroup() : d(new TaskGroupData) {
 TaskGroup::TaskGroup(const TaskGroup &other) : d(other.d) {
 }
 
-TaskGroup::TaskGroup(PfNode node) {
+TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet) {
   TaskGroupData *tgd = new TaskGroupData;
   tgd->_id = node.attribute("id"); // LATER check uniqueness
   tgd->_label = node.attribute("label", tgd->_id);
+  tgd->_params.setParent(parentParamSet);
   foreach (PfNode child, node.childrenByName("param")) {
     QString key = child.attribute("key");
     QString value = child.attribute("value");

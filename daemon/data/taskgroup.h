@@ -29,7 +29,7 @@ class TaskGroup {
 public:
   TaskGroup();
   TaskGroup(const TaskGroup &other);
-  TaskGroup(PfNode node);
+  TaskGroup(PfNode node, ParamSet parentParamSet);
   ~TaskGroup();
   TaskGroup &operator =(const TaskGroup &other);
   //QList<Task> tasks();
