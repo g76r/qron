@@ -73,7 +73,7 @@ FileLogger::~FileLogger() {
 void FileLogger::log(Log::Severity severity, QString line) {
   // force asynchronous call to protect against i/o latency: slow disk,
   // NFS stall (for those fool enough to write logs over NFS), etc.
-  //qDebug() << "***log" << line;
+  //qDebug() << "***log" << this << line;
   if (severity >= _minSeverity)
     QMetaObject::invokeMethod(this, "doLog", Qt::QueuedConnection,
                               Q_ARG(QString, line));

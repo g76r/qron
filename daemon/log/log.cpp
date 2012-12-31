@@ -34,6 +34,7 @@ void Log::log(const QString message, Severity severity, const QString task,
   QString line = QString("%1 %2/%3 %4 %5 %6")
       .arg(now.toString(Qt::ISODate)).arg(task).arg(execId).arg(sourceCode)
       .arg(severityToString(severity)).arg(message);
+  //qDebug() << "***log" << line;
   foreach (FileLogger *logger, _loggers)
     logger->log(severity, line);
 }
