@@ -62,7 +62,8 @@ SOURCES += sched/main.cpp \
     ui/textmatrixmodel.cpp \
     ui/hostslistmodel.cpp \
     ui/clusterslistmodel.cpp \
-    ui/resourcesallocationmodel.cpp
+    ui/resourcesallocationmodel.cpp \
+    ui/paramsetmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -85,7 +86,8 @@ HEADERS += \
     ui/hostslistmodel.h \
     ui/clusterslistmodel.h \
     ui/textviews.h \
-    ui/resourcesallocationmodel.h
+    ui/resourcesallocationmodel.h \
+    ui/paramsetmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

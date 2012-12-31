@@ -28,6 +28,7 @@ public:
   ParamSet();
   ParamSet(const ParamSet &other);
   ~ParamSet();
+  ParamSet &operator =(const ParamSet &other);
   const ParamSet parent() const;
   ParamSet parent();
   void setParent(ParamSet parent);
@@ -57,6 +58,8 @@ public:
                                const QString separator = " ",
                                bool inherit = true) const;
   bool isNull() const;
+  int size() const;
+  bool isEmpty() const;
   QString toString(bool inherit = true) const;
 
 private:

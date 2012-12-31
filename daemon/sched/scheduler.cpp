@@ -173,6 +173,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   emit tasksConfigurationReset(_tasksGroups, _tasks);
   emit targetsConfigurationReset(_clusters, _hosts);
   emit hostResourceConfigurationChanged(_resources);
+  emit globalParamsChanged(_globalParams);
   return true;
 }
 

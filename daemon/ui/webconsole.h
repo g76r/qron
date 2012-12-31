@@ -24,6 +24,7 @@
 #include "resourcesallocationmodel.h"
 #include "hostslistmodel.h"
 #include "clusterslistmodel.h"
+#include "paramsetmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -33,10 +34,11 @@ class WebConsole : public HttpHandler {
   HostsListModel *_hostsListModel;
   ClustersListModel *_clustersListModel;
   ResourcesAllocationModel *_resourceAllocationModel;
+  ParamSetModel *_globalParamsModel;
   HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
-  *_htmlClustersListView, *_htmlResourcesAllocationView;
+  *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView;
   CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
-  *_csvClustersListView, *_csvResourceAllocationView;
+  *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView;
   TemplatingHttpHandler *_wuiHandler;
 
 public:

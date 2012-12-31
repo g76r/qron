@@ -19,16 +19,19 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _hostsListModel(new HostsListModel(this)),
   _clustersListModel(new ClustersListModel(this)),
   _resourceAllocationModel(new ResourcesAllocationModel(this)),
+  _globalParamsModel(new ParamSetModel(this)),
   _htmlTasksTreeView(new HtmlTableView(this)),
   _htmlTargetsTreeView(new HtmlTableView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
   _htmlClustersListView(new HtmlTableView(this)),
   _htmlResourcesAllocationView(new HtmlTableView(this)),
+  _htmlGlobalParamsView(new HtmlTableView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
   _csvHostsListView(new CsvView(this)),
   _csvClustersListView(new CsvView(this)),
   _csvResourceAllocationView(new CsvView(this)),
+  _csvGlobalParamsView(new CsvView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console",
                                         ":docroot/console")) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
@@ -49,18 +52,22 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _htmlResourcesAllocationView->setRowHeaders();
   //_htmlResourceAllocationView->setTopLeftHeader(QString::fromUtf8("Host × Resource"));
   _htmlResourcesAllocationView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlGlobalParamsView->setModel(_globalParamsModel);
+  _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
   _csvClustersListView->setModel(_clustersListModel);
   _csvResourceAllocationView->setModel(_resourceAllocationModel);
   _csvResourceAllocationView->setRowHeaders();
+  _csvGlobalParamsView->setModel(_globalParamsModel);
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
   _wuiHandler->addView("resourcesallocation", _htmlResourcesAllocationView);
   _wuiHandler->addView("hostslist", _htmlHostsListView);
   _wuiHandler->addView("clusterslist", _htmlClustersListView);
+  _wuiHandler->addView("globalparams", _htmlGlobalParamsView);
 }
 
 QString WebConsole::name() const {
@@ -134,6 +141,17 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlResourcesAllocationView->text().toUtf8().constData());
     return;
   }
+  if (path == "/rest/csv/params/global/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvGlobalParamsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/params/global/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlGlobalParamsView->text().toUtf8().constData());
+    return;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
 }
@@ -156,6 +174,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
+               _globalParamsModel, SLOT(paramsChanged(ParamSet)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -175,5 +195,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
+            _globalParamsModel, SLOT(paramsChanged(ParamSet)));
   }
 }

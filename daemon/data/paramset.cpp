@@ -39,6 +39,12 @@ ParamSet::ParamSet(ParamSetData *data) : d(data) {
 ParamSet::~ParamSet() {
 }
 
+ParamSet &ParamSet::operator =(const ParamSet &other) {
+  if (this != &other)
+    d = other.d;
+  return *this;
+}
+
 const ParamSet ParamSet::parent() const {
   return d ? ParamSet(const_cast<QSharedDataPointer<ParamSetData>&>(
                         d.constData()->_parent))
@@ -186,6 +192,14 @@ const QSet<QString> ParamSet::keys(bool inherit) const {
 
 bool ParamSet::isNull() const {
   return !d;
+}
+
+int ParamSet::size() const {
+  return d ? d->_params.size() : 0;
+}
+
+bool ParamSet::isEmpty() const {
+  return d ? d->_params.isEmpty() : true;
 }
 
 QString ParamSet::toString(bool inherit) const {
