@@ -45,7 +45,7 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
           case 1:
             return g.label();
           case 8:
-            return g.params().toString();
+            return g.params().toString(false);
           }
           break;
         case TextViews::TrClassRole:
@@ -80,7 +80,7 @@ QVariant TasksTreeModel::data(const QModelIndex &index, int role) const {
           case 7:
             return t.nextScheduledExecution();
           case 8:
-            return t.params().toString();
+            return t.params().toString(false);
           case 9:
             return t.resourcesAsString();
           }

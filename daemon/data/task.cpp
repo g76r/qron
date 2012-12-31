@@ -90,7 +90,6 @@ Task::Task(PfNode node) {
       // LATER read misfire config
     }
   }
-  // TODO resources
   foreach (PfNode child, node.childrenByName("resource")) {
     QString kind = child.attribute("kind");
     qint64 quantity = child.attribute("quantity").toLong(0, 0);
@@ -153,6 +152,7 @@ QString Task::target() const {
 
 void Task::setTaskGroup(TaskGroup taskGroup) {
   d->_group = taskGroup;
+  d->_params.setParent(taskGroup.params());
 }
 
 QList<CronTrigger> Task::cronTriggers() const {

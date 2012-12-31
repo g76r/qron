@@ -22,7 +22,6 @@
 class ParamSetData;
 
 class ParamSet {
-  friend class ParamSetData;
   QSharedDataPointer<ParamSetData> d;
   ParamSet(ParamSetData *data);
 public:
@@ -33,32 +32,36 @@ public:
   ParamSet parent();
   void setParent(ParamSet parent);
   void setValue(const QString key, const QString value);
-  /** Return a value without interpreting parameters substitution.
-    */
-  QString rawValue(const QString key) const;
+  /** Return a value without performing parameters substitution.
+   * @param inherit should search values in parents if not found
+   */
+  QString rawValue(const QString key, bool inherit = true) const;
   /** Return a value after parameters substitution.
-    * If the ParamSet does not hold a value for this key, search its
-    * parents.
+   * @param searchInParents should search values in parents if not found
     */
-  QString value(const QString key) const {
-    return evaluate(rawValue(key)); }
+  QString value(const QString key, bool inherit = true) const {
+    return evaluate(rawValue(key, inherit)); }
   /** Return a value splitted into strings after parameters substitution.
     */
   QStringList valueAsStrings(const QString key,
-                             const QString separator = " ") const {
-    return splitAndEvaluate(rawValue(key), separator); }
+                             const QString separator = " ",
+                             bool inherit = true) const {
+    return splitAndEvaluate(rawValue(key), separator, inherit); }
   /** Return all keys for which the ParamSet or one of its parents hold a value.
     */
-  const QSet<QString> keys() const;
-  /** Perform parameters substitution.
-    */
-  QString evaluate(const QString rawValue) const;
-  /** Split string and perform parameters substitution.
-    */
+  const QSet<QString> keys(bool inherit = true) const;
+  /** Perform parameters substitution within the string. */
+  QString evaluate(const QString rawValue, bool inherit = true) const;
+  /** Split string and perform parameters substitution. */
   QStringList splitAndEvaluate(const QString rawValue,
-                               const QString separator = " ") const;
+                               const QString separator = " ",
+                               bool inherit = true) const;
   bool isNull() const;
-  QString toString() const;
+  QString toString(bool inherit = true) const;
+
+private:
+  inline void appendVariableValue(QString &value, QString &variable,
+                                  bool inherit = true) const;
 };
 
 QDebug operator<<(QDebug dbg, const ParamSet &params);

@@ -110,7 +110,6 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       } else {
         task.setTaskGroup(taskGroup);
         _tasks.insert(task.fqtn(), task);
-        // TODO Task::cronTriggers() is a very bad pattern, replace it
         foreach (CronTrigger trigger, task.cronTriggers()) {
           trigger.setTask(task);
           _cronTriggers.append(trigger);
