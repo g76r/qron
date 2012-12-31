@@ -34,7 +34,8 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent) {
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
   // TODO clearLoggers() and create loggers depending on config file
-  Log::addLogger(new FileLogger("/tmp/log0", Log::Debug, this));
+  Log::addLogger(new FileLogger("/tmp/qron-%!yyyy%!mm%!dd.log", Log::Debug,
+                                this));
   Log::addLogger(new FileLogger("/tmp/info", Log::Info, this));
 }
 
