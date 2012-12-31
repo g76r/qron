@@ -15,7 +15,7 @@
 #include <QThread>
 #include <QtDebug>
 #include <QMetaObject>
-#include <log/log.h>
+#include "log/log.h"
 
 Executor::Executor(QObject *threadParent) : QObject(0), _isTemporary(false),
   _thread(new QThread(threadParent)), _process(0) {

@@ -55,6 +55,25 @@ const QString Log::severityToString(Severity severity) {
   return "UNKNOWN";
 }
 
+Log::Severity Log::severityFromString(const QString string) {
+  if (!string.isEmpty())
+    switch (string.at(0).toAscii()) {
+    case 'I':
+    case 'i':
+      return Info;
+    case 'W':
+    case 'w':
+      return Warning;
+    case 'E':
+    case 'e':
+      return Error;
+    case 'F':
+    case 'f':
+      return Fatal;
+    }
+  return Debug;
+}
+
 QString Log::sanitize(const QString string) {
   QString s(string);
   s.replace(QRegExp("\\s"), "_");

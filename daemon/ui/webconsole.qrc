@@ -8,5 +8,6 @@
         <file>docroot/console/img/glyphicons-halflings-white.png</file>
         <file>docroot/console/about.html</file>
         <file>docroot/console/resources.html</file>
+        <file>docroot/console/alerts.html</file>
     </qresource>
 </RCC>

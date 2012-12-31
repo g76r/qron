@@ -28,7 +28,8 @@
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
-Scheduler::Scheduler(QObject *parent) : QObject(parent) {
+Scheduler::Scheduler(QObject *parent) : QObject(parent),
+  _alerter(new Alerter(this)) {
   //qRegisterMetaType<CronTrigger>("CronTrigger");
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
@@ -81,6 +82,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   children += root.childrenByName("host");
   children += root.childrenByName("cluster");
   children += root.childrenByName("maxtotaltasks");
+  children += root.childrenByName("alerts");
   foreach (PfNode node, children) {
     if (node.name() == "host") {
       Host host(node);
@@ -154,6 +156,10 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::warning() << "ignoring maxtotaltasks with incorrect value: "
                        << node.contentAsString();
       }
+    } else if (node.name() == "alerts") {
+      if (!_alerter->loadConfiguration(node, errorString))
+        return false;
+      Log::debug() << "configured alerter";
     }
   }
   if (_executors.isEmpty()) {
@@ -243,11 +249,13 @@ void Scheduler::clearFlag(QString flag) {
 
 bool Scheduler::tryStartTaskNow(TaskRequest request) {
   if (_executors.isEmpty()) {
-    Log::debug() << "cannot execute task '" << request.task().fqtn()
-                 << "' now because there are already too many tasks running "
-                    "(maxtotaltasks reached)";
+    Log::info() << "cannot execute task '" << request.task().fqtn()
+                << "' now because there are already too many tasks running "
+                   "(maxtotaltasks reached)";
+    _alerter->raiseAlert("maxtotaltasks.reached");
     return false;
   }
+  _alerter->lowerAlert("maxtotaltasks.reached");
   // LATER check flags
   QList<Host> hosts;
   Host host = _hosts.value(request.task().target());
@@ -257,8 +265,9 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     hosts.append(host);
   if (hosts.isEmpty()) {
     Log::error() << "cannot execute task '" << request.task().fqtn()
-                 << "' now because its target '" << request.task().target()
+                 << "' because its target '" << request.task().target()
                  << "' is not defined";
+    _alerter->raiseAlert("task.failure."+request.task().fqtn());
     return false;
   }
   // LATER implement other cluster balancing methods than "first"
@@ -281,6 +290,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
                             -taskResources.value(kind));
     _resources.insert(h.id(), hostResources);
     emit hostResourceAllocationChanged(h.id(), hostResources);
+    _alerter->lowerAlert("resource.exhausted."+request.task().target());
     _executors.takeFirst()->execute(request, h);
     request.task().setLastExecution(QDateTime::currentDateTime());
     emit taskStarted(request, h);
@@ -291,6 +301,8 @@ nexthost:;
   Log::warning() << "cannot execute task '" << request.task().fqtn()
                  << "' now because there is not enough resources on target '"
                  << request.task().target() << "'";
+  // LATER suffix alert with resources kind (one alert per exhausted kind)
+  _alerter->raiseAlert("resource.exhausted."+request.task().target());
   return false;
 }
 
@@ -348,6 +360,10 @@ void Scheduler::taskFinishing(TaskRequest request, Host target, bool success,
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
   _resources.insert(target.id(), hostResources);
+  if (success)
+    _alerter->lowerAlert("task.failure."+request.task().fqtn());
+  else
+    _alerter->raiseAlert("task.failure."+request.task().fqtn());
   emit hostResourceAllocationChanged(target.id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   reevaluateQueuedRequests();

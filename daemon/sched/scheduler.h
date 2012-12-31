@@ -27,6 +27,7 @@
 #include <QMap>
 #include "executor.h"
 #include <QVariant>
+#include "alert/alerter.h"
 
 class PfNode;
 
@@ -42,12 +43,14 @@ class Scheduler : public QObject {
   QSet<QString> _setFlags;
   QList<TaskRequest> _queuedRequests;
   QList<Executor*> _executors;
+  Alerter *_alerter;
 
 public:
-  explicit Scheduler(QObject *threadParent = 0);
+  explicit Scheduler(QObject *parent = 0);
   bool loadConfiguration(QIODevice *source, QString &errorString,
                          bool appendToCurrentConfig = true);
   void customEvent(QEvent *event);
+  Alerter *alerter() { return _alerter; }
 
 public slots:
   /** Expicitely request task execution now.

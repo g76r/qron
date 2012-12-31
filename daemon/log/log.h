@@ -36,6 +36,13 @@ public:
                   const QString task = "?", const QString execId = "?",
                   const QString sourceCode = ":");
   static const QString severityToString(Severity severity);
+  /** Very tolerant severity mnemonic reader.
+   * Read first character of string in a case insensitive manner, e.g.
+   * "W", "warn", "warning", and "war against terror" are all interpreted
+   * as Log::Warning.
+   * Unmatched letters ar interpreted as Log::Debug, therefore "D", "Debug",
+   * or even "Global Warming" and "" are all interpreted as Log::Debug. */
+  static Log::Severity severityFromString(const QString string);
   static void logMessageHandler(QtMsgType type, const char *msg);
   static inline LogHelper debug(const QString task = "?",
                                 const QString execId = "?",

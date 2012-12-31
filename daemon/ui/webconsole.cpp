@@ -20,18 +20,21 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _clustersListModel(new ClustersListModel(this)),
   _resourceAllocationModel(new ResourcesAllocationModel(this)),
   _globalParamsModel(new ParamSetModel(this)),
+  _raisedAlertsModel(new TextSetModel(this)),
   _htmlTasksTreeView(new HtmlTableView(this)),
   _htmlTargetsTreeView(new HtmlTableView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
   _htmlClustersListView(new HtmlTableView(this)),
   _htmlResourcesAllocationView(new HtmlTableView(this)),
   _htmlGlobalParamsView(new HtmlTableView(this)),
+  _htmlRaisedAlertsView(new HtmlSetView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
   _csvHostsListView(new CsvView(this)),
   _csvClustersListView(new CsvView(this)),
   _csvResourceAllocationView(new CsvView(this)),
   _csvGlobalParamsView(new CsvView(this)),
+  _csvRaisedAlertsView(new CsvView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console",
                                         ":docroot/console")) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
@@ -54,6 +57,8 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _htmlResourcesAllocationView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlGlobalParamsView->setModel(_globalParamsModel);
   _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
+  _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
+  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alerts currently raised)");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -61,6 +66,8 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _csvResourceAllocationView->setModel(_resourceAllocationModel);
   _csvResourceAllocationView->setRowHeaders();
   _csvGlobalParamsView->setModel(_globalParamsModel);
+  _csvRaisedAlertsView->setModel(_raisedAlertsModel);
+  _csvRaisedAlertsView->setColumnHeaders(false);
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
@@ -68,6 +75,7 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _wuiHandler->addView("hostslist", _htmlHostsListView);
   _wuiHandler->addView("clusterslist", _htmlClustersListView);
   _wuiHandler->addView("globalparams", _htmlGlobalParamsView);
+  _wuiHandler->addView("raisedalerts", _htmlRaisedAlertsView);
 }
 
 QString WebConsole::name() const {
@@ -152,6 +160,17 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlGlobalParamsView->text().toUtf8().constData());
     return;
   }
+  if (path == "/rest/csv/alerts/raised/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvRaisedAlertsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/alerts/raised/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlRaisedAlertsView->text().toUtf8().constData());
+    return;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
 }
@@ -176,6 +195,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
+    disconnect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
+               _raisedAlertsModel, SLOT(insertValue(QString)));
+    disconnect(_scheduler->alerter(), SIGNAL(alertLowered(QString)),
+               _raisedAlertsModel, SLOT(removeValue(QString)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -197,5 +220,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
+    connect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
+            _raisedAlertsModel, SLOT(insertValue(QString)));
+    connect(_scheduler->alerter(), SIGNAL(alertLowered(QString)),
+            _raisedAlertsModel, SLOT(removeValue(QString)));
   }
 }

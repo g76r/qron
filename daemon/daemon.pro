@@ -63,7 +63,20 @@ SOURCES += sched/main.cpp \
     ui/hostslistmodel.cpp \
     ui/clusterslistmodel.cpp \
     ui/resourcesallocationmodel.cpp \
-    ui/paramsetmodel.cpp
+    ui/paramsetmodel.cpp \
+    alert/alerter.cpp \
+    data/alert.cpp \
+    data/alertrule.cpp \
+    alert/alertchannel.cpp \
+    alert/udpalertchannel.cpp \
+    alert/mailalertchannel.cpp \
+    alert/logalertchannel.cpp \
+    alert/setflagalertchannel.cpp \
+    alert/clearflagalertchannel.cpp \
+    alert/posteventalertchannel.cpp \
+    alert/httpalertchannel.cpp \
+    alert/execalertchannel.cpp \
+    ui/textsetmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -87,7 +100,20 @@ HEADERS += \
     ui/clusterslistmodel.h \
     ui/textviews.h \
     ui/resourcesallocationmodel.h \
-    ui/paramsetmodel.h
+    ui/paramsetmodel.h \
+    alert/alerter.h \
+    data/alert.h \
+    data/alertrule.h \
+    alert/alertchannel.h \
+    alert/udpalertchannel.h \
+    alert/mailalertchannel.h \
+    alert/logalertchannel.h \
+    alert/setflagalertchannel.h \
+    alert/clearflagalertchannel.h \
+    alert/posteventalertchannel.h \
+    alert/httpalertchannel.h \
+    alert/execalertchannel.h \
+    ui/textsetmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc
