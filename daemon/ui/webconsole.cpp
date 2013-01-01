@@ -197,7 +197,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
                _raisedAlertsModel, SLOT(insertValue(QString)));
-    disconnect(_scheduler->alerter(), SIGNAL(alertLowered(QString)),
+    disconnect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
                _raisedAlertsModel, SLOT(removeValue(QString)));
   }
   _scheduler = scheduler;
@@ -222,7 +222,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
             _raisedAlertsModel, SLOT(insertValue(QString)));
-    connect(_scheduler->alerter(), SIGNAL(alertLowered(QString)),
+    connect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
             _raisedAlertsModel, SLOT(removeValue(QString)));
   }
 }

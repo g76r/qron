@@ -16,16 +16,15 @@
 
 #include "alertchannel.h"
 
-class UdpAlertChannel : public AlertChannel
-{
+class QUdpSocket;
+
+class UdpAlertChannel : public AlertChannel {
   Q_OBJECT
+  QUdpSocket *_socket;
+
 public:
   explicit UdpAlertChannel(QObject *parent = 0);
-  
-signals:
-  
-public slots:
-  
+  void sendMessage(Alert alert, bool cancellation);
 };
 
 #endif // UDPALERTCHANNEL_H

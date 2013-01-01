@@ -18,9 +18,10 @@
 
 class LogAlertChannel : public AlertChannel {
   Q_OBJECT
+
 public:
   explicit LogAlertChannel(QObject *parent = 0);
-  void emitAlert(Alert alert);
+  void sendMessage(Alert alert, bool cancellation);
 };
 
 #endif // LOGALERTCHANNEL_H

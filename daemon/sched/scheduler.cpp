@@ -255,7 +255,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     _alerter->raiseAlert("maxtotaltasks.reached");
     return false;
   }
-  _alerter->lowerAlert("maxtotaltasks.reached");
+  _alerter->cancelAlert("maxtotaltasks.reached");
   // LATER check flags
   QList<Host> hosts;
   Host host = _hosts.value(request.task().target());
@@ -290,7 +290,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
                             -taskResources.value(kind));
     _resources.insert(h.id(), hostResources);
     emit hostResourceAllocationChanged(h.id(), hostResources);
-    _alerter->lowerAlert("resource.exhausted."+request.task().target());
+    _alerter->cancelAlert("resource.exhausted."+request.task().target());
     _executors.takeFirst()->execute(request, h);
     request.task().setLastExecution(QDateTime::currentDateTime());
     emit taskStarted(request, h);
@@ -361,7 +361,7 @@ void Scheduler::taskFinishing(TaskRequest request, Host target, bool success,
                           +taskResources.value(kind));
   _resources.insert(target.id(), hostResources);
   if (success)
-    _alerter->lowerAlert("task.failure."+request.task().fqtn());
+    _alerter->cancelAlert("task.failure."+request.task().fqtn());
   else
     _alerter->raiseAlert("task.failure."+request.task().fqtn());
   emit hostResourceAllocationChanged(target.id(), hostResources);

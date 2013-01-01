@@ -23,8 +23,8 @@ public:
   QString _pattern;
   QRegExp _patterRegExp;
   QWeakPointer<AlertChannel> _channel;
-  QString _address, _message;
-  bool _stop;
+  QString _address, _message, _cancelMessage;
+  bool _stop, _notifyCancel;
 };
 
 AlertRule::AlertRule() {
@@ -43,14 +43,17 @@ AlertRule::~AlertRule() {
 }
 
 AlertRule::AlertRule(const PfNode node, const QString pattern,
-                     QWeakPointer<AlertChannel> channel, bool stop)
+                     QWeakPointer<AlertChannel> channel, bool stop,
+                     bool notifyCancel)
   : d(new AlertRuleData) {
   d->_pattern = pattern;
   d->_patterRegExp = compilePattern(pattern);
   d->_channel = channel;
   d->_address = node.attribute("address"); // LATER check uniqueness
   d->_message = node.attribute("message"); // LATER check uniqueness
+  d->_cancelMessage = node.attribute("cancelmessage"); // LATER check uniqueness
   d->_stop = stop;
+  d->_notifyCancel = notifyCancel;
 }
 
 QRegExp AlertRule::compilePattern(const QString pattern) {
@@ -124,8 +127,20 @@ QString AlertRule::message(Alert alert) const {
   return ParamSet().evaluate(rawMessage);
 }
 
+QString AlertRule::cancelMessage(Alert alert) const {
+  QString rawMessage = d ? d->_cancelMessage : QString();
+  if (rawMessage.isEmpty())
+    rawMessage = "canceling alert "+alert.id();
+  // LATER give alert context to evaluation method
+  return ParamSet().evaluate(rawMessage);
+}
+
 bool AlertRule::stop() const {
   return d ? d->_stop : false;
+}
+
+bool AlertRule::notifyCancel() const {
+  return d ? d->_notifyCancel : false;
 }
 
 bool AlertRule::isNull() const {

@@ -18,6 +18,7 @@
 #include "log/log.h"
 #include "pf/pfnode.h"
 #include "logalertchannel.h"
+#include "udpalertchannel.h"
 
 Alerter::Alerter(QObject *threadParent) : QObject(0),
   _thread(new QThread(threadParent)) {
@@ -29,6 +30,7 @@ Alerter::Alerter(QObject *threadParent) : QObject(0),
   qRegisterMetaType<AlertRule>("AlertRule");
   qRegisterMetaType<Alert>("Alert");
   _channels.insert("log", new LogAlertChannel(this));
+  _channels.insert("udp", new UdpAlertChannel(this));
 }
 
 bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
@@ -47,8 +49,10 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
         _params.setValue(key, value);
       }
     } else if (node.name() == "rule") {
-      QString pattern = node.attribute("match", "**"); // LATER check uniqueness
-      bool stop  = !node.attribute("stop").isNull(); // LATER check uniqueness
+      // LATER check uniqueness of attributes
+      QString pattern = node.attribute("match", "**");
+      bool stop = !node.attribute("stop").isNull();
+      bool notifyCancel = node.attribute("nocancelnotify").isNull();
       //Log::debug() << "found alert rule section " << pattern << " " << stop;
       foreach (PfNode node, node.children()) {
         if (node.name() == "match" || node.name() == "stop") {
@@ -57,7 +61,7 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
           QString name = node.name();
           AlertChannel *channel = _channels.value(name);
           if (channel) {
-            AlertRule rule(node, pattern, channel, stop);
+            AlertRule rule(node, pattern, channel, stop, notifyCancel);
             _rules.append(rule);
             Log::debug() << "configured alert rule " << name << " " << pattern
                          << " " << stop << " "
@@ -81,19 +85,38 @@ void Alerter::emitAlert(QString alert) {
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
       Log::debug() << "alert matching rule #" << n;
-      emitAlert(Alert(alert, rule));
+      sendMessage(Alert(alert, rule), false);
+      if (rule.stop())
+        break;
     }
-    if (rule.stop())
-      break;
     ++n;
   }
+  emit alertEmited(alert);
 }
 
-void Alerter::emitAlert(Alert alert) {
+void Alerter::emitAlertCancellation(QString alert) {
+  Log::debug() << "emiting alert cancellation " << alert;
+  int n = 0;
+  foreach (AlertRule rule, _rules) {
+    if (rule.patternRegExp().exactMatch(alert)) {
+      Log::debug() << "alert matching rule #" << n;
+      if (rule.notifyCancel())
+        sendMessage(Alert(alert, rule), true);
+      if (rule.stop())
+        break;
+    }
+    ++n;
+  }
+  emit alertEmited(alert);
+}
+
+void Alerter::sendMessage(Alert alert, bool cancellation) {
   QWeakPointer<AlertChannel> channel = alert.rule().channel();
   if (channel)
-    QMetaObject::invokeMethod(channel.data(), "emitAlert", Qt::QueuedConnection,
-                              Q_ARG(Alert, alert));
+    QMetaObject::invokeMethod(channel.data(), "sendMessage",
+                              Qt::QueuedConnection,
+                              Q_ARG(Alert, alert),
+                              Q_ARG(bool, cancellation));
 }
 
 void Alerter::raiseAlert(QString alert) {
@@ -105,10 +128,11 @@ void Alerter::raiseAlert(QString alert) {
   }
 }
 
-void Alerter::lowerAlert(QString alert) {
+void Alerter::cancelAlert(QString alert) {
   if (_raisedAlerts.contains(alert)) {
     _raisedAlerts.remove(alert);
     Log::debug() << "lowering alert " << alert;
-    emit alertLowered(alert);
+    emit alertCanceled(alert);
+    emitAlertCancellation(alert);
   }
 }

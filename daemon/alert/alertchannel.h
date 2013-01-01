@@ -25,7 +25,7 @@ class AlertChannel : public QObject {
 
 public:
   explicit AlertChannel(QObject *threadParent = 0);
-  Q_INVOKABLE virtual void emitAlert(Alert alert) = 0;
+  Q_INVOKABLE virtual void sendMessage(Alert alert, bool cancellation) = 0;
 };
 
 #endif // ALERTCHANNEL_H

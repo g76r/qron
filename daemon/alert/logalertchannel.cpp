@@ -17,7 +17,8 @@
 LogAlertChannel::LogAlertChannel(QObject *parent) : AlertChannel(parent) {
 }
 
-void LogAlertChannel::emitAlert(Alert alert) {
-  Log::log(alert.rule().message(alert),
+void LogAlertChannel::sendMessage(Alert alert, bool cancellation) {
+  Log::log(cancellation ? alert.rule().cancelMessage(alert)
+                        : alert.rule().message(alert),
            Log::severityFromString(alert.rule().address()));
 }

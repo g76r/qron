@@ -31,18 +31,17 @@ public:
   AlertRule();
   AlertRule(const AlertRule &);
   AlertRule(const PfNode node, const QString pattern,
-            QWeakPointer<AlertChannel> channel, bool stop);
+            QWeakPointer<AlertChannel> channel, bool stop, bool notifyCancel);
   AlertRule &operator=(const AlertRule &);
   ~AlertRule();
   QString pattern() const;
   QRegExp patternRegExp() const;
-  //void setPattern(const QString pattern);
   QWeakPointer<AlertChannel> channel() const;
-  //void setChannel(AlertChannel *channel);
   QString address() const;
-  //void setAddess(const QString address);
   QString message(Alert alert) const;
+  QString cancelMessage(Alert alert) const;
   bool stop() const;
+  bool notifyCancel() const;
   bool isNull() const;
   /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
    * "some.path.with.\*.star.and.\\.backslash" into regular expressions.

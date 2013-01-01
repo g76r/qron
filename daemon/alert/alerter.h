@@ -38,17 +38,19 @@ public:
   bool loadConfiguration(PfNode root, QString &errorString);
   void emitAlert(QString alert);
   void raiseAlert(QString alert);
-  void lowerAlert(QString alert);
+  void cancelAlert(QString alert);
   ParamSet params() const { return _params; }
 
 signals:
   void alertRaised(QString alert);
-  void alertLowered(QString alert);
+  void alertCanceled(QString alert);
+  void alertEmited(QString alert);
   void paramsChanged(ParamSet params);
   void rulesChanged(QList<AlertRule> rules);
 
 private:
-  void emitAlert(Alert alert);
+  void emitAlertCancellation(QString alert);
+  void sendMessage(Alert alert, bool cancellation);
 };
 
 #endif // ALERTER_H

@@ -12,8 +12,35 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "udpalertchannel.h"
+#include <QStringList>
+#include <QUdpSocket>
+#include "log/log.h"
 
-UdpAlertChannel::UdpAlertChannel(QObject *parent) :
-  AlertChannel(parent)
-{
+UdpAlertChannel::UdpAlertChannel(QObject *parent) : AlertChannel(parent),
+  _socket(new QUdpSocket(this)) {
+}
+
+void UdpAlertChannel::sendMessage(Alert alert, bool cancellation) {
+  // LATER support IPv6 numeric addresses (they contain colons)
+  QStringList tokens(alert.rule().address().split(":"));
+  int port;
+  if (tokens.size() != 2 || (port = tokens.at(1).toInt()) <= 0 || port > 65535)
+    Log::warning() << "unssupported UDP address for UDP alert channel: "
+                   << alert.rule().address();
+  const QString host = tokens.at(0);
+  _socket->connectToHost(host, (quint16)port, QIODevice::WriteOnly);
+  if (_socket->waitForConnected(2000)) {
+    const QString message = cancellation ? alert.rule().cancelMessage(alert)
+                                         : alert.rule().message(alert);
+    qint64 rc = _socket->write(message.toUtf8());
+    if (rc < 0)
+      Log::warning() << "error when emiting UDP alert: " << _socket->error()
+                     << " " << _socket->errorString();
+    else
+      Log::debug() << "UDP alert emited on " << host << ":" << port << " for "
+                   << rc << " bytes: " << message;
+  } else {
+    Log::warning() << "error when emiting UDP alert: " << _socket->error()
+                   << " " << _socket->errorString();
+  }
 }
