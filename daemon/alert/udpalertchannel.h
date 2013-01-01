@@ -18,6 +18,8 @@
 
 class QUdpSocket;
 
+/** Log channel that send alerts as arbitrary UDP packets.
+ */
 class UdpAlertChannel : public AlertChannel {
   Q_OBJECT
   QUdpSocket *_socket;

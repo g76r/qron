@@ -16,6 +16,7 @@
 #include <QDateTime>
 #include "util/timerwithargument.h"
 #include "mail/mailsender.h"
+#include <QThread>
 
 class MailAlertQueue {
 public:
@@ -29,6 +30,7 @@ public:
 
 MailAlertChannel::MailAlertChannel(QObject *parent)
   : AlertChannel(parent), _mailSender(0) {
+  _thread->setObjectName("MailAlertChannelThread");
   qRegisterMetaType<MailAlertQueue>("MailAlertQueue");
 }
 

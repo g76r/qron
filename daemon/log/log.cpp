@@ -17,6 +17,7 @@
 #include <QString>
 #include <QDateTime>
 #include <QRegExp>
+#include <QThread>
 
 static QList<FileLogger*> _loggers;
 
@@ -31,8 +32,14 @@ void Log::clearLoggers() {
 void Log::log(const QString message, Severity severity, const QString task,
               const QString execId, const QString sourceCode) {
   QDateTime now = QDateTime::currentDateTime();
+  QString realTask(task);
+  if (realTask.isNull())
+    realTask = QThread::currentThread()->objectName();
   QString line = QString("%1 %2/%3 %4 %5 %6")
-      .arg(now.toString(Qt::ISODate)).arg(task).arg(execId).arg(sourceCode)
+      .arg(now.toString(Qt::ISODate))
+      .arg(sanitize(realTask.isEmpty() ? "?" : realTask))
+      .arg(execId.isEmpty() ? "0" : sanitize(execId))
+      .arg(sourceCode.isEmpty() ? ":" : sanitize(sourceCode))
       .arg(severityToString(severity)).arg(message);
   //qDebug() << "***log" << line;
   foreach (FileLogger *logger, _loggers)
@@ -76,6 +83,7 @@ Log::Severity Log::severityFromString(const QString string) {
 
 QString Log::sanitize(const QString string) {
   QString s(string);
+  // LATER optimize: avoid using a regexp 3 times per log line
   s.replace(QRegExp("\\s"), "_");
   return s;
 }
@@ -83,15 +91,15 @@ QString Log::sanitize(const QString string) {
 void Log::logMessageHandler(QtMsgType type, const char *msg) {
   switch (type) {
   case QtDebugMsg:
-    Log::log(msg, Log::Debug, "?", "?");
+    Log::log(msg, Log::Debug);
     break;
   case QtWarningMsg:
-    Log::log(msg, Log::Warning, "?", "?");
+    Log::log(msg, Log::Warning);
     break;
   case QtCriticalMsg:
-    Log::log(msg, Log::Error, "?", "?");
+    Log::log(msg, Log::Error);
     break;
   case QtFatalMsg:
-    Log::log(msg, Log::Fatal, "?", "?");
+    Log::log(msg, Log::Fatal);
   }
 }

@@ -16,6 +16,7 @@
 #include <QFile>
 #include <QtDebug>
 #include <QThread>
+#include "data/paramset.h"
 
 FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
                        QObject *threadParent)
@@ -41,14 +42,12 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
   }
 }
 
-#include "data/paramset.h"
 FileLogger::FileLogger(const QString path, Log::Severity minSeverity,
                        QObject *threadParent)
   : QObject(0), _device(0), _thread(new QThread(threadParent)),
     _minSeverity(minSeverity) {
   QString actualPath = ParamSet().evaluate(path);
   qDebug() << "creating FileLogger from path" << path << actualPath;
-  // TODO parameters substitution (to allow date/time in path)
   if (_device)
     delete _device;
   _device = new QFile(actualPath, this);
@@ -75,7 +74,6 @@ FileLogger::~FileLogger() {
 void FileLogger::log(Log::Severity severity, QString line) {
   // force asynchronous call to protect against i/o latency: slow disk,
   // NFS stall (for those fool enough to write logs over NFS), etc.
-  //qDebug() << "***log" << this << line;
   if (severity >= _minSeverity)
     QMetaObject::invokeMethod(this, "doLog", Qt::QueuedConnection,
                               Q_ARG(QString, line));
@@ -83,7 +81,6 @@ void FileLogger::log(Log::Severity severity, QString line) {
 
 void FileLogger::doLog(const QString line) {
   // TODO file reopen (to allow log rotation and date/time in path)
-  //qDebug() << "***doLog" << line;
   if (_device) {
     QByteArray ba = line.toUtf8();
     ba.append("\n");

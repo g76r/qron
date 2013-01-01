@@ -15,9 +15,11 @@
 #include <QStringList>
 #include <QUdpSocket>
 #include "log/log.h"
+#include <QThread>
 
 UdpAlertChannel::UdpAlertChannel(QObject *parent) : AlertChannel(parent),
   _socket(0) {
+  _thread->setObjectName("UdpAlertChannelThread");
 }
 
 void UdpAlertChannel::sendMessage(Alert alert, bool cancellation) {

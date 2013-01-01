@@ -24,6 +24,7 @@
 
 Alerter::Alerter(QObject *threadParent) : QObject(0),
   _thread(new QThread(threadParent)) {
+  _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();

@@ -19,6 +19,8 @@
 
 Executor::Executor(QObject *threadParent) : QObject(0), _isTemporary(false),
   _thread(new QThread(threadParent)), _process(0) {
+  _thread->setObjectName(QString("Executor-%1")
+                         .arg((long)_thread, sizeof(long)*8, 16));
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();

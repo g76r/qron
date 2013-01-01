@@ -13,8 +13,10 @@
  */
 #include "logalertchannel.h"
 #include "log/log.h"
+#include <QThread>
 
 LogAlertChannel::LogAlertChannel(QObject *parent) : AlertChannel(parent) {
+  _thread->setObjectName("LogAlertChannelThread");
 }
 
 void LogAlertChannel::sendMessage(Alert alert, bool cancellation) {

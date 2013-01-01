@@ -19,10 +19,12 @@
 #include "log/filelogger.h"
 #include "httpd/httpserver.h"
 #include "ui/webconsole.h"
+#include <QThread>
 
 int main(int argc, char *argv[]) {
   //qInstallMsgHandler(Log::logMessageHandler);
   QCoreApplication a(argc, argv);
+  QThread::currentThread()->setObjectName("MainThread");
   QFile *console = new QFile;
   console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
   FileLogger *logger = new FileLogger(console, Log::Debug, 0);

@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,8 +33,9 @@ public:
   static void addLogger(FileLogger *logger);
   static void clearLoggers();
   static void log(const QString message, Severity severity = Info,
-                  const QString task = "?", const QString execId = "?",
-                  const QString sourceCode = ":");
+                  const QString task = QString(),
+                  const QString execId = QString(),
+                  const QString sourceCode = QString());
   static const QString severityToString(Severity severity);
   /** Very tolerant severity mnemonic reader.
    * Read first character of string in a case insensitive manner, e.g.
@@ -44,31 +45,31 @@ public:
    * or even "Global Warming" and "" are all interpreted as Log::Debug. */
   static Log::Severity severityFromString(const QString string);
   static void logMessageHandler(QtMsgType type, const char *msg);
-  static inline LogHelper debug(const QString task = "?",
-                                const QString execId = "?",
-                                const QString sourceCode = ":");
-  static inline LogHelper info(const QString task = "?",
-                               const QString execId = "?",
-                               const QString sourceCode = ":");
-  static inline LogHelper warning(const QString task = "?",
-                                  const QString execId = "?",
-                                  const QString sourceCode = ":");
-  static inline LogHelper error(const QString task = "?",
-                                const QString execId = "?",
-                                const QString sourceCode = ":");
-  static inline LogHelper fatal(const QString task = "?",
-                                const QString execId = "?",
-                                const QString sourceCode = ":");
+  static inline LogHelper debug(const QString task = QString(),
+                                const QString execId = QString(),
+                                const QString sourceCode = QString());
+  static inline LogHelper info(const QString task = QString(),
+                               const QString execId = QString(),
+                               const QString sourceCode = QString());
+  static inline LogHelper warning(const QString task = QString(),
+                                  const QString execId = QString(),
+                                  const QString sourceCode = QString());
+  static inline LogHelper error(const QString task = QString(),
+                                const QString execId = QString(),
+                                const QString sourceCode = QString());
+  static inline LogHelper fatal(const QString task = QString(),
+                                const QString execId = QString(),
+                                const QString sourceCode = QString());
   static inline LogHelper debug(const QString task, quint64 execId,
-                                const QString sourceCode = ":");
+                                const QString sourceCode = QString());
   static inline LogHelper info(const QString task, quint64 execId,
-                               const QString sourceCode = ":");
+                               const QString sourceCode = QString());
   static inline LogHelper warning(const QString task, quint64 execId,
-                                  const QString sourceCode = ":");
+                                  const QString sourceCode = QString());
   static inline LogHelper error(const QString task, quint64 execId,
-                                const QString sourceCode = ":");
+                                const QString sourceCode = QString());
   static inline LogHelper fatal(const QString task, quint64 execId,
-                                const QString sourceCode = ":");
+                                const QString sourceCode = QString());
 
 private:
   static inline QString sanitize(const QString string);
@@ -196,27 +197,5 @@ LogHelper Log::fatal(const QString task, quint64 execId,
                      const QString sourceCode) {
   return fatal(task, QString::number(execId), sourceCode);
 }
-
-/*
-#define LOG_TASK_LOG(message, task, execId, severity) \
-  Log::log(message, severity, task, execId, \
-  QString(__FILE__":%1").arg(__LINE__))
-#define LOG_TASK_DEBUG(message, task, execId) \
-  LOG_TASK_LOG(message, task, execId, Log::Debug)
-#define LOG_TASK_INFO(message, task, execId) \
-  LOG_TASK_LOG(message, task, execId, Log::Info)
-#define LOG_TASK_WARNING(message, task, execId) \
-  LOG_TASK_LOG(message, task, execId, Log::Warning)
-#define LOG_TASK_ERROR(message, task, execId) \
-  LOG_TASK_LOG(message, task, execId, Log::Error)
-#define LOG_TASK_FATAL(message, task, execId) \
-  LOG_TASK_LOG(message, task, execId, Log::Fatal)
-#define LOG_LOG(message, severity)  Log::log(message, severity)
-#define LOG_DEBUG(message) LOG_LOG(message, Log::Debug)
-#define LOG_INFO(message) LOG_LOG(message, Log::Info)
-#define LOG_WARNING(message) LOG_LOG(message, Log::Warning)
-#define LOG_ERROR(message) LOG_LOG(message, Log::Error)
-#define LOG_FATAL(message) LOG_LOG(message, Log::Fatal)
-*/
 
 #endif // LOG_H

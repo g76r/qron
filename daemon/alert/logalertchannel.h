@@ -16,6 +16,9 @@
 
 #include "alertchannel.h"
 
+/** This is a mock alert channel that write the alert into log.
+ * This channel is not intended for real life but only for test cases.
+ */
 class LogAlertChannel : public AlertChannel {
   Q_OBJECT
 

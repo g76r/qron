@@ -21,6 +21,7 @@ class QThread;
 
 class AlertChannel : public QObject {
   Q_OBJECT
+protected:
   QThread *_thread;
 
 public:
