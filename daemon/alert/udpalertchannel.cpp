@@ -17,10 +17,12 @@
 #include "log/log.h"
 
 UdpAlertChannel::UdpAlertChannel(QObject *parent) : AlertChannel(parent),
-  _socket(new QUdpSocket(this)) {
+  _socket(0) {
 }
 
 void UdpAlertChannel::sendMessage(Alert alert, bool cancellation) {
+  if (!_socket)
+    _socket = new QUdpSocket(this);
   // LATER support IPv6 numeric addresses (they contain colons)
   QStringList tokens(alert.rule().address().split(":"));
   int port;
@@ -43,4 +45,8 @@ void UdpAlertChannel::sendMessage(Alert alert, bool cancellation) {
     Log::warning() << "error when emiting UDP alert: " << _socket->error()
                    << " " << _socket->errorString();
   }
+  _socket->disconnectFromHost();
+  while(_socket->state() != QAbstractSocket::UnconnectedState
+        && _socket->waitForBytesWritten(10000))
+    ;
 }

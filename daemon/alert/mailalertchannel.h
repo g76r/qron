@@ -15,17 +15,30 @@
 #define MAILALERTCHANNEL_H
 
 #include "alertchannel.h"
+#include <QList>
+#include <QHash>
+#include "data/paramset.h"
 
-class MailAlertChannel : public AlertChannel
-{
+class MailAlertQueue;
+class MailSender;
+
+class MailAlertChannel : public AlertChannel {
   Q_OBJECT
+  QHash<QString,MailAlertQueue*> _queues;
+  MailSender *_mailSender;
+  QString _senderAddress;
+  int _minDelayBetweenMails;
+
 public:
   explicit MailAlertChannel(QObject *parent = 0);
-  
-signals:
-  
+  ~MailAlertChannel();
+  void sendMessage(Alert alert, bool cancellation);
+
 public slots:
-  
+  void setParams(ParamSet params);
+
+private:
+  Q_INVOKABLE void processQueue(const QVariant address);
 };
 
 #endif // MAILALERTCHANNEL_H

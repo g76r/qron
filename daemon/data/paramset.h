@@ -36,12 +36,24 @@ public:
   /** Return a value without performing parameters substitution.
    * @param inherit should search values in parents if not found
    */
-  QString rawValue(const QString key, bool inherit = true) const;
+  QString rawValue(const QString key, const QString defaultValue = QString(),
+                   bool inherit = true) const;
+  inline QString rawValue(const QString key, const char *defaultValue,
+                   bool inherit = true) const {
+    return rawValue(key, QString(defaultValue), inherit); }
+  inline QString rawValue(const QString key, bool inherit) const {
+    return rawValue(key, QString(), inherit); }
   /** Return a value after parameters substitution.
    * @param searchInParents should search values in parents if not found
     */
-  QString value(const QString key, bool inherit = true) const {
-    return evaluate(rawValue(key, inherit)); }
+  inline QString value(const QString key, QString defaultValue = QString(),
+                       bool inherit = true) const {
+    return evaluate(rawValue(key, defaultValue, inherit)); }
+  inline QString value(const QString key, const char *defaultValue,
+                       bool inherit = true) const {
+    return evaluate(rawValue(key, QString(defaultValue), inherit)); }
+  inline QString value(const QString key, bool inherit) const {
+    return evaluate(rawValue(key, QString(), inherit)); }
   /** Return a value splitted into strings after parameters substitution.
     */
   QStringList valueAsStrings(const QString key,

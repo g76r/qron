@@ -19,18 +19,24 @@
 #include "pf/pfnode.h"
 #include "logalertchannel.h"
 #include "udpalertchannel.h"
+#include "mailalertchannel.h"
 
 Alerter::Alerter(QObject *threadParent) : QObject(0),
   _thread(new QThread(threadParent)) {
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
+  _channels.insert("log", new LogAlertChannel(this));
+  _channels.insert("udp", new UdpAlertChannel(this));
+  MailAlertChannel *mailChannel = new MailAlertChannel(this);
+  _channels.insert("mail", mailChannel);
+  connect(this, SIGNAL(paramsChanged(ParamSet)),
+          mailChannel, SLOT(setParams(ParamSet)));
   moveToThread(_thread);
   qRegisterMetaType<QList<AlertRule> >("QList<AlertRule>");
   qRegisterMetaType<AlertRule>("AlertRule");
   qRegisterMetaType<Alert>("Alert");
-  _channels.insert("log", new LogAlertChannel(this));
-  _channels.insert("udp", new UdpAlertChannel(this));
+  qRegisterMetaType<ParamSet>("ParamSet");
 }
 
 bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
@@ -129,6 +135,8 @@ void Alerter::raiseAlert(QString alert) {
 }
 
 void Alerter::cancelAlert(QString alert) {
+  // FIXME wait for a while (e.g. 15', anyway > mail sending interval) before actually cancelling alert, in case it switches on and off at high frequency
+  // FIXME provide more details on raised alerts: id, rise time, would-cancel time
   if (_raisedAlerts.contains(alert)) {
     _raisedAlerts.remove(alert);
     Log::debug() << "lowering alert " << alert;

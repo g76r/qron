@@ -67,15 +67,14 @@ void ParamSet::setValue(const QString key, const QString value) {
   d->_params.insert(key, value);
 }
 
-QString ParamSet::rawValue(const QString key, bool inherit) const {
+QString ParamSet::rawValue(const QString key, const QString defaultValue, bool inherit) const {
   QString value;
   if (d) {
     value = d->_params.value(key);
     if (value.isNull() && inherit)
       value = parent().rawValue(key);
   }
-  //qDebug() << "    rawValue" << key << value << value.isNull() << isNull();
-  return value;
+  return value.isNull() ? defaultValue : value;
 }
 
 QString ParamSet::evaluate(const QString rawValue, bool inherit) const {
