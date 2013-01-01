@@ -67,7 +67,13 @@ void MailAlertChannel::sendMessage(Alert alert, bool cancellation) {
     queue->_cancellations.append(alert);
   else
     queue->_alerts.append(alert);
-  processQueue(address);
+  if (!queue->_processingScheduled) {
+    // wait for a while before sending a mail with only 1 alert, in case some
+    // related alerts are coming soon after this one
+    // LATER parametrized these hard-coded 10"
+    TimerWithArgument::singleShot(10000, this, "processQueue", address);
+    queue->_processingScheduled = true;
+  }
 }
 
 // LATER also send reminders of long raised alerts every e.g. 1 hour
@@ -76,7 +82,6 @@ void MailAlertChannel::processQueue(const QVariant address) {
   const QString addr(address.toString());
   MailAlertQueue *queue = _queues.value(addr);
   if (queue && (queue->_alerts.size() || queue->_cancellations.size())) {
-    // FIXME wait for a while (e.g. 10" before sending a mail with only 1 alert, in case some related alerts are coming soon)
     QString errorString;
     int s = queue->_lastMail.secsTo(QDateTime::currentDateTime());
     if (queue->_lastMail.isNull() || s >= _minDelayBetweenMails) {
