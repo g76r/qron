@@ -52,20 +52,17 @@
 
     <div class="container">
       <div class="row">
-        <div class="span8">
+        <div class="span6">
           <h2>Recently emited alerts</h2>
           <p>Coming soon...
         </div>
-        <div class="span4">
-          <h2>Current alerts</h2>
+        <div class="span6">
+          <h2>Currently raised alerts</h2>
           <p>The table below display raised alerts, not including one-shot
           alerts that are emited without the need to be raised.
           <p><a class="btn" href="/rest/csv/alerts/raised/list/v1"><i class="icon-file"></i> CSV</a>
           <a class="btn" href="/rest/html/alerts/raised/list/v1"><i class="icon-file"></i> HTML</a>
-          <p><table class="table table-condensed table-hover">
-          <tr><th><i class="icon-bell"></i> Currently raised alerts</th></tr>
-          <tr><td><?view:raisedalerts?></td></tr>
-          </table>
+          <p><?view:raisedalerts?>
         </div>
       </div>
       <div class="row">

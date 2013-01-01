@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,8 +25,7 @@
 #include "hostslistmodel.h"
 #include "clusterslistmodel.h"
 #include "paramsetmodel.h"
-#include "textview/htmlsetview.h"
-#include "textsetmodel.h"
+#include "raisedalertsmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -37,10 +36,10 @@ class WebConsole : public HttpHandler {
   ClustersListModel *_clustersListModel;
   ResourcesAllocationModel *_resourceAllocationModel;
   ParamSetModel *_globalParamsModel;
-  TextSetModel *_raisedAlertsModel;
+  RaisedAlertsModel *_raisedAlertsModel;
   HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
-  *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView;
-  HtmlSetView *_htmlRaisedAlertsView;
+  *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView,
+  *_htmlRaisedAlertsView;
   CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
   *_csvRaisedAlertsView;

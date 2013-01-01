@@ -16,6 +16,7 @@
 
 #include <QSharedDataPointer>
 #include "alertrule.h"
+#include <QDateTime>
 
 class AlertData;
 
@@ -30,6 +31,7 @@ public:
   ~Alert();
   QString id() const;
   AlertRule rule() const;
+  QDateTime datetime() const;
 };
 
 #endif // ALERT_H

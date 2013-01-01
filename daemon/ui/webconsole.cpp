@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,14 +20,14 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _clustersListModel(new ClustersListModel(this)),
   _resourceAllocationModel(new ResourcesAllocationModel(this)),
   _globalParamsModel(new ParamSetModel(this)),
-  _raisedAlertsModel(new TextSetModel(this)),
+  _raisedAlertsModel(new RaisedAlertsModel(this)),
   _htmlTasksTreeView(new HtmlTableView(this)),
   _htmlTargetsTreeView(new HtmlTableView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
   _htmlClustersListView(new HtmlTableView(this)),
   _htmlResourcesAllocationView(new HtmlTableView(this)),
   _htmlGlobalParamsView(new HtmlTableView(this)),
-  _htmlRaisedAlertsView(new HtmlSetView(this)),
+  _htmlRaisedAlertsView(new HtmlTableView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
   _csvHostsListView(new CsvView(this)),
@@ -58,7 +58,8 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _htmlGlobalParamsView->setModel(_globalParamsModel);
   _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
-  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alerts currently raised)");
+  _htmlRaisedAlertsView->setTableClass("table table-condensed table-hover");
+  //_htmlRaisedAlertsView->setEmptyPlaceholder("(no alerts currently raised)");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -67,7 +68,6 @@ WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
   _csvResourceAllocationView->setRowHeaders();
   _csvGlobalParamsView->setModel(_globalParamsModel);
   _csvRaisedAlertsView->setModel(_raisedAlertsModel);
-  _csvRaisedAlertsView->setColumnHeaders(false);
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
@@ -196,9 +196,11 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
-               _raisedAlertsModel, SLOT(insertValue(QString)));
+               _raisedAlertsModel, SLOT(alertRaised(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
-               _raisedAlertsModel, SLOT(removeValue(QString)));
+               _raisedAlertsModel, SLOT(alertCanceled(QString)));
+    disconnect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
+               _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -221,8 +223,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
-            _raisedAlertsModel, SLOT(insertValue(QString)));
+            _raisedAlertsModel, SLOT(alertRaised(QString)));
     connect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
-            _raisedAlertsModel, SLOT(removeValue(QString)));
+            _raisedAlertsModel, SLOT(alertCanceled(QString)));
+    connect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
+            _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
   }
 }

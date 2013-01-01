@@ -74,6 +74,7 @@ void MailAlertChannel::processQueue(const QVariant address) {
   const QString addr(address.toString());
   MailAlertQueue *queue = _queues.value(addr);
   if (queue && (queue->_alerts.size() || queue->_cancellations.size())) {
+    // FIXME wait for a while (e.g. 10" before sending a mail with only 1 alert, in case some related alerts are coming soon)
     QString errorString;
     int s = queue->_lastMail.secsTo(QDateTime::currentDateTime());
     if (queue->_lastMail.isNull() || s >= _minDelayBetweenMails) {
@@ -95,14 +96,15 @@ void MailAlertChannel::processQueue(const QVariant address) {
         body.append("(none)\r\n");
       else
         foreach (Alert alert, queue->_alerts)
-          body.append("* ").append(alert.rule().message(alert)).append("\r\n");
+          body.append(alert.datetime().toString(Qt::ISODate)).append(" ")
+              .append(alert.rule().message(alert)).append("\r\n");
       body.append("\r\nFormer alerts cancelled:\r\n\r\n");
       if (queue->_cancellations.isEmpty())
         body.append("(none)\r\n");
       else
         foreach (Alert alert, queue->_cancellations)
-          body.append("* ").append(alert.rule().cancelMessage(alert))
-              .append("\r\n");
+          body.append(alert.datetime().toString(Qt::ISODate)).append(" ")
+              .append(alert.rule().cancelMessage(alert)).append("\r\n");
       bool queued = _mailSender->send(_senderAddress, recipients, body,
                                          headers, QList<QVariant>(),
                                          errorString);

@@ -18,8 +18,9 @@ class AlertData : public QSharedData {
 public:
   QString _id;
   AlertRule _rule;
+  QDateTime _datetime;
   AlertData(const QString id = QString(), AlertRule rule = AlertRule())
-    : _id(id), _rule(rule) { }
+    : _id(id), _rule(rule), _datetime(QDateTime::currentDateTime()) { }
 };
 
 Alert::Alert() : d(new AlertData) {
@@ -46,4 +47,8 @@ QString Alert::id() const {
 
 AlertRule Alert::rule() const {
   return d ? d->_rule : AlertRule();
+}
+
+QDateTime Alert::datetime() const {
+  return d ? d->_datetime : QDateTime();
 }

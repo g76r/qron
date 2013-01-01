@@ -20,6 +20,7 @@
 #include "logalertchannel.h"
 #include "udpalertchannel.h"
 #include "mailalertchannel.h"
+#include <QTimer>
 
 Alerter::Alerter(QObject *threadParent) : QObject(0),
   _thread(new QThread(threadParent)) {
@@ -32,11 +33,16 @@ Alerter::Alerter(QObject *threadParent) : QObject(0),
   _channels.insert("mail", mailChannel);
   connect(this, SIGNAL(paramsChanged(ParamSet)),
           mailChannel, SLOT(setParams(ParamSet)));
+  QTimer *timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(processCancellation()));
+  // LATER replace this 10" ugly batch with predictive timer (min(timestamps))
+  timer->start(10000);
   moveToThread(_thread);
   qRegisterMetaType<QList<AlertRule> >("QList<AlertRule>");
   qRegisterMetaType<AlertRule>("AlertRule");
   qRegisterMetaType<Alert>("Alert");
   qRegisterMetaType<ParamSet>("ParamSet");
+  qRegisterMetaType<QDateTime>("QDateTime");
 }
 
 bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
@@ -60,6 +66,7 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
       bool stop = !node.attribute("stop").isNull();
       bool notifyCancel = node.attribute("nocancelnotify").isNull();
       //Log::debug() << "found alert rule section " << pattern << " " << stop;
+      int channelsCount = 0;
       foreach (PfNode node, node.children()) {
         if (node.name() == "match" || node.name() == "stop") {
           // ignore
@@ -67,11 +74,18 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
           QString name = node.name();
           AlertChannel *channel = _channels.value(name);
           if (channel) {
-            AlertRule rule(node, pattern, channel, stop, notifyCancel);
-            _rules.append(rule);
-            Log::debug() << "configured alert rule " << name << " " << pattern
-                         << " " << stop << " "
-                         << rule.patternRegExp().pattern();
+            if (stop && channelsCount++) {
+              Log::error() << "do not support several channel for the same "
+                              "alert rule if (stop) is set, ignoring channel '"
+                           << QString::fromUtf8(node.toPf())
+                           << "' with matching pattern " << pattern;
+            } else {
+              AlertRule rule(node, pattern, channel, stop, notifyCancel);
+              _rules.append(rule);
+              Log::debug() << "configured alert rule " << name << " " << pattern
+                           << " " << stop << " "
+                           << rule.patternRegExp().pattern();
+            }
           } else {
             Log::warning() << "alert channel '" << name << "' unknown in alert "
                               "rule with matching pattern " << pattern;
@@ -80,6 +94,7 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
       }
     }
   }
+  _cancelDelay = _params.value("canceldelay", "900").toInt(); // 15'
   emit paramsChanged(_params);
   emit rulesChanged(_rules);
   return true;
@@ -127,20 +142,38 @@ void Alerter::sendMessage(Alert alert, bool cancellation) {
 
 void Alerter::raiseAlert(QString alert) {
   if (!_raisedAlerts.contains(alert)) {
-    _raisedAlerts.insert(alert);
-    Log::debug() << "raising alert " << alert;
-    emit alertRaised(alert);
-    emitAlert(alert);
+    _raisedAlerts.insert(alert, QDateTime::currentDateTime());
+    if (_soonCanceledAlerts.remove(alert)) {
+      Log::debug() << "alert is no longer scheduled for cancellation " << alert
+                   << " (it was raised again within cancel delay";
+    } else {
+      Log::debug() << "raising alert " << alert;
+      emit alertRaised(alert);
+      emitAlert(alert);
+    }
   }
 }
 
 void Alerter::cancelAlert(QString alert) {
-  // FIXME wait for a while (e.g. 15', anyway > mail sending interval) before actually cancelling alert, in case it switches on and off at high frequency
-  // FIXME provide more details on raised alerts: id, rise time, would-cancel time
-  if (_raisedAlerts.contains(alert)) {
+  if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
     _raisedAlerts.remove(alert);
-    Log::debug() << "lowering alert " << alert;
-    emit alertCanceled(alert);
-    emitAlertCancellation(alert);
+    QDateTime dt(QDateTime::currentDateTime().addSecs(_cancelDelay));
+    _soonCanceledAlerts.insert(alert, dt);
+    Log::debug() << "will cancel alert " << alert << " in " << _cancelDelay
+                 << " s";
+    emit alertCancellationScheduled(alert, dt);
+  }
+}
+
+void Alerter::processCancellation() {
+  QDateTime now(QDateTime::currentDateTime());
+  foreach (QString alert, _soonCanceledAlerts.keys()) {
+    QDateTime dt(_soonCanceledAlerts.value(alert));
+    if (dt <= now) {
+      Log::debug() << "do cancel alert " << alert;
+      emit alertCanceled(alert);
+      emitAlertCancellation(alert);
+      _soonCanceledAlerts.remove(alert);
+    }
   }
 }

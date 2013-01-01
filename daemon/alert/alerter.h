@@ -21,6 +21,7 @@
 #include "alertchannel.h"
 #include <QHash>
 #include <QString>
+#include <QDateTime>
 
 class QThread;
 class PfNode;
@@ -31,7 +32,9 @@ class Alerter : public QObject {
   ParamSet _params;
   QHash<QString,AlertChannel*> _channels;
   QList<AlertRule> _rules;
-  QSet<QString> _raisedAlerts;
+  QHash<QString,QDateTime> _raisedAlerts; // alert + raise time
+  QHash<QString,QDateTime> _soonCanceledAlerts; // alert + scheduled cancel time
+  int _cancelDelay;
 
 public:
   explicit Alerter(QObject *threadParent = 0);
@@ -44,9 +47,13 @@ public:
 signals:
   void alertRaised(QString alert);
   void alertCanceled(QString alert);
+  void alertCancellationScheduled(QString alert, QDateTime scheduledTime);
   void alertEmited(QString alert);
   void paramsChanged(ParamSet params);
   void rulesChanged(QList<AlertRule> rules);
+
+private slots:
+  void processCancellation();
 
 private:
   void emitAlertCancellation(QString alert);

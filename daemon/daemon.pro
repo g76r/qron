@@ -76,7 +76,8 @@ SOURCES += sched/main.cpp \
     alert/posteventalertchannel.cpp \
     alert/httpalertchannel.cpp \
     alert/execalertchannel.cpp \
-    ui/textsetmodel.cpp
+    ui/textsetmodel.cpp \
+    ui/raisedalertsmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -113,7 +114,8 @@ HEADERS += \
     alert/posteventalertchannel.h \
     alert/httpalertchannel.h \
     alert/execalertchannel.h \
-    ui/textsetmodel.h
+    ui/textsetmodel.h \
+    ui/raisedalertsmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc
