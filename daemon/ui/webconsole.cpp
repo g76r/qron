@@ -13,7 +13,7 @@
  */
 #include "webconsole.h"
 
-WebConsole::WebConsole(QObject *parent) : HttpHandler(parent), _scheduler(0),
+WebConsole::WebConsole() : _scheduler(0),
   _tasksTreeModel(new TasksTreeModel(this)),
   _targetsTreeModel(new TargetsTreeModel(this)),
   _hostsListModel(new HostsListModel(this)),

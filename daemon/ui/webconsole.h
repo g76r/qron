@@ -46,7 +46,7 @@ class WebConsole : public HttpHandler {
   TemplatingHttpHandler *_wuiHandler;
 
 public:
-  WebConsole(QObject *parent = 0);
+  WebConsole();
   QString name() const;
   bool acceptRequest(const HttpRequest &req);
   void handleRequest(HttpRequest &req, HttpResponse &res);

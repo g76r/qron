@@ -13,12 +13,9 @@
  */
 #include "alertchannel.h"
 #include <QThread>
-#include <QtDebug>
-#include <QMetaObject>
-#include "log/log.h"
 
-AlertChannel::AlertChannel(QObject *threadParent) : QObject(0),
-  _thread(new QThread(threadParent)) {
+AlertChannel::AlertChannel(QObject *parent) : QObject(parent),
+  _thread(new QThread) {
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();

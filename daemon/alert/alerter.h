@@ -37,7 +37,8 @@ class Alerter : public QObject {
   int _cancelDelay;
 
 public:
-  explicit Alerter(QObject *threadParent = 0);
+  explicit Alerter();
+  ~Alerter();
   bool loadConfiguration(PfNode root, QString &errorString);
   void emitAlert(QString alert);
   void raiseAlert(QString alert);

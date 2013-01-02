@@ -47,6 +47,7 @@ class Scheduler : public QObject {
 
 public:
   explicit Scheduler(QObject *parent = 0);
+  ~Scheduler();
   bool loadConfiguration(QIODevice *source, QString &errorString,
                          bool appendToCurrentConfig = true);
   void customEvent(QEvent *event);

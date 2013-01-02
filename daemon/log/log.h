@@ -22,16 +22,21 @@
 class FileLogger;
 class LogHelper;
 
-// LATER handle default task/id
-
 /** This class provides a server-side log facility with common server-side
   * severities (whereas QtDebug does not) and write timestamped log files.
+  * All public methods are threadsafe.
   */
 class Log {
 public:
   enum Severity { Debug, Info, Warning, Error, Fatal };
+  /** Add a new logger. Takes the ownership of the logger (= will delete it). */
   static void addLogger(FileLogger *logger);
+  /** Add a logger to stdout. */
+  static void addConsoleLogger();
+  /** Remove all loggers. */
   static void clearLoggers();
+  /** Remove all loggers and replace them with a new one. */
+  static void replaceLoggers(FileLogger *newLogger);
   static void log(const QString message, Severity severity = Info,
                   const QString task = QString(),
                   const QString execId = QString(),
@@ -72,6 +77,7 @@ public:
                                 const QString sourceCode = QString());
 
 private:
+  Log() { }
   static inline QString sanitize(const QString string);
 };
 

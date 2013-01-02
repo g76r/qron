@@ -18,9 +18,8 @@
 #include <QThread>
 #include "data/paramset.h"
 
-FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
-                       QObject *threadParent)
-  : QObject(0), _device(0), _thread(new QThread(threadParent)),
+FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
+  : QObject(0), _device(0), _thread(new QThread),
     _minSeverity(minSeverity) {
   qDebug() << "creating FileLogger from device" << device;
   if (_device)
@@ -42,9 +41,8 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity,
   }
 }
 
-FileLogger::FileLogger(const QString path, Log::Severity minSeverity,
-                       QObject *threadParent)
-  : QObject(0), _device(0), _thread(new QThread(threadParent)),
+FileLogger::FileLogger(QString path, Log::Severity minSeverity)
+  : QObject(0), _device(0), _thread(new QThread(0)),
     _minSeverity(minSeverity) {
   QString actualPath = ParamSet().evaluate(path);
   qDebug() << "creating FileLogger from path" << path << actualPath;

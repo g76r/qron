@@ -21,16 +21,16 @@
 #include "udpalertchannel.h"
 #include "mailalertchannel.h"
 #include <QTimer>
+#include <QCoreApplication>
 
-Alerter::Alerter(QObject *threadParent) : QObject(0),
-  _thread(new QThread(threadParent)) {
+Alerter::Alerter() : QObject(0), _thread(new QThread) {
   _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
-  _channels.insert("log", new LogAlertChannel(this));
-  _channels.insert("udp", new UdpAlertChannel(this));
-  MailAlertChannel *mailChannel = new MailAlertChannel(this);
+  _channels.insert("log", new LogAlertChannel);
+  _channels.insert("udp", new UdpAlertChannel);
+  MailAlertChannel *mailChannel = new MailAlertChannel;
   _channels.insert("mail", mailChannel);
   connect(this, SIGNAL(paramsChanged(ParamSet)),
           mailChannel, SLOT(setParams(ParamSet)));
@@ -44,6 +44,11 @@ Alerter::Alerter(QObject *threadParent) : QObject(0),
   qRegisterMetaType<Alert>("Alert");
   qRegisterMetaType<ParamSet>("ParamSet");
   qRegisterMetaType<QDateTime>("QDateTime");
+}
+
+Alerter::~Alerter() {
+  foreach (AlertChannel *channel, _channels.values())
+    channel->deleteLater();
 }
 
 bool Alerter::loadConfiguration(PfNode root, QString &errorString) {

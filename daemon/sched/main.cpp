@@ -20,41 +20,35 @@
 #include "httpd/httpserver.h"
 #include "ui/webconsole.h"
 #include <QThread>
+#include <unistd.h>
 
 int main(int argc, char *argv[]) {
-  //qInstallMsgHandler(Log::logMessageHandler);
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
-  QFile *console = new QFile;
-  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(console, Log::Debug, 0);
-  Log::addLogger(logger);
+  Log::addConsoleLogger();
   Scheduler *scheduler = new Scheduler;
   HttpServer *httpd = new HttpServer;
   WebConsole *webconsole = new WebConsole;
-  httpd->appendHandler(webconsole);
   webconsole->setScheduler(scheduler);
+  httpd->appendHandler(webconsole);
   httpd->listen(QHostAddress::Any, 8086); // TODO parametrize addr and port
-  QFile *config = new QFile("./qron.conf");
+  QFile *config = new QFile("./qron.conf"); // TODO parametrize config file
+  // LATER have a config directory rather only one file
   QString errorString;
-  if (!scheduler->loadConfiguration(config, errorString)) {
+  int rc = scheduler->loadConfiguration(config, errorString) ? 0 : 1;
+  delete config;
+  if (rc) {
     Log::fatal() << "cannot load configuration: " << errorString;
     Log::fatal() << "qrond is aborting startup sequence";
-    delete console;
-    delete webconsole;
-    delete httpd;
-    delete scheduler;
-    delete config;
-    return 1;
+  } else {
+    // LATER daemonize on Unix
+    // LATER catch Unix signals
+    // EVENLATER servicize on Windows
+    rc = a.exec();
   }
-  config->deleteLater();
-  QObject::connect(scheduler, SIGNAL(destroyed()),
-                   console, SLOT(deleteLater()));
-  QObject::connect(scheduler, SIGNAL(destroyed()),
-                   logger, SLOT(deleteLater()));
-  QObject::connect(scheduler, SIGNAL(destroyed()),
-                   httpd, SLOT(deleteLater()));
-  QObject::connect(scheduler, SIGNAL(destroyed()),
-                   QCoreApplication::instance(), SLOT(quit()));
-  return a.exec();
+  delete httpd;
+  delete scheduler;
+  ::usleep(100000); // give a chance for last asynchronous log writing
+  Log::clearLoggers(); // this deletes logger and console
+  return rc;
 }

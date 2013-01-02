@@ -25,7 +25,7 @@ protected:
   QThread *_thread;
 
 public:
-  explicit AlertChannel(QObject *threadParent = 0);
+  explicit AlertChannel(QObject *parent = 0);
   Q_INVOKABLE virtual void sendMessage(Alert alert, bool cancellation) = 0;
 };
 

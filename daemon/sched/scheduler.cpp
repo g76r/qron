@@ -29,15 +29,22 @@
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
 Scheduler::Scheduler(QObject *parent) : QObject(parent),
-  _alerter(new Alerter(this)) {
+  _alerter(new Alerter) {
   //qRegisterMetaType<CronTrigger>("CronTrigger");
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
   // TODO clearLoggers() and create loggers depending on config file
-  Log::addLogger(new FileLogger("/tmp/qron-%!yyyy%!mm%!dd.log", Log::Debug,
-                                this));
-  Log::addLogger(new FileLogger("/tmp/info", Log::Info, this));
+  Log::addLogger(new FileLogger("/tmp/qron-%!yyyy%!mm%!dd.log", Log::Debug));
+  Log::addLogger(new FileLogger("/tmp/info", Log::Info));
+}
+
+Scheduler::~Scheduler() {
+  QFile *console = new QFile;
+  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
+  FileLogger *logger = new FileLogger(console, Log::Debug);
+  Log::replaceLoggers(logger);
+  _alerter->deleteLater();
 }
 
 bool Scheduler::loadConfiguration(QIODevice *source,
@@ -147,7 +154,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         }
         Log::debug() << "configured " << n << " task executors";
         while (n--) {
-          Executor *e = new Executor(this);
+          Executor *e = new Executor;
           connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
                   this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
           _executors.append(e);
@@ -166,7 +173,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     Log::debug() << "configured 16 task executors (default maxtotaltasks "
                     "value)";
     for (int n = 16; n; --n) {
-      Executor *e = new Executor(this);
+      Executor *e = new Executor;
       connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
               this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
       _executors.append(e);
@@ -309,7 +316,7 @@ nexthost:;
 void Scheduler::startTaskNowAnyway(TaskRequest request) {
   Executor *e;
   if (_executors.isEmpty()) {
-    e = new Executor(this);
+    e = new Executor;
     e->setTemporary();
     connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
             this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));

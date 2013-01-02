@@ -18,15 +18,44 @@
 #include <QDateTime>
 #include <QRegExp>
 #include <QThread>
+#include <QMutex>
+#include <QFile>
 
 static QList<FileLogger*> _loggers;
+static QMutex _loggersMutex;
+
+void Log::addConsoleLogger() {
+  QFile *console = new QFile;
+  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
+  FileLogger *logger = new FileLogger(console, Log::Debug);
+  Log::addLogger(logger);
+}
 
 void Log::addLogger(FileLogger *logger) {
-  _loggers.append(logger);
+  QMutexLocker locker(&_loggersMutex);
+  if (logger) {
+    if (_loggers.isEmpty())
+      qInstallMsgHandler(Log::logMessageHandler);
+    _loggers.append(logger);
+  }
 }
 
 void Log::clearLoggers() {
+  QMutexLocker locker(&_loggersMutex);
+  foreach(FileLogger *logger, _loggers)
+    logger->deleteLater();
   _loggers.clear();
+}
+
+void Log::replaceLoggers(FileLogger *newLogger) {
+  QMutexLocker locker(&_loggersMutex);
+  foreach(FileLogger *logger, _loggers)
+    logger->deleteLater();
+  _loggers.clear();
+  if (newLogger)
+    _loggers.append(newLogger);
+  else
+    qInstallMsgHandler(0);
 }
 
 void Log::log(const QString message, Severity severity, const QString task,
@@ -42,6 +71,7 @@ void Log::log(const QString message, Severity severity, const QString task,
       .arg(sourceCode.isEmpty() ? ":" : sanitize(sourceCode))
       .arg(severityToString(severity)).arg(message);
   //qDebug() << "***log" << line;
+  QMutexLocker locker(&_loggersMutex);
   foreach (FileLogger *logger, _loggers)
     logger->log(severity, line);
 }
@@ -101,5 +131,6 @@ void Log::logMessageHandler(QtMsgType type, const char *msg) {
     break;
   case QtFatalMsg:
     Log::log(msg, Log::Fatal);
+    // TODO shutdown process because default Qt message handler does shutdown
   }
 }
