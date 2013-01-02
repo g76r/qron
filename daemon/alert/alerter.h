@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -40,9 +40,13 @@ public:
   explicit Alerter();
   ~Alerter();
   bool loadConfiguration(PfNode root, QString &errorString);
+  /** This method is threadsafe. */
   void emitAlert(QString alert);
+  /** This method is threadsafe. */
   void raiseAlert(QString alert);
+  /** This method is threadsafe. */
   void cancelAlert(QString alert);
+  /** This method is threadsafe. */
   ParamSet params() const { return _params; }
 
 signals:
@@ -57,7 +61,10 @@ private slots:
   void processCancellation();
 
 private:
-  void emitAlertCancellation(QString alert);
+  Q_INVOKABLE void doEmitAlert(QString alert);
+  void doEmitAlertCancellation(QString alert);
+  Q_INVOKABLE void doRaiseAlert(QString alert);
+  Q_INVOKABLE void doCancelAlert(QString alert);
   void sendMessage(Alert alert, bool cancellation);
 };
 

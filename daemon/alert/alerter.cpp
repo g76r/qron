@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -107,11 +107,15 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
 }
 
 void Alerter::emitAlert(QString alert) {
+  QMetaObject::invokeMethod(this, "doEmitAlert", Q_ARG(QString, alert));
+}
+
+void Alerter::doEmitAlert(QString alert) {
   Log::debug() << "emiting alert " << alert;
   int n = 0;
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
-      Log::debug() << "alert matching rule #" << n;
+      //Log::debug() << "alert matching rule #" << n;
       sendMessage(Alert(alert, rule), false);
       if (rule.stop())
         break;
@@ -121,12 +125,12 @@ void Alerter::emitAlert(QString alert) {
   emit alertEmited(alert);
 }
 
-void Alerter::emitAlertCancellation(QString alert) {
+void Alerter::doEmitAlertCancellation(QString alert) {
   Log::debug() << "emiting alert cancellation " << alert;
   int n = 0;
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
-      Log::debug() << "alert matching rule #" << n;
+      //Log::debug() << "alert matching rule #" << n;
       if (rule.notifyCancel())
         sendMessage(Alert(alert, rule), true);
       if (rule.stop())
@@ -141,12 +145,15 @@ void Alerter::sendMessage(Alert alert, bool cancellation) {
   QWeakPointer<AlertChannel> channel = alert.rule().channel();
   if (channel)
     QMetaObject::invokeMethod(channel.data(), "sendMessage",
-                              Qt::QueuedConnection,
                               Q_ARG(Alert, alert),
                               Q_ARG(bool, cancellation));
 }
 
 void Alerter::raiseAlert(QString alert) {
+  QMetaObject::invokeMethod(this, "doRaiseAlert", Q_ARG(QString, alert));
+}
+
+void Alerter::doRaiseAlert(QString alert) {
   if (!_raisedAlerts.contains(alert)) {
     _raisedAlerts.insert(alert, QDateTime::currentDateTime());
     if (_soonCanceledAlerts.remove(alert)) {
@@ -155,12 +162,16 @@ void Alerter::raiseAlert(QString alert) {
     } else {
       Log::debug() << "raising alert " << alert;
       emit alertRaised(alert);
-      emitAlert(alert);
+      doEmitAlert(alert);
     }
   }
 }
 
 void Alerter::cancelAlert(QString alert) {
+  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alert));
+}
+
+void Alerter::doCancelAlert(QString alert) {
   if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
     _raisedAlerts.remove(alert);
     QDateTime dt(QDateTime::currentDateTime().addSecs(_cancelDelay));
@@ -178,7 +189,7 @@ void Alerter::processCancellation() {
     if (dt <= now) {
       Log::debug() << "do cancel alert " << alert;
       emit alertCanceled(alert);
-      emitAlertCancellation(alert);
+      doEmitAlertCancellation(alert);
       _soonCanceledAlerts.remove(alert);
     }
   }
