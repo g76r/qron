@@ -92,7 +92,7 @@ QRegExp AlertRule::compilePattern(const QString pattern) {
     case '^':
     case '$':
     case 0: // actual 0 or non-ascii
-      // TODO fix regexp conversion, it is erroneous with some special chars
+      // LATER fix regexp conversion, it is erroneous with some special chars
       re.append('\\').append(c);
       break;
     default:

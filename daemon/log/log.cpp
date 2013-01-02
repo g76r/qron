@@ -131,6 +131,6 @@ void Log::logMessageHandler(QtMsgType type, const char *msg) {
     break;
   case QtFatalMsg:
     Log::log(msg, Log::Fatal);
-    // TODO shutdown process because default Qt message handler does shutdown
+    // LATER shutdown process because default Qt message handler does shutdown
   }
 }

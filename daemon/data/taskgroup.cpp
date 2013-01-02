@@ -45,7 +45,7 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet) {
     QString key = child.attribute("key");
     QString value = child.attribute("value");
     if (key.isNull() || value.isNull()) {
-      // LATER warn
+      Log::warning() << "invalid taskgroup param " << child.toPf();
     } else {
       Log::debug() << "configured taskgroup param " << key << "=" << value
                    << "for taskgroup '" << tgd->_id << "'";
@@ -85,6 +85,6 @@ bool TaskGroup::isNull() const {
 }
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup) {
-  dbg.nospace() << taskGroup.id(); // LATER display more
+  dbg.nospace() << taskGroup.id();
   return dbg.space();
 }

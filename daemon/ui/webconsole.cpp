@@ -115,7 +115,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlTasksTreeView->text().toUtf8().constData());
     return;
   }
-  // TODO tasks list (not only tree)
+  // LATER tasks list (not only tree)
   if (path == "/rest/csv/hosts/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");

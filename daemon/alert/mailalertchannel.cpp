@@ -35,7 +35,7 @@ MailAlertChannel::MailAlertChannel(QObject *parent)
 }
 
 void MailAlertChannel::setParams(ParamSet params) {
-  // TODO make server specification more user friendly, e.g. "localhost:25" or "localhost"
+  // LATER make server specification more user friendly, e.g. "localhost:25" or "localhost"
   QString relay = params.value("mail.relay", "smtp://127.0.0.1");
   if (_mailSender)
     delete _mailSender;
@@ -70,7 +70,7 @@ void MailAlertChannel::sendMessage(Alert alert, bool cancellation) {
   if (!queue->_processingScheduled) {
     // wait for a while before sending a mail with only 1 alert, in case some
     // related alerts are coming soon after this one
-    // LATER parametrized these hard-coded 10"
+    // LATER parametrized the hard-coded 10" before first mail
     TimerWithArgument::singleShot(10000, this, "processQueue", address);
     queue->_processingScheduled = true;
   }
@@ -91,8 +91,9 @@ void MailAlertChannel::processQueue(const QVariant address) {
       QStringList recipients(addr);
       QString body;
       QMap<QString,QString> headers;
-      headers.insert("Subject", "qron alerts"); // LATER parametrize
-      // LATER HTML body
+      // LATER parametrize mail subject
+      headers.insert("Subject", "qron alerts");
+      // LATER HTML alert mails
       body.append("This message contains ")
           .append(QString::number(queue->_alerts.size()))
           .append(" new raised alerts and ")

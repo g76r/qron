@@ -134,13 +134,13 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       QString key = node.attribute("key");
       QString value = node.attribute("value");
       if (key.isNull() || value.isNull()) {
-        // LATER warn
+        Log::warning() << "invalid global param " << node.toPf();
       } else {
         Log::debug() << "configured global param " << key << "=" << value;
         _globalParams.setValue(key, value);
       }
     } else if (node.name() == "log") {
-      // LATER log config
+      // TODO log config
     } else if (node.name() == "maxtotaltasks") {
       bool ok = true;
       int n = node.contentAsString().toInt(&ok);
@@ -264,6 +264,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
   }
   _alerter->cancelAlert("maxtotaltasks.reached");
   // LATER check flags
+  // TODO check maxtaskinstance
   QList<Host> hosts;
   Host host = _hosts.value(request.task().target());
   if (host.isNull())

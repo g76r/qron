@@ -54,13 +54,15 @@ Task::Task(PfNode node) {
   td->_command = node.attribute("command");
   td->_target = node.attribute("target");
   td->_maxtaskinstance = node.attribute("maxtaskinstance", "1").toInt();
-  if (td->_maxtaskinstance <= 0)
-    td->_maxtaskinstance = 1; // LATER warn
+  if (td->_maxtaskinstance <= 0) {
+    td->_maxtaskinstance = 1;
+    Log::warning() << "invalid task maxtaskinstance " << node.toPf();
+  }
   foreach (PfNode child, node.childrenByName("param")) {
     QString key = child.attribute("key");
     QString value = child.attribute("value");
     if (key.isNull() || value.isNull()) {
-      // LATER warn
+      Log::warning() << "invalid task param " << child.toPf();
     } else {
       Log::debug() << "configured task param " << key << "=" << value
                    << "for task '" << td->_id << "'";
@@ -204,6 +206,6 @@ void Task::setNextScheduledExecution(const QDateTime timestamp) const {
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {
-  dbg.nospace() << task.fqtn(); // LATER display more
+  dbg.nospace() << task.fqtn();
   return dbg.space();
 }

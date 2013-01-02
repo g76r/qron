@@ -29,7 +29,7 @@ QVariant TextSetModel::data(const QModelIndex &index, int role) const {
 }
 
 void TextSetModel::insertValue(const QString value) {
-  // LATER optimize
+  // LATER optimize TextSetModel::insertValue
   if (!_values.contains(value)) {
     beginResetModel();
     _values.append(value);
@@ -39,7 +39,7 @@ void TextSetModel::insertValue(const QString value) {
 }
 
 void TextSetModel::removeValue(const QString value) {
-  // LATER optimize
+  // LATER optimize TextSetModel::removeValue
   if (_values.contains(value)) {
     beginResetModel();
     _values.removeOne(value);

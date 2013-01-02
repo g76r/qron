@@ -87,7 +87,7 @@ void ParamSet::appendVariableValue(QString &value, QString &variable,
   if (variable.isEmpty()) {
     Log::warning() << "unsupported variable substitution: empty variable name";
   } else if (variable.at(0) == '!') {
-    // LATER %!Z %!taskid %!fqtn %!requestid %!taskgroupid %!retcode %!status %!eventid
+    // LATER %!Z %!taskid %!fqtn %!requestid %!taskgroupid %!retcode %!status %!eventid %!taskduration %!taskdelay
     if (variable == "!yyyy") {
       value.append(QDateTime::currentDateTime().toString("yyyy"));
     } else if (variable == "!mm") {

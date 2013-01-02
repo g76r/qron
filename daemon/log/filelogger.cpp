@@ -53,7 +53,7 @@ FileLogger::FileLogger(QString path, Log::Severity minSeverity)
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
-  // LATER open in another thread (maybe during reopen)
+  // LATER open in FileLogger thread (maybe during reopen)
   if (!_device->open(QIODevice::WriteOnly|QIODevice::Append
                      |QIODevice::Unbuffered)) {
     qWarning() << "cannot open log file" << actualPath << ":"

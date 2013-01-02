@@ -17,12 +17,11 @@
 #include <QStringList>
 #include "log/log.h"
 
-// LATER support for more complex cron expression such as those of Quartz
+// MAYDO support for more complex cron expression such as those of Quartz
 // e.g. 0#3 = third sunday, 0L = last sunday, W = working day, etc.
-// LATER support 5 fields expressions (without seconds)
-// LATER support 7 fields expressions (with year)
-// LATER warn if dayofweek > 7
-// LATER support text dayofweek (MON, FRI...)
+// MAYDO support 5 fields expressions (without seconds)
+// MAYDO support 7 fields expressions (with year)
+// MAYDO support text dayofweek (MON, FRI...)
 
 #define RE_STEP "(((([0-9]*)(-([0-9]+))?)|\\*)(/([0-9]+))?)"
 #define RE_STEP_INTERNAL RE_STEP "\\s*,\\s*"
@@ -199,8 +198,13 @@ private:
           case 5:
             if (star)
               _daysofweek.setAll();
-            else
+            else {
+              if (iStart > 7 || iStop > 7)
+                Log::warning() << "cron trigger expression with dayofweek > 7, "
+                                  "will use dayofweek%7 instead: "
+                               << cronExpression;
               _daysofweek.set(iStart%7, iStop%7, modulo.toInt());
+            }
             break;
           }
           j += c[0].length();

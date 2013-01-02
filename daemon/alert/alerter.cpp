@@ -61,7 +61,7 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
       QString key = node.attribute("key");
       QString value = node.attribute("value");
       if (key.isNull() || value.isNull()) {
-        // LATER warn
+        Log::warning() << "invalid alerts param " << node.toPf();
       } else {
         Log::debug() << "configured alerts param " << key << "=" << value;
         _params.setValue(key, value);
