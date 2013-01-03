@@ -14,7 +14,7 @@
 #include "mailalertchannel.h"
 #include "log/log.h"
 #include <QDateTime>
-#include "util/timerwithargument.h"
+#include "util/timerwitharguments.h"
 #include "mail/mailsender.h"
 #include <QThread>
 
@@ -71,7 +71,7 @@ void MailAlertChannel::sendMessage(Alert alert, bool cancellation) {
     // wait for a while before sending a mail with only 1 alert, in case some
     // related alerts are coming soon after this one
     // LATER parametrized the hard-coded 10" before first mail
-    TimerWithArgument::singleShot(10000, this, "processQueue", address);
+    TimerWithArguments::singleShot(10000, this, "processQueue", address);
     queue->_processingScheduled = true;
   }
 }
@@ -126,12 +126,12 @@ void MailAlertChannel::processQueue(const QVariant address) {
         Log::warning() << "cannot send mail alert to " << addr
                        << " error in SMTP communication: " << errorString;
         // LATER parametrize retry delay, set a maximum data retention, etc.
-        TimerWithArgument::singleShot(60000, this, "processQueue", addr);
+        TimerWithArguments::singleShot(60000, this, "processQueue", addr);
       }
     } else {
       if (!queue->_processingScheduled) { // this avoids stacking calls
         Log::debug() << "MailAlertChannel::processQueue postponing send";
-        TimerWithArgument::singleShot((_minDelayBetweenMails-s)*1000, this,
+        TimerWithArguments::singleShot((_minDelayBetweenMails-s)*1000, this,
                                       "processQueue", addr);
         queue->_processingScheduled = true;
       } else

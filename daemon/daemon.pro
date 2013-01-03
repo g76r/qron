@@ -51,7 +51,6 @@ SOURCES += sched/main.cpp \
     data/host.cpp \
     data/taskrequest.cpp \
     sched/executor.cpp \
-    util/timerwithargument.cpp \
     log/log.cpp \
     log/filelogger.cpp \
     ui/taskstreemodel.cpp \
@@ -88,7 +87,6 @@ HEADERS += \
     data/host.h \
     data/taskrequest.h \
     sched/executor.h \
-    util/timerwithargument.h \
     log/log.h \
     log/filelogger.h \
     ui/taskstreemodel.h \

@@ -19,7 +19,7 @@
 #include "pf/pfdomhandler.h"
 #include "data/host.h"
 #include "data/cluster.h"
-#include "util/timerwithargument.h"
+#include "util/timerwitharguments.h"
 #include <QMetaObject>
 #include "log/log.h"
 #include "log/filelogger.h"
@@ -415,7 +415,7 @@ void Scheduler::setTimerForCronTrigger(CronTrigger trigger,
                  << trigger.canonicalCronExpression() << "'";
     QVariant v;
     v.setValue(trigger);
-    TimerWithArgument::singleShot(ms, this, "triggerTrigger", v);
+    TimerWithArguments::singleShot(ms, this, "triggerTrigger", v);
     trigger.task().setNextScheduledExecution(QDateTime::currentDateTime()
                                              .addMSecs(ms));
   }
