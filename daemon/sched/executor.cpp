@@ -71,6 +71,7 @@ void Executor::sshMean(TaskRequest request, Host target) {
   // LATER make the host key bypass optional (since it's insecure)
   // LATER support ssh options from params, such as port and keys
   // LATER remove warning about known hosts file from stderr log
+  // LATER provide a way to set ssh username
   sshCmdline << "ssh" << "-oUserKnownHostsFile=/dev/null"
              << "-oGlobalKnownHostsFile=/dev/null"
              << "-oStrictHostKeyChecking=no"
