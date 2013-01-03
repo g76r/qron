@@ -26,6 +26,8 @@
 #include "clusterslistmodel.h"
 #include "paramsetmodel.h"
 #include "raisedalertsmodel.h"
+#include "lastemitedalertsmodel.h"
+#include "textview/clockview.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -37,12 +39,15 @@ class WebConsole : public HttpHandler {
   ResourcesAllocationModel *_resourceAllocationModel;
   ParamSetModel *_globalParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
+  LastEmitedAlertsModel *_lastEmitedAlertsModel;
   HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
   *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView,
-  *_htmlRaisedAlertsView;
+  *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
+  *_htmlLastEmitedAlertsView10;
+  ClockView *_clockView;
   CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
-  *_csvRaisedAlertsView;
+  *_csvRaisedAlertsView, *_csvLastEmitedAlertsView;
   TemplatingHttpHandler *_wuiHandler;
 
 public:

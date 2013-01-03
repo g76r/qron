@@ -38,9 +38,9 @@
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li><a href="index.html">Overview</a></li>
-              <li><a href="tasks.html">Tasks</a></li>
+              <li class="active"><a href="tasks.html">Tasks</a></li>
               <li><a href="infra.html">Infrastructure</a></li>
-              <li class="active"><a href="alerts.html">Alerts</a></li>
+              <li><a href="alerts.html">Alerts</a></li>
               <li><a href="resources.html">Resources</a></li>
               <li><a href="events.html">Events</a></li>
               <li><a href="schedule.html">Schedule</a></li>
@@ -55,34 +55,27 @@
 
     <div class="container">
       <div class="row">
-        <div class="span6">
-          <h2>Recently emited alerts</h2>
-          <p>The table below displays emited alerts. There are two kinds of
-          alerts: those which are emited when raised (see on the right) and
-          those which are emited immediatly (one shot alerts).
+        <div class="span8">
+          <h2>Coming soon</h2>
+          <p>Coming soon...
         </div>
-        <div class="span6">
-          <h2>Currently raised alerts</h2>
-          <p>The table below displays raised alerts, not including one-shot
-          alerts that are emited without the need to be raised.
-        </div>
-      </div>
-      <div class="row">
-        <div class="span6">
-          <p><a class="btn btn-info" href="/rest/csv/alerts/emited/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="/rest/html/alerts/emited/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <p><?view:lastemitedalerts?>
-        </div>
-        <div class="span6">
-          <p><a class="btn btn-info" href="/rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="/rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <p><?view:raisedalerts?>
+        <div class="span4">
+          <h2>Global params</h2>
+          <p><a class="btn btn-info" href="/rest/csv/params/global/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/params/global/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:globalparams?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
-          <h2>Alerts configuration</h2>
-          <p>Coming soon...
+          <a name="tasks"></a>
+          <h2>Tasks</h2>
+          <p>
+          <a class="btn btn-info" href="/rest/csv/tasks/tree/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/tasks/tree/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="/rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV (flat list)</a>
+          <a class="btn btn-info" href="/rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML (flat list)</a>
+          <p><?view:taskstree?>
         </div>
       </div>
     </div>

@@ -37,12 +37,15 @@
           <a class="brand" href="#">Qron Web Console</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li class="active"><a href="index.html">Home</a></li>
-              <li><a href="config.html">Configuration</a></li>
+              <li class="active"><a href="index.html">Overview</a></li>
+              <li><a href="tasks.html">Tasks</a></li>
+              <li><a href="infra.html">Infrastructure</a></li>
               <li><a href="alerts.html">Alerts</a></li>
               <li><a href="resources.html">Resources</a></li>
+              <li><a href="events.html">Events</a></li>
               <li><a href="schedule.html">Schedule</a></li>
               <li><a href="about.html">About</a></li>
+              <li><a><?view:now?></a></li>
           </div>
         </div>
       </div>
@@ -52,41 +55,45 @@
 
     <div class="container">
       <div class="row">
-        <div class="span8">
-          <h2>Recent events</h2>
-          <p>Coming soon...
+        <div class="span6">
+          <h2>Recently emited alerts</h2>
+          <p><a class="btn btn-info" href="/rest/csv/alerts/emited/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/alerts/emited/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="alerts.html">Alerts page &raquo;</a>
+          <p><?view:lastemitedalerts10?>
         </div>
-        <div class="span4">
-          <h2>Global params</h2>
-          <p><a class="btn" href="/rest/csv/params/global/list/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/params/global/list/v1"><i class="icon-file"></i> HTML</a>
-          <p><?view:globalparams?>
+        <div class="span6">
+          <h2>Currently raised alerts</h2>
+          <p><a class="btn btn-info" href="/rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="alerts.html">Alerts page &raquo;</a>
+          <p><?view:raisedalerts10?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
           <h2>Tasks</h2>
-          <p><a class="btn btn-primary" href="config.html#tasks">Configuration &raquo;</a>
-          <a class="btn" href="/rest/csv/tasks/tree/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/tasks/tree/v1"><i class="icon-file"></i> HTML</a>
-          <a class="btn" href="/rest/csv/tasks/list/v1"><i class="icon-file"></i> CSV (flat list)</a>
-          <a class="btn" href="/rest/html/tasks/list/v1"><i class="icon-file"></i> HTML (flat list)</a>
+          <p><a class="btn btn-info" href="/rest/csv/tasks/tree/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/tasks/tree/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="/rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV (flat list)</a>
+          <a class="btn btn-info" href="/rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML (flat list)</a>
+          <a class="btn btn-primary" href="tasks.html">Tasks page &raquo;</a>
           <p><?view:taskstree?>
         </div>
       </div>
       <div class="row">
         <div class="span8">
           <h2>Hosts</h2>
-          <p><a class="btn btn-primary" href="config.html#hosts">Configuration &raquo;</a>
-          <a class="btn" href="/rest/csv/hosts/list/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/hosts/list/v1"><i class="icon-file"></i> HTML</a>
+          <p><a class="btn btn-info" href="/rest/csv/hosts/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/hosts/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:hostslist?>
         </div>
         <div class="span4">
           <h2>Clusters</h2>
-          <p><a class="btn btn-primary" href="config.html#clusters">Configuration &raquo;</a>
-          <a class="btn" href="/rest/csv/clusters/list/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/clusters/list/v1"><i class="icon-file"></i> HTML</a>
+          <p><a class="btn btn-info" href="/rest/csv/clusters/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/clusters/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:clusterslist?>
         </div>
       </div>

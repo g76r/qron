@@ -37,12 +37,15 @@
           <a class="brand" href="#">Qron Web Console</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li><a href="index.html">Home</a></li>
-              <li><a href="config.html">Configuration</a></li>
+              <li><a href="index.html">Overview</a></li>
+              <li><a href="tasks.html">Tasks</a></li>
+              <li><a href="infra.html">Infrastructure</a></li>
               <li><a href="alerts.html">Alerts</a></li>
               <li class="active"><a href="resources.html">Resources</a></li>
+              <li><a href="events.html">Events</a></li>
               <li><a href="schedule.html">Schedule</a></li>
               <li><a href="about.html">About</a></li>
+              <li><a><?view:now?></a></li>
           </div>
         </div>
       </div>
@@ -55,8 +58,8 @@
         <div class="span12">
           <h2>Current resources allocation</h2>
           <p>The table below shows resources currently availlable for every host depending on tasks currently executed.
-          <p><a class="btn" href="/rest/csv/resources/allocation/v1"><i class="icon-file"></i> CSV</a>
-          <a class="btn" href="/rest/html/resources/allocation/v1"><i class="icon-file"></i> HTML</a>
+          <p><a class="btn btn-info" href="/rest/csv/resources/allocation/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/resources/allocation/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:resourcesallocation?>
         </div>
       </div>

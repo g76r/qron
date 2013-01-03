@@ -21,6 +21,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _resourceAllocationModel(new ResourcesAllocationModel(this)),
   _globalParamsModel(new ParamSetModel(this)),
   _raisedAlertsModel(new RaisedAlertsModel(this)),
+  _lastEmitedAlertsModel(new LastEmitedAlertsModel(this, 51)),
   _htmlTasksTreeView(new HtmlTableView(this)),
   _htmlTargetsTreeView(new HtmlTableView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
@@ -28,6 +29,10 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlResourcesAllocationView(new HtmlTableView(this)),
   _htmlGlobalParamsView(new HtmlTableView(this)),
   _htmlRaisedAlertsView(new HtmlTableView(this)),
+  _htmlRaisedAlertsView10(new HtmlTableView(this)),
+  _htmlLastEmitedAlertsView(new HtmlTableView(this)),
+  _htmlLastEmitedAlertsView10(new HtmlTableView(this)),
+  _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
   _csvHostsListView(new CsvView(this)),
@@ -35,6 +40,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvResourceAllocationView(new CsvView(this)),
   _csvGlobalParamsView(new CsvView(this)),
   _csvRaisedAlertsView(new CsvView(this)),
+  _csvLastEmitedAlertsView(new CsvView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console",
                                         ":docroot/console")) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
@@ -59,7 +65,26 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView->setTableClass("table table-condensed table-hover");
-  //_htmlRaisedAlertsView->setEmptyPlaceholder("(no alerts currently raised)");
+  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alerts currently raised)");
+  _htmlRaisedAlertsView
+      ->setEllipsePlaceholder("(alerts list too long to be displayed)");
+  _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
+  _htmlRaisedAlertsView10->setTableClass("table table-condensed table-hover");
+  _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alerts currently raised)");
+  _htmlRaisedAlertsView10
+      ->setEllipsePlaceholder("(see alerts page for more alerts)");
+  _htmlRaisedAlertsView10->setMaxrows(10);
+  _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
+  _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
+  _htmlLastEmitedAlertsView->setMaxrows(50);
+  _htmlLastEmitedAlertsView
+      ->setEllipsePlaceholder("(alerts list too long to be displayed)");
+  _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
+  _htmlLastEmitedAlertsView10
+      ->setTableClass("table table-condensed table-hover");
+  _htmlLastEmitedAlertsView10->setMaxrows(10);
+  _htmlLastEmitedAlertsView10
+      ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -68,6 +93,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvResourceAllocationView->setRowHeaders();
   _csvGlobalParamsView->setModel(_globalParamsModel);
   _csvRaisedAlertsView->setModel(_raisedAlertsModel);
+  _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
@@ -76,6 +102,10 @@ WebConsole::WebConsole() : _scheduler(0),
   _wuiHandler->addView("clusterslist", _htmlClustersListView);
   _wuiHandler->addView("globalparams", _htmlGlobalParamsView);
   _wuiHandler->addView("raisedalerts", _htmlRaisedAlertsView);
+  _wuiHandler->addView("raisedalerts10", _htmlRaisedAlertsView10);
+  _wuiHandler->addView("lastemitedalerts", _htmlLastEmitedAlertsView);
+  _wuiHandler->addView("lastemitedalerts10", _htmlLastEmitedAlertsView10);
+  _wuiHandler->addView("now", _clockView);
 }
 
 QString WebConsole::name() const {
@@ -171,6 +201,17 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlRaisedAlertsView->text().toUtf8().constData());
     return;
   }
+  if (path == "/rest/csv/alerts/emited/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvLastEmitedAlertsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/alerts/emited/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlLastEmitedAlertsView->text().toUtf8().constData());
+    return;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
 }
@@ -201,6 +242,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _raisedAlertsModel, SLOT(alertCanceled(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
                _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
+    disconnect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
+               _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -228,5 +271,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _raisedAlertsModel, SLOT(alertCanceled(QString)));
     connect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
             _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
+    connect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
+            _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
   }
 }
