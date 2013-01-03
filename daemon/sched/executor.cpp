@@ -53,23 +53,31 @@ void Executor::doExecute(TaskRequest request, Host target) {
 }
 
 void Executor::execMean(TaskRequest request, Host target) {
-  execProcess(request, target,
-              request.params().splitAndEvaluate(request.task().command()));
+  QStringList cmdline;
+  cmdline = request.params().splitAndEvaluate(request.task().command());
+  Log::info(_request.task().fqtn(), _request.id())
+      << "exact command line to be executed (locally): " << cmdline.join(" ");
+  execProcess(request, target, cmdline);
 }
 
 void Executor::sshMean(TaskRequest request, Host target) {
-  QStringList cmdline;
+  QStringList cmdline, sshCmdline;
+  cmdline = request.params().splitAndEvaluate(request.task().command());
+  Log::info(_request.task().fqtn(), _request.id())
+      << "exact command line to be executed (through ssh on host "
+      << target.hostname() <<  "): " << cmdline.join(" ");
   // ssh options are set to avoid any host key check to make the connection
   // successful even if the host is not known or if its key changed
   // LATER make the host key bypass optional (since it's insecure)
   // LATER support ssh options from params, such as port and keys
   // LATER remove warning about known hosts file from stderr log
-  cmdline << "ssh" << "-oUserKnownHostsFile=/dev/null"
-          << "-oGlobalKnownHostsFile=/dev/null" << "-oStrictHostKeyChecking=no"
-          << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
-          << target.hostname()
-          << request.params().evaluate(request.task().command());
-  execProcess(request, target, cmdline);
+  sshCmdline << "ssh" << "-oUserKnownHostsFile=/dev/null"
+             << "-oGlobalKnownHostsFile=/dev/null"
+             << "-oStrictHostKeyChecking=no"
+             << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
+             << target.hostname()
+             << cmdline;
+  execProcess(request, target, sshCmdline);
 }
 
 void Executor::execProcess(TaskRequest request, Host target,
@@ -97,12 +105,13 @@ void Executor::execProcess(TaskRequest request, Host target,
    if (!cmdline.isEmpty()) {
      QString program = cmdline.takeFirst();
      Log::debug(_request.task().fqtn(), _request.id())
-         << "about to run command '" << program << "' with args " << cmdline
-         << " and environment " << env.toStringList();
+         << "about to start system process '" << program << "' with args "
+         << cmdline << " and environment " << env.toStringList();
      _process->start(program, cmdline);
    } else
-     Log::warning() << "cannot execute task with empty command '"
-                    << request.task().fqtn() << "'";
+     Log::warning(_request.task().fqtn(), _request.id())
+         << "cannot execute task with empty command '"
+         << request.task().fqtn() << "'";
 }
 
 void Executor::error(QProcess::ProcessError error) {
