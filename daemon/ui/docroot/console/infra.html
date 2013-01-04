@@ -37,9 +37,9 @@
           <a class="brand" href="#">Qron Web Console</a>
           <div class="nav-collapse collapse">
             <ul class="nav">
-              <li class="active"><a href="index.html">Overview</a></li>
+              <li><a href="index.html">Overview</a></li>
               <li><a href="tasks.html">Tasks</a></li>
-              <li><a href="infra.html">Infrastructure</a></li>
+              <li class="active"><a href="infra.html">Infrastructure</a></li>
               <li><a href="alerts.html">Alerts</a></li>
               <li><a href="resources.html">Resources</a></li>
               <li><a href="events.html">Events</a></li>
@@ -56,40 +56,35 @@
 
     <div class="container">
       <div class="row">
-        <div class="span6">
-          <h2>Recently emited alerts</h2>
-          <p><a class="btn btn-info" href="/rest/csv/alerts/emited/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="/rest/html/alerts/emited/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="alerts.html">Alerts page &raquo;</a>
-          <p><?view:lastemitedalerts10?>
+        <div class="span8">
+          <h2>Coming soon</h2>
+          <p>Coming soon...
         </div>
-        <div class="span6">
-          <h2>Currently raised alerts</h2>
-          <p><a class="btn btn-info" href="/rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="/rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="alerts.html">Alerts page &raquo;</a>
-          <p><?view:raisedalerts10?>
+        <div class="span4">
+          <h2>Global params</h2>
+          <p><a class="btn btn-info" href="/rest/csv/params/global/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/params/global/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:globalparams?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span8">
+          <h2>Hosts</h2>
+          <p><a class="btn btn-info" href="/rest/csv/hosts/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/hosts/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:hostslist?>
+        </div>
+        <div class="span4">
+          <h2>Clusters</h2>
+          <p><a class="btn btn-info" href="/rest/csv/clusters/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/clusters/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:clusterslist?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
-          <h2>Tasks</h2>
-          <p><a class="btn btn-info" href="/rest/csv/tasks/tree/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="/rest/html/tasks/tree/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-info" href="/rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV (flat list)</a>
-          <a class="btn btn-info" href="/rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML (flat list)</a>
-          <a class="btn btn-primary" href="tasks.html">Tasks page &raquo;</a>
-          <p><?view:taskstree?>
-        </div>
-      </div>
-      <div class="row">
-        <div class="span12">
-          <h2>Last log entries</h2>
-          <p><a class="btn btn-info" href="/rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="/rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-info" href="/rest/txt/log/full/v1"><i class="icon-file icon-white"></i> full raw log</a>
-          <a class="btn btn-primary" href="log.html">Log page &raquo;</a>
-          <p><?view:log10?>
+          <h2>More to come</h2>
+          <p>Soon...
         </div>
       </div>
     </div>

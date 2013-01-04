@@ -76,24 +76,26 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlAlertParamsView->setTableClass("table table-condensed table-hover");
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView->setTableClass("table table-condensed table-hover");
-  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alerts currently raised)");
+  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlRaisedAlertsView
       ->setEllipsePlaceholder("(alerts list too long to be displayed)");
   _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView10->setTableClass("table table-condensed table-hover");
-  _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alerts currently raised)");
+  _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
   _htmlRaisedAlertsView10
       ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _htmlRaisedAlertsView10->setMaxrows(10);
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
   _htmlLastEmitedAlertsView->setMaxrows(50);
+  _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlLastEmitedAlertsView
       ->setEllipsePlaceholder("(alerts list too long to be displayed)");
   _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView10
       ->setTableClass("table table-condensed table-hover");
   _htmlLastEmitedAlertsView10->setMaxrows(10);
+  _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
   _htmlLastEmitedAlertsView10
       ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _htmlAlertRulesView->setModel(_alertRulesModel);
@@ -105,12 +107,14 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLogView->setTrClassRole(LogModel::TrClassRole);
   _htmlLogView
       ->setEllipsePlaceholder("(download full raw log for more entries)");
+  _htmlLogView->setEmptyPlaceholder("(empty log)");
   _htmlLogView10->setModel(_memoryLogger->model());
   _htmlLogView10->setTableClass("table table-condensed table-hover");
   _htmlLogView10->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlLogView10->setTrClassRole(LogModel::TrClassRole);
   _htmlLogView10->setMaxrows(10);
   _htmlLogView10->setEllipsePlaceholder("(see log page for more entries)");
+  _htmlLogView10->setEmptyPlaceholder("(empty log)");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
