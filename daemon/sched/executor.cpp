@@ -35,7 +35,7 @@ void Executor::execute(TaskRequest request, Host target) {
 
 void Executor::doExecute(TaskRequest request, Host target) {
   const QString mean = request.task().mean();
-  Log::info(request.task().fqtn(), request.id())
+  Log::debug(request.task().fqtn(), request.id())
       << "executing task '" << request.task().fqtn() << "' through mean '"
       << mean << "'";
   if (mean == "exec")
