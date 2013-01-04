@@ -28,9 +28,12 @@ void UdpAlertChannel::sendMessage(Alert alert, bool cancellation) {
   // LATER support IPv6 numeric addresses (they contain colons)
   QStringList tokens(alert.rule().address().split(":"));
   int port;
-  if (tokens.size() != 2 || (port = tokens.at(1).toInt()) <= 0 || port > 65535)
+  if (tokens.size() != 2 || (port = tokens.at(1).toInt()) <= 0
+      || port > 65535) {
     Log::warning() << "unssupported UDP address for UDP alert channel: "
                    << alert.rule().address();
+    return;
+  }
   const QString host = tokens.at(0);
   _socket->connectToHost(host, (quint16)port, QIODevice::WriteOnly);
   if (_socket->waitForConnected(2000)) {
