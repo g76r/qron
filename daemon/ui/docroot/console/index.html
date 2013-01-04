@@ -44,6 +44,7 @@
               <li><a href="resources.html">Resources</a></li>
               <li><a href="events.html">Events</a></li>
               <li><a href="schedule.html">Schedule</a></li>
+              <li><a href="log.html">Log</a></li>
               <li><a href="about.html">About</a></li>
               <li><a><?view:now?></a></li>
           </div>
@@ -95,6 +96,16 @@
           <a class="btn btn-info" href="/rest/html/clusters/list/v1"><i class="icon-file icon-white"></i> HTML</a>
           <a class="btn btn-primary" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:clusterslist?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <h2>Last log entries</h2>
+          <p><a class="btn btn-info" href="/rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="/rest/txt/log/full/v1"><i class="icon-file icon-white"></i> full raw log</a>
+          <a class="btn btn-primary" href="log.html">Log page &raquo;</a>
+          <p><?view:log10?>
         </div>
       </div>
     </div>

@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,29 +11,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef FILELOGGER_H
-#define FILELOGGER_H
+#ifndef LOGGER_H
+#define LOGGER_H
 
 #include <QObject>
-#include "logger.h"
+#include "log.h"
+#include <QDateTime>
 
-class QIODevice;
-class QThread;
-
-class FileLogger : public Logger {
+class Logger : public QObject {
   Q_OBJECT
-  QIODevice *_device;
-  QThread *_thread;
+  Log::Severity _minSeverity;
 
 public:
-  /** Takes ownership of the device (= will delete it). */
-  explicit FileLogger(QIODevice *device, Log::Severity minSeverity = Log::Info);
-  explicit FileLogger(QString path, Log::Severity minSeverity = Log::Info);
-  ~FileLogger();
+  explicit Logger(QObject *parent = 0, Log::Severity minSeverity = Log::Info);
+  /** This method is thread-safe. */
+  void log(QDateTime timestamp, QString message, Log::Severity severity,
+           QString task, QString execId, QString sourceCode);
 
 protected:
-  void doLog(QDateTime timestamp, QString message, Log::Severity severity,
-             QString task, QString execId, QString sourceCode);
+  Q_INVOKABLE virtual void doLog(QDateTime timestamp, QString message,
+                                 Log::Severity severity, QString task,
+                                 QString execId, QString sourceCode) = 0;
 };
 
-#endif // FILELOGGER_H
+#endif // LOGGER_H

@@ -21,7 +21,7 @@
 #include <QMutex>
 #include <QFile>
 
-static QList<FileLogger*> _loggers;
+static QList<Logger*> _loggers;
 static QMutex _loggersMutex;
 
 void Log::addConsoleLogger() {
@@ -31,7 +31,7 @@ void Log::addConsoleLogger() {
   Log::addLogger(logger);
 }
 
-void Log::addLogger(FileLogger *logger) {
+void Log::addLogger(Logger *logger) {
   QMutexLocker locker(&_loggersMutex);
   if (logger) {
     if (_loggers.isEmpty())
@@ -42,14 +42,14 @@ void Log::addLogger(FileLogger *logger) {
 
 void Log::clearLoggers() {
   QMutexLocker locker(&_loggersMutex);
-  foreach(FileLogger *logger, _loggers)
+  foreach(Logger *logger, _loggers)
     logger->deleteLater();
   _loggers.clear();
 }
 
-void Log::replaceLoggers(FileLogger *newLogger) {
+void Log::replaceLoggers(Logger *newLogger) {
   QMutexLocker locker(&_loggersMutex);
-  foreach(FileLogger *logger, _loggers)
+  foreach(Logger *logger, _loggers)
     logger->deleteLater();
   _loggers.clear();
   if (newLogger)
@@ -64,16 +64,12 @@ void Log::log(const QString message, Severity severity, const QString task,
   QString realTask(task);
   if (realTask.isNull())
     realTask = QThread::currentThread()->objectName();
-  QString line = QString("%1 %2/%3 %4 %5 %6")
-      .arg(now.toString(Qt::ISODate))
-      .arg(sanitize(realTask.isEmpty() ? "?" : realTask))
-      .arg(execId.isEmpty() ? "0" : sanitize(execId))
-      .arg(sourceCode.isEmpty() ? ":" : sanitize(sourceCode))
-      .arg(severityToString(severity)).arg(message);
-  //qDebug() << "***log" << line;
+  realTask = realTask.isEmpty() ? "?" : sanitize(realTask);
+  QString realExecId = execId.isEmpty() ? "0" : sanitize(execId);
+  QString realSourceCode = sourceCode.isEmpty() ? ":" : sanitize(sourceCode);
   QMutexLocker locker(&_loggersMutex);
-  foreach (FileLogger *logger, _loggers)
-    logger->log(severity, line);
+  foreach (Logger *logger, _loggers)
+    logger->log(now, message, severity, realTask, realExecId, realSourceCode);
 }
 
 const QString Log::severityToString(Severity severity) {

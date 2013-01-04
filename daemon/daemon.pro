@@ -78,7 +78,10 @@ SOURCES += sched/main.cpp \
     ui/textsetmodel.cpp \
     ui/raisedalertsmodel.cpp \
     ui/lastemitedalertsmodel.cpp \
-    ui/alertrulesmodel.cpp
+    ui/alertrulesmodel.cpp \
+    log/logger.cpp \
+    log/memorylogger.cpp \
+    log/logmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -117,7 +120,10 @@ HEADERS += \
     ui/textsetmodel.h \
     ui/raisedalertsmodel.h \
     ui/lastemitedalertsmodel.h \
-    ui/alertrulesmodel.h
+    ui/alertrulesmodel.h \
+    log/logger.h \
+    log/memorylogger.h \
+    log/logmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

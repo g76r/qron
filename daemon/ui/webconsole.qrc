@@ -10,5 +10,6 @@
         <file>docroot/console/resources.html</file>
         <file>docroot/console/alerts.html</file>
         <file>docroot/console/tasks.html</file>
+        <file>docroot/console/log.html</file>
     </qresource>
 </RCC>

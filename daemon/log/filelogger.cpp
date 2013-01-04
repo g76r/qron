@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,8 +19,7 @@
 #include "data/paramset.h"
 
 FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
-  : QObject(0), _device(0), _thread(new QThread),
-    _minSeverity(minSeverity) {
+  : Logger(0, minSeverity), _device(0), _thread(new QThread) {
   qDebug() << "creating FileLogger from device" << device;
   if (_device)
     delete _device;
@@ -42,8 +41,7 @@ FileLogger::FileLogger(QIODevice *device, Log::Severity minSeverity)
 }
 
 FileLogger::FileLogger(QString path, Log::Severity minSeverity)
-  : QObject(0), _device(0), _thread(new QThread(0)),
-    _minSeverity(minSeverity) {
+  : Logger(0, minSeverity), _device(0), _thread(new QThread(0)) {
   QString actualPath = ParamSet().evaluate(path);
   qDebug() << "creating FileLogger from path" << path << actualPath;
   if (_device)
@@ -69,15 +67,14 @@ FileLogger::~FileLogger() {
     delete _device;
 }
 
-void FileLogger::log(Log::Severity severity, QString line) {
-  // force asynchronous call to protect against i/o latency: slow disk,
-  // NFS stall (for those fool enough to write logs over NFS), etc.
-  if (severity >= _minSeverity)
-    QMetaObject::invokeMethod(this, "doLog", Qt::QueuedConnection,
-                              Q_ARG(QString, line));
-}
-
-void FileLogger::doLog(const QString line) {
+void FileLogger::doLog(QDateTime timestamp, QString message,
+                       Log::Severity severity,
+                       QString task, QString execId,
+                       QString sourceCode) {
+  QString line = QString("%1 %2/%3 %4 %5 %6")
+      .arg(timestamp.toString(Qt::ISODate)).arg(task).arg(execId)
+      .arg(sourceCode).arg(Log::severityToString(severity)).arg(message);
+  //qDebug() << "***log" << line;
   // TODO file reopen (to allow log rotation and date/time in path)
   if (_device) {
     QByteArray ba = line.toUtf8();

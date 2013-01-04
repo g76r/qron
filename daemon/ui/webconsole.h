@@ -29,6 +29,7 @@
 #include "lastemitedalertsmodel.h"
 #include "textview/clockview.h"
 #include "alertrulesmodel.h"
+#include "log/memorylogger.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -46,13 +47,16 @@ class WebConsole : public HttpHandler {
   *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView,
   *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
-  *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView;
+  *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlLogView,
+  *_htmlLogView10;
   ClockView *_clockView;
   CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
   *_csvAlertParamsView,
-  *_csvRaisedAlertsView, *_csvLastEmitedAlertsView, *_csvAlertRulesView;
+  *_csvRaisedAlertsView, *_csvLastEmitedAlertsView, *_csvAlertRulesView,
+  *_csvLogView;
   TemplatingHttpHandler *_wuiHandler;
+  MemoryLogger *_memoryLogger;
 
 public:
   WebConsole();

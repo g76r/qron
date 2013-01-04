@@ -19,7 +19,7 @@
 #include <QVariant>
 #include <QStringList>
 
-class FileLogger;
+class Logger;
 class LogHelper;
 
 /** This class provides a server-side log facility with common server-side
@@ -30,13 +30,13 @@ class Log {
 public:
   enum Severity { Debug, Info, Warning, Error, Fatal };
   /** Add a new logger. Takes the ownership of the logger (= will delete it). */
-  static void addLogger(FileLogger *logger);
+  static void addLogger(Logger *logger);
   /** Add a logger to stdout. */
   static void addConsoleLogger();
   /** Remove all loggers. */
   static void clearLoggers();
   /** Remove all loggers and replace them with a new one. */
-  static void replaceLoggers(FileLogger *newLogger);
+  static void replaceLoggers(Logger *newLogger);
   static void log(const QString message, Severity severity = Info,
                   const QString task = QString(),
                   const QString execId = QString(),

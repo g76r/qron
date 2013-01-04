@@ -36,6 +36,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLastEmitedAlertsView(new HtmlTableView(this)),
   _htmlLastEmitedAlertsView10(new HtmlTableView(this)),
   _htmlAlertRulesView(new HtmlTableView(this)),
+  _htmlLogView(new HtmlTableView(this)),
+  _htmlLogView10(new HtmlTableView(this)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
@@ -47,8 +49,9 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvRaisedAlertsView(new CsvView(this)),
   _csvLastEmitedAlertsView(new CsvView(this)),
   _csvAlertRulesView(new CsvView(this)),
-  _wuiHandler(new TemplatingHttpHandler(this, "/console",
-                                        ":docroot/console")) {
+  _csvLogView(new CsvView(this)),
+  _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
+  _memoryLogger(new MemoryLogger) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
   _htmlTasksTreeView->setTableClass("table table-condensed table-hover");
   _htmlTasksTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
@@ -96,6 +99,18 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlAlertRulesView->setModel(_alertRulesModel);
   _htmlAlertRulesView->setTableClass("table table-condensed table-hover");
   _htmlAlertRulesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlLogView->setModel(_memoryLogger->model());
+  _htmlLogView->setTableClass("table table-condensed table-hover");
+  _htmlLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlLogView->setTrClassRole(LogModel::TrClassRole);
+  _htmlLogView
+      ->setEllipsePlaceholder("(download full raw log for more entries)");
+  _htmlLogView10->setModel(_memoryLogger->model());
+  _htmlLogView10->setTableClass("table table-condensed table-hover");
+  _htmlLogView10->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlLogView10->setTrClassRole(LogModel::TrClassRole);
+  _htmlLogView10->setMaxrows(10);
+  _htmlLogView10->setEllipsePlaceholder("(see log page for more entries)");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -106,6 +121,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvAlertParamsView->setModel(_alertParamsModel);
   _csvRaisedAlertsView->setModel(_raisedAlertsModel);
   _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
+  _csvLogView->setModel(_memoryLogger->model());
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
@@ -120,6 +136,13 @@ WebConsole::WebConsole() : _scheduler(0),
   _wuiHandler->addView("lastemitedalerts10", _htmlLastEmitedAlertsView10);
   _wuiHandler->addView("now", _clockView);
   _wuiHandler->addView("alertrules", _htmlAlertRulesView);
+  _wuiHandler->addView("log", _htmlLogView);
+  _wuiHandler->addView("log10", _htmlLogView10);
+  _memoryLogger->model()
+      ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
+  _memoryLogger->model()->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
+  _memoryLogger->model()->setWarningTrClass("warning");
+  _memoryLogger->model()->setErrorTrClass("error");
 }
 
 QString WebConsole::name() const {
@@ -248,6 +271,17 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlAlertRulesView->text().toUtf8().constData());
     return;
   }
+  if (path == "/rest/csv/log/info/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvLogView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/log/info/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlLogView->text().toUtf8().constData());
+    return;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
 }
@@ -317,5 +351,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
             _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
+    Log::addLogger(_memoryLogger); // LATER this won't work when conf reload will be implemented
   }
 }
