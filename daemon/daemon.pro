@@ -77,7 +77,8 @@ SOURCES += sched/main.cpp \
     alert/execalertchannel.cpp \
     ui/textsetmodel.cpp \
     ui/raisedalertsmodel.cpp \
-    ui/lastemitedalertsmodel.cpp
+    ui/lastemitedalertsmodel.cpp \
+    ui/alertrulesmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -115,7 +116,8 @@ HEADERS += \
     alert/execalertchannel.h \
     ui/textsetmodel.h \
     ui/raisedalertsmodel.h \
-    ui/lastemitedalertsmodel.h
+    ui/lastemitedalertsmodel.h \
+    ui/alertrulesmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

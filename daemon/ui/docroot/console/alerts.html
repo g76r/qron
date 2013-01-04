@@ -81,8 +81,27 @@
       </div>
       <div class="row">
         <div class="span12">
-          <h2>Alerts configuration</h2>
+          <h2>Alerts rules</h2>
+          <p>For every emited alert, rules are evaluated from top to bottom.
+           If several rules match an alert, it is emited several times, one
+           per matching rule.
+           If a stop rule matches an alert, next rules are not evaluated
+           regardless if they match the alert or not.
+          <p><a class="btn btn-info" href="/rest/csv/alerts/rules/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/alerts/rules/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:alertrules?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span8">
+          <h2>Coming soon</h2>
           <p>Coming soon...
+        </div>
+        <div class="span4">
+          <h2>Alert params</h2>
+          <p><a class="btn btn-info" href="/rest/csv/alerts/params/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/alerts/params/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:alertparams?>
         </div>
       </div>
     </div>

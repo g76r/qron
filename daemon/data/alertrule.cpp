@@ -23,7 +23,7 @@ public:
   QString _pattern;
   QRegExp _patterRegExp;
   QWeakPointer<AlertChannel> _channel;
-  QString _address, _message, _cancelMessage;
+  QString _address, _message, _cancelMessage, _channelName;
   bool _stop, _notifyCancel;
 };
 
@@ -43,12 +43,13 @@ AlertRule::~AlertRule() {
 }
 
 AlertRule::AlertRule(const PfNode node, const QString pattern,
-                     QWeakPointer<AlertChannel> channel, bool stop,
-                     bool notifyCancel)
+                     QWeakPointer<AlertChannel> channel, QString channelName,
+                     bool stop, bool notifyCancel)
   : d(new AlertRuleData) {
   d->_pattern = pattern;
   d->_patterRegExp = compilePattern(pattern);
   d->_channel = channel;
+  d->_channelName = channelName;
   d->_address = node.attribute("address"); // LATER check uniqueness
   d->_message = node.attribute("message"); // LATER check uniqueness
   d->_cancelMessage = node.attribute("cancelmessage"); // LATER check uniqueness
@@ -114,6 +115,10 @@ QWeakPointer<AlertChannel> AlertRule::channel() const {
   return d ? d->_channel : QWeakPointer<AlertChannel>();
 }
 
+QString AlertRule::channelName() const {
+  return d ? d->_channelName : QString();
+}
+
 QString AlertRule::address() const {
   return d ? d->_address : QString();
 
@@ -133,6 +138,14 @@ QString AlertRule::cancelMessage(Alert alert) const {
     rawMessage = "canceling alert "+alert.id();
   // LATER give alert context to evaluation method
   return ParamSet().evaluate(rawMessage);
+}
+
+QString AlertRule::rawMessage() const {
+  return d ? d->_message : QString();
+}
+
+QString AlertRule::rawCancelMessage() const {
+  return d ? d->_cancelMessage : QString();
 }
 
 bool AlertRule::stop() const {

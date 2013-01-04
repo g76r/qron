@@ -28,6 +28,7 @@
 #include "raisedalertsmodel.h"
 #include "lastemitedalertsmodel.h"
 #include "textview/clockview.h"
+#include "alertrulesmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -37,17 +38,20 @@ class WebConsole : public HttpHandler {
   HostsListModel *_hostsListModel;
   ClustersListModel *_clustersListModel;
   ResourcesAllocationModel *_resourceAllocationModel;
-  ParamSetModel *_globalParamsModel;
+  ParamSetModel *_globalParamsModel, *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
   LastEmitedAlertsModel *_lastEmitedAlertsModel;
+  AlertRulesModel *_alertRulesModel;
   HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
   *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView,
+  *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
-  *_htmlLastEmitedAlertsView10;
+  *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView;
   ClockView *_clockView;
   CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
-  *_csvRaisedAlertsView, *_csvLastEmitedAlertsView;
+  *_csvAlertParamsView,
+  *_csvRaisedAlertsView, *_csvLastEmitedAlertsView, *_csvAlertRulesView;
   TemplatingHttpHandler *_wuiHandler;
 
 public:

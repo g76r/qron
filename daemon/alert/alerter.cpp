@@ -86,7 +86,7 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
                            << QString::fromUtf8(node.toPf())
                            << "' with matching pattern " << pattern;
             } else {
-              AlertRule rule(node, pattern, channel, stop, notifyCancel);
+              AlertRule rule(node, pattern, channel, name, stop, notifyCancel);
               _rules.append(rule);
               Log::debug() << "configured alert rule " << name << " " << pattern
                            << " " << stop << " "

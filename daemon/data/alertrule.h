@@ -31,15 +31,19 @@ public:
   AlertRule();
   AlertRule(const AlertRule &);
   AlertRule(const PfNode node, const QString pattern,
-            QWeakPointer<AlertChannel> channel, bool stop, bool notifyCancel);
+            QWeakPointer<AlertChannel> channel, QString channelName, bool stop,
+            bool notifyCancel);
   AlertRule &operator=(const AlertRule &);
   ~AlertRule();
   QString pattern() const;
   QRegExp patternRegExp() const;
   QWeakPointer<AlertChannel> channel() const;
+  QString channelName() const;
   QString address() const;
   QString message(Alert alert) const;
   QString cancelMessage(Alert alert) const;
+  QString rawMessage() const;
+  QString rawCancelMessage() const;
   bool stop() const;
   bool notifyCancel() const;
   bool isNull() const;
