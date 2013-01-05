@@ -26,13 +26,13 @@ win32:debug:LIBS += -L../../libqtpf/pf-build-windows/debug \
 win32:release:LIBS += -L../libqtpf/pf-build-windows/release \
   -L../../libqtpf/pfsql-build-windows/release \
   -L../../ssu-build-windows/release
-linux-g++:LIBS += -L../libqtpf/pf -L../libqtpf/pfsql -L../libqtssu
+unix:LIBS += -L../libqtpf/pf -L../libqtpf/pfsql -L../libqtssu
 
 QMAKE_CXXFLAGS += -Wextra
-linux-g++ {
-  OBJECTS_DIR = ../daemon-build-linux/obj
-  RCC_DIR = ../daemon-build-linux/rcc
-  MOC_DIR = ../daemon-build-linux/moc
+unix {
+  OBJECTS_DIR = ../daemon-build-unix/obj
+  RCC_DIR = ../daemon-build-unix/rcc
+  MOC_DIR = ../daemon-build-unix/moc
 }
 
 contains(QT_VERSION, ^4\\.[0-6]\\..*) {
