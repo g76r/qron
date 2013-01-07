@@ -355,6 +355,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
             _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
-    Log::addLogger(_memoryLogger); // LATER this won't work when conf reload will be implemented
+    Log::addLogger(_memoryLogger, false);
   }
 }

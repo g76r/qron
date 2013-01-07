@@ -28,12 +28,13 @@ void Log::addConsoleLogger() {
   QFile *console = new QFile;
   console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
   FileLogger *logger = new FileLogger(console, Log::Debug);
-  Log::addLogger(logger);
+  Log::addLogger(logger, false);
 }
 
-void Log::addLogger(Logger *logger) {
+void Log::addLogger(Logger *logger, bool removable) {
   QMutexLocker locker(&_loggersMutex);
   if (logger) {
+    logger->_removable = removable;
     if (_loggers.isEmpty())
       qInstallMsgHandler(Log::logMessageHandler);
     _loggers.append(logger);
@@ -43,8 +44,10 @@ void Log::addLogger(Logger *logger) {
 void Log::clearLoggers() {
   QMutexLocker locker(&_loggersMutex);
   foreach(Logger *logger, _loggers)
-    logger->deleteLater();
-  _loggers.clear();
+    if (logger->_removable) {
+      logger->deleteLater();
+      _loggers.removeOne(logger);
+    }
 }
 
 void Log::replaceLoggers(Logger *newLogger) {
@@ -57,8 +60,10 @@ void Log::replaceLoggers(Logger *newLogger) {
 void Log::replaceLoggers(QList<Logger*> newLoggers) {
   QMutexLocker locker(&_loggersMutex);
   foreach(Logger *logger, _loggers)
-    logger->deleteLater();
-  _loggers.clear();
+    if (logger->_removable) {
+      logger->deleteLater();
+      _loggers.removeOne(logger);
+    }
   if (newLoggers.isEmpty())
     qInstallMsgHandler(0);
   foreach (Logger *logger, newLoggers)

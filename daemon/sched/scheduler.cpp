@@ -37,10 +37,7 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent),
 }
 
 Scheduler::~Scheduler() {
-  QFile *console = new QFile;
-  console->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(console, Log::Debug);
-  Log::replaceLoggers(logger);
+  Log::clearLoggers();
   _alerter->deleteLater();
 }
 
@@ -88,10 +85,6 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   children += root.childrenByName("maxtotaltasks");
   children += root.childrenByName("alerts");
   QList<Logger*> loggers;
-  QFile *file = new QFile;
-  file->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
-  FileLogger *logger = new FileLogger(file, Log::Debug);
-  loggers.append(logger);
   foreach (PfNode node, children) {
     if (node.name() == "host") {
       Host host(node);

@@ -19,8 +19,10 @@
 #include <QDateTime>
 
 class Logger : public QObject {
+  friend class Log;
   Q_OBJECT
   Log::Severity _minSeverity;
+  bool _removable;
 
 public:
   explicit Logger(QObject *parent = 0, Log::Severity minSeverity = Log::Info);

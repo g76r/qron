@@ -14,7 +14,7 @@
 #include "logger.h"
 
 Logger::Logger(QObject *parent, Log::Severity minSeverity) : QObject(parent),
-  _minSeverity(minSeverity) {
+  _minSeverity(minSeverity), _removable(true) {
   qRegisterMetaType<Log::Severity>("Log::Severity");
 }
 

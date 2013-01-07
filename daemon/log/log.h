@@ -30,7 +30,7 @@ class Log {
 public:
   enum Severity { Debug, Info, Warning, Error, Fatal };
   /** Add a new logger. Takes the ownership of the logger (= will delete it). */
-  static void addLogger(Logger *logger);
+  static void addLogger(Logger *logger, bool removable = true);
   /** Add a logger to stdout. */
   static void addConsoleLogger();
   /** Remove all loggers. */
