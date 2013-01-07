@@ -48,14 +48,21 @@ void Log::clearLoggers() {
 }
 
 void Log::replaceLoggers(Logger *newLogger) {
+  QList<Logger*> newLoggers;
+  if (newLogger)
+    newLoggers.append(newLogger);
+  replaceLoggers(newLoggers);
+}
+
+void Log::replaceLoggers(QList<Logger*> newLoggers) {
   QMutexLocker locker(&_loggersMutex);
   foreach(Logger *logger, _loggers)
     logger->deleteLater();
   _loggers.clear();
-  if (newLogger)
-    _loggers.append(newLogger);
-  else
+  if (newLoggers.isEmpty())
     qInstallMsgHandler(0);
+  foreach (Logger *logger, newLoggers)
+    _loggers.append(logger);
 }
 
 void Log::log(const QString message, Severity severity, const QString task,

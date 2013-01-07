@@ -34,9 +34,6 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent),
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
-  // TODO clearLoggers() and create loggers depending on config file
-  Log::addLogger(new FileLogger("/tmp/qron-%!yyyy%!mm%!dd.log", Log::Debug));
-  Log::addLogger(new FileLogger("/tmp/info", Log::Info));
 }
 
 Scheduler::~Scheduler() {
@@ -90,6 +87,11 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   children += root.childrenByName("cluster");
   children += root.childrenByName("maxtotaltasks");
   children += root.childrenByName("alerts");
+  QList<Logger*> loggers;
+  QFile *file = new QFile;
+  file->open(1, QIODevice::WriteOnly|QIODevice::Unbuffered);
+  FileLogger *logger = new FileLogger(file, Log::Debug);
+  loggers.append(logger);
   foreach (PfNode node, children) {
     if (node.name() == "host") {
       Host host(node);
@@ -139,8 +141,6 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::debug() << "configured global param " << key << "=" << value;
         _globalParams.setValue(key, value);
       }
-    } else if (node.name() == "log") {
-      // TODO log config
     } else if (node.name() == "maxtotaltasks") {
       bool ok = true;
       int n = node.contentAsString().toInt(&ok);
@@ -163,12 +163,29 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::warning() << "ignoring maxtotaltasks with incorrect value: "
                        << node.contentAsString();
       }
+    } else if (node.name() == "log") {
+      QString level = node.attribute("level");
+      QString filename = node.attribute("file");
+      if (level.isEmpty()) {
+        Log::warning() << "invalid log level in configuration: "
+                       << node.toPf();
+      } else if (filename.isEmpty()) {
+        Log::warning() << "invalid log filename in configuration: "
+                       << node.toPf();
+      } else {
+        filename = ParamSet().evaluate(filename);
+        Log::info() << "adding logger " << node.toPf(); // FIXME
+        loggers.append(new FileLogger(new QFile(filename),
+                                      Log::severityFromString(level)));
+      }
     } else if (node.name() == "alerts") {
       if (!_alerter->loadConfiguration(node, errorString))
         return false;
       Log::debug() << "configured alerter";
     }
   }
+  Log::info() << "replacing loggers " << loggers.size(); // FIXME
+  Log::replaceLoggers(loggers);
   if (_executors.isEmpty()) {
     Log::debug() << "configured 16 task executors (default maxtotaltasks "
                     "value)";

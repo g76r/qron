@@ -37,6 +37,8 @@ public:
   static void clearLoggers();
   /** Remove all loggers and replace them with a new one. */
   static void replaceLoggers(Logger *newLogger);
+  /** Remove all loggers and replace them with new ones. */
+  static void replaceLoggers(QList<Logger*> newLoggers);
   static void log(const QString message, Severity severity = Info,
                   const QString task = QString(),
                   const QString execId = QString(),

@@ -33,4 +33,3 @@ void Logger::log(QDateTime timestamp, QString message, Log::Severity severity,
                               Q_ARG(QString, execId),
                               Q_ARG(QString, sourceCode));
 }
-
