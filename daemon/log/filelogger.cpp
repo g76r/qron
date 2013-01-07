@@ -72,7 +72,7 @@ void FileLogger::doLog(QDateTime timestamp, QString message,
                        QString task, QString execId,
                        QString sourceCode) {
   QString line = QString("%1 %2/%3 %4 %5 %6")
-      .arg(timestamp.toString(Qt::ISODate)).arg(task).arg(execId)
+      .arg(timestamp.toString("yyyy-MM-ddThh:mm:ss,zzz")).arg(task).arg(execId)
       .arg(sourceCode).arg(Log::severityToString(severity)).arg(message);
   //qDebug() << "***log" << line;
   // TODO file reopen (to allow log rotation and date/time in path)

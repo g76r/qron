@@ -37,9 +37,10 @@ private:
     QString _task, _execId, _sourceCode;
     LogEntry(QDateTime timestamp, QString message, Log::Severity severity,
              QString task, QString execId, QString sourceCode)
-      : _timestamp(timestamp.toString(Qt::ISODate)), _message(message),
-        _severityText(Log::severityToString(severity)), _severity(severity),
-        _task(task), _execId(execId), _sourceCode(sourceCode) { }
+      : _timestamp(timestamp.toString("yyyy-MM-ddThh:mm:ss,zzz")),
+        _message(message), _severityText(Log::severityToString(severity)),
+        _severity(severity), _task(task), _execId(execId),
+        _sourceCode(sourceCode) { }
   };
   QList<LogEntry> _log;
   int _maxrows;
