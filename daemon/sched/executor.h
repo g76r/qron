@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,6 +21,8 @@
 #include <QProcess>
 
 class QThread;
+class QNetworkAccessManager;
+class QNetworkReply;
 
 class Executor : public QObject {
   Q_OBJECT
@@ -30,6 +32,7 @@ class Executor : public QObject {
   QByteArray _errBuf;
   TaskRequest _request;
   Host _target;
+  QNetworkAccessManager *_nam;
 
 public:
   explicit Executor();
@@ -51,6 +54,7 @@ private slots:
   void finished(int exitCode, QProcess::ExitStatus exitStatus);
   void readyReadStandardError();
   void readyReadStandardOutput();
+  void replyFinished(QNetworkReply *reply);
 
 private:
   Q_INVOKABLE void doExecute(TaskRequest request, Host target);

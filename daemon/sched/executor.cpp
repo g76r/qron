@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,11 +16,17 @@
 #include <QtDebug>
 #include <QMetaObject>
 #include "log/log.h"
+#include <QNetworkAccessManager>
+#include <QUrl>
+#include <QBuffer>
+#include <QNetworkReply>
 
 Executor::Executor() : QObject(0), _isTemporary(false), _thread(new QThread),
-  _process(0) {
+  _process(0), _nam(new QNetworkAccessManager(this)) {
   _thread->setObjectName(QString("Executor-%1")
                          .arg((long)_thread, sizeof(long)*8, 16));
+  connect(_nam, SIGNAL(finished(QNetworkReply*)),
+          this, SLOT(replyFinished(QNetworkReply*)));
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
@@ -96,29 +102,41 @@ void Executor::execProcess(TaskRequest request, Host target,
           this, SLOT(readyReadStandardError()));
   connect(_process, SIGNAL(readyReadStandardOutput()),
           this, SLOT(readyReadStandardOutput()));
-   QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-   foreach (const QString key, request.params().keys()) {
-     //qDebug() << "setting environment variable" << key << "="
-     //         << request.params().value(key);
-     env.insert(key, request.params().value(key));
-   }
-   _process->setProcessEnvironment(env);
-   if (!cmdline.isEmpty()) {
-     QString program = cmdline.takeFirst();
-     Log::debug(_request.task().fqtn(), _request.id())
-         << "about to start system process '" << program << "' with args "
-         << cmdline << " and environment " << env.toStringList();
-     _process->start(program, cmdline);
-   } else
-     Log::warning(_request.task().fqtn(), _request.id())
-         << "cannot execute task with empty command '"
-         << request.task().fqtn() << "'";
+  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
+  foreach (const QString key, request.params().keys()) {
+    //qDebug() << "setting environment variable" << key << "="
+    //         << request.params().value(key);
+    env.insert(key, request.params().value(key));
+  }
+  _process->setProcessEnvironment(env);
+  if (!cmdline.isEmpty()) {
+    QString program = cmdline.takeFirst();
+    Log::debug(_request.task().fqtn(), _request.id())
+        << "about to start system process '" << program << "' with args "
+        << cmdline << " and environment " << env.toStringList();
+    _process->start(program, cmdline);
+  } else {
+    delete _process;
+    _process = 0;
+    _target = Host();
+    _request = TaskRequest();
+    Log::warning(_request.task().fqtn(), _request.id())
+        << "cannot execute task with empty command '"
+        << request.task().fqtn() << "'";
+  }
 }
 
 void Executor::error(QProcess::ProcessError error) {
+  readyReadStandardError();
+  readyReadStandardOutput();
   Log::error(_request.task().fqtn(), _request.id())
       << "task error #" << error << " : " << _process->errorString();
   // LATER log duration and wait time
+  _process->deleteLater();
+  _process = 0;
+  _errBuf.clear();
+  _target = Host();
+  _request = TaskRequest();
 }
 
 void Executor::finished(int exitCode, QProcess::ExitStatus exitStatus) {
@@ -160,6 +178,61 @@ void Executor::readyReadStandardOutput() {
 }
 
 void Executor::httpMean(TaskRequest request, Host target) {
-  // TODO http mean
-  emit taskFinished(request, target, false, 42, this);
+  // LATER http mean should support http auth, http proxy auth and ssl
+  QString method = request.params().value("method");
+  QUrl url;
+  int port = request.params().value("port", "80").toInt();
+  url.setScheme("http");
+  url.setHost(target.hostname());
+  url.setPort(port);
+  url.setPath(request.task().command());
+  if (url.isValid()) {
+    _request = request;
+    _target = target;
+    if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
+      Log::info(_request.task().fqtn(), _request.id())
+          << "exact GET URL to be called: "
+          << url.toString(QUrl::RemovePassword);
+      _nam->get(QNetworkRequest(url));
+    } else if (method.compare("put", Qt::CaseInsensitive) == 0) {
+      Log::info(_request.task().fqtn(), _request.id())
+          << "exact PUT URL to be called: "
+          << url.toString(QUrl::RemovePassword);
+      QBuffer *buffer = new QBuffer(this);
+      buffer->open(QIODevice::ReadOnly);
+      _nam->put(QNetworkRequest(url), buffer);
+    } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
+      Log::info(_request.task().fqtn(), _request.id())
+          << "exact POST URL to be called: "
+          << url.toString(QUrl::RemovePassword);
+      QBuffer *buffer = new QBuffer(this);
+      buffer->open(QIODevice::ReadOnly);
+      _nam->post(QNetworkRequest(url), buffer);
+    } else {
+      Log::error(_request.task().fqtn(), _request.id())
+          << "unsupported HTTP method: " << method;
+      _target = Host();
+      _request = TaskRequest();
+    }
+  } else {
+    Log::error(_request.task().fqtn(), _request.id())
+        << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
+  }
+}
+
+void Executor::replyFinished(QNetworkReply *reply) {
+  int status = reply
+      ->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
+  QString reason = reply
+      ->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
+  bool success = (status < 300);
+  Log::info(_request.task().fqtn(), _request.id())
+      << "task '" << _request.task().fqtn() << "' finished "
+      << (success ? "successfully" : "in failure") << " with return code "
+      << status << " (" << reason << ") on host '" << _target.hostname() << "'";
+  // LATER log duration and wait time
+  emit taskFinished(_request, _target, success, status, this);
+  _target = Host();
+  _request = TaskRequest();
+  reply->deleteLater();
 }

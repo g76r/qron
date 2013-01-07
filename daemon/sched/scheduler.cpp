@@ -224,8 +224,8 @@ void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   } else {
     // note: a request must always be queued even if the task can be started
     // immediately, to avoid the new tasks being started before queued ones
-    Log::debug() << "queuing task '" << task.fqtn() << "' with params "
-                 << params;
+    Log::debug(task.fqtn(), request.id())
+        << "queuing task '" << task.fqtn() << "' with params " << params;
     _queuedRequests.append(request);
     reevaluateQueuedRequests();
   }
@@ -273,9 +273,10 @@ void Scheduler::clearFlag(QString flag) {
 
 bool Scheduler::tryStartTaskNow(TaskRequest request) {
   if (_executors.isEmpty()) {
-    Log::info() << "cannot execute task '" << request.task().fqtn()
-                << "' now because there are already too many tasks running "
-                   "(maxtotaltasks reached)";
+    Log::info(request.task().fqtn(), request.id())
+        << "cannot execute task '" << request.task().fqtn()
+        << "' now because there are already too many tasks running "
+           "(maxtotaltasks reached)";
     _alerter->raiseAlert("maxtotaltasks.reached");
     return false;
   }
@@ -289,9 +290,10 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
   else
     hosts.append(host);
   if (hosts.isEmpty()) {
-    Log::error() << "cannot execute task '" << request.task().fqtn()
-                 << "' because its target '" << request.task().target()
-                 << "' is not defined";
+    Log::error(request.task().fqtn(), request.id())
+        << "cannot execute task '" << request.task().fqtn()
+        << "' because its target '" << request.task().target()
+        << "' is not defined";
     _alerter->raiseAlert("task.failure."+request.task().fqtn());
     return false;
   }
@@ -301,14 +303,16 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     QMap<QString,qint64> hostResources = _resources.value(h.id());
     foreach (QString kind, taskResources.keys()) {
       if (hostResources.value(kind) < taskResources.value(kind)) {
-        Log::info() << "lacks resource '" << kind << "' on host '" << h.id()
-                    << "' for task '" << request.task().id() << "' (need "
-                    << taskResources.value(kind) << ", have "
-                    << hostResources.value(kind) << ")";
+        Log::info(request.task().fqtn(), request.id())
+            << "lacks resource '" << kind << "' on host '" << h.id()
+            << "' for task '" << request.task().id() << "' (need "
+            << taskResources.value(kind) << ", have "
+            << hostResources.value(kind) << ")";
         goto nexthost;
       }
-      Log::debug() << "resource '" << kind << "' ok on host '" << h.id()
-                   << "' for task '" << request.task().id();
+      Log::debug(request.task().fqtn(), request.id())
+          << "resource '" << kind << "' ok on host '" << h.id()
+          << "' for task '" << request.task().id();
     }
     foreach (QString kind, taskResources.keys())
       hostResources.insert(kind, hostResources.value(kind)
@@ -323,9 +327,10 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     return true;
 nexthost:;
   }
-  Log::warning() << "cannot execute task '" << request.task().fqtn()
-                 << "' now because there is not enough resources on target '"
-                 << request.task().target() << "'";
+  Log::warning(request.task().fqtn(), request.id())
+      << "cannot execute task '" << request.task().fqtn()
+      << "' now because there is not enough resources on target '"
+      << request.task().target() << "'";
   // LATER suffix alert with resources kind (one alert per exhausted kind)
   _alerter->raiseAlert("resource.exhausted."+request.task().target());
   return false;
@@ -348,9 +353,10 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
       target = hosts.first(); // LATER implement other method than "first"
   }
   if (target.isNull()) {
-    Log::error() << "cannot execute task '" << request.task().fqtn()
-                 << "' now because its target '" << request.task().target()
-                 << "' is not defined";
+    Log::error(request.task().fqtn(), request.id())
+        << "cannot execute task '" << request.task().fqtn()
+        << "' now because its target '" << request.task().target()
+        << "' is not defined";
     return;
   }
   QMap<QString,qint64> taskResources = request.task().resources();
