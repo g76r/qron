@@ -61,7 +61,7 @@ void Executor::doExecute(TaskRequest request, Host target) {
 void Executor::execMean(TaskRequest request, Host target) {
   QStringList cmdline;
   cmdline = request.params().splitAndEvaluate(request.task().command());
-  Log::info(_request.task().fqtn(), _request.id())
+  Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   execProcess(request, target, cmdline);
 }
@@ -69,7 +69,7 @@ void Executor::execMean(TaskRequest request, Host target) {
 void Executor::sshMean(TaskRequest request, Host target) {
   QStringList cmdline, sshCmdline;
   cmdline = request.params().splitAndEvaluate(request.task().command());
-  Log::info(_request.task().fqtn(), _request.id())
+  Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (through ssh on host "
       << target.hostname() <<  "): " << cmdline.join(" ");
   // ssh options are set to avoid any host key check to make the connection
