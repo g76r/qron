@@ -35,8 +35,7 @@ public:
   ParamSet params() const;
   bool isNull() const;
   QSet<QString> eventTriggers() const;
-  /** Fully qualified task name (i.e. "taskGroupId.taskId")
-    */
+  /** Fully qualified task name (i.e. "taskGroupId.taskId") */
   QString id() const;
   QString fqtn() const;
   QString label() const;
@@ -53,6 +52,13 @@ public:
   void setLastExecution(const QDateTime timestamp) const;
   QDateTime nextScheduledExecution() const;
   void setNextScheduledExecution(const QDateTime timestamp) const;
+  /** Maximum allowed simultaneous instances (includes running and queued
+    * instances). Default: 1. */
+  int maxInstances() const;
+  /** Current intances count (includes running and queued instances). */
+  int instancesCount() const;
+  /** Atomic fetch-and-add of the current instances count. */
+  int fetchAndAddInstancesCount(int valueToAdd) const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

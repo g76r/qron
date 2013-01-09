@@ -18,6 +18,7 @@
 #include "pf/pfnode.h"
 #include "crontrigger.h"
 #include "log/log.h"
+#include <QAtomicInt>
 
 class TaskData : public QSharedData {
 public:
@@ -26,16 +27,17 @@ public:
   ParamSet _params;
   QSet<QString> _eventTriggers;
   QMap<QString,qint64> _resources;
-  quint32 _maxtaskinstance;
+  quint32 _maxInstances;
   QList<CronTrigger> _cronTriggers;
   mutable QDateTime _lastExecution, _nextScheduledExecution;
+  mutable QAtomicInt _instancesCount;
 
   TaskData() { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _group(other._group), _params(other._params),
     _eventTriggers(other._eventTriggers), _resources(other._resources),
-    _maxtaskinstance(other._maxtaskinstance),
+    _maxInstances(other._maxInstances),
     _cronTriggers(other._cronTriggers), _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution) { }
 };
@@ -53,10 +55,10 @@ Task::Task(PfNode node) {
   td->_mean = node.attribute("mean"); // LATER check validity
   td->_command = node.attribute("command");
   td->_target = node.attribute("target");
-  td->_maxtaskinstance = node.attribute("maxtaskinstance", "1").toInt();
-  if (td->_maxtaskinstance <= 0) {
-    td->_maxtaskinstance = 1;
-    Log::warning() << "invalid task maxtaskinstance " << node.toPf();
+  td->_maxInstances = node.attribute("maxinstances", "1").toInt();
+  if (td->_maxInstances <= 0) {
+    td->_maxInstances = 1;
+    Log::warning() << "invalid task maxinstances " << node.toPf();
   }
   foreach (PfNode child, node.childrenByName("param")) {
     QString key = child.attribute("key");
@@ -203,6 +205,18 @@ void Task::setLastExecution(const QDateTime timestamp) const {
 
 void Task::setNextScheduledExecution(const QDateTime timestamp) const {
   d->_nextScheduledExecution = timestamp;
+}
+
+int Task::maxInstances() const {
+  return d->_maxInstances;
+}
+
+int Task::instancesCount() const {
+  return d->_instancesCount;
+}
+
+int Task::fetchAndAddInstancesCount(int valueToAdd) const {
+  return d->_instancesCount.fetchAndAddOrdered(valueToAdd);
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {

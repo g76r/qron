@@ -50,10 +50,12 @@ void Executor::doExecute(TaskRequest request, Host target) {
     sshMean(request, target);
   else if (mean == "http")
     httpMean(request, target);
-  else {
+  else if (mean == "donothing") {
+    emit taskFinished(request, target, true, 0, this);
+  } else {
     Log::error(request.task().fqtn(), request.id())
         << "cannot execute task with unknown mean '" << mean << "'";
-    emit taskFinished(request, target, false, 1, this);
+    emit taskFinished(request, target, false, -1, this);
   }
   // LATER add other means: https, postevent, setflag, clearflag
 }
@@ -116,13 +118,14 @@ void Executor::execProcess(TaskRequest request, Host target,
         << cmdline << " and environment " << env.toStringList();
     _process->start(program, cmdline);
   } else {
-    delete _process;
-    _process = 0;
-    _target = Host();
-    _request = TaskRequest();
     Log::warning(_request.task().fqtn(), _request.id())
         << "cannot execute task with empty command '"
         << request.task().fqtn() << "'";
+    emit taskFinished(_request, _target, false, -1, this);
+    _process->deleteLater();
+    _process = 0;
+    _target = Host();
+    _request = TaskRequest();
   }
 }
 
@@ -132,6 +135,7 @@ void Executor::error(QProcess::ProcessError error) {
   Log::error(_request.task().fqtn(), _request.id())
       << "task error #" << error << " : " << _process->errorString();
   // LATER log duration and wait time
+  emit taskFinished(_request, _target, false, -1, this);
   _process->deleteLater();
   _process = 0;
   _errBuf.clear();
@@ -211,12 +215,14 @@ void Executor::httpMean(TaskRequest request, Host target) {
     } else {
       Log::error(_request.task().fqtn(), _request.id())
           << "unsupported HTTP method: " << method;
+      emit taskFinished(_request, _target, false, -1, this);
       _target = Host();
       _request = TaskRequest();
     }
   } else {
     Log::error(_request.task().fqtn(), _request.id())
         << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
+    emit taskFinished(_request, _target, false, -1, this);
   }
 }
 

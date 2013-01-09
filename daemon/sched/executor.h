@@ -46,6 +46,10 @@ public slots:
   void execute(TaskRequest request, Host target);
 
 signals:
+  /** Signal emited whenever a task is no longer running or queued:
+    * when finished on failure, finished on success, or cannot be started
+    * because of a failure on start.
+    */
   void taskFinished(TaskRequest request, Host target, bool success,
                     int returnCode, QWeakPointer<Executor> executor);
 

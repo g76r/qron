@@ -82,7 +82,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   children += root.childrenByName("task");
   children += root.childrenByName("host");
   children += root.childrenByName("cluster");
-  children += root.childrenByName("maxtotaltasks");
+  children += root.childrenByName("maxtotaltaskinstances");
   children += root.childrenByName("alerts");
   QList<Logger*> loggers;
   foreach (PfNode node, children) {
@@ -134,13 +134,13 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::debug() << "configured global param " << key << "=" << value;
         _globalParams.setValue(key, value);
       }
-    } else if (node.name() == "maxtotaltasks") {
+    } else if (node.name() == "maxtotaltaskinstances") {
       bool ok = true;
       int n = node.contentAsString().toInt(&ok);
       if (ok && n > 0) {
         if (!_executors.isEmpty()) {
-          Log::warning() << "overriding maxtotaltasks " << _executors.size()
-                         << " with " << n;
+          Log::warning() << "overriding maxtotaltaskinstances "
+                         << _executors.size() << " with " << n;
           foreach (Executor *e, _executors)
             e->deleteLater();
           _executors.clear();
@@ -153,8 +153,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
           _executors.append(e);
         }
       } else {
-        Log::warning() << "ignoring maxtotaltasks with incorrect value: "
-                       << node.contentAsString();
+        Log::warning() << "ignoring maxtotaltaskinstances with incorrect "
+                          "value: " << node.contentAsString();
       }
     } else if (node.name() == "log") {
       QString level = node.attribute("level");
@@ -180,8 +180,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   Log::info() << "replacing loggers " << loggers.size(); // FIXME
   Log::replaceLoggers(loggers);
   if (_executors.isEmpty()) {
-    Log::debug() << "configured 16 task executors (default maxtotaltasks "
-                    "value)";
+    Log::debug() << "configured 16 task executors (default "
+                    "maxtotaltaskinstances value)";
     for (int n = 16; n; --n) {
       Executor *e = new Executor;
       connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
@@ -200,11 +200,11 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   return true;
 }
 
-void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
+bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   Task task = _tasks.value(fqtn);
   if (task.isNull()) {
-    Log::warning() << "requested task not found: " << fqtn << params << force;
-    return;
+    Log::error() << "requested task not found: " << fqtn << params << force;
+    return false;
   }
   if (!params.parent().isNull()) {
     Log::warning() << "task requested with non null params' parent (parent will"
@@ -213,8 +213,16 @@ void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   params.setParent(task.params());
   TaskRequest request(task, params);
   if (force) {
+    task.fetchAndAddInstancesCount(1);
     startTaskNowAnyway(request);
   } else {
+    if (task.fetchAndAddInstancesCount(1) >= task.maxInstances()) {
+      task.fetchAndAddInstancesCount(-1);
+      Log::warning() << "requested task '" << fqtn << "' cannot be queued "
+                        "because maxinstances is already reached ("
+                     << task.maxInstances() << ")";
+      return false;
+    }
     // note: a request must always be queued even if the task can be started
     // immediately, to avoid the new tasks being started before queued ones
     Log::debug(task.fqtn(), request.id())
@@ -222,6 +230,7 @@ void Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
     _queuedRequests.append(request);
     reevaluateQueuedRequests();
   }
+  return true;
 }
 
 void Scheduler::triggerEvent(QString event) {
@@ -269,11 +278,11 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     Log::info(request.task().fqtn(), request.id())
         << "cannot execute task '" << request.task().fqtn()
         << "' now because there are already too many tasks running "
-           "(maxtotaltasks reached)";
-    _alerter->raiseAlert("maxtotaltasks.reached");
+           "(maxtotaltaskinstances reached)";
+    _alerter->raiseAlert("maxtotaltaskinstances.reached");
     return false;
   }
-  _alerter->cancelAlert("maxtotaltasks.reached");
+  _alerter->cancelAlert("maxtotaltaskinstances.reached");
   // LATER check flags
   // TODO check maxtaskinstance
   QList<Host> hosts;
@@ -367,10 +376,7 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
 
 void Scheduler::taskFinishing(TaskRequest request, Host target, bool success,
                              int returnCode, QWeakPointer<Executor> executor) {
-  Q_UNUSED(request)
-  Q_UNUSED(target)
-  Q_UNUSED(success)
-  Q_UNUSED(returnCode)
+  request.task().fetchAndAddInstancesCount(-1);
   Executor *e = executor.data();
   if (e) {
     if (e->isTemporary())

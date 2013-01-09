@@ -58,8 +58,9 @@ public slots:
     * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
     * @param params override some params at request time
     * @param force if true, any constraints or ressources are ignored
+    * @return true if task queued, false if task cannot be queued
     */
-  void requestTask(const QString fqtn, ParamSet params = ParamSet(),
+  bool requestTask(const QString fqtn, ParamSet params = ParamSet(),
                    bool force = false);
   /** Emit an event, triggering whatever this event is configured to trigger.
     */
