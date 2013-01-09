@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include <QSharedDataPointer>
 #include "data/task.h"
 #include "data/paramset.h"
+#include <QDateTime>
 
 class TaskRequestData;
 
@@ -31,6 +32,18 @@ public:
   const Task task() const;
   const ParamSet params() const;
   quint64 id() const;
+  QDateTime submissionDatetime() const;
+  QDateTime startDatetime() const;
+  void setStartDatetime(QDateTime datetime
+                        = QDateTime::currentDateTime()) const;
+  void setEndDatetime(QDateTime datetime = QDateTime::currentDateTime()) const;
+  QDateTime endDatetime() const;
+  quint64 queuedMillis() const {
+    return submissionDatetime().msecsTo(startDatetime()); }
+  quint64 runningMillis() const {
+    return startDatetime().msecsTo(endDatetime()); }
+  quint64 totalMillis() const {
+    return submissionDatetime().msecsTo(endDatetime()); }
 };
 
 #endif // TASKREQUEST_H

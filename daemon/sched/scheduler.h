@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -93,7 +93,14 @@ signals:
                                      QMap<QString,qint64> resources);
   void hostResourceConfigurationChanged(
       QMap<QString,QMap<QString,qint64> > resources);
+  /** There is no guarantee that taskQueued() is emited, taskStarted() or
+    * taskFinished() can be emited witout previous taskQueued(). */
+  void taskQueued(TaskRequest request, Host host);
+  /** There is no guarantee that taskStarted() is emited, taskFinished() can
+    * be emited witout previous taskQueued().
+    * @param delayedMillis time between request and start, in ms */
   void taskStarted(TaskRequest request, Host host);
+  /** @param durationMillis time between start and termination, in ms */
   void taskFinished(TaskRequest request, Host target, bool success,
                     int returnCode, QWeakPointer<Executor> executor);
   void globalParamsChanged(ParamSet globalParams);

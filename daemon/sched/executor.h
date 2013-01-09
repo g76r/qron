@@ -40,22 +40,19 @@ public:
   bool isTemporary() const { return _isTemporary; }
   
 public slots:
-  /** Execute a request now.
-    * This method is thread-safe.
-    */
+  /** Execute a request now. This method is thread-safe. */
   void execute(TaskRequest request, Host target);
 
 signals:
   /** Signal emited whenever a task is no longer running or queued:
     * when finished on failure, finished on success, or cannot be started
-    * because of a failure on start.
-    */
+    * because of a failure on start. */
   void taskFinished(TaskRequest request, Host target, bool success,
                     int returnCode, QWeakPointer<Executor> executor);
 
 private slots:
-  void error(QProcess::ProcessError error);
-  void finished(int exitCode, QProcess::ExitStatus exitStatus);
+  void processError(QProcess::ProcessError error);
+  void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
   void readyReadStandardError();
   void readyReadStandardOutput();
   void replyFinished(QNetworkReply *reply);

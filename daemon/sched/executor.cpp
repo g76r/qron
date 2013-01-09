@@ -41,9 +41,10 @@ void Executor::execute(TaskRequest request, Host target) {
 
 void Executor::doExecute(TaskRequest request, Host target) {
   const QString mean = request.task().mean();
+  request.setStartDatetime();
   Log::debug(request.task().fqtn(), request.id())
-      << "executing task '" << request.task().fqtn() << "' through mean '"
-      << mean << "'";
+      << "starting task '" << request.task().fqtn() << "' through mean '"
+      << mean << "' after " << request.queuedMillis() << " ms in queue";
   if (mean == "exec")
     execMean(request, target);
   else if (mean == "ssh")
@@ -97,9 +98,9 @@ void Executor::execProcess(TaskRequest request, Host target,
   _process = new QProcess(this);
   _process->setProcessChannelMode(QProcess::SeparateChannels);
   connect(_process, SIGNAL(error(QProcess::ProcessError)),
-          this, SLOT(error(QProcess::ProcessError)));
+          this, SLOT(processError(QProcess::ProcessError)));
   connect(_process, SIGNAL(finished(int,QProcess::ExitStatus)),
-          this, SLOT(finished(int,QProcess::ExitStatus)));
+          this, SLOT(processFinished(int,QProcess::ExitStatus)));
   connect(_process, SIGNAL(readyReadStandardError()),
           this, SLOT(readyReadStandardError()));
   connect(_process, SIGNAL(readyReadStandardOutput()),
@@ -129,7 +130,7 @@ void Executor::execProcess(TaskRequest request, Host target,
   }
 }
 
-void Executor::error(QProcess::ProcessError error) {
+void Executor::processError(QProcess::ProcessError error) {
   readyReadStandardError();
   readyReadStandardOutput();
   Log::error(_request.task().fqtn(), _request.id())
@@ -143,15 +144,16 @@ void Executor::error(QProcess::ProcessError error) {
   _request = TaskRequest();
 }
 
-void Executor::finished(int exitCode, QProcess::ExitStatus exitStatus) {
+void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   readyReadStandardError();
   readyReadStandardOutput();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
+  _request.setEndDatetime();
   Log::info(_request.task().fqtn(), _request.id())
       << "task '" << _request.task().fqtn() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
-      << exitCode << " on host '" << _target.hostname() << "'";
-  // LATER log duration and wait time
+      << exitCode << " on host '" << _target.hostname() << "' in "
+      << _request.runningMillis() << " ms";
   emit taskFinished(_request, _target, success, exitCode, this);
   _process->deleteLater();
   _process = 0;
@@ -232,11 +234,12 @@ void Executor::replyFinished(QNetworkReply *reply) {
   QString reason = reply
       ->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
   bool success = (status < 300);
+  _request.setEndDatetime();
   Log::info(_request.task().fqtn(), _request.id())
       << "task '" << _request.task().fqtn() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
-      << status << " (" << reason << ") on host '" << _target.hostname() << "'";
-  // LATER log duration and wait time
+      << status << " (" << reason << ") on host '" << _target.hostname()
+      << "' in " << _request.runningMillis() << " ms";
   emit taskFinished(_request, _target, success, status, this);
   _target = Host();
   _request = TaskRequest();

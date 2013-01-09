@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,10 +23,14 @@ public:
   quint64 _id;
   Task _task;
   ParamSet _params;
+  QDateTime _submission;
+  mutable QDateTime _start, _end; // FIXME
   TaskRequestData(Task task = Task(), ParamSet params = ParamSet())
-    : _id(newId()), _task(task), _params(params) { }
+    : _id(newId()), _task(task), _params(params),
+      _submission(QDateTime::currentDateTime()) { }
   TaskRequestData(const TaskRequestData &other) : QSharedData(), _id(other._id),
-    _task(other._task), _params(other._params) { }
+    _task(other._task), _params(other._params), _submission(other._submission),
+    _start(other._start), _end(other._end) { }
   static quint64 newId() {
     QDateTime now = QDateTime::currentDateTime();
     return now.date().year() * 100000000000000LL
@@ -68,4 +72,24 @@ const ParamSet TaskRequest::params() const {
 
 quint64 TaskRequest::id() const {
   return d->_id;
+}
+
+QDateTime TaskRequest::submissionDatetime() const {
+  return d->_submission;
+}
+
+QDateTime TaskRequest::startDatetime() const {
+  return d->_start;
+}
+
+void TaskRequest::setStartDatetime(QDateTime datetime) const {
+  d->_start = datetime;
+}
+
+QDateTime TaskRequest::endDatetime() const {
+  return d->_end;
+}
+
+void TaskRequest::setEndDatetime(QDateTime datetime) const {
+  d->_end = datetime;
 }
