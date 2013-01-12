@@ -154,6 +154,10 @@ QString Task::target() const {
   return d->_target;
 }
 
+TaskGroup Task::taskGroup() const {
+  return d->_group;
+}
+
 void Task::setTaskGroup(TaskGroup taskGroup) {
   d->_group = taskGroup;
   d->_params.setParent(taskGroup.params());

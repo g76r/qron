@@ -65,7 +65,8 @@ void Executor::doExecute(TaskRequest request) {
 
 void Executor::execMean(TaskRequest request) {
   QStringList cmdline;
-  cmdline = request.params().splitAndEvaluate(request.task().command());
+  cmdline = request.params()
+      .splitAndEvaluate(request.task().command(), &request);
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   execProcess(request, cmdline);
@@ -73,7 +74,8 @@ void Executor::execMean(TaskRequest request) {
 
 void Executor::sshMean(TaskRequest request) {
   QStringList cmdline, sshCmdline;
-  cmdline = request.params().splitAndEvaluate(request.task().command());
+  cmdline = request.params()
+      .splitAndEvaluate(request.task().command(), &request);
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (through ssh on host "
       << request.target().hostname() <<  "): " << cmdline.join(" ");
@@ -109,7 +111,7 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline) {
   foreach (const QString key, request.params().keys()) {
     //qDebug() << "setting environment variable" << key << "="
     //         << request.params().value(key);
-    env.insert(key, request.params().value(key));
+    env.insert(key, request.params().value(key, &request));
   }
   _process->setProcessEnvironment(env);
   if (!cmdline.isEmpty()) {
@@ -190,10 +192,14 @@ void Executor::httpMean(TaskRequest request) {
   QString method = request.params().value("method");
   QUrl url;
   int port = request.params().value("port", "80").toInt();
-  url.setScheme("http");
-  url.setHost(request.target().hostname());
-  url.setPort(port);
-  url.setPath(request.task().command());
+  QString hostname = request.params()
+      .evaluate(request.target().hostname(), &request);
+  QString command = request.params()
+      .evaluate(request.task().command(), &request);
+  if (command.size() && command.at(0) == '/')
+    command = command.mid(1);
+  url.setEncodedUrl(QString("http://%1:%2/%3").arg(hostname).arg(port)
+                    .arg(command).toUtf8(), QUrl::TolerantMode);
   if (url.isValid()) {
     _request = request;
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {

@@ -17,10 +17,11 @@
 #include <QSharedDataPointer>
 #include "alertrule.h"
 #include <QDateTime>
+#include "util/paramsprovider.h"
 
 class AlertData;
 
-class Alert {
+class Alert : public ParamsProvider {
   QSharedDataPointer<AlertData> d;
 
 public:
@@ -32,6 +33,7 @@ public:
   QString id() const;
   AlertRule rule() const;
   QDateTime datetime() const;
+  QString paramValue(const QString key, const QString defaultValue) const;
 };
 
 #endif // ALERT_H

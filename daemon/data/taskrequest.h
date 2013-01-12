@@ -19,10 +19,11 @@
 #include "util/paramset.h"
 #include <QDateTime>
 #include "host.h"
+#include "util/paramsprovider.h"
 
 class TaskRequestData;
 
-class TaskRequest {
+class TaskRequest : public ParamsProvider {
   QSharedDataPointer<TaskRequestData> d;
 public:
   TaskRequest();
@@ -55,6 +56,7 @@ public:
     * Return a null Host when the task request is still queued. */
   Host target() const;
   void setTarget(Host target) const;
+  QString paramValue(const QString key, const QString defaultValue) const;
 };
 
 #endif // TASKREQUEST_H

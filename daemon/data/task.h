@@ -17,11 +17,11 @@
 #include <QSharedData>
 #include "util/paramset.h"
 #include <QSet>
+#include "taskgroup.h"
 
 class TaskData;
 class QDebug;
 class PfNode;
-class TaskGroup;
 class CronTrigger;
 
 class Task {
@@ -42,6 +42,7 @@ public:
   QString mean() const;
   QString command() const;
   QString target() const;
+  TaskGroup taskGroup() const;
   void setTaskGroup(TaskGroup taskGroup);
   QList<CronTrigger> cronTriggers() const;
   /** Resources consumed. */

@@ -122,3 +122,41 @@ Host TaskRequest::target() const {
 void TaskRequest::setTarget(Host target) const {
   d->_target = target;
 }
+
+QString TaskRequest::paramValue(const QString key,
+                                const QString defaultValue) const {
+  if (key == "!taskid") {
+    return task().id();
+  } else if (key == "!fqtn") {
+    return task().fqtn();
+  } else if (key == "!taskgroupid") {
+    return task().taskGroup().id();
+  } else if (key == "!taskrequestid") {
+    return QString::number(id());
+  } else if (key == "!runningms") {
+    return QString::number(runningMillis());
+  } else if (key == "!runnings") {
+    return QString::number(runningMillis()/1000);
+  } else if (key == "!queuedms") {
+    return QString::number(queuedMillis());
+  } else if (key == "!queueds") {
+    return QString::number(queuedMillis()/1000);
+  } else if (key == "!returncode") {
+    return QString::number(returnCode());
+  } else if (key == "!status") {
+    if (startDatetime().isNull())
+      return "queued";
+    if (endDatetime().isNull())
+      return "running";
+    return success() ? "success" : "failure";
+  } else if (key == "!submissiondate") {
+    return submissionDatetime().toString(Qt::ISODate);
+  } else if (key == "!startdate") {
+    return startDatetime().toString(Qt::ISODate);
+  } else if (key == "!enddate") {
+    return endDatetime().toString(Qt::ISODate);
+  } else if (key == "!target") {
+    return target().hostname();
+  }
+  return defaultValue;
+}

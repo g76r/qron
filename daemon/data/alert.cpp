@@ -52,3 +52,13 @@ AlertRule Alert::rule() const {
 QDateTime Alert::datetime() const {
   return d ? d->_datetime : QDateTime();
 }
+
+QString Alert::paramValue(const QString key, const QString defaultValue) const {
+  if (key == "!alertid") {
+    return id();
+  } else if (key == "!alertdate") {
+    return datetime().toString(Qt::ISODate);
+  }
+  return defaultValue;
+
+}
