@@ -16,7 +16,7 @@
 
 #include <QSharedDataPointer>
 #include "task.h"
-#include "paramset.h"
+#include "util/paramset.h"
 #include <QDateTime>
 #include "host.h"
 

@@ -24,7 +24,7 @@
 #include "resourcesallocationmodel.h"
 #include "hostslistmodel.h"
 #include "clusterslistmodel.h"
-#include "paramsetmodel.h"
+#include "util/paramsetmodel.h"
 #include "raisedalertsmodel.h"
 #include "lastemitedalertsmodel.h"
 #include "textview/clockview.h"

@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,7 @@
 #include <QSharedData>
 #include "alert/alertchannel.h"
 #include "pf/pfnode.h"
-#include "data/paramset.h"
+#include "util/paramset.h"
 #include "alert.h"
 
 class AlertRuleData : public QSharedData {

@@ -17,7 +17,7 @@
 #include <QObject>
 #include <QSet>
 #include <QIODevice>
-#include "data/paramset.h"
+#include "util/paramset.h"
 #include "data/taskgroup.h"
 #include "data/task.h"
 #include "data/crontrigger.h"

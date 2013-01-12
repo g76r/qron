@@ -15,7 +15,7 @@
 #define TASK_H
 
 #include <QSharedData>
-#include "paramset.h"
+#include "util/paramset.h"
 #include <QSet>
 
 class TaskData;

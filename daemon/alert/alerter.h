@@ -15,7 +15,7 @@
 #define ALERTER_H
 
 #include <QObject>
-#include "data/paramset.h"
+#include "util/paramset.h"
 #include "data/alertrule.h"
 #include "data/alert.h"
 #include "alertchannel.h"

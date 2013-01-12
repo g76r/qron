@@ -1,4 +1,4 @@
-# Copyright 2012 Hallowyn and others.
+# Copyright 2012-2013 Hallowyn and others.
 # This file is part of qron, see <http://qron.hallowyn.com/>.
 # Qron is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -45,14 +45,11 @@ TEMPLATE = app
 SOURCES += sched/main.cpp \
     data/task.cpp \
     data/taskgroup.cpp \
-    data/paramset.cpp \
     sched/scheduler.cpp \
     data/crontrigger.cpp \
     data/host.cpp \
     data/taskrequest.cpp \
     sched/executor.cpp \
-    log/log.cpp \
-    log/filelogger.cpp \
     ui/taskstreemodel.cpp \
     ui/webconsole.cpp \
     ui/treemodelwithstructure.cpp \
@@ -62,7 +59,6 @@ SOURCES += sched/main.cpp \
     ui/hostslistmodel.cpp \
     ui/clusterslistmodel.cpp \
     ui/resourcesallocationmodel.cpp \
-    ui/paramsetmodel.cpp \
     alert/alerter.cpp \
     data/alert.cpp \
     data/alertrule.cpp \
@@ -79,22 +75,16 @@ SOURCES += sched/main.cpp \
     ui/raisedalertsmodel.cpp \
     ui/lastemitedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
-    log/logger.cpp \
-    log/memorylogger.cpp \
-    log/logmodel.cpp \
     ui/taskrequestsmodel.cpp
 
 HEADERS += \
     data/task.h \
     data/taskgroup.h \
-    data/paramset.h \
     sched/scheduler.h \
     data/crontrigger.h \
     data/host.h \
     data/taskrequest.h \
     sched/executor.h \
-    log/log.h \
-    log/filelogger.h \
     ui/taskstreemodel.h \
     ui/webconsole.h \
     ui/treemodelwithstructure.h \
@@ -105,7 +95,6 @@ HEADERS += \
     ui/clusterslistmodel.h \
     ui/textviews.h \
     ui/resourcesallocationmodel.h \
-    ui/paramsetmodel.h \
     alert/alerter.h \
     data/alert.h \
     data/alertrule.h \
@@ -122,9 +111,6 @@ HEADERS += \
     ui/raisedalertsmodel.h \
     ui/lastemitedalertsmodel.h \
     ui/alertrulesmodel.h \
-    log/logger.h \
-    log/memorylogger.h \
-    log/logmodel.h \
     ui/taskrequestsmodel.h
 
 RESOURCES += \
