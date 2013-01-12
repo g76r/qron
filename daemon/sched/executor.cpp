@@ -34,47 +34,49 @@ Executor::Executor() : QObject(0), _isTemporary(false), _thread(new QThread),
   //qDebug() << "creating new task executor" << this;
 }
 
-void Executor::execute(TaskRequest request, Host target) {
-  QMetaObject::invokeMethod(this, "doExecute", Q_ARG(TaskRequest, request),
-                            Q_ARG(Host, target));
+void Executor::execute(TaskRequest request) {
+  QMetaObject::invokeMethod(this, "doExecute", Q_ARG(TaskRequest, request));
 }
 
-void Executor::doExecute(TaskRequest request, Host target) {
+void Executor::doExecute(TaskRequest request) {
   const QString mean = request.task().mean();
-  request.setStartDatetime();
   Log::debug(request.task().fqtn(), request.id())
       << "starting task '" << request.task().fqtn() << "' through mean '"
       << mean << "' after " << request.queuedMillis() << " ms in queue";
   if (mean == "exec")
-    execMean(request, target);
+    execMean(request);
   else if (mean == "ssh")
-    sshMean(request, target);
+    sshMean(request);
   else if (mean == "http")
-    httpMean(request, target);
+    httpMean(request);
   else if (mean == "donothing") {
-    emit taskFinished(request, target, true, 0, this);
+    request.setSuccess(true);
+    request.setReturnCode(0);
+    emit taskFinished(request, this);
   } else {
     Log::error(request.task().fqtn(), request.id())
         << "cannot execute task with unknown mean '" << mean << "'";
-    emit taskFinished(request, target, false, -1, this);
+    request.setSuccess(false);
+    request.setReturnCode(-1);
+    emit taskFinished(request, this);
   }
   // LATER add other means: https, postevent, setflag, clearflag
 }
 
-void Executor::execMean(TaskRequest request, Host target) {
+void Executor::execMean(TaskRequest request) {
   QStringList cmdline;
   cmdline = request.params().splitAndEvaluate(request.task().command());
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
-  execProcess(request, target, cmdline);
+  execProcess(request, cmdline);
 }
 
-void Executor::sshMean(TaskRequest request, Host target) {
+void Executor::sshMean(TaskRequest request) {
   QStringList cmdline, sshCmdline;
   cmdline = request.params().splitAndEvaluate(request.task().command());
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (through ssh on host "
-      << target.hostname() <<  "): " << cmdline.join(" ");
+      << request.target().hostname() <<  "): " << cmdline.join(" ");
   // ssh options are set to avoid any host key check to make the connection
   // successful even if the host is not known or if its key changed
   // LATER make the host key bypass optional (since it's insecure)
@@ -85,15 +87,13 @@ void Executor::sshMean(TaskRequest request, Host target) {
              << "-oGlobalKnownHostsFile=/dev/null"
              << "-oStrictHostKeyChecking=no"
              << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
-             << target.hostname()
+             << request.target().hostname()
              << cmdline;
-  execProcess(request, target, sshCmdline);
+  execProcess(request, sshCmdline);
 }
 
-void Executor::execProcess(TaskRequest request, Host target,
-                           QStringList cmdline) {
+void Executor::execProcess(TaskRequest request, QStringList cmdline) {
   _request = request;
-  _target = target;
   _errBuf.clear();
   _process = new QProcess(this);
   _process->setProcessChannelMode(QProcess::SeparateChannels);
@@ -122,10 +122,11 @@ void Executor::execProcess(TaskRequest request, Host target,
     Log::warning(_request.task().fqtn(), _request.id())
         << "cannot execute task with empty command '"
         << request.task().fqtn() << "'";
-    emit taskFinished(_request, _target, false, -1, this);
+    _request.setSuccess(false);
+    _request.setReturnCode(-1);
+    emit taskFinished(_request, this);
     _process->deleteLater();
     _process = 0;
-    _target = Host();
     _request = TaskRequest();
   }
 }
@@ -135,12 +136,12 @@ void Executor::processError(QProcess::ProcessError error) {
   readyReadStandardOutput();
   Log::error(_request.task().fqtn(), _request.id())
       << "task error #" << error << " : " << _process->errorString();
-  // LATER log duration and wait time
-  emit taskFinished(_request, _target, false, -1, this);
+  _request.setSuccess(false);
+  _request.setReturnCode(-1);
+  emit taskFinished(_request, this);
   _process->deleteLater();
   _process = 0;
   _errBuf.clear();
-  _target = Host();
   _request = TaskRequest();
 }
 
@@ -152,13 +153,14 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   Log::info(_request.task().fqtn(), _request.id())
       << "task '" << _request.task().fqtn() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
-      << exitCode << " on host '" << _target.hostname() << "' in "
+      << exitCode << " on host '" << _request.target().hostname() << "' in "
       << _request.runningMillis() << " ms";
-  emit taskFinished(_request, _target, success, exitCode, this);
+  _request.setSuccess(success);
+  _request.setReturnCode(exitCode);
+  emit taskFinished(_request, this);
   _process->deleteLater();
   _process = 0;
   _errBuf.clear();
-  _target = Host();
   _request = TaskRequest();
 }
 
@@ -183,18 +185,17 @@ void Executor::readyReadStandardOutput() {
   // LATER make it possible to log stdout too (as debug, depending on task cfg)
 }
 
-void Executor::httpMean(TaskRequest request, Host target) {
+void Executor::httpMean(TaskRequest request) {
   // LATER http mean should support http auth, http proxy auth and ssl
   QString method = request.params().value("method");
   QUrl url;
   int port = request.params().value("port", "80").toInt();
   url.setScheme("http");
-  url.setHost(target.hostname());
+  url.setHost(request.target().hostname());
   url.setPort(port);
   url.setPath(request.task().command());
   if (url.isValid()) {
     _request = request;
-    _target = target;
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact GET URL to be called: "
@@ -217,14 +218,17 @@ void Executor::httpMean(TaskRequest request, Host target) {
     } else {
       Log::error(_request.task().fqtn(), _request.id())
           << "unsupported HTTP method: " << method;
-      emit taskFinished(_request, _target, false, -1, this);
-      _target = Host();
+      _request.setSuccess(false);
+      _request.setReturnCode(-1);
+      emit taskFinished(_request, this);
       _request = TaskRequest();
     }
   } else {
     Log::error(_request.task().fqtn(), _request.id())
         << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
-    emit taskFinished(_request, _target, false, -1, this);
+    _request.setSuccess(false);
+    _request.setReturnCode(-1);
+    emit taskFinished(_request, this);
   }
 }
 
@@ -238,10 +242,12 @@ void Executor::replyFinished(QNetworkReply *reply) {
   Log::info(_request.task().fqtn(), _request.id())
       << "task '" << _request.task().fqtn() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
-      << status << " (" << reason << ") on host '" << _target.hostname()
-      << "' in " << _request.runningMillis() << " ms";
-  emit taskFinished(_request, _target, success, status, this);
-  _target = Host();
+      << status << " (" << reason << ") on host '"
+      << _request.target().hostname() << "' in " << _request.runningMillis()
+      << " ms";
+  _request.setSuccess(success);
+  _request.setReturnCode(status);
+  emit taskFinished(_request, this);
   _request = TaskRequest();
   reply->deleteLater();
 }

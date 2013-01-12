@@ -95,19 +95,17 @@ signals:
       QMap<QString,QMap<QString,qint64> > resources);
   /** There is no guarantee that taskQueued() is emited, taskStarted() or
     * taskFinished() can be emited witout previous taskQueued(). */
-  void taskQueued(TaskRequest request, Host host);
+  void taskQueued(TaskRequest request);
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
     * be emited witout previous taskQueued().
     * @param delayedMillis time between request and start, in ms */
-  void taskStarted(TaskRequest request, Host host);
+  void taskStarted(TaskRequest request);
   /** @param durationMillis time between start and termination, in ms */
-  void taskFinished(TaskRequest request, Host target, bool success,
-                    int returnCode, QWeakPointer<Executor> executor);
+  void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
   void globalParamsChanged(ParamSet globalParams);
 
 private slots:
-  void taskFinishing(TaskRequest request, Host target, bool success,
-                    int returnCode, QWeakPointer<Executor> executor);
+  void taskFinishing(TaskRequest request, QWeakPointer<Executor> executor);
 
 private:
   /** Check if it is permitted for a task to run now, if yes start it.

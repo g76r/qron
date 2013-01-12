@@ -69,14 +69,24 @@
       </div>
       <div class="row">
         <div class="span12">
-          <a name="tasks"></a>
-          <h2>Tasks</h2>
+          <a name="config"></a>
+          <h2>Tasks configuration</h2>
           <p>
           <a class="btn btn-info" href="/rest/csv/tasks/tree/v1"><i class="icon-file icon-white"></i> CSV</a>
           <a class="btn btn-info" href="/rest/html/tasks/tree/v1"><i class="icon-file icon-white"></i> HTML</a>
           <a class="btn btn-info" href="/rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV (flat list)</a>
           <a class="btn btn-info" href="/rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML (flat list)</a>
           <p><?view:taskstree?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <a name="requests"></a>
+          <h2>Last tasks executions</h2>
+          <p><a class="btn btn-info" href="/rest/csv/taskrequests/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="/rest/html/taskrequests/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="tasks.html">Tasks page &raquo;</a>
+          <p><?view:taskrequests?>
         </div>
       </div>
     </div>

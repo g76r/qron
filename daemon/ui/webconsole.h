@@ -30,6 +30,7 @@
 #include "textview/clockview.h"
 #include "alertrulesmodel.h"
 #include "log/memorylogger.h"
+#include "taskrequestsmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -43,18 +44,19 @@ class WebConsole : public HttpHandler {
   RaisedAlertsModel *_raisedAlertsModel;
   LastEmitedAlertsModel *_lastEmitedAlertsModel;
   AlertRulesModel *_alertRulesModel;
+  TaskRequestsModel *_taskRequestsHistoryModel, *_unfinishedTaskRequestModel;
   HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
   *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView,
   *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlLogView,
-  *_htmlLogView10;
+  *_htmlLogView10, *_htmlTaskRequestsView, *_htmlTaskRequestsView20;
   ClockView *_clockView;
   CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
   *_csvAlertParamsView,
   *_csvRaisedAlertsView, *_csvLastEmitedAlertsView, *_csvAlertRulesView,
-  *_csvLogView;
+  *_csvLogView, *_csvTaskRequestsView;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryLogger;
 

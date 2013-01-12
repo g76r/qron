@@ -24,13 +24,18 @@ public:
   Task _task;
   ParamSet _params;
   QDateTime _submission;
-  mutable QDateTime _start, _end; // FIXME
+  mutable QDateTime _start, _end;
+  mutable bool _success;
+  mutable int _returnCode;
+  mutable Host _target;
   TaskRequestData(Task task = Task(), ParamSet params = ParamSet())
     : _id(newId()), _task(task), _params(params),
-      _submission(QDateTime::currentDateTime()) { }
+      _submission(QDateTime::currentDateTime()), _success(false),
+      _returnCode(0) { }
   TaskRequestData(const TaskRequestData &other) : QSharedData(), _id(other._id),
     _task(other._task), _params(other._params), _submission(other._submission),
-    _start(other._start), _end(other._end) { }
+    _start(other._start), _end(other._end), _success(other._success),
+    _returnCode(other._returnCode), _target(other._target) { }
   static quint64 newId() {
     QDateTime now = QDateTime::currentDateTime();
     return now.date().year() * 100000000000000LL
@@ -92,4 +97,28 @@ QDateTime TaskRequest::endDatetime() const {
 
 void TaskRequest::setEndDatetime(QDateTime datetime) const {
   d->_end = datetime;
+}
+
+bool TaskRequest::success() const {
+  return d->_success;
+}
+
+void TaskRequest::setSuccess(bool success) const {
+  d->_success = success;
+}
+
+int TaskRequest::returnCode() const {
+  return d->_returnCode;
+}
+
+void TaskRequest::setReturnCode(int returnCode) const {
+  d->_returnCode = returnCode;
+}
+
+Host TaskRequest::target() const {
+  return d->_target;
+}
+
+void TaskRequest::setTarget(Host target) const {
+  d->_target = target;
 }

@@ -81,7 +81,8 @@ SOURCES += sched/main.cpp \
     ui/alertrulesmodel.cpp \
     log/logger.cpp \
     log/memorylogger.cpp \
-    log/logmodel.cpp
+    log/logmodel.cpp \
+    ui/taskrequestsmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -123,7 +124,8 @@ HEADERS += \
     ui/alertrulesmodel.h \
     log/logger.h \
     log/memorylogger.h \
-    log/logmodel.h
+    log/logmodel.h \
+    ui/taskrequestsmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

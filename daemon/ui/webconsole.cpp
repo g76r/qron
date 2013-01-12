@@ -24,6 +24,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _raisedAlertsModel(new RaisedAlertsModel(this)),
   _lastEmitedAlertsModel(new LastEmitedAlertsModel(this, 51)),
   _alertRulesModel(new AlertRulesModel(this)),
+  _taskRequestsHistoryModel(new TaskRequestsModel(this, 1000)),
+  _unfinishedTaskRequestModel(new TaskRequestsModel(this, 100, false)),
   _htmlTasksTreeView(new HtmlTableView(this)),
   _htmlTargetsTreeView(new HtmlTableView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
@@ -38,6 +40,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlAlertRulesView(new HtmlTableView(this)),
   _htmlLogView(new HtmlTableView(this)),
   _htmlLogView10(new HtmlTableView(this)),
+  _htmlTaskRequestsView(new HtmlTableView(this)),
+  _htmlTaskRequestsView20(new HtmlTableView(this)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvView(this)),
   _csvTargetsTreeView(new CsvView(this)),
@@ -50,6 +54,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvLastEmitedAlertsView(new CsvView(this)),
   _csvAlertRulesView(new CsvView(this)),
   _csvLogView(new CsvView(this)),
+  _csvTaskRequestsView(new CsvView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
   _memoryLogger(new MemoryLogger) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
@@ -115,6 +120,22 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLogView10->setMaxrows(10);
   _htmlLogView10->setEllipsePlaceholder("(see log page for more entries)");
   _htmlLogView10->setEmptyPlaceholder("(empty log)");
+  _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
+  _htmlTaskRequestsView20->setTableClass("table table-condensed table-hover");
+  _htmlTaskRequestsView20->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTaskRequestsView20->setTrClassRole(LogModel::TrClassRole);
+  _htmlTaskRequestsView20->setMaxrows(20);
+  _htmlTaskRequestsView20
+      ->setEllipsePlaceholder("(see tasks page for more entries)");
+  _htmlTaskRequestsView20->setEmptyPlaceholder("(no running or queued task)");
+  _htmlTaskRequestsView->setModel(_taskRequestsHistoryModel);
+  _htmlTaskRequestsView->setTableClass("table table-condensed table-hover");
+  _htmlTaskRequestsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTaskRequestsView->setTrClassRole(LogModel::TrClassRole);
+  _htmlTaskRequestsView->setMaxrows(100);
+  _htmlTaskRequestsView
+      ->setEllipsePlaceholder("(tasks list too long to be displayed)");
+  _htmlTaskRequestsView->setEmptyPlaceholder("(no recent task)");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -126,6 +147,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvRaisedAlertsView->setModel(_raisedAlertsModel);
   _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _csvLogView->setModel(_memoryLogger->model());
+  _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
@@ -142,6 +164,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _wuiHandler->addView("alertrules", _htmlAlertRulesView);
   _wuiHandler->addView("log", _htmlLogView);
   _wuiHandler->addView("log10", _htmlLogView10);
+  _wuiHandler->addView("taskrequests", _htmlTaskRequestsView);
+  _wuiHandler->addView("taskrequests20", _htmlTaskRequestsView20);
   _memoryLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryLogger->model()->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
@@ -286,6 +310,17 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlLogView->text().toUtf8().constData());
     return;
   }
+  if (path == "/rest/csv/taskrequests/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvTaskRequestsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/taskrequests/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlTaskRequestsView->text().toUtf8().constData());
+    return;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
 }
@@ -304,9 +339,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
     disconnect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),
                _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QMap<QString,qint64>)));
-    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest,Host)),
+    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
@@ -322,6 +357,18 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
                _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
+    disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
+               _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
+               _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+               _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
+               _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
+               _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+               _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -337,9 +384,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourceAllocationModel, SLOT(setResourceConfiguration(QMap<QString,QMap<QString,qint64> >)));
     connect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QMap<QString,qint64>)),
             _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QMap<QString,qint64>)));
-    connect(_scheduler, SIGNAL(taskStarted(TaskRequest,Host)),
+    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
+    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
@@ -355,6 +402,18 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
             _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
+    connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
+            _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
+            _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+            _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
+            _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
+            _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+            _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     Log::addLogger(_memoryLogger, false);
   }
 }

@@ -148,8 +148,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::debug() << "configured " << n << " task executors";
         while (n--) {
           Executor *e = new Executor;
-          connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
-                  this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
+          connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+                  this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
           _executors.append(e);
         }
       } else {
@@ -184,8 +184,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
                     "maxtotaltaskinstances value)";
     for (int n = 16; n; --n) {
       Executor *e = new Executor;
-      connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
-              this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
+      connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+              this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
       _executors.append(e);
     }
   }
@@ -228,6 +228,7 @@ bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
     Log::debug(task.fqtn(), request.id())
         << "queuing task '" << task.fqtn() << "' with params " << params;
     _queuedRequests.append(request);
+    emit taskQueued(request);
     reevaluateQueuedRequests();
   }
   return true;
@@ -322,9 +323,11 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     _resources.insert(h.id(), hostResources);
     emit hostResourceAllocationChanged(h.id(), hostResources);
     _alerter->cancelAlert("resource.exhausted."+request.task().target());
-    _executors.takeFirst()->execute(request, h);
+    request.setTarget(h);
+    request.setStartDatetime();
     request.task().setLastExecution(QDateTime::currentDateTime());
-    emit taskStarted(request, h);
+    _executors.takeFirst()->execute(request);
+    emit taskStarted(request);
     reevaluateQueuedRequests();
     return true;
 nexthost:;
@@ -343,8 +346,8 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
   if (_executors.isEmpty()) {
     e = new Executor;
     e->setTemporary();
-    connect(e, SIGNAL(taskFinished(TaskRequest,Host,bool,int,QWeakPointer<Executor>)),
-            this, SLOT(taskFinishing(TaskRequest,Host,bool,int,QWeakPointer<Executor>)));
+    connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+            this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
   } else {
     e = _executors.takeFirst();
   }
@@ -368,14 +371,16 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
                           -taskResources.value(kind));
   _resources.insert(target.id(), hostResources);
   emit hostResourceAllocationChanged(target.id(), hostResources);
-  e->execute(request, target);
+  request.setTarget(target);
+  request.setStartDatetime();
   request.task().setLastExecution(QDateTime::currentDateTime());
-  emit taskStarted(request, target);
+  e->execute(request);
+  emit taskStarted(request);
   reevaluateQueuedRequests();
 }
 
-void Scheduler::taskFinishing(TaskRequest request, Host target, bool success,
-                             int returnCode, QWeakPointer<Executor> executor) {
+void Scheduler::taskFinishing(TaskRequest request,
+                              QWeakPointer<Executor> executor) {
   request.task().fetchAndAddInstancesCount(-1);
   Executor *e = executor.data();
   if (e) {
@@ -385,19 +390,19 @@ void Scheduler::taskFinishing(TaskRequest request, Host target, bool success,
       _executors.append(e);
   }
   QMap<QString,qint64> taskResources = request.task().resources();
-  QMap<QString,qint64> hostResources = _resources.value(target.id());
+  QMap<QString,qint64> hostResources = _resources.value(request.target().id());
   foreach (QString kind, taskResources.keys())
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
-  _resources.insert(target.id(), hostResources);
-  if (success)
+  _resources.insert(request.target().id(), hostResources);
+  if (request.success())
     _alerter->cancelAlert("task.failure."+request.task().fqtn());
   else
     _alerter->raiseAlert("task.failure."+request.task().fqtn());
-  emit hostResourceAllocationChanged(target.id(), hostResources);
+  emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   reevaluateQueuedRequests();
-  emit taskFinished(request, target, success, returnCode, executor);
+  emit taskFinished(request, executor);
 }
 
 void Scheduler::reevaluateQueuedRequests() {

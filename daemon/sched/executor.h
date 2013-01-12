@@ -31,7 +31,6 @@ class Executor : public QObject {
   QProcess *_process;
   QByteArray _errBuf;
   TaskRequest _request;
-  Host _target;
   QNetworkAccessManager *_nam;
 
 public:
@@ -41,14 +40,13 @@ public:
   
 public slots:
   /** Execute a request now. This method is thread-safe. */
-  void execute(TaskRequest request, Host target);
+  void execute(TaskRequest request);
 
 signals:
   /** Signal emited whenever a task is no longer running or queued:
     * when finished on failure, finished on success, or cannot be started
     * because of a failure on start. */
-  void taskFinished(TaskRequest request, Host target, bool success,
-                    int returnCode, QWeakPointer<Executor> executor);
+  void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
 
 private slots:
   void processError(QProcess::ProcessError error);
@@ -58,11 +56,11 @@ private slots:
   void replyFinished(QNetworkReply *reply);
 
 private:
-  Q_INVOKABLE void doExecute(TaskRequest request, Host target);
-  void execMean(TaskRequest request, Host target);
-  void sshMean(TaskRequest request, Host target);
-  void httpMean(TaskRequest request, Host target);
-  void execProcess(TaskRequest request, Host target, QStringList cmdline);
+  Q_INVOKABLE void doExecute(TaskRequest request);
+  void execMean(TaskRequest request);
+  void sshMean(TaskRequest request);
+  void httpMean(TaskRequest request);
+  void execProcess(TaskRequest request, QStringList cmdline);
   Q_DISABLE_COPY(Executor)
 };
 

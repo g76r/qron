@@ -15,9 +15,10 @@
 #define TASKREQUEST_H
 
 #include <QSharedDataPointer>
-#include "data/task.h"
-#include "data/paramset.h"
+#include "task.h"
+#include "paramset.h"
 #include <QDateTime>
+#include "host.h"
 
 class TaskRequestData;
 
@@ -44,6 +45,16 @@ public:
     return startDatetime().msecsTo(endDatetime()); }
   quint64 totalMillis() const {
     return submissionDatetime().msecsTo(endDatetime()); }
+  bool success() const;
+  void setSuccess(bool success) const;
+  int returnCode() const;
+  void setReturnCode(int returnCode) const;
+  /** Note that this is the exact target on which the task is running/has been
+    * running, i.e. if the task target was a cluster, this is the host which
+    * was choosen within the cluster.
+    * Return a null Host when the task request is still queued. */
+  Host target() const;
+  void setTarget(Host target) const;
 };
 
 #endif // TASKREQUEST_H
