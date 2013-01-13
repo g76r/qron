@@ -17,7 +17,9 @@
 #include "httpd/httphandler.h"
 #include "httpd/templatinghttphandler.h"
 #include "textview/htmltableview.h"
-#include "textview/csvview.h"
+#include "textview/csvtableview.h"
+#include "textview/htmltreeview.h"
+#include "textview/csvtreeview.h"
 #include "sched/scheduler.h"
 #include "taskstreemodel.h"
 #include "targetstreemodel.h"
@@ -45,14 +47,15 @@ class WebConsole : public HttpHandler {
   LastEmitedAlertsModel *_lastEmitedAlertsModel;
   AlertRulesModel *_alertRulesModel;
   TaskRequestsModel *_taskRequestsHistoryModel, *_unfinishedTaskRequestModel;
-  HtmlTableView *_htmlTasksTreeView, *_htmlTargetsTreeView, *_htmlHostsListView,
+  HtmlTreeView *_htmlTasksTreeView, *_htmlTargetsTreeView;
+  HtmlTableView *_htmlHostsListView,
   *_htmlClustersListView, *_htmlResourcesAllocationView, *_htmlGlobalParamsView,
   *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlLogView,
   *_htmlLogView10, *_htmlTaskRequestsView, *_htmlTaskRequestsView20;
   ClockView *_clockView;
-  CsvView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
+  CsvTableView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
   *_csvAlertParamsView,
   *_csvRaisedAlertsView, *_csvLastEmitedAlertsView, *_csvAlertRulesView,
