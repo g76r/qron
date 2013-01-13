@@ -12,6 +12,8 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "webconsole.h"
+#include "util/ioutils.h"
+#include <QFile>
 
 WebConsole::WebConsole() : _scheduler(0),
   _tasksTreeModel(new TasksTreeModel(this)),
@@ -344,6 +346,25 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   if (path == "/rest/html/log/info/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlLogView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/txt/log/full/v1") {
+    QString path(Log::pathToFullestLog());
+    if (path.isEmpty()) {
+      res.setStatus(500);
+      res.output()->write("No log file found.");
+    } else {
+      QFile file(path);
+      if (file.open(QIODevice::ReadOnly)) {
+        res.setContentType("text/plain;charset=UTF-8");
+        IOUtils::copyAll(res.output(), file);
+      } else {
+        int status = file.error() == QFile::PermissionsError ? 403 : 404;
+        res.setStatus(status);
+        res.output()->write(status == 403 ? "Permission denied."
+                                          : "Document not found.");
+      }
+    }
     return;
   }
   if (path == "/rest/csv/taskrequests/list/v1") {

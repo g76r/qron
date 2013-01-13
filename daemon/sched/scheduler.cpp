@@ -168,7 +168,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       } else {
         filename = ParamSet().evaluate(filename);
         Log::info() << "adding logger " << node.toPf(); // FIXME
-        loggers.append(new FileLogger(new QFile(filename),
+        loggers.append(new FileLogger(filename,
                                       Log::severityFromString(level)));
       }
     } else if (node.name() == "alerts") {
