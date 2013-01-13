@@ -1,4 +1,4 @@
 #!/bin/bash
 echo stdout message
 echo stderr message FOOBAR=$FOOBAR BARFOO=$BARFOO 1>&2
-sleep 5
+sleep 50

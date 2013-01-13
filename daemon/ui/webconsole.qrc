@@ -12,5 +12,7 @@
         <file>docroot/console/tasks.html</file>
         <file>docroot/console/log.html</file>
         <file>docroot/console/infra.html</file>
+        <file>docroot/console/events.html</file>
+        <file>docroot/console/schedule.html</file>
     </qresource>
 </RCC>

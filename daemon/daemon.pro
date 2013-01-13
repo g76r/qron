@@ -75,7 +75,8 @@ SOURCES += sched/main.cpp \
     ui/raisedalertsmodel.cpp \
     ui/lastemitedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
-    ui/taskrequestsmodel.cpp
+    ui/taskrequestsmodel.cpp \
+    ui/tasksmodel.cpp
 
 HEADERS += \
     data/task.h \
@@ -111,7 +112,8 @@ HEADERS += \
     ui/raisedalertsmodel.h \
     ui/lastemitedalertsmodel.h \
     ui/alertrulesmodel.h \
-    ui/taskrequestsmodel.h
+    ui/taskrequestsmodel.h \
+    ui/tasksmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc
