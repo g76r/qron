@@ -44,6 +44,7 @@ class Scheduler : public QObject {
   QList<TaskRequest> _queuedRequests;
   QList<Executor*> _executors;
   Alerter *_alerter;
+  bool _firstConfigurationLoad;
 
 public:
   explicit Scheduler(QObject *parent = 0);

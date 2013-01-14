@@ -29,7 +29,7 @@
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
 Scheduler::Scheduler(QObject *parent) : QObject(parent),
-  _alerter(new Alerter) {
+  _alerter(new Alerter), _firstConfigurationLoad(true) {
   //qRegisterMetaType<CronTrigger>("CronTrigger");
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
@@ -197,6 +197,10 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   emit targetsConfigurationReset(_clusters, _hosts);
   emit hostResourceConfigurationChanged(_resources);
   emit globalParamsChanged(_globalParams);
+  if (_firstConfigurationLoad) {
+    _firstConfigurationLoad = false;
+    _alerter->emitAlert("scheduler.start");
+  }
   return true;
 }
 
@@ -280,10 +284,10 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
         << "cannot execute task '" << request.task().fqtn()
         << "' now because there are already too many tasks running "
            "(maxtotaltaskinstances reached)";
-    _alerter->raiseAlert("maxtotaltaskinstances.reached");
+    _alerter->raiseAlert("scheduler.maxtotaltaskinstances.reached");
     return false;
   }
-  _alerter->cancelAlert("maxtotaltaskinstances.reached");
+  _alerter->cancelAlert("scheduler.maxtotaltaskinstances.reached");
   // LATER check flags
   // TODO check maxtaskinstance
   QList<Host> hosts;
