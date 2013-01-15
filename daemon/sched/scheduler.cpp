@@ -99,9 +99,9 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         if (!host.isNull())
           cluster.appendHost(host);
         else
-          Log::warning() << "host '" << child.contentAsString()
-                         << "' not found, won't add it to cluster '"
-                         << cluster.id() << "'";
+          Log::error() << "host '" << child.contentAsString()
+                       << "' not found, won't add it to cluster '"
+                       << cluster.id() << "'";
       }
       _clusters.insert(cluster.id(), cluster);
       Log::debug() << "configured cluster '" << cluster.id() << "' with "
@@ -199,6 +199,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   emit globalParamsChanged(_globalParams);
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
+    Log::info() << "starting scheduler";
     _alerter->emitAlert("scheduler.start");
   }
   return true;
