@@ -28,6 +28,7 @@
 #include "executor.h"
 #include <QVariant>
 #include "alert/alerter.h"
+#include <QMutex>
 
 class PfNode;
 
@@ -41,6 +42,7 @@ class Scheduler : public QObject {
   QMap<QString,Host> _hosts;
   QMap<QString,QMap<QString,qint64> > _resources;
   QSet<QString> _setFlags;
+  mutable QMutex _flagsMutex;
   QList<TaskRequest> _queuedRequests;
   QList<Executor*> _executors;
   Alerter *_alerter;
@@ -71,11 +73,14 @@ public slots:
   void triggerTrigger(QVariant trigger);
   /** Set a flag, which will be evaluated by any following task constraints
     * evaluation.
-    */
+    * This method is thread-safe. */
   void setFlag(QString flag);
   /** Clear a flag.
-    */
+    * This method is thread-safe. */
   void clearFlag(QString flag);
+  /** Clear a flag.
+    * This method is thread-safe. */
+  bool isFlagSet(QString flag) const;
   /** Ask for queued requests to be reevaluated during next event loop
     * iteration.
     * This method must be called every time something occurs that could make a

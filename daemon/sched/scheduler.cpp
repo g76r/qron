@@ -263,6 +263,7 @@ void Scheduler::triggerTrigger(QVariant trigger) {
 }
 
 void Scheduler::setFlag(QString flag) {
+  QMutexLocker ml(&_flagsMutex);
   Log::debug() << "setting flag '" << flag << "'"
                << (_setFlags.contains(flag) ? " which was already set"
                                             : "");
@@ -271,11 +272,17 @@ void Scheduler::setFlag(QString flag) {
 }
 
 void Scheduler::clearFlag(QString flag) {
+  QMutexLocker ml(&_flagsMutex);
   Log::debug() << "clearing flag '" << flag << "'"
                << (_setFlags.contains(flag) ? ""
                                             : " which was already cleared");
   _setFlags.remove(flag);
   reevaluateQueuedRequests();
+}
+
+bool Scheduler::isFlagSet(QString flag) const {
+  QMutexLocker ml(&_flagsMutex);
+  return _setFlags.contains(flag);
 }
 
 bool Scheduler::tryStartTaskNow(TaskRequest request) {
