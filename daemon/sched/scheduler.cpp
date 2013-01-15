@@ -166,7 +166,6 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::warning() << "invalid log filename in configuration: "
                        << node.toPf();
       } else {
-        filename = ParamSet().evaluate(filename);
         Log::info() << "adding logger " << node.toPf(); // FIXME
         loggers.append(new FileLogger(filename,
                                       Log::severityFromString(level)));
