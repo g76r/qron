@@ -43,7 +43,7 @@ public:
   QString command() const;
   QString target() const;
   TaskGroup taskGroup() const;
-  void setTaskGroup(TaskGroup taskGroup);
+  void completeConfiguration(TaskGroup taskGroup);
   QList<CronTrigger> cronTriggers() const;
   /** Resources consumed. */
   QMap<QString,qint64> resources() const;
@@ -60,6 +60,8 @@ public:
   int instancesCount() const;
   /** Atomic fetch-and-add of the current instances count. */
   int fetchAndAddInstancesCount(int valueToAdd) const;
+  const QList<QRegExp> stderrFilters() const;
+  void appendStderrFilter(QRegExp filter);
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

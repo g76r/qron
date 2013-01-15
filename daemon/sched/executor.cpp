@@ -24,7 +24,8 @@
 Executor::Executor() : QObject(0), _isTemporary(false), _thread(new QThread),
   _process(0), _nam(new QNetworkAccessManager(this)) {
   _thread->setObjectName(QString("Executor-%1")
-                         .arg((long)_thread, sizeof(long)*8, 16));
+                         .arg((long)_thread, sizeof(long)*2, 16,
+                              QLatin1Char('0')));
   connect(_nam, SIGNAL(finished(QNetworkReply*)),
           this, SLOT(replyFinished(QNetworkReply*)));
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
@@ -167,16 +168,29 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
 }
 
 void Executor::readyReadStandardError() {
+  // LATER provide a way to define several stderr filter regexps
+  // LATER provide a way to choose log level for stderr
   _process->setReadChannel(QProcess::StandardError);
   QByteArray ba;
   while (!(ba = _process->read(1024)).isEmpty()) {
     _errBuf.append(ba);
     int i;
     while (((i = _errBuf.indexOf('\n')) >= 0)) {
-      QString line = QString::fromUtf8(_errBuf.mid(0, i));
+      QString line;
+      if (i > 0 && _errBuf.at(i-1) == '\r')
+        line = QString::fromUtf8(_errBuf.mid(0, i-1));
+      else
+        line = QString::fromUtf8(_errBuf.mid(0, i));
       _errBuf.remove(0, i+1);
-      Log::warning(_request.task().fqtn(), _request.id())
-          << "task stderr: " << line.trimmed();
+      if (!line.isEmpty())
+      if (!line.isEmpty()) {
+        foreach (QRegExp filter, _request.task().stderrFilters())
+          if (filter.indexIn(line) >= 0)
+            goto line_filtered;
+        Log::warning(_request.task().fqtn(), _request.id())
+            << "task stderr: " << line.trimmed();
+line_filtered:;
+      }
     }
   }
 }

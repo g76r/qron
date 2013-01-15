@@ -29,6 +29,7 @@ public:
   QMap<QString,qint64> _resources;
   quint32 _maxInstances;
   QList<CronTrigger> _cronTriggers;
+  QList<QRegExp> _stderrFilters;
   mutable QDateTime _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
 
@@ -37,8 +38,8 @@ public:
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _group(other._group), _params(other._params),
     _eventTriggers(other._eventTriggers), _resources(other._resources),
-    _maxInstances(other._maxInstances),
-    _cronTriggers(other._cronTriggers), _lastExecution(other._lastExecution),
+    _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
+    _stderrFilters(other._stderrFilters), _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution) { }
 };
 
@@ -158,9 +159,12 @@ TaskGroup Task::taskGroup() const {
   return d->_group;
 }
 
-void Task::setTaskGroup(TaskGroup taskGroup) {
+void Task::completeConfiguration(TaskGroup taskGroup) {
   d->_group = taskGroup;
   d->_params.setParent(taskGroup.params());
+  QString filter = params().value("stderrfilter");
+  if (!filter.isEmpty())
+    d->_stderrFilters.append(QRegExp(filter));
 }
 
 QList<CronTrigger> Task::cronTriggers() const {
@@ -221,6 +225,14 @@ int Task::instancesCount() const {
 
 int Task::fetchAndAddInstancesCount(int valueToAdd) const {
   return d->_instancesCount.fetchAndAddOrdered(valueToAdd);
+}
+
+const QList<QRegExp> Task::stderrFilters() const {
+  return d->_stderrFilters;
+}
+
+void Task::appendStderrFilter(QRegExp filter) {
+  d->_stderrFilters.append(filter);
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {

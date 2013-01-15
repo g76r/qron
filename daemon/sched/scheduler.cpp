@@ -113,7 +113,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::warning() << "ignoring task '" << task.id()
                        << "' without taskgroup";
       } else {
-        task.setTaskGroup(taskGroup);
+        task.completeConfiguration(taskGroup);
         _tasks.insert(task.fqtn(), task);
         foreach (CronTrigger trigger, task.cronTriggers()) {
           trigger.setTask(task);
