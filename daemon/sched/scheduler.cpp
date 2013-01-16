@@ -166,7 +166,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::warning() << "invalid log filename in configuration: "
                        << node.toPf();
       } else {
-        Log::info() << "adding logger " << node.toPf(); // FIXME
+        Log::debug() << "adding logger " << node.toPf();
         loggers.append(new FileLogger(filename,
                                       Log::severityFromString(level)));
       }
@@ -176,7 +176,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       Log::debug() << "configured alerter";
     }
   }
-  Log::info() << "replacing loggers " << loggers.size(); // FIXME
+  Log::debug() << "replacing loggers " << loggers.size();
   Log::replaceLoggers(loggers);
   if (_executors.isEmpty()) {
     Log::debug() << "configured 16 task executors (default "
@@ -296,7 +296,6 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
   }
   _alerter->cancelAlert("scheduler.maxtotaltaskinstances.reached");
   // LATER check flags
-  // TODO check maxtaskinstance
   QList<Host> hosts;
   Host host = _hosts.value(request.task().target());
   if (host.isNull())
