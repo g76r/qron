@@ -128,7 +128,6 @@ QString AlertRule::message(Alert alert) const {
   QString rawMessage = d ? d->_message : QString();
   if (rawMessage.isEmpty())
     rawMessage = "alert "+alert.id();
-  // LATER give alert context to evaluation method
   return ParamSet().evaluate(rawMessage, &alert);
 }
 
@@ -136,7 +135,6 @@ QString AlertRule::cancelMessage(Alert alert) const {
   QString rawMessage = d ? d->_cancelMessage : QString();
   if (rawMessage.isEmpty())
     rawMessage = "canceling alert "+alert.id();
-  // LATER give alert context to evaluation method
   return ParamSet().evaluate(rawMessage, &alert);
 }
 

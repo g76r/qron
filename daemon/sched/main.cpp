@@ -63,9 +63,9 @@ int main(int argc, char *argv[]) {
     Log::fatal() << "cannot load configuration: " << errorString;
     Log::fatal() << "qrond is aborting startup sequence";
   } else {
-    // LATER daemonize on Unix
+    // LATER truly daemonize on Unix (pidfile...)
     // LATER catch Unix signals
-    // EVENLATER servicize on Windows
+    // LATER servicize on Windows
     rc = a.exec();
   }
   delete httpd;
