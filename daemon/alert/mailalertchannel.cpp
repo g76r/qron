@@ -57,22 +57,26 @@ MailAlertChannel::~MailAlertChannel() {
 }
 
 void MailAlertChannel::sendMessage(Alert alert, bool cancellation) {
-  const QString address = alert.rule().address();
-  MailAlertQueue *queue = _queues.value(address);
-  if (!queue) {
-    queue = new MailAlertQueue(address);
-    _queues.insert(address, queue);
-  }
-  if (cancellation)
-    queue->_cancellations.append(alert);
-  else
-    queue->_alerts.append(alert);
-  if (!queue->_processingScheduled) {
-    // wait for a while before sending a mail with only 1 alert, in case some
-    // related alerts are coming soon after this one
-    // LATER parametrized the hard-coded 10" before first mail
-    TimerWithArguments::singleShot(10000, this, "processQueue", address);
-    queue->_processingScheduled = true;
+  // LATER support more complex mail addresses with quotes and so on
+  QStringList addresses = alert.rule().address().split(',');
+  foreach (QString address, addresses) {
+    address = address.trimmed();
+    MailAlertQueue *queue = _queues.value(address);
+    if (!queue) {
+      queue = new MailAlertQueue(address);
+      _queues.insert(address, queue);
+    }
+    if (cancellation)
+      queue->_cancellations.append(alert);
+    else
+      queue->_alerts.append(alert);
+    if (!queue->_processingScheduled) {
+      // wait for a while before sending a mail with only 1 alert, in case some
+      // related alerts are coming soon after this one
+      // LATER parametrized the hard-coded 10" before first mail
+      TimerWithArguments::singleShot(10000, this, "processQueue", address);
+      queue->_processingScheduled = true;
+    }
   }
 }
 
