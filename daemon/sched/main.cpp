@@ -26,13 +26,35 @@ int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   Log::addConsoleLogger();
+  QHostAddress webconsoleAddress(QHostAddress::Any);
+  quint16 webconsolePort(8086);
+  QString configPath("/etc/qron.conf");
+  for (int i = 1; i < argc; ++i) {
+    if (QString("-l") == argv[i] && i < argc-1) {
+      webconsoleAddress.setAddress(argv[++i]);
+    } else if (QString("-p") == argv[i] && i < argc-1) {
+      int p = QString(argv[++i]).toInt();
+      if (p >= 1 && p <= 65535)
+        webconsolePort = p;
+      else
+        Log::error() << "bad port number: " << argv[i]
+                        << " using default instead (8086)";
+    } else if (QString("-c") == argv[i] && i < argc-1) {
+      configPath = argv[++i];
+    } else {
+      Log::warning() << "unknown command line parameter: " << argv[i];
+    }
+  }
   Scheduler *scheduler = new Scheduler;
   HttpServer *httpd = new HttpServer;
   WebConsole *webconsole = new WebConsole;
   webconsole->setScheduler(scheduler);
   httpd->appendHandler(webconsole);
-  httpd->listen(QHostAddress::Any, 8086); // TODO parametrize addr and port
-  QFile *config = new QFile("./qron.conf"); // TODO parametrize config file
+  if (!httpd->listen(webconsoleAddress, webconsolePort))
+    Log::error() << "cannot start webconsole on "
+                 << webconsoleAddress.toString() << ":" << webconsolePort
+                 << ": " << httpd->errorString();
+  QFile *config = new QFile(configPath);
   // LATER have a config directory rather only one file
   QString errorString;
   int rc = scheduler->loadConfiguration(config, errorString) ? 0 : 1;
