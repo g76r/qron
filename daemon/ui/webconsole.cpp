@@ -215,7 +215,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);
   if (path.isEmpty()) {
-    res.redirect("/console/");
+    res.redirect("console/index.html");
     return;
   }
   if (path.startsWith("/console")) {
