@@ -53,12 +53,15 @@ void Executor::doExecute(TaskRequest request) {
   else if (mean == "donothing") {
     request.setSuccess(true);
     request.setReturnCode(0);
+    request.setStartDatetime();
+    request.setEndDatetime();
     emit taskFinished(request, this);
   } else {
     Log::error(request.task().fqtn(), request.id())
         << "cannot execute task with unknown mean '" << mean << "'";
     request.setSuccess(false);
     request.setReturnCode(-1);
+    request.setEndDatetime();
     emit taskFinished(request, this);
   }
   // LATER add other means: https, postevent, setflag, clearflag
@@ -127,6 +130,7 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline) {
         << request.task().fqtn() << "'";
     _request.setSuccess(false);
     _request.setReturnCode(-1);
+    _request.setEndDatetime();
     emit taskFinished(_request, this);
     _process->deleteLater();
     _process = 0;
@@ -141,6 +145,7 @@ void Executor::processError(QProcess::ProcessError error) {
       << "task error #" << error << " : " << _process->errorString();
   _request.setSuccess(false);
   _request.setReturnCode(-1);
+  _request.setEndDatetime();
   emit taskFinished(_request, this);
   _process->deleteLater();
   _process = 0;
@@ -215,8 +220,8 @@ void Executor::httpMean(TaskRequest request) {
     command = command.mid(1);
   url.setEncodedUrl(QString("http://%1:%2/%3").arg(hostname).arg(port)
                     .arg(command).toUtf8(), QUrl::TolerantMode);
+  _request = request;
   if (url.isValid()) {
-    _request = request;
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact GET URL to be called: "
@@ -241,6 +246,7 @@ void Executor::httpMean(TaskRequest request) {
           << "unsupported HTTP method: " << method;
       _request.setSuccess(false);
       _request.setReturnCode(-1);
+      _request.setEndDatetime();
       emit taskFinished(_request, this);
       _request = TaskRequest();
     }
@@ -249,7 +255,9 @@ void Executor::httpMean(TaskRequest request) {
         << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
     _request.setSuccess(false);
     _request.setReturnCode(-1);
+    _request.setEndDatetime();
     emit taskFinished(_request, this);
+    _request = TaskRequest();
   }
 }
 
@@ -260,7 +268,8 @@ void Executor::replyFinished(QNetworkReply *reply) {
       ->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
   bool success = (status < 300);
   _request.setEndDatetime();
-  Log::info(_request.task().fqtn(), _request.id())
+  Log::log(success ? Log::Info : Log::Warning, _request.task().fqtn(),
+           _request.id())
       << "task '" << _request.task().fqtn() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
       << status << " (" << reason << ") on host '"

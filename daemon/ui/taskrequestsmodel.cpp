@@ -53,9 +53,11 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 5:
         return r.endDatetime();
       case 6:
-        return r.startDatetime().isNull() ? QVariant() : r.queuedMillis()/1000;
+        return r.startDatetime().isNull() || r.submissionDatetime().isNull()
+            ? QVariant() : QString::number(r.queuedMillis()/1000.0);
       case 7:
-        return r.endDatetime().isNull() ? QVariant() : r.runningMillis()/1000;
+        return r.endDatetime().isNull() || r.startDatetime().isNull()
+            ? QVariant() : QString::number(r.runningMillis()/1000.0);
       }
       break;
     }
@@ -65,8 +67,8 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
           return r.success() ? QVariant()
                              : "<i class=\"icon-minus-sign\"></i> ";
         if (!r.startDatetime().isNull())
-          return "<i class=\"icon-play\"></i>";
-        return "<i class=\"icon-pause\"></i>";
+          return "<i class=\"icon-play\"></i> ";
+        return "<i class=\"icon-time\"></i> ";
       }
       break;
     case TextViews::TrClassRole:
@@ -116,6 +118,9 @@ void TaskRequestsModel::taskChanged(TaskRequest request) {
   for (row = 0; row < _requests.size(); ++row) {
     TaskRequest &r(_requests[row]);
     if (r.id() == request.id()) {
+      qDebug() << "TaskRequestsModel::taskChanged" << request.id()
+               << request.submissionDatetime() << request.startDatetime()
+               << request.endDatetime() << "found" << _keepFinished;
       if (r.endDatetime().isNull() || _keepFinished) {
         r = request;
         emit dataChanged(index(row, 1), index(row, 5));
@@ -127,9 +132,14 @@ void TaskRequestsModel::taskChanged(TaskRequest request) {
       return;
     }
   }
-  beginInsertRows(QModelIndex(), 0, 0);
-  _requests.prepend(request);
-  endInsertRows();
+  qDebug() << "TaskRequestsModel::taskChanged" << request.id()
+           << request.submissionDatetime() << request.startDatetime()
+           << request.endDatetime() << "new" << _keepFinished;
+  if (request.endDatetime().isNull() || _keepFinished) {
+    beginInsertRows(QModelIndex(), 0, 0);
+    _requests.prepend(request);
+    endInsertRows();
+  }
   if (_requests.size() > _maxrows) {
     beginRemoveRows(QModelIndex(), _maxrows, _requests.size());
     while (_requests.size() > _maxrows)

@@ -41,9 +41,11 @@ public:
   void setEndDatetime(QDateTime datetime = QDateTime::currentDateTime()) const;
   QDateTime endDatetime() const;
   quint64 queuedMillis() const {
-    return submissionDatetime().msecsTo(startDatetime()); }
+    QDateTime submission(submissionDatetime());
+    return submission.isNull() ? 0 : submission.msecsTo(startDatetime()); }
   quint64 runningMillis() const {
-    return startDatetime().msecsTo(endDatetime()); }
+    QDateTime start(startDatetime());
+    return start.isNull() ? 0 : start.msecsTo(endDatetime()); }
   quint64 totalMillis() const {
     return submissionDatetime().msecsTo(endDatetime()); }
   bool success() const;

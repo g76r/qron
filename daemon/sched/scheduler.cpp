@@ -308,7 +308,12 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
         << "' because its target '" << request.task().target()
         << "' is not defined";
     _alerter->raiseAlert("task.failure."+request.task().fqtn());
-    return false;
+    request.setReturnCode(-1);
+    request.setSuccess(false);
+    request.setEndDatetime();
+    request.task().fetchAndAddInstancesCount(-1);
+    emit taskFinished(request, QWeakPointer<Executor>());
+    return true;
   }
   // LATER implement other cluster balancing methods than "first"
   QMap<QString,qint64> taskResources = request.task().resources();
@@ -411,8 +416,8 @@ void Scheduler::taskFinishing(TaskRequest request,
     _alerter->raiseAlert("task.failure."+request.task().fqtn());
   emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
-  reevaluateQueuedRequests();
   emit taskFinished(request, executor);
+  reevaluateQueuedRequests();
 }
 
 void Scheduler::reevaluateQueuedRequests() {
