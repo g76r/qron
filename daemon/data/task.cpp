@@ -56,6 +56,8 @@ Task::Task(PfNode node) {
   td->_mean = node.attribute("mean"); // LATER check validity
   td->_command = node.attribute("command");
   td->_target = node.attribute("target");
+  if (td->_target.isEmpty() && td->_mean == "local")
+    td->_target = "localhost";
   td->_maxInstances = node.attribute("maxinstances", "1").toInt();
   if (td->_maxInstances <= 0) {
     td->_maxInstances = 1;

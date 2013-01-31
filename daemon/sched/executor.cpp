@@ -44,7 +44,7 @@ void Executor::doExecute(TaskRequest request) {
   Log::debug(request.task().fqtn(), request.id())
       << "starting task '" << request.task().fqtn() << "' through mean '"
       << mean << "' after " << request.queuedMillis() << " ms in queue";
-  if (mean == "exec")
+  if (mean == "local")
     execMean(request);
   else if (mean == "ssh")
     sshMean(request);
