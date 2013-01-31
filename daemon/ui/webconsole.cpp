@@ -357,7 +357,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
       QFile file(path);
       if (file.open(QIODevice::ReadOnly)) {
         res.setContentType("text/plain;charset=UTF-8");
-        IOUtils::copyAll(res.output(), file);
+        IOUtils::copy(res.output(), &file, 100*1024*1024);
       } else {
         int status = file.error() == QFile::PermissionsError ? 403 : 404;
         res.setStatus(status);
