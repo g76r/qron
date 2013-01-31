@@ -153,7 +153,8 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   readyReadStandardOutput();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
   _request.setEndDatetime();
-  Log::info(_request.task().fqtn(), _request.id())
+  Log::log(success ? Log::Info : Log::Warning, _request.task().fqtn(),
+           _request.id())
       << "task '" << _request.task().fqtn() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
       << exitCode << " on host '" << _request.target().hostname() << "' in "
