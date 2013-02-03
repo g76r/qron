@@ -16,7 +16,7 @@
 
 #include <QAbstractListModel>
 #include <QList>
-#include "data/alertrule.h"
+#include "config/alertrule.h"
 
 class AlertRulesModel : public QAbstractListModel {
   Q_OBJECT

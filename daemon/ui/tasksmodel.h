@@ -17,9 +17,9 @@
 #include <QAbstractListModel>
 #include <QList>
 #include <QMap>
-#include "data/task.h"
-#include "data/taskgroup.h"
-#include "data/taskrequest.h"
+#include "config/task.h"
+#include "config/taskgroup.h"
+#include "config/taskrequest.h"
 
 class TasksModel : public QAbstractListModel {
   Q_OBJECT

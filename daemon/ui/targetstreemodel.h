@@ -15,8 +15,8 @@
 #define TARGETSTREEMODEL_H
 
 #include "treemodelwithstructure.h"
-#include "data/cluster.h"
-#include "data/host.h"
+#include "config/cluster.h"
+#include "config/host.h"
 
 class TargetsTreeModel : public TreeModelWithStructure {
   Q_OBJECT

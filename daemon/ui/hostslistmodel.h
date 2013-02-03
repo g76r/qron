@@ -16,8 +16,8 @@
 
 #include <QAbstractListModel>
 #include "textviews.h"
-#include "data/cluster.h"
-#include "data/host.h"
+#include "config/cluster.h"
+#include "config/host.h"
 
 class HostsListModel : public QAbstractListModel {
   Q_OBJECT

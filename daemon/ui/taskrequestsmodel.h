@@ -17,8 +17,8 @@
 #include <QAbstractListModel>
 #include <QString>
 #include <QDateTime>
-#include "data/taskrequest.h"
-#include "data/host.h"
+#include "config/taskrequest.h"
+#include "config/host.h"
 #include <QList>
 #include "textviews.h"
 

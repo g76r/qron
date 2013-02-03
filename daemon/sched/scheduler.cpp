@@ -17,8 +17,8 @@
 #include <QEvent>
 #include "pf/pfparser.h"
 #include "pf/pfdomhandler.h"
-#include "data/host.h"
-#include "data/cluster.h"
+#include "config/host.h"
+#include "config/cluster.h"
 #include "util/timerwitharguments.h"
 #include <QMetaObject>
 #include "log/log.h"

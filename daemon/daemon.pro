@@ -43,25 +43,25 @@ contains(QT_VERSION, ^4\\.[0-6]\\..*) {
 TEMPLATE = app
 
 SOURCES += sched/main.cpp \
-    data/task.cpp \
-    data/taskgroup.cpp \
+    config/task.cpp \
+    config/taskgroup.cpp \
     sched/scheduler.cpp \
-    data/crontrigger.cpp \
-    data/host.cpp \
-    data/taskrequest.cpp \
+    config/crontrigger.cpp \
+    config/host.cpp \
+    config/taskrequest.cpp \
     sched/executor.cpp \
     ui/taskstreemodel.cpp \
     ui/webconsole.cpp \
     ui/treemodelwithstructure.cpp \
     ui/targetstreemodel.cpp \
-    data/cluster.cpp \
+    config/cluster.cpp \
     ui/textmatrixmodel.cpp \
     ui/hostslistmodel.cpp \
     ui/clusterslistmodel.cpp \
     ui/resourcesallocationmodel.cpp \
     alert/alerter.cpp \
-    data/alert.cpp \
-    data/alertrule.cpp \
+    config/alert.cpp \
+    config/alertrule.cpp \
     alert/alertchannel.cpp \
     alert/udpalertchannel.cpp \
     alert/mailalertchannel.cpp \
@@ -79,26 +79,26 @@ SOURCES += sched/main.cpp \
     ui/tasksmodel.cpp
 
 HEADERS += \
-    data/task.h \
-    data/taskgroup.h \
+    config/task.h \
+    config/taskgroup.h \
     sched/scheduler.h \
-    data/crontrigger.h \
-    data/host.h \
-    data/taskrequest.h \
+    config/crontrigger.h \
+    config/host.h \
+    config/taskrequest.h \
     sched/executor.h \
     ui/taskstreemodel.h \
     ui/webconsole.h \
     ui/treemodelwithstructure.h \
     ui/targetstreemodel.h \
-    data/cluster.h \
+    config/cluster.h \
     ui/textmatrixmodel.h \
     ui/hostslistmodel.h \
     ui/clusterslistmodel.h \
     ui/textviews.h \
     ui/resourcesallocationmodel.h \
     alert/alerter.h \
-    data/alert.h \
-    data/alertrule.h \
+    config/alert.h \
+    config/alertrule.h \
     alert/alertchannel.h \
     alert/udpalertchannel.h \
     alert/mailalertchannel.h \

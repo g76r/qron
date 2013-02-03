@@ -15,7 +15,7 @@
 #define ALERTCHANNEL_H
 
 #include <QObject>
-#include "data/alert.h"
+#include "config/alert.h"
 
 class QThread;
 
