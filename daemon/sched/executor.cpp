@@ -139,21 +139,21 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline) {
 }
 
 void Executor::processError(QProcess::ProcessError error) {
+  //qDebug() << "************ processError" << _request.id() << _process;
+  if (!_process)
+    return; // LATER add log
   readyReadStandardError();
   readyReadStandardOutput();
   Log::error(_request.task().fqtn(), _request.id())
       << "task error #" << error << " : " << _process->errorString();
-  _request.setSuccess(false);
-  _request.setReturnCode(-1);
-  _request.setEndDatetime();
-  emit taskFinished(_request, this);
-  _process->deleteLater();
-  _process = 0;
-  _errBuf.clear();
-  _request = TaskRequest();
+  _process->kill();
+  processFinished(-1, QProcess::CrashExit);
 }
 
 void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
+  //qDebug() << "************ processFinished" << _request.id() << _process;
+  if (!_process)
+    return; // LATER add log
   readyReadStandardError();
   readyReadStandardOutput();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
@@ -174,8 +174,11 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
 }
 
 void Executor::readyReadStandardError() {
+  //qDebug() << "************ readyReadStandardError" << _request.id() << _process;
   // LATER provide a way to define several stderr filter regexps
   // LATER provide a way to choose log level for stderr
+  if (!_process)
+    return;
   _process->setReadChannel(QProcess::StandardError);
   QByteArray ba;
   while (!(ba = _process->read(1024)).isEmpty()) {
@@ -202,6 +205,9 @@ line_filtered:;
 }
 
 void Executor::readyReadStandardOutput() {
+  //qDebug() << "************ readyReadStandardOutput" << _request.id() << _process;
+  if (!_process)
+    return;
   _process->setReadChannel(QProcess::StandardOutput);
   while (!_process->read(1024).isEmpty());
   // LATER make it possible to log stdout too (as debug, depending on task cfg)
