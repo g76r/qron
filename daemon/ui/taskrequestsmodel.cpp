@@ -118,9 +118,9 @@ void TaskRequestsModel::taskChanged(TaskRequest request) {
   for (row = 0; row < _requests.size(); ++row) {
     TaskRequest &r(_requests[row]);
     if (r.id() == request.id()) {
-      qDebug() << "TaskRequestsModel::taskChanged" << request.id()
-               << request.submissionDatetime() << request.startDatetime()
-               << request.endDatetime() << "found" << _keepFinished;
+      //qDebug() << "TaskRequestsModel::taskChanged" << request.id()
+      //         << request.submissionDatetime() << request.startDatetime()
+      //         << request.endDatetime() << "found" << _keepFinished;
       if (r.endDatetime().isNull() || _keepFinished) {
         r = request;
         emit dataChanged(index(row, 1), index(row, 5));
@@ -132,9 +132,9 @@ void TaskRequestsModel::taskChanged(TaskRequest request) {
       return;
     }
   }
-  qDebug() << "TaskRequestsModel::taskChanged" << request.id()
-           << request.submissionDatetime() << request.startDatetime()
-           << request.endDatetime() << "new" << _keepFinished;
+  //qDebug() << "TaskRequestsModel::taskChanged" << request.id()
+  //         << request.submissionDatetime() << request.startDatetime()
+  //         << request.endDatetime() << "new" << _keepFinished;
   if (request.endDatetime().isNull() || _keepFinished) {
     beginInsertRows(QModelIndex(), 0, 0);
     _requests.prepend(request);
