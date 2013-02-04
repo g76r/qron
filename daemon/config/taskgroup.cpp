@@ -17,13 +17,16 @@
 #include "task.h"
 #include "pf/pfnode.h"
 #include <QtDebug>
+#include "event/event.h"
+#include <QWeakPointer>
+#include "sched/scheduler.h"
 
 class TaskGroupData : public QSharedData {
-  friend class TaskGroup;
+public:
   QString _id, _label;
   ParamSet _params;
-  //QList<Task> _tasks;
-public:
+  QList<Event> _onstart, _onsuccess, _onfailure;
+  QWeakPointer<Scheduler> _scheduler;
   TaskGroupData() { }
   TaskGroupData(const TaskGroupData &other) : QSharedData(), _id(other._id),
     _label(other._label), _params(other._params)/*, _tasks(other._tasks)*/ { }
@@ -36,8 +39,10 @@ TaskGroup::TaskGroup() : d(new TaskGroupData) {
 TaskGroup::TaskGroup(const TaskGroup &other) : d(other.d) {
 }
 
-TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet) {
+TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
+                     Scheduler *scheduler) {
   TaskGroupData *tgd = new TaskGroupData;
+  tgd->_scheduler = scheduler;
   tgd->_id = node.attribute("id"); // LATER check uniqueness
   tgd->_label = node.attribute("label", tgd->_id);
   tgd->_params.setParent(parentParamSet);
@@ -52,6 +57,16 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet) {
       tgd->_params.setValue(key, value);
     }
   }
+  foreach (PfNode child, node.childrenByName("onstart"))
+    scheduler->loadEventListConfiguration(child, tgd->_onstart);
+  foreach (PfNode child, node.childrenByName("onsuccess"))
+    scheduler->loadEventListConfiguration(child, tgd->_onsuccess);
+  foreach (PfNode child, node.childrenByName("onfailure"))
+    scheduler->loadEventListConfiguration(child, tgd->_onfailure);
+  foreach (PfNode child, node.childrenByName("onfinish")) {
+    scheduler->loadEventListConfiguration(child, tgd->_onsuccess);
+    scheduler->loadEventListConfiguration(child, tgd->_onfailure);
+  }
   d = tgd;
 }
 
@@ -63,10 +78,6 @@ TaskGroup &TaskGroup::operator =(const TaskGroup &other) {
     d.operator=(other.d);
   return *this;
 }
-
-//QList<Task> TaskGroup::tasks() {
-//  return d->_tasks;
-//}
 
 QString TaskGroup::id() const {
   return d->_id;
@@ -87,4 +98,17 @@ bool TaskGroup::isNull() const {
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup) {
   dbg.nospace() << taskGroup.id();
   return dbg.space();
+}
+
+void TaskGroup::triggerStartEvents(const ParamsProvider *context) const {
+  // LATER trigger events in parent group first
+  Scheduler::triggerEvents(d->_onstart, context);
+}
+
+void TaskGroup::triggerSuccessEvents(const ParamsProvider *context) const {
+  Scheduler::triggerEvents(d->_onsuccess, context);
+}
+
+void TaskGroup::triggerFailureEvents(const ParamsProvider *context) const {
+  Scheduler::triggerEvents(d->_onfailure, context);
 }

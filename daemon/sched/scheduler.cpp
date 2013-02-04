@@ -25,6 +25,16 @@
 #include "log/filelogger.h"
 #include <QFile>
 #include <stdio.h>
+#include "event/postnoticeevent.h"
+#include "event/logevent.h"
+#include "event/udpevent.h"
+#include "event/httpevent.h"
+#include "event/raisealertevent.h"
+#include "event/cancelalertevent.h"
+#include "event/emitalertevent.h"
+#include "event/setflagevent.h"
+#include "event/clearflagevent.h"
+#include "event/requesttaskevent.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
@@ -84,6 +94,13 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   children += root.childrenByName("cluster");
   children += root.childrenByName("maxtotaltaskinstances");
   children += root.childrenByName("alerts");
+  children += root.childrenByName("onstart");
+  children += root.childrenByName("onsuccess");
+  children += root.childrenByName("onfailure");
+  children += root.childrenByName("onfinish");
+  children += root.childrenByName("onlog");
+  children += root.childrenByName("onnotice");
+  children += root.childrenByName("onschedulerstart");
   QList<Logger*> loggers;
   foreach (PfNode node, children) {
     if (node.name() == "host") {
@@ -107,7 +124,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       Log::debug() << "configured cluster '" << cluster.id() << "' with "
                    << cluster.hosts().size() << " hosts";
     } else if (node.name() == "task") {
-      Task task(node);
+      Task task(node, this);
       TaskGroup taskGroup = _tasksGroups.value(node.attribute("taskgroup"));
       if (taskGroup.isNull()) {
         Log::warning() << "ignoring task '" << task.id()
@@ -122,7 +139,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
         Log::debug() << "configured task '" << task.fqtn() << "'";
       }
     } else if (node.name() == "taskgroup") {
-      TaskGroup taskGroup(node, _globalParams);
+      TaskGroup taskGroup(node, _globalParams, this);
       _tasksGroups.insert(taskGroup.id(), taskGroup);
       Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
     } else if (node.name() == "param") {
@@ -174,6 +191,29 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       if (!_alerter->loadConfiguration(node, errorString))
         return false;
       Log::debug() << "configured alerter";
+    } else if (node.name() == "onstart") {
+      if (!loadEventListConfiguration(node, _onstart, errorString))
+        return false;
+    } else if (node.name() == "onsuccess") {
+      if (!loadEventListConfiguration(node, _onsuccess, errorString))
+        return false;
+    } else if (node.name() == "onfailure") {
+      if (!loadEventListConfiguration(node, _onfailure, errorString))
+        return false;
+    } else if (node.name() == "onfinish") {
+      if (!loadEventListConfiguration(node, _onsuccess, errorString)
+          || !loadEventListConfiguration(node, _onfailure, errorString))
+        return false;
+    } else if (node.name() == "onlog") {
+      // LATER implement onlog events for real
+      if (!loadEventListConfiguration(node, _onlog, errorString))
+        return false;
+    } else if (node.name() == "onnotice") {
+      if (!loadEventListConfiguration(node, _onnotice, errorString))
+        return false;
+    } else if (node.name() == "onschedulerstart") {
+      if (!loadEventListConfiguration(node, _onschedulerstart, errorString))
+        return false;
     }
   }
   Log::debug() << "replacing loggers " << loggers.size();
@@ -200,8 +240,50 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
     _alerter->emitAlert("scheduler.start");
+    triggerEvents(_onschedulerstart, 0);
   }
   return true;
+}
+
+bool Scheduler::loadEventListConfiguration(PfNode listnode, QList<Event> &list,
+                                           QString &errorString) {
+  Q_UNUSED(errorString)
+  foreach (PfNode node, listnode.children()) {
+    if (node.name() == "postnotice") {
+      list.append(PostNoticeEvent(this, node.contentAsString()));
+    } else if (node.name() == "setflag") {
+      list.append(SetFlagEvent(this, node.contentAsString()));
+    } else if (node.name() == "clearflag") {
+      list.append(ClearFlagEvent(this, node.contentAsString()));
+    } else if (node.name() == "raisealert") {
+      list.append(RaiseAlertEvent(this, node.contentAsString()));
+    } else if (node.name() == "cancelalert") {
+      list.append(CancelAlertEvent(this, node.contentAsString()));
+    } else if (node.name() == "emitalert") {
+      list.append(EmitAlertEvent(this, node.contentAsString()));
+    } else if (node.name() == "requesttask") {
+      ParamSet params;
+      // FIXME loadparams
+      list.append(RequestTaskEvent(this, node.contentAsString(), params,
+                                   node.hasChild("force")));
+    } else if (node.name() == "udp") {
+      list.append(UdpEvent(node.attribute("address"),
+                           node.attribute("message")));
+    } else if (node.name() == "log") {
+      list.append(LogEvent(
+                    Log::severityFromString(node.attribute("severity", "info")),
+                    node.attribute("message")));
+    } else {
+      Log::warning() << "unknown event type: " << node.name();
+    }
+  }
+  return true;
+}
+
+void Scheduler::triggerEvents(const QList<Event> list,
+                              const ParamsProvider *context) {
+  foreach (const Event e, list)
+    e.trigger(context);
 }
 
 bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
@@ -238,17 +320,6 @@ bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   return true;
 }
 
-void Scheduler::triggerEvent(QString event) {
-  foreach (Task task, _tasks.values()) {
-    if (task.eventTriggers().contains(event)) {
-      Log::debug() << "event '" << event << "' triggered task '" << task.fqtn()
-                   << "'";
-      // LATER support params at trigger level
-      requestTask(task.fqtn());
-    }
-  }
-}
-
 void Scheduler::triggerTrigger(QVariant trigger) {
   if (trigger.canConvert<CronTrigger>()) {
     CronTrigger ct = qvariant_cast<CronTrigger>(trigger);
@@ -262,7 +333,7 @@ void Scheduler::triggerTrigger(QVariant trigger) {
     Log::warning() << "invalid internal object when triggering trigger";
 }
 
-void Scheduler::setFlag(QString flag) {
+void Scheduler::setFlag(const QString flag) {
   QMutexLocker ml(&_flagsMutex);
   Log::debug() << "setting flag '" << flag << "'"
                << (_setFlags.contains(flag) ? " which was already set"
@@ -271,7 +342,7 @@ void Scheduler::setFlag(QString flag) {
   reevaluateQueuedRequests();
 }
 
-void Scheduler::clearFlag(QString flag) {
+void Scheduler::clearFlag(const QString flag) {
   QMutexLocker ml(&_flagsMutex);
   Log::debug() << "clearing flag '" << flag << "'"
                << (_setFlags.contains(flag) ? ""
@@ -280,9 +351,36 @@ void Scheduler::clearFlag(QString flag) {
   reevaluateQueuedRequests();
 }
 
-bool Scheduler::isFlagSet(QString flag) const {
+bool Scheduler::isFlagSet(const QString flag) const {
   QMutexLocker ml(&_flagsMutex);
   return _setFlags.contains(flag);
+}
+
+class NoticeContext : public ParamsProvider {
+public:
+  QString _notice;
+  NoticeContext(const QString notice) : _notice(notice) { }
+  QString paramValue(const QString key, const QString defaultValue) const {
+    if (key == "!notice")
+      return _notice;
+    return defaultValue;
+  }
+};
+
+void Scheduler::postNotice(const QString notice) {
+  Log::debug() << "posting notice '" << notice << "'";
+  foreach (Task task, _tasks.values()) {
+    if (task.noticeTriggers().contains(notice)) {
+      Log::debug() << "notice '" << notice << "' triggered task '"
+                   << task.fqtn() << "'";
+      // LATER support params at trigger level
+      requestTask(task.fqtn());
+    }
+  }
+  emit noticePosted(notice);
+  // TODO onnotice events are useless without a notice filter
+  NoticeContext context(notice);
+  triggerEvents(_onnotice, &context);
 }
 
 bool Scheduler::tryStartTaskNow(TaskRequest request) {
@@ -341,6 +439,8 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     request.setTarget(h);
     request.setStartDatetime();
     request.task().setLastExecution(QDateTime::currentDateTime());
+    triggerEvents(_onstart, &request);
+    request.task().triggerStartEvents(&request);
     _executors.takeFirst()->execute(request);
     emit taskStarted(request);
     reevaluateQueuedRequests();
@@ -391,6 +491,8 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
   request.task().setLastExecution(QDateTime::currentDateTime());
   e->execute(request);
   emit taskStarted(request);
+  triggerEvents(_onstart, &request);
+  request.task().triggerStartEvents(&request);
   reevaluateQueuedRequests();
 }
 
@@ -417,6 +519,13 @@ void Scheduler::taskFinishing(TaskRequest request,
   emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   emit taskFinished(request, executor);
+  if (request.success()) {
+    triggerEvents(_onsuccess, &request);
+    request.task().triggerSuccessEvents(&request);
+  } else {
+    triggerEvents(_onfailure, &request);
+    request.task().triggerFailureEvents(&request);
+  }
   reevaluateQueuedRequests();
 }
 

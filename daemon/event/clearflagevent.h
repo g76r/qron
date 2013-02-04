@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,9 +11,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "posteventalertchannel.h"
+#ifndef CLEARFLAGEVENT_H
+#define CLEARFLAGEVENT_H
 
-PostEventAlertChannel::PostEventAlertChannel(QObject *parent) :
-  AlertChannel(parent)
-{
-}
+#include "event.h"
+
+class ClearFlagEventData;
+class Scheduler;
+
+class ClearFlagEvent : public Event {
+public:
+  ClearFlagEvent(Scheduler *scheduler = 0, const QString flag = QString());
+  ClearFlagEvent(const ClearFlagEvent &);
+  ~ClearFlagEvent();
+};
+
+#endif // CLEARFLAGEVENT_H

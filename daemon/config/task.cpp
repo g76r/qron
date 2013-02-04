@@ -19,25 +19,30 @@
 #include "crontrigger.h"
 #include "log/log.h"
 #include <QAtomicInt>
+#include "event/event.h"
+#include <QWeakPointer>
+#include "sched/scheduler.h"
 
 class TaskData : public QSharedData {
 public:
   QString _id, _label, _mean, _command, _target;
   TaskGroup _group;
   ParamSet _params;
-  QSet<QString> _eventTriggers;
+  QSet<QString> _noticeTriggers;
   QMap<QString,qint64> _resources;
   quint32 _maxInstances;
   QList<CronTrigger> _cronTriggers;
   QList<QRegExp> _stderrFilters;
+  QList<Event> _onstart, _onsuccess, _onfailure;
   mutable QDateTime _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
+  QWeakPointer<Scheduler> _scheduler;
 
   TaskData() { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _group(other._group), _params(other._params),
-    _eventTriggers(other._eventTriggers), _resources(other._resources),
+    _noticeTriggers(other._noticeTriggers), _resources(other._resources),
     _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
     _stderrFilters(other._stderrFilters), _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution) { }
@@ -49,8 +54,9 @@ Task::Task() : d(new TaskData) {
 Task::Task(const Task &other) : d(other.d) {
 }
 
-Task::Task(PfNode node) {
+Task::Task(PfNode node, Scheduler *scheduler) {
   TaskData *td = new TaskData;
+  td->_scheduler = scheduler;
   td->_id = node.attribute("id"); // LATER check uniqueness
   td->_label = node.attribute("label", td->_id);
   td->_mean = node.attribute("mean"); // LATER check validity
@@ -76,10 +82,10 @@ Task::Task(PfNode node) {
     }
   }
   foreach (PfNode child, node.childrenByName("trigger")) {
-    QString event = child.attribute("event");
-    if (!event.isNull()) {
-      td->_eventTriggers.insert(event);
-      Log::debug() << "configured event trigger '" << event << "' on task '"
+    QString notice = child.attribute("notice");
+    if (!notice.isNull()) {
+      td->_noticeTriggers.insert(notice);
+      Log::debug() << "configured notice trigger '" << notice << "' on task '"
                    << td->_id << "'";
       continue;
     }
@@ -97,6 +103,16 @@ Task::Task(PfNode node) {
       continue;
       // LATER read misfire config
     }
+  }
+  foreach (PfNode child, node.childrenByName("onstart"))
+    scheduler->loadEventListConfiguration(child, td->_onstart);
+  foreach (PfNode child, node.childrenByName("onsuccess"))
+    scheduler->loadEventListConfiguration(child, td->_onsuccess);
+  foreach (PfNode child, node.childrenByName("onfailure"))
+    scheduler->loadEventListConfiguration(child, td->_onfailure);
+  foreach (PfNode child, node.childrenByName("onfinish")) {
+    scheduler->loadEventListConfiguration(child, td->_onsuccess);
+    scheduler->loadEventListConfiguration(child, td->_onfailure);
   }
   foreach (PfNode child, node.childrenByName("resource")) {
     QString kind = child.attribute("kind");
@@ -130,8 +146,8 @@ bool Task::isNull() const {
   return d->_id.isNull();
 }
 
-QSet<QString> Task::eventTriggers() const {
-  return d->_eventTriggers;
+QSet<QString> Task::noticeTriggers() const {
+  return d->_noticeTriggers;
 }
 
 QString Task::id() const {
@@ -194,7 +210,7 @@ QString Task::triggersAsString() const {
   if (!isNull()) {
     foreach (CronTrigger t, d->_cronTriggers)
       s.append("(").append(t.cronExpression()).append(") ");
-    foreach (QString t, d->_eventTriggers)
+    foreach (QString t, d->_noticeTriggers)
       s.append("^").append(t).append(" ");
   }
   if (!s.isEmpty())
@@ -241,4 +257,19 @@ void Task::appendStderrFilter(QRegExp filter) {
 QDebug operator<<(QDebug dbg, const Task &task) {
   dbg.nospace() << task.fqtn();
   return dbg.space();
+}
+
+void Task::triggerStartEvents(const ParamsProvider *context) const {
+  d->_group.triggerStartEvents(context);
+  Scheduler::triggerEvents(d->_onstart, context);
+}
+
+void Task::triggerSuccessEvents(const ParamsProvider *context) const {
+  d->_group.triggerSuccessEvents(context);
+  Scheduler::triggerEvents(d->_onsuccess, context);
+}
+
+void Task::triggerFailureEvents(const ParamsProvider *context) const {
+  d->_group.triggerFailureEvents(context);
+  Scheduler::triggerEvents(d->_onfailure, context);
 }

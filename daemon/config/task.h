@@ -23,18 +23,19 @@ class TaskData;
 class QDebug;
 class PfNode;
 class CronTrigger;
+class Scheduler;
 
 class Task {
   QSharedDataPointer<TaskData> d;
 public:
   Task();
   Task(const Task &other);
-  Task(PfNode node);
+  Task(PfNode node, Scheduler *scheduler);
   ~Task();
   Task &operator =(const Task &other);
   ParamSet params() const;
   bool isNull() const;
-  QSet<QString> eventTriggers() const;
+  QSet<QString> noticeTriggers() const;
   /** Fully qualified task name (i.e. "taskGroupId.taskId") */
   QString id() const;
   QString fqtn() const;
@@ -62,6 +63,9 @@ public:
   int fetchAndAddInstancesCount(int valueToAdd) const;
   const QList<QRegExp> stderrFilters() const;
   void appendStderrFilter(QRegExp filter);
+  void triggerStartEvents(const ParamsProvider *context) const;
+  void triggerSuccessEvents(const ParamsProvider *context) const;
+  void triggerFailureEvents(const ParamsProvider *context) const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

@@ -179,6 +179,9 @@ void Alerter::doCancelAlert(QString alert) {
     Log::debug() << "will cancel alert " << alert << " in " << _cancelDelay
                  << " s";
     emit alertCancellationScheduled(alert, dt);
+  //} else {
+  //  Log::debug() << "would have canceled alert " << alert
+  //               << " if it was raised";
   }
 }
 

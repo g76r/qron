@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,21 +11,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef POSTEVENTALERTCHANNEL_H
-#define POSTEVENTALERTCHANNEL_H
+#ifndef HTTPEVENT_H
+#define HTTPEVENT_H
 
-#include "alertchannel.h"
+#include "event.h"
+#include "util/paramset.h"
 
-class PostEventAlertChannel : public AlertChannel
-{
-  Q_OBJECT
+class HttpEventData;
+
+class HttpEvent : public Event{
 public:
-  explicit PostEventAlertChannel(QObject *parent = 0);
-  
-signals:
-  
-public slots:
-  
+  HttpEvent(const QString url = QString(),
+            const ParamSet params = ParamSet());
+  HttpEvent(const HttpEvent &);
+  ~HttpEvent();
 };
 
-#endif // POSTEVENTALERTCHANNEL_H
+#endif // HTTPEVENT_H

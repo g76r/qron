@@ -141,6 +141,10 @@ QString TaskRequest::paramValue(const QString key,
     return QString::number(queuedMillis());
   } else if (key == "!queueds") {
     return QString::number(queuedMillis()/1000);
+  } else if (key == "!totalms") {
+    return QString::number(queuedMillis()+runningMillis());
+  } else if (key == "!totals") {
+    return QString::number((queuedMillis()+runningMillis())/1000);
   } else if (key == "!returncode") {
     return QString::number(returnCode());
   } else if (key == "!status") {

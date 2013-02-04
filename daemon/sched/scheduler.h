@@ -29,8 +29,8 @@
 #include <QVariant>
 #include "alert/alerter.h"
 #include <QMutex>
-
-class PfNode;
+#include "event/event.h"
+#include "pf/pfnode.h"
 
 class Scheduler : public QObject {
   Q_OBJECT
@@ -47,12 +47,22 @@ class Scheduler : public QObject {
   QList<Executor*> _executors;
   Alerter *_alerter;
   bool _firstConfigurationLoad;
+  QList<Event> _onstart, _onsuccess, _onfailure;
+  QList<Event> _onlog, _onnotice, _onschedulerstart;
 
 public:
   explicit Scheduler(QObject *parent = 0);
   ~Scheduler();
   bool loadConfiguration(QIODevice *source, QString &errorString,
                          bool appendToCurrentConfig = true);
+  bool loadEventListConfiguration(PfNode listnode, QList<Event> &list,
+                                  QString &errorString);
+  inline bool loadEventListConfiguration(PfNode listnode, QList<Event> &list) {
+    QString errorString;
+    return loadEventListConfiguration(listnode, list, errorString);
+  }
+  static void triggerEvents(const QList<Event> list,
+                            const ParamsProvider *context);
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
 
@@ -65,22 +75,22 @@ public slots:
     */
   bool requestTask(const QString fqtn, ParamSet params = ParamSet(),
                    bool force = false);
-  /** Emit an event, triggering whatever this event is configured to trigger.
-    */
-  void triggerEvent(QString event);
   /** Fire a cron trigger, triggering whatever this trigger is configured to do.
     */
   void triggerTrigger(QVariant trigger);
   /** Set a flag, which will be evaluated by any following task constraints
     * evaluation.
     * This method is thread-safe. */
-  void setFlag(QString flag);
+  void setFlag(const QString flag);
   /** Clear a flag.
     * This method is thread-safe. */
-  void clearFlag(QString flag);
+  void clearFlag(const QString flag);
   /** Clear a flag.
     * This method is thread-safe. */
-  bool isFlagSet(QString flag) const;
+  bool isFlagSet(const QString flag) const;
+  /** Post a notice.
+    * This method is thread-safe. */
+  void postNotice(const QString notice);
   /** Ask for queued requests to be reevaluated during next event loop
     * iteration.
     * This method must be called every time something occurs that could make a
@@ -109,6 +119,7 @@ signals:
   /** @param durationMillis time between start and termination, in ms */
   void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
   void globalParamsChanged(ParamSet globalParams);
+  void noticePosted(QString notice);
 
 private slots:
   void taskFinishing(TaskRequest request, QWeakPointer<Executor> executor);

@@ -68,7 +68,6 @@ SOURCES += sched/main.cpp \
     alert/logalertchannel.cpp \
     alert/setflagalertchannel.cpp \
     alert/clearflagalertchannel.cpp \
-    alert/posteventalertchannel.cpp \
     alert/httpalertchannel.cpp \
     alert/execalertchannel.cpp \
     ui/textsetmodel.cpp \
@@ -76,7 +75,19 @@ SOURCES += sched/main.cpp \
     ui/lastemitedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
     ui/taskrequestsmodel.cpp \
-    ui/tasksmodel.cpp
+    ui/tasksmodel.cpp \
+    event/event.cpp \
+    event/postnoticeevent.cpp \
+    event/logevent.cpp \
+    alert/postnoticealertchannel.cpp \
+    event/udpevent.cpp \
+    event/httpevent.cpp \
+    event/setflagevent.cpp \
+    event/clearflagevent.cpp \
+    event/raisealertevent.cpp \
+    event/cancelalertevent.cpp \
+    event/emitalertevent.cpp \
+    event/requesttaskevent.cpp
 
 HEADERS += \
     config/task.h \
@@ -105,7 +116,6 @@ HEADERS += \
     alert/logalertchannel.h \
     alert/setflagalertchannel.h \
     alert/clearflagalertchannel.h \
-    alert/posteventalertchannel.h \
     alert/httpalertchannel.h \
     alert/execalertchannel.h \
     ui/textsetmodel.h \
@@ -113,7 +123,20 @@ HEADERS += \
     ui/lastemitedalertsmodel.h \
     ui/alertrulesmodel.h \
     ui/taskrequestsmodel.h \
-    ui/tasksmodel.h
+    ui/tasksmodel.h \
+    event/event.h \
+    event/postnoticeevent.h \
+    event/event_p.h \
+    event/logevent.h \
+    alert/postnoticealertchannel.h \
+    event/udpevent.h \
+    event/httpevent.h \
+    event/setflagevent.h \
+    event/clearflagevent.h \
+    event/raisealertevent.h \
+    event/cancelalertevent.h \
+    event/emitalertevent.h \
+    event/requesttaskevent.h
 
 RESOURCES += \
     ui/webconsole.qrc

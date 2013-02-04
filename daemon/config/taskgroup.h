@@ -22,6 +22,7 @@ class TaskGroupData;
 class Task;
 class PfNode;
 class QDebug;
+class Scheduler;
 
 class TaskGroup {
   QSharedDataPointer<TaskGroupData> d;
@@ -29,14 +30,16 @@ class TaskGroup {
 public:
   TaskGroup();
   TaskGroup(const TaskGroup &other);
-  TaskGroup(PfNode node, ParamSet parentParamSet);
+  TaskGroup(PfNode node, ParamSet parentParamSet, Scheduler *scheduler);
   ~TaskGroup();
   TaskGroup &operator =(const TaskGroup &other);
-  //QList<Task> tasks();
   QString id() const;
   QString label() const;
   ParamSet params() const;
   bool isNull() const;
+  void triggerStartEvents(const ParamsProvider *context) const;
+  void triggerSuccessEvents(const ParamsProvider *context) const;
+  void triggerFailureEvents(const ParamsProvider *context) const;
 };
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);
