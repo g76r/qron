@@ -23,7 +23,11 @@
 #include <QTimer>
 #include <QCoreApplication>
 
-Alerter::Alerter() : QObject(0), _thread(new QThread) {
+#define DEFAULT_CANCEL_DELAY 900
+// 900" = 15'
+
+Alerter::Alerter() : QObject(0), _thread(new QThread),
+  _cancelDelay(DEFAULT_CANCEL_DELAY) {
   _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -100,7 +104,9 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
       }
     }
   }
-  _cancelDelay = _params.value("canceldelay", "900").toInt(); // 15'
+  QString cancelDelayString = _params.value("canceldelay");
+  if (!cancelDelayString.isNull())
+    _cancelDelay = cancelDelayString.toInt();
   emit paramsChanged(_params);
   emit rulesChanged(_rules);
   return true;
