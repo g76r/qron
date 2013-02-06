@@ -57,7 +57,40 @@
     <div class="container">
       <div class="row">
         <div class="span12">
-          <h2>Coming soon...</h2>
+          <a name="config"></a>
+          <h2>Scheduler events configuration</h2>
+          <p><?view:schedulerevents?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <a name="config"></a>
+          <h2>Tasks events configuration</h2>
+          <p>
+          <a class="btn btn-info" href="../rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p>Warning: this table does not yet contain task groups events definitions, which are inherited by tasks. (coming soon...)
+          <p><?view:tasksevents?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span4">
+          <h2>Recently posted notices</h2>
+          <p><?view:lastpostednotices20?>
+        </div>
+        <div class="span4">
+          <h2>Recent flags changes</h2>
+          <p><?view:lastflagschanges20?>
+        </div>
+        <div class="span4">
+          <h2>Currently set flags</h2>
+          <p><?view:flagsset20?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <h2>Caption</h2>
+          <p>Coming soon...
         </div>
       </div>
     </div>

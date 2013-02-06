@@ -14,14 +14,14 @@
 #include "tasksmodel.h"
 #include <QDateTime>
 #include "textviews.h"
+#include "event/event.h"
 
-#define COLUMNS 14
+#define COLUMNS 17
 
 TasksModel::TasksModel(QObject *parent) : QAbstractListModel(parent) {
 }
 
 int TasksModel::rowCount(const QModelIndex &parent) const {
-  Q_UNUSED(parent)
   return parent.isValid() ? 0 : _tasks.size();
 }
 
@@ -64,6 +64,12 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return t.maxInstances();
       case 13:
         return t.instancesCount();
+      case 14:
+        return Event::toStringList(t.onstartEvents()).join(" ");
+      case 15:
+        return Event::toStringList(t.onsuccessEvents()).join(" ");
+      case 16:
+        return Event::toStringList(t.onfailureEvents()).join(" ");
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -116,6 +122,12 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Max instances";
     case 13:
       return "Instances count";
+    case 14:
+      return "On start";
+    case 15:
+      return "On success";
+    case 16:
+      return "On failure";
     }
   }
   return QVariant();
@@ -144,8 +156,7 @@ void TasksModel::setAllTasksAndGroups(QMap<QString, TaskGroup> groups,
 void TasksModel::taskChanged(Task task) {
   for (int row = 0; row < _tasks.size(); ++row)
     if (_tasks.at(row).id() == task.id()) {
-      QModelIndex index(createIndex(row, 0));
-      emit dataChanged(index, index);
+      emit dataChanged(createIndex(row, 0), createIndex(row, COLUMNS-1));
       return;
     }
 }

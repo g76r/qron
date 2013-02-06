@@ -28,12 +28,14 @@
 #include "clusterslistmodel.h"
 #include "util/paramsetmodel.h"
 #include "raisedalertsmodel.h"
-#include "lastemitedalertsmodel.h"
+#include "lastoccuredtexteventsmodel.h"
 #include "textview/clockview.h"
 #include "alertrulesmodel.h"
 #include "log/memorylogger.h"
 #include "taskrequestsmodel.h"
 #include "tasksmodel.h"
+#include "schedulereventsmodel.h"
+#include "flagssetmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -45,17 +47,23 @@ class WebConsole : public HttpHandler {
   ResourcesAllocationModel *_resourceAllocationModel;
   ParamSetModel *_globalParamsModel, *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
-  LastEmitedAlertsModel *_lastEmitedAlertsModel;
+  LastOccuredTextEventsModel *_lastEmitedAlertsModel, *_lastPostedNoticesModel,
+  *_lastFlagsChangesModel;
   AlertRulesModel *_alertRulesModel;
   TaskRequestsModel *_taskRequestsHistoryModel, *_unfinishedTaskRequestModel;
   TasksModel *_tasksModel;
+  SchedulerEventsModel *_schedulerEventsModel;
+  FlagsSetModel *_flagsSetModel;
   HtmlTreeView *_htmlTasksTreeView, *_htmlTargetsTreeView;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlResourcesAllocationView, *_htmlGlobalParamsView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlLogView,
   *_htmlLogView10, *_htmlTaskRequestsView, *_htmlTaskRequestsView20,
-  *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksListView;
+  *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksListView,
+  *_htmlTasksEventsView, *_htmlSchedulerEventsView,
+  *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
+  *_htmlFlagsSetView20;
   ClockView *_clockView;
   CsvTableView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
@@ -70,6 +78,13 @@ public:
   bool acceptRequest(const HttpRequest &req);
   void handleRequest(HttpRequest &req, HttpResponse &res);
   void setScheduler(Scheduler *scheduler);
+
+signals:
+  void flagChange(QString change);
+
+private slots:
+  void flagSet(QString flag);
+  void flagCleared(QString flag);
 };
 
 #endif // WEBCONSOLE_H

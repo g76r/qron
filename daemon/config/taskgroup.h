@@ -23,6 +23,7 @@ class Task;
 class PfNode;
 class QDebug;
 class Scheduler;
+class Event;
 
 class TaskGroup {
   QSharedDataPointer<TaskGroupData> d;
@@ -40,6 +41,9 @@ public:
   void triggerStartEvents(const ParamsProvider *context) const;
   void triggerSuccessEvents(const ParamsProvider *context) const;
   void triggerFailureEvents(const ParamsProvider *context) const;
+  const QList<Event> onstartEvents() const;
+  const QList<Event> onsuccessEvents() const;
+  const QList<Event> onfailureEvents() const;
 };
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);

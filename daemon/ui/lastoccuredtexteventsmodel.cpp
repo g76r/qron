@@ -11,36 +11,36 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "lastemitedalertsmodel.h"
+#include "lastoccuredtexteventsmodel.h"
 #include <QtDebug>
 
 #define COLUMNS 2
 
-LastEmitedAlertsModel::LastEmitedAlertsModel(QObject *parent, int maxsize)
+LastOccuredTextEventsModel::LastOccuredTextEventsModel(QObject *parent, int maxsize)
   : QAbstractListModel(parent), _maxsize(maxsize) {
 }
 
-int LastEmitedAlertsModel::rowCount(const QModelIndex &parent) const {
+int LastOccuredTextEventsModel::rowCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
-  return parent.isValid() ? 0 : _emitedAlerts.size();
+  return parent.isValid() ? 0 : _occuredEvents.size();
 }
 
-int LastEmitedAlertsModel::columnCount(const QModelIndex &parent) const {
+int LastOccuredTextEventsModel::columnCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
   return COLUMNS;
 }
 
-QVariant LastEmitedAlertsModel::data(const QModelIndex &index, int role) const {
+QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
-      && index.row() < _emitedAlerts.size()) {
+      && index.row() < _occuredEvents.size()) {
     switch(role) {
     case Qt::DisplayRole: {
-      const EmitedAlert ea(_emitedAlerts.at(index.row()));
+      const OccuredEvent ea(_occuredEvents.at(index.row()));
       switch(index.column()) {
       case 0:
         return ea._datetime;
       case 1:
-        return ea._alert;
+        return ea._event;
       }
       break;
     }
@@ -51,7 +51,7 @@ QVariant LastEmitedAlertsModel::data(const QModelIndex &index, int role) const {
   return QVariant();
 }
 
-QVariant LastEmitedAlertsModel::headerData(
+QVariant LastOccuredTextEventsModel::headerData(
     int section, Qt::Orientation orientation, int role) const {
   if (role == Qt::DisplayRole) {
     if (orientation == Qt::Horizontal) {
@@ -59,7 +59,7 @@ QVariant LastEmitedAlertsModel::headerData(
       case 0:
         return "Timestamp";
       case 1:
-        return "Alert";
+        return _eventName;
       }
     } else {
       return QString::number(section);
@@ -69,13 +69,13 @@ QVariant LastEmitedAlertsModel::headerData(
   return QVariant();
 }
 
-void LastEmitedAlertsModel::alertEmited(QString alert) {
+void LastOccuredTextEventsModel::eventOccured(QString event) {
   beginInsertRows(QModelIndex(), 0, 0);
-  _emitedAlerts.prepend(EmitedAlert(alert));
+  _occuredEvents.prepend(OccuredEvent(event));
   endInsertRows();
-  if (_emitedAlerts.size() > _maxsize) {
+  if (_occuredEvents.size() > _maxsize) {
     beginRemoveRows(QModelIndex(), _maxsize, _maxsize);
-    _emitedAlerts.removeAt(_maxsize);
+    _occuredEvents.removeAt(_maxsize);
     endRemoveRows();
   }
 }

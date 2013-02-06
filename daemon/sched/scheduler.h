@@ -105,6 +105,10 @@ signals:
                                QMap<QString,Task> tasks);
   void targetsConfigurationReset(QMap<QString,Cluster> clusters,
                                  QMap<QString,Host> hosts);
+  void eventsConfigurationReset(QList<Event> onstart, QList<Event> onsuccess,
+                                QList<Event> onfailure, QList<Event> onlog,
+                                QList<Event> onnotice,
+                                QList<Event> onschedulerstart);
   void hostResourceAllocationChanged(QString host,
                                      QMap<QString,qint64> resources);
   void hostResourceConfigurationChanged(
@@ -120,6 +124,8 @@ signals:
   void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
   void globalParamsChanged(ParamSet globalParams);
   void noticePosted(QString notice);
+  void flagSet(QString flag);
+  void flagCleared(QString flag);
 
 private slots:
   void taskFinishing(TaskRequest request, QWeakPointer<Executor> executor);

@@ -34,7 +34,8 @@ Event::~Event() {
 }
 
 void Event::trigger(const ParamsProvider *context) const {
-  d->trigger(context);
+  if (d)
+    d->trigger(context);
 }
 
 QString EventData::toString() const {
@@ -44,4 +45,15 @@ QString EventData::toString() const {
 void EventData::trigger(const ParamsProvider *context) const {
   Q_UNUSED(context)
   Log::warning() << "EventData::trigger() called whereas it should never";
+}
+
+QString Event::toString() const {
+  return d ? d->toString() : QString();
+}
+
+QStringList Event::toStringList(const QList<Event> list) {
+  QStringList sl;
+  foreach (const Event e, list)
+    sl.append(e.toString());
+  return sl;
 }

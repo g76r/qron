@@ -11,36 +11,38 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LASTEMITEDALERTSMODEL_H
-#define LASTEMITEDALERTSMODEL_H
+#ifndef LASTOCCUREDTEXTEVENTSMODEL_H
+#define LASTOCCUREDTEXTEVENTSMODEL_H
 
 #include <QAbstractListModel>
 #include <QDateTime>
 #include <QString>
 
-class LastEmitedAlertsModel : public QAbstractListModel {
+class LastOccuredTextEventsModel : public QAbstractListModel {
   Q_OBJECT
-  class EmitedAlert {
+  class OccuredEvent {
   public:
-    QString _alert;
+    QString _event;
     QDateTime _datetime;
-    EmitedAlert(QString alert) : _alert(alert),
+    OccuredEvent(QString event) : _event(event),
       _datetime(QDateTime::currentDateTime()) { }
   };
-  QList<EmitedAlert> _emitedAlerts;
+  QList<OccuredEvent> _occuredEvents;
   int _maxsize;
+  QString _eventName;
 
 public:
   // LATER limit last emited alerts by age
-  explicit LastEmitedAlertsModel(QObject *parent = 0, int maxsize = 100);
+  explicit LastOccuredTextEventsModel(QObject *parent = 0, int maxsize = 100);
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  void setEventName(const QString eventName) { _eventName = eventName; }
 
 public slots:
-  void alertEmited(QString alert);
+  void eventOccured(QString event);
 
 };
 
-#endif // LASTEMITEDALERTSMODEL_H
+#endif // LASTOCCUREDTEXTEVENTSMODEL_H

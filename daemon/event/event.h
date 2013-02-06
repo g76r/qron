@@ -16,6 +16,7 @@
 
 #include <QSharedDataPointer>
 #include "util/paramsprovider.h"
+#include <QStringList>
 
 class EventData;
 
@@ -29,6 +30,8 @@ public:
   Event &operator=(const Event &);
   ~Event();
   void trigger(const ParamsProvider *context) const;
+  QString toString() const;
+  static QStringList toStringList(const QList<Event> list);
 
 protected:
   Event(EventData *data);

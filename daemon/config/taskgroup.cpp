@@ -112,3 +112,15 @@ void TaskGroup::triggerSuccessEvents(const ParamsProvider *context) const {
 void TaskGroup::triggerFailureEvents(const ParamsProvider *context) const {
   Scheduler::triggerEvents(d->_onfailure, context);
 }
+
+const QList<Event> TaskGroup::onstartEvents() const {
+  return d->_onstart;
+}
+
+const QList<Event> TaskGroup::onsuccessEvents() const {
+  return d->_onsuccess;
+}
+
+const QList<Event> TaskGroup::onfailureEvents() const {
+  return d->_onfailure;
+}

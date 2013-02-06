@@ -24,11 +24,15 @@ WebConsole::WebConsole() : _scheduler(0),
   _globalParamsModel(new ParamSetModel(this)),
   _alertParamsModel(new ParamSetModel(this)),
   _raisedAlertsModel(new RaisedAlertsModel(this)),
-  _lastEmitedAlertsModel(new LastEmitedAlertsModel(this, 51)),
+  _lastEmitedAlertsModel(new LastOccuredTextEventsModel(this, 51)),
+  _lastPostedNoticesModel(new LastOccuredTextEventsModel(this)),
+  _lastFlagsChangesModel(new LastOccuredTextEventsModel(this)),
   _alertRulesModel(new AlertRulesModel(this)),
   _taskRequestsHistoryModel(new TaskRequestsModel(this, 1000)),
   _unfinishedTaskRequestModel(new TaskRequestsModel(this, 100, false)),
   _tasksModel(new TasksModel(this)),
+  _schedulerEventsModel(new SchedulerEventsModel(this)),
+  _flagsSetModel(new FlagsSetModel(this)),
   _htmlTasksTreeView(new HtmlTreeView(this)),
   _htmlTargetsTreeView(new HtmlTreeView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
@@ -48,6 +52,11 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTasksScheduleView(new HtmlTableView(this)),
   _htmlTasksConfigView(new HtmlTableView(this)),
   _htmlTasksListView(new HtmlTableView(this)),
+  _htmlTasksEventsView(new HtmlTableView(this)),
+  _htmlSchedulerEventsView(new HtmlTableView(this)),
+  _htmlLastPostedNoticesView20(new HtmlTableView(this)),
+  _htmlLastFlagsChangesView20(new HtmlTableView(this)),
+  _htmlFlagsSetView20(new HtmlTableView(this)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvTableView(this)),
   _csvTargetsTreeView(new CsvTableView(this)),
@@ -97,6 +106,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlRaisedAlertsView10
       ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _htmlRaisedAlertsView10->setMaxrows(10);
+  _lastEmitedAlertsModel->setEventName("Alert");
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
   _htmlLastEmitedAlertsView->setMaxrows(50);
@@ -161,6 +171,36 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTasksListView->setTableClass("table table-condensed table-hover");
   _htmlTasksListView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlTasksListView->setEmptyPlaceholder("(no task in configuration)");
+  _htmlTasksEventsView->setModel(_tasksModel);
+  _htmlTasksEventsView->setTableClass("table table-condensed table-hover");
+  _htmlTasksEventsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
+  cols.clear();
+  cols << 11 << 6 << 14 << 15 << 16;
+  _htmlTasksEventsView->setColumnIndexes(cols);
+  _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
+  _htmlSchedulerEventsView->setTableClass("table table-condensed table-hover");
+  _lastPostedNoticesModel->setEventName("Notice");
+  _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
+  _htmlLastPostedNoticesView20
+      ->setTableClass("table table-condensed table-hover");
+  _htmlLastPostedNoticesView20->setMaxrows(20);
+  _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
+  _htmlLastPostedNoticesView20
+      ->setEllipsePlaceholder("(older notices not displayed)");
+  _lastFlagsChangesModel->setEventName("Flag change");
+  _htmlLastFlagsChangesView20->setModel(_lastFlagsChangesModel);
+  _htmlLastFlagsChangesView20
+      ->setTableClass("table table-condensed table-hover");
+  _htmlLastFlagsChangesView20->setMaxrows(20);
+  _htmlLastFlagsChangesView20->setEmptyPlaceholder("(no flags changes)");
+  _htmlLastFlagsChangesView20
+      ->setEllipsePlaceholder("(older changes not displayed)");
+  _htmlFlagsSetView20->setModel(_flagsSetModel);
+  _htmlFlagsSetView20->setTableClass("table table-condensed table-hover");
+  _htmlFlagsSetView20->setMaxrows(20);
+  _htmlFlagsSetView20->setEmptyPlaceholder("(no flags set)");
+  _htmlFlagsSetView20->setEllipsePlaceholder("(more flags not displayed)");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -194,11 +234,18 @@ WebConsole::WebConsole() : _scheduler(0),
   _wuiHandler->addView("taskrequests20", _htmlTaskRequestsView20);
   _wuiHandler->addView("tasksschedule", _htmlTasksScheduleView);
   _wuiHandler->addView("tasksconfig", _htmlTasksConfigView);
+  _wuiHandler->addView("tasksevents", _htmlTasksEventsView);
+  _wuiHandler->addView("schedulerevents", _htmlSchedulerEventsView);
+  _wuiHandler->addView("lastpostednotices20", _htmlLastPostedNoticesView20);
+  _wuiHandler->addView("lastflagschanges20", _htmlLastFlagsChangesView20);
+  _wuiHandler->addView("flagsset20", _htmlFlagsSetView20);
   _memoryLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryLogger->model()->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
   _memoryLogger->model()->setWarningTrClass("warning");
   _memoryLogger->model()->setErrorTrClass("error");
+  connect(this, SIGNAL(flagChange(QString)),
+          _lastFlagsChangesModel, SLOT(eventOccured(QString)));
 }
 
 QString WebConsole::name() const {
@@ -421,7 +468,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
                _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
     disconnect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
-               _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
+               _lastEmitedAlertsModel, SLOT(eventOccured(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
                _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
     disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
@@ -436,6 +483,18 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
+               _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    disconnect(_scheduler, SIGNAL(noticePosted(QString)),
+               _lastPostedNoticesModel, SLOT(eventOccured(QString)));
+    disconnect(_scheduler, SIGNAL(flagSet(QString)),
+               this, SLOT(flagSet(QString)));
+    disconnect(_scheduler, SIGNAL(flagCleared(QString)),
+               this, SLOT(flagCleared(QString)));
+    disconnect(_scheduler, SIGNAL(flagSet(QString)),
+               _flagsSetModel, SLOT(setFlag(QString)));
+    disconnect(_scheduler, SIGNAL(flagCleared(QString)),
+               _flagsSetModel, SLOT(clearFlag(QString)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -476,7 +535,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
             _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
     connect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
-            _lastEmitedAlertsModel, SLOT(alertEmited(QString)));
+            _lastEmitedAlertsModel, SLOT(eventOccured(QString)));
     connect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
             _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
     connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
@@ -491,6 +550,26 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
+            _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    connect(_scheduler, SIGNAL(noticePosted(QString)),
+            _lastPostedNoticesModel, SLOT(eventOccured(QString)));
+    connect(_scheduler, SIGNAL(flagSet(QString)),
+            this, SLOT(flagSet(QString)));
+    connect(_scheduler, SIGNAL(flagCleared(QString)),
+            this, SLOT(flagCleared(QString)));
+    connect(_scheduler, SIGNAL(flagSet(QString)),
+            _flagsSetModel, SLOT(setFlag(QString)));
+    connect(_scheduler, SIGNAL(flagCleared(QString)),
+            _flagsSetModel, SLOT(clearFlag(QString)));
     Log::addLogger(_memoryLogger, false);
   }
+}
+
+void WebConsole::flagSet(QString flag) {
+  emit flagChange("+"+flag);
+}
+
+void WebConsole::flagCleared(QString flag) {
+  emit flagChange("-"+flag);
 }

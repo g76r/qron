@@ -72,7 +72,6 @@ SOURCES += sched/main.cpp \
     alert/execalertchannel.cpp \
     ui/textsetmodel.cpp \
     ui/raisedalertsmodel.cpp \
-    ui/lastemitedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
     ui/taskrequestsmodel.cpp \
     ui/tasksmodel.cpp \
@@ -87,7 +86,10 @@ SOURCES += sched/main.cpp \
     event/raisealertevent.cpp \
     event/cancelalertevent.cpp \
     event/emitalertevent.cpp \
-    event/requesttaskevent.cpp
+    event/requesttaskevent.cpp \
+    ui/schedulereventsmodel.cpp \
+    ui/lastoccuredtexteventsmodel.cpp \
+    ui/flagssetmodel.cpp
 
 HEADERS += \
     config/task.h \
@@ -120,7 +122,6 @@ HEADERS += \
     alert/execalertchannel.h \
     ui/textsetmodel.h \
     ui/raisedalertsmodel.h \
-    ui/lastemitedalertsmodel.h \
     ui/alertrulesmodel.h \
     ui/taskrequestsmodel.h \
     ui/tasksmodel.h \
@@ -136,7 +137,10 @@ HEADERS += \
     event/raisealertevent.h \
     event/cancelalertevent.h \
     event/emitalertevent.h \
-    event/requesttaskevent.h
+    event/requesttaskevent.h \
+    ui/schedulereventsmodel.h \
+    ui/lastoccuredtexteventsmodel.h \
+    ui/flagssetmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

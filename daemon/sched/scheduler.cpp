@@ -44,6 +44,7 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent),
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
+  qRegisterMetaType<QList<Event> >("QList<Event>");
 }
 
 Scheduler::~Scheduler() {
@@ -236,6 +237,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   emit targetsConfigurationReset(_clusters, _hosts);
   emit hostResourceConfigurationChanged(_resources);
   emit globalParamsChanged(_globalParams);
+  emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
+                                _onnotice, _onschedulerstart);
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
@@ -339,6 +342,8 @@ void Scheduler::setFlag(const QString flag) {
                << (_setFlags.contains(flag) ? " which was already set"
                                             : "");
   _setFlags.insert(flag);
+  ml.unlock();
+  emit flagSet(flag);
   reevaluateQueuedRequests();
 }
 
@@ -348,6 +353,8 @@ void Scheduler::clearFlag(const QString flag) {
                << (_setFlags.contains(flag) ? ""
                                             : " which was already cleared");
   _setFlags.remove(flag);
+  ml.unlock();
+  emit flagCleared(flag);
   reevaluateQueuedRequests();
 }
 
