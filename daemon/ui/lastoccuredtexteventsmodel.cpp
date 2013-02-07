@@ -33,8 +33,7 @@ int LastOccuredTextEventsModel::columnCount(const QModelIndex &parent) const {
 QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
       && index.row() < _occuredEvents.size()) {
-    switch(role) {
-    case Qt::DisplayRole: {
+    if (role == Qt::DisplayRole) {
       const OccuredEvent ea(_occuredEvents.at(index.row()));
       switch(index.column()) {
       case 0:
@@ -42,11 +41,8 @@ QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) co
       case 1:
         return ea._event;
       }
-      break;
-    }
-    default:
-      ;
-    }
+    } else if (role == _prefixRole && index.column() == 1)
+      return _prefix;
   }
   return QVariant();
 }

@@ -33,6 +33,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _tasksModel(new TasksModel(this)),
   _schedulerEventsModel(new SchedulerEventsModel(this)),
   _flagsSetModel(new FlagsSetModel(this)),
+  _taskGroupsModel(new TaskGroupsModel(this)),
   _htmlTasksTreeView(new HtmlTreeView(this)),
   _htmlTargetsTreeView(new HtmlTreeView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
@@ -57,6 +58,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLastPostedNoticesView20(new HtmlTableView(this)),
   _htmlLastFlagsChangesView20(new HtmlTableView(this)),
   _htmlFlagsSetView20(new HtmlTableView(this)),
+  _htmlTaskGroupsView(new HtmlTableView(this)),
+  _htmlTaskGroupsEventsView(new HtmlTableView(this)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvTableView(this)),
   _csvTargetsTreeView(new CsvTableView(this)),
@@ -71,6 +74,11 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvLogView(new CsvTableView(this)),
   _csvTaskRequestsView(new CsvTableView(this)),
   _csvTasksView(new CsvTableView(this)),
+  _csvSchedulerEventsView(new CsvTableView(this)),
+  _csvLastPostedNoticesView(new CsvTableView(this)),
+  _csvLastFlagsChangesView(new CsvTableView(this)),
+  _csvFlagsSetView(new CsvTableView(this)),
+  _csvTaskGroupsView(new CsvTableView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
   _memoryLogger(new MemoryLogger) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
@@ -95,24 +103,31 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _htmlAlertParamsView->setTableClass("table table-condensed table-hover");
+  _raisedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ",
+                                TextViews::HtmlPrefixRole);
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView->setTableClass("table table-condensed table-hover");
   _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlRaisedAlertsView
       ->setEllipsePlaceholder("(alerts list too long to be displayed)");
+  _htmlRaisedAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView10->setTableClass("table table-condensed table-hover");
   _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
   _htmlRaisedAlertsView10
       ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _htmlRaisedAlertsView10->setMaxrows(10);
+  _htmlRaisedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _lastEmitedAlertsModel->setEventName("Alert");
+  _lastEmitedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ",
+                                TextViews::HtmlPrefixRole);
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
   _htmlLastEmitedAlertsView->setMaxrows(50);
   _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlLastEmitedAlertsView
       ->setEllipsePlaceholder("(alerts list too long to be displayed)");
+  _htmlLastEmitedAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView10
       ->setTableClass("table table-condensed table-hover");
@@ -120,6 +135,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
   _htmlLastEmitedAlertsView10
       ->setEllipsePlaceholder("(see alerts page for more alerts)");
+  _htmlLastEmitedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlAlertRulesView->setModel(_alertRulesModel);
   _htmlAlertRulesView->setTableClass("table table-condensed table-hover");
   _htmlAlertRulesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
@@ -181,6 +197,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
   _htmlSchedulerEventsView->setTableClass("table table-condensed table-hover");
   _lastPostedNoticesModel->setEventName("Notice");
+  _lastPostedNoticesModel->setPrefix("<i class=\"icon-comment\"></i> ",
+                                     TextViews::HtmlPrefixRole);
   _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
   _htmlLastPostedNoticesView20
       ->setTableClass("table table-condensed table-hover");
@@ -188,7 +206,10 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
   _htmlLastPostedNoticesView20
       ->setEllipsePlaceholder("(older notices not displayed)");
+  _htmlLastPostedNoticesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _lastFlagsChangesModel->setEventName("Flag change");
+  _lastFlagsChangesModel->setPrefix("<i class=\"icon-flag\"></i> ",
+                                    TextViews::HtmlPrefixRole);
   _htmlLastFlagsChangesView20->setModel(_lastFlagsChangesModel);
   _htmlLastFlagsChangesView20
       ->setTableClass("table table-condensed table-hover");
@@ -196,11 +217,29 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLastFlagsChangesView20->setEmptyPlaceholder("(no flags changes)");
   _htmlLastFlagsChangesView20
       ->setEllipsePlaceholder("(older changes not displayed)");
+  _htmlLastFlagsChangesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _flagsSetModel->setPrefix("<i class=\"icon-flag\"></i> ",
+                            TextViews::HtmlPrefixRole);
   _htmlFlagsSetView20->setModel(_flagsSetModel);
   _htmlFlagsSetView20->setTableClass("table table-condensed table-hover");
   _htmlFlagsSetView20->setMaxrows(20);
   _htmlFlagsSetView20->setEmptyPlaceholder("(no flags set)");
   _htmlFlagsSetView20->setEllipsePlaceholder("(more flags not displayed)");
+  _htmlFlagsSetView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlTaskGroupsView->setModel(_taskGroupsModel);
+  _htmlTaskGroupsView->setTableClass("table table-condensed table-hover");
+  _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
+  _htmlTaskGroupsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  cols.clear();
+  cols << 0 << 1 << 2;
+  _htmlTaskGroupsView->setColumnIndexes(cols);
+  _htmlTaskGroupsEventsView->setModel(_taskGroupsModel);
+  _htmlTaskGroupsEventsView->setTableClass("table table-condensed table-hover");
+  _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
+  _htmlTaskGroupsEventsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  cols.clear();
+  cols << 0 << 3 << 4 << 5;
+  _htmlTaskGroupsEventsView->setColumnIndexes(cols);
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);
@@ -214,6 +253,11 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvLogView->setModel(_memoryLogger->model());
   _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
   _csvTasksView->setModel(_tasksModel);
+  _csvSchedulerEventsView->setModel(_schedulerEventsModel);
+  _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
+  _csvLastFlagsChangesView->setModel(_lastFlagsChangesModel);
+  _csvFlagsSetView->setModel(_flagsSetModel);
+  _csvTaskGroupsView->setModel(_taskGroupsModel);
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("taskstree", _htmlTasksTreeView);
   _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
@@ -239,6 +283,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _wuiHandler->addView("lastpostednotices20", _htmlLastPostedNoticesView20);
   _wuiHandler->addView("lastflagschanges20", _htmlLastFlagsChangesView20);
   _wuiHandler->addView("flagsset20", _htmlFlagsSetView20);
+  _wuiHandler->addView("taskgroups", _htmlTaskGroupsView);
+  _wuiHandler->addView("taskgroupsevents", _htmlTaskGroupsEventsView);
   _memoryLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryLogger->model()->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
@@ -294,6 +340,11 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   if (path == "/rest/html/tasks/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTasksListView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/tasks/events/v1") { // FIXME
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlTasksEventsView->text().toUtf8().constData());
     return;
   }
   if (path == "/rest/csv/hosts/list/v1") {
@@ -425,6 +476,66 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlTaskRequestsView->text().toUtf8().constData());
     return;
   }
+  if (path == "/rest/csv/scheduler/events/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvSchedulerEventsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/scheduler/events/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlSchedulerEventsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/csv/notices/lastposted/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvLastPostedNoticesView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/notices/lastposted/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlLastPostedNoticesView20->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/csv/flags/lastchanges/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvLastFlagsChangesView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/flags/lastchanges/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlLastFlagsChangesView20->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/csv/flags/set/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvFlagsSetView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/flags/set/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlFlagsSetView20->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/csv/taskgroups/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvTaskGroupsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/taskgroups/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlTaskGroupsView->text().toUtf8().constData());
+    return;
+  }
+  if (path == "/rest/html/taskgroups/events/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlTaskGroupsEventsView->text().toUtf8().constData());
+    return;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
 }
@@ -495,6 +606,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _flagsSetModel, SLOT(setFlag(QString)));
     disconnect(_scheduler, SIGNAL(flagCleared(QString)),
                _flagsSetModel, SLOT(clearFlag(QString)));
+    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
+               _taskGroupsModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -562,6 +675,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _flagsSetModel, SLOT(setFlag(QString)));
     connect(_scheduler, SIGNAL(flagCleared(QString)),
             _flagsSetModel, SLOT(clearFlag(QString)));
+    connect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
+            _taskGroupsModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
     Log::addLogger(_memoryLogger, false);
   }
 }

@@ -27,6 +27,8 @@ class FlagsSetModel : public QAbstractListModel {
       _setTime(QDateTime::currentDateTime()) { }
   };
   QList<SetFlag> _setFlags;
+  QString _prefix;
+  int _prefixRole;
 
 public:
   explicit FlagsSetModel(QObject *parent = 0);
@@ -34,6 +36,10 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  void setPrefix(const QString prefix, int prefixRole) {
+    _prefix = prefix;
+    _prefixRole = prefixRole;
+  }
 
 public slots:
   void setFlag(QString flag);

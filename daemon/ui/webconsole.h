@@ -36,6 +36,7 @@
 #include "tasksmodel.h"
 #include "schedulereventsmodel.h"
 #include "flagssetmodel.h"
+#include "taskgroupsmodel.h"
 
 class WebConsole : public HttpHandler {
   Q_OBJECT
@@ -54,6 +55,7 @@ class WebConsole : public HttpHandler {
   TasksModel *_tasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
   FlagsSetModel *_flagsSetModel;
+  TaskGroupsModel *_taskGroupsModel;
   HtmlTreeView *_htmlTasksTreeView, *_htmlTargetsTreeView;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlResourcesAllocationView, *_htmlGlobalParamsView, *_htmlAlertParamsView,
@@ -63,12 +65,14 @@ class WebConsole : public HttpHandler {
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
   *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
-  *_htmlFlagsSetView20;
+  *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView;
   ClockView *_clockView;
   CsvTableView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
-  *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView;
+  *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
+  *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
+  *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryLogger;
 

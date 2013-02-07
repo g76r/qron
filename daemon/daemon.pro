@@ -89,7 +89,8 @@ SOURCES += sched/main.cpp \
     event/requesttaskevent.cpp \
     ui/schedulereventsmodel.cpp \
     ui/lastoccuredtexteventsmodel.cpp \
-    ui/flagssetmodel.cpp
+    ui/flagssetmodel.cpp \
+    ui/taskgroupsmodel.cpp
 
 HEADERS += \
     config/task.h \
@@ -140,7 +141,8 @@ HEADERS += \
     event/requesttaskevent.h \
     ui/schedulereventsmodel.h \
     ui/lastoccuredtexteventsmodel.h \
-    ui/flagssetmodel.h
+    ui/flagssetmodel.h \
+    ui/taskgroupsmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

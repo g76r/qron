@@ -30,8 +30,7 @@ int FlagsSetModel::columnCount(const QModelIndex &parent) const {
 QVariant FlagsSetModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
       && index.row() < _setFlags.size()) {
-    switch(role) {
-    case Qt::DisplayRole: {
+    if (role == Qt::DisplayRole) {
       const SetFlag sf(_setFlags.at(index.row()));
       switch(index.column()) {
       case 0:
@@ -39,11 +38,8 @@ QVariant FlagsSetModel::data(const QModelIndex &index, int role) const {
       case 1:
         return sf._setTime;
       }
-      break;
-    }
-    default:
-      ;
-    }
+    } else if (role == _prefixRole && index.column() == 1)
+      return _prefix;
   }
   return QVariant();
 }
@@ -62,7 +58,6 @@ QVariant FlagsSetModel::headerData(int section, Qt::Orientation orientation,
       return QString::number(section);
     }
   }
-  // LATER htmlPrefix <i class="icon-bell"></i>
   return QVariant();
 }
 

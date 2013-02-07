@@ -33,8 +33,7 @@ int RaisedAlertsModel::columnCount(const QModelIndex &parent) const {
 QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
       && index.row() < _raisedAlerts.size()) {
-    switch(role) {
-    case Qt::DisplayRole: {
+    if (role == Qt::DisplayRole) {
       const RaisedAlert ra(_raisedAlerts.at(index.row()));
       switch(index.column()) {
       case 0:
@@ -44,11 +43,8 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
       case 2:
         return ra._scheduledCancellationTime;
       }
-      break;
-    }
-    default:
-      ;
-    }
+    } else if(role == _prefixRole && index.column() == 0)
+      return _prefix;
   }
   return QVariant();
 }
@@ -69,7 +65,6 @@ QVariant RaisedAlertsModel::headerData(int section, Qt::Orientation orientation,
       return QString::number(section);
     }
   }
-  // LATER htmlPrefix <i class="icon-bell"></i>
   return QVariant();
 }
 

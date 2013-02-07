@@ -28,6 +28,8 @@ class RaisedAlertsModel : public QAbstractListModel {
       _raiseTime(QDateTime::currentDateTime()) { }
   };
   QList<RaisedAlert> _raisedAlerts;
+  QString _prefix;
+  int _prefixRole;
 
 public:
   explicit RaisedAlertsModel(QObject *parent = 0);
@@ -35,6 +37,10 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  void setPrefix(const QString prefix, int prefixRole) {
+    _prefix = prefix;
+    _prefixRole = prefixRole;
+  }
 
 public slots:
   void alertRaised(QString alert);

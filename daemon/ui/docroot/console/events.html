@@ -59,7 +59,20 @@
         <div class="span12">
           <a name="config"></a>
           <h2>Scheduler events configuration</h2>
-          <p><?view:schedulerevents?>
+          <p>
+          <a class="btn btn-info" href="../rest/csv/scheduler/events/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/scheduler/events/v1"><i class="icon-file icon-white"></i> HTML</a>
+	  <p><?view:schedulerevents?>
+	</div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <a name="config"></a>
+          <h2>Tasks groups events configuration</h2>
+          <p>
+          <a class="btn btn-info" href="../rest/csv/taskgroups/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/taskgroups/events/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:taskgroupsevents?>
         </div>
       </div>
       <div class="row">
@@ -68,31 +81,44 @@
           <h2>Tasks events configuration</h2>
           <p>
           <a class="btn btn-info" href="../rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <p>Warning: this table does not yet contain task groups events definitions, which are inherited by tasks. (coming soon...)
+          <a class="btn btn-info" href="../rest/html/tasks/events/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:tasksevents?>
         </div>
       </div>
       <div class="row">
         <div class="span4">
           <h2>Recently posted notices</h2>
+          <p>
+          <a class="btn btn-info" href="../rest/csv/notices/lastposted/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/notices/lastposted/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:lastpostednotices20?>
         </div>
         <div class="span4">
           <h2>Recent flags changes</h2>
+          <p>
+          <a class="btn btn-info" href="../rest/csv/flags/lastchanges/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/flags/lastchanges/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:lastflagschanges20?>
         </div>
         <div class="span4">
           <h2>Currently set flags</h2>
+          <p>
+          <a class="btn btn-info" href="../rest/csv/flags/set/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/flags/set/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:flagsset20?>
         </div>
       </div>
+      <!--
+         TODO: caption
+         TODO: merge tasks and taskgroups into a unique tree
+         TODO: add graphical events-triggers representation (graphviz?)
       <div class="row">
         <div class="span12">
           <h2>Caption</h2>
           <p>Coming soon...
         </div>
       </div>
+      -->
     </div>
 
 <!-- start of footer -->
