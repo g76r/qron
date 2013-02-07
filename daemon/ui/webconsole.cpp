@@ -144,7 +144,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlLogView->setTrClassRole(LogModel::TrClassRole);
   _htmlLogView
-      ->setEllipsePlaceholder("(download full raw log for more entries)");
+      ->setEllipsePlaceholder("(download text log file for more entries)");
   _htmlLogView->setEmptyPlaceholder("(empty log)");
   _htmlLogView10->setModel(_memoryLogger->model());
   _htmlLogView10->setTableClass("table table-condensed table-hover");
@@ -446,7 +446,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.output()->write(_htmlLogView->text().toUtf8().constData());
     return;
   }
-  if (path == "/rest/txt/log/full/v1") {
+  if (path == "/rest/txt/log/current/v1") {
     QString path(Log::pathToFullestLog());
     if (path.isEmpty()) {
       res.setStatus(500);
