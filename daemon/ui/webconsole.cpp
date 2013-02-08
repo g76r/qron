@@ -24,12 +24,12 @@ WebConsole::WebConsole() : _scheduler(0),
   _globalParamsModel(new ParamSetModel(this)),
   _alertParamsModel(new ParamSetModel(this)),
   _raisedAlertsModel(new RaisedAlertsModel(this)),
-  _lastEmitedAlertsModel(new LastOccuredTextEventsModel(this, 51)),
-  _lastPostedNoticesModel(new LastOccuredTextEventsModel(this)),
-  _lastFlagsChangesModel(new LastOccuredTextEventsModel(this)),
+  _lastEmitedAlertsModel(new LastOccuredTextEventsModel(this, 50)),
+  _lastPostedNoticesModel(new LastOccuredTextEventsModel(this, 50)),
+  _lastFlagsChangesModel(new LastOccuredTextEventsModel(this, 50)),
   _alertRulesModel(new AlertRulesModel(this)),
-  _taskRequestsHistoryModel(new TaskRequestsModel(this, 1000)),
-  _unfinishedTaskRequestModel(new TaskRequestsModel(this, 100, false)),
+  _taskRequestsHistoryModel(new TaskRequestsModel(this, 20000)),
+  _unfinishedTaskRequestModel(new TaskRequestsModel(this, 20, false)),
   _tasksModel(new TasksModel(this)),
   _schedulerEventsModel(new SchedulerEventsModel(this)),
   _flagsSetModel(new FlagsSetModel(this)),
@@ -174,14 +174,14 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTasksScheduleView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
   QList<int> cols;
-  cols << 11 << 2 << 5 << 6 << 9 << 10 << 12 << 13;
+  cols << 11 << 2 << 5 << 6 << 9 << 10 << 17;
   _htmlTasksScheduleView->setColumnIndexes(cols);
   _htmlTasksConfigView->setModel(_tasksModel);
   _htmlTasksConfigView->setTableClass("table table-condensed table-hover");
   _htmlTasksConfigView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
-  cols << 1 << 0 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 12;
+  cols << 1 << 0 << 3 << 5 << 4 << 6 << 7 << 8 << 12;
   _htmlTasksConfigView->setColumnIndexes(cols);
   _htmlTasksListView->setModel(_tasksModel);
   _htmlTasksListView->setTableClass("table table-condensed table-hover");
@@ -252,6 +252,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _csvLogView->setModel(_memoryLogger->model());
   _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
+  _csvTaskRequestsView->setMaxrows(20000);
   _csvTasksView->setModel(_tasksModel);
   _csvSchedulerEventsView->setModel(_schedulerEventsModel);
   _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);

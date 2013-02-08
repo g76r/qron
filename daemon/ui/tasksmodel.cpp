@@ -16,7 +16,7 @@
 #include "textviews.h"
 #include "event/event.h"
 
-#define COLUMNS 17
+#define COLUMNS 18
 
 TasksModel::TasksModel(QObject *parent) : QAbstractListModel(parent) {
 }
@@ -70,6 +70,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return Event::toStringList(t.onsuccessEvents()).join(" ");
       case 16:
         return Event::toStringList(t.onfailureEvents()).join(" ");
+      case 17:
+        return QString::number(t.instancesCount())+" / "
+            +QString::number(t.maxInstances());
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -128,6 +131,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "On success";
     case 16:
       return "On failure";
+    case 17:
+      return "Instances / max";
     }
   }
   return QVariant();

@@ -13,7 +13,7 @@
  */
 #include "taskrequestsmodel.h"
 
-#define COLUMNS 8
+#define COLUMNS 9
 
 TaskRequestsModel::TaskRequestsModel(QObject *parent, int maxrows,
                                      bool keepFinished)
@@ -58,6 +58,9 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 7:
         return r.endDatetime().isNull() || r.startDatetime().isNull()
             ? QVariant() : QString::number(r.runningMillis()/1000.0);
+      case 8:
+        return QString::number(r.task().instancesCount())+" / "
+            +QString::number(r.task().maxInstances());
       }
       break;
     }
@@ -105,6 +108,8 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
         return "Seconds queued";
       case 7:
         return "Seconds running";
+      case 8:
+        return "Instances / max";
       }
     } else {
       return QString::number(section);
