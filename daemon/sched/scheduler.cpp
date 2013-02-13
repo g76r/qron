@@ -506,8 +506,8 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
 void Scheduler::taskFinishing(TaskRequest request,
                               QWeakPointer<Executor> executor) {
   request.task().fetchAndAddInstancesCount(-1);
-  Executor *e = executor.data();
-  if (e) {
+  if (executor) {
+    Executor *e = executor.data();
     if (e->isTemporary())
       e->deleteLater();
     else

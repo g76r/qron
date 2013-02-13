@@ -99,6 +99,16 @@ void Executor::sshMean(TaskRequest request) {
 }
 
 void Executor::execProcess(TaskRequest request, QStringList cmdline) {
+  if (cmdline.isEmpty()) {
+    Log::warning(request.task().fqtn(), request.id())
+        << "cannot execute task with empty command '"
+        << request.task().fqtn() << "'";
+    request.setSuccess(false);
+    request.setReturnCode(-1);
+    request.setEndDatetime();
+    emit taskFinished(request, this);
+    return;
+  }
   _request = request;
   _errBuf.clear();
   _process = new QProcess(this);
@@ -118,24 +128,11 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline) {
     env.insert(key, request.params().value(key, &request));
   }
   _process->setProcessEnvironment(env);
-  if (!cmdline.isEmpty()) {
-    QString program = cmdline.takeFirst();
-    Log::debug(_request.task().fqtn(), _request.id())
-        << "about to start system process '" << program << "' with args "
-        << cmdline << " and environment " << env.toStringList();
-    _process->start(program, cmdline);
-  } else {
-    Log::warning(_request.task().fqtn(), _request.id())
-        << "cannot execute task with empty command '"
-        << request.task().fqtn() << "'";
-    _request.setSuccess(false);
-    _request.setReturnCode(-1);
-    _request.setEndDatetime();
-    emit taskFinished(_request, this);
-    _process->deleteLater();
-    _process = 0;
-    _request = TaskRequest();
-  }
+  QString program = cmdline.takeFirst();
+  Log::debug(_request.task().fqtn(), _request.id())
+      << "about to start system process '" << program << "' with args "
+      << cmdline << " and environment " << env.toStringList();
+  _process->start(program, cmdline);
 }
 
 void Executor::processError(QProcess::ProcessError error) {
