@@ -15,8 +15,9 @@
 #include <QDateTime>
 #include "textviews.h"
 #include "event/event.h"
+#include <QUrl>
 
-#define COLUMNS 18
+#define COLUMNS 19
 
 TasksModel::TasksModel(QObject *parent) : QAbstractListModel(parent) {
 }
@@ -86,6 +87,19 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         ;
       }
       break;
+    case TextViews::HtmlSuffixRole:
+      switch(index.column()) {
+      case 18: {
+        QString infourl = t.infourl();
+        if (!infourl.isEmpty())
+          return " <span class=\"label label-info\"><a target=\"_blank\" "
+              "href=\""+infourl+"\"><i class=\"icon-info-sign icon-white\">"
+              "</i></a></span>";
+      }
+      default:
+        ;
+      }
+      break;
     default:
       ;
     }
@@ -133,6 +147,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "On failure";
     case 17:
       return "Instances / max";
+    case 18:
+      return "Actions";
     }
   }
   return QVariant();

@@ -18,6 +18,7 @@ namespace TextViews {
   static const int HtmlPrefixRole = Qt::UserRole;
   static const int TrClassRole = Qt::UserRole+1;
   static const int LinkRole = Qt::UserRole+2;
+  static const int HtmlSuffixRole = Qt::UserRole+3;
 }
 
 #endif // TEXTVIEWS_H

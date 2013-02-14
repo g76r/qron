@@ -13,7 +13,7 @@
  */
 #include "taskrequestsmodel.h"
 
-#define COLUMNS 9
+#define COLUMNS 10
 
 TaskRequestsModel::TaskRequestsModel(QObject *parent, int maxrows,
                                      bool keepFinished)
@@ -80,6 +80,19 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       if (!r.startDatetime().isNull())
         return "info";
       return "warning";
+    case TextViews::HtmlSuffixRole:
+      switch(index.column()) {
+      case 9: {
+        QString infourl = r.task().infourl();
+        if (!infourl.isEmpty())
+          return " <span class=\"label label-info\"><a target=\"_blank\" "
+              "href=\""+infourl+"\"><i class=\"icon-info-sign icon-white\">"
+              "</i></a></span>";
+      }
+      default:
+        ;
+      }
+      break;
     default:
       ;
     }
@@ -110,6 +123,8 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
         return "Seconds running";
       case 8:
         return "Instances / max";
+      case 9:
+        return "Actions";
       }
     } else {
       return QString::number(section);

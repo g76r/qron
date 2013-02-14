@@ -44,6 +44,7 @@ public:
   QString mean() const;
   QString command() const;
   QString target() const;
+  QString infourl() const;
   TaskGroup taskGroup() const;
   void completeConfiguration(TaskGroup taskGroup);
   QList<CronTrigger> cronTriggers() const;

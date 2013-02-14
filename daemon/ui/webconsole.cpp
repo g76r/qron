@@ -166,7 +166,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
   _htmlTaskRequestsView20->setTableClass("table table-condensed table-hover");
-  _htmlTaskRequestsView20->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTaskRequestsView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlTaskRequestsView20->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTaskRequestsView20->setTrClassRole(LogModel::TrClassRole);
   _htmlTaskRequestsView20->setMaxrows(20);
   _htmlTaskRequestsView20
@@ -174,7 +175,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTaskRequestsView20->setEmptyPlaceholder("(no running or queued task)");
   _htmlTaskRequestsView->setModel(_taskRequestsHistoryModel);
   _htmlTaskRequestsView->setTableClass("table table-condensed table-hover");
-  _htmlTaskRequestsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTaskRequestsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlTaskRequestsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTaskRequestsView->setTrClassRole(LogModel::TrClassRole);
   _htmlTaskRequestsView->setMaxrows(100);
   _htmlTaskRequestsView
@@ -183,13 +185,15 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTasksScheduleView->setModel(_tasksModel);
   _htmlTasksScheduleView->setTableClass("table table-condensed table-hover");
   _htmlTasksScheduleView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTasksScheduleView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
   QList<int> cols;
-  cols << 11 << 2 << 5 << 6 << 9 << 10 << 17;
+  cols << 11 << 18 << 2 << 5 << 6 << 9 << 10 << 17;
   _htmlTasksScheduleView->setColumnIndexes(cols);
   _htmlTasksConfigView->setModel(_tasksModel);
   _htmlTasksConfigView->setTableClass("table table-condensed table-hover");
   _htmlTasksConfigView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTasksConfigView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
   cols << 1 << 0 << 3 << 5 << 4 << 6 << 7 << 8 << 12;
@@ -197,10 +201,12 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTasksListView->setModel(_tasksModel);
   _htmlTasksListView->setTableClass("table table-condensed table-hover");
   _htmlTasksListView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTasksListView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksListView->setEmptyPlaceholder("(no task in configuration)");
   _htmlTasksEventsView->setModel(_tasksModel);
   _htmlTasksEventsView->setTableClass("table table-condensed table-hover");
   _htmlTasksEventsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTasksEventsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
   cols << 11 << 6 << 14 << 15 << 16;
