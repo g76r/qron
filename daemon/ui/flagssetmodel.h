@@ -25,6 +25,7 @@ class FlagsSetModel : public QAbstractListModel {
     QDateTime _setTime;
     SetFlag(QString flag) : _flag(flag),
       _setTime(QDateTime::currentDateTime()) { }
+    SetFlag(const SetFlag &o) : _flag(o._flag), _setTime(o._setTime) { }
   };
   QList<SetFlag> _setFlags;
   QString _prefix;

@@ -26,6 +26,9 @@ class RaisedAlertsModel : public QAbstractListModel {
     QDateTime _raiseTime, _scheduledCancellationTime;
     RaisedAlert(QString alert) : _alert(alert),
       _raiseTime(QDateTime::currentDateTime()) { }
+    RaisedAlert(const RaisedAlert &o) : _alert(o._alert),
+      _raiseTime(o._raiseTime),
+      _scheduledCancellationTime(o._scheduledCancellationTime) { }
   };
   QList<RaisedAlert> _raisedAlerts;
   QString _prefix;

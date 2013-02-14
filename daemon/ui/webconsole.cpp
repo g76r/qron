@@ -28,6 +28,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _lastPostedNoticesModel(new LastOccuredTextEventsModel(this, 50)),
   _lastFlagsChangesModel(new LastOccuredTextEventsModel(this, 50)),
   _alertRulesModel(new AlertRulesModel(this)),
+  // memory cost: about 1.5 kB / request, e.g. 30 MB for 20000 requests
+  // (this is an empirical measurement and thus includes model + csv view
   _taskRequestsHistoryModel(new TaskRequestsModel(this, 20000)),
   _unfinishedTaskRequestModel(new TaskRequestsModel(this, 20, false)),
   _tasksModel(new TasksModel(this)),

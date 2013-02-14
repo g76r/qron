@@ -26,6 +26,8 @@ class LastOccuredTextEventsModel : public QAbstractListModel {
     QDateTime _datetime;
     OccuredEvent(QString event) : _event(event),
       _datetime(QDateTime::currentDateTime()) { }
+    OccuredEvent(const OccuredEvent &o) : _event(o._event),
+      _datetime(o._datetime) { }
   };
   QList<OccuredEvent> _occuredEvents;
   int _maxsize;

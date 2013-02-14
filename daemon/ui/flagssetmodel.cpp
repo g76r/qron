@@ -31,7 +31,7 @@ QVariant FlagsSetModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
       && index.row() < _setFlags.size()) {
     if (role == Qt::DisplayRole) {
-      const SetFlag sf(_setFlags.at(index.row()));
+      const SetFlag &sf(_setFlags.at(index.row()));
       switch(index.column()) {
       case 0:
         return sf._flag;
@@ -64,12 +64,12 @@ QVariant FlagsSetModel::headerData(int section, Qt::Orientation orientation,
 void FlagsSetModel::setFlag(QString flag) {
   int row;
   for (row = 0; row < _setFlags.size(); ++row) {
-    SetFlag sf(_setFlags.at(row));
+    const SetFlag &sf(_setFlags.at(row));
     if (sf._flag == flag)
       return;
   }
   for (row = 0; row < _setFlags.size(); ++row) {
-    const SetFlag sf(_setFlags.at(row));
+    const SetFlag &sf(_setFlags.at(row));
     if (sf._flag > flag)
       break;
   }
@@ -80,7 +80,7 @@ void FlagsSetModel::setFlag(QString flag) {
 
 void FlagsSetModel::clearFlag(QString alert) {
   for (int row = 0; row < _setFlags.size(); ++row) {
-    const SetFlag sf(_setFlags.at(row));
+    const SetFlag &sf(_setFlags.at(row));
     if (sf._flag == alert) {
       beginRemoveRows(QModelIndex(), row, row);
       _setFlags.removeAt(row);

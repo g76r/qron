@@ -15,7 +15,7 @@
 #include <QSharedData>
 #include "log/log.h"
 
-Event::Event() : d(new EventData) {
+Event::Event() {
 }
 
 Event::Event(const Event &rhs) : d(rhs.d) {

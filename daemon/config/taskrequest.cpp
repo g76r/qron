@@ -15,6 +15,8 @@
 #include <QSharedData>
 #include <QDateTime>
 #include <QAtomicInt>
+#include <QtDebug>
+#include <QThread>
 
 static QAtomicInt _sequence;
 
@@ -24,18 +26,40 @@ public:
   Task _task;
   ParamSet _params;
   QDateTime _submission;
-  mutable QDateTime _start, _end;
+
+private:
+  mutable qint64 _start, _end;
   mutable bool _success;
   mutable int _returnCode;
-  mutable Host _target;
-  TaskRequestData(Task task = Task(), ParamSet params = ParamSet())
+  mutable Host _target; // FIXME not thread safe
+
+public:
+  TaskRequestData(Task task, ParamSet params = ParamSet())
     : _id(newId()), _task(task), _params(params),
-      _submission(QDateTime::currentDateTime()), _success(false),
-      _returnCode(0) { }
+      _submission(QDateTime::currentDateTime()), _start(LLONG_MIN),
+      _end(LLONG_MIN), _success(false), _returnCode(0) { }
+  TaskRequestData() : _id(0), _start(LLONG_MIN), _end(LLONG_MIN),
+    _success(false), _returnCode(0) { }
   TaskRequestData(const TaskRequestData &other) : QSharedData(), _id(other._id),
     _task(other._task), _params(other._params), _submission(other._submission),
-    _start(other._start), _end(other._end), _success(other._success),
+    _start(other._start), _end(other._end),  _success(other._success),
     _returnCode(other._returnCode), _target(other._target) { }
+  QDateTime start() const {
+    return _start == LLONG_MIN
+        ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_start); }
+  void setStart(QDateTime timestamp) const {
+    _start = timestamp.toMSecsSinceEpoch(); }
+  QDateTime end() const {
+    return _end == LLONG_MIN
+        ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_end); }
+  void setEnd(QDateTime timestamp) const {
+    _end = timestamp.toMSecsSinceEpoch(); }
+  bool success() const { return _success; }
+  void setSuccess(bool success) const { _success = success; }
+  int returnCode() const { return _returnCode; }
+  void setReturnCode(int returnCode) const { _returnCode = returnCode; }
+  Host target() const { return _target; } // FIXME not thread safe
+  void setTarget(Host host) const { _target = host; } // FIXME not thread safe
   static quint64 newId() {
     QDateTime now = QDateTime::currentDateTime();
     return now.date().year() * 100000000000000LL
@@ -46,9 +70,13 @@ public:
         + now.time().second() * 10000LL
         + _sequence.fetchAndAddOrdered(1)%10000;
   }
+  ~TaskRequestData() {
+    qDebug() << "~TaskRequestData" << QThread::currentThread()->objectName()
+             << _task.id() << _id;
+  }
 };
 
-TaskRequest::TaskRequest() : d(new TaskRequestData) {
+TaskRequest::TaskRequest() {
 }
 
 TaskRequest::TaskRequest(const TaskRequest &other) : d(other.d) {
@@ -59,6 +87,7 @@ TaskRequest::TaskRequest(Task task, ParamSet params)
 }
 
 TaskRequest::~TaskRequest() {
+  //qDebug() << "~TaskRequest" << QThread::currentThread()->objectName();
 }
 
 TaskRequest &TaskRequest::operator=(const TaskRequest &other) {
@@ -68,63 +97,70 @@ TaskRequest &TaskRequest::operator=(const TaskRequest &other) {
 }
 
 const Task TaskRequest::task() const {
-  return d->_task;
+  return d ? d->_task : Task();
 }
 
 const ParamSet TaskRequest::params() const {
-  return d->_params;
+  return d ? d->_params : ParamSet();
 }
 
 quint64 TaskRequest::id() const {
-  return d->_id;
+  return d ? d->_id : 0;
 }
 
 QDateTime TaskRequest::submissionDatetime() const {
-  return d->_submission;
+  return d ? d->_submission : QDateTime();
 }
 
 QDateTime TaskRequest::startDatetime() const {
-  return d->_start;
+  return d ? d->start() : QDateTime();
 }
 
 void TaskRequest::setStartDatetime(QDateTime datetime) const {
-  d->_start = datetime;
+  if (d)
+    d->setStart(datetime);
 }
 
 QDateTime TaskRequest::endDatetime() const {
-  return d->_end;
+  return d ? d->end() : QDateTime();
 }
 
 void TaskRequest::setEndDatetime(QDateTime datetime) const {
-  d->_end = datetime;
+  if (d)
+    d->setEnd(datetime);
 }
 
 bool TaskRequest::success() const {
-  return d->_success;
+  return d ? d->success() : false;
 }
 
 void TaskRequest::setSuccess(bool success) const {
-  d->_success = success;
+  if (d)
+    d->setSuccess(success);
 }
 
 int TaskRequest::returnCode() const {
-  return d->_returnCode;
+  return d ? d->returnCode() : 0;
 }
 
 void TaskRequest::setReturnCode(int returnCode) const {
-  d->_returnCode = returnCode;
+  if (d)
+    d->setReturnCode(returnCode);
 }
 
 Host TaskRequest::target() const {
-  return d->_target;
+  return d ? d->target() : Host();
 }
 
 void TaskRequest::setTarget(Host target) const {
-  d->_target = target;
+  if (d)
+    d->setTarget(target);
 }
 
 QString TaskRequest::paramValue(const QString key,
                                 const QString defaultValue) const {
+  if (!d)
+    return defaultValue;
   if (key == "!taskid") {
     return task().id();
   } else if (key == "!fqtn") {

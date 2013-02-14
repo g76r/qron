@@ -25,7 +25,7 @@
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
-  Log::addConsoleLogger();
+  //Log::addConsoleLogger();
   QHostAddress webconsoleAddress(QHostAddress::Any);
   quint16 webconsolePort(8086);
   QString configPath("/etc/qron.conf");

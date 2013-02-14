@@ -22,6 +22,8 @@
 #include "event/event.h"
 #include <QWeakPointer>
 #include "sched/scheduler.h"
+#include <QtDebug>
+#include <QThread>
 
 class TaskData : public QSharedData {
 public:
@@ -34,11 +36,14 @@ public:
   QList<CronTrigger> _cronTriggers;
   QList<QRegExp> _stderrFilters;
   QList<Event> _onstart, _onsuccess, _onfailure;
-  mutable QDateTime _lastExecution, _nextScheduledExecution;
-  mutable QAtomicInt _instancesCount;
   QWeakPointer<Scheduler> _scheduler;
 
-  TaskData() { }
+private:
+  mutable qint64 _lastExecution, _nextScheduledExecution;
+  mutable QAtomicInt _instancesCount;
+
+public:
+  TaskData() : _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN) { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _group(other._group), _params(other._params),
@@ -46,9 +51,26 @@ public:
     _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
     _stderrFilters(other._stderrFilters), _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution) { }
-};
+  QDateTime lastExecution() const {
+    return _lastExecution == LLONG_MIN
+        ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
+  void setLastExecution(QDateTime timestamp) const {
+    _lastExecution = timestamp.toMSecsSinceEpoch(); }
+  QDateTime nextScheduledExecution() const {
+    return _nextScheduledExecution == LLONG_MIN
+        ? QDateTime()
+        : QDateTime::fromMSecsSinceEpoch(_nextScheduledExecution); }
+  void setNextScheduledExecution(QDateTime timestamp) const {
+    _nextScheduledExecution = timestamp.toMSecsSinceEpoch(); }
+  int instancesCount() const { return _instancesCount; }
+  int fetchAndAddInstancesCount(int valueToAdd) const {
+    return _instancesCount.fetchAndAddOrdered(valueToAdd); }
+  ~TaskData() {
+    qDebug() << "~TaskData" << QThread::currentThread()->objectName()
+             << _id;
+  }};
 
-Task::Task() : d(new TaskData) {
+Task::Task() {
 }
 
 Task::Task(const Task &other) : d(other.d) {
@@ -68,40 +90,46 @@ Task::Task(PfNode node, Scheduler *scheduler) {
   td->_maxInstances = node.attribute("maxinstances", "1").toInt();
   if (td->_maxInstances <= 0) {
     td->_maxInstances = 1;
-    Log::warning() << "invalid task maxinstances " << node.toPf();
+    Log::error() << "ignoring invalid task maxinstances " << node.toPf();
   }
   foreach (PfNode child, node.childrenByName("param")) {
     QString key = child.attribute("key");
     QString value = child.attribute("value");
     if (key.isNull() || value.isNull()) {
-      Log::warning() << "invalid task param " << child.toPf();
+      Log::error() << "ignoring invalid task param " << child.toPf();
     } else {
-      Log::debug() << "configured task param " << key << "=" << value
-                   << "for task '" << td->_id << "'";
+      //Log::debug() << "configured task param " << key << "=" << value
+      //             << "for task '" << td->_id << "'";
       td->_params.setValue(key, value);
     }
   }
   foreach (PfNode child, node.childrenByName("trigger")) {
-    QString notice = child.attribute("notice");
-    if (!notice.isNull()) {
-      td->_noticeTriggers.insert(notice);
-      Log::debug() << "configured notice trigger '" << notice << "' on task '"
-                   << td->_id << "'";
-      continue;
-    }
-    QString cron = child.attribute("cron");
-    if (!cron.isNull()) {
-      CronTrigger trigger(cron);
-      if (trigger.isValid()) {
-        td->_cronTriggers.append(trigger);
-        Log::debug() << "configured cron trigger '" << cron << "' on task '"
-                     << td->_id << "'";
-      } else
-        Log::warning() << "ignoring invalid cron trigger '" << cron
-                       << "' parsed as '" << trigger.canonicalCronExpression()
-                       << "' on task '" << td->_id;
-      continue;
-      // LATER read misfire config
+    foreach (PfNode grandchild, child.children()) {
+      QString content = grandchild.contentAsString();
+      QString triggerType = grandchild.name();
+      if (triggerType == "notice") {
+        if (!content.isEmpty()) {
+          td->_noticeTriggers.insert(content);
+          //Log::debug() << "configured notice trigger '" << content
+          //             << "' on task '" << td->_id << "'";
+        } else
+          Log::error() << "ignoring empty notice trigger on task '" << td->_id
+                       << "' in configuration";
+      } else if (triggerType == "cron") {
+          CronTrigger trigger(content);
+          if (trigger.isValid()) {
+            td->_cronTriggers.append(trigger);
+            //Log::debug() << "configured cron trigger '" << content
+            //             << "' on task '" << td->_id << "'";
+          } else
+            Log::error() << "ignoring invalid cron trigger '" << content
+                         << "' parsed as '" << trigger.canonicalCronExpression()
+                         << "' on task '" << td->_id;
+          // LATER read misfire config
+      } else {
+        Log::error() << "ignoring unknown trigger type '" << triggerType
+                     << "' on task '" << td->_id << "'";
+      }
     }
   }
   foreach (PfNode child, node.childrenByName("onstart"))
@@ -118,11 +146,11 @@ Task::Task(PfNode node, Scheduler *scheduler) {
     QString kind = child.attribute("kind");
     qint64 quantity = child.attribute("quantity").toLong(0, 0);
     if (kind.isNull())
-      Log::warning() << "ignoring resource with no or empty kind in task"
-                     << td->_id;
+      Log::error() << "ignoring resource with no or empty kind in task"
+                   << td->_id;
     else if (quantity <= 0)
-      Log::warning() << "ignoring resource of kind " << kind
-                     << "with incorrect quantity in task" << td->_id;
+      Log::error() << "ignoring resource of kind " << kind
+                   << "with incorrect quantity in task" << td->_id;
     else
       td->_resources.insert(kind, quantity);
   }
@@ -130,6 +158,7 @@ Task::Task(PfNode node, Scheduler *scheduler) {
 }
 
 Task::~Task() {
+  //qDebug() << "~Task" << QThread::currentThread()->objectName();
 }
 
 Task &Task::operator =(const Task &other) {
@@ -139,46 +168,48 @@ Task &Task::operator =(const Task &other) {
 }
 
 ParamSet Task::params() const {
-  return d->_params;
+  return d ? d->_params : ParamSet();
 }
 
 bool Task::isNull() const {
-  return d->_id.isNull();
+  return !d;
 }
 
 QSet<QString> Task::noticeTriggers() const {
-  return d->_noticeTriggers;
+  return d ? d->_noticeTriggers : QSet<QString>();
 }
 
 QString Task::id() const {
-  return d->_id;
+  return d ? d->_id : QString();
 }
 
 QString Task::fqtn() const {
-  return d->_group.id()+"."+d->_id;
+  return d ? d->_group.id()+"."+d->_id : QString();
 }
 
 QString Task::label() const {
-  return d->_label;
+  return d ? d->_label : QString();
 }
 
 QString Task::mean() const {
-  return d->_mean;
+  return d ? d->_mean : QString();
 }
 
 QString Task::command() const {
-  return d->_command;
+  return d ? d->_command : QString();
 }
 
 QString Task::target() const {
-  return d->_target;
+  return d ? d->_target : QString();
 }
 
 TaskGroup Task::taskGroup() const {
-  return d->_group;
+  return d ? d->_group : TaskGroup();
 }
 
 void Task::completeConfiguration(TaskGroup taskGroup) {
+  if (!d)
+    return;
   d->_group = taskGroup;
   d->_params.setParent(taskGroup.params());
   QString filter = params().value("stderrfilter");
@@ -187,17 +218,17 @@ void Task::completeConfiguration(TaskGroup taskGroup) {
 }
 
 QList<CronTrigger> Task::cronTriggers() const {
-  return d->_cronTriggers;
+  return d ? d->_cronTriggers : QList<CronTrigger>();
 }
 
 QMap<QString, qint64> Task::resources() const {
-  return d->_resources;
+  return d ? d->_resources : QMap<QString,qint64>();
 }
 
 QString Task::resourcesAsString() const {
   QString s;
   s.append("{ ");
-  if (!isNull())
+  if (d)
     foreach(QString key, d->_resources.keys()) {
       s.append(key).append("=")
           .append(QString::number(d->_resources.value(key))).append(" ");
@@ -207,7 +238,7 @@ QString Task::resourcesAsString() const {
 
 QString Task::triggersAsString() const {
   QString s;
-  if (!isNull()) {
+  if (d) {
     foreach (CronTrigger t, d->_cronTriggers)
       s.append("(").append(t.cronExpression()).append(") ");
     foreach (QString t, d->_noticeTriggers)
@@ -219,39 +250,42 @@ QString Task::triggersAsString() const {
 }
 
 QDateTime Task::lastExecution() const {
-  return d->_lastExecution;
+  return d ? d->lastExecution() : QDateTime();
 }
 
 QDateTime Task::nextScheduledExecution() const {
-  return d->_nextScheduledExecution;
+  return d ? d->nextScheduledExecution() : QDateTime();
 }
 
 void Task::setLastExecution(const QDateTime timestamp) const {
-  d->_lastExecution = timestamp;
+  if (d)
+    d->setLastExecution(timestamp);
 }
 
 void Task::setNextScheduledExecution(const QDateTime timestamp) const {
-  d->_nextScheduledExecution = timestamp;
+  if (d)
+    d->setNextScheduledExecution(timestamp);
 }
 
 int Task::maxInstances() const {
-  return d->_maxInstances;
+  return d ? d->_maxInstances : 0;
 }
 
 int Task::instancesCount() const {
-  return d->_instancesCount;
+  return d ? d->instancesCount() : 0;
 }
 
 int Task::fetchAndAddInstancesCount(int valueToAdd) const {
-  return d->_instancesCount.fetchAndAddOrdered(valueToAdd);
+  return d ? d->fetchAndAddInstancesCount(valueToAdd) : 0;
 }
 
 const QList<QRegExp> Task::stderrFilters() const {
-  return d->_stderrFilters;
+  return d ? d->_stderrFilters : QList<QRegExp>();
 }
 
 void Task::appendStderrFilter(QRegExp filter) {
-  d->_stderrFilters.append(filter);
+  if (d)
+    d->_stderrFilters.append(filter);
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {
@@ -260,28 +294,34 @@ QDebug operator<<(QDebug dbg, const Task &task) {
 }
 
 void Task::triggerStartEvents(const ParamsProvider *context) const {
-  d->_group.triggerStartEvents(context);
-  Scheduler::triggerEvents(d->_onstart, context);
+  if (d) {
+    d->_group.triggerStartEvents(context);
+    Scheduler::triggerEvents(d->_onstart, context);
+  }
 }
 
 void Task::triggerSuccessEvents(const ParamsProvider *context) const {
-  d->_group.triggerSuccessEvents(context);
-  Scheduler::triggerEvents(d->_onsuccess, context);
+  if (d) {
+    d->_group.triggerSuccessEvents(context);
+    Scheduler::triggerEvents(d->_onsuccess, context);
+  }
 }
 
 void Task::triggerFailureEvents(const ParamsProvider *context) const {
-  d->_group.triggerFailureEvents(context);
-  Scheduler::triggerEvents(d->_onfailure, context);
+  if (d) {
+    d->_group.triggerFailureEvents(context);
+    Scheduler::triggerEvents(d->_onfailure, context);
+  }
 }
 
 const QList<Event> Task::onstartEvents() const {
-  return d->_onstart;
+  return d ? d->_onstart : QList<Event>();
 }
 
 const QList<Event> Task::onsuccessEvents() const {
-  return d->_onsuccess;
+  return d ? d->_onsuccess : QList<Event>();
 }
 
 const QList<Event> Task::onfailureEvents() const {
-  return d->_onfailure;
+  return d ? d->_onfailure : QList<Event>();
 }

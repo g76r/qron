@@ -34,7 +34,7 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
       && index.row() < _raisedAlerts.size()) {
     if (role == Qt::DisplayRole) {
-      const RaisedAlert ra(_raisedAlerts.at(index.row()));
+      const RaisedAlert &ra(_raisedAlerts.at(index.row()));
       switch(index.column()) {
       case 0:
         return ra._alert;
@@ -71,7 +71,7 @@ QVariant RaisedAlertsModel::headerData(int section, Qt::Orientation orientation,
 void RaisedAlertsModel::alertRaised(QString alert) {
   int row;
   for (row = 0; row < _raisedAlerts.size(); ++row) {
-    RaisedAlert ra(_raisedAlerts.at(row));
+    RaisedAlert &ra(_raisedAlerts[row]);
     if (ra._alert == alert) {
       // this should not occur since a not yet canceled alert should never
       // be raised again
@@ -82,7 +82,7 @@ void RaisedAlertsModel::alertRaised(QString alert) {
     }
   }
   for (row = 0; row < _raisedAlerts.size(); ++row) {
-    const RaisedAlert ra(_raisedAlerts.at(row));
+    const RaisedAlert &ra(_raisedAlerts.at(row));
     if (ra._alert > alert)
       break;
   }
@@ -93,7 +93,7 @@ void RaisedAlertsModel::alertRaised(QString alert) {
 
 void RaisedAlertsModel::alertCanceled(QString alert) {
   for (int row = 0; row < _raisedAlerts.size(); ++row) {
-    const RaisedAlert ra(_raisedAlerts.at(row));
+    const RaisedAlert &ra(_raisedAlerts.at(row));
     if (ra._alert == alert) {
       beginRemoveRows(QModelIndex(), row, row);
       _raisedAlerts.removeAt(row);
@@ -106,10 +106,10 @@ void RaisedAlertsModel::alertCanceled(QString alert) {
 void RaisedAlertsModel::alertCancellationScheduled(QString alert,
                                                    QDateTime scheduledTime) {
   for (int row = 0; row < _raisedAlerts.size(); ++row) {
-    RaisedAlert ra(_raisedAlerts.at(row));
+    RaisedAlert &ra(_raisedAlerts[row]);
     if (ra._alert == alert) {
       ra._scheduledCancellationTime = scheduledTime;
-      _raisedAlerts.replace(row, ra);
+      //_raisedAlerts.replace(row, ra);
       QModelIndex i = index(row, 2);
       emit dataChanged(i, i);
       break;

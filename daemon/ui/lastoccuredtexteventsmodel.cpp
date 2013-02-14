@@ -34,12 +34,12 @@ QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) co
   if (index.isValid() && index.row() >= 0
       && index.row() < _occuredEvents.size()) {
     if (role == Qt::DisplayRole) {
-      const OccuredEvent ea(_occuredEvents.at(index.row()));
+      const OccuredEvent &oe(_occuredEvents.at(index.row()));
       switch(index.column()) {
       case 0:
-        return ea._datetime;
+        return oe._datetime;
       case 1:
-        return ea._event;
+        return oe._event;
       }
     } else if (role == _prefixRole && index.column() == 1)
       return _prefix;
