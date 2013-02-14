@@ -57,11 +57,21 @@
     <div class="container">
       <div class="row">
         <div class="span12">
-          <h2>Last log entries</h2>
+          <a name="warninglog"></a>
+          <h2>Last abnormal log entries</h2>
           <p><a class="btn btn-info" href="../rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
           <a class="btn btn-info" href="../rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
           <a class="btn btn-info" href="../rest/txt/log/current/v1"><i class="icon-file icon-white"></i> Current log file</a>
-          <p><?view:log?>
+          <a class="btn btn-primary" href="#infolog">Including INFO &raquo;</a>
+          <p><?view:warninglog?>
+        </div>
+        <div class="span12">
+          <a name="infolog"></a>
+          <h2>Last log entries, including INFO</h2>
+          <p><a class="btn btn-info" href="../rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="../rest/txt/log/current/v1"><i class="icon-file icon-white"></i> Current log file</a>
+          <p><?view:infolog?>
         </div>
       </div>
     </div>

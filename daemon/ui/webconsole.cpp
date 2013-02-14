@@ -48,8 +48,9 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlLastEmitedAlertsView(new HtmlTableView(this)),
   _htmlLastEmitedAlertsView10(new HtmlTableView(this)),
   _htmlAlertRulesView(new HtmlTableView(this)),
-  _htmlLogView(new HtmlTableView(this)),
-  _htmlLogView10(new HtmlTableView(this)),
+  _htmlWarningLogView(new HtmlTableView(this)),
+  _htmlWarningLogView10(new HtmlTableView(this)),
+  _htmlInfoLogView(new HtmlTableView(this)),
   _htmlTaskRequestsView(new HtmlTableView(this)),
   _htmlTaskRequestsView20(new HtmlTableView(this)),
   _htmlTasksScheduleView(new HtmlTableView(this)),
@@ -82,7 +83,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvFlagsSetView(new CsvTableView(this)),
   _csvTaskGroupsView(new CsvTableView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
-  _memoryLogger(new MemoryLogger) {
+  _memoryInfoLogger(new MemoryLogger(0, Log::Info, 200)),
+  _memoryWarningLogger(new MemoryLogger(0, Log::Warning, 100)) {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
   _htmlTasksTreeView->setTableClass("table table-condensed table-hover");
   _htmlTasksTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
@@ -141,20 +143,27 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlAlertRulesView->setModel(_alertRulesModel);
   _htmlAlertRulesView->setTableClass("table table-condensed table-hover");
   _htmlAlertRulesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlLogView->setModel(_memoryLogger->model());
-  _htmlLogView->setTableClass("table table-condensed table-hover");
-  _htmlLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlLogView->setTrClassRole(LogModel::TrClassRole);
-  _htmlLogView
+  _htmlWarningLogView->setModel(_memoryWarningLogger->model());
+  _htmlWarningLogView->setTableClass("table table-condensed table-hover");
+  _htmlWarningLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlWarningLogView->setTrClassRole(LogModel::TrClassRole);
+  _htmlWarningLogView
       ->setEllipsePlaceholder("(download text log file for more entries)");
-  _htmlLogView->setEmptyPlaceholder("(empty log)");
-  _htmlLogView10->setModel(_memoryLogger->model());
-  _htmlLogView10->setTableClass("table table-condensed table-hover");
-  _htmlLogView10->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlLogView10->setTrClassRole(LogModel::TrClassRole);
-  _htmlLogView10->setMaxrows(10);
-  _htmlLogView10->setEllipsePlaceholder("(see log page for more entries)");
-  _htmlLogView10->setEmptyPlaceholder("(empty log)");
+  _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
+  _htmlWarningLogView10->setModel(_memoryWarningLogger->model());
+  _htmlWarningLogView10->setTableClass("table table-condensed table-hover");
+  _htmlWarningLogView10->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlWarningLogView10->setTrClassRole(LogModel::TrClassRole);
+  _htmlWarningLogView10->setMaxrows(10);
+  _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
+  _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
+  _htmlInfoLogView->setModel(_memoryInfoLogger->model());
+  _htmlInfoLogView->setTableClass("table table-condensed table-hover");
+  _htmlInfoLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlInfoLogView->setTrClassRole(LogModel::TrClassRole);
+  _htmlInfoLogView
+      ->setEllipsePlaceholder("(download text log file for more entries)");
+  _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
   _htmlTaskRequestsView20->setTableClass("table table-condensed table-hover");
   _htmlTaskRequestsView20->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
@@ -253,7 +262,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvAlertParamsView->setModel(_alertParamsModel);
   _csvRaisedAlertsView->setModel(_raisedAlertsModel);
   _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
-  _csvLogView->setModel(_memoryLogger->model());
+  _csvLogView->setModel(_memoryInfoLogger->model());
   _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
   _csvTaskRequestsView->setMaxrows(20000);
   _csvTasksView->setModel(_tasksModel);
@@ -276,8 +285,9 @@ WebConsole::WebConsole() : _scheduler(0),
   _wuiHandler->addView("lastemitedalerts10", _htmlLastEmitedAlertsView10);
   _wuiHandler->addView("now", _clockView);
   _wuiHandler->addView("alertrules", _htmlAlertRulesView);
-  _wuiHandler->addView("log", _htmlLogView);
-  _wuiHandler->addView("log10", _htmlLogView10);
+  _wuiHandler->addView("warninglog10", _htmlWarningLogView10);
+  _wuiHandler->addView("warninglog", _htmlWarningLogView);
+  _wuiHandler->addView("infolog", _htmlInfoLogView);
   _wuiHandler->addView("taskrequests", _htmlTaskRequestsView);
   _wuiHandler->addView("taskrequests20", _htmlTaskRequestsView20);
   _wuiHandler->addView("tasksschedule", _htmlTasksScheduleView);
@@ -289,11 +299,18 @@ WebConsole::WebConsole() : _scheduler(0),
   _wuiHandler->addView("flagsset20", _htmlFlagsSetView20);
   _wuiHandler->addView("taskgroups", _htmlTaskGroupsView);
   _wuiHandler->addView("taskgroupsevents", _htmlTaskGroupsEventsView);
-  _memoryLogger->model()
+  _memoryWarningLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
-  _memoryLogger->model()->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
-  _memoryLogger->model()->setWarningTrClass("warning");
-  _memoryLogger->model()->setErrorTrClass("error");
+  _memoryWarningLogger->model()
+      ->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
+  _memoryWarningLogger->model()->setWarningTrClass("warning");
+  _memoryWarningLogger->model()->setErrorTrClass("error");
+  _memoryInfoLogger->model()
+      ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
+  _memoryInfoLogger->model()
+      ->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
+  _memoryInfoLogger->model()->setWarningTrClass("warning");
+  _memoryInfoLogger->model()->setErrorTrClass("error");
   connect(this, SIGNAL(flagChange(QString)),
           _lastFlagsChangesModel, SLOT(eventOccured(QString)));
 }
@@ -447,7 +464,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   }
   if (path == "/rest/html/log/info/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlLogView->text().toUtf8().constData());
+    res.output()->write(_htmlInfoLogView->text().toUtf8().constData());
     return;
   }
   if (path == "/rest/txt/log/current/v1") {
@@ -681,7 +698,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _flagsSetModel, SLOT(clearFlag(QString)));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
             _taskGroupsModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
-    Log::addLogger(_memoryLogger, false);
+    Log::addLogger(_memoryWarningLogger, false);
+    Log::addLogger(_memoryInfoLogger, false);
   }
 }
 

@@ -60,8 +60,9 @@ class WebConsole : public HttpHandler {
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlResourcesAllocationView, *_htmlGlobalParamsView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
-  *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlLogView,
-  *_htmlLogView10, *_htmlTaskRequestsView, *_htmlTaskRequestsView20,
+  *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
+  *_htmlWarningLogView10, *_htmlInfoLogView,
+  *_htmlTaskRequestsView, *_htmlTaskRequestsView20,
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
   *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
@@ -74,7 +75,7 @@ class WebConsole : public HttpHandler {
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView;
   TemplatingHttpHandler *_wuiHandler;
-  MemoryLogger *_memoryLogger;
+  MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
 
 public:
   WebConsole();
