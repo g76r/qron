@@ -36,7 +36,7 @@ QVariant FlagsSetModel::data(const QModelIndex &index, int role) const {
       case 0:
         return sf._flag;
       case 1:
-        return sf._setTime;
+        return sf._setTime.toString("yyyy-MM-dd hh:mm:ss,zzz");
       }
     } else if (role == _prefixRole && index.column() == 1)
       return _prefix;

@@ -37,7 +37,7 @@ QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) co
       const OccuredEvent &oe(_occuredEvents.at(index.row()));
       switch(index.column()) {
       case 0:
-        return oe._datetime;
+        return oe._datetime.toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 1:
         return oe._event;
       }

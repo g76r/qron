@@ -242,6 +242,7 @@ WebConsole::WebConsole() : _scheduler(0),
   cols.clear();
   cols << 0 << 3 << 4 << 5;
   _htmlTaskGroupsEventsView->setColumnIndexes(cols);
+  _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTargetsTreeView->setModel(_targetsTreeModel);
   _csvHostsListView->setModel(_hostsListModel);

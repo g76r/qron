@@ -39,9 +39,10 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
       case 0:
         return ra._alert;
       case 1:
-        return ra._raiseTime;
+        return ra._raiseTime.toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 2:
-        return ra._scheduledCancellationTime;
+        return ra._scheduledCancellationTime
+            .toString("yyyy-MM-dd hh:mm:ss,zzz");
       }
     } else if(role == _prefixRole && index.column() == 0)
       return _prefix;

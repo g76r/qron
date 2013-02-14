@@ -55,9 +55,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 8:
         return t.resourcesAsString();
       case 9:
-        return t.lastExecution();
+        return t.lastExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 10:
-        return t.nextScheduledExecution();
+        return t.nextScheduledExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 11:
         return t.fqtn();
       case 12:

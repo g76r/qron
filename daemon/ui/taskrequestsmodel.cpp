@@ -47,11 +47,11 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
           return "running";
         return "queued";
       case 3:
-        return r.submissionDatetime();
+        return r.submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 4:
-        return r.startDatetime();
+        return r.startDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 5:
-        return r.endDatetime();
+        return r.endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 6:
         return r.startDatetime().isNull() || r.submissionDatetime().isNull()
             ? QVariant() : QString::number(r.queuedMillis()/1000.0);
