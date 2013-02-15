@@ -15,8 +15,6 @@
 #include <QSharedData>
 #include <QDateTime>
 #include <QAtomicInt>
-#include <QtDebug>
-#include <QThread>
 
 static QAtomicInt _sequence;
 
@@ -28,6 +26,7 @@ public:
   QDateTime _submission;
 
 private:
+  // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
   mutable qint64 _start, _end;
   mutable bool _success;
   mutable int _returnCode;
@@ -70,10 +69,6 @@ public:
         + now.time().second() * 10000LL
         + _sequence.fetchAndAddOrdered(1)%10000;
   }
-  ~TaskRequestData() {
-    qDebug() << "~TaskRequestData" << QThread::currentThread()->objectName()
-             << _task.id() << _id;
-  }
 };
 
 TaskRequest::TaskRequest() {
@@ -87,7 +82,6 @@ TaskRequest::TaskRequest(Task task, ParamSet params)
 }
 
 TaskRequest::~TaskRequest() {
-  //qDebug() << "~TaskRequest" << QThread::currentThread()->objectName();
 }
 
 TaskRequest &TaskRequest::operator=(const TaskRequest &other) {

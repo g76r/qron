@@ -22,8 +22,6 @@
 #include "event/event.h"
 #include <QWeakPointer>
 #include "sched/scheduler.h"
-#include <QtDebug>
-#include <QThread>
 
 class TaskData : public QSharedData {
 public:
@@ -39,6 +37,7 @@ public:
   QWeakPointer<Scheduler> _scheduler;
 
 private:
+  // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
   mutable qint64 _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
 
@@ -66,10 +65,7 @@ public:
   int instancesCount() const { return _instancesCount; }
   int fetchAndAddInstancesCount(int valueToAdd) const {
     return _instancesCount.fetchAndAddOrdered(valueToAdd); }
-  ~TaskData() {
-    qDebug() << "~TaskData" << QThread::currentThread()->objectName()
-             << _id;
-  }};
+};
 
 Task::Task() {
 }
@@ -160,7 +156,6 @@ Task::Task(PfNode node, Scheduler *scheduler) {
 }
 
 Task::~Task() {
-  //qDebug() << "~Task" << QThread::currentThread()->objectName();
 }
 
 Task &Task::operator =(const Task &other) {
