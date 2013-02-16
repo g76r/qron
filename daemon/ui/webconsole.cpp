@@ -474,9 +474,9 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     return;
   }
   if (path == "/rest/txt/log/current/v1") {
-    QString path(Log::pathToFullestLog());
+    QString path(Log::pathToLastFullestLog());
     if (path.isEmpty()) {
-      res.setStatus(500);
+      res.setStatus(404);
       res.output()->write("No log file found.");
     } else {
       QFile file(path);
@@ -488,10 +488,37 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
         else
           IOUtils::grepString(res.output(), &file, 100*1024*1024, filter);
       } else {
+        Log::warning() << "web console cannot open log file " << path
+                       << " : error #" << file.error() << " : "
+                       << file.errorString();
         int status = file.error() == QFile::PermissionsError ? 403 : 404;
         res.setStatus(status);
         res.output()->write(status == 403 ? "Permission denied."
                                           : "Document not found.");
+      }
+    }
+    return;
+  }
+  if (path == "/rest/txt/log/all/v1") {
+    QStringList paths(Log::pathsToFullestLogs());
+    if (paths.isEmpty()) {
+      res.setStatus(404);
+      res.output()->write("No log file found.");
+    } else {
+      res.setContentType("text/plain;charset=UTF-8");
+      const QString filter = req.param("filter");
+      foreach (const QString path, paths) {
+        QFile file(path);
+        if (file.open(QIODevice::ReadOnly)) {
+          if (filter.isEmpty())
+            IOUtils::copy(res.output(), &file, 100*1024*1024);
+          else
+            IOUtils::grepString(res.output(), &file, 100*1024*1024, filter);
+        } else {
+          Log::warning() << "web console cannot open log file " << path
+                         << " : error #" << file.error() << " : "
+                         << file.errorString();
+        }
       }
     }
     return;
