@@ -481,8 +481,12 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     } else {
       QFile file(path);
       if (file.open(QIODevice::ReadOnly)) {
+        const QString filter = req.param("filter");
         res.setContentType("text/plain;charset=UTF-8");
-        IOUtils::copy(res.output(), &file, 100*1024*1024);
+        if (filter.isEmpty())
+          IOUtils::copy(res.output(), &file, 100*1024*1024);
+        else
+          IOUtils::grepString(res.output(), &file, 100*1024*1024, filter);
       } else {
         int status = file.error() == QFile::PermissionsError ? 403 : 404;
         res.setStatus(status);

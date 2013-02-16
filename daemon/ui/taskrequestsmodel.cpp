@@ -65,13 +65,25 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       break;
     }
     case TextViews::HtmlPrefixRole:
-      if (index.column() == 2) {
+      switch(index.column()) {
+      case 2: {
         if (!r.endDatetime().isNull())
           return r.success() ? QVariant()
                              : "<i class=\"icon-minus-sign\"></i> ";
         if (!r.startDatetime().isNull())
           return "<i class=\"icon-play\"></i> ";
         return "<i class=\"icon-time\"></i> ";
+      }
+      case 9: {
+        QString actions;
+        actions = " <span class=\"label label-info\"><a target=\"_blank\" "
+            "href=\"/rest/txt/log/all/v1?filter=%20"
+            +r.task().fqtn()+"/"+QString::number(r.id())
+            +"%20\"><i class=\"icon-search icon-white\"></i></a></span>";
+        return actions;
+      }
+      default:
+        ;
       }
       break;
     case TextViews::TrClassRole:
