@@ -76,8 +76,8 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       }
       case 9: {
         QString actions;
-        actions = " <span class=\"label label-info\"><a target=\"_blank\" "
-            "href=\"/rest/txt/log/all/v1?filter=%20"
+        actions = " <span class=\"label label-info\" title=\"Log\">"
+            "<a target=\"_blank\" href=\"/rest/txt/log/all/v1?filter=%20"
             +r.task().fqtn()+"/"+QString::number(r.id())
             +"%20\"><i class=\"icon-search icon-white\"></i></a></span>";
         return actions;
@@ -97,7 +97,8 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 9: {
         QString infourl = r.task().infourl();
         if (!infourl.isEmpty())
-          return " <span class=\"label label-info\"><a target=\"_blank\" "
+          return " <span class=\"label label-info\" "
+              "title=\"Information / Documentation\"><a target=\"_blank\" "
               "href=\""+infourl+"\"><i class=\"icon-info-sign icon-white\">"
               "</i></a></span>";
       }
