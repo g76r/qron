@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012 Hallowyn and others.
+ Copyright 2012-2013 Hallowyn and others.
  This file is part of qron, see <http://qron.hallowyn.com/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -16,14 +16,14 @@
 <html>
   <head>
     <title>Qron Web Console</title>
-    <link href="css/bootstrap.css" rel="stylesheet">
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
     <style type="text/css">
       body {
         padding-top: 60px;
         padding-bottom: 40px;
       }
     </style>
-    <link href="css/bootstrap-responsive.css" rel="stylesheet">
   </head>
   <body>
     <div class="navbar navbar-inverse navbar-fixed-top">
@@ -51,10 +51,10 @@
         </div>
       </div>
     </div>
-
 <!-- end of header -->
 
     <div class="container">
+      <?value:message?>
       <div class="hero-unit">
         <h1>Qron: the free scheduler</h1>
         <p>Qron is an enterprise-grade scheduler with time-based and event-based triggers, dependencies between tasks, resources management, monitoring, rest api, web console, and even more features. And it's free software.
@@ -76,7 +76,8 @@
           <p>Qron uses, embeds or includes several other free software and media. The most proheminent being:
           <a href="http://www.qt-project.org/">Qt</a>,
           <a href="http://twitter.github.com/bootstrap/">Twitter Bootstrap</a>,
-          <a href="http://glyphicons.com/">Glyphicons</a>.
+          <a href="http://glyphicons.com/">Glyphicons</a>,
+          <a href="http://jquery.org/">jQuery</a>.
           <p>To execute tasks on remote hosts, it also relies on
           <a href="http://www.openssh.org/">OpenSSH</a> client.
         </div>
@@ -85,8 +86,8 @@
     </div>
 
 <!-- start of footer -->
-
-    <script src="js/bootstrap.js"></script>
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
   </body>
 </html>
 

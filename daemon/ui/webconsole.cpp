@@ -338,12 +338,67 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.redirect("console/index.html");
     return;
   }
+  if (path == "/console/do") {
+    const QString event = req.param("event");
+    if (event == "requestTask") {
+      // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
+      const QString fqtn = req.param("fqtn");
+      if (_scheduler) {
+        if (_scheduler->requestTask(fqtn))
+          res.setBase64SessionCookie("message", "S:Task '"+fqtn
+                                     +"' submitted for execution.", "/");
+        else
+          res.setBase64SessionCookie("message", "E:Cannot execute task '"
+                                     +fqtn+"'.", "/");
+      } else
+        res.setBase64SessionCookie("message", "E:Cannot execute task since "
+                                   "scheduler is not available.", "/");
+    } else {
+      res.setBase64SessionCookie("message", "E:Internal error: unknown "
+                                 "event '"+event+"'.", "/");
+    }
+    res.redirect(req.header("Referer", "index.html"));
+    return;
+  }
   if (path.startsWith("/console")) {
-    /*res.setContentType("text/html;charset=UTF-8");
-    res.output()->write("<html><head><title>Qron Web Console</title></head>\n"
-                        "<body>\n");
-    res.output()->write(_htmlTasksView->text().toUtf8().constData());*/
-    _wuiHandler->handleRequest(req, res);
+    QHash<QString,QVariant> values;
+    QString message = req.base64Cookie("message");
+    //qDebug() << "message cookie:" << message;
+    if (!message.isEmpty()) {
+      char alertType = 'I';
+      QString title;
+      QString alertClass;
+      if (message.size() > 1 && message.at(1) == ':') {
+        alertType = message.at(0).toAscii();
+        message = message.mid(2);
+      }
+      switch (alertType) {
+      case 'S':
+        title = "Success:";
+        alertClass = "alert-success";
+        break;
+      case 'I':
+        title = "Info:";
+        alertClass = "alert-info";
+        break;
+      case 'E':
+        title = "Error!";
+        alertClass = "alert-error";
+        break;
+      case 'W':
+        title = "Warning!";
+        break;
+      default:
+        ;
+      }
+      values.insert("message", "<div class=\"alert alert-block "+alertClass+"\">"
+                    "<button type=\"button\" class=\"close\" "
+                    "data-dismiss=\"alert\">&times;</button>"
+                    "<h4>"+title+"</h4> "+message+"</div>");
+    } else
+      values.insert("message", "");
+    res.clearCookie("message", "/");
+    _wuiHandler->handleRequestWithContext(req, res, values);
     return;
   }
   // LATER optimize resource selection (avoid if/if/if)

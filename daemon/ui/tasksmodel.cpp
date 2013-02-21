@@ -85,7 +85,11 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return "<i class=\"icon-folder-open\"></i> ";
       case 18: {
         QString actions;
-        actions = " <span class=\"label label-info\" title=\"Log\">"
+        actions =
+            " <span class=\"label label-important\" title=\"Request execution\">"
+            "<a target=\"_blank\" href=\"do?event=requestTask&fqtn="
+            +t.fqtn()+"\"><i class=\"icon-play icon-white\"></i></a></span>"
+            " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"/rest/txt/log/all/v1?filter=%20"
             +t.fqtn()+"/\"><i class=\"icon-search icon-white\"></i></a></span>";
         return actions;

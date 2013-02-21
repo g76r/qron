@@ -292,7 +292,7 @@ void Scheduler::triggerEvents(const QList<Event> list,
 bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   Task task = _tasks.value(fqtn);
   if (task.isNull()) {
-    Log::error() << "requested task not found: " << fqtn << params << force;
+    Log::warning() << "requested task not found: " << fqtn << params << force;
     return false;
   }
   if (!params.parent().isNull()) {
