@@ -83,9 +83,14 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return "<i class=\"icon-cog\"></i> ";
       case 1:
         return "<i class=\"icon-folder-open\"></i> ";
-      case 6:
-        return t.enabled() ? QVariant()
-                           : "<i class=\"icon-ban-circle\"></i> DISABLED ";
+      case 6: {
+        QString prefix;
+        if (!t.enabled())
+          prefix = "<i class=\"icon-ban-circle\"></i> disabled ";
+        if (t.triggersAsString().isEmpty())
+          prefix += "<i class=\"icon-remove\"></i> no trigger ";
+        return prefix;
+      }
       case 18: {
         QString fqtn = t.fqtn();
         bool enabled = t.enabled();
