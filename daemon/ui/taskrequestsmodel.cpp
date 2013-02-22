@@ -45,7 +45,9 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
           return r.success() ? "success" : "failure";
         if (!r.startDatetime().isNull())
           return "running";
-        return "queued";
+        if (r.task().enabled())
+          return "queued";
+        return "queued and disabled";
       case 3:
         return r.submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 4:
@@ -72,7 +74,9 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
                              : "<i class=\"icon-minus-sign\"></i> ";
         if (!r.startDatetime().isNull())
           return "<i class=\"icon-play\"></i> ";
-        return "<i class=\"icon-time\"></i> ";
+        if (r.task().enabled())
+          return "<i class=\"icon-time\"></i> ";
+        return "<i class=\"icon-ban-circle\"></i> ";
       }
       case 9: {
         QString actions;

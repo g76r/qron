@@ -40,9 +40,11 @@ private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
   mutable qint64 _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
+  mutable bool _enabled;
 
 public:
-  TaskData() : _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN) { }
+  TaskData() : _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
+    _enabled(true) { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _infourl(other._infourl),
@@ -50,7 +52,8 @@ public:
     _noticeTriggers(other._noticeTriggers), _resources(other._resources),
     _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
     _stderrFilters(other._stderrFilters), _lastExecution(other._lastExecution),
-    _nextScheduledExecution(other._nextScheduledExecution) { }
+    _nextScheduledExecution(other._nextScheduledExecution),
+    _instancesCount(other._instancesCount), _enabled(other._enabled) { }
   QDateTime lastExecution() const {
     return _lastExecution == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
@@ -65,6 +68,8 @@ public:
   int instancesCount() const { return _instancesCount; }
   int fetchAndAddInstancesCount(int valueToAdd) const {
     return _instancesCount.fetchAndAddOrdered(valueToAdd); }
+  bool enabled() const { return _enabled; }
+  void setEnabled(bool enabled) const { _enabled = enabled; }
 };
 
 Task::Task() {
@@ -325,4 +330,12 @@ const QList<Event> Task::onsuccessEvents() const {
 
 const QList<Event> Task::onfailureEvents() const {
   return d ? d->_onfailure : QList<Event>();
+}
+
+bool Task::enabled() const {
+  return d ? d->enabled() : false;
+}
+void Task::setEnabled(bool enabled) const {
+  if (d)
+    d->setEnabled(enabled);
 }

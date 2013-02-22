@@ -35,6 +35,7 @@
 #include "event/setflagevent.h"
 #include "event/clearflagevent.h"
 #include "event/requesttaskevent.h"
+#include <QThread>
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
@@ -45,6 +46,8 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent),
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
   qRegisterMetaType<QList<Event> >("QList<Event>");
+  qRegisterMetaType<QMap<QString,Task> >("QMap<QString,Task>");
+  qRegisterMetaType<QMap<QString,TaskGroup> >("QMap<QString,TaskGroup>");
 }
 
 Scheduler::~Scheduler() {
@@ -290,7 +293,19 @@ void Scheduler::triggerEvents(const QList<Event> list,
 }
 
 bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
+  if (this->thread() == QThread::currentThread())
+    return doRequestTask(fqtn, params, force);
+  bool success = false;
+  QMetaObject::invokeMethod(this, "doRequestTask", Qt::BlockingQueuedConnection,
+                            Q_RETURN_ARG(bool, success), Q_ARG(QString, fqtn),
+                            Q_ARG(ParamSet, params), Q_ARG(bool, force));
+  return success;
+}
+
+bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
+  QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
+  ml.unlock();
   if (task.isNull()) {
     Log::warning() << "requested task not found: " << fqtn << params << force;
     return false;
@@ -375,6 +390,7 @@ public:
 };
 
 void Scheduler::postNotice(const QString notice) {
+  QMutexLocker ml(&_configMutex);
   Log::debug() << "posting notice '" << notice << "'";
   foreach (Task task, _tasks.values()) {
     if (task.noticeTriggers().contains(notice)) {
@@ -384,6 +400,7 @@ void Scheduler::postNotice(const QString notice) {
       requestTask(task.fqtn());
     }
   }
+  ml.unlock();
   emit noticePosted(notice);
   // TODO onnotice events are useless without a notice filter
   NoticeContext context(notice);
@@ -391,6 +408,8 @@ void Scheduler::postNotice(const QString notice) {
 }
 
 bool Scheduler::tryStartTaskNow(TaskRequest request) {
+  if (!request.task().enabled())
+    return false; // do not start disabled tasks
   if (_executors.isEmpty()) {
     Log::info(request.task().fqtn(), request.id())
         << "cannot execute task '" << request.task().fqtn()
@@ -473,6 +492,7 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
   } else {
     e = _executors.takeFirst();
   }
+  QMutexLocker ml(&_configMutex);
   Host target = _hosts.value(request.task().target());
   if (target.isNull()) {
     QList<Host> hosts = _clusters.value(request.task().target()).hosts();
@@ -492,6 +512,7 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
     hostResources.insert(kind, hostResources.value(kind)
                           -taskResources.value(kind));
   _resources.insert(target.id(), hostResources);
+  ml.unlock();
   emit hostResourceAllocationChanged(target.id(), hostResources);
   request.setTarget(target);
   request.setStartDatetime();
@@ -513,12 +534,14 @@ void Scheduler::taskFinishing(TaskRequest request,
     else
       _executors.append(e);
   }
+  QMutexLocker ml(&_configMutex);
   QMap<QString,qint64> taskResources = request.task().resources();
   QMap<QString,qint64> hostResources = _resources.value(request.target().id());
   foreach (QString kind, taskResources.keys())
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
   _resources.insert(request.target().id(), hostResources);
+  ml.unlock();
   if (request.success())
     _alerter->cancelAlert("task.failure."+request.task().fqtn());
   else
@@ -578,4 +601,17 @@ void Scheduler::setTimerForCronTrigger(CronTrigger trigger,
                                              .addMSecs(ms));
   }
   // LATER handle cases were trigger is far away in the future
+}
+
+bool Scheduler::enableTask(const QString fqtn, bool enable) {
+  QMutexLocker ml(&_configMutex);
+  Task t = _tasks.value(fqtn);
+  if (t.isNull())
+    return false;
+  t.setEnabled(enable);
+  ml.unlock();
+  if (enable)
+    reevaluateQueuedRequests();
+  emit tasksConfigurationReset(_tasksGroups, _tasks); // LATER smaller scope
+  return true;
 }

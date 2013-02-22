@@ -42,7 +42,7 @@ class Scheduler : public QObject {
   QMap<QString,Host> _hosts;
   QMap<QString,QMap<QString,qint64> > _resources;
   QSet<QString> _setFlags;
-  mutable QMutex _flagsMutex;
+  mutable QMutex _flagsMutex, _configMutex;
   QList<TaskRequest> _queuedRequests;
   QList<Executor*> _executors;
   Alerter *_alerter;
@@ -65,6 +65,9 @@ public:
                             const ParamsProvider *context);
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
+  /** Test a flag.
+    * This method is thread-safe. */
+  bool isFlagSet(const QString flag) const;
 
 public slots:
   /** Expicitely request task execution now.
@@ -75,9 +78,6 @@ public slots:
     */
   bool requestTask(const QString fqtn, ParamSet params = ParamSet(),
                    bool force = false);
-  /** Fire a cron trigger, triggering whatever this trigger is configured to do.
-    */
-  void triggerTrigger(QVariant trigger);
   /** Set a flag, which will be evaluated by any following task constraints
     * evaluation.
     * This method is thread-safe. */
@@ -85,9 +85,6 @@ public slots:
   /** Clear a flag.
     * This method is thread-safe. */
   void clearFlag(const QString flag);
-  /** Clear a flag.
-    * This method is thread-safe. */
-  bool isFlagSet(const QString flag) const;
   /** Post a notice.
     * This method is thread-safe. */
   void postNotice(const QString notice);
@@ -99,6 +96,9 @@ public slots:
     * QWidget::update()).
     */
   void reevaluateQueuedRequests();
+  /** Enable or disable a task.
+    * This method is threadsafe */
+  bool enableTask(const QString fqtn, bool enable);
 
 signals:
   void tasksConfigurationReset(QMap<QString,TaskGroup> tasksGroups,
@@ -143,9 +143,14 @@ private:
     * @see reevaluateQueuedRequests()
     */
   void startQueuedTasksIfPossible();
+  /** Fire a cron trigger, triggering whatever this trigger is configured to do.
+    */
+  Q_INVOKABLE void triggerTrigger(QVariant trigger);
   bool loadConfiguration(PfNode root, QString &errorString);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
+  Q_INVOKABLE bool doRequestTask(const QString fqtn, ParamSet params,
+                                 bool force);
   Q_DISABLE_COPY(Scheduler)
 };
 

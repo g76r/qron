@@ -339,20 +339,33 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     return;
   }
   if (path == "/console/do") {
-    const QString event = req.param("event");
+    QString event = req.param("event");
+    QString fqtn = req.param("fqtn");
     if (event == "requestTask") {
       // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
-      const QString fqtn = req.param("fqtn");
       if (_scheduler) {
         if (_scheduler->requestTask(fqtn))
           res.setBase64SessionCookie("message", "S:Task '"+fqtn
                                      +"' submitted for execution.", "/");
         else
-          res.setBase64SessionCookie("message", "E:Cannot execute task '"
-                                     +fqtn+"'.", "/");
+          res.setBase64SessionCookie("message", "E:Execution request of task '"
+                                     +fqtn+"' failed (see logs for more "
+                                     "information).", "/");
       } else
-        res.setBase64SessionCookie("message", "E:Cannot execute task since "
-                                   "scheduler is not available.", "/");
+        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                   "/");
+    } else if (event == "enableTask") {
+      bool enable = req.param("enable") == "true";
+      if (_scheduler) {
+        if (_scheduler->enableTask(fqtn, enable))
+          res.setBase64SessionCookie("message", "S:Task '"+fqtn+"' "
+                                     +(enable?"enabled":"disabled")+".", "/");
+        else
+          res.setBase64SessionCookie("message", "E:Task '"
+                                     +fqtn+"' not found.", "/");
+      } else
+        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                   "/");
     } else {
       res.setBase64SessionCookie("message", "E:Internal error: unknown "
                                  "event '"+event+"'.", "/");

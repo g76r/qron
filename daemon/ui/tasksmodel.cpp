@@ -83,16 +83,29 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return "<i class=\"icon-cog\"></i> ";
       case 1:
         return "<i class=\"icon-folder-open\"></i> ";
+      case 6:
+        return t.enabled() ? QVariant()
+                           : "<i class=\"icon-ban-circle\"></i> DISABLED ";
       case 18: {
-        QString actions;
-        actions =
-            " <span class=\"label label-important\" title=\"Request execution\">"
-            "<a target=\"_blank\" href=\"do?event=requestTask&fqtn="
-            +t.fqtn()+"\"><i class=\"icon-play icon-white\"></i></a></span>"
+        QString fqtn = t.fqtn();
+        bool enabled = t.enabled();
+        return
+            /* requestTask */
+            " <span class=\"label label-important\" "
+            "title=\"Request execution\">"
+            "<a href=\"do?event=requestTask&fqtn="
+            +fqtn+"\"><i class=\"icon-play icon-white\"></i></a></span>"
+            /* {enable,disable}Task */
+            " <span class=\"label label-"+(enabled?"important":"warning")
+            +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
+            "<a href=\"do?event=enableTask&fqtn="+fqtn+"&enable="
+            +(enabled?"false":"true")+"\"><i class=\"icon-ban-circle"
+            //+(enabled?"ban-circle":"ok-circle")
+            +" icon-white\"></i></a></span>"
+            /* log */
             " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"/rest/txt/log/all/v1?filter=%20"
-            +t.fqtn()+"/\"><i class=\"icon-search icon-white\"></i></a></span>";
-        return actions;
+            +fqtn+"/\"><i class=\"icon-search icon-white\"></i></a></span>";
       }
       default:
         ;
@@ -170,6 +183,7 @@ void TasksModel::setAllTasksAndGroups(QMap<QString, TaskGroup> groups,
                                       QMap<QString, Task> tasks) {
   Q_UNUSED(groups)
   beginResetModel();
+  _tasks.clear();
   foreach (const Task task, tasks.values()) {
     int row;
     for (row = 0; row < _tasks.size(); ++row) {

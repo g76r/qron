@@ -71,6 +71,8 @@ public:
   const QList<Event> onstartEvents() const;
   const QList<Event> onsuccessEvents() const;
   const QList<Event> onfailureEvents() const;
+  bool enabled() const;
+  void setEnabled(bool enabled) const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);
