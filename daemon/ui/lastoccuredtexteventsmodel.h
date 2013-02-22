@@ -23,16 +23,17 @@ class LastOccuredTextEventsModel : public QAbstractListModel {
   class OccuredEvent {
   public:
     QString _event;
+    int _type;
     QDateTime _datetime;
-    OccuredEvent(QString event) : _event(event),
+    OccuredEvent(QString event, int type) : _event(event), _type(type),
       _datetime(QDateTime::currentDateTime()) { }
-    OccuredEvent(const OccuredEvent &o) : _event(o._event),
+    OccuredEvent(const OccuredEvent &o) : _event(o._event), _type(o._type),
       _datetime(o._datetime) { }
   };
   QList<OccuredEvent> _occuredEvents;
   int _maxsize;
   QString _eventName;
-  QString _prefix;
+  QHash<int,QString> _prefixes;
   int _prefixRole;
 
 public:
@@ -42,15 +43,15 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  void setEventName(const QString eventName) { _eventName = eventName; }
-  void setPrefix(const QString prefix, int prefixRole) {
-    _prefix = prefix;
-    _prefixRole = prefixRole;
-  }
+  inline void setEventName(const QString eventName) { _eventName = eventName; }
+  inline void setPrefix(const QString prefix, int type = 0) {
+    _prefixes.insert(type, prefix); }
+  inline void setPrefixRole(int prefixRole) {
+    _prefixRole = prefixRole; }
 
 public slots:
   void eventOccured(QString event);
-
+  void eventOccured(QString event, int type);
 };
 
 #endif // LASTOCCUREDTEXTEVENTSMODEL_H

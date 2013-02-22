@@ -85,11 +85,15 @@ public:
   void setScheduler(Scheduler *scheduler);
 
 signals:
-  void flagChange(QString change);
+  void flagChange(QString change, int type);
+  void alertEmited(QString alert, int type);
 
 private slots:
   void flagSet(QString flag);
   void flagCleared(QString flag);
+  void alertEmited(QString alert);
+  void alertCancellationEmited(QString alert);
+
 };
 
 #endif // WEBCONSOLE_H

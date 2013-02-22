@@ -33,8 +33,8 @@ int LastOccuredTextEventsModel::columnCount(const QModelIndex &parent) const {
 QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
       && index.row() < _occuredEvents.size()) {
+    const OccuredEvent &oe(_occuredEvents.at(index.row()));
     if (role == Qt::DisplayRole) {
-      const OccuredEvent &oe(_occuredEvents.at(index.row()));
       switch(index.column()) {
       case 0:
         return oe._datetime.toString("yyyy-MM-dd hh:mm:ss,zzz");
@@ -42,7 +42,7 @@ QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) co
         return oe._event;
       }
     } else if (role == _prefixRole && index.column() == 1)
-      return _prefix;
+      return _prefixes.value(oe._type);
   }
   return QVariant();
 }
@@ -61,13 +61,16 @@ QVariant LastOccuredTextEventsModel::headerData(
       return QString::number(section);
     }
   }
-  // LATER htmlPrefix <i class="icon-bell"></i>
   return QVariant();
 }
 
 void LastOccuredTextEventsModel::eventOccured(QString event) {
+  eventOccured(event, 0);
+}
+
+void LastOccuredTextEventsModel::eventOccured(QString event, int type) {
   beginInsertRows(QModelIndex(), 0, 0);
-  _occuredEvents.prepend(OccuredEvent(event));
+  _occuredEvents.prepend(OccuredEvent(event, type));
   endInsertRows();
   if (_occuredEvents.size() > _maxsize) {
     beginRemoveRows(QModelIndex(), _maxsize, _maxsize);

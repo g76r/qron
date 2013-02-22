@@ -391,8 +391,10 @@ public:
 
 void Scheduler::postNotice(const QString notice) {
   QMutexLocker ml(&_configMutex);
+  QMap<QString,Task> tasks = _tasks;
+  ml.unlock();
   Log::debug() << "posting notice '" << notice << "'";
-  foreach (Task task, _tasks.values()) {
+  foreach (Task task, tasks.values()) {
     if (task.noticeTriggers().contains(notice)) {
       Log::debug() << "notice '" << notice << "' triggered task '"
                    << task.fqtn() << "'";
@@ -400,7 +402,6 @@ void Scheduler::postNotice(const QString notice) {
       requestTask(task.fqtn());
     }
   }
-  ml.unlock();
   emit noticePosted(notice);
   // TODO onnotice events are useless without a notice filter
   NoticeContext context(notice);

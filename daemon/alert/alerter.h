@@ -54,6 +54,7 @@ signals:
   void alertCanceled(QString alert);
   void alertCancellationScheduled(QString alert, QDateTime scheduledTime);
   void alertEmited(QString alert);
+  void alertCancellationEmited(QString alert);
   void paramsChanged(ParamSet params);
   void rulesChanged(QList<AlertRule> rules);
 

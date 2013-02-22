@@ -144,7 +144,7 @@ void Alerter::doEmitAlertCancellation(QString alert) {
     }
     ++n;
   }
-  emit alertEmited(alert);
+  emit alertCancellationEmited(alert);
 }
 
 void Alerter::sendMessage(Alert alert, bool cancellation) {

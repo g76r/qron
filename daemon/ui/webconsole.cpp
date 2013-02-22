@@ -123,8 +123,9 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlRaisedAlertsView10->setMaxrows(10);
   _htmlRaisedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _lastEmitedAlertsModel->setEventName("Alert");
-  _lastEmitedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ",
-                                TextViews::HtmlPrefixRole);
+  _lastEmitedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ", 0);
+  _lastEmitedAlertsModel->setPrefix("<i class=\"icon-ok\"></i> ", 1);
+  _lastEmitedAlertsModel->setPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
   _htmlLastEmitedAlertsView->setMaxrows(50);
@@ -214,8 +215,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
   _htmlSchedulerEventsView->setTableClass("table table-condensed table-hover");
   _lastPostedNoticesModel->setEventName("Notice");
-  _lastPostedNoticesModel->setPrefix("<i class=\"icon-comment\"></i> ",
-                                     TextViews::HtmlPrefixRole);
+  _lastPostedNoticesModel->setPrefix("<i class=\"icon-comment\"></i> ");
+  _lastPostedNoticesModel->setPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
   _htmlLastPostedNoticesView20
       ->setTableClass("table table-condensed table-hover");
@@ -225,8 +226,9 @@ WebConsole::WebConsole() : _scheduler(0),
       ->setEllipsePlaceholder("(older notices not displayed)");
   _htmlLastPostedNoticesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _lastFlagsChangesModel->setEventName("Flag change");
-  _lastFlagsChangesModel->setPrefix("<i class=\"icon-flag\"></i> ",
-                                    TextViews::HtmlPrefixRole);
+  _lastFlagsChangesModel->setPrefix("<i class=\"icon-flag\"></i> ", 0);
+  _lastFlagsChangesModel->setPrefix("<i class=\"icon-minus\"></i> ", 1);
+  _lastFlagsChangesModel->setPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastFlagsChangesView20->setModel(_lastFlagsChangesModel);
   _htmlLastFlagsChangesView20
       ->setTableClass("table table-condensed table-hover");
@@ -317,8 +319,10 @@ WebConsole::WebConsole() : _scheduler(0),
       ->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
   _memoryInfoLogger->model()->setWarningTrClass("warning");
   _memoryInfoLogger->model()->setErrorTrClass("error");
-  connect(this, SIGNAL(flagChange(QString)),
-          _lastFlagsChangesModel, SLOT(eventOccured(QString)));
+  connect(this, SIGNAL(flagChange(QString,int)),
+          _lastFlagsChangesModel, SLOT(eventOccured(QString,int)));
+  connect(this, SIGNAL(alertEmited(QString,int)),
+          _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
 }
 
 QString WebConsole::name() const {
@@ -705,7 +709,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
                _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
     disconnect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
-               _lastEmitedAlertsModel, SLOT(eventOccured(QString)));
+               this, SLOT(alertEmited(QString)));
+    disconnect(_scheduler->alerter(), SIGNAL(alertCancellationEmited(QString)),
+               this, SLOT(alertCancellationEmited(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
                _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
     disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
@@ -774,7 +780,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
             _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
     connect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
-            _lastEmitedAlertsModel, SLOT(eventOccured(QString)));
+            this, SLOT(alertEmited(QString)));
+    connect(_scheduler->alerter(), SIGNAL(alertCancellationEmited(QString)),
+            this, SLOT(alertCancellationEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
             _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
     connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
@@ -809,9 +817,17 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
 }
 
 void WebConsole::flagSet(QString flag) {
-  emit flagChange("+"+flag);
+  emit flagChange("+"+flag, 0);
 }
 
 void WebConsole::flagCleared(QString flag) {
-  emit flagChange("-"+flag);
+  emit flagChange("-"+flag, 1);
+}
+
+void WebConsole::alertEmited(QString alert) {
+  emit alertEmited(alert, 0);
+}
+
+void WebConsole::alertCancellationEmited(QString alert) {
+  emit alertEmited("-"+alert, 1);
 }
