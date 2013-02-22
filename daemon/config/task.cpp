@@ -95,6 +95,8 @@ Task::Task(PfNode node, Scheduler *scheduler) {
     td->_maxInstances = 1;
     Log::error() << "ignoring invalid task maxinstances " << node.toPf();
   }
+  if (node.hasChild("disabled"))
+    td->setEnabled(false);
   foreach (PfNode child, node.childrenByName("param")) {
     QString key = child.attribute("key");
     QString value = child.attribute("value");
