@@ -14,7 +14,7 @@
 #include "raisedalertsmodel.h"
 #include <QtDebug>
 
-#define COLUMNS 3
+#define COLUMNS 4
 
 RaisedAlertsModel::RaisedAlertsModel(QObject *parent)
   : QAbstractListModel(parent) {
@@ -33,8 +33,8 @@ int RaisedAlertsModel::columnCount(const QModelIndex &parent) const {
 QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
   if (index.isValid() && index.row() >= 0
       && index.row() < _raisedAlerts.size()) {
+    const RaisedAlert &ra(_raisedAlerts.at(index.row()));
     if (role == Qt::DisplayRole) {
-      const RaisedAlert &ra(_raisedAlerts.at(index.row()));
       switch(index.column()) {
       case 0:
         return ra._alert;
@@ -44,8 +44,17 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
         return ra._scheduledCancellationTime
             .toString("yyyy-MM-dd hh:mm:ss,zzz");
       }
-    } else if(role == _prefixRole && index.column() == 0)
-      return _prefix;
+    } else if(role == _prefixRole) {
+      switch (index.column()) {
+      case 0:
+        return _prefix;
+      case 3:
+        return " <span class=\"label label-important\">"
+            "<a title=\"Cancel alert\"href=\"do?event=cancelAlert&alert="
+            +ra._alert+"&immediately=true\"><i class=\"icon-ok icon-white\">"
+            "</i></a></span>";
+      }
+    }
   }
   return QVariant();
 }
@@ -61,6 +70,8 @@ QVariant RaisedAlertsModel::headerData(int section, Qt::Orientation orientation,
         return "Raised on";
       case 2:
         return "Cancellation scheduled on";
+      case 3:
+        return "Actions";
       }
     } else {
       return QString::number(section);

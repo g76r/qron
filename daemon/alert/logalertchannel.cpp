@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@ LogAlertChannel::LogAlertChannel(QObject *parent) : AlertChannel(parent) {
   _thread->setObjectName("LogAlertChannelThread");
 }
 
-void LogAlertChannel::sendMessage(Alert alert, bool cancellation) {
+void LogAlertChannel::doSendMessage(Alert alert, bool cancellation) {
   Log::log(cancellation ? alert.rule().cancelMessage(alert)
                         : alert.rule().message(alert),
            Log::severityFromString(alert.rule().address()));

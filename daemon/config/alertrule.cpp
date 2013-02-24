@@ -134,7 +134,7 @@ QString AlertRule::message(Alert alert) const {
 QString AlertRule::cancelMessage(Alert alert) const {
   QString rawMessage = d ? d->_cancelMessage : QString();
   if (rawMessage.isEmpty())
-    rawMessage = "canceling alert "+alert.id();
+    rawMessage = "alert "+alert.id()+" canceled";
   return ParamSet().evaluate(rawMessage, &alert);
 }
 

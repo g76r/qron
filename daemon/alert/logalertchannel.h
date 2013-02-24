@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,7 +24,7 @@ class LogAlertChannel : public AlertChannel {
 
 public:
   explicit LogAlertChannel(QObject *parent = 0);
-  void sendMessage(Alert alert, bool cancellation);
+  void doSendMessage(Alert alert, bool cancellation);
 };
 
 #endif // LOGALERTCHANNEL_H

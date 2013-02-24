@@ -150,9 +150,7 @@ void Alerter::doEmitAlertCancellation(QString alert) {
 void Alerter::sendMessage(Alert alert, bool cancellation) {
   QWeakPointer<AlertChannel> channel = alert.rule().channel();
   if (channel)
-    QMetaObject::invokeMethod(channel.data(), "sendMessage",
-                              Q_ARG(Alert, alert),
-                              Q_ARG(bool, cancellation));
+    channel.data()->sendMessage(alert, cancellation);
 }
 
 void Alerter::raiseAlert(QString alert) {
@@ -174,20 +172,36 @@ void Alerter::doRaiseAlert(QString alert) {
 }
 
 void Alerter::cancelAlert(QString alert) {
-  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alert));
+  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alert),
+                            Q_ARG(bool, false));
 }
 
-void Alerter::doCancelAlert(QString alert) {
-  if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
-    _raisedAlerts.remove(alert);
-    QDateTime dt(QDateTime::currentDateTime().addSecs(_cancelDelay));
-    _soonCanceledAlerts.insert(alert, dt);
-    Log::debug() << "will cancel alert " << alert << " in " << _cancelDelay
-                 << " s";
-    emit alertCancellationScheduled(alert, dt);
-  //} else {
-  //  Log::debug() << "would have canceled alert " << alert
-  //               << " if it was raised";
+void Alerter::cancelAlertImmediately(QString alert) {
+  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alert),
+                            Q_ARG(bool, true));
+}
+
+void Alerter::doCancelAlert(QString alert, bool immediately) {
+  if (immediately) {
+    if (_raisedAlerts.contains(alert) || _soonCanceledAlerts.contains(alert)) {
+      Log::debug() << "do cancel alert immediately: " << alert;
+      emit alertCanceled(alert);
+      doEmitAlertCancellation(alert);
+      _raisedAlerts.remove(alert);
+      _soonCanceledAlerts.remove(alert);
+    }
+  } else {
+    if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
+      _raisedAlerts.remove(alert);
+      QDateTime dt(QDateTime::currentDateTime().addSecs(_cancelDelay));
+      _soonCanceledAlerts.insert(alert, dt);
+      Log::debug() << "will cancel alert " << alert << " in " << _cancelDelay
+                   << " s";
+      emit alertCancellationScheduled(alert, dt);
+      //} else {
+      //  Log::debug() << "would have canceled alert " << alert
+      //               << " if it was raised";
+    }
   }
 }
 

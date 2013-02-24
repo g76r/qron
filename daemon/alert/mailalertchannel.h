@@ -37,7 +37,7 @@ class MailAlertChannel : public AlertChannel {
 public:
   explicit MailAlertChannel(QObject *parent = 0);
   ~MailAlertChannel();
-  void sendMessage(Alert alert, bool cancellation);
+  void doSendMessage(Alert alert, bool cancellation);
 
 public slots:
   void setParams(ParamSet params);

@@ -47,6 +47,8 @@ public:
   /** This method is threadsafe. */
   void cancelAlert(QString alert);
   /** This method is threadsafe. */
+  void cancelAlertImmediately(QString alert);
+  /** This method is threadsafe. */
   ParamSet params() const { return _params; }
 
 signals:
@@ -65,7 +67,7 @@ private:
   Q_INVOKABLE void doEmitAlert(QString alert);
   void doEmitAlertCancellation(QString alert);
   Q_INVOKABLE void doRaiseAlert(QString alert);
-  Q_INVOKABLE void doCancelAlert(QString alert);
+  Q_INVOKABLE void doCancelAlert(QString alert, bool immediately = false);
   void sendMessage(Alert alert, bool cancellation);
 };
 

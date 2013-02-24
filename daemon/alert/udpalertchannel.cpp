@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,7 +22,7 @@ UdpAlertChannel::UdpAlertChannel(QObject *parent) : AlertChannel(parent),
   _thread->setObjectName("UdpAlertChannelThread");
 }
 
-void UdpAlertChannel::sendMessage(Alert alert, bool cancellation) {
+void UdpAlertChannel::doSendMessage(Alert alert, bool cancellation) {
   if (!_socket)
     _socket = new QUdpSocket(this);
   // LATER support IPv6 numeric addresses (they contain colons)

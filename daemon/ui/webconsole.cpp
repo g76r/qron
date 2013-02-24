@@ -189,7 +189,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTasksScheduleView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
   QList<int> cols;
-  cols << 11 << 18 << 2 << 5 << 6 << 9 << 10 << 17;
+  cols << 11 << 2 << 5 << 6 << 9 << 10 << 17 << 18;
   _htmlTasksScheduleView->setColumnIndexes(cols);
   _htmlTasksConfigView->setModel(_tasksModel);
   _htmlTasksConfigView->setTableClass("table table-condensed table-hover");
@@ -343,8 +343,10 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     return;
   }
   if (path == "/console/do") {
+    // FIXME should return 200 or 500 rather than redirect if no referer, to make it usable for rest client
     QString event = req.param("event");
     QString fqtn = req.param("fqtn");
+    QString alert = req.param("alert");
     if (event == "requestTask") {
       // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
       if (_scheduler) {
@@ -367,6 +369,33 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
         else
           res.setBase64SessionCookie("message", "E:Task '"
                                      +fqtn+"' not found.", "/");
+      } else
+        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                   "/");
+    } else if (event == "cancelAlert") {
+      if (_scheduler) {
+        if (req.param("immediately") == "true")
+          _scheduler->alerter()->cancelAlertImmediately(alert);
+        else
+          _scheduler->alerter()->cancelAlert(alert);
+        res.setBase64SessionCookie("message", "S:Cancelled alert '"+alert+"'.",
+                                   "/");
+      } else
+        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                   "/");
+    } else if (event == "raiseAlert") {
+      if (_scheduler) {
+        _scheduler->alerter()->raiseAlert(alert);
+        res.setBase64SessionCookie("message", "S:Raised alert '"+alert+"'.",
+                                   "/");
+      } else
+        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                   "/");
+    } else if (event == "emitAlert") {
+      if (_scheduler) {
+        _scheduler->alerter()->emitAlert(alert);
+        res.setBase64SessionCookie("message", "S:Emitted alert '"+alert+"'.",
+                                   "/");
       } else
         res.setBase64SessionCookie("message", "E:Scheduler is not available.",
                                    "/");

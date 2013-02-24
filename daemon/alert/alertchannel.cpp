@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,6 +13,7 @@
  */
 #include "alertchannel.h"
 #include <QThread>
+#include <QMetaObject>
 
 AlertChannel::AlertChannel(QObject *parent) : QObject(parent),
   _thread(new QThread) {
@@ -20,4 +21,9 @@ AlertChannel::AlertChannel(QObject *parent) : QObject(parent),
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
+}
+
+void AlertChannel::sendMessage(Alert alert, bool cancellation) {
+  QMetaObject::invokeMethod(this, "doSendMessage", Q_ARG(Alert, alert),
+                            Q_ARG(bool, cancellation));
 }

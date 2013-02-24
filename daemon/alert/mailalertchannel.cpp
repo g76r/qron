@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -56,7 +56,7 @@ MailAlertChannel::~MailAlertChannel() {
   qDeleteAll(_queues);
 }
 
-void MailAlertChannel::sendMessage(Alert alert, bool cancellation) {
+void MailAlertChannel::doSendMessage(Alert alert, bool cancellation) {
   // LATER support more complex mail addresses with quotes and so on
   QStringList addresses = alert.rule().address().split(',');
   foreach (QString address, addresses) {
@@ -85,7 +85,13 @@ void MailAlertChannel::sendMessage(Alert alert, bool cancellation) {
 void MailAlertChannel::processQueue(const QVariant address) {
   const QString addr(address.toString());
   MailAlertQueue *queue = _queues.value(addr);
-  if (queue && (queue->_alerts.size() || queue->_cancellations.size())) {
+  if (!queue) { // should never happen
+    Log::debug() << "MailAlertChannel::processQueue called for an address with "
+                    "no queue: " << address;
+    return;
+  }
+  queue->_processingScheduled = false;
+  if (queue->_alerts.size() || queue->_cancellations.size()) {
     QString errorString;
     int s = queue->_lastMail.secsTo(QDateTime::currentDateTime());
     if (queue->_lastMail.isNull() || s >= _minDelayBetweenMails) {
@@ -125,21 +131,18 @@ void MailAlertChannel::processQueue(const QVariant address) {
         queue->_alerts.clear();
         queue->_cancellations.clear();
         queue->_lastMail = QDateTime::currentDateTime();
-        queue->_processingScheduled = false;
       } else {
         Log::warning() << "cannot send mail alert to " << addr
                        << " error in SMTP communication: " << errorString;
         // LATER parametrize retry delay, set a maximum data retention, etc.
         TimerWithArguments::singleShot(60000, this, "processQueue", addr);
+        queue->_processingScheduled = true;
       }
     } else {
-      if (!queue->_processingScheduled) { // this avoids stacking calls
-        Log::debug() << "MailAlertChannel::processQueue postponing send";
-        TimerWithArguments::singleShot((_minDelayBetweenMails-s)*1000, this,
-                                      "processQueue", addr);
-        queue->_processingScheduled = true;
-      } else
-        Log::debug() << "MailAlertChannel::processQueue not even postponing";
+      Log::debug() << "MailAlertChannel::processQueue postponing send";
+      TimerWithArguments::singleShot((_minDelayBetweenMails-s)*1000, this,
+                                     "processQueue", addr);
+      queue->_processingScheduled = true;
     }
   } else {
     Log::debug() << "MailAlertChannel::processQueue called for nothing";
