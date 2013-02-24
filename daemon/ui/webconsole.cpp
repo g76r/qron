@@ -829,5 +829,5 @@ void WebConsole::alertEmited(QString alert) {
 }
 
 void WebConsole::alertCancellationEmited(QString alert) {
-  emit alertEmited("-"+alert, 1);
+  emit alertEmited(alert+" cancelled", 1);
 }
