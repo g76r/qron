@@ -84,7 +84,8 @@ WebConsole::WebConsole() : _scheduler(0),
   _csvTaskGroupsView(new CsvTableView(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
   _memoryInfoLogger(new MemoryLogger(0, Log::Info, 200)),
-  _memoryWarningLogger(new MemoryLogger(0, Log::Warning, 100)) {
+  _memoryWarningLogger(new MemoryLogger(0, Log::Warning, 100)),
+  _title("Qron Web Console"), _navtitle("Qron Web Console") {
   _htmlTasksTreeView->setModel(_tasksTreeModel);
   _htmlTasksTreeView->setTableClass("table table-condensed table-hover");
   _htmlTasksTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
@@ -408,6 +409,8 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
   }
   if (path.startsWith("/console")) {
     QHash<QString,QVariant> values;
+    values.insert("title", _title);
+    values.insert("navtitle", _navtitle);
     QString message = req.base64Cookie("message");
     //qDebug() << "message cookie:" << message;
     if (!message.isEmpty()) {
@@ -765,6 +768,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _flagsSetModel, SLOT(clearFlag(QString)));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
                _taskGroupsModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
+    disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
+               this, SLOT(globalParamsChanged(ParamSet)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -832,8 +837,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _flagsSetModel, SLOT(clearFlag(QString)));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QMap<QString,TaskGroup>,QMap<QString,Task>)),
             _taskGroupsModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
+    connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
+            this, SLOT(globalParamsChanged(ParamSet)));
     Log::addLogger(_memoryWarningLogger, false);
     Log::addLogger(_memoryInfoLogger, false);
+  } else {
+    _title = "Qron Web Console";
   }
 }
 
@@ -851,4 +860,9 @@ void WebConsole::alertEmited(QString alert) {
 
 void WebConsole::alertCancellationEmited(QString alert) {
   emit alertEmited(alert+" cancelled", 1);
+}
+
+void WebConsole::globalParamsChanged(ParamSet globalParams) {
+  _title = globalParams.value("webconsole.title", "Qron Web Console");
+  _navtitle = globalParams.value("webconsole.navtitle", _title);
 }

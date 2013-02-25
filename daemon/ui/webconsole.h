@@ -76,6 +76,7 @@ class WebConsole : public HttpHandler {
   *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
+  QString _title, _navtitle;
 
 public:
   WebConsole();
@@ -93,7 +94,7 @@ private slots:
   void flagCleared(QString flag);
   void alertEmited(QString alert);
   void alertCancellationEmited(QString alert);
-
+  void globalParamsChanged(ParamSet globalParams);
 };
 
 #endif // WEBCONSOLE_H

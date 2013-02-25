@@ -99,6 +99,7 @@ public slots:
   /** Enable or disable a task.
     * This method is threadsafe */
   bool enableTask(const QString fqtn, bool enable);
+  ParamSet globalParams() const { return _globalParams; }
 
 signals:
   void tasksConfigurationReset(QMap<QString,TaskGroup> tasksGroups,
