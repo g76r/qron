@@ -379,7 +379,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
           _scheduler->alerter()->cancelAlertImmediately(alert);
         else
           _scheduler->alerter()->cancelAlert(alert);
-        res.setBase64SessionCookie("message", "S:Cancelled alert '"+alert+"'.",
+        res.setBase64SessionCookie("message", "S:Canceled alert '"+alert+"'.",
                                    "/");
       } else
         res.setBase64SessionCookie("message", "E:Scheduler is not available.",
@@ -859,7 +859,7 @@ void WebConsole::alertEmited(QString alert) {
 }
 
 void WebConsole::alertCancellationEmited(QString alert) {
-  emit alertEmited(alert+" cancelled", 1);
+  emit alertEmited(alert+" canceled", 1);
 }
 
 void WebConsole::globalParamsChanged(ParamSet globalParams) {

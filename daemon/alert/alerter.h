@@ -26,6 +26,9 @@
 class QThread;
 class PfNode;
 
+#define ALERTER_DEFAULT_CANCEL_DELAY 900
+// 900" = 15'
+
 class Alerter : public QObject {
   Q_OBJECT
   QThread *_thread;

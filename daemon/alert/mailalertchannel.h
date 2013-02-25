@@ -31,8 +31,8 @@ class MailAlertChannel : public AlertChannel {
   Q_OBJECT
   QHash<QString,MailAlertQueue*> _queues;
   MailSender *_mailSender;
-  QString _senderAddress;
-  int _minDelayBetweenMails;
+  QString _senderAddress, _webConsoleUrl;
+  int _minDelayBetweenMails, _cancelDelay;
 
 public:
   explicit MailAlertChannel(QObject *parent = 0);

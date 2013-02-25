@@ -23,11 +23,8 @@
 #include <QTimer>
 #include <QCoreApplication>
 
-#define DEFAULT_CANCEL_DELAY 900
-// 900" = 15'
-
 Alerter::Alerter() : QObject(0), _thread(new QThread),
-  _cancelDelay(DEFAULT_CANCEL_DELAY) {
+  _cancelDelay(ALERTER_DEFAULT_CANCEL_DELAY) {
   _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));

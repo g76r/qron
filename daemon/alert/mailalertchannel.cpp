@@ -17,6 +17,7 @@
 #include "util/timerwitharguments.h"
 #include "mail/mailsender.h"
 #include <QThread>
+#include "alerter.h"
 
 class MailAlertQueue {
 public:
@@ -45,6 +46,12 @@ void MailAlertChannel::setParams(ParamSet params) {
   _minDelayBetweenMails = params.value("mail.mindelaybetweenmails").toInt();
   if (_minDelayBetweenMails < 60) // hard coded 1 minute minimum
     _minDelayBetweenMails = 600;
+  _webConsoleUrl = params.value("webconsoleurl");
+  // LATER cancelDelay should be taken from Alerter, not from configuration
+  // to avoid double coding default values and the like
+  _cancelDelay = params.value("canceldelay").toInt();
+  if (_cancelDelay < 1)
+    _cancelDelay = ALERTER_DEFAULT_CANCEL_DELAY;
   Log::debug() << "MailAlertChannel configured " << relay << " "
                << _senderAddress << " " << _minDelayBetweenMails
                << " " << params.toString();
@@ -103,6 +110,9 @@ void MailAlertChannel::processQueue(const QVariant address) {
       QMap<QString,QString> headers;
       // LATER parametrize mail subject
       headers.insert("Subject", "qron alerts");
+      if (!_webConsoleUrl.isEmpty())
+        body.append("Alerts can also be viewed here:\r\n")
+            .append(_webConsoleUrl).append("\r\n\r\n");
       // LATER HTML alert mails
       body.append("This message contains ")
           .append(QString::number(queue->_alerts.size()))
@@ -114,15 +124,24 @@ void MailAlertChannel::processQueue(const QVariant address) {
         body.append("(none)\r\n");
       else
         foreach (Alert alert, queue->_alerts)
-          body.append(alert.datetime().toString(Qt::ISODate)).append(" ")
-              .append(alert.rule().message(alert)).append("\r\n");
-      body.append("\r\nFormer alerts cancelled:\r\n\r\n");
+          body.append(alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz"))
+              .append(" ").append(alert.rule().message(alert)).append("\r\n");
+      body.append("\r\nFormer alerts canceled:\r\n\r\n");
       if (queue->_cancellations.isEmpty())
         body.append("(none)\r\n");
-      else
+      else {
         foreach (Alert alert, queue->_cancellations)
-          body.append(alert.datetime().toString(Qt::ISODate)).append(" ")
-              .append(alert.rule().cancelMessage(alert)).append("\r\n");
+          body.append(alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz"))
+              .append(" ").append(alert.rule().cancelMessage(alert))
+              .append("\r\n");
+        body.append(
+              "\r\n"
+              "Please note that there is a delay between alert cancellation\r\n"
+              "request (timestamps above) and the actual time this mail is\r\n"
+              "sent (send timestamp of the mail).\r\n"
+              "This is the 'canceldelay' parameter, currently configured to\r\n"
+              +QString::number(_cancelDelay)+" seconds.");
+      }
       bool queued = _mailSender->send(_senderAddress, recipients, body,
                                          headers, QList<QVariant>(),
                                          errorString);
