@@ -333,6 +333,7 @@ bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
         << "queuing task '" << task.fqtn() << "' with params " << params;
     _queuedRequests.append(request);
     emit taskQueued(request);
+    emit taskChanged(request.task());
     reevaluateQueuedRequests();
   }
   return true;
@@ -438,6 +439,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     request.setEndDatetime();
     request.task().fetchAndAddInstancesCount(-1);
     emit taskFinished(request, QWeakPointer<Executor>());
+    emit taskChanged(request.task());
     return true;
   }
   // LATER implement other cluster balancing methods than "first"
@@ -470,6 +472,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     request.task().triggerStartEvents(&request);
     _executors.takeFirst()->execute(request);
     emit taskStarted(request);
+    emit taskChanged(request.task());
     reevaluateQueuedRequests();
     return true;
 nexthost:;
@@ -520,6 +523,7 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
   request.task().setLastExecution(QDateTime::currentDateTime());
   e->execute(request);
   emit taskStarted(request);
+  emit taskChanged(request.task());
   triggerEvents(_onstart, &request);
   request.task().triggerStartEvents(&request);
   reevaluateQueuedRequests();
@@ -550,6 +554,7 @@ void Scheduler::taskFinishing(TaskRequest request,
   emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   emit taskFinished(request, executor);
+  emit taskChanged(request.task());
   if (request.success()) {
     triggerEvents(_onsuccess, &request);
     request.task().triggerSuccessEvents(&request);
@@ -613,6 +618,6 @@ bool Scheduler::enableTask(const QString fqtn, bool enable) {
   ml.unlock();
   if (enable)
     reevaluateQueuedRequests();
-  emit tasksConfigurationReset(_tasksGroups, _tasks); // LATER smaller scope
+  emit taskChanged(t);
   return true;
 }

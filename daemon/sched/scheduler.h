@@ -122,6 +122,9 @@ signals:
   void taskStarted(TaskRequest request);
   /** @param durationMillis time between start and termination, in ms */
   void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
+  /** Called whenever a task or taskrequest changes: queued, started, finished,
+   * disabled, enabled... */
+  void taskChanged(Task request);
   void globalParamsChanged(ParamSet globalParams);
   void noticePosted(QString notice);
   void flagSet(QString flag);

@@ -721,12 +721,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-               _tasksModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-               _tasksModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
-               _tasksModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskChanged(Task)),
+               _tasksModel, SLOT(taskChanged(Task)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler->alerter(), SIGNAL(paramsChanged(ParamSet)),
@@ -792,12 +788,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-            _tasksModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-            _tasksModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
-            _tasksModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskChanged(Task)),
+            _tasksModel, SLOT(taskChanged(Task)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler->alerter(), SIGNAL(paramsChanged(ParamSet)),

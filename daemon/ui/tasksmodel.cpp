@@ -213,6 +213,6 @@ void TasksModel::taskChanged(Task task) {
     }
 }
 
-void TasksModel::taskChanged(TaskRequest request) {
-  taskChanged(request.task());
-}
+//void TasksModel::taskChanged(TaskRequest request) {
+//  taskChanged(request.task());
+//}

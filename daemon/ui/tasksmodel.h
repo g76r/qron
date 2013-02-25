@@ -35,7 +35,7 @@ public slots:
   void setAllTasksAndGroups(QMap<QString,TaskGroup> groups,
                             QMap<QString,Task> tasks);
   void taskChanged(Task task);
-  void taskChanged(TaskRequest request);
+  //void taskChanged(TaskRequest request);
 };
 
 #endif // TASKSMODEL_H
