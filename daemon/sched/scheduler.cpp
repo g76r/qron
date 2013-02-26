@@ -42,6 +42,7 @@
 Scheduler::Scheduler(QObject *parent) : QObject(parent),
   _alerter(new Alerter), _firstConfigurationLoad(true) {
   //qRegisterMetaType<CronTrigger>("CronTrigger");
+  qRegisterMetaType<Task>("Task");
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
