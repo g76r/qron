@@ -343,68 +343,53 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     res.redirect("console/index.html");
     return;
   }
-  if (path == "/console/do") {
+  if (path == "/console/do" || path == "/rest/do" ) {
     // FIXME should return 200 or 500 rather than redirect if no referer, to make it usable for rest client
     QString event = req.param("event");
     QString fqtn = req.param("fqtn");
     QString alert = req.param("alert");
-    if (event == "requestTask") {
-      // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
-      if (_scheduler) {
+    QString message;
+    if (_scheduler) {
+      if (event == "requestTask") {
+        // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
         if (_scheduler->requestTask(fqtn))
-          res.setBase64SessionCookie("message", "S:Task '"+fqtn
-                                     +"' submitted for execution.", "/");
+          message = "S:Task '"+fqtn+"' submitted for execution.";
         else
-          res.setBase64SessionCookie("message", "E:Execution request of task '"
-                                     +fqtn+"' failed (see logs for more "
-                                     "information).", "/");
-      } else
-        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                   "/");
-    } else if (event == "enableTask") {
-      bool enable = req.param("enable") == "true";
-      if (_scheduler) {
+          message = "E:Execution request of task '"+fqtn
+              +"' failed (see logs for more information).";
+      } else if (event == "enableTask") {
+        bool enable = req.param("enable") == "true";
         if (_scheduler->enableTask(fqtn, enable))
-          res.setBase64SessionCookie("message", "S:Task '"+fqtn+"' "
-                                     +(enable?"enabled":"disabled")+".", "/");
+          message = "S:Task '"+fqtn+"' "+(enable?"enabled":"disabled")+".";
         else
-          res.setBase64SessionCookie("message", "E:Task '"
-                                     +fqtn+"' not found.", "/");
-      } else
-        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                   "/");
-    } else if (event == "cancelAlert") {
-      if (_scheduler) {
+          message = "E:Task '"+fqtn+"' not found.";
+      } else if (event == "cancelAlert") {
         if (req.param("immediately") == "true")
           _scheduler->alerter()->cancelAlertImmediately(alert);
         else
           _scheduler->alerter()->cancelAlert(alert);
-        res.setBase64SessionCookie("message", "S:Canceled alert '"+alert+"'.",
-                                   "/");
-      } else
-        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                   "/");
-    } else if (event == "raiseAlert") {
-      if (_scheduler) {
+        message = "S:Canceled alert '"+alert+"'.";
+      } else if (event == "raiseAlert") {
         _scheduler->alerter()->raiseAlert(alert);
-        res.setBase64SessionCookie("message", "S:Raised alert '"+alert+"'.",
-                                   "/");
-      } else
-        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                   "/");
-    } else if (event == "emitAlert") {
-      if (_scheduler) {
+        message = "S:Raised alert '"+alert+"'.";
+      } else if (event == "emitAlert") {
         _scheduler->alerter()->emitAlert(alert);
-        res.setBase64SessionCookie("message", "S:Emitted alert '"+alert+"'.",
-                                   "/");
+        message = "S:Emitted alert '"+alert+"'.";
       } else
-        res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                   "/");
+        message = "E:Internal error: unknown event '"+event+"'.";
+    } else
+      message = "E:Scheduler is not available.";
+    QString referer = req.header("Referer");
+    if (!referer.isEmpty()) {
+      res.setBase64SessionCookie("message", message, "/");
+      res.redirect(referer);
     } else {
-      res.setBase64SessionCookie("message", "E:Internal error: unknown "
-                                 "event '"+event+"'.", "/");
+      if (message.startsWith("E:") || message.startsWith("W:"))
+        res.setStatus(500);
+      res.setContentType("text/plain;charset=UTF-8");
+      message.append("\n");
+      res.output()->write(message.toUtf8());
     }
-    res.redirect(req.header("Referer", "index.html"));
     return;
   }
   if (path.startsWith("/console")) {
