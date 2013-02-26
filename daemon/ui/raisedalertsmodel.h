@@ -49,6 +49,7 @@ public slots:
   void alertRaised(QString alert);
   void alertCanceled(QString alert);
   void alertCancellationScheduled(QString alert, QDateTime scheduledTime);
+  void alertCancellationUnscheduled(QString alert);
 };
 
 #endif // RAISEDALERTSMODEL_H

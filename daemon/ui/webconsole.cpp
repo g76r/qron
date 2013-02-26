@@ -736,6 +736,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _raisedAlertsModel, SLOT(alertCanceled(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
                _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
+    disconnect(_scheduler->alerter(), SIGNAL(alertCancellationUnscheduled(QString)),
+               _raisedAlertsModel, SLOT(alertCancellationUnscheduled(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
                this, SLOT(alertEmited(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(alertCancellationEmited(QString)),
@@ -805,6 +807,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _raisedAlertsModel, SLOT(alertCanceled(QString)));
     connect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
             _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
+    connect(_scheduler->alerter(), SIGNAL(alertCancellationUnscheduled(QString)),
+            _raisedAlertsModel, SLOT(alertCancellationUnscheduled(QString)));
     connect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
             this, SLOT(alertEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(alertCancellationEmited(QString)),

@@ -121,7 +121,18 @@ void RaisedAlertsModel::alertCancellationScheduled(QString alert,
     RaisedAlert &ra(_raisedAlerts[row]);
     if (ra._alert == alert) {
       ra._scheduledCancellationTime = scheduledTime;
-      //_raisedAlerts.replace(row, ra);
+      QModelIndex i = index(row, 2);
+      emit dataChanged(i, i);
+      break;
+    }
+  }
+}
+
+void RaisedAlertsModel::alertCancellationUnscheduled(QString alert) {
+  for (int row = 0; row < _raisedAlerts.size(); ++row) {
+    RaisedAlert &ra(_raisedAlerts[row]);
+    if (ra._alert == alert) {
+      ra._scheduledCancellationTime = QDateTime();
       QModelIndex i = index(row, 2);
       emit dataChanged(i, i);
       break;

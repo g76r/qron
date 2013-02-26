@@ -29,6 +29,8 @@ class PfNode;
 #define ALERTER_DEFAULT_CANCEL_DELAY 900
 // 900" = 15'
 
+/** Main class for the alert system.
+ */
 class Alerter : public QObject {
   Q_OBJECT
   QThread *_thread;
@@ -43,24 +45,69 @@ public:
   explicit Alerter();
   ~Alerter();
   bool loadConfiguration(PfNode root, QString &errorString);
-  /** This method is threadsafe. */
+  /** Immediatly emit an alert, regardless of raised alert, even if the same
+   * alert has just been emited.
+   * In most cases it is strongly recommanded to call raiseAlert() instead.
+   * This method is threadsafe.
+   * @see raiseAlert() */
   void emitAlert(QString alert);
-  /** This method is threadsafe. */
+  /** Raise an alert and emit it if it is not already raised.
+   * This is the prefered way to report an alert.
+   * If the alert is already raised but has been canceled and is still in its
+   * cancel grace period, the cancellation is unscheduled.
+   * If the alert is already raised and not canceled, this method does nothing.
+   * This method is threadsafe. */
   void raiseAlert(QString alert);
-  /** This method is threadsafe. */
+  /** Tell the Alerter that an alert should no longer be raised.
+   * This is the prefered way to report the end of an alert.
+   * This schedule the alert for cancellation after a grace delay set to 15
+   * minutes by default and configurable through "canceldelay" parameter (with
+   * a value in seconds).
+   * The grace delay should be configured longer than any time interval
+   * between alerts send which recipients are human beings (e.g.
+   * "mail.mindelaybetweenmails" for mail alerts, which default is 10 mintues)
+   * since it avoids flip/flop spam (which otherwise would occur if the same
+   * alerts is raised and cancel several time within the same time interval
+   * between alerts send).
+   * This method is threadsafe. */
   void cancelAlert(QString alert);
-  /** This method is threadsafe. */
+  /** Immediatly cancel an alert, ignoring grace delay.
+   * In most cases it is strongly recommanded to call cancelAlert() instead.
+   * The only widespread reason to use cancelAlertImmediately() is when one
+   * wants to manually cancel an alert to ensure that if it occurs again soon
+   * (during what would have been the end of the grace delay) all events
+   * (e.g. mails) are sent again.
+   * This method is threadsafe.
+   * @see cancelAlert() */
   void cancelAlertImmediately(QString alert);
-  /** This method is threadsafe. */
+  /** Give access to alerts parameters.
+   * This method is threadsafe. */
   ParamSet params() const { return _params; }
 
 signals:
+  /** An alert has just been raised.
+   * This signal is not emited when raising an alert that is already raised. */
   void alertRaised(QString alert);
+  /** An alert has just been canceled.
+   * This signal is emited only when canceling an alert that was raised.
+   * Note that most of the time th alert is not actually canceled (hence this
+   * signal is not emited) until a grace period called 'canceldelay'. */
   void alertCanceled(QString alert);
+  /** An alert has been scheduled for cancellation, e.g. through cancelAlert().
+   * This signal is not emited when trying to cancel an alert that is not
+   * currently raised. */
   void alertCancellationScheduled(QString alert, QDateTime scheduledTime);
+  /** An alert is raised again during then canceldelay grace period. */
+  void alertCancellationUnscheduled(QString alert);
+  /** An alert is emited through alert channels.
+   * This can occur when raising an alert that is not already raised (through
+   * raiseAlert()) or when directly an alert (through emitAlert()). */
   void alertEmited(QString alert);
+  /** An alert cancellation is emited through alert channels. */
   void alertCancellationEmited(QString alert);
+  /** Alert parameters (hence configuration) has changed. */
   void paramsChanged(ParamSet params);
+  /** Alert rules (hence configuration) has changed. */
   void rulesChanged(QList<AlertRule> rules);
 
 private slots:

@@ -56,25 +56,25 @@
     <div class="container">
       <?value:message?>
       <div class="row">
-        <div class="span6">
+        <div class="span5">
           <h2>Recently emited alerts</h2>
           <p>The table below displays emited alerts. There are two kinds of
           alerts: those which are emited when raised (see on the right) and
           those which are emited immediatly (one shot alerts).
         </div>
-        <div class="span6">
+        <div class="span7">
           <h2>Currently raised alerts</h2>
           <p>The table below displays raised alerts, not including one-shot
           alerts that are emited without the need to be raised.
         </div>
       </div>
       <div class="row">
-        <div class="span6">
+        <div class="span5">
           <p><a class="btn btn-info" href="../rest/csv/alerts/emited/v1"><i class="icon-file icon-white"></i> CSV</a>
           <a class="btn btn-info" href="../rest/html/alerts/emited/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:lastemitedalerts?>
         </div>
-        <div class="span6">
+        <div class="span7">
           <p><a class="btn btn-info" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
           <a class="btn btn-info" href="../rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:raisedalerts?>

@@ -158,6 +158,7 @@ void Alerter::doRaiseAlert(QString alert) {
   if (!_raisedAlerts.contains(alert)) {
     _raisedAlerts.insert(alert, QDateTime::currentDateTime());
     if (_soonCanceledAlerts.remove(alert)) {
+      emit alertCancellationUnscheduled(alert);
       Log::debug() << "alert is no longer scheduled for cancellation " << alert
                    << " (it was raised again within cancel delay)";
     } else {
