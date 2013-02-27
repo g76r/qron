@@ -115,7 +115,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             +" icon-white\"></i></a></span>"
             /* log */
             " <span class=\"label label-info\" title=\"Log\">"
-            "<a target=\"_blank\" href=\"/rest/txt/log/all/v1?filter=%20"
+            "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
             +fqtn+"/\"><i class=\"icon-search icon-white\"></i></a></span>";
       }
       case 19: {
