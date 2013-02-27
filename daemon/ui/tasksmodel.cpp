@@ -17,7 +17,7 @@
 #include "event/event.h"
 #include <QUrl>
 
-#define COLUMNS 19
+#define COLUMNS 20
 
 TasksModel::TasksModel(QObject *parent) : QAbstractListModel(parent) {
 }
@@ -74,6 +74,12 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 17:
         return QString::number(t.instancesCount())+" / "
             +QString::number(t.maxInstances());
+      case 19: {
+        QDateTime dt = t.lastExecution();
+        if (!dt.isNull())
+          return dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
+              .append(t.lastSuccessful() ? " success" : " failure");
+      }
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -111,6 +117,11 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"/rest/txt/log/all/v1?filter=%20"
             +fqtn+"/\"><i class=\"icon-search icon-white\"></i></a></span>";
+      }
+      case 19: {
+        QDateTime dt = t.lastExecution();
+        if (!dt.isNull() && !t.lastSuccessful())
+          return "<i class=\"icon-minus-sign\"></i> ";
       }
       default:
         ;
@@ -179,6 +190,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Instances / max";
     case 18:
       return "Actions";
+    case 19:
+      return "Last execution status";
     }
   }
   return QVariant();

@@ -73,6 +73,8 @@ public:
   const QList<Event> onfailureEvents() const;
   bool enabled() const;
   void setEnabled(bool enabled) const;
+  bool lastSuccessful() const;
+  void setLastSuccessful(bool successful) const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

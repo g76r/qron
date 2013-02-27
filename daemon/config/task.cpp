@@ -40,7 +40,7 @@ private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
   mutable qint64 _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
-  mutable bool _enabled;
+  mutable bool _enabled, _lastSuccessful;
 
 public:
   TaskData() : _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
@@ -53,7 +53,8 @@ public:
     _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
     _stderrFilters(other._stderrFilters), _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution),
-    _instancesCount(other._instancesCount), _enabled(other._enabled) { }
+    _instancesCount(other._instancesCount), _enabled(other._enabled),
+    _lastSuccessful(other._lastSuccessful) { }
   QDateTime lastExecution() const {
     return _lastExecution == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
@@ -70,6 +71,9 @@ public:
     return _instancesCount.fetchAndAddOrdered(valueToAdd); }
   bool enabled() const { return _enabled; }
   void setEnabled(bool enabled) const { _enabled = enabled; }
+  bool lastSuccessful() const { return _lastSuccessful; }
+  void setLastSuccessful(bool successful) const {
+    _lastSuccessful = successful; }
 };
 
 Task::Task() {
@@ -340,4 +344,13 @@ bool Task::enabled() const {
 void Task::setEnabled(bool enabled) const {
   if (d)
     d->setEnabled(enabled);
+}
+
+bool Task::lastSuccessful() const {
+  return d ? d->lastSuccessful() : false;
+}
+
+void Task::setLastSuccessful(bool successful) const {
+  if (d)
+    d->setLastSuccessful(successful);
 }

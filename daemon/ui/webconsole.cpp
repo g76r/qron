@@ -190,7 +190,7 @@ WebConsole::WebConsole() : _scheduler(0),
   _htmlTasksScheduleView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
   QList<int> cols;
-  cols << 11 << 2 << 5 << 6 << 9 << 10 << 17 << 18;
+  cols << 11 << 2 << 5 << 6 << 19 << 10 << 17 << 18;
   _htmlTasksScheduleView->setColumnIndexes(cols);
   _htmlTasksConfigView->setModel(_tasksModel);
   _htmlTasksConfigView->setTableClass("table table-condensed table-hover");
