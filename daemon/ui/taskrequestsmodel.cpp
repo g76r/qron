@@ -75,7 +75,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         if (!r.startDatetime().isNull())
           return "<i class=\"icon-play\"></i> ";
         if (r.task().enabled())
-          return "<i class=\"icon-time\"></i> ";
+          return "<i class=\"icon-inbox\"></i> ";
         return "<i class=\"icon-ban-circle\"></i> ";
       }
       case 9: {

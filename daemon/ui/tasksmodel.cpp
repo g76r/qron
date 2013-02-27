@@ -16,10 +16,17 @@
 #include "textviews.h"
 #include "event/event.h"
 #include <QUrl>
+#include <QTimer>
 
 #define COLUMNS 20
+#define SOON_EXECUTION_MILLIS 300000
+// 300,000 ms = 5'
+#define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
 
 TasksModel::TasksModel(QObject *parent) : QAbstractListModel(parent) {
+  QTimer *timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(forceTimeRelatedDataRefresh()));
+  timer->start(FULL_REFRESH_INTERVAL);
 }
 
 int TasksModel::rowCount(const QModelIndex &parent) const {
@@ -96,6 +103,14 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         if (t.triggersAsString().isEmpty())
           prefix += "<i class=\"icon-remove\"></i> no trigger ";
         return prefix;
+      }
+      case 10: {
+        QDateTime dt = t.nextScheduledExecution();
+        if (!dt.isNull()
+            && dt.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()
+            < SOON_EXECUTION_MILLIS)
+          return "<i class=\"icon-time\"></i> ";
+        break;
       }
       case 18: {
         QString fqtn = t.fqtn();
@@ -226,6 +241,8 @@ void TasksModel::taskChanged(Task task) {
     }
 }
 
-//void TasksModel::taskChanged(TaskRequest request) {
-//  taskChanged(request.task());
-//}
+void TasksModel::forceTimeRelatedDataRefresh() {
+  int size = _tasks.size();
+  if (size)
+    emit dataChanged(createIndex(0, 10), createIndex(size-1, 10));
+}
