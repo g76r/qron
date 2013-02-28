@@ -30,20 +30,22 @@ public:
   ParamSet _params;
   QSet<QString> _noticeTriggers;
   QMap<QString,qint64> _resources;
-  quint32 _maxInstances;
+  int _maxInstances;
   QList<CronTrigger> _cronTriggers;
   QList<QRegExp> _stderrFilters;
   QList<Event> _onstart, _onsuccess, _onfailure;
   QWeakPointer<Scheduler> _scheduler;
+  long long _maxExpectedDuration, _minExpectedDuration;
 
 private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
-  mutable qint64 _lastExecution, _nextScheduledExecution;
+  mutable long long _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
   mutable bool _enabled, _lastSuccessful;
 
 public:
-  TaskData() : _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
+  TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
+    _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true) { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
@@ -51,7 +53,10 @@ public:
     _group(other._group), _params(other._params),
     _noticeTriggers(other._noticeTriggers), _resources(other._resources),
     _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
-    _stderrFilters(other._stderrFilters), _lastExecution(other._lastExecution),
+    _stderrFilters(other._stderrFilters),
+    _maxExpectedDuration(other._maxExpectedDuration),
+    _minExpectedDuration(other._minExpectedDuration),
+    _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution),
     _instancesCount(other._instancesCount), _enabled(other._enabled),
     _lastSuccessful(other._lastSuccessful) { }
@@ -101,6 +106,9 @@ Task::Task(PfNode node, Scheduler *scheduler) {
   }
   if (node.hasChild("disabled"))
     td->setEnabled(false);
+  td->_maxExpectedDuration = node.intAttribute("maxexpectedduration",
+                                               LLONG_MAX);
+  td->_minExpectedDuration = node.intAttribute("minexpectedduration", 0);
   foreach (PfNode child, node.childrenByName("param")) {
     QString key = child.attribute("key");
     QString value = child.attribute("value");
@@ -173,6 +181,10 @@ Task &Task::operator =(const Task &other) {
   if (this != &other)
     d.operator=(other.d);
   return *this;
+}
+
+bool Task::operator==(const Task &other) {
+  return (!d && !other.d) || (d && other.d && fqtn() == other.fqtn());
 }
 
 ParamSet Task::params() const {
@@ -353,4 +365,11 @@ bool Task::lastSuccessful() const {
 void Task::setLastSuccessful(bool successful) const {
   if (d)
     d->setLastSuccessful(successful);
+}
+
+long long Task::maxExpectedDuration() const {
+  return d ? d->_maxExpectedDuration : LLONG_MAX;
+}
+long long Task::minExpectedDuration() const {
+  return d ? d->_minExpectedDuration : 0;
 }

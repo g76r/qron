@@ -34,6 +34,7 @@ public:
   Task(PfNode node, Scheduler *scheduler);
   ~Task();
   Task &operator =(const Task &other);
+  bool operator==(const Task &other);
   ParamSet params() const;
   bool isNull() const;
   QSet<QString> noticeTriggers() const;
@@ -75,6 +76,8 @@ public:
   void setEnabled(bool enabled) const;
   bool lastSuccessful() const;
   void setLastSuccessful(bool successful) const;
+  long long maxExpectedDuration() const;
+  long long minExpectedDuration() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

@@ -31,6 +31,7 @@ public:
   TaskRequest(Task task, ParamSet params);
   ~TaskRequest();
   TaskRequest &operator=(const TaskRequest &);
+  bool operator==(const TaskRequest &);
   const Task task() const;
   const ParamSet params() const;
   quint64 id() const;
@@ -40,14 +41,18 @@ public:
                         = QDateTime::currentDateTime()) const;
   void setEndDatetime(QDateTime datetime = QDateTime::currentDateTime()) const;
   QDateTime endDatetime() const;
-  quint64 queuedMillis() const {
+  qint64 queuedMillis() const {
     QDateTime submission(submissionDatetime());
     return submission.isNull() ? 0 : submission.msecsTo(startDatetime()); }
-  quint64 runningMillis() const {
+  qint64 runningMillis() const {
     QDateTime start(startDatetime());
     return start.isNull() ? 0 : start.msecsTo(endDatetime()); }
-  quint64 totalMillis() const {
+  qint64 totalMillis() const {
     return submissionDatetime().msecsTo(endDatetime()); }
+  qint64 liveTotalMillis() const {
+    QDateTime end(endDatetime());
+    return submissionDatetime()
+        .msecsTo(end.isNull() ? QDateTime::currentDateTime() : end); }
   bool success() const;
   void setSuccess(bool success) const;
   int returnCode() const;

@@ -43,7 +43,7 @@ class Scheduler : public QObject {
   QMap<QString,QMap<QString,qint64> > _resources;
   QSet<QString> _setFlags;
   mutable QMutex _flagsMutex, _configMutex;
-  QList<TaskRequest> _queuedRequests;
+  QList<TaskRequest> _queuedRequests, _runningRequests;
   QList<Executor*> _executors;
   Alerter *_alerter;
   bool _firstConfigurationLoad;
@@ -133,6 +133,7 @@ signals:
 
 private slots:
   void taskFinishing(TaskRequest request, QWeakPointer<Executor> executor);
+  void periodicChecks();
 
 private:
   /** Check if it is permitted for a task to run now, if yes start it.

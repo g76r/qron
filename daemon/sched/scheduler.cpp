@@ -49,6 +49,9 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent),
   qRegisterMetaType<QList<Event> >("QList<Event>");
   qRegisterMetaType<QMap<QString,Task> >("QMap<QString,Task>");
   qRegisterMetaType<QMap<QString,TaskGroup> >("QMap<QString,TaskGroup>");
+  QTimer *timer = new QTimer(this);
+  connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
+  timer->start(60000);
 }
 
 Scheduler::~Scheduler() {
@@ -532,7 +535,9 @@ void Scheduler::startTaskNowAnyway(TaskRequest request) {
 
 void Scheduler::taskFinishing(TaskRequest request,
                               QWeakPointer<Executor> executor) {
-  request.task().fetchAndAddInstancesCount(-1);
+  Task t(request.task());
+  QString fqtn(t.fqtn());
+  t.fetchAndAddInstancesCount(-1);
   if (executor) {
     Executor *e = executor.data();
     if (e->isTemporary())
@@ -540,29 +545,42 @@ void Scheduler::taskFinishing(TaskRequest request,
     else
       _executors.append(e);
   }
+  _runningRequests.removeAll(request);
   QMutexLocker ml(&_configMutex);
-  QMap<QString,qint64> taskResources = request.task().resources();
-  QMap<QString,qint64> hostResources = _resources.value(request.target().id());
+  QMap<QString,qint64> taskResources = t.resources();
+  QMap<QString,qint64> hostResources = _resources.value(t.id());
   foreach (QString kind, taskResources.keys())
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
   _resources.insert(request.target().id(), hostResources);
   ml.unlock();
   if (request.success())
-    _alerter->cancelAlert("task.failure."+request.task().fqtn());
+    _alerter->cancelAlert("task.failure."+fqtn);
   else
-    _alerter->raiseAlert("task.failure."+request.task().fqtn());
+    _alerter->raiseAlert("task.failure."+fqtn);
   emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
-  request.task().setLastSuccessful(request.success());
+  t.setLastSuccessful(request.success());
   emit taskFinished(request, executor);
-  emit taskChanged(request.task());
+  emit taskChanged(t);
   if (request.success()) {
     triggerEvents(_onsuccess, &request);
-    request.task().triggerSuccessEvents(&request);
+    t.triggerSuccessEvents(&request);
   } else {
     triggerEvents(_onfailure, &request);
-    request.task().triggerFailureEvents(&request);
+    t.triggerFailureEvents(&request);
+  }
+  if (t.maxExpectedDuration() < LLONG_MAX) {
+    if (t.maxExpectedDuration() < request.totalMillis())
+      _alerter->raiseAlert("task.toolong."+t.fqtn());
+    else
+      _alerter->cancelAlert("task.toolong."+t.fqtn());
+  }
+  if (t.minExpectedDuration() > 0) {
+    if (t.minExpectedDuration() > request.runningMillis())
+      _alerter->raiseAlert("task.tooshort."+t.fqtn());
+    else
+      _alerter->cancelAlert("task.tooshort."+t.fqtn());
   }
   reevaluateQueuedRequests();
 }
@@ -585,7 +603,7 @@ void Scheduler::startQueuedTasksIfPossible() {
   for (int i = 0; i < _queuedRequests.size(); ) {
     TaskRequest r = _queuedRequests[i];
     if (tryStartTaskNow(r)) {
-      _queuedRequests.removeAt(i);
+      _runningRequests.append(_queuedRequests.takeAt(i));
       // LATER remove other queued instances of same task if needed
     } else
       ++i;
@@ -622,4 +640,14 @@ bool Scheduler::enableTask(const QString fqtn, bool enable) {
     reevaluateQueuedRequests();
   emit taskChanged(t);
   return true;
+}
+
+void Scheduler::periodicChecks() {
+  QList<TaskRequest> currentRequests(_queuedRequests);
+  currentRequests.append(_runningRequests);
+  foreach (const TaskRequest r, currentRequests) {
+    const Task t(r.task());
+    if (t.maxExpectedDuration() < r.liveTotalMillis())
+      _alerter->raiseAlert("task.toolong."+t.fqtn());
+  }
 }

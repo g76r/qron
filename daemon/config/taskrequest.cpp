@@ -90,6 +90,10 @@ TaskRequest &TaskRequest::operator=(const TaskRequest &other) {
   return *this;
 }
 
+bool TaskRequest::operator==(const TaskRequest &other) {
+  return (!d && !other.d) || (d && other.d && d->_id == other.d->_id);
+}
+
 const Task TaskRequest::task() const {
   return d ? d->_task : Task();
 }
