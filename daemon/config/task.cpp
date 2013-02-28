@@ -46,7 +46,7 @@ private:
 public:
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
-    _enabled(true) { }
+    _enabled(true), _lastSuccessful(true) { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _infourl(other._infourl),

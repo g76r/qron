@@ -560,7 +560,8 @@ void Scheduler::taskFinishing(TaskRequest request,
     _alerter->raiseAlert("task.failure."+fqtn);
   emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
-  t.setLastSuccessful(request.success());
+  if (!request.endDatetime().isNull())
+    t.setLastSuccessful(request.success());
   emit taskFinished(request, executor);
   emit taskChanged(t);
   if (request.success()) {
