@@ -236,7 +236,9 @@ void Task::completeConfiguration(TaskGroup taskGroup) {
     return;
   d->_group = taskGroup;
   d->_params.setParent(taskGroup.params());
-  QString filter = params().value("stderrfilter");
+  QString filter = params().value("stderrfilter",
+                                  "^Warning: Permanently added .* to the list "
+                                  "of known hosts.$");
   if (!filter.isEmpty())
     d->_stderrFilters.append(QRegExp(filter));
 }
