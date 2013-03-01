@@ -548,7 +548,7 @@ void Scheduler::taskFinishing(TaskRequest request,
   _runningRequests.removeAll(request);
   QMutexLocker ml(&_configMutex);
   QMap<QString,qint64> taskResources = t.resources();
-  QMap<QString,qint64> hostResources = _resources.value(t.id());
+  QMap<QString,qint64> hostResources = _resources.value(request.target().id());
   foreach (QString kind, taskResources.keys())
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
