@@ -83,7 +83,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         actions = " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
             +r.task().fqtn()+"/"+QString::number(r.id())
-            +"%20\"><i class=\"icon-search icon-white\"></i></a></span>";
+            +"%20\"><i class=\"icon-th-list icon-white\"></i></a></span>";
         return actions;
       }
       default:

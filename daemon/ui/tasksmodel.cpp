@@ -109,7 +109,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         if (!dt.isNull()
             && dt.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()
             < SOON_EXECUTION_MILLIS)
-          return "<i class=\"icon-time\"></i> ";
+          return "<i class=\"glyphicon-alarm\"></i> ";
         break;
       }
       case 18: {
@@ -131,7 +131,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             /* log */
             " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
-            +fqtn+"/\"><i class=\"icon-search icon-white\"></i></a></span>";
+            +fqtn+"/\"><i class=\"icon-th-list icon-white\"></i></a></span>";
       }
       case 19: {
         QDateTime dt = t.lastExecution();
