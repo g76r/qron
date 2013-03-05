@@ -93,9 +93,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       switch(index.column()) {
       case 0:
       case 11:
-        return "<i class=\"icon-cog\"></i> ";
+        return "<i class=\"glyphicon-cogwheel\"></i> ";
       case 1:
-        return "<i class=\"icon-folder-open\"></i> ";
+        return "<i class=\"glyphicon-cogwheels\"></i> ";
       case 6: {
         QString prefix;
         if (!t.enabled())

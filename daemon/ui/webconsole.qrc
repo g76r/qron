@@ -15,5 +15,7 @@
         <file>docroot/console/infra.html</file>
         <file>docroot/console/events.html</file>
         <file>docroot/console/schedule.html</file>
+        <file>docroot/console/css/glyphicons.css</file>
+        <file>docroot/console/img/glyphicons.png</file>
     </qresource>
 </RCC>
