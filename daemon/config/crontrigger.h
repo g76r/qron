@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,6 @@
 #include <QMetaType>
 
 class CronTriggerData;
-class Task;
 
 class CronTrigger {
   QSharedDataPointer<CronTriggerData> d;
@@ -30,21 +29,32 @@ public:
   CronTrigger(const CronTrigger &other);
   ~CronTrigger();
   CronTrigger &operator =(const CronTrigger &other);
-  Task task() const;
-  void setTask(Task task);
   /** Cron expression as it was initialy given */
   QString cronExpression() const;
   /** Cron expression in a canonical/unique form */
   QString canonicalCronExpression() const;
   /** Cron expression is valid (hence not null or empty). */
   bool isValid() const;
-  QDateTime nextTrigger(QDateTime lastTrigger, QDateTime max) const;
+  /** Return next triggering date, from cache or after computation if needed */
+  QDateTime nextTriggering(QDateTime max) const;
+  /** Set last triggered and compute next triggering date. */
+  QDateTime nextTriggering(QDateTime lastTriggered, QDateTime max) const {
+    setLastTriggered(lastTriggered);
+    return nextTriggering(max); }
   /** Syntaxic sugar with max = lastTrigger + 10 years */
-  QDateTime nextTrigger(QDateTime lastTrigger) const;
+  QDateTime nextTriggering() const {
+    return nextTriggering(QDateTime::currentDateTime().addYears(10)); }
   /** Syntaxic sugar returning msecs from current time
-    * @return -1 if not available within 10 years
-    */
-  int nextTriggerMsecs(QDateTime lastTirgger) const;
+   * @return -1 if not available within 10 years */
+  int nextTriggeringMsecs(QDateTime lastTriggered) const {
+    setLastTriggered(lastTriggered);
+    return nextTriggeringMsecs(); }
+  /** Syntaxic sugar returning msecs from current time
+   * @return -1 if not available within 10 years */
+  int nextTriggeringMsecs() const;
+  QDateTime lastTriggered() const;
+  void setLastTriggered(const QDateTime lastTriggered) const;
+  void clearLastTriggered() const { setLastTriggered(QDateTime()); }
 };
 
 Q_DECLARE_METATYPE(CronTrigger)

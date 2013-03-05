@@ -59,14 +59,11 @@ Scheduler::~Scheduler() {
   _alerter->deleteLater();
 }
 
-bool Scheduler::loadConfiguration(QIODevice *source,
-                                  QString &errorString,
-                                  bool appendToCurrentConfig) {
-  Q_UNUSED(appendToCurrentConfig) // LATER implement appendToCurrentConfig
+bool Scheduler::loadConfiguration(QIODevice *source, QString &errorString) {
   if (!source->isOpen())
     if (!source->open(QIODevice::ReadOnly)) {
       errorString = source->errorString();
-      Log::warning() << "cannot read configuration: " << errorString;
+      Log::error() << "cannot read configuration: " << errorString;
       return false;
     }
   PfDomHandler pdh;
@@ -74,14 +71,14 @@ bool Scheduler::loadConfiguration(QIODevice *source,
   pp.parse(source);
   int n = pdh.roots().size();
   if (n < 1) {
-    errorString = "empty configuration";
-    Log::warning() << errorString;
+    Log::error() << "empty configuration";
     return false;
   }
   foreach (PfNode root, pdh.roots()) {
     if (root.name() == "qrontab") {
       if (!loadConfiguration(root, errorString))
         return false;
+      return true; // LATER warn if several top level nodes
     } else {
       Log::warning() << "ignoring node '" << root.name()
                      << "' at configuration file top level";
@@ -92,7 +89,10 @@ bool Scheduler::loadConfiguration(QIODevice *source,
 
 bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   Q_UNUSED(errorString) // currently no fatal error, only warnings
+  QMutexLocker ml(&_configMutex);
+  QMutexLocker ml2(&_flagsMutex); // FIXME ???
   _resources.clear();
+  _setFlags.clear();
   QList<PfNode> children;
   children += root.childrenByName("param");
   children += root.childrenByName("log");
@@ -140,10 +140,6 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       } else {
         task.completeConfiguration(taskGroup);
         _tasks.insert(task.fqtn(), task);
-        foreach (CronTrigger trigger, task.cronTriggers()) {
-          trigger.setTask(task);
-          _cronTriggers.append(trigger);
-        }
         Log::debug() << "configured task '" << task.fqtn() << "'";
       }
     } else if (node.name() == "taskgroup") {
@@ -236,10 +232,9 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
       _executors.append(e);
     }
   }
-  foreach (CronTrigger trigger, _cronTriggers) {
-    setTimerForCronTrigger(trigger);
-    // LATER fire cron triggers if they were missed since last task exec
-  }
+  // LATER fire cron triggers if they were missed since last task exec
+  QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
+                            Qt::QueuedConnection);
   emit tasksConfigurationReset(_tasksGroups, _tasks);
   emit targetsConfigurationReset(_clusters, _hosts);
   emit hostResourceConfigurationChanged(_resources);
@@ -306,6 +301,13 @@ bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
   return success;
 }
 
+void Scheduler::asyncRequestTask(const QString fqtn, ParamSet params,
+                                 bool force) {
+  QMetaObject::invokeMethod(this, "doRequestTask", Qt::QueuedConnection,
+                            Q_ARG(QString, fqtn), Q_ARG(ParamSet, params),
+                            Q_ARG(bool, force));
+}
+
 bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
@@ -343,17 +345,44 @@ bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
   return true;
 }
 
-void Scheduler::triggerTrigger(QVariant trigger) {
-  if (trigger.canConvert<CronTrigger>()) {
-    CronTrigger ct = qvariant_cast<CronTrigger>(trigger);
-    Log::debug() << "trigger '" << ct.cronExpression() << "' triggered task '"
-                 << ct.task().fqtn() << "'";
-    // LATER support params at trigger level
-    requestTask(ct.task().fqtn());
-    // LATER this is theorically not accurate since it could miss a trigger
-    setTimerForCronTrigger(ct);
-  } else
-    Log::warning() << "invalid internal object when triggering trigger";
+void Scheduler::checkTriggersForTask(QVariant fqtn) {
+  Log::debug() << "Scheduler::checkTriggersForTask " << fqtn;
+  QMutexLocker ml(&_configMutex);
+  Task task = _tasks.value(fqtn.toString());
+  foreach (const CronTrigger trigger, task.cronTriggers())
+    checkTrigger(trigger, task, fqtn.toString());
+}
+
+void Scheduler::checkTriggersForAllTasks() {
+  Log::debug() << "Scheduler::checkTriggersForAllTasks ";
+  QMutexLocker ml(&_configMutex);
+  foreach (Task task, _tasks.values()) {
+    QString fqtn = task.fqtn();
+    foreach (const CronTrigger trigger, task.cronTriggers())
+      checkTrigger(trigger, task, fqtn);
+  }
+}
+
+void Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
+  Log::debug() << "Scheduler::checkTrigger " << trigger.cronExpression()
+               << " " << fqtn;
+  QDateTime now(QDateTime::currentDateTime());
+  QDateTime next = trigger.nextTriggering();
+  if (next <= now) {
+    // requestTask if trigger reached
+    Log::debug() << "trigger '" << trigger.cronExpression()
+                 << "' triggered task '" << fqtn << "'";
+    asyncRequestTask(fqtn);
+    trigger.setLastTriggered(now);
+  } else {
+    // plan new check if not yet planned
+    QDateTime taskNext = task.nextScheduledExecution();
+    if (!taskNext.isValid() || taskNext > next) {
+      qint64 ms = now.msecsTo(next);
+      TimerWithArguments::singleShot(ms, this, "checkTriggersForTask", fqtn);
+      task.setNextScheduledExecution(now.addMSecs(ms));
+    }
+  }
 }
 
 void Scheduler::setFlag(const QString flag) {
@@ -609,25 +638,6 @@ void Scheduler::startQueuedTasksIfPossible() {
     } else
       ++i;
   }
-}
-
-void Scheduler::setTimerForCronTrigger(CronTrigger trigger,
-                                       QDateTime previous) {
-  int ms = trigger.nextTriggerMsecs(previous);
-  if (ms >= 0) {
-    Log::debug() << "setting cron timer " << ms << " ms for task '"
-                 << trigger.task().fqtn() << "' from trigger '"
-                 << trigger.cronExpression() << "' at "
-                 << QDateTime::currentDateTime() << " (previous exec was at "
-                 << previous << " and cron expression was parsed as '"
-                 << trigger.canonicalCronExpression() << "'";
-    QVariant v;
-    v.setValue(trigger);
-    TimerWithArguments::singleShot(ms, this, "triggerTrigger", v);
-    trigger.task().setNextScheduledExecution(QDateTime::currentDateTime()
-                                             .addMSecs(ms));
-  }
-  // LATER handle cases were trigger is far away in the future
 }
 
 bool Scheduler::enableTask(const QString fqtn, bool enable) {

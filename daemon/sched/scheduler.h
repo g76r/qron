@@ -37,7 +37,6 @@ class Scheduler : public QObject {
   ParamSet _globalParams;
   QMap<QString,TaskGroup> _tasksGroups;
   QMap<QString,Task> _tasks;
-  QList<CronTrigger> _cronTriggers;
   QMap<QString,Cluster> _clusters;
   QMap<QString,Host> _hosts;
   QMap<QString,QMap<QString,qint64> > _resources;
@@ -53,8 +52,7 @@ class Scheduler : public QObject {
 public:
   explicit Scheduler(QObject *parent = 0);
   ~Scheduler();
-  bool loadConfiguration(QIODevice *source, QString &errorString,
-                         bool appendToCurrentConfig = true);
+  bool loadConfiguration(QIODevice *source, QString &errorString);
   bool loadEventListConfiguration(PfNode listnode, QList<Event> &list,
                                   QString &errorString);
   inline bool loadEventListConfiguration(PfNode listnode, QList<Event> &list) {
@@ -70,7 +68,10 @@ public:
   bool isFlagSet(const QString flag) const;
 
 public slots:
-  /** Expicitely request task execution now.
+  /** Explicitely request task execution now.
+    * This method will block current thread until the request is either
+    * queued either denied by Scheduler thread.
+    * If current thread is the Scheduler thread, the method is a direct call.
     * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
     * @param params override some params at request time
     * @param force if true, any constraints or ressources are ignored
@@ -78,6 +79,15 @@ public slots:
     */
   bool requestTask(const QString fqtn, ParamSet params = ParamSet(),
                    bool force = false);
+  /** Explicitely request task execution now, but do not wait for validity
+   * check of the request, therefore do not wait for Scheduler thread
+   * processing the request.
+   * If current thread is the Scheduler thread, the call is queued anyway,
+   * which make the method safe to be called when already locking Scheduler
+   * mutexes.
+   */
+  void asyncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
+                        bool force = false);
   /** Set a flag, which will be evaluated by any following task constraints
     * evaluation.
     * This method is thread-safe. */
@@ -134,6 +144,10 @@ signals:
 private slots:
   void taskFinishing(TaskRequest request, QWeakPointer<Executor> executor);
   void periodicChecks();
+  /** Fire expired triggers for a given task. */
+  void checkTriggersForTask(QVariant fqtn);
+  /** Fire expired triggers for all tasks. */
+  void checkTriggersForAllTasks();
 
 private:
   /** Check if it is permitted for a task to run now, if yes start it.
@@ -148,9 +162,7 @@ private:
     * @see reevaluateQueuedRequests()
     */
   void startQueuedTasksIfPossible();
-  /** Fire a cron trigger, triggering whatever this trigger is configured to do.
-    */
-  Q_INVOKABLE void triggerTrigger(QVariant trigger);
+  void checkTrigger(CronTrigger trigger, Task task, QString fqtn);
   bool loadConfiguration(PfNode root, QString &errorString);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
