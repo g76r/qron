@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,6 +11,7 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
+#include "qrond.h"
 #include <QCoreApplication>
 #include "sched/scheduler.h"
 #include <QFile>
@@ -21,6 +22,9 @@
 #include "ui/webconsole.h"
 #include <QThread>
 #include <unistd.h>
+
+Qrond::Qrond(QObject *parent) : QObject(parent) {
+}
 
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);

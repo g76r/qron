@@ -19,14 +19,14 @@ CONFIG += console largefile
 CONFIG -= app_bundle
 
 INCLUDEPATH += ../libqtpf ../libqtssu
-LIBS += -lqtpf -lqtssu
-win32:debug:LIBS += -L../../libqtpf/pf-build-windows/debug \
-  -L../../libqtpf/pfsql-build-windows/debug \
-  -L../../ssu-build-windows/debug
+win32:debug:LIBS += -L../libqtpf/pf-build-windows/debug \
+  -L../libqtpf/pfsql-build-windows/debug \
+  -L../ssu-build-windows/debug
 win32:release:LIBS += -L../libqtpf/pf-build-windows/release \
-  -L../../libqtpf/pfsql-build-windows/release \
-  -L../../ssu-build-windows/release
+  -L../libqtpf/pfsql-build-windows/release \
+  -L../ssu-build-windows/release
 unix:LIBS += -L../libqtpf/pf -L../libqtpf/pfsql -L../libqtssu
+LIBS += -lqtpf -lqtssu
 
 QMAKE_CXXFLAGS += -Wextra
 unix {
@@ -42,7 +42,7 @@ contains(QT_VERSION, ^4\\.[0-6]\\..*) {
 
 TEMPLATE = app
 
-SOURCES += sched/main.cpp \
+SOURCES += \
     config/task.cpp \
     config/taskgroup.cpp \
     sched/scheduler.cpp \
@@ -90,7 +90,8 @@ SOURCES += sched/main.cpp \
     ui/schedulereventsmodel.cpp \
     ui/lastoccuredtexteventsmodel.cpp \
     ui/flagssetmodel.cpp \
-    ui/taskgroupsmodel.cpp
+    ui/taskgroupsmodel.cpp \
+    sched/qrond.cpp
 
 HEADERS += \
     config/task.h \
@@ -142,7 +143,8 @@ HEADERS += \
     ui/schedulereventsmodel.h \
     ui/lastoccuredtexteventsmodel.h \
     ui/flagssetmodel.h \
-    ui/taskgroupsmodel.h
+    ui/taskgroupsmodel.h \
+    sched/qrond.h
 
 RESOURCES += \
     ui/webconsole.qrc
