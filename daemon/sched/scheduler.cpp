@@ -374,15 +374,16 @@ void Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
                  << "' triggered task '" << fqtn << "'";
     asyncRequestTask(fqtn);
     trigger.setLastTriggered(now);
+    next = trigger.nextTriggering();
   } else {
-    // plan new check if not yet planned
     QDateTime taskNext = task.nextScheduledExecution();
-    if (!taskNext.isValid() || taskNext > next) {
-      qint64 ms = now.msecsTo(next);
-      TimerWithArguments::singleShot(ms, this, "checkTriggersForTask", fqtn);
-      task.setNextScheduledExecution(now.addMSecs(ms));
-    }
+    if (taskNext.isValid() && taskNext <= next)
+      return; // don't plan new check if already planned
   }
+  // plan new check
+  qint64 ms = now.msecsTo(next);
+  TimerWithArguments::singleShot(ms, this, "checkTriggersForTask", fqtn);
+  task.setNextScheduledExecution(now.addMSecs(ms));
 }
 
 void Scheduler::setFlag(const QString flag) {
