@@ -89,6 +89,7 @@ bool Scheduler::loadConfiguration(QIODevice *source, QString &errorString) {
 
 bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   Q_UNUSED(errorString) // currently no fatal error, only warnings
+  // FIXME should not need a config (biglock) mutex if loadConfiguration is always executed by Scheduler's thread
   QMutexLocker ml(&_configMutex);
   QMutexLocker ml2(&_flagsMutex); // FIXME ???
   _resources.clear();
@@ -233,6 +234,7 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     }
   }
   // LATER fire cron triggers if they were missed since last task exec
+  // FIXME should we execute this method every minutes in case a trigger was lost ?
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
   emit tasksConfigurationReset(_tasksGroups, _tasks);
@@ -241,6 +243,8 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   emit globalParamsChanged(_globalParams);
   emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
                                 _onnotice, _onschedulerstart);
+  ml.unlock();
+  ml2.unlock();
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
@@ -370,18 +374,29 @@ void Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   QDateTime next = trigger.nextTriggering();
   if (next <= now) {
     // requestTask if trigger reached
-    Log::debug() << "trigger '" << trigger.cronExpression()
+    Log::debug() << "Scheduler::checkTrigger trigger '"
+                 << trigger.cronExpression()
                  << "' triggered task '" << fqtn << "'";
     asyncRequestTask(fqtn);
     trigger.setLastTriggered(now);
     next = trigger.nextTriggering();
   } else {
     QDateTime taskNext = task.nextScheduledExecution();
-    if (taskNext.isValid() && taskNext <= next)
+    if (taskNext.isValid() && taskNext <= next) {
+      Log::debug() << "Scheduler::checkTrigger don't trigger or plan new "
+                      "check for task " << fqtn << " "
+                   << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
+                   << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
+                   << taskNext.toString("yyyy-MM-dd hh:mm:ss,zzz");
       return; // don't plan new check if already planned
+    }
   }
   // plan new check
   qint64 ms = now.msecsTo(next);
+  Log::debug() << "Scheduler::checkTrigger planning new check for task "
+               << fqtn << " "
+               << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
+               << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " " << ms;
   TimerWithArguments::singleShot(ms, this, "checkTriggersForTask", fqtn);
   task.setNextScheduledExecution(now.addMSecs(ms));
 }
@@ -434,7 +449,7 @@ void Scheduler::postNotice(const QString notice) {
       Log::debug() << "notice '" << notice << "' triggered task '"
                    << task.fqtn() << "'";
       // LATER support params at trigger level
-      requestTask(task.fqtn());
+      asyncRequestTask(task.fqtn());
     }
   }
   emit noticePosted(notice);
@@ -455,6 +470,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     return false;
   }
   _alerter->cancelAlert("scheduler.maxtotaltaskinstances.reached");
+  QMutexLocker ml(&_configMutex);
   // LATER check flags
   QList<Host> hosts;
   Host host = _hosts.value(request.task().target());
@@ -502,15 +518,17 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     request.setTarget(h);
     request.setStartDatetime();
     request.task().setLastExecution(QDateTime::currentDateTime());
-    triggerEvents(_onstart, &request);
+    triggerEvents(_onstart, &request); // FIXME accessing _onstart needs lock but triggering events may need unlock...
+    ml.unlock();
     request.task().triggerStartEvents(&request);
-    _executors.takeFirst()->execute(request);
+    _executors.takeFirst()->execute(request); // FIXME eaccessing _executors should not need lock but does...
     emit taskStarted(request);
     emit taskChanged(request.task());
     reevaluateQueuedRequests();
     return true;
 nexthost:;
   }
+  ml.unlock();
   Log::warning(request.task().fqtn(), request.id())
       << "cannot execute task '" << request.task().fqtn()
       << "' now because there is not enough resources on target '"
