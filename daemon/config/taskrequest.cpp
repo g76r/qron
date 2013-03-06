@@ -188,11 +188,11 @@ QString TaskRequest::paramValue(const QString key,
       return "running";
     return success() ? "success" : "failure";
   } else if (key == "!submissiondate") {
-    return submissionDatetime().toString(Qt::ISODate);
+    return submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
   } else if (key == "!startdate") {
-    return startDatetime().toString(Qt::ISODate);
+    return startDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
   } else if (key == "!enddate") {
-    return endDatetime().toString(Qt::ISODate);
+    return endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
   } else if (key == "!target") {
     return target().hostname();
   }

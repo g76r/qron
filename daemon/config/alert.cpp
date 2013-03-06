@@ -57,7 +57,7 @@ QString Alert::paramValue(const QString key, const QString defaultValue) const {
   if (key == "!alertid") {
     return id();
   } else if (key == "!alertdate") {
-    return datetime().toString(Qt::ISODate);
+    return datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
   }
   return defaultValue;
 
