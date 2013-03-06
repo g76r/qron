@@ -69,7 +69,7 @@ QVariant RaisedAlertsModel::headerData(int section, Qt::Orientation orientation,
       case 1:
         return "Raised on";
       case 2:
-        return "Cancellation scheduled on";
+        return "Cancellation on";
       case 3:
         return "Actions";
       }
