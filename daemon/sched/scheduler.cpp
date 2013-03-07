@@ -39,9 +39,12 @@
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
-Scheduler::Scheduler(QObject *parent) : QObject(parent),
+Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _alerter(new Alerter), _firstConfigurationLoad(true) {
-  //qRegisterMetaType<CronTrigger>("CronTrigger");
+  _thread->setObjectName("SchedulerThread");
+  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
+  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  _thread->start();
   qRegisterMetaType<Task>("Task");
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<Host>("Host");
@@ -52,6 +55,7 @@ Scheduler::Scheduler(QObject *parent) : QObject(parent),
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
+  moveToThread(_thread);
 }
 
 Scheduler::~Scheduler() {

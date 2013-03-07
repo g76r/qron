@@ -73,7 +73,7 @@ int main(int argc, char *argv[]) {
     rc = a.exec();
   }
   delete httpd;
-  delete scheduler;
+  scheduler->deleteLater();
   ::usleep(100000); // give a chance for last asynchronous log writing
   Log::clearLoggers(); // this deletes logger and console
   return rc;

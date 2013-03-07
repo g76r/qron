@@ -32,8 +32,11 @@
 #include "event/event.h"
 #include "pf/pfnode.h"
 
+class QThread;
+
 class Scheduler : public QObject {
   Q_OBJECT
+  QThread *_thread;
   ParamSet _globalParams;
   QMap<QString,TaskGroup> _tasksGroups;
   QMap<QString,Task> _tasks;
@@ -50,7 +53,7 @@ class Scheduler : public QObject {
   QList<Event> _onlog, _onnotice, _onschedulerstart;
 
 public:
-  explicit Scheduler(QObject *parent = 0);
+  Scheduler();
   ~Scheduler();
   bool loadConfiguration(QIODevice *source, QString &errorString);
   bool loadEventListConfiguration(PfNode listnode, QList<Event> &list,
