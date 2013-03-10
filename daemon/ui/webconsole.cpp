@@ -352,7 +352,7 @@ void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
     if (_scheduler) {
       if (event == "requestTask") {
         // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
-        if (_scheduler->requestTask(fqtn))
+        if (_scheduler->syncRequestTask(fqtn))
           message = "S:Task '"+fqtn+"' submitted for execution.";
         else
           message = "E:Execution request of task '"+fqtn

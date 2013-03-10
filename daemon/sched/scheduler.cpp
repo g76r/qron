@@ -238,7 +238,6 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
     }
   }
   // LATER fire cron triggers if they were missed since last task exec
-  // FIXME should we execute this method every minutes in case a trigger was lost ?
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
   emit tasksConfigurationReset(_tasksGroups, _tasks);
@@ -294,12 +293,13 @@ bool Scheduler::loadEventListConfiguration(PfNode listnode, QList<Event> &list,
 }
 
 void Scheduler::triggerEvents(const QList<Event> list,
-                              const ParamsProvider *context) {
+                                  const ParamsProvider *context) {
   foreach (const Event e, list)
     e.trigger(context);
 }
 
-bool Scheduler::requestTask(const QString fqtn, ParamSet params, bool force) {
+bool Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
+                               bool force) {
   if (this->thread() == QThread::currentThread())
     return doRequestTask(fqtn, params, force);
   bool success = false;
@@ -371,38 +371,40 @@ void Scheduler::checkTriggersForAllTasks() {
   }
 }
 
-void Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
-  Log::debug() << "Scheduler::checkTrigger " << trigger.cronExpression()
-               << " " << fqtn;
+bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
+  //Log::debug() << "Scheduler::checkTrigger " << trigger.cronExpression()
+  //             << " " << fqtn;
   QDateTime now(QDateTime::currentDateTime());
   QDateTime next = trigger.nextTriggering();
+  bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    Log::debug() << "Scheduler::checkTrigger trigger '"
-                 << trigger.cronExpression()
+    Log::debug() << "trigger '" << trigger.cronExpression()
                  << "' triggered task '" << fqtn << "'";
     asyncRequestTask(fqtn);
     trigger.setLastTriggered(now);
     next = trigger.nextTriggering();
+    fired = true;
   } else {
     QDateTime taskNext = task.nextScheduledExecution();
     if (taskNext.isValid() && taskNext <= next) {
-      Log::debug() << "Scheduler::checkTrigger don't trigger or plan new "
-                      "check for task " << fqtn << " "
-                   << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
-                   << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
-                   << taskNext.toString("yyyy-MM-dd hh:mm:ss,zzz");
-      return; // don't plan new check if already planned
+      //Log::debug() << "Scheduler::checkTrigger don't trigger or plan new "
+      //                "check for task " << fqtn << " "
+      //             << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
+      //             << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
+      //             << taskNext.toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return false; // don't plan new check if already planned
     }
   }
   // plan new check
   qint64 ms = now.msecsTo(next);
-  Log::debug() << "Scheduler::checkTrigger planning new check for task "
-               << fqtn << " "
-               << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
-               << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " " << ms;
+  //Log::debug() << "Scheduler::checkTrigger planning new check for task "
+  //             << fqtn << " "
+  //             << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
+  //             << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " " << ms;
   TimerWithArguments::singleShot(ms, this, "checkTriggersForTask", fqtn);
   task.setNextScheduledExecution(now.addMSecs(ms));
+  return fired;
 }
 
 void Scheduler::setFlag(const QString flag) {
@@ -677,6 +679,7 @@ bool Scheduler::enableTask(const QString fqtn, bool enable) {
 }
 
 void Scheduler::periodicChecks() {
+  // detect queued or running tasks that exceeded their max expected duration
   QList<TaskRequest> currentRequests(_queuedRequests);
   currentRequests.append(_runningRequests);
   foreach (const TaskRequest r, currentRequests) {
@@ -684,4 +687,8 @@ void Scheduler::periodicChecks() {
     if (t.maxExpectedDuration() < r.liveTotalMillis())
       _alerter->raiseAlert("task.toolong."+t.fqtn());
   }
+  // restart timer for triggers if any was lost, this is never usefull apart
+  // if current system time goes back (which btw should never occur on well
+  // managed production servers, however it with naive sysops)
+  checkTriggersForAllTasks();
 }

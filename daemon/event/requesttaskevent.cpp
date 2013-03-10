@@ -28,8 +28,8 @@ public:
       QString id = context ? context->paramValue("!taskrequestid") : QString();
       Log::log(fqtn.isNull() ? Log::Debug : Log::Info, fqtn, id.toLongLong())
           << "requesttask event requesting execution of task " << _fqtn;
-      _scheduler.data()->requestTask(_params.evaluate(_fqtn, context), _params,
-                                     _force);
+      _scheduler.data()->asyncRequestTask(_params.evaluate(_fqtn, context),
+                                          _params, _force);
       // LATER if requestTask returns the TaskRequest object, we can track child taskrequestid
       // LATER this special case should be logged to a special data model to enable drawing parent-child diagrams
     }

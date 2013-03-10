@@ -80,8 +80,8 @@ public slots:
     * @param force if true, any constraints or ressources are ignored
     * @return true if task queued, false if task cannot be queued
     */
-  bool requestTask(const QString fqtn, ParamSet params = ParamSet(),
-                   bool force = false);
+  bool syncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
+                       bool force = false);
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
    * processing the request.
@@ -165,7 +165,8 @@ private:
     * @see reevaluateQueuedRequests()
     */
   void startQueuedTasksIfPossible();
-  void checkTrigger(CronTrigger trigger, Task task, QString fqtn);
+  /** @return true iff the triggers fires a task request */
+  bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
   bool loadConfiguration(PfNode root, QString &errorString);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
