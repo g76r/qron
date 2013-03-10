@@ -57,7 +57,7 @@ private slots:
 
 private:
   Q_INVOKABLE void doExecute(TaskRequest request);
-  void execMean(TaskRequest request);
+  void localMean(TaskRequest request);
   void sshMean(TaskRequest request);
   void httpMean(TaskRequest request);
   void execProcess(TaskRequest request, QStringList cmdline);

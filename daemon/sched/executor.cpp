@@ -45,7 +45,7 @@ void Executor::doExecute(TaskRequest request) {
       << "starting task '" << request.task().fqtn() << "' through mean '"
       << mean << "' after " << request.queuedMillis() << " ms in queue";
   if (mean == "local")
-    execMean(request);
+    localMean(request);
   else if (mean == "ssh")
     sshMean(request);
   else if (mean == "http")
@@ -64,10 +64,9 @@ void Executor::doExecute(TaskRequest request) {
     request.setEndDatetime();
     emit taskFinished(request, this);
   }
-  // LATER add other means: https, postevent, setflag, clearflag
 }
 
-void Executor::execMean(TaskRequest request) {
+void Executor::localMean(TaskRequest request) {
   QStringList cmdline;
   cmdline = request.params()
       .splitAndEvaluate(request.task().command(), &request);
@@ -83,18 +82,30 @@ void Executor::sshMean(TaskRequest request) {
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (through ssh on host "
       << request.target().hostname() <<  "): " << cmdline.join(" ");
-  // ssh options are set to avoid any host key check to make the connection
-  // successful even if the host is not known or if its key changed
-  // LATER make the host key bypass optional (since it's insecure)
-  // LATER support ssh options from params, such as port and keys
-  // LATER remove warning about known hosts file from stderr log
-  // LATER provide a way to set ssh username
-  sshCmdline << "ssh" << "-oUserKnownHostsFile=/dev/null"
-             << "-oGlobalKnownHostsFile=/dev/null"
-             << "-oStrictHostKeyChecking=no"
+  QString username = request.params().value("ssh.username");
+  qlonglong port = request.params().valueAsLong("ssh.port");
+  QString ignoreknownhosts = request.params().value("ssh.ignoreknownhosts",
+                                                    "true");
+  QString identity = request.params().value("ssh.identity");
+  QStringList options = request.params().valueAsStrings("ssh.options");
+  sshCmdline << "ssh" << "-oLogLevel=ERROR" << "-oEscapeChar=none"
              << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
-             << request.target().hostname()
-             << cmdline;
+             << "-oIdentitiesOnly=yes" << "-oKbdInteractiveAuthentication=no"
+             << "-oBatchMode=yes" << "-oConnectionAttempts=3"
+             << "-oPasswordAuthentication=false";
+  if (ignoreknownhosts == "true")
+    sshCmdline << "-oUserKnownHostsFile=/dev/null"
+               << "-oGlobalKnownHostsFile=/dev/null"
+               << "-oStrictHostKeyChecking=no";
+  if (port > 0 && port < 65536)
+    sshCmdline << "-oPort="+QString::number(port);
+  if (!identity.isEmpty())
+    sshCmdline << "-oIdentityFile=" + identity;
+  foreach (QString option, options)
+    sshCmdline << "-o" + option;
+  if (!username.isEmpty())
+    sshCmdline << "-oUser=" + username;
+  sshCmdline << request.target().hostname() << cmdline;
   execProcess(request, sshCmdline);
 }
 
