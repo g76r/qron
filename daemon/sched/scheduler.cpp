@@ -75,7 +75,9 @@ bool Scheduler::loadConfiguration(QIODevice *source, QString &errorString) {
   pp.parse(source);
   int n = pdh.roots().size();
   if (n < 1) {
-    Log::error() << "empty configuration";
+    errorString = pdh.errorString()+" at line "+QString::number(pdh.errorLine())
+        +" column "+QString::number(pdh.errorColumn());
+    Log::error() << "empty or invalid configuration: " << errorString;
     return false;
   }
   foreach (PfNode root, pdh.roots()) {
