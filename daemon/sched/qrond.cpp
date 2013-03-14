@@ -50,7 +50,7 @@ int main(int argc, char *argv[]) {
     }
   }
   Scheduler *scheduler = new Scheduler;
-  HttpServer *httpd = new HttpServer;
+  HttpServer *httpd = new HttpServer(8, 32); // LATER should be configurable
   WebConsole *webconsole = new WebConsole;
   webconsole->setScheduler(scheduler);
   httpd->appendHandler(webconsole);
@@ -72,7 +72,10 @@ int main(int argc, char *argv[]) {
     // LATER servicize on Windows
     rc = a.exec();
   }
-  delete httpd;
+  // HttpServer and Scheduler will be deleted, but their threads won't since
+  // they lies in main thread which event loop is no longer running
+  // WebConsole will be deleted since HttpServer connects its deleteLater()
+  httpd->deleteLater();
   scheduler->deleteLater();
   ::usleep(100000); // give a chance for last asynchronous log writing
   Log::clearLoggers(); // this deletes logger and console

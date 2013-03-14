@@ -14,8 +14,9 @@
 #include "webconsole.h"
 #include "util/ioutils.h"
 #include <QFile>
+#include <QThread>
 
-WebConsole::WebConsole() : _scheduler(0),
+WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _tasksTreeModel(new TasksTreeModel(this)),
   _targetsTreeModel(new TargetsTreeModel(this)),
   _hostsListModel(new HostsListModel(this)),
@@ -86,6 +87,10 @@ WebConsole::WebConsole() : _scheduler(0),
   _memoryInfoLogger(new MemoryLogger(0, Log::Info, 200)),
   _memoryWarningLogger(new MemoryLogger(0, Log::Warning, 100)),
   _title("Qron Web Console"), _navtitle("Qron Web Console") {
+  _thread->setObjectName("WebConsoleServer");
+  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
+  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  _thread->start();
   _htmlTasksTreeView->setModel(_tasksTreeModel);
   _htmlTasksTreeView->setTableClass("table table-condensed table-hover");
   _htmlTasksTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
@@ -324,18 +329,21 @@ WebConsole::WebConsole() : _scheduler(0),
           _lastFlagsChangesModel, SLOT(eventOccured(QString,int)));
   connect(this, SIGNAL(alertEmited(QString,int)),
           _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
+  moveToThread(_thread);
+  _memoryInfoLogger->moveToThread(_thread);
+  _memoryWarningLogger->moveToThread(_thread);
 }
 
 QString WebConsole::name() const {
   return "WebConsole";
 }
 
-bool WebConsole::acceptRequest(const HttpRequest &req) {
+bool WebConsole::acceptRequest(HttpRequest req) {
   Q_UNUSED(req)
   return true;
 }
 
-void WebConsole::handleRequest(HttpRequest &req, HttpResponse &res) {
+void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
   QString path = req.url().path();
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);

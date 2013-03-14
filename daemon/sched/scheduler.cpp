@@ -52,6 +52,10 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<QList<Event> >("QList<Event>");
   qRegisterMetaType<QMap<QString,Task> >("QMap<QString,Task>");
   qRegisterMetaType<QMap<QString,TaskGroup> >("QMap<QString,TaskGroup>");
+  qRegisterMetaType<QMap<QString,QMap<QString,qint64> > >("QMap<QString,QMap<QString,qint64> >");
+  qRegisterMetaType<QMap<QString,Cluster> >("QMap<QString,Cluster>");
+  qRegisterMetaType<QMap<QString,Host> >("QMap<QString,Host>");
+  qRegisterMetaType<QMap<QString,qint64> >("QMap<QString,qint64>");
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
@@ -356,7 +360,7 @@ bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
 }
 
 void Scheduler::checkTriggersForTask(QVariant fqtn) {
-  Log::debug() << "Scheduler::checkTriggersForTask " << fqtn;
+  //Log::debug() << "Scheduler::checkTriggersForTask " << fqtn;
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn.toString());
   foreach (const CronTrigger trigger, task.cronTriggers())
@@ -364,7 +368,7 @@ void Scheduler::checkTriggersForTask(QVariant fqtn) {
 }
 
 void Scheduler::checkTriggersForAllTasks() {
-  Log::debug() << "Scheduler::checkTriggersForAllTasks ";
+  //Log::debug() << "Scheduler::checkTriggersForAllTasks ";
   QMutexLocker ml(&_configMutex);
   foreach (Task task, _tasks.values()) {
     QString fqtn = task.fqtn();
@@ -381,8 +385,8 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    Log::debug() << "trigger '" << trigger.cronExpression()
-                 << "' triggered task '" << fqtn << "'";
+    Log::debug(fqtn) << "cron trigger '" << trigger.cronExpression()
+                     << "' triggering task '" << fqtn << "'";
     asyncRequestTask(fqtn);
     trigger.setLastTriggered(now);
     next = trigger.nextTriggering();

@@ -38,8 +38,11 @@
 #include "flagssetmodel.h"
 #include "taskgroupsmodel.h"
 
+class QThread;
+
 class WebConsole : public HttpHandler {
   Q_OBJECT
+  QThread *_thread;
   Scheduler *_scheduler;
   TasksTreeModel *_tasksTreeModel;
   TargetsTreeModel *_targetsTreeModel;
@@ -81,8 +84,8 @@ class WebConsole : public HttpHandler {
 public:
   WebConsole();
   QString name() const;
-  bool acceptRequest(const HttpRequest &req);
-  void handleRequest(HttpRequest &req, HttpResponse &res);
+  bool acceptRequest(HttpRequest req);
+  void handleRequest(HttpRequest req, HttpResponse res);
   void setScheduler(Scheduler *scheduler);
 
 signals:
