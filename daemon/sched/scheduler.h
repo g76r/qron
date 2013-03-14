@@ -78,10 +78,10 @@ public slots:
     * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
     * @param params override some params at request time
     * @param force if true, any constraints or ressources are ignored
-    * @return true if task queued, false if task cannot be queued
+    * @return request id if task queued, -1 if task cannot be queued
     */
-  bool syncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
-                       bool force = false);
+  quint64 syncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
+                          bool force = false);
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
    * processing the request.
@@ -170,8 +170,8 @@ private:
   bool loadConfiguration(PfNode root, QString &errorString);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
-  Q_INVOKABLE bool doRequestTask(const QString fqtn, ParamSet params,
-                                 bool force);
+  Q_INVOKABLE quint64 doRequestTask(const QString fqtn, ParamSet params,
+                                    bool force);
   Q_DISABLE_COPY(Scheduler)
 };
 

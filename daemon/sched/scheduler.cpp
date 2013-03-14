@@ -40,6 +40,7 @@
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
+  _configMutex(QMutex::Recursive),
   _alerter(new Alerter), _firstConfigurationLoad(true) {
   _thread->setObjectName("SchedulerThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
@@ -304,15 +305,15 @@ void Scheduler::triggerEvents(const QList<Event> list,
     e.trigger(context);
 }
 
-bool Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
+quint64 Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
                                bool force) {
   if (this->thread() == QThread::currentThread())
     return doRequestTask(fqtn, params, force);
-  bool success = false;
+  quint64 id = -1;
   QMetaObject::invokeMethod(this, "doRequestTask", Qt::BlockingQueuedConnection,
-                            Q_RETURN_ARG(bool, success), Q_ARG(QString, fqtn),
+                            Q_RETURN_ARG(quint64, id), Q_ARG(QString, fqtn),
                             Q_ARG(ParamSet, params), Q_ARG(bool, force));
-  return success;
+  return id;
 }
 
 void Scheduler::asyncRequestTask(const QString fqtn, ParamSet params,
@@ -322,13 +323,13 @@ void Scheduler::asyncRequestTask(const QString fqtn, ParamSet params,
                             Q_ARG(bool, force));
 }
 
-bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
+quint64 Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
   ml.unlock();
   if (task.isNull()) {
     Log::warning() << "requested task not found: " << fqtn << params << force;
-    return false;
+    return -1;
   }
   if (!params.parent().isNull()) {
     Log::warning() << "task requested with non null params' parent (parent will"
@@ -345,7 +346,7 @@ bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
       Log::warning() << "requested task '" << fqtn << "' cannot be queued "
                         "because maxinstances is already reached ("
                      << task.maxInstances() << ")";
-      return false;
+      return -1;
     }
     // note: a request must always be queued even if the task can be started
     // immediately, to avoid the new tasks being started before queued ones
@@ -356,7 +357,7 @@ bool Scheduler::doRequestTask(const QString fqtn, ParamSet params, bool force) {
     emit taskChanged(request.task());
     reevaluateQueuedRequests();
   }
-  return true;
+  return request.id();
 }
 
 void Scheduler::checkTriggersForTask(QVariant fqtn) {
@@ -385,9 +386,13 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    Log::debug(fqtn) << "cron trigger '" << trigger.cronExpression()
-                     << "' triggering task '" << fqtn << "'";
-    asyncRequestTask(fqtn);
+    quint64 id = syncRequestTask(fqtn);
+    if (id > 0)
+      Log::debug(fqtn, id) << "cron trigger '" << trigger.cronExpression()
+                           << "' triggered task '" << fqtn << "'";
+    else
+      Log::debug(fqtn) << "cron trigger '" << trigger.cronExpression()
+                       << "' failed to trigger task '" << fqtn << "'";
     trigger.setLastTriggered(now);
     next = trigger.nextTriggering();
     fired = true;
