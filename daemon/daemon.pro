@@ -91,7 +91,8 @@ SOURCES += \
     ui/lastoccuredtexteventsmodel.cpp \
     ui/flagssetmodel.cpp \
     ui/taskgroupsmodel.cpp \
-    sched/qrond.cpp
+    sched/qrond.cpp \
+    config/configutils.cpp
 
 HEADERS += \
     config/task.h \
@@ -144,7 +145,8 @@ HEADERS += \
     ui/lastoccuredtexteventsmodel.h \
     ui/flagssetmodel.h \
     ui/taskgroupsmodel.h \
-    sched/qrond.h
+    sched/qrond.h \
+    config/configutils.h
 
 RESOURCES += \
     ui/webconsole.qrc

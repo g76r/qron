@@ -22,6 +22,7 @@
 #include "event/event.h"
 #include <QWeakPointer>
 #include "sched/scheduler.h"
+#include "config/configutils.h"
 
 class TaskData : public QSharedData {
 public:
@@ -109,17 +110,7 @@ Task::Task(PfNode node, Scheduler *scheduler) {
   td->_maxExpectedDuration = node.intAttribute("maxexpectedduration",
                                                LLONG_MAX);
   td->_minExpectedDuration = node.intAttribute("minexpectedduration", 0);
-  foreach (PfNode child, node.childrenByName("param")) {
-    QString key = child.attribute("key");
-    QString value = child.attribute("value");
-    if (key.isNull() || value.isNull()) {
-      Log::error() << "ignoring invalid task param " << child.toPf();
-    } else {
-      //Log::debug() << "configured task param " << key << "=" << value
-      //             << "for task '" << td->_id << "'";
-      td->_params.setValue(key, value);
-    }
-  }
+  ConfigUtils::loadParamSet(node, td->_params);
   foreach (PfNode child, node.childrenByName("trigger")) {
     foreach (PfNode grandchild, child.children()) {
       QString content = grandchild.contentAsString();

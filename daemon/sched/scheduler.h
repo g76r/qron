@@ -60,8 +60,7 @@ public:
                                   QString &errorString);
   inline bool loadEventListConfiguration(PfNode listnode, QList<Event> &list) {
     QString errorString;
-    return loadEventListConfiguration(listnode, list, errorString);
-  }
+    return loadEventListConfiguration(listnode, list, errorString); }
   static void triggerEvents(const QList<Event> list,
                             const ParamsProvider *context);
   void customEvent(QEvent *event);

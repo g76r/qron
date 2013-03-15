@@ -20,6 +20,7 @@
 #include "event/event.h"
 #include <QWeakPointer>
 #include "sched/scheduler.h"
+#include "config/configutils.h"
 
 class TaskGroupData : public QSharedData {
 public:
@@ -46,17 +47,7 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
   tgd->_id = node.attribute("id"); // LATER check uniqueness
   tgd->_label = node.attribute("label", tgd->_id);
   tgd->_params.setParent(parentParamSet);
-  foreach (PfNode child, node.childrenByName("param")) {
-    QString key = child.attribute("key");
-    QString value = child.attribute("value");
-    if (key.isNull() || value.isNull()) {
-      Log::warning() << "invalid taskgroup param " << child.toPf();
-    } else {
-      Log::debug() << "configured taskgroup param " << key << "=" << value
-                   << "for taskgroup '" << tgd->_id << "'";
-      tgd->_params.setValue(key, value);
-    }
-  }
+  ConfigUtils::loadParamSet(node, tgd->_params);
   foreach (PfNode child, node.childrenByName("onstart"))
     scheduler->loadEventListConfiguration(child, tgd->_onstart);
   foreach (PfNode child, node.childrenByName("onsuccess"))

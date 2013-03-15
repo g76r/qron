@@ -22,6 +22,7 @@
 #include "mailalertchannel.h"
 #include <QTimer>
 #include <QCoreApplication>
+#include "config/configutils.h"
 
 Alerter::Alerter() : QObject(0), _thread(new QThread),
   _cancelDelay(ALERTER_DEFAULT_CANCEL_DELAY) {
@@ -54,49 +55,37 @@ Alerter::~Alerter() {
 
 bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
   Q_UNUSED(errorString) // currently no fatal error, only warnings
-  QList<PfNode> children;
-  children += root.childrenByName("param");
-  children += root.childrenByName("rule");
-  foreach (PfNode node, children) {
-    if (node.name() == "param") {
-      QString key = node.attribute("key");
-      QString value = node.attribute("value");
-      if (key.isNull() || value.isNull()) {
-        Log::warning() << "invalid alerts param " << node.toPf();
+  _params.clear();
+  if (!ConfigUtils::loadParamSet(root, _params, errorString))
+    return false;
+  foreach (PfNode node, root.childrenByName("rule")) {
+    QString pattern = node.attribute("match", "**");
+    bool stop = !node.attribute("stop").isNull();
+    bool notifyCancel = node.attribute("nocancelnotify").isNull();
+    //Log::debug() << "found alert rule section " << pattern << " " << stop;
+    int channelsCount = 0;
+    foreach (PfNode node, node.children()) {
+      if (node.name() == "match" || node.name() == "stop") {
+        // ignore
       } else {
-        Log::debug() << "configured alerts param " << key << "=" << value;
-        _params.setValue(key, value);
-      }
-    } else if (node.name() == "rule") {
-      // LATER check uniqueness of attributes
-      QString pattern = node.attribute("match", "**");
-      bool stop = !node.attribute("stop").isNull();
-      bool notifyCancel = node.attribute("nocancelnotify").isNull();
-      //Log::debug() << "found alert rule section " << pattern << " " << stop;
-      int channelsCount = 0;
-      foreach (PfNode node, node.children()) {
-        if (node.name() == "match" || node.name() == "stop") {
-          // ignore
-        } else {
-          QString name = node.name();
-          AlertChannel *channel = _channels.value(name);
-          if (channel) {
-            if (stop && channelsCount++) {
-              Log::error() << "do not support several channel for the same "
-                              "alert rule if (stop) is set, ignoring channel '"
-                           << QString::fromUtf8(node.toPf())
-                           << "' with matching pattern " << pattern;
-            } else {
-              AlertRule rule(node, pattern, channel, name, stop, notifyCancel);
-              _rules.append(rule);
-              Log::debug() << "configured alert rule " << name << " " << pattern
-                           << " " << stop << " "
-                           << rule.patternRegExp().pattern();
-            }
+        QString name = node.name();
+        AlertChannel *channel = _channels.value(name);
+        if (channel) {
+          if (stop && channelsCount++) {
+            Log::error() << "do not support several channel for the same "
+                            "alert rule if (stop) is set, ignoring channel '"
+                         << QString::fromUtf8(node.toPf())
+                         << "' with matching pattern " << pattern;
           } else {
-            Log::warning() << "alert channel '" << name << "' unknown in alert "
-                              "rule with matching pattern " << pattern;
+            AlertRule rule(node, pattern, channel, name, stop, notifyCancel);
+            _rules.append(rule);
+            Log::debug() << "configured alert rule " << name << " " << pattern
+                         << " " << stop << " "
+                         << rule.patternRegExp().pattern();
           }
+        } else {
+          Log::warning() << "alert channel '" << name << "' unknown in alert "
+                            "rule with matching pattern " << pattern;
         }
       }
     }

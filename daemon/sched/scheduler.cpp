@@ -36,6 +36,7 @@
 #include "event/clearflagevent.h"
 #include "event/requesttaskevent.h"
 #include <QThread>
+#include "config/configutils.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
@@ -105,135 +106,116 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   QMutexLocker ml2(&_flagsMutex); // FIXME ???
   _resources.clear();
   _setFlags.clear();
-  QList<PfNode> children;
-  children += root.childrenByName("param");
-  children += root.childrenByName("log");
-  children += root.childrenByName("taskgroup");
-  children += root.childrenByName("task");
-  children += root.childrenByName("host");
-  children += root.childrenByName("cluster");
-  children += root.childrenByName("maxtotaltaskinstances");
-  children += root.childrenByName("alerts");
-  children += root.childrenByName("onstart");
-  children += root.childrenByName("onsuccess");
-  children += root.childrenByName("onfailure");
-  children += root.childrenByName("onfinish");
-  children += root.childrenByName("onlog");
-  children += root.childrenByName("onnotice");
-  children += root.childrenByName("onschedulerstart");
+  _globalParams.clear();
   QList<Logger*> loggers;
-  foreach (PfNode node, children) {
-    if (node.name() == "host") {
-      Host host(node);
-      _hosts.insert(host.id(), host);
-      Log::debug() << "configured host '" << host.id() << "' with hostname '"
-                   << host.hostname() << "'";
-      _resources.insert(host.id(), host.resources());
-    } else if (node.name() == "cluster") {
-      Cluster cluster(node);
-      foreach (PfNode child, node.childrenByName("host")) {
-        Host host = _hosts.value(child.contentAsString());
-        if (!host.isNull())
-          cluster.appendHost(host);
-        else
-          Log::error() << "host '" << child.contentAsString()
-                       << "' not found, won't add it to cluster '"
-                       << cluster.id() << "'";
-      }
-      _clusters.insert(cluster.id(), cluster);
-      Log::debug() << "configured cluster '" << cluster.id() << "' with "
-                   << cluster.hosts().size() << " hosts";
-    } else if (node.name() == "task") {
-      Task task(node, this);
-      TaskGroup taskGroup = _tasksGroups.value(node.attribute("taskgroup"));
-      if (taskGroup.isNull()) {
-        Log::warning() << "ignoring task '" << task.id()
-                       << "' without taskgroup";
-      } else {
-        task.completeConfiguration(taskGroup);
-        _tasks.insert(task.fqtn(), task);
-        Log::debug() << "configured task '" << task.fqtn() << "'";
-      }
-    } else if (node.name() == "taskgroup") {
-      TaskGroup taskGroup(node, _globalParams, this);
-      _tasksGroups.insert(taskGroup.id(), taskGroup);
-      Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
-    } else if (node.name() == "param") {
-      QString key = node.attribute("key");
-      QString value = node.attribute("value");
-      if (key.isNull() || value.isNull()) {
-        Log::warning() << "invalid global param " << node.toPf();
-      } else {
-        Log::debug() << "configured global param " << key << "=" << value;
-        _globalParams.setValue(key, value);
-      }
-    } else if (node.name() == "maxtotaltaskinstances") {
-      bool ok = true;
-      int n = node.contentAsString().toInt(&ok);
-      if (ok && n > 0) {
-        if (!_executors.isEmpty()) {
-          Log::warning() << "overriding maxtotaltaskinstances "
-                         << _executors.size() << " with " << n;
-          foreach (Executor *e, _executors)
-            e->deleteLater();
-          _executors.clear();
-        }
-        Log::debug() << "configured " << n << " task executors";
-        while (n--) {
-          Executor *e = new Executor;
-          connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
-                  this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
-          _executors.append(e);
-        }
-      } else {
-        Log::warning() << "ignoring maxtotaltaskinstances with incorrect "
-                          "value: " << node.contentAsString();
-      }
-    } else if (node.name() == "log") {
-      QString level = node.attribute("level");
-      QString filename = node.attribute("file");
-      if (level.isEmpty()) {
-        Log::warning() << "invalid log level in configuration: "
-                       << node.toPf();
-      } else if (filename.isEmpty()) {
-        Log::warning() << "invalid log filename in configuration: "
-                       << node.toPf();
-      } else {
-        Log::debug() << "adding logger " << node.toPf();
-        loggers.append(new FileLogger(filename,
-                                      Log::severityFromString(level)));
-      }
-    } else if (node.name() == "alerts") {
-      if (!_alerter->loadConfiguration(node, errorString))
-        return false;
-      Log::debug() << "configured alerter";
-    } else if (node.name() == "onstart") {
-      if (!loadEventListConfiguration(node, _onstart, errorString))
-        return false;
-    } else if (node.name() == "onsuccess") {
-      if (!loadEventListConfiguration(node, _onsuccess, errorString))
-        return false;
-    } else if (node.name() == "onfailure") {
-      if (!loadEventListConfiguration(node, _onfailure, errorString))
-        return false;
-    } else if (node.name() == "onfinish") {
-      if (!loadEventListConfiguration(node, _onsuccess, errorString)
-          || !loadEventListConfiguration(node, _onfailure, errorString))
-        return false;
-    } else if (node.name() == "onlog") {
-      // LATER implement onlog events for real
-      if (!loadEventListConfiguration(node, _onlog, errorString))
-        return false;
-    } else if (node.name() == "onnotice") {
-      if (!loadEventListConfiguration(node, _onnotice, errorString))
-        return false;
-    } else if (node.name() == "onschedulerstart") {
-      if (!loadEventListConfiguration(node, _onschedulerstart, errorString))
-        return false;
+  foreach (PfNode node, root.childrenByName("log")) {
+    QString level = node.attribute("level");
+    QString filename = node.attribute("file");
+    if (level.isEmpty()) {
+      Log::warning() << "invalid log level in configuration: "
+                     << node.toPf();
+    } else if (filename.isEmpty()) {
+      Log::warning() << "invalid log filename in configuration: "
+                     << node.toPf();
+    } else {
+      Log::debug() << "adding logger " << node.toPf();
+      loggers.append(new FileLogger(filename,
+                                    Log::severityFromString(level)));
     }
   }
-  Log::debug() << "replacing loggers " << loggers.size();
+  //Log::debug() << "replacing loggers " << loggers.size();
   Log::replaceLoggers(loggers);
+  if (!ConfigUtils::loadParamSet(root, _globalParams, errorString))
+    return false;
+  foreach (PfNode node, root.childrenByName("taskgroup")) {
+    TaskGroup taskGroup(node, _globalParams, this);
+    _tasksGroups.insert(taskGroup.id(), taskGroup);
+    //Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
+  }
+  foreach (PfNode node, root.childrenByName("task")) {
+    Task task(node, this);
+    TaskGroup taskGroup = _tasksGroups.value(node.attribute("taskgroup"));
+    if (taskGroup.isNull()) {
+      Log::warning() << "ignoring task '" << task.id()
+                     << "' without taskgroup";
+    } else {
+      task.completeConfiguration(taskGroup);
+      _tasks.insert(task.fqtn(), task);
+      //Log::debug() << "configured task '" << task.fqtn() << "'";
+    }
+  }
+  foreach (PfNode node, root.childrenByName("host")) {
+    Host host(node);
+    _hosts.insert(host.id(), host);
+    //Log::debug() << "configured host '" << host.id() << "' with hostname '"
+    //             << host.hostname() << "'";
+    _resources.insert(host.id(), host.resources());
+  }
+  foreach (PfNode node, root.childrenByName("cluster")) {
+    Cluster cluster(node);
+    foreach (PfNode child, node.childrenByName("host")) {
+      Host host = _hosts.value(child.contentAsString());
+      if (!host.isNull())
+        cluster.appendHost(host);
+      else
+        Log::error() << "host '" << child.contentAsString()
+                     << "' not found, won't add it to cluster '"
+                     << cluster.id() << "'";
+    }
+    _clusters.insert(cluster.id(), cluster);
+    //Log::debug() << "configured cluster '" << cluster.id() << "' with "
+    //             << cluster.hosts().size() << " hosts";
+  }
+  foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {
+    int n = node.contentAsString().toInt(0, 0);
+    if (n > 0) {
+      if (!_executors.isEmpty()) {
+        Log::warning() << "overriding maxtotaltaskinstances "
+                       << _executors.size() << " with " << n;
+        foreach (Executor *e, _executors)
+          e->deleteLater();
+        _executors.clear();
+      }
+      Log::debug() << "configuring " << n << " task executors";
+      while (n--) {
+        Executor *e = new Executor;
+        connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+                this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
+        _executors.append(e);
+      }
+    } else {
+      Log::warning() << "ignoring maxtotaltaskinstances with incorrect "
+                        "value: " << node.contentAsString();
+    }
+  }
+  foreach (PfNode node, root.childrenByName("alerts")) {
+    // LATER warn or fail if duplicated
+    if (!_alerter->loadConfiguration(node, errorString))
+      return false;
+    //Log::debug() << "configured alerter";
+  }
+  foreach (PfNode node, root.childrenByName("onstart"))
+    if (!loadEventListConfiguration(node, _onstart, errorString))
+      return false;
+  foreach (PfNode node, root.childrenByName("onsuccess"))
+    if (!loadEventListConfiguration(node, _onsuccess, errorString))
+      return false;
+  foreach (PfNode node, root.childrenByName("onfailure"))
+    if (!loadEventListConfiguration(node, _onfailure, errorString))
+      return false;
+  foreach (PfNode node, root.childrenByName("onfinish"))
+    if (!loadEventListConfiguration(node, _onsuccess, errorString)
+        || !loadEventListConfiguration(node, _onfailure, errorString))
+      return false;
+  foreach (PfNode node, root.childrenByName("onlog"))
+    if (!loadEventListConfiguration(node, _onlog, errorString))
+      return false;
+  foreach (PfNode node, root.childrenByName("onnotice"))
+    if (!loadEventListConfiguration(node, _onnotice, errorString))
+      return false;
+  foreach (PfNode node, root.childrenByName("onschedulerstart"))
+    if (!loadEventListConfiguration(node, _onschedulerstart, errorString))
+      return false;
   if (_executors.isEmpty()) {
     Log::debug() << "configured 16 task executors (default "
                     "maxtotaltaskinstances value)";
