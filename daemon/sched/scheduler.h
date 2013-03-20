@@ -37,13 +37,13 @@ class QThread;
 class Scheduler : public QObject {
   Q_OBJECT
   QThread *_thread;
-  ParamSet _globalParams;
+  ParamSet _globalParams, _setenv;
   QMap<QString,TaskGroup> _tasksGroups;
   QMap<QString,Task> _tasks;
   QMap<QString,Cluster> _clusters;
   QMap<QString,Host> _hosts;
   QMap<QString,QMap<QString,qint64> > _resources;
-  QSet<QString> _setFlags;
+  QSet<QString> _setFlags, _unsetenv;
   mutable QMutex _flagsMutex, _configMutex;
   QList<TaskRequest> _queuedRequests, _runningRequests;
   QList<Executor*> _executors;

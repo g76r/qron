@@ -64,6 +64,7 @@ public:
   Host target() const;
   void setTarget(Host target) const;
   QString paramValue(const QString key, const QString defaultValue) const;
+  ParamSet setenv() const;
 };
 
 #endif // TASKREQUEST_H

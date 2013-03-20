@@ -28,8 +28,8 @@ class TaskData : public QSharedData {
 public:
   QString _id, _label, _mean, _command, _target, _infourl;
   TaskGroup _group;
-  ParamSet _params;
-  QSet<QString> _noticeTriggers;
+  ParamSet _params, _setenv;
+  QSet<QString> _noticeTriggers, _unsetenv;
   QMap<QString,qint64> _resources;
   int _maxInstances;
   QList<CronTrigger> _cronTriggers;
@@ -51,8 +51,9 @@ public:
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _infourl(other._infourl),
-    _group(other._group), _params(other._params),
-    _noticeTriggers(other._noticeTriggers), _resources(other._resources),
+    _group(other._group), _params(other._params), _setenv(other._setenv),
+    _noticeTriggers(other._noticeTriggers), _unsetenv(other._unsetenv),
+    _resources(other._resources),
     _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
     _stderrFilters(other._stderrFilters),
     _maxExpectedDuration(other._maxExpectedDuration),
@@ -111,6 +112,8 @@ Task::Task(PfNode node, Scheduler *scheduler) {
                                                LLONG_MAX);
   td->_minExpectedDuration = node.intAttribute("minexpectedduration", 0);
   ConfigUtils::loadParamSet(node, td->_params);
+  ConfigUtils::loadSetenv(node, td->_setenv);
+  ConfigUtils::loadUnsetenv(node, td->_unsetenv);
   foreach (PfNode child, node.childrenByName("trigger")) {
     foreach (PfNode grandchild, child.children()) {
       QString content = grandchild.contentAsString();
@@ -227,6 +230,8 @@ void Task::completeConfiguration(TaskGroup taskGroup) {
     return;
   d->_group = taskGroup;
   d->_params.setParent(taskGroup.params());
+  d->_setenv.setParent(taskGroup.setenv());
+  d->_unsetenv |= taskGroup.unsetenv();
   QString filter = params().value("stderrfilter");
   if (!filter.isEmpty())
     d->_stderrFilters.append(QRegExp(filter));
@@ -363,4 +368,12 @@ long long Task::maxExpectedDuration() const {
 }
 long long Task::minExpectedDuration() const {
   return d ? d->_minExpectedDuration : 0;
+}
+
+ParamSet Task::setenv() const {
+  return d ? d->_setenv : ParamSet();
+}
+
+QSet<QString> Task::unsetenv() const {
+  return d ? d->_unsetenv : QSet<QString>();
 }

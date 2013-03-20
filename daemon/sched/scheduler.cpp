@@ -61,6 +61,10 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
+  _setenv.setValue("TASKREQUESTID", "%!taskrequestid");
+  _setenv.setValue("FQTN", "%!fqtn");
+  _setenv.setValue("TASKGROUPID", "%!taskgroupid");
+  _setenv.setValue("TASKID", "%!taskid");
   moveToThread(_thread);
 }
 
@@ -106,7 +110,9 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   QMutexLocker ml2(&_flagsMutex); // FIXME ???
   _resources.clear();
   _setFlags.clear();
+  _unsetenv.clear();
   _globalParams.clear();
+  _setenv.clear();
   QList<Logger*> loggers;
   foreach (PfNode node, root.childrenByName("log")) {
     QString level = node.attribute("level");
@@ -127,8 +133,12 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   Log::replaceLoggers(loggers);
   if (!ConfigUtils::loadParamSet(root, _globalParams, errorString))
     return false;
+  if (!ConfigUtils::loadSetenv(root, _setenv, errorString))
+    return false;
+  if (!ConfigUtils::loadUnsetenv(root, _unsetenv, errorString))
+    return false;
   foreach (PfNode node, root.childrenByName("taskgroup")) {
-    TaskGroup taskGroup(node, _globalParams, this);
+    TaskGroup taskGroup(node, _globalParams, _setenv, _unsetenv, this);
     _tasksGroups.insert(taskGroup.id(), taskGroup);
     //Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
   }

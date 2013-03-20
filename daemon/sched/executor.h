@@ -32,6 +32,7 @@ class Executor : public QObject {
   QByteArray _errBuf;
   TaskRequest _request;
   QNetworkAccessManager *_nam;
+  QProcessEnvironment _baseenv;
 
 public:
   explicit Executor();
@@ -60,7 +61,10 @@ private:
   void localMean(TaskRequest request);
   void sshMean(TaskRequest request);
   void httpMean(TaskRequest request);
-  void execProcess(TaskRequest request, QStringList cmdline);
+  void execProcess(TaskRequest request, QStringList cmdline,
+                   QProcessEnvironment sysenv);
+  inline void prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
+                         QHash<QString, QString> *setenv = 0);
   Q_DISABLE_COPY(Executor)
 };
 

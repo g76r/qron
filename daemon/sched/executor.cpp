@@ -31,6 +31,7 @@ Executor::Executor() : QObject(0), _isTemporary(false), _thread(new QThread),
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
+  _baseenv = QProcessEnvironment::systemEnvironment();
   moveToThread(_thread);
   //qDebug() << "creating new task executor" << this;
 }
@@ -72,7 +73,9 @@ void Executor::localMean(TaskRequest request) {
       .splitAndEvaluate(request.task().command(), &request);
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
-  execProcess(request, cmdline);
+  QProcessEnvironment sysenv;
+  prepareEnv(request, &sysenv);
+  execProcess(request, cmdline, sysenv);
 }
 
 void Executor::sshMean(TaskRequest request) {
@@ -82,6 +85,9 @@ void Executor::sshMean(TaskRequest request) {
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (through ssh on host "
       << request.target().hostname() <<  "): " << cmdline.join(" ");
+  QHash<QString,QString> setenv;
+  QProcessEnvironment sysenv;
+  prepareEnv(request, &sysenv, &setenv);
   QString username = request.params().value("ssh.username");
   qlonglong port = request.params().valueAsLong("ssh.port");
   QString ignoreknownhosts = request.params().value("ssh.ignoreknownhosts",
@@ -105,11 +111,19 @@ void Executor::sshMean(TaskRequest request) {
     sshCmdline << "-o" + option;
   if (!username.isEmpty())
     sshCmdline << "-oUser=" + username;
-  sshCmdline << request.target().hostname() << cmdline;
-  execProcess(request, sshCmdline);
+  sshCmdline << request.target().hostname();
+  foreach (QString key, setenv.keys())
+    if (!request.task().unsetenv().contains(key)) {
+      QString value = setenv.value(key);
+      value.replace('\'', QString());
+      sshCmdline << key+"='"+value+"'";
+    }
+  sshCmdline << cmdline;
+  execProcess(request, sshCmdline, sysenv);
 }
 
-void Executor::execProcess(TaskRequest request, QStringList cmdline) {
+void Executor::execProcess(TaskRequest request, QStringList cmdline,
+                           QProcessEnvironment sysenv) {
   if (cmdline.isEmpty()) {
     Log::warning(request.task().fqtn(), request.id())
         << "cannot execute task with empty command '"
@@ -132,17 +146,11 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline) {
           this, SLOT(readyReadStandardError()));
   connect(_process, SIGNAL(readyReadStandardOutput()),
           this, SLOT(readyReadStandardOutput()));
-  QProcessEnvironment env = QProcessEnvironment::systemEnvironment();
-  foreach (const QString key, request.params().keys()) {
-    //qDebug() << "setting environment variable" << key << "="
-    //         << request.params().value(key);
-    env.insert(key, request.params().value(key, &request));
-  }
-  _process->setProcessEnvironment(env);
+  _process->setProcessEnvironment(sysenv);
   QString program = cmdline.takeFirst();
   Log::debug(_request.task().fqtn(), _request.id())
       << "about to start system process '" << program << "' with args "
-      << cmdline << " and environment " << env.toStringList();
+      << cmdline << " and environment " << sysenv.toStringList();
   _process->start(program, cmdline);
 }
 
@@ -294,4 +302,32 @@ void Executor::replyFinished(QNetworkReply *reply) {
   emit taskFinished(_request, this);
   _request = TaskRequest();
   reply->deleteLater();
+}
+
+void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
+                          QHash<QString,QString> *setenv) {
+  // first clean system base env from any unset variables
+  *sysenv = _baseenv;
+  foreach (const QString pattern, request.task().unsetenv()) {
+    QRegExp re(pattern, Qt::CaseInsensitive, QRegExp::WildcardUnix);
+    foreach (const QString key, sysenv->keys())
+      if (re.exactMatch(key))
+        sysenv->remove(key);
+  }
+  // then build setenv evaluated paramset that may be used apart from merging
+  // into sysenv
+  foreach (QString key, request.setenv().keys()) {
+    const QString expr(request.setenv().rawValue(key));
+    /*Log::debug(request.task().fqtn(), request.id())
+        << "setting environment variable " << key << "="
+        << expr << " " << request.params().keys(false).size() << " "
+        << request.params().keys(true).size() << " ["
+        << request.params().evaluate("%!yyyy %!fqtn %{!fqtn}", &_request)
+        << "]";*/
+    key.replace(QRegExp("[^a-zA-Z_0-9]+"), "_");
+    const QString value = request.params().evaluate(expr, &request);
+    if (setenv)
+      setenv->insert(key, value);
+    sysenv->insert(key, value);
+  }
 }

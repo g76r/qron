@@ -25,12 +25,16 @@
 class TaskGroupData : public QSharedData {
 public:
   QString _id, _label;
-  ParamSet _params;
+  ParamSet _params, _setenv;
   QList<Event> _onstart, _onsuccess, _onfailure;
   QWeakPointer<Scheduler> _scheduler;
+  QSet<QString> _unsetenv;
   TaskGroupData() { }
   TaskGroupData(const TaskGroupData &other) : QSharedData(), _id(other._id),
-    _label(other._label), _params(other._params)/*, _tasks(other._tasks)*/ { }
+    _label(other._label), _params(other._params), _setenv(other._setenv),
+    _onstart(other._onstart), _onsuccess(other._onsuccess),
+    _onfailure(other._onfailure), _scheduler(other._scheduler),
+    _unsetenv(other._unsetenv) { }
   ~TaskGroupData() { }
 };
 
@@ -41,6 +45,7 @@ TaskGroup::TaskGroup(const TaskGroup &other) : d(other.d) {
 }
 
 TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
+                     ParamSet parentSetenv, QSet<QString> parentUnsetenv,
                      Scheduler *scheduler) {
   TaskGroupData *tgd = new TaskGroupData;
   tgd->_scheduler = scheduler;
@@ -48,6 +53,10 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
   tgd->_label = node.attribute("label", tgd->_id);
   tgd->_params.setParent(parentParamSet);
   ConfigUtils::loadParamSet(node, tgd->_params);
+  tgd->_setenv.setParent(parentSetenv);
+  ConfigUtils::loadSetenv(node, tgd->_setenv);
+  ConfigUtils::loadUnsetenv(node, tgd->_unsetenv);
+  tgd->_unsetenv |= parentUnsetenv;
   foreach (PfNode child, node.childrenByName("onstart"))
     scheduler->loadEventListConfiguration(child, tgd->_onstart);
   foreach (PfNode child, node.childrenByName("onsuccess"))
@@ -114,4 +123,12 @@ const QList<Event> TaskGroup::onsuccessEvents() const {
 
 const QList<Event> TaskGroup::onfailureEvents() const {
   return d->_onfailure;
+}
+
+ParamSet TaskGroup::setenv() const {
+  return d ? d->_setenv : ParamSet();
+}
+
+QSet<QString> TaskGroup::unsetenv() const {
+  return d ? d->_unsetenv : QSet<QString>();
 }

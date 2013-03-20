@@ -16,10 +16,16 @@
 ConfigUtils::ConfigUtils() {
 }
 
-bool ConfigUtils::loadParamSet(PfNode parentnode, ParamSet &params,
-                               QString &errorString) {
+bool ConfigUtils::loadGenericParamSet(PfNode parentnode, ParamSet &params,
+                                      QString attrname, QString &errorString) {
   Q_UNUSED(errorString);
-  foreach (PfNode node, parentnode.childrenByName("param")) {
+  /*QStringList list;
+  foreach (PfNode node, parentnode.children())
+    list << node.name();
+  Log::debug() << "loadGenericParamSet " << parentnode.name() << " "
+               << attrname << " " << parentnode.childrenByName(attrname).size()
+               << " " << parentnode.children().size() << " " << list.join(",");*/
+  foreach (PfNode node, parentnode.childrenByName(attrname)) {
     // use key and value subnodes if present
     QString key = node.attribute("key");
     QString value = node.attribute("value");
@@ -36,11 +42,22 @@ bool ConfigUtils::loadParamSet(PfNode parentnode, ParamSet &params,
         value = "";
       } else {
         key = content.left(i);
-        value = content.mid(i);
+        value = content.mid(i+1).trimmed();
       }
     }
     params.setValue(key, value);
+    //Log::debug() << "setting value " << attrname << " " << key << "=" << value;
   }
   return true;
 }
 
+bool ConfigUtils::loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv,
+                               QString &errorString) {
+  Q_UNUSED(errorString);
+  foreach (PfNode node, parentnode.childrenByName("unsetenv")) {
+    QStringList names = node.contentAsString().split(QRegExp("\\s"));
+    foreach (const QString name, names)
+      unsetenv.insert(name);
+  }
+  return true;
+}

@@ -19,13 +19,27 @@
 
 class ConfigUtils {
 public:
-  static bool loadParamSet(PfNode parentnode, ParamSet &params,
-                           QString &errorString);
+  static inline bool loadParamSet(PfNode parentnode, ParamSet &params,
+                                  QString &errorString) {
+    return loadGenericParamSet(parentnode, params, "param", errorString); }
   static inline bool loadParamSet(PfNode parentnode, ParamSet &params) {
     QString errorString;
     return loadParamSet(parentnode, params, errorString); }
+  static inline bool loadSetenv(PfNode parentnode, ParamSet &params,
+                                QString &errorString) {
+    return loadGenericParamSet(parentnode, params, "setenv", errorString); }
+  static inline bool loadSetenv(PfNode parentnode, ParamSet &params) {
+    QString errorString;
+    return loadSetenv(parentnode, params, errorString); }
+  static bool loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv,
+                           QString &errorString);
+  static bool loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv) {
+    QString errorString;
+    return loadUnsetenv(parentnode, unsetenv, errorString); }
 
 private:
+  static bool loadGenericParamSet(PfNode parentnode, ParamSet &params,
+                                  QString attrname, QString &errorString);
   ConfigUtils();
 };
 

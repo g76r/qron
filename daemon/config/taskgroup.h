@@ -31,7 +31,8 @@ class TaskGroup {
 public:
   TaskGroup();
   TaskGroup(const TaskGroup &other);
-  TaskGroup(PfNode node, ParamSet parentParamSet, Scheduler *scheduler);
+  TaskGroup(PfNode node, ParamSet parentParamSet, ParamSet parentSetenv,
+            QSet<QString> parentUnsetenv, Scheduler *scheduler);
   ~TaskGroup();
   TaskGroup &operator =(const TaskGroup &other);
   QString id() const;
@@ -44,6 +45,8 @@ public:
   const QList<Event> onstartEvents() const;
   const QList<Event> onsuccessEvents() const;
   const QList<Event> onfailureEvents() const;
+  ParamSet setenv() const;
+  QSet<QString> unsetenv() const;
 };
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);

@@ -157,6 +157,7 @@ void TaskRequest::setTarget(Host target) const {
 
 QString TaskRequest::paramValue(const QString key,
                                 const QString defaultValue) const {
+  //Log::debug() << "TaskRequest::paramvalue " << key;
   if (!d)
     return defaultValue;
   if (key == "!taskid") {
@@ -197,4 +198,8 @@ QString TaskRequest::paramValue(const QString key,
     return target().hostname();
   }
   return defaultValue;
+}
+
+ParamSet TaskRequest::setenv() const {
+  return d ? d->_task.setenv() : ParamSet();
 }

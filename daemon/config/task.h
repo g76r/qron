@@ -78,6 +78,8 @@ public:
   void setLastSuccessful(bool successful) const;
   long long maxExpectedDuration() const;
   long long minExpectedDuration() const;
+  ParamSet setenv() const;
+  QSet<QString> unsetenv() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);
