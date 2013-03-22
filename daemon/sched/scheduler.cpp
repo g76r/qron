@@ -61,10 +61,6 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
-  _setenv.setValue("TASKREQUESTID", "%!taskrequestid");
-  _setenv.setValue("FQTN", "%!fqtn");
-  _setenv.setValue("TASKGROUPID", "%!taskgroupid");
-  _setenv.setValue("TASKID", "%!taskid");
   moveToThread(_thread);
 }
 
@@ -113,6 +109,10 @@ bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
   _unsetenv.clear();
   _globalParams.clear();
   _setenv.clear();
+  _setenv.setValue("TASKREQUESTID", "%!taskrequestid");
+  _setenv.setValue("FQTN", "%!fqtn");
+  _setenv.setValue("TASKGROUPID", "%!taskgroupid");
+  _setenv.setValue("TASKID", "%!taskid");
   QList<Logger*> loggers;
   foreach (PfNode node, root.childrenByName("log")) {
     QString level = node.attribute("level");
