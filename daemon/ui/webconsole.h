@@ -66,7 +66,8 @@ class WebConsole : public HttpHandler {
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView,
   *_htmlTaskRequestsView, *_htmlTaskRequestsView20,
-  *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksListView,
+  *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
+  *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
   *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
   *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView;

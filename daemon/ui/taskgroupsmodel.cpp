@@ -16,7 +16,7 @@
 #include "textviews.h"
 #include "event/event.h"
 
-#define COLUMNS 6
+#define COLUMNS 9
 
 TaskGroupsModel::TaskGroupsModel(QObject *parent) : QAbstractListModel(parent) {
 }
@@ -48,6 +48,34 @@ QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
         return Event::toStringList(tg.onsuccessEvents()).join(" ");
       case 5:
         return Event::toStringList(tg.onfailureEvents()).join(" ");
+      case 6: {
+        QString env;
+        ParamSet setenv = tg.setenv();
+        foreach(const QString key, setenv.keys())
+          env.append(key).append('=').append(setenv.value(key)).append(' ');
+        foreach(const QString key, tg.unsetenv())
+          env.append('-').append(key).append(' ');
+        if (!env.isEmpty())
+          env.chop(1);
+        return env;
+      }
+      case 7: {
+        QString env;
+        ParamSet setenv = tg.setenv();
+        foreach(const QString key, setenv.keys())
+          env.append(key).append('=').append(setenv.value(key)).append(' ');
+        if (!env.isEmpty())
+          env.chop(1);
+        return env;
+      }
+      case 8: {
+        QString env;
+        foreach(const QString key, tg.unsetenv())
+          env.append(key).append(' ');
+        if (!env.isEmpty())
+          env.chop(1);
+        return env;
+      }
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -81,6 +109,12 @@ QVariant TaskGroupsModel::headerData(int section, Qt::Orientation orientation,
       return "On success";
     case 5:
       return "On failure";
+    case 6:
+      return "System environment";
+    case 7:
+      return "Setenv";
+    case 8:
+      return "Unsetenv";
     }
   }
   return QVariant();

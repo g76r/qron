@@ -18,7 +18,7 @@
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 20
+#define COLUMNS 23
 #define SOON_EXECUTION_MILLIS 300000
 // 300,000 ms = 5'
 #define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
@@ -86,6 +86,34 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         if (!dt.isNull())
           return dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
               .append(t.lastSuccessful() ? " success" : " failure");
+      }
+      case 20: {
+        QString env;
+        ParamSet setenv = t.setenv();
+        foreach(const QString key, setenv.keys())
+          env.append(key).append('=').append(setenv.value(key)).append(' ');
+        foreach(const QString key, t.unsetenv())
+          env.append('-').append(key).append(' ');
+        if (!env.isEmpty())
+          env.chop(1);
+        return env;
+      }
+      case 21: {
+        QString env;
+        ParamSet setenv = t.setenv();
+        foreach(const QString key, setenv.keys())
+          env.append(key).append('=').append(setenv.value(key)).append(' ');
+        if (!env.isEmpty())
+          env.chop(1);
+        return env;
+      }
+      case 22: {
+        QString env;
+        foreach(const QString key, t.unsetenv())
+          env.append(key).append(' ');
+        if (!env.isEmpty())
+          env.chop(1);
+        return env;
       }
       }
       break;
@@ -207,6 +235,12 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Actions";
     case 19:
       return "Last execution status";
+    case 20:
+      return "System environment";
+    case 21:
+      return "Setenv";
+    case 22:
+      return "Unsetenv";
     }
   }
   return QVariant();

@@ -56,6 +56,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskRequestsView20(new HtmlTableView(this)),
   _htmlTasksScheduleView(new HtmlTableView(this)),
   _htmlTasksConfigView(new HtmlTableView(this)),
+  _htmlTasksParamsView(new HtmlTableView(this)),
   _htmlTasksListView(new HtmlTableView(this)),
   _htmlTasksEventsView(new HtmlTableView(this)),
   _htmlSchedulerEventsView(new HtmlTableView(this)),
@@ -203,8 +204,16 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksConfigView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
-  cols << 1 << 0 << 3 << 5 << 4 << 6 << 7 << 8 << 12;
+  cols << 1 << 0 << 3 << 5 << 4 << 6 << 8 << 12;
   _htmlTasksConfigView->setColumnIndexes(cols);
+  _htmlTasksParamsView->setModel(_tasksModel);
+  _htmlTasksParamsView->setTableClass("table table-condensed table-hover");
+  _htmlTasksParamsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
+  _htmlTasksParamsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
+  _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
+  cols.clear();
+  cols << 1 << 0 << 7 << 21 << 22;
+  _htmlTasksParamsView->setColumnIndexes(cols);
   _htmlTasksListView->setModel(_tasksModel);
   _htmlTasksListView->setTableClass("table table-condensed table-hover");
   _htmlTasksListView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
@@ -256,7 +265,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
   _htmlTaskGroupsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   cols.clear();
-  cols << 0 << 1 << 2;
+  cols << 0 << 1 << 2 << 7 << 8;
   _htmlTaskGroupsView->setColumnIndexes(cols);
   _htmlTaskGroupsEventsView->setModel(_taskGroupsModel);
   _htmlTaskGroupsEventsView->setTableClass("table table-condensed table-hover");
@@ -306,6 +315,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("taskrequests20", _htmlTaskRequestsView20);
   _wuiHandler->addView("tasksschedule", _htmlTasksScheduleView);
   _wuiHandler->addView("tasksconfig", _htmlTasksConfigView);
+  _wuiHandler->addView("tasksparams", _htmlTasksParamsView);
   _wuiHandler->addView("tasksevents", _htmlTasksEventsView);
   _wuiHandler->addView("schedulerevents", _htmlSchedulerEventsView);
   _wuiHandler->addView("lastpostednotices20", _htmlLastPostedNoticesView20);
