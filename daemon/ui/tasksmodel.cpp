@@ -83,8 +83,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             +QString::number(t.maxInstances());
       case 19: {
         QDateTime dt = t.lastExecution();
-        if (!dt.isNull())
-          return dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
+        return dt.isNull()
+            ? QVariant()
+            : dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
               .append(t.lastSuccessful() ? " success" : " failure");
       }
       case 20: {
