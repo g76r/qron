@@ -88,9 +88,8 @@ bool Scheduler::loadConfiguration(QIODevice *source, QString &errorString) {
   }
   foreach (PfNode root, pdh.roots()) {
     if (root.name() == "qrontab") {
-      if (!loadConfiguration(root, errorString))
-        return false;
-      return true; // LATER warn if several top level nodes
+      // LATER warn if several top level nodes
+      return loadConfiguration(root, errorString);
     } else {
       Log::warning() << "ignoring node '" << root.name()
                      << "' at configuration file top level";
@@ -100,10 +99,10 @@ bool Scheduler::loadConfiguration(QIODevice *source, QString &errorString) {
 }
 
 bool Scheduler::loadConfiguration(PfNode root, QString &errorString) {
-  Q_UNUSED(errorString) // currently no fatal error, only warnings
-  // FIXME should not need a config (biglock) mutex if loadConfiguration is always executed by Scheduler's thread
+  // should not need a config (biglock) mutex if loadConfiguration is always executed by Scheduler's thread
+  // however using only Scheduler's thread need to cope with QString&
   QMutexLocker ml(&_configMutex);
-  QMutexLocker ml2(&_flagsMutex); // FIXME ???
+  QMutexLocker ml2(&_flagsMutex);
   _resources.clear();
   _setFlags.clear();
   _unsetenv.clear();

@@ -13,70 +13,127 @@
  */
 #include "qrond.h"
 #include <QCoreApplication>
-#include "sched/scheduler.h"
 #include <QFile>
 #include <QtDebug>
 #include "log/log.h"
 #include "log/filelogger.h"
-#include "httpd/httpserver.h"
-#include "ui/webconsole.h"
 #include <QThread>
 #include <unistd.h>
+#ifdef __unix__
+#include <signal.h>
+#endif
 
-Qrond::Qrond(QObject *parent) : QObject(parent) {
+Q_GLOBAL_STATIC(Qrond, qrondInstance)
+
+Qrond::Qrond(QObject *parent) : QObject(parent),
+  _webconsoleAddress(QHostAddress::Any), _webconsolePort(8086),
+  _scheduler(new Scheduler),
+  _httpd(new HttpServer(8, 32)), // LATER should be configurable
+  _webconsole(new WebConsole), _configPath("/etc/qron.conf") {
+  _webconsole->setScheduler(_scheduler);
+  _httpd->appendHandler(_webconsole);
 }
+
+Qrond::~Qrond() {
+  // HttpServer and Scheduler will be deleted, but their threads won't since
+  // they lies in main thread which event loop is no longer running
+  // WebConsole will be deleted since HttpServer connects its deleteLater()
+  _httpd->deleteLater();
+  _scheduler->deleteLater();
+}
+
+void Qrond::startup(QStringList args) {
+  int n = args.size();
+  for (int i =0; i < n; ++i) {
+    const QString &arg = args[i];
+    if (i < n-1 && arg == "-l") {
+      _webconsoleAddress.setAddress(args[++i]);
+    } else if (i < n-1 && arg == "-p") {
+      int p = QString(args[++i]).toInt();
+      if (p >= 1 && p <= 65535)
+        _webconsolePort = p;
+      else
+        Log::error() << "bad port number: " << arg
+                     << " using default instead (8086)";
+    } else if (i < n-1 && arg == "-c") {
+       _configPath = args[++i];
+    } else {
+      Log::warning() << "unknown command line parameter: " << arg;
+    }
+  }
+  if (!_httpd->listen(_webconsoleAddress, _webconsolePort))
+    Log::error() << "cannot start webconsole on "
+                 << _webconsoleAddress.toString() << ":" << _webconsolePort
+                 << ": " << _httpd->errorString();
+  QFile *config = new QFile(_configPath);
+  // LATER have a config directory rather only one file
+  QString errorString;
+  int rc = _scheduler->loadConfiguration(config, errorString) ? 0 : 1;
+  delete config;
+  if (rc) {
+    Log::fatal() << "cannot load configuration: " << errorString;
+    Log::fatal() << "qrond is aborting startup sequence";
+    shutdown(rc);
+  }
+}
+
+void Qrond::reload() {
+  QString errorString;
+  QFile *config = new QFile(_configPath);
+  // LATER have a config directory rather only one file
+  int rc = _scheduler->loadConfiguration(config, errorString) ? 0 : 1;
+  delete config;
+  if (rc)
+    Log::error() << "cannot reload configuration: " << errorString;
+}
+
+void Qrond::shutdown(int returnCode) {
+  Log::info() << "qrond is shuting down";
+  // TODO wait for running tasks while starting new ones is disabled
+  QThread::currentThread()->exit(returnCode);
+}
+
+#ifdef __unix__
+static void signal_handler(int signal_number) {
+  //qDebug() << "signal" << signal_number;
+  switch (signal_number) {
+  case SIGHUP:
+    QMetaObject::invokeMethod(qrondInstance(), "reload", Qt::QueuedConnection);
+    break;
+  case SIGTERM:
+  case SIGINT:
+    QMetaObject::invokeMethod(qrondInstance(), "shutdown",
+                              Qt::QueuedConnection, Q_ARG(int, 0));
+    break;
+  }
+}
+#endif
 
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   Log::addConsoleLogger(Log::Fatal);
-  QHostAddress webconsoleAddress(QHostAddress::Any);
-  quint16 webconsolePort(8086);
-  QString configPath("/etc/qron.conf");
-  for (int i = 1; i < argc; ++i) {
-    if (QString("-l") == argv[i] && i < argc-1) {
-      webconsoleAddress.setAddress(argv[++i]);
-    } else if (QString("-p") == argv[i] && i < argc-1) {
-      int p = QString(argv[++i]).toInt();
-      if (p >= 1 && p <= 65535)
-        webconsolePort = p;
-      else
-        Log::error() << "bad port number: " << argv[i]
-                        << " using default instead (8086)";
-    } else if (QString("-c") == argv[i] && i < argc-1) {
-      configPath = argv[++i];
-    } else {
-      Log::warning() << "unknown command line parameter: " << argv[i];
-    }
-  }
-  Scheduler *scheduler = new Scheduler;
-  HttpServer *httpd = new HttpServer(8, 32); // LATER should be configurable
-  WebConsole *webconsole = new WebConsole;
-  webconsole->setScheduler(scheduler);
-  httpd->appendHandler(webconsole);
-  if (!httpd->listen(webconsoleAddress, webconsolePort))
-    Log::error() << "cannot start webconsole on "
-                 << webconsoleAddress.toString() << ":" << webconsolePort
-                 << ": " << httpd->errorString();
-  QFile *config = new QFile(configPath);
-  // LATER have a config directory rather only one file
-  QString errorString;
-  int rc = scheduler->loadConfiguration(config, errorString) ? 0 : 1;
-  delete config;
-  if (rc) {
-    Log::fatal() << "cannot load configuration: " << errorString;
-    Log::fatal() << "qrond is aborting startup sequence";
-  } else {
-    // LATER truly daemonize on Unix (pidfile...)
-    // LATER catch Unix signals
-    // LATER servicize on Windows
-    rc = a.exec();
-  }
-  // HttpServer and Scheduler will be deleted, but their threads won't since
-  // they lies in main thread which event loop is no longer running
-  // WebConsole will be deleted since HttpServer connects its deleteLater()
-  httpd->deleteLater();
-  scheduler->deleteLater();
+  QStringList args;
+  for (int i = 1; i < argc; ++i)
+    args << QString::fromUtf8(argv[i]);
+  qrondInstance()->startup(args);
+#ifdef __unix__
+  struct sigaction action;
+  memset(&action, 0, sizeof(struct sigaction));
+  action.sa_handler = signal_handler;
+  sigaction(SIGHUP, &action, 0);
+  sigaction(SIGTERM, &action, 0);
+  sigaction(SIGINT, &action, 0);
+#endif
+  // LATER truly daemonize on Unix (pidfile...)
+  // LATER servicize on Windows
+  int rc = a.exec();
+#ifdef __unix__
+  action.sa_handler = SIG_IGN;
+  sigaction(SIGHUP, &action, 0);
+  sigaction(SIGTERM, &action, 0);
+  sigaction(SIGINT, &action, 0);
+#endif
   ::usleep(100000); // give a chance for last asynchronous log writing
   Log::clearLoggers(); // this deletes logger and console
   return rc;

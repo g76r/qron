@@ -14,12 +14,26 @@
 #ifndef QROND_H
 #define QROND_H
 
-#include <QObject>
+#include <QStringList>
+#include "sched/scheduler.h"
+#include "httpd/httpserver.h"
+#include "ui/webconsole.h"
 
 class Qrond : public QObject {
   Q_OBJECT
+  QHostAddress _webconsoleAddress;
+  quint16 _webconsolePort;
+  Scheduler *_scheduler;
+  HttpServer *_httpd;
+  WebConsole *_webconsole;
+  QString _configPath;
+
 public:
   explicit Qrond(QObject *parent = 0);
+  ~Qrond();
+  Q_INVOKABLE void startup(QStringList args);
+  Q_INVOKABLE void reload();
+  Q_INVOKABLE void shutdown(int returnCode);
 };
 
 #endif // QROND_H
