@@ -124,6 +124,7 @@ void TaskGroupsModel::setAllTasksAndGroups(QMap<QString, TaskGroup> groups,
                                       QMap<QString, Task> tasks) {
   Q_UNUSED(tasks)
   beginResetModel();
+  _groups.clear();
   foreach (const TaskGroup group, groups.values()) {
     int row;
     for (row = 0; row < _groups.size(); ++row) {

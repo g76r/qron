@@ -203,3 +203,8 @@ QString TaskRequest::paramValue(const QString key,
 ParamSet TaskRequest::setenv() const {
   return d ? d->_task.setenv() : ParamSet();
 }
+
+void TaskRequest::setTask(Task task) {
+  if (d)
+    d->_task = task;
+}

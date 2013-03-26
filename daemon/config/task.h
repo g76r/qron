@@ -31,7 +31,7 @@ class Task {
 public:
   Task();
   Task(const Task &other);
-  Task(PfNode node, Scheduler *scheduler);
+  Task(PfNode node, Scheduler *scheduler, const Task oldTask);
   ~Task();
   Task &operator =(const Task &other);
   bool operator==(const Task &other);

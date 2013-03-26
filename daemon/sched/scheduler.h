@@ -55,7 +55,7 @@ class Scheduler : public QObject {
 public:
   Scheduler();
   ~Scheduler();
-  bool loadConfiguration(QIODevice *source, QString &errorString);
+  bool reloadConfiguration(QIODevice *source, QString &errorString);
   bool loadEventListConfiguration(PfNode listnode, QList<Event> &list,
                                   QString &errorString);
   inline bool loadEventListConfiguration(PfNode listnode, QList<Event> &list) {
@@ -166,7 +166,7 @@ private:
   void startQueuedTasksIfPossible();
   /** @return true iff the triggers fires a task request */
   bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
-  bool loadConfiguration(PfNode root, QString &errorString);
+  bool reloadConfiguration(PfNode root, QString &errorString);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
   Q_INVOKABLE quint64 doRequestTask(const QString fqtn, ParamSet params,

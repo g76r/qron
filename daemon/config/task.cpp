@@ -76,6 +76,8 @@ public:
   int instancesCount() const { return _instancesCount; }
   int fetchAndAddInstancesCount(int valueToAdd) const {
     return _instancesCount.fetchAndAddOrdered(valueToAdd); }
+  int fetchAndStoreInstancesCount(int value) const {
+    return _instancesCount.fetchAndStoreOrdered(value); }
   bool enabled() const { return _enabled; }
   void setEnabled(bool enabled) const { _enabled = enabled; }
   bool lastSuccessful() const { return _lastSuccessful; }
@@ -89,7 +91,7 @@ Task::Task() {
 Task::Task(const Task &other) : d(other.d) {
 }
 
-Task::Task(PfNode node, Scheduler *scheduler) {
+Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
   td->_id = node.attribute("id"); // LATER check uniqueness
@@ -114,6 +116,17 @@ Task::Task(PfNode node, Scheduler *scheduler) {
   ConfigUtils::loadParamSet(node, td->_params);
   ConfigUtils::loadSetenv(node, td->_setenv);
   ConfigUtils::loadUnsetenv(node, td->_unsetenv);
+  QHash<QString,CronTrigger> oldCronTriggers;
+  // copy mutable fields from old task and build old cron triggers dictionary
+  if (oldTask.d) {
+    foreach (const CronTrigger ct, oldTask.d->_cronTriggers)
+      oldCronTriggers.insert(ct.canonicalCronExpression(), ct);
+    td->setLastExecution(oldTask.lastExecution());
+    td->setNextScheduledExecution(oldTask.nextScheduledExecution());
+    td->fetchAndStoreInstancesCount(oldTask.instancesCount());
+    td->setLastSuccessful(oldTask.lastSuccessful());
+  }
+  // LATER load cron triggers last exec timestamp from on-disk log
   foreach (PfNode child, node.childrenByName("trigger")) {
     foreach (PfNode grandchild, child.children()) {
       QString content = grandchild.contentAsString();
@@ -129,6 +142,10 @@ Task::Task(PfNode node, Scheduler *scheduler) {
       } else if (triggerType == "cron") {
           CronTrigger trigger(content);
           if (trigger.isValid()) {
+            CronTrigger oldTrigger =
+                oldCronTriggers.value(trigger.canonicalCronExpression());
+            if (oldTrigger.isValid())
+              trigger.setLastTriggered(oldTrigger.lastTriggered());
             td->_cronTriggers.append(trigger);
             //Log::debug() << "configured cron trigger '" << content
             //             << "' on task '" << td->_id << "'";
