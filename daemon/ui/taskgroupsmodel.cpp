@@ -52,7 +52,7 @@ QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
         QString env;
         ParamSet setenv = tg.setenv();
         foreach(const QString key, setenv.keys())
-          env.append(key).append('=').append(setenv.value(key)).append(' ');
+          env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
         foreach(const QString key, tg.unsetenv())
           env.append('-').append(key).append(' ');
         if (!env.isEmpty())
@@ -63,7 +63,7 @@ QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
         QString env;
         ParamSet setenv = tg.setenv();
         foreach(const QString key, setenv.keys())
-          env.append(key).append('=').append(setenv.value(key)).append(' ');
+          env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
         if (!env.isEmpty())
           env.chop(1);
         return env;
