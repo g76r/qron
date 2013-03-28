@@ -42,7 +42,8 @@
 
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _configMutex(QMutex::Recursive),
-  _alerter(new Alerter), _firstConfigurationLoad(true) {
+  _alerter(new Alerter), _firstConfigurationLoad(true),
+  _maxtotaltaskinstances(0) {
   _thread->setObjectName("SchedulerThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -197,29 +198,54 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
     //Log::debug() << "configured cluster '" << cluster.id() << "' with "
     //             << cluster.hosts().size() << " hosts";
   }
-  // FIXME
+  int maxtotaltaskinstances = 0;
   foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {
     int n = node.contentAsString().toInt(0, 0);
     if (n > 0) {
-      if (!_executors.isEmpty()) {
+      if (maxtotaltaskinstances > 0) {
         Log::warning() << "overriding maxtotaltaskinstances "
-                       << _executors.size() << " with " << n;
-        foreach (Executor *e, _executors)
-          e->deleteLater();
-        _executors.clear();
+                       << maxtotaltaskinstances << " with " << n;
       }
-      Log::debug() << "configuring " << n << " task executors";
-      while (n--) {
-        Executor *e = new Executor;
-        connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
-                this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
-        _executors.append(e);
-      }
+      maxtotaltaskinstances = n;
     } else {
       Log::warning() << "ignoring maxtotaltaskinstances with incorrect "
-                        "value: " << node.contentAsString();
+                        "value: " << node.toPf();
     }
   }
+  if (maxtotaltaskinstances <= 0) {
+    Log::debug() << "configured 16 task executors (default "
+                    "maxtotaltaskinstances value)";
+    maxtotaltaskinstances = 16;
+  }
+  int executorsToAdd = maxtotaltaskinstances - _maxtotaltaskinstances;
+  if (executorsToAdd < 0) {
+    if (-executorsToAdd > _availableExecutors.size()) {
+      Log::warning() << "cannot set maxtotaltaskinstances down to "
+                     << maxtotaltaskinstances << " because there are too "
+                        "currently many busy executors, setting it to "
+                     << maxtotaltaskinstances
+                        - (executorsToAdd - _availableExecutors.size())
+                     << " instead";
+      maxtotaltaskinstances -= executorsToAdd - _availableExecutors.size();
+      executorsToAdd = -_availableExecutors.size();
+    }
+    Log::debug() << "removing " << -executorsToAdd << " executors to reach "
+                    "maxtotaltaskinstances of " << maxtotaltaskinstances;
+    for (int i = 0; i < -executorsToAdd; ++i)
+      _availableExecutors.takeFirst()->deleteLater();
+  } else if (executorsToAdd > 0) {
+    Log::debug() << "adding " << executorsToAdd << " executors to reach "
+                    "maxtotaltaskinstances of " << maxtotaltaskinstances;
+    for (int i = 0; i < executorsToAdd; ++i) {
+      Executor *e = new Executor;
+      connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+              this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
+      _availableExecutors.append(e);
+    }
+  } else {
+    Log::debug() << "keep maxtotaltaskinstances of " << maxtotaltaskinstances;
+  }
+  _maxtotaltaskinstances = maxtotaltaskinstances;
   foreach (PfNode node, root.childrenByName("alerts")) {
     // LATER warn or fail if duplicated
     if (!_alerter->loadConfiguration(node, errorString))
@@ -255,16 +281,6 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
     if (!loadEventListConfiguration(node, _onschedulerstart, errorString))
       return false;
   // LATER onschedulerreload onschedulershutdown
-  if (_executors.isEmpty()) {
-    Log::debug() << "configured 16 task executors (default "
-                    "maxtotaltaskinstances value)";
-    for (int n = 16; n; --n) {
-      Executor *e = new Executor;
-      connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
-              this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
-      _executors.append(e);
-    }
-  }
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
   emit tasksConfigurationReset(_tasksGroups, _tasks);
@@ -273,6 +289,7 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
   emit globalParamsChanged(_globalParams);
   emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
                                 _onnotice, _onschedulerstart);
+  reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {
     TaskRequest &r = _queuedRequests[i];
@@ -514,7 +531,7 @@ void Scheduler::postNotice(const QString notice) {
 bool Scheduler::tryStartTaskNow(TaskRequest request) {
   if (!request.task().enabled())
     return false; // do not start disabled tasks
-  if (_executors.isEmpty()) {
+  if (_availableExecutors.isEmpty()) {
     Log::info(request.task().fqtn(), request.id())
         << "cannot execute task '" << request.task().fqtn()
         << "' now because there are already too many tasks running "
@@ -574,7 +591,7 @@ bool Scheduler::tryStartTaskNow(TaskRequest request) {
     triggerEvents(_onstart, &request); // FIXME accessing _onstart needs lock but triggering events may need unlock...
     ml.unlock();
     request.task().triggerStartEvents(&request);
-    _executors.takeFirst()->execute(request); // FIXME eaccessing _executors should not need lock but does...
+    _availableExecutors.takeFirst()->execute(request); // FIXME eaccessing _executors should not need lock but does...
     emit taskStarted(request);
     emit taskChanged(request.task());
     reevaluateQueuedRequests();
@@ -593,13 +610,13 @@ nexthost:;
 
 void Scheduler::startTaskNowAnyway(TaskRequest request) {
   Executor *e;
-  if (_executors.isEmpty()) {
+  if (_availableExecutors.isEmpty()) {
     e = new Executor;
     e->setTemporary();
     connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
             this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
   } else {
-    e = _executors.takeFirst();
+    e = _availableExecutors.takeFirst();
   }
   QMutexLocker ml(&_configMutex);
   Host target = _hosts.value(request.task().target());
@@ -647,7 +664,7 @@ void Scheduler::taskFinishing(TaskRequest request,
     if (e->isTemporary())
       e->deleteLater();
     else
-      _executors.append(e);
+      _availableExecutors.append(e);
   }
   _runningRequests.removeAll(request);
   QMap<QString,qint64> taskResources = requestedTask.resources();

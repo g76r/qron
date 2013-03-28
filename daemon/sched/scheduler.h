@@ -46,11 +46,12 @@ class Scheduler : public QObject {
   QSet<QString> _setFlags, _unsetenv;
   mutable QMutex _flagsMutex, _configMutex;
   QList<TaskRequest> _queuedRequests, _runningRequests;
-  QList<Executor*> _executors;
+  QList<Executor*> _availableExecutors;
   Alerter *_alerter;
   bool _firstConfigurationLoad;
   QList<Event> _onstart, _onsuccess, _onfailure;
   QList<Event> _onlog, _onnotice, _onschedulerstart;
+  int _maxtotaltaskinstances;
 
 public:
   Scheduler();
