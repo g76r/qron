@@ -37,6 +37,7 @@
 #include "schedulereventsmodel.h"
 #include "flagssetmodel.h"
 #include "taskgroupsmodel.h"
+#include "lastemitedalertsmodel.h"
 
 class QThread;
 
@@ -51,8 +52,8 @@ class WebConsole : public HttpHandler {
   ResourcesAllocationModel *_resourceAllocationModel;
   ParamSetModel *_globalParamsModel, *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
-  LastOccuredTextEventsModel *_lastEmitedAlertsModel, *_lastPostedNoticesModel,
-  *_lastFlagsChangesModel;
+  LastEmitedAlertsModel *_lastEmitedAlertsModel;
+  LastOccuredTextEventsModel *_lastPostedNoticesModel, *_lastFlagsChangesModel;
   AlertRulesModel *_alertRulesModel;
   TaskRequestsModel *_taskRequestsHistoryModel, *_unfinishedTaskRequestModel;
   TasksModel *_tasksModel;

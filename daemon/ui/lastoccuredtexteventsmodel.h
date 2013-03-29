@@ -34,6 +34,8 @@ class LastOccuredTextEventsModel : public QAbstractListModel {
   int _maxsize;
   QString _eventName;
   QHash<int,QString> _prefixes;
+
+protected:
   int _prefixRole;
 
 public:

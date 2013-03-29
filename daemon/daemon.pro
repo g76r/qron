@@ -92,7 +92,8 @@ SOURCES += \
     ui/flagssetmodel.cpp \
     ui/taskgroupsmodel.cpp \
     sched/qrond.cpp \
-    config/configutils.cpp
+    config/configutils.cpp \
+    ui/lastemitedalertsmodel.cpp
 
 HEADERS += \
     config/task.h \
@@ -146,7 +147,8 @@ HEADERS += \
     ui/flagssetmodel.h \
     ui/taskgroupsmodel.h \
     sched/qrond.h \
-    config/configutils.h
+    config/configutils.h \
+    ui/lastemitedalertsmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

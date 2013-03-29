@@ -13,6 +13,7 @@
  */
 #include "raisedalertsmodel.h"
 #include <QtDebug>
+#include <QRegExp>
 
 #define COLUMNS 4
 
@@ -49,10 +50,17 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
       case 0:
         return _prefix;
       case 3:
-        return " <span class=\"label label-important\">"
+        QString s = " <span class=\"label label-important\">"
             "<a title=\"Cancel alert\"href=\"do?event=cancelAlert&alert="
             +ra._alert+"&immediately=true\"><i class=\"icon-ok icon-white\">"
             "</i></a></span>";
+        QRegExp re("task\\.[^\\.]+\\.(.*)");
+        if (re.exactMatch(ra._alert))
+          s += " <span class=\"label label-info\" title=\"Log\">"
+              "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
+              +re.cap(1)
+              +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>";
+        return s;
       }
     }
   }

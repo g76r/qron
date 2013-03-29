@@ -57,30 +57,45 @@
     <div class="container">
       <?value:message?>
       <div class="row">
-        <div class="span5">
-          <h2>Recently emited alerts</h2>
-          <p>The table below displays emited alerts. There are two kinds of
-          alerts: those which are emited when raised (see on the right) and
-          those which are emited immediatly (one shot alerts).
-        </div>
-        <div class="span7">
-          <h2>Currently raised alerts</h2>
-          <p>The table below displays raised alerts, not including one-shot
-          alerts that are emited without the need to be raised.
+        <div class="span12">
+          <p>There are two kinds of alerts: those which are emited when raised
+          and those which are emited immediatly (one shot alerts).
+          <p>The first table display alerts of the first kind, including a
+          cancellation timestamp if the alert as been canceled (cancellation
+          is not immediatly effective to avoid alerts flip/flop).
+          <p>The second table display every alert (raised or not) along with
+          its emission timestamp. Note that alerts with a human recipient
+          (e.g. e-mail) are aggregated and throttled and therefore may be
+          actually sent to their recipient a few time after if other alerts
+          have already been emited recently.
         </div>
       </div>
       <div class="row">
-        <div class="span5">
+        <div class="span8">
+          <h2>Currently raised alerts</h2>
+          <p><a class="btn btn-info" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="events.html">Events page &raquo;</a>
+          <p><?view:raisedalerts?>
+        </div>
+        <div class="span4">
+          <h2>Alert params</h2>
+          <p><a class="btn btn-info" href="../rest/csv/alerts/params/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-info" href="../rest/html/alerts/params/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><?view:alertparams?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span7">
+          <h2>Recently emited alerts</h2>
           <p><a class="btn btn-info" href="../rest/csv/alerts/emited/v1"><i class="icon-file icon-white"></i> CSV</a>
           <a class="btn btn-info" href="../rest/html/alerts/emited/v1"><i class="icon-file icon-white"></i> HTML</a>
           <a class="btn btn-primary" href="events.html">Events page &raquo;</a>
           <p><?view:lastemitedalerts?>
         </div>
-        <div class="span7">
-          <p><a class="btn btn-info" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="events.html">Events page &raquo;</a>
-          <p><?view:raisedalerts?>
+        <div class="span5">
+          <h2>Available alert channels</h2>
+          <p>Coming soon...
         </div>
       </div>
       <div class="row">
@@ -94,18 +109,6 @@
           <p><a class="btn btn-info" href="../rest/csv/alerts/rules/v1"><i class="icon-file icon-white"></i> CSV</a>
           <a class="btn btn-info" href="../rest/html/alerts/rules/v1"><i class="icon-file icon-white"></i> HTML</a>
           <p><?view:alertrules?>
-        </div>
-      </div>
-      <div class="row">
-        <div class="span8">
-          <h2>Available alert channels</h2>
-          <p>Coming soon...
-        </div>
-        <div class="span4">
-          <h2>Alert params</h2>
-          <p><a class="btn btn-info" href="../rest/csv/alerts/params/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/alerts/params/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <p><?view:alertparams?>
         </div>
       </div>
     </div>
