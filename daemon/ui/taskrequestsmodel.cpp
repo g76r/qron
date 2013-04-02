@@ -42,7 +42,10 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         return r.task().fqtn();
       case 2:
         if (!r.endDatetime().isNull())
-          return r.success() ? "success" : "failure";
+          if (r.startDatetime().isNull())
+            return "canceled";
+          else
+            return r.success() ? "success" : "failure";
         if (!r.startDatetime().isNull())
           return "running";
         if (r.task().enabled())
@@ -70,8 +73,11 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       switch(index.column()) {
       case 2: {
         if (!r.endDatetime().isNull())
-          return r.success() ? QVariant()
-                             : "<i class=\"icon-minus-sign\"></i> ";
+          if (r.startDatetime().isNull())
+            return "<i class=\"icon-remove\"></i> ";
+          else
+            return r.success() ? QVariant()
+                               : "<i class=\"icon-minus-sign\"></i> ";
         if (!r.startDatetime().isNull())
           return "<i class=\"icon-play\"></i> ";
         if (r.task().enabled())
@@ -92,7 +98,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       break;
     case TextViews::TrClassRole:
       if (!r.endDatetime().isNull())
-        return r.success() ? QVariant() : "error";
+        return r.success() || r.startDatetime().isNull() ? QVariant() : "error";
       if (!r.startDatetime().isNull())
         return "info";
       return "warning";

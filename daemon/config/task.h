@@ -29,6 +29,7 @@ class Event;
 class Task {
   QSharedDataPointer<TaskData> d;
 public:
+  enum DiscardAliasesOnStart { DiscardNone, DiscardAll, DiscardUnknown };
   Task();
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, const Task oldTask);
@@ -80,6 +81,11 @@ public:
   long long minExpectedDuration() const;
   ParamSet setenv() const;
   QSet<QString> unsetenv() const;
+  DiscardAliasesOnStart discardAliasesOnStart() const;
+  inline QString discardAliasesOnStartAsString() const {
+    return discardAliasesOnStartAsString(discardAliasesOnStart()); }
+  static QString discardAliasesOnStartAsString(DiscardAliasesOnStart v);
+  static DiscardAliasesOnStart discardAliasesOnStartFromString(QString v);
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

@@ -37,6 +37,7 @@ public:
   QList<Event> _onstart, _onsuccess, _onfailure;
   QWeakPointer<Scheduler> _scheduler;
   long long _maxExpectedDuration, _minExpectedDuration;
+  Task::DiscardAliasesOnStart _discardAliasesOnStart;
 
 private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
@@ -46,6 +47,7 @@ private:
 
 public:
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
+    _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true), _lastSuccessful(true) { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
@@ -58,6 +60,7 @@ public:
     _stderrFilters(other._stderrFilters),
     _maxExpectedDuration(other._maxExpectedDuration),
     _minExpectedDuration(other._minExpectedDuration),
+    _discardAliasesOnStart(other._discardAliasesOnStart),
     _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution),
     _instancesCount(other._instancesCount), _enabled(other._enabled),
@@ -174,13 +177,20 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     QString kind = child.attribute("kind");
     qint64 quantity = child.attribute("quantity").toLong(0, 0);
     if (kind.isNull())
-      Log::error() << "ignoring resource with no or empty kind in task"
+      Log::error() << "ignoring resource with no or empty kind in task "
                    << td->_id;
     else if (quantity <= 0)
       Log::error() << "ignoring resource of kind " << kind
-                   << "with incorrect quantity in task" << td->_id;
+                   << "with incorrect quantity in task " << td->_id;
     else
       td->_resources.insert(kind, quantity);
+  }
+  QString doas = node.attribute("discardaliasesonstart", "all");
+  td->_discardAliasesOnStart = discardAliasesOnStartFromString(doas);
+  if (td->_discardAliasesOnStart == Task::DiscardUnknown) {
+    td->_discardAliasesOnStart = Task::DiscardAll;
+    Log::error() << "invalid discardaliasesonstart on task " << td->_id << ": '"
+                 << doas << "'";
   }
   d = td;
 }
@@ -393,4 +403,28 @@ ParamSet Task::setenv() const {
 
 QSet<QString> Task::unsetenv() const {
   return d ? d->_unsetenv : QSet<QString>();
+}
+
+Task::DiscardAliasesOnStart Task::discardAliasesOnStart() const {
+  return d ? d->_discardAliasesOnStart : Task::DiscardNone;
+}
+
+QString Task::discardAliasesOnStartAsString(Task::DiscardAliasesOnStart v) {
+  switch (v) {
+  case Task::DiscardNone:
+    return "none";
+  case Task::DiscardAll:
+    return "all";
+  case Task::DiscardUnknown:
+    ;
+  }
+  return "unknown"; // should never happen
+}
+
+Task::DiscardAliasesOnStart Task::discardAliasesOnStartFromString(QString v) {
+  if (v == "none")
+    return Task::DiscardNone;
+  if (v == "all")
+    return Task::DiscardAll;
+  return Task::DiscardUnknown;
 }

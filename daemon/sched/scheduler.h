@@ -131,10 +131,8 @@ signals:
     * taskFinished() can be emited witout previous taskQueued(). */
   void taskQueued(TaskRequest request);
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
-    * be emited witout previous taskQueued().
-    * @param delayedMillis time between request and start, in ms */
+    * be emited witout previous taskQueued(). */
   void taskStarted(TaskRequest request);
-  /** @param durationMillis time between start and termination, in ms */
   void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
   /** Called whenever a task or taskrequest changes: queued, started, finished,
    * disabled, enabled... */
@@ -153,22 +151,22 @@ private slots:
   void checkTriggersForAllTasks();
 
 private:
-  /** Check if it is permitted for a task to run now, if yes start it.
-   * If request.force() is true, start a task despite any constraint or limit,
-   * even create a new (temporary) executor thread if needed.
-   * @return true if the task was started
-   */
-  bool startTaskNow(TaskRequest request);
   /** Reevaluate queued requests and start any task that can be started.
     * @see reevaluateQueuedRequests()
     */
-  void startQueuedTasksIfPossible();
+  void startQueuedTasks();
+  /** Check if it is permitted for a task to run now, if yes start it.
+   * If request.force() is true, start a task despite any constraint or limit,
+   * even create a new (temporary) executor thread if needed.
+   * @return true if the task was started or canceled
+   */
+  bool startQueuedTask(TaskRequest request);
   /** @return true iff the triggers fires a task request */
   bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
   bool reloadConfiguration(PfNode root, QString &errorString);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
-  Q_INVOKABLE quint64 doRequestTask(const QString fqtn, ParamSet params,
+  Q_INVOKABLE quint64 enqueueTaskRequest(const QString fqtn, ParamSet params,
                                     bool force);
   Q_DISABLE_COPY(Scheduler)
 };

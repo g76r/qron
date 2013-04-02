@@ -300,6 +300,12 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
           << "canceling queued task while reloading configuration because this "
              "task no longer exists: '" << fqtn << "'";
       _queuedRequests.removeAt(i--);
+      r.setReturnCode(-1);
+      r.setSuccess(false);
+      r.setEndDatetime();
+      // LATER maybe these signals should be emited asynchronously
+      emit taskFinished(r, QWeakPointer<Executor>());
+      emit taskChanged(r.task());
     } else {
       Log::info(fqtn, r.id())
           << "replacing task definition in queued request while reloading "
@@ -361,9 +367,10 @@ void Scheduler::triggerEvents(const QList<Event> list,
 quint64 Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
                                bool force) {
   if (this->thread() == QThread::currentThread())
-    return doRequestTask(fqtn, params, force);
+    return enqueueTaskRequest(fqtn, params, force);
   quint64 id = -1;
-  QMetaObject::invokeMethod(this, "doRequestTask", Qt::BlockingQueuedConnection,
+  QMetaObject::invokeMethod(this, "enqueueTaskRequest",
+                            Qt::BlockingQueuedConnection,
                             Q_RETURN_ARG(quint64, id), Q_ARG(QString, fqtn),
                             Q_ARG(ParamSet, params), Q_ARG(bool, force));
   return id;
@@ -371,13 +378,13 @@ quint64 Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
 
 void Scheduler::asyncRequestTask(const QString fqtn, ParamSet params,
                                  bool force) {
-  QMetaObject::invokeMethod(this, "doRequestTask", Qt::QueuedConnection,
+  QMetaObject::invokeMethod(this, "enqueueTaskRequest", Qt::QueuedConnection,
                             Q_ARG(QString, fqtn), Q_ARG(ParamSet, params),
                             Q_ARG(bool, force));
 }
 
-quint64 Scheduler::doRequestTask(const QString fqtn, ParamSet params,
-                                 bool force) {
+quint64 Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
+                                      bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
   ml.unlock();
@@ -389,6 +396,7 @@ quint64 Scheduler::doRequestTask(const QString fqtn, ParamSet params,
     Log::warning() << "task requested with non null params' parent (parent will"
                       " be ignored)";
   }
+  // FIXME avoid stacking disabled task requests
   params.setParent(task.params());
   TaskRequest request(task, params, force);
   Log::debug(task.fqtn(), request.id())
@@ -517,7 +525,50 @@ void Scheduler::postNotice(const QString notice) {
   triggerEvents(_onnotice, &context);
 }
 
-bool Scheduler::startTaskNow(TaskRequest request) {
+void Scheduler::reevaluateQueuedRequests() {
+  QCoreApplication::postEvent(this,
+                              new QEvent(REEVALUATE_QUEUED_REQUEST_EVENT));
+}
+
+void Scheduler::customEvent(QEvent *event) {
+  if (event->type() == REEVALUATE_QUEUED_REQUEST_EVENT) {
+    QCoreApplication::removePostedEvents(this, REEVALUATE_QUEUED_REQUEST_EVENT);
+    startQueuedTasks();
+  } else {
+    QObject::customEvent(event);
+  }
+}
+
+void Scheduler::startQueuedTasks() {
+  for (int i = 0; i < _queuedRequests.size(); ) {
+    TaskRequest r = _queuedRequests[i];
+    if (startQueuedTask(r)) {
+      _runningRequests.append(_queuedRequests.takeAt(i));
+      if (r.task().discardAliasesOnStart() != Task::DiscardNone) {
+        // remove other requests of same task
+        QString fqtn(r.task().fqtn());
+        for (int j = 0; j < _queuedRequests.size(); ) {
+          TaskRequest r2 = _queuedRequests[j];
+          if (fqtn == r2.task().fqtn()) {
+            _queuedRequests.takeAt(j);
+            Log::info(fqtn, r2.id())
+                << "canceling task because another instance of the same task "
+                   "is starting: " << fqtn << "/" << r.id();
+            r2.setReturnCode(-1);
+            r2.setSuccess(false);
+            r2.setEndDatetime();
+            emit taskFinished(r2, QWeakPointer<Executor>());
+            emit taskChanged(r2.task());
+          } else
+            ++j;
+        }
+      }
+    } else
+      ++i;
+  }
+}
+
+bool Scheduler::startQueuedTask(TaskRequest request) {
   Task task(request.task());
   QString fqtn(task.fqtn());
   Executor *executor = 0;
@@ -593,7 +644,6 @@ bool Scheduler::startTaskNow(TaskRequest request) {
     triggerEvents(_onstart, &request); // FIXME accessing _onstart needs lock but triggering events may need unlock...
     ml.unlock();
     task.triggerStartEvents(&request);
-    // FIXME remove other requests of same task
     executor = _availableExecutors.takeFirst();
     if (!executor) {
       // this should only happen with force == true
@@ -650,7 +700,7 @@ void Scheduler::taskFinishing(TaskRequest request,
     _alerter->raiseAlert("task.failure."+fqtn);
   emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
-  if (!request.endDatetime().isNull())
+  if (!request.startDatetime().isNull() && !request.endDatetime().isNull())
     configuredTask.setLastSuccessful(request.success());
   emit taskFinished(request, executor);
   emit taskChanged(configuredTask);
@@ -673,33 +723,7 @@ void Scheduler::taskFinishing(TaskRequest request,
     else
       _alerter->cancelAlert("task.tooshort."+fqtn);
   }
-  // FIXME remove other requests of same task
   reevaluateQueuedRequests();
-}
-
-void Scheduler::reevaluateQueuedRequests() {
-  QCoreApplication::postEvent(this,
-                              new QEvent(REEVALUATE_QUEUED_REQUEST_EVENT));
-}
-
-void Scheduler::customEvent(QEvent *event) {
-  if (event->type() == REEVALUATE_QUEUED_REQUEST_EVENT) {
-    QCoreApplication::removePostedEvents(this, REEVALUATE_QUEUED_REQUEST_EVENT);
-    startQueuedTasksIfPossible();
-  } else {
-    QObject::customEvent(event);
-  }
-}
-
-void Scheduler::startQueuedTasksIfPossible() {
-  for (int i = 0; i < _queuedRequests.size(); ) {
-    TaskRequest r = _queuedRequests[i];
-    if (startTaskNow(r)) {
-      _runningRequests.append(_queuedRequests.takeAt(i));
-      // LATER remove other queued instances of same task if needed
-    } else
-      ++i;
-  }
 }
 
 bool Scheduler::enableTask(const QString fqtn, bool enable) {
