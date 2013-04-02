@@ -28,7 +28,7 @@ class TaskRequest : public ParamsProvider {
 public:
   TaskRequest();
   TaskRequest(const TaskRequest &);
-  TaskRequest(Task task, ParamSet params);
+  TaskRequest(Task task, ParamSet params, bool force = false);
   ~TaskRequest();
   TaskRequest &operator=(const TaskRequest &);
   bool operator==(const TaskRequest &);
@@ -66,6 +66,7 @@ public:
   QString paramValue(const QString key, const QString defaultValue) const;
   ParamSet setenv() const;
   void setTask(Task task);
+  bool force() const;
 };
 
 #endif // TASKREQUEST_H

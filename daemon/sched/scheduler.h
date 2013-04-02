@@ -154,13 +154,11 @@ private slots:
 
 private:
   /** Check if it is permitted for a task to run now, if yes start it.
-    * @return true if the task was started
-    */
-  bool tryStartTaskNow(TaskRequest request);
-  /** Start a task despite any constraint or limit. Even create a new executor
-    * thread if needed.
-    */
-  void startTaskNowAnyway(TaskRequest request);
+   * If request.force() is true, start a task despite any constraint or limit,
+   * even create a new (temporary) executor thread if needed.
+   * @return true if the task was started
+   */
+  bool startTaskNow(TaskRequest request);
   /** Reevaluate queued requests and start any task that can be started.
     * @see reevaluateQueuedRequests()
     */

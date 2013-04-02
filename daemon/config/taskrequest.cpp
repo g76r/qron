@@ -24,6 +24,7 @@ public:
   Task _task;
   ParamSet _params;
   QDateTime _submission;
+  bool _force;
 
 private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
@@ -33,16 +34,17 @@ private:
   mutable Host _target; // FIXME not thread safe
 
 public:
-  TaskRequestData(Task task, ParamSet params = ParamSet())
+  TaskRequestData(Task task, ParamSet params, bool force)
     : _id(newId()), _task(task), _params(params),
-      _submission(QDateTime::currentDateTime()), _start(LLONG_MIN),
-      _end(LLONG_MIN), _success(false), _returnCode(0) { }
+      _submission(QDateTime::currentDateTime()), _force(force),
+      _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0) { }
   TaskRequestData() : _id(0), _start(LLONG_MIN), _end(LLONG_MIN),
     _success(false), _returnCode(0) { }
   TaskRequestData(const TaskRequestData &other) : QSharedData(), _id(other._id),
     _task(other._task), _params(other._params), _submission(other._submission),
-    _start(other._start), _end(other._end),  _success(other._success),
-    _returnCode(other._returnCode), _target(other._target) { }
+    _force(other._force), _start(other._start), _end(other._end),
+    _success(other._success), _returnCode(other._returnCode),
+    _target(other._target) { }
   QDateTime start() const {
     return _start == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_start); }
@@ -77,8 +79,8 @@ TaskRequest::TaskRequest() {
 TaskRequest::TaskRequest(const TaskRequest &other) : d(other.d) {
 }
 
-TaskRequest::TaskRequest(Task task, ParamSet params)
-  : d(new TaskRequestData(task, params)) {
+TaskRequest::TaskRequest(Task task, ParamSet params, bool force)
+  : d(new TaskRequestData(task, params, force)) {
 }
 
 TaskRequest::~TaskRequest() {
@@ -207,4 +209,8 @@ ParamSet TaskRequest::setenv() const {
 void TaskRequest::setTask(Task task) {
   if (d)
     d->_task = task;
+}
+
+bool TaskRequest::force() const {
+  return d ? d->_force : false;
 }
