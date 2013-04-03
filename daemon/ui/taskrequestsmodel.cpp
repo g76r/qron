@@ -41,11 +41,12 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 1:
         return r.task().fqtn();
       case 2:
-        if (!r.endDatetime().isNull())
+        if (!r.endDatetime().isNull()) {
           if (r.startDatetime().isNull())
             return "canceled";
           else
             return r.success() ? "success" : "failure";
+        }
         if (!r.startDatetime().isNull())
           return "running";
         if (r.task().enabled())
@@ -72,12 +73,13 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
     case TextViews::HtmlPrefixRole:
       switch(index.column()) {
       case 2: {
-        if (!r.endDatetime().isNull())
+        if (!r.endDatetime().isNull()) {
           if (r.startDatetime().isNull())
             return "<i class=\"icon-remove\"></i> ";
           else
             return r.success() ? QVariant()
                                : "<i class=\"icon-minus-sign\"></i> ";
+        }
         if (!r.startDatetime().isNull())
           return "<i class=\"icon-play\"></i> ";
         if (r.task().enabled())
