@@ -520,7 +520,7 @@ void Scheduler::postNotice(const QString notice) {
     }
   }
   emit noticePosted(notice);
-  // TODO onnotice events are useless without a notice filter
+  // LATER onnotice events are useless without a notice filter
   NoticeContext context(notice);
   triggerEvents(_onnotice, &context);
 }

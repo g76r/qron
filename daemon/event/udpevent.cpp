@@ -38,7 +38,7 @@ public:
     }
   }
   void trigger(const ParamsProvider *context) const {
-    // TODO run in a separate thread to avoid network/dns/etc. hangups
+    // LATER run in a separate thread to avoid network/dns/etc. hangups
     if (!_port) // address is invalid
       return;
     QUdpSocket *socket = new QUdpSocket;

@@ -379,7 +379,6 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     return;
   }
   if (path == "/console/do" || path == "/rest/do" ) {
-    // FIXME should return 200 or 500 rather than redirect if no referer, to make it usable for rest client
     QString event = req.param("event");
     QString fqtn = req.param("fqtn");
     QString alert = req.param("alert");
