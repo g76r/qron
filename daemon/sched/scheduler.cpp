@@ -396,17 +396,36 @@ quint64 Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
     Log::warning() << "task requested with non null params' parent (parent will"
                       " be ignored)";
   }
-  // FIXME avoid stacking disabled task requests
   params.setParent(task.params());
   TaskRequest request(task, params, force);
-  Log::debug(task.fqtn(), request.id())
+  if (!force && (!task.enabled()
+      || task.discardAliasesOnStart() != Task::DiscardNone)) {
+    // avoid stacking disabled task requests by canceling older ones
+    for (int i = 0; i < _queuedRequests.size(); ) {
+      const TaskRequest &r2 = _queuedRequests[i];
+      if (fqtn == r2.task().fqtn()) {
+        Log::info(fqtn, r2.id())
+            << "canceling task because another instance of the same task "
+               "is queued "
+            << (!task.enabled() ? "and the task is disabled" : "") << ": "
+            << fqtn << "/" << request.id();
+        r2.setReturnCode(-1);
+        r2.setSuccess(false);
+        r2.setEndDatetime();
+        emit taskFinished(r2, QWeakPointer<Executor>());
+        _queuedRequests.takeAt(i);
+      } else
+        ++i;
+    }
+  }
+  Log::debug(fqtn, request.id())
       << "queuing task '" << task.fqtn() << "' with params " << params;
   // note: a request must always be queued even if the task can be started
   // immediately, to avoid the new tasks being started before queued ones
   _queuedRequests.append(request);
   reevaluateQueuedRequests();
   emit taskQueued(request);
-  emit taskChanged(request.task());
+  emit taskChanged(task);
   return request.id();
 }
 
@@ -558,7 +577,9 @@ void Scheduler::startQueuedTasks() {
             r2.setSuccess(false);
             r2.setEndDatetime();
             emit taskFinished(r2, QWeakPointer<Executor>());
-            emit taskChanged(r2.task());
+            emit taskChanged(r.task()); // MAYDO deduplicate this signal
+            if (j < i)
+              --i;
           } else
             ++j;
         }
@@ -729,6 +750,7 @@ void Scheduler::taskFinishing(TaskRequest request,
 bool Scheduler::enableTask(const QString fqtn, bool enable) {
   QMutexLocker ml(&_configMutex);
   Task t = _tasks.value(fqtn);
+  //Log::fatal() << "enableTask " << fqtn << " " << enable << " " << t.id();
   if (t.isNull())
     return false;
   t.setEnabled(enable);
