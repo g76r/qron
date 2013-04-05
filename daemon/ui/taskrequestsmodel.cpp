@@ -13,7 +13,7 @@
  */
 #include "taskrequestsmodel.h"
 
-#define COLUMNS 10
+#define COLUMNS 9
 
 TaskRequestsModel::TaskRequestsModel(QObject *parent, int maxrows,
                                      bool keepFinished)
@@ -49,9 +49,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         }
         if (!r.startDatetime().isNull())
           return "running";
-        if (r.task().enabled())
-          return "queued";
-        return "queued and disabled";
+        return "queued";
       case 3:
         return r.submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 4:
@@ -64,9 +62,6 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 7:
         return r.endDatetime().isNull() || r.startDatetime().isNull()
             ? QVariant() : QString::number(r.runningMillis()/1000.0);
-      case 8:
-        return QString::number(r.task().instancesCount())+" / "
-            +QString::number(r.task().maxInstances());
       }
       break;
     }
@@ -82,17 +77,16 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         }
         if (!r.startDatetime().isNull())
           return "<i class=\"icon-play\"></i> ";
-        if (r.task().enabled())
-          return "<i class=\"icon-inbox\"></i> ";
-        return "<i class=\"icon-ban-circle\"></i> ";
+        return "<i class=\"icon-inbox\"></i> ";
       }
-      case 9: {
+      case 8: {
         QString actions;
         actions = " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
             +r.task().fqtn()+"/"+QString::number(r.id())
             +"%20\"><i class=\"icon-th-list icon-white\"></i></a></span>";
         return actions;
+        // LATER add cancel button for queued requests
       }
       default:
         ;
@@ -106,7 +100,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       return "warning";
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
-      case 9: {
+      case 8: {
         QString infourl = r.task().infourl();
         if (!infourl.isEmpty())
           return " <span class=\"label label-info\" "
@@ -133,7 +127,7 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
       case 0:
         return "Request Id";
       case 1:
-        return "Task Id";
+        return "Fully qualified task name";
       case 2:
         return "Status";
       case 3:
@@ -147,8 +141,6 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
       case 7:
         return "Seconds running";
       case 8:
-        return "Instances / max";
-      case 9:
         return "Actions";
       }
     } else {
@@ -160,6 +152,7 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
 
 void TaskRequestsModel::taskChanged(TaskRequest request) {
   int row;
+  //Log::fatal() << "taskChanged " << request.task().fqtn() << "/" << request.id();
   for (row = 0; row < _requests.size(); ++row) {
     TaskRequest &r(_requests[row]);
     if (r.id() == request.id()) {
@@ -168,7 +161,7 @@ void TaskRequestsModel::taskChanged(TaskRequest request) {
       //         << request.endDatetime() << "found" << _keepFinished;
       if (r.endDatetime().isNull() || _keepFinished) {
         r = request;
-        emit dataChanged(index(row, 1), index(row, 5));
+        emit dataChanged(index(row, 2), index(row, COLUMNS-1));
       } else {
         beginRemoveRows(QModelIndex(), row, row);
         _requests.removeAt(row);
