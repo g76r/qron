@@ -288,7 +288,9 @@ void Executor::replyFinished(QNetworkReply *reply) {
       ->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   QString reason = reply
       ->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-  bool success = (status < 300);
+  QNetworkReply::NetworkError error = reply->error();
+  bool success = (status < 300 && status >= 100
+                  && error == QNetworkReply::NoError);
   _request.setEndDatetime();
   Log::log(success ? Log::Info : Log::Warning, _request.task().fqtn(),
            _request.id())
@@ -296,7 +298,7 @@ void Executor::replyFinished(QNetworkReply *reply) {
       << (success ? "successfully" : "in failure") << " with return code "
       << status << " (" << reason << ") on host '"
       << _request.target().hostname() << "' in " << _request.runningMillis()
-      << " ms";
+      << " ms, with network error code " << error;
   _request.setSuccess(success);
   _request.setReturnCode(status);
   emit taskFinished(_request, this);
