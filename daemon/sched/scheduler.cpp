@@ -299,13 +299,13 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
       Log::warning(fqtn, r.id())
           << "canceling queued task while reloading configuration because this "
              "task no longer exists: '" << fqtn << "'";
-      _queuedRequests.removeAt(i--);
       r.setReturnCode(-1);
       r.setSuccess(false);
       r.setEndDatetime();
       // LATER maybe these signals should be emited asynchronously
       emit taskFinished(r, QWeakPointer<Executor>());
       emit taskChanged(r.task());
+      _queuedRequests.removeAt(i--);
     } else {
       Log::info(fqtn, r.id())
           << "replacing task definition in queued request while reloading "
@@ -401,21 +401,20 @@ quint64 Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
   if (!force && (!task.enabled()
       || task.discardAliasesOnStart() != Task::DiscardNone)) {
     // avoid stacking disabled task requests by canceling older ones
-    for (int i = 0; i < _queuedRequests.size(); ) {
+    for (int i = 0; i < _queuedRequests.size(); ++i) {
       const TaskRequest &r2 = _queuedRequests[i];
       if (fqtn == r2.task().fqtn()) {
         Log::info(fqtn, r2.id())
             << "canceling task because another instance of the same task "
-               "is queued "
-            << (!task.enabled() ? "and the task is disabled" : "") << ": "
+               "is queued"
+            << (!task.enabled() ? " and the task is disabled" : "") << ": "
             << fqtn << "/" << request.id();
         r2.setReturnCode(-1);
         r2.setSuccess(false);
         r2.setEndDatetime();
         emit taskFinished(r2, QWeakPointer<Executor>());
-        _queuedRequests.takeAt(i);
-      } else
-        ++i;
+        _queuedRequests.removeAt(i--);
+      }
     }
   }
   Log::debug(fqtn, request.id())
@@ -566,10 +565,9 @@ void Scheduler::startQueuedTasks() {
       if (r.task().discardAliasesOnStart() != Task::DiscardNone) {
         // remove other requests of same task
         QString fqtn(r.task().fqtn());
-        for (int j = 0; j < _queuedRequests.size(); ) {
+        for (int j = 0; j < _queuedRequests.size(); ++j ) {
           TaskRequest r2 = _queuedRequests[j];
           if (fqtn == r2.task().fqtn()) {
-            _queuedRequests.takeAt(j);
             Log::info(fqtn, r2.id())
                 << "canceling task because another instance of the same task "
                    "is starting: " << fqtn << "/" << r.id();
@@ -580,8 +578,8 @@ void Scheduler::startQueuedTasks() {
             emit taskChanged(r.task()); // MAYDO deduplicate this signal
             if (j < i)
               --i;
-          } else
-            ++j;
+            _queuedRequests.removeAt(j--);
+          }
         }
       }
     } else

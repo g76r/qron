@@ -41,15 +41,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 1:
         return r.task().fqtn();
       case 2:
-        if (!r.endDatetime().isNull()) {
-          if (r.startDatetime().isNull())
-            return "canceled";
-          else
-            return r.success() ? "success" : "failure";
-        }
-        if (!r.startDatetime().isNull())
-          return "running";
-        return "queued";
+        return r.statusAsString();
       case 3:
         return r.submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 4:
@@ -67,18 +59,20 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
     }
     case TextViews::HtmlPrefixRole:
       switch(index.column()) {
-      case 2: {
-        if (!r.endDatetime().isNull()) {
-          if (r.startDatetime().isNull())
-            return "<i class=\"icon-remove\"></i> ";
-          else
-            return r.success() ? QVariant()
-                               : "<i class=\"icon-minus-sign\"></i> ";
-        }
-        if (!r.startDatetime().isNull())
+      case 2:
+        switch(r.status()) {
+        case TaskRequest::Queued:
+          return "<i class=\"icon-inbox\"></i> ";
+        case TaskRequest::Running:
           return "<i class=\"icon-play\"></i> ";
-        return "<i class=\"icon-inbox\"></i> ";
-      }
+        case TaskRequest::Failure:
+          return "<i class=\"icon-minus-sign\"></i> ";
+        case TaskRequest::Canceled:
+          return "<i class=\"icon-remove\"></i> ";
+        case TaskRequest::Success:
+          ;
+        }
+        break;
       case 8: {
         QString actions;
         actions = " <span class=\"label label-info\" title=\"Log\">"
@@ -152,14 +146,14 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
 
 void TaskRequestsModel::taskChanged(TaskRequest request) {
   int row;
-  //Log::fatal() << "taskChanged " << request.task().fqtn() << "/" << request.id();
+  //Log::fatal() << "taskChanged " << request.task().fqtn() << "/"
+  //             << request.id() << " " << request.statusAsString();
   for (row = 0; row < _requests.size(); ++row) {
     TaskRequest &r(_requests[row]);
     if (r.id() == request.id()) {
-      //qDebug() << "TaskRequestsModel::taskChanged" << request.id()
-      //         << request.submissionDatetime() << request.startDatetime()
-      //         << request.endDatetime() << "found" << _keepFinished;
-      if (r.endDatetime().isNull() || _keepFinished) {
+      //Log::fatal() << "TaskRequestsModel::taskChanged " << request.id()
+      //             << " found " << _keepFinished << " " << request.finished();
+      if (!request.finished() || _keepFinished) {
         r = request;
         emit dataChanged(index(row, 2), index(row, COLUMNS-1));
       } else {
@@ -173,7 +167,7 @@ void TaskRequestsModel::taskChanged(TaskRequest request) {
   //qDebug() << "TaskRequestsModel::taskChanged" << request.id()
   //         << request.submissionDatetime() << request.startDatetime()
   //         << request.endDatetime() << "new" << _keepFinished;
-  if (request.endDatetime().isNull() || _keepFinished) {
+  if (!request.finished() || _keepFinished) {
     beginInsertRows(QModelIndex(), 0, 0);
     _requests.prepend(request);
     endInsertRows();

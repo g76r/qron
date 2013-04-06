@@ -48,11 +48,13 @@ public:
   QDateTime start() const {
     return _start == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_start); }
+  qint64 startMillis() const { return _start; }
   void setStart(QDateTime timestamp) const {
     _start = timestamp.toMSecsSinceEpoch(); }
   QDateTime end() const {
     return _end == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_end); }
+  qint64 endMillis() const { return _end; }
   void setEnd(QDateTime timestamp) const {
     _end = timestamp.toMSecsSinceEpoch(); }
   bool success() const { return _success; }
@@ -213,4 +215,35 @@ void TaskRequest::setTask(Task task) {
 
 bool TaskRequest::force() const {
   return d ? d->_force : false;
+}
+
+TaskRequest::TaskRequestStatus TaskRequest::status() const {
+  if (d) {
+    if (d->endMillis() != LLONG_MIN) {
+      if (d->startMillis() == LLONG_MIN)
+        return Canceled;
+      else
+        return d->success() ? Success : Failure;
+    }
+    if (d->startMillis() != LLONG_MIN)
+      return Running;
+  }
+  return Queued;
+}
+
+QString TaskRequest::statusAsString(
+    TaskRequest::TaskRequestStatus status) {
+  switch(status) {
+  case Queued:
+    return "queued";
+  case Running:
+    return "running";
+  case Success:
+    return "success";
+  case Failure:
+    return "failure";
+  case Canceled:
+    return "canceled";
+  }
+  return "unknown";
 }

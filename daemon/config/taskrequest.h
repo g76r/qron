@@ -26,6 +26,7 @@ class TaskRequestData;
 class TaskRequest : public ParamsProvider {
   QSharedDataPointer<TaskRequestData> d;
 public:
+  enum TaskRequestStatus { Queued, Running, Success, Failure, Canceled };
   TaskRequest();
   TaskRequest(const TaskRequest &);
   TaskRequest(Task task, ParamSet params, bool force = false);
@@ -67,6 +68,20 @@ public:
   ParamSet setenv() const;
   void setTask(Task task);
   bool force() const;
+  TaskRequestStatus status() const;
+  static QString statusAsString(TaskRequest::TaskRequestStatus status);
+  QString statusAsString() const {
+    return statusAsString(status()); }
+  /** @return true iff status != Queued or Running */
+  bool finished() const {
+    switch(status()) {
+    case Queued:
+    case Running:
+      return false;
+    default:
+      return true;
+    }
+  }
 };
 
 #endif // TASKREQUEST_H

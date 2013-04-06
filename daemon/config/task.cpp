@@ -69,13 +69,15 @@ public:
     return _lastExecution == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
   void setLastExecution(QDateTime timestamp) const {
-    _lastExecution = timestamp.toMSecsSinceEpoch(); }
+    _lastExecution = timestamp.isValid()
+        ? timestamp.toMSecsSinceEpoch() : LLONG_MIN ; }
   QDateTime nextScheduledExecution() const {
     return _nextScheduledExecution == LLONG_MIN
         ? QDateTime()
         : QDateTime::fromMSecsSinceEpoch(_nextScheduledExecution); }
   void setNextScheduledExecution(QDateTime timestamp) const {
-    _nextScheduledExecution = timestamp.toMSecsSinceEpoch(); }
+    _nextScheduledExecution = timestamp.isValid()
+        ? timestamp.toMSecsSinceEpoch() : LLONG_MIN ; }
   int instancesCount() const { return _instancesCount; }
   int fetchAndAddInstancesCount(int valueToAdd) const {
     return _instancesCount.fetchAndAddOrdered(valueToAdd); }
@@ -128,6 +130,7 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     td->setNextScheduledExecution(oldTask.nextScheduledExecution());
     td->fetchAndStoreInstancesCount(oldTask.instancesCount());
     td->setLastSuccessful(oldTask.lastSuccessful());
+    td->setEnabled(td->enabled() && oldTask.enabled());
   }
   // LATER load cron triggers last exec timestamp from on-disk log
   foreach (PfNode child, node.childrenByName("trigger")) {
