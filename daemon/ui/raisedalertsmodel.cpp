@@ -56,7 +56,7 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
             "</i></a></span>";
         QRegExp re("task\\.[^\\.]+\\.(.*)");
         if (re.exactMatch(ra._alert))
-          s += " <span class=\"label label-info\" title=\"Log\">"
+          s += " <span class=\"label label-info\" title=\"Related tasks log\">"
               "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
               +re.cap(1)
               +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>";

@@ -33,7 +33,7 @@ QVariant LastEmitedAlertsModel::data(const QModelIndex &index, int role) const {
                                          Qt::DisplayRole);
     QRegExp re("task\\.[^\\.]+\\.(.*)");
     if (re.exactMatch(v.toString()))
-      return " <span class=\"label label-info\" title=\"Log\">"
+      return " <span class=\"label label-info\" title=\"Related alerts log\">"
           "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
           +re.cap(1)
           +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>";
