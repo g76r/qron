@@ -24,8 +24,13 @@
 #include <QCoreApplication>
 #include "config/configutils.h"
 
+// LATER replace this 10" ugly batch with predictive timer (min(timestamps))
+#define ASYNC_PROCESSING_INTERVAL 10000
+#define ALERTER_DEFAULT_REMIND_FREQUENCY 60000
+
 Alerter::Alerter() : QObject(0), _thread(new QThread),
-  _cancelDelay(ALERTER_DEFAULT_CANCEL_DELAY) {
+  _cancelDelay(ALERTER_DEFAULT_CANCEL_DELAY),
+  _remindFrequency(ALERTER_DEFAULT_REMIND_FREQUENCY) {
   _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -37,9 +42,8 @@ Alerter::Alerter() : QObject(0), _thread(new QThread),
   connect(this, SIGNAL(paramsChanged(ParamSet)),
           mailChannel, SLOT(setParams(ParamSet)));
   QTimer *timer = new QTimer(this);
-  connect(timer, SIGNAL(timeout()), this, SLOT(processCancellation()));
-  // LATER replace this 10" ugly batch with predictive timer (min(timestamps))
-  timer->start(10000);
+  connect(timer, SIGNAL(timeout()), this, SLOT(asyncProcessing()));
+  timer->start(ASYNC_PROCESSING_INTERVAL);
   moveToThread(_thread);
   qRegisterMetaType<QList<AlertRule> >("QList<AlertRule>");
   qRegisterMetaType<AlertRule>("AlertRule");
@@ -90,9 +94,10 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
       }
     }
   }
-  QString cancelDelayString = _params.value("canceldelay");
-  if (!cancelDelayString.isNull())
-    _cancelDelay = cancelDelayString.toInt();
+  _cancelDelay = _params.valueAsInt("canceldelay",
+                                    ALERTER_DEFAULT_CANCEL_DELAY);
+  _remindFrequency = _params.valueAsInt("remindfrequency",
+                                        ALERTER_DEFAULT_REMIND_FREQUENCY);
   emit paramsChanged(_params);
   emit rulesChanged(_rules);
   return true;
@@ -108,7 +113,7 @@ void Alerter::doEmitAlert(QString alert) {
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
       //Log::debug() << "alert matching rule #" << n;
-      sendMessage(Alert(alert, rule), false);
+      sendMessage(Alert(alert, rule), AlertChannel::Emit);
       if (rule.stop())
         break;
     }
@@ -124,19 +129,37 @@ void Alerter::doEmitAlertCancellation(QString alert) {
     if (rule.patternRegExp().exactMatch(alert)) {
       //Log::debug() << "alert matching rule #" << n;
       if (rule.notifyCancel())
-        sendMessage(Alert(alert, rule), true);
+        sendMessage(Alert(alert, rule), AlertChannel::Cancel);
       if (rule.stop())
         break;
     }
     ++n;
   }
-  emit alertCancellationEmited(alert);
+  _soonCanceledAlerts.remove(alert);
+  _remindedAlerts.remove(alert);
+  emit alertCanceled(alert);
 }
 
-void Alerter::sendMessage(Alert alert, bool cancellation) {
+void Alerter::doRemindAlert(QString alert) {
+  Log::debug() << "reminding alert " << alert;
+  int n = 0;
+  foreach (AlertRule rule, _rules) {
+    if (rule.patternRegExp().exactMatch(alert)) {
+      //Log::debug() << "alert matching rule #" << n;
+      if (rule.notifyCancel())
+        sendMessage(Alert(alert, rule), AlertChannel::Remind);
+      if (rule.stop())
+        break;
+    }
+    ++n;
+  }
+  _remindedAlerts.insert(alert, QDateTime::currentDateTime());
+}
+
+void Alerter::sendMessage(Alert alert, AlertChannel::MessageType type) {
   QWeakPointer<AlertChannel> channel = alert.rule().channel();
   if (channel)
-    channel.data()->sendMessage(alert, cancellation);
+    channel.data()->sendMessage(alert, type);
 }
 
 void Alerter::raiseAlert(QString alert) {
@@ -145,12 +168,16 @@ void Alerter::raiseAlert(QString alert) {
 
 void Alerter::doRaiseAlert(QString alert) {
   if (!_raisedAlerts.contains(alert)) {
-    _raisedAlerts.insert(alert, QDateTime::currentDateTime());
-    if (_soonCanceledAlerts.remove(alert)) {
+    if (_soonCanceledAlerts.contains(alert)) {
+      _raisedAlerts.insert(alert, _soonCanceledAlerts.value(alert));
+      _soonCanceledAlerts.remove(alert);
       emit alertCancellationUnscheduled(alert);
       Log::debug() << "alert is no longer scheduled for cancellation " << alert
                    << " (it was raised again within cancel delay)";
     } else {
+      QDateTime now(QDateTime::currentDateTime());
+      _raisedAlerts.insert(alert, now);
+      _remindedAlerts.insert(alert, now);
       Log::debug() << "raising alert " << alert;
       emit alertRaised(alert);
       doEmitAlert(alert);
@@ -172,10 +199,8 @@ void Alerter::doCancelAlert(QString alert, bool immediately) {
   if (immediately) {
     if (_raisedAlerts.contains(alert) || _soonCanceledAlerts.contains(alert)) {
       Log::debug() << "do cancel alert immediately: " << alert;
-      emit alertCanceled(alert);
       doEmitAlertCancellation(alert);
       _raisedAlerts.remove(alert);
-      _soonCanceledAlerts.remove(alert);
     }
   } else {
     if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
@@ -192,15 +217,15 @@ void Alerter::doCancelAlert(QString alert, bool immediately) {
   }
 }
 
-void Alerter::processCancellation() {
+void Alerter::asyncProcessing() {
   QDateTime now(QDateTime::currentDateTime());
-  foreach (QString alert, _soonCanceledAlerts.keys()) {
-    QDateTime dt(_soonCanceledAlerts.value(alert));
-    if (dt <= now) {
-      Log::debug() << "do cancel alert " << alert;
-      emit alertCanceled(alert);
+  // process alerts cancellations after cancel delay
+  foreach (QString alert, _soonCanceledAlerts.keys())
+    if (_soonCanceledAlerts.value(alert) <= now)
       doEmitAlertCancellation(alert);
-      _soonCanceledAlerts.remove(alert);
-    }
-  }
+  // process alerts reminders
+  foreach (QString alert, _raisedAlerts.keys())
+    if (!_soonCanceledAlerts.contains(alert)
+        && _remindedAlerts.value(alert).secsTo(now) > _remindFrequency)
+      doRemindAlert(alert);
 }

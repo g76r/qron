@@ -14,6 +14,7 @@
 #include "alertchannel.h"
 #include <QThread>
 #include <QMetaObject>
+#include <QMetaType>
 
 AlertChannel::AlertChannel(QObject *parent) : QObject(parent),
   _thread(new QThread) {
@@ -21,9 +22,10 @@ AlertChannel::AlertChannel(QObject *parent) : QObject(parent),
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
+  qRegisterMetaType<AlertChannel::MessageType>("AlertChannel::MessageType");
 }
 
-void AlertChannel::sendMessage(Alert alert, bool cancellation) {
+void AlertChannel::sendMessage(Alert alert, AlertChannel::MessageType type) {
   QMetaObject::invokeMethod(this, "doSendMessage", Q_ARG(Alert, alert),
-                            Q_ARG(bool, cancellation));
+                            Q_ARG(AlertChannel::MessageType, type));
 }

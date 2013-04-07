@@ -22,7 +22,7 @@
 class MailAlertQueue {
 public:
   QString _address;
-  QList<Alert> _alerts, _cancellations;
+  QList<Alert> _alerts, _cancellations, _reminders;
   QDateTime _lastMail;
   bool _processingScheduled;
   MailAlertQueue(const QString address = QString()) : _address(address),
@@ -43,13 +43,13 @@ void MailAlertChannel::setParams(ParamSet params) {
   _mailSender = new MailSender(relay);
   _senderAddress = params.value("mail.senderaddress",
                                 "please-do-not-reply@localhost");
-  _minDelayBetweenMails = params.value("mail.mindelaybetweenmails").toInt();
+  params.valueAsInt("mail.mindelaybetweenmails", 600);
   if (_minDelayBetweenMails < 60) // hard coded 1 minute minimum
-    _minDelayBetweenMails = 600;
+    _minDelayBetweenMails = 60;
   _webConsoleUrl = params.value("webconsoleurl");
   // LATER cancelDelay should be taken from Alerter, not from configuration
   // to avoid double coding default values and the like
-  _cancelDelay = params.value("canceldelay").toInt();
+  _cancelDelay = params.valueAsInt("canceldelay", ALERTER_DEFAULT_CANCEL_DELAY);
   if (_cancelDelay < 1)
     _cancelDelay = ALERTER_DEFAULT_CANCEL_DELAY;
   Log::debug() << "MailAlertChannel configured " << relay << " "
@@ -63,7 +63,7 @@ MailAlertChannel::~MailAlertChannel() {
   qDeleteAll(_queues);
 }
 
-void MailAlertChannel::doSendMessage(Alert alert, bool cancellation) {
+void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
   // LATER support more complex mail addresses with quotes and so on
   QStringList addresses = alert.rule().address().split(',');
   foreach (QString address, addresses) {
@@ -73,10 +73,16 @@ void MailAlertChannel::doSendMessage(Alert alert, bool cancellation) {
       queue = new MailAlertQueue(address);
       _queues.insert(address, queue);
     }
-    if (cancellation)
-      queue->_cancellations.append(alert);
-    else
+    switch (type) {
+    case Emit:
       queue->_alerts.append(alert);
+      break;
+    case Cancel:
+      queue->_cancellations.append(alert);
+      break;
+    case Remind:
+      queue->_reminders.append(alert);
+    };
     if (!queue->_processingScheduled) {
       // wait for a while before sending a mail with only 1 alert, in case some
       // related alerts are coming soon after this one
@@ -87,8 +93,6 @@ void MailAlertChannel::doSendMessage(Alert alert, bool cancellation) {
   }
 }
 
-// LATER also send reminders of long raised alerts every e.g. 1 hour
-
 void MailAlertChannel::processQueue(const QVariant address) {
   const QString addr(address.toString());
   MailAlertQueue *queue = _queues.value(addr);
@@ -98,13 +102,15 @@ void MailAlertChannel::processQueue(const QVariant address) {
     return;
   }
   queue->_processingScheduled = false;
-  if (queue->_alerts.size() || queue->_cancellations.size()) {
+  if (queue->_alerts.size() || queue->_cancellations.size()
+      || queue->_reminders.size()) {
     QString errorString;
     int s = queue->_lastMail.secsTo(QDateTime::currentDateTime());
     if (queue->_lastMail.isNull() || s >= _minDelayBetweenMails) {
       Log::debug() << "MailAlertChannel::processQueue trying to send alerts "
                       "mail to " << addr << ": " << queue->_alerts.size()
-                   << " + " << queue->_cancellations.size();
+                   << " + " << queue->_cancellations.size() << " + "
+                   << queue->_reminders.size();
       QStringList recipients(addr);
       QString body;
       QMap<QString,QString> headers;
@@ -116,16 +122,27 @@ void MailAlertChannel::processQueue(const QVariant address) {
       // LATER HTML alert mails
       body.append("This message contains ")
           .append(QString::number(queue->_alerts.size()))
-          .append(" new raised alerts and ")
+          .append(" new raised alerts, ")
           .append(QString::number(queue->_cancellations.size()))
-          .append(" alert cancellations.\r\n\r\n");
+          .append(" alert cancellations and ")
+          .append(QString::number(queue->_reminders.size()))
+          .append(" reminders.\r\n\r\n");
       body.append("NEW RAISED ALERTS:\r\n\r\n");
       if (queue->_alerts.isEmpty())
         body.append("(none)\r\n");
       else
         foreach (Alert alert, queue->_alerts)
           body.append(alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz"))
-              .append(" ").append(alert.rule().message(alert)).append("\r\n");
+              .append(" ").append(alert.rule().emitMessage(alert))
+              .append("\r\n");
+      body.append("\r\nAlerts reminders (alerts still raised):\r\n\r\n");
+      if (queue->_reminders.isEmpty())
+        body.append("(none)\r\n");
+      else
+        foreach (Alert alert, queue->_reminders)
+          body.append(alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz"))
+              .append(" ").append(alert.rule().reminderMessage(alert))
+              .append("\r\n");
       body.append("\r\nFormer alerts canceled:\r\n\r\n");
       if (queue->_cancellations.isEmpty())
         body.append("(none)\r\n");
@@ -149,6 +166,7 @@ void MailAlertChannel::processQueue(const QVariant address) {
         Log::info() << "successfuly sent an alert mail to " << addr;
         queue->_alerts.clear();
         queue->_cancellations.clear();
+        queue->_reminders.clear();
         queue->_lastMail = QDateTime::currentDateTime();
       } else {
         Log::warning() << "cannot send mail alert to " << addr

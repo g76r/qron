@@ -39,7 +39,9 @@ class Alerter : public QObject {
   QList<AlertRule> _rules;
   QHash<QString,QDateTime> _raisedAlerts; // alert + raise time
   QHash<QString,QDateTime> _soonCanceledAlerts; // alert + scheduled cancel time
+  QHash<QString,QDateTime> _remindedAlerts; // alert + last reminder time
   int _cancelDelay;
+  int _remindFrequency;
 
 public:
   explicit Alerter();
@@ -88,14 +90,14 @@ signals:
   /** An alert has just been raised.
    * This signal is not emited when raising an alert that is already raised. */
   void alertRaised(QString alert);
-  /** An alert has just been canceled.
-   * This signal is emited only when canceling an alert that was raised.
-   * Note that most of the time th alert is not actually canceled (hence this
-   * signal is not emited) until a grace period called 'canceldelay'. */
-  void alertCanceled(QString alert);
   /** An alert has been scheduled for cancellation, e.g. through cancelAlert().
    * This signal is not emited when trying to cancel an alert that is not
-   * currently raised. */
+   * currently raised.
+   * This signal does not mean that the alert is yet actually cancelled.
+   * It will be actually canceled only after a grace period called
+   * 'canceldelay', if it is not raised again meanwhile.
+   * @see alertCancellationEmited()
+   * @see alertCancellationUnscheduled() */
   void alertCancellationScheduled(QString alert, QDateTime scheduledTime);
   /** An alert is raised again during then canceldelay grace period. */
   void alertCancellationUnscheduled(QString alert);
@@ -103,22 +105,24 @@ signals:
    * This can occur when raising an alert that is not already raised (through
    * raiseAlert()) or when directly an alert (through emitAlert()). */
   void alertEmited(QString alert);
-  /** An alert cancellation is emited through alert channels. */
-  void alertCancellationEmited(QString alert);
+  /** An alert has been actually canceled and emited through alert channels.
+   * This signal is only emited after the 'canceldelay' grace period. */
+  void alertCanceled(QString alert);
   /** Alert parameters (hence configuration) has changed. */
   void paramsChanged(ParamSet params);
   /** Alert rules (hence configuration) has changed. */
   void rulesChanged(QList<AlertRule> rules);
 
 private slots:
-  void processCancellation();
+  void asyncProcessing();
 
 private:
   Q_INVOKABLE void doEmitAlert(QString alert);
   void doEmitAlertCancellation(QString alert);
+  void doRemindAlert(QString alert);
   Q_INVOKABLE void doRaiseAlert(QString alert);
   Q_INVOKABLE void doCancelAlert(QString alert, bool immediately = false);
-  void sendMessage(Alert alert, bool cancellation);
+  inline void sendMessage(Alert alert, AlertChannel::MessageType type);
 };
 
 #endif // ALERTER_H

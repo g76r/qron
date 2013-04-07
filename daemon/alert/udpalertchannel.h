@@ -26,7 +26,7 @@ class UdpAlertChannel : public AlertChannel {
 
 public:
   explicit UdpAlertChannel(QObject *parent = 0);
-  void doSendMessage(Alert alert, bool cancellation);
+  void doSendMessage(Alert alert, MessageType type);
 };
 
 #endif // UDPALERTCHANNEL_H

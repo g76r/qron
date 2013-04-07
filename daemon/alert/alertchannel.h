@@ -25,9 +25,13 @@ protected:
   QThread *_thread;
 
 public:
+  enum MessageType { Emit, Cancel, Remind };
   explicit AlertChannel(QObject *parent = 0);
-  void sendMessage(Alert alert, bool cancellation);
-  Q_INVOKABLE virtual void doSendMessage(Alert alert, bool cancellation) = 0;
+  void sendMessage(Alert alert, MessageType type);
+
+protected:
+  Q_INVOKABLE virtual void doSendMessage(Alert alert,
+                                         AlertChannel::MessageType type) = 0;
 };
 
 #endif // ALERTCHANNEL_H

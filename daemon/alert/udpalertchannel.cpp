@@ -22,7 +22,9 @@ UdpAlertChannel::UdpAlertChannel(QObject *parent) : AlertChannel(parent),
   _thread->setObjectName("UdpAlertChannelThread");
 }
 
-void UdpAlertChannel::doSendMessage(Alert alert, bool cancellation) {
+void UdpAlertChannel::doSendMessage(Alert alert, MessageType type) {
+  if (type == Remind)
+    return; // ignore reminders
   if (!_socket)
     _socket = new QUdpSocket(this);
   // LATER support IPv6 numeric addresses (they contain colons)
@@ -37,8 +39,9 @@ void UdpAlertChannel::doSendMessage(Alert alert, bool cancellation) {
   const QString host = tokens.at(0);
   _socket->connectToHost(host, (quint16)port, QIODevice::WriteOnly);
   if (_socket->waitForConnected(2000)) {
-    const QString message = cancellation ? alert.rule().cancelMessage(alert)
-                                         : alert.rule().message(alert);
+    const QString message =
+        type == Cancel ? alert.rule().cancelMessage(alert)
+                       : alert.rule().emitMessage(alert);
     qint64 rc = _socket->write(message.toUtf8());
     if (rc < 0)
       Log::warning() << "error when emiting UDP alert: " << _socket->error()

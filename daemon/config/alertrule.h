@@ -40,8 +40,9 @@ public:
   QWeakPointer<AlertChannel> channel() const;
   QString channelName() const;
   QString address() const;
-  QString message(Alert alert) const;
+  QString emitMessage(Alert alert) const;
   QString cancelMessage(Alert alert) const;
+  QString reminderMessage(Alert alert) const;
   QString rawMessage() const;
   QString rawCancelMessage() const;
   bool stop() const;

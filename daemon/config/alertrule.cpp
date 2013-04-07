@@ -23,7 +23,8 @@ public:
   QString _pattern;
   QRegExp _patterRegExp;
   QWeakPointer<AlertChannel> _channel;
-  QString _address, _message, _cancelMessage, _channelName;
+  QString _address, _emitMessage, _cancelMessage, _reminderMessage,
+  _channelName;
   bool _stop, _notifyCancel;
 };
 
@@ -51,8 +52,9 @@ AlertRule::AlertRule(const PfNode node, const QString pattern,
   d->_channel = channel;
   d->_channelName = channelName;
   d->_address = node.attribute("address"); // LATER check uniqueness
-  d->_message = node.attribute("message"); // LATER check uniqueness
+  d->_emitMessage = node.attribute("emitmessage"); // LATER check uniqueness
   d->_cancelMessage = node.attribute("cancelmessage"); // LATER check uniqueness
+  d->_reminderMessage = node.attribute("remindermessage"); // LATER check uniqueness
   d->_stop = stop;
   d->_notifyCancel = notifyCancel;
 }
@@ -124,22 +126,29 @@ QString AlertRule::address() const {
 
 }
 
-QString AlertRule::message(Alert alert) const {
-  QString rawMessage = d ? d->_message : QString();
+QString AlertRule::emitMessage(Alert alert) const {
+  QString rawMessage = d ? d->_emitMessage : QString();
   if (rawMessage.isEmpty())
-    rawMessage = "alert "+alert.id();
+    rawMessage = "alert raised: "+alert.id();
   return ParamSet().evaluate(rawMessage, &alert);
 }
 
 QString AlertRule::cancelMessage(Alert alert) const {
   QString rawMessage = d ? d->_cancelMessage : QString();
   if (rawMessage.isEmpty())
-    rawMessage = "alert "+alert.id()+" canceled";
+    rawMessage = "alert canceled: "+alert.id();
+  return ParamSet().evaluate(rawMessage, &alert);
+}
+
+QString AlertRule::reminderMessage(Alert alert) const {
+  QString rawMessage = d ? d->_reminderMessage : QString();
+  if (rawMessage.isEmpty())
+    rawMessage = "alert still raised: "+alert.id();
   return ParamSet().evaluate(rawMessage, &alert);
 }
 
 QString AlertRule::rawMessage() const {
-  return d ? d->_message : QString();
+  return d ? d->_emitMessage : QString();
 }
 
 QString AlertRule::rawCancelMessage() const {

@@ -24,7 +24,7 @@ class LogAlertChannel : public AlertChannel {
 
 public:
   explicit LogAlertChannel(QObject *parent = 0);
-  void doSendMessage(Alert alert, bool cancellation);
+  void doSendMessage(Alert alert, MessageType type);
 };
 
 #endif // LOGALERTCHANNEL_H

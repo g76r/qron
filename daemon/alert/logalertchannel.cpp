@@ -19,8 +19,18 @@ LogAlertChannel::LogAlertChannel(QObject *parent) : AlertChannel(parent) {
   _thread->setObjectName("LogAlertChannelThread");
 }
 
-void LogAlertChannel::doSendMessage(Alert alert, bool cancellation) {
-  Log::log(cancellation ? alert.rule().cancelMessage(alert)
-                        : alert.rule().message(alert),
-           Log::severityFromString(alert.rule().address()));
+void LogAlertChannel::doSendMessage(Alert alert, MessageType type) {
+  switch(type) {
+  case Emit:
+    Log::log(alert.rule().emitMessage(alert),
+             Log::severityFromString(alert.rule().address()));
+    break;
+  case Cancel:
+    Log::log(alert.rule().cancelMessage(alert),
+             Log::severityFromString(alert.rule().address()));
+    break;
+  case Remind:
+    ; // ignore reminders
+  }
+
 }
