@@ -94,7 +94,7 @@ TaskRequest &TaskRequest::operator=(const TaskRequest &other) {
   return *this;
 }
 
-bool TaskRequest::operator==(const TaskRequest &other) {
+bool TaskRequest::operator==(const TaskRequest &other) const {
   return (!d && !other.d) || (d && other.d && d->_id == other.d->_id);
 }
 
@@ -246,4 +246,12 @@ QString TaskRequest::statusAsString(
     return "canceled";
   }
   return "unknown";
+}
+
+bool TaskRequest::isNull() {
+  return !d || d->_id == 0;
+}
+
+uint qHash(const TaskRequest &request) {
+  return (uint)request.id();
 }

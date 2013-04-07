@@ -45,7 +45,8 @@ class Scheduler : public QObject {
   QMap<QString,QMap<QString,qint64> > _resources;
   QSet<QString> _setFlags, _unsetenv;
   mutable QMutex _flagsMutex, _configMutex;
-  QList<TaskRequest> _queuedRequests, _runningRequests;
+  QList<TaskRequest> _queuedRequests;
+  QHash<TaskRequest,Executor*> _runningRequests;
   QList<Executor*> _availableExecutors;
   Alerter *_alerter;
   bool _firstConfigurationLoad;
@@ -78,19 +79,36 @@ public slots:
     * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
     * @param params override some params at request time
     * @param force if true, any constraints or ressources are ignored
-    * @return request id if task queued, -1 if task cannot be queued
+    * @return request id if task queued, isNull() if task cannot be queued
     */
-  quint64 syncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
-                          bool force = false);
+  TaskRequest syncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
+                              bool force = false);
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
    * processing the request.
-   * If current thread is the Scheduler thread, the call is queued anyway,
-   * which make the method safe to be called when already locking Scheduler
-   * mutexes.
+   * If current thread is the Scheduler thread, the call is queued anyway.
    */
   void asyncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
                         bool force = false);
+  /** Cancel a queued request.
+   * @return TaskRequest.isNull() iff error (e.g. request not found or no longer
+   * queued */
+  TaskRequest cancelRequest(quint64 id);
+  TaskRequest cancelRequest(TaskRequest request) {
+    return cancelRequest(request.id()); }
+  /** Abort a running request.
+   * For local tasks aborting means killing, for ssh tasks aborting means
+   * killing ssh client hence most of time killing actual task, for http tasks
+   * aborting means closing the socket.
+   * Beware that, but for local tasks, aborting a task does not guarantees that
+   * the application processing is actually ended whereas it frees resources
+   * and tasks instance counters, hence enabling immediate reexecution of the
+   * same task.
+   * @return TaskRequest.isNull() iff error (e.g. request not found or no longer
+   * running */
+  TaskRequest abortTask(quint64 id);
+  TaskRequest abortTask(TaskRequest request) {
+    return abortTask(request.id()); }
   /** Set a flag, which will be evaluated by any following task constraints
     * evaluation.
     * This method is thread-safe. */
@@ -166,8 +184,10 @@ private:
   bool reloadConfiguration(PfNode root, QString &errorString);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
-  Q_INVOKABLE quint64 enqueueTaskRequest(const QString fqtn, ParamSet params,
-                                    bool force);
+  Q_INVOKABLE TaskRequest enqueueTaskRequest(const QString fqtn,
+                                             ParamSet params, bool force);
+  Q_INVOKABLE TaskRequest doCancelRequest(quint64 id);
+  Q_INVOKABLE TaskRequest doAbortTask(quint64 id);
   Q_DISABLE_COPY(Scheduler)
 };
 

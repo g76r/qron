@@ -75,7 +75,26 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         break;
       case 8: {
         QString actions;
-        actions = " <span class=\"label label-info\" title=\"Log\">"
+        switch(r.status()) {
+        case TaskRequest::Queued:
+          /* cancel */
+          actions += " <span class=\"label label-important\" "
+              "title=\"Cancel request\"><a href=\"do?event=cancelRequest&id="
+              +QString::number(r.id())
+              +"\"><i class=\"icon-remove icon-white\"></i></a></span>";
+          break;
+        case TaskRequest::Running:
+          /* abort */
+          actions += " <span class=\"label label-important\" "
+              "title=\"Abort task\"><a href=\"do?event=abortTask&id="
+              +QString::number(r.id())+"\">"
+              "<i class=\"glyphicon-skull glyphicon-white\"></i></a></span>";
+          break;
+        default:
+          ;
+        }
+        /* log */
+        actions += " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
             +r.task().fqtn()+"/"+QString::number(r.id())
             +"%20\"><i class=\"icon-th-list icon-white\"></i></a></span>";
@@ -87,11 +106,17 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       }
       break;
     case TextViews::TrClassRole:
-      if (!r.endDatetime().isNull())
-        return r.success() || r.startDatetime().isNull() ? QVariant() : "error";
-      if (!r.startDatetime().isNull())
+      switch(r.status()) {
+      case TaskRequest::Queued:
+        return "warning";
+      case TaskRequest::Running:
         return "info";
-      return "warning";
+      case TaskRequest::Failure:
+        return "error";
+      case TaskRequest::Canceled:
+      case TaskRequest::Success:
+        ;
+      }
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
       case 8: {

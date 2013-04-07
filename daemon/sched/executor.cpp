@@ -22,7 +22,7 @@
 #include <QNetworkReply>
 
 Executor::Executor() : QObject(0), _isTemporary(false), _thread(new QThread),
-  _process(0), _nam(new QNetworkAccessManager(this)) {
+  _process(0), _nam(new QNetworkAccessManager(this)), _reply(0) {
   _thread->setObjectName(QString("Executor-%1")
                          .arg((long)_thread, sizeof(long)*2, 16,
                               QLatin1Char('0')));
@@ -248,21 +248,21 @@ void Executor::httpMean(TaskRequest request) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact GET URL to be called: "
           << url.toString(QUrl::RemovePassword);
-      _nam->get(QNetworkRequest(url));
+      _reply = _nam->get(QNetworkRequest(url));
     } else if (method.compare("put", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact PUT URL to be called: "
           << url.toString(QUrl::RemovePassword);
       QBuffer *buffer = new QBuffer(this);
       buffer->open(QIODevice::ReadOnly);
-      _nam->put(QNetworkRequest(url), buffer);
+      _reply = _nam->put(QNetworkRequest(url), buffer);
     } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact POST URL to be called: "
           << url.toString(QUrl::RemovePassword);
       QBuffer *buffer = new QBuffer(this);
       buffer->open(QIODevice::ReadOnly);
-      _nam->post(QNetworkRequest(url), buffer);
+      _reply = _nam->post(QNetworkRequest(url), buffer);
     } else {
       Log::error(_request.task().fqtn(), _request.id())
           << "unsupported HTTP method: " << method;
@@ -284,6 +284,10 @@ void Executor::httpMean(TaskRequest request) {
 }
 
 void Executor::replyFinished(QNetworkReply *reply) {
+  QString fqtn(_request.task().fqtn());
+  if (reply != _reply)
+    Log::debug(fqtn, _request.id()) << "Executor::replyFinished receive "
+                                       "strange pointer";
   int status = reply
       ->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   QString reason = reply
@@ -292,18 +296,19 @@ void Executor::replyFinished(QNetworkReply *reply) {
   bool success = (status < 300 && status >= 100
                   && error == QNetworkReply::NoError);
   _request.setEndDatetime();
-  Log::log(success ? Log::Info : Log::Warning, _request.task().fqtn(),
-           _request.id())
-      << "task '" << _request.task().fqtn() << "' finished "
+  Log::log(success ? Log::Info : Log::Warning, fqtn, _request.id())
+      << "task '" << fqtn << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
       << status << " (" << reason << ") on host '"
       << _request.target().hostname() << "' in " << _request.runningMillis()
       << " ms, with network error code " << error;
+  // LATER translate network error codes into human readable strings
   _request.setSuccess(success);
   _request.setReturnCode(status);
   emit taskFinished(_request, this);
   _request = TaskRequest();
   reply->deleteLater();
+  _reply = 0;
 }
 
 void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
@@ -331,5 +336,24 @@ void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
     if (setenv)
       setenv->insert(key, value);
     sysenv->insert(key, value);
+  }
+}
+
+void Executor::abort() {
+  QMetaObject::invokeMethod(this, "doAbort");
+}
+
+void Executor::doAbort() {
+  if (_request.isNull()) {
+    Log::warning() << "cannot abort task because this executor is not "
+                      "currently responsible for any task";
+  }
+  else if (_process) {
+    _process->kill();
+  } else if (_reply) {
+    _reply->abort();
+  } else {
+    Log::warning(_request.task().fqtn(), _request.id())
+        << "cannot abort task because its execution mean is not abortable";
   }
 }

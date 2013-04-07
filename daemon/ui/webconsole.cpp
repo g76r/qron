@@ -15,6 +15,7 @@
 #include "util/ioutils.h"
 #include <QFile>
 #include <QThread>
+#include "config/taskrequest.h"
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _tasksTreeModel(new TasksTreeModel(this)),
@@ -382,17 +383,30 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     QString event = req.param("event");
     QString fqtn = req.param("fqtn");
     QString alert = req.param("alert");
+    quint64 id = req.param("id").toULongLong();
     QString message;
     if (_scheduler) {
       if (event == "requestTask") {
         // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
-        qint64 id = _scheduler->syncRequestTask(fqtn);
-        if (id > 0)
+        TaskRequest request = _scheduler->syncRequestTask(fqtn);
+        if (!request.isNull())
           message = "S:Task '"+fqtn+"' submitted for execution with id "
-              +QString::number(id)+".";
+              +QString::number(request.id())+".";
         else
           message = "E:Execution request of task '"+fqtn
               +"' failed (see logs for more information).";
+      } else if (event == "cancelRequest") {
+        TaskRequest request = _scheduler->cancelRequest(id);
+        if (!request.isNull())
+          message = "S:Task request "+QString::number(id)+" cancelled.";
+        else
+          message = "E:Cannot cancel request "+QString::number(id)+".";
+      } else if (event == "abortTask") {
+        TaskRequest request = _scheduler->abortTask(id);
+        if (!request.isNull())
+          message = "S:Task "+QString::number(id)+" aborted.";
+        else
+          message = "E:Cannot abort task "+QString::number(id)+".";
       } else if (event == "enableTask") {
         bool enable = req.param("enable") == "true";
         if (_scheduler->enableTask(fqtn, enable))

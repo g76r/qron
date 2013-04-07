@@ -32,7 +32,7 @@ public:
   TaskRequest(Task task, ParamSet params, bool force = false);
   ~TaskRequest();
   TaskRequest &operator=(const TaskRequest &);
-  bool operator==(const TaskRequest &);
+  bool operator==(const TaskRequest &) const;
   const Task task() const;
   const ParamSet params() const;
   quint64 id() const;
@@ -82,6 +82,9 @@ public:
       return true;
     }
   }
+  bool isNull();
 };
+
+uint qHash(const TaskRequest &request);
 
 #endif // TASKREQUEST_H

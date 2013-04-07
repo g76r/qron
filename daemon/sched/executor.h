@@ -33,15 +33,16 @@ class Executor : public QObject {
   TaskRequest _request;
   QNetworkAccessManager *_nam;
   QProcessEnvironment _baseenv;
+  QNetworkReply *_reply;
 
 public:
   explicit Executor();
   void setTemporary(bool temporary = true) { _isTemporary = temporary; }
   bool isTemporary() const { return _isTemporary; }
-  
-public slots:
   /** Execute a request now. This method is thread-safe. */
   void execute(TaskRequest request);
+  /** Abort current request now. This method is thread-safe. */
+  void abort();
 
 signals:
   /** Signal emited whenever a task is no longer running or queued:
@@ -65,6 +66,7 @@ private:
                    QProcessEnvironment sysenv);
   inline void prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
                          QHash<QString, QString> *setenv = 0);
+  Q_INVOKABLE void doAbort();
   Q_DISABLE_COPY(Executor)
 };
 

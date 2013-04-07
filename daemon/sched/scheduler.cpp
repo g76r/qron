@@ -364,16 +364,17 @@ void Scheduler::triggerEvents(const QList<Event> list,
     e.trigger(context);
 }
 
-quint64 Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
+TaskRequest Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
                                bool force) {
   if (this->thread() == QThread::currentThread())
     return enqueueTaskRequest(fqtn, params, force);
-  quint64 id = -1;
+  TaskRequest request;
   QMetaObject::invokeMethod(this, "enqueueTaskRequest",
                             Qt::BlockingQueuedConnection,
-                            Q_RETURN_ARG(quint64, id), Q_ARG(QString, fqtn),
-                            Q_ARG(ParamSet, params), Q_ARG(bool, force));
-  return id;
+                            Q_RETURN_ARG(TaskRequest, request),
+                            Q_ARG(QString, fqtn), Q_ARG(ParamSet, params),
+                            Q_ARG(bool, force));
+  return request;
 }
 
 void Scheduler::asyncRequestTask(const QString fqtn, ParamSet params,
@@ -383,14 +384,14 @@ void Scheduler::asyncRequestTask(const QString fqtn, ParamSet params,
                             Q_ARG(bool, force));
 }
 
-quint64 Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
+TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
                                       bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
   ml.unlock();
   if (task.isNull()) {
     Log::warning() << "requested task not found: " << fqtn << params << force;
-    return -1;
+    return TaskRequest();
   }
   if (!params.parent().isNull()) {
     Log::warning() << "task requested with non null params' parent (parent will"
@@ -425,7 +426,65 @@ quint64 Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
   reevaluateQueuedRequests();
   emit taskQueued(request);
   emit taskChanged(task);
-  return request.id();
+  return request;
+}
+
+TaskRequest Scheduler::cancelRequest(quint64 id) {
+  if (this->thread() == QThread::currentThread())
+    return doCancelRequest(id);
+  TaskRequest request;
+  QMetaObject::invokeMethod(this, "doCancelRequest",
+                            Qt::BlockingQueuedConnection,
+                            Q_RETURN_ARG(TaskRequest, request),
+                            Q_ARG(quint64, id));
+  return request;
+}
+
+TaskRequest Scheduler::doCancelRequest(quint64 id) {
+  for (int i = 0; i < _queuedRequests.size(); ++i) {
+    TaskRequest r2 = _queuedRequests[i];
+    if (id == r2.id()) {
+      QString fqtn(r2.task().fqtn());
+      Log::info(fqtn, id) << "canceling task as requested";
+      r2.setReturnCode(-1);
+      r2.setSuccess(false);
+      r2.setEndDatetime();
+      emit taskFinished(r2, QWeakPointer<Executor>());
+      return r2;
+    }
+  }
+  Log::warning() << "cannot cancel task request because it is not in requests "
+                    "queue";
+  return TaskRequest();
+}
+
+TaskRequest Scheduler::abortTask(quint64 id) {
+  if (this->thread() == QThread::currentThread())
+    return doAbortTask(id);
+  TaskRequest request;
+  QMetaObject::invokeMethod(this, "doAbortTask",
+                            Qt::BlockingQueuedConnection,
+                            Q_RETURN_ARG(TaskRequest, request),
+                            Q_ARG(quint64, id));
+  return request;
+}
+
+TaskRequest Scheduler::doAbortTask(quint64 id) {
+  QList<TaskRequest> tasks = _runningRequests.keys();
+  for (int i = 0; i < tasks.size(); ++i) {
+    TaskRequest r2 = tasks[i];
+    if (id == r2.id()) {
+      QString fqtn(r2.task().fqtn());
+      Executor *executor = _runningRequests.value(r2);
+      if (executor) {
+        Log::warning(fqtn, id) << "aborting task as requested";
+        executor->abort();
+        return r2;
+      }
+    }
+  }
+  Log::warning() << "cannot abort task because it is not in running tasks list";
+  return TaskRequest();
 }
 
 void Scheduler::checkTriggersForTask(QVariant fqtn) {
@@ -454,10 +513,11 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    quint64 id = syncRequestTask(fqtn);
-    if (id > 0)
-      Log::debug(fqtn, id) << "cron trigger '" << trigger.cronExpression()
-                           << "' triggered task '" << fqtn << "'";
+    TaskRequest request = syncRequestTask(fqtn);
+    if (!request.isNull())
+      Log::debug(fqtn, request.id())
+          << "cron trigger '" << trigger.cronExpression()
+          << "' triggered task '" << fqtn << "'";
     else
       Log::debug(fqtn) << "cron trigger '" << trigger.cronExpression()
                        << "' failed to trigger task '" << fqtn << "'";
@@ -561,7 +621,7 @@ void Scheduler::startQueuedTasks() {
   for (int i = 0; i < _queuedRequests.size(); ) {
     TaskRequest r = _queuedRequests[i];
     if (startQueuedTask(r)) {
-      _runningRequests.append(_queuedRequests.takeAt(i));
+      _queuedRequests.removeAt(i);
       if (r.task().discardAliasesOnStart() != Task::DiscardNone) {
         // remove other requests of same task
         QString fqtn(r.task().fqtn());
@@ -675,6 +735,7 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     emit taskStarted(request);
     emit taskChanged(task);
     reevaluateQueuedRequests();
+    _runningRequests.insert(request, executor);
     return true;
 nexthost:;
   }
@@ -705,7 +766,7 @@ void Scheduler::taskFinishing(TaskRequest request,
     else
       _availableExecutors.append(e);
   }
-  _runningRequests.removeAll(request);
+  _runningRequests.remove(request);
   QMap<QString,qint64> taskResources = requestedTask.resources();
   QMap<QString,qint64> hostResources = _resources.value(request.target().id());
   foreach (QString kind, taskResources.keys())
@@ -762,7 +823,7 @@ bool Scheduler::enableTask(const QString fqtn, bool enable) {
 void Scheduler::periodicChecks() {
   // detect queued or running tasks that exceeded their max expected duration
   QList<TaskRequest> currentRequests(_queuedRequests);
-  currentRequests.append(_runningRequests);
+  currentRequests.append(_runningRequests.keys());
   foreach (const TaskRequest r, currentRequests) {
     const Task t(r.task());
     if (t.maxExpectedDuration() < r.liveTotalMillis())
