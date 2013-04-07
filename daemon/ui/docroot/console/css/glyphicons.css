@@ -7,6 +7,9 @@
     background-image:url("../img/glyphicons.png");
     background-repeat:no-repeat;
 }
+[class^="glyphicon-white"],[class*=" glyphicon-white"] {
+    background-image:url("../img/glyphicons-white.png");
+}
 [class^="glyphicon-"]:last-child,[class*=" glyphicon-"]:last-child {
     *margin-left:0;
 }
