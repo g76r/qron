@@ -39,6 +39,7 @@
 #include "config/configutils.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
+#define DEFAULT_MAXQUEUEDREQUESTS 128
 
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _configMutex(QMutex::Recursive),
@@ -246,6 +247,24 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
     Log::debug() << "keep maxtotaltaskinstances of " << maxtotaltaskinstances;
   }
   _maxtotaltaskinstances = maxtotaltaskinstances;
+  int maxqueuedrequests = 0;
+  foreach (PfNode node, root.childrenByName("maxqueuedrequests")) {
+    int n = node.contentAsString().toInt(0, 0);
+    if (n > 0) {
+      if (maxqueuedrequests > 0) {
+        Log::warning() << "overriding maxqueuedrequests "
+                       << maxqueuedrequests << " with " << n;
+      }
+      maxqueuedrequests = n;
+    } else {
+      Log::warning() << "ignoring maxqueuedrequests with incorrect "
+                        "value: " << node.toPf();
+    }
+  }
+  if (maxqueuedrequests <= 0)
+    maxqueuedrequests = DEFAULT_MAXQUEUEDREQUESTS;
+  _maxqueuedrequests = maxqueuedrequests;
+  Log::debug() << "setting maxqueuedrequests to " << maxqueuedrequests;
   foreach (PfNode node, root.childrenByName("alerts")) {
     // LATER warn or fail if duplicated
     if (!_alerter->loadConfiguration(node, errorString))
@@ -418,8 +437,16 @@ TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
       }
     }
   }
+  if (_queuedRequests.size() >= _maxqueuedrequests) {
+    Log::error(fqtn, request.id())
+        << "cannot queue task because maxqueuedrequests is already reached ("
+        << _maxqueuedrequests << ")";
+    _alerter->raiseAlert("scheduler.maxqueuedrequests.reached");
+    return TaskRequest();
+  }
+  _alerter->cancelAlert("scheduler.maxqueuedrequests.reached");
   Log::debug(fqtn, request.id())
-      << "queuing task '" << task.fqtn() << "' with params " << params;
+      << "queuing task";
   // note: a request must always be queued even if the task can be started
   // immediately, to avoid the new tasks being started before queued ones
   _queuedRequests.append(request);
@@ -668,8 +695,10 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     Log::warning() << "requested task '" << fqtn << "' cannot be executed "
                       "because maxinstances is already reached ("
                    << task.maxInstances() << ")";
+    _alerter->raiseAlert("task.maxinstancesreached."+fqtn);
     return false;
   }
+  _alerter->cancelAlert("task.maxinstancesreached."+fqtn);
   // LATER check flags
   QMutexLocker ml(&_configMutex);
   QList<Host> hosts;

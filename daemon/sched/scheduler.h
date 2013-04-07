@@ -52,7 +52,7 @@ class Scheduler : public QObject {
   bool _firstConfigurationLoad;
   QList<Event> _onstart, _onsuccess, _onfailure;
   QList<Event> _onlog, _onnotice, _onschedulerstart;
-  int _maxtotaltaskinstances;
+  int _maxtotaltaskinstances, _maxqueuedrequests;
 
 public:
   Scheduler();
