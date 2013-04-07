@@ -398,7 +398,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       } else if (event == "cancelRequest") {
         TaskRequest request = _scheduler->cancelRequest(id);
         if (!request.isNull())
-          message = "S:Task request "+QString::number(id)+" cancelled.";
+          message = "S:Task request "+QString::number(id)+" canceled.";
         else
           message = "E:Cannot cancel request "+QString::number(id)+".";
       } else if (event == "abortTask") {
