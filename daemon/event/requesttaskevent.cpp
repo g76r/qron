@@ -16,32 +16,38 @@
 
 class RequestTaskEventData : public EventData {
 public:
-  QString _fqtn;
+  QString _idOrFqtn;
   ParamSet _params;
   bool _force;
-  RequestTaskEventData(Scheduler *scheduler = 0, const QString fqtn = QString(),
+  RequestTaskEventData(Scheduler *scheduler = 0,
+                       const QString idOrFqtn = QString(),
                        ParamSet params = ParamSet(), bool force = false)
-    : EventData(scheduler), _fqtn(fqtn), _params(params), _force(force) { }
+    : EventData(scheduler), _idOrFqtn(idOrFqtn), _params(params), _force(force) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler) {
       QString fqtn = context ? context->paramValue("!fqtn") : QString();
       QString id = context ? context->paramValue("!taskrequestid") : QString();
+      QString group = context ? context->paramValue("!taskgroupid") : QString();
       Log::log(fqtn.isNull() ? Log::Debug : Log::Info, fqtn, id.toLongLong())
-          << "requesttask event requesting execution of task " << _fqtn;
-      _scheduler.data()->asyncRequestTask(_params.evaluate(_fqtn, context),
-                                          _params, _force);
+          << "requesttask event requesting execution of task " << _idOrFqtn;
+      QString idOrFqtn = _params.evaluate(_idOrFqtn, context);
+      QString local = group+"."+_idOrFqtn;
+      if (_scheduler.data()->taskExists(local))
+        _scheduler.data()->asyncRequestTask(local, _params, _force);
+      else
+        _scheduler.data()->asyncRequestTask(idOrFqtn, _params, _force);
       // LATER if requestTask returns the TaskRequest object, we can track child taskrequestid
       // LATER this special case should be logged to a special data model to enable drawing parent-child diagrams
     }
   }
   QString toString() const {
-    return "*" + _fqtn;
+    return "*" + _idOrFqtn;
   }
 };
 
-RequestTaskEvent::RequestTaskEvent(Scheduler *scheduler, const QString fqtn,
+RequestTaskEvent::RequestTaskEvent(Scheduler *scheduler, const QString idOrFqtn,
                                    ParamSet params, bool force)
-  : Event(new RequestTaskEventData(scheduler, fqtn, params, force)) {
+  : Event(new RequestTaskEventData(scheduler, idOrFqtn, params, force)) {
 }
 
 RequestTaskEvent::RequestTaskEvent(const RequestTaskEvent &rhs) : Event(rhs) {

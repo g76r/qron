@@ -131,6 +131,7 @@ public slots:
     * This method is threadsafe */
   bool enableTask(const QString fqtn, bool enable);
   ParamSet globalParams() const { return _globalParams; }
+  bool taskExists(QString fqtn);
 
 signals:
   void tasksConfigurationReset(QMap<QString,TaskGroup> tasksGroups,

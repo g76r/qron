@@ -22,7 +22,7 @@ class Scheduler;
 
 class RequestTaskEvent : public Event {
 public:
-  RequestTaskEvent(Scheduler *scheduler = 0, const QString fqtn = QString(),
+  RequestTaskEvent(Scheduler *scheduler = 0, const QString idOrFqtn = QString(),
                    ParamSet params = ParamSet(), bool force = false);
   RequestTaskEvent(const RequestTaskEvent &);
   ~RequestTaskEvent();

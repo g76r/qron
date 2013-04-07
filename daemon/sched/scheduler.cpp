@@ -849,6 +849,11 @@ bool Scheduler::enableTask(const QString fqtn, bool enable) {
   return true;
 }
 
+bool Scheduler::taskExists(QString fqtn) {
+  QMutexLocker ml(&_configMutex);
+  return _tasks.contains(fqtn);
+}
+
 void Scheduler::periodicChecks() {
   // detect queued or running tasks that exceeded their max expected duration
   QList<TaskRequest> currentRequests(_queuedRequests);
