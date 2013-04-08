@@ -91,6 +91,12 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
               "<i class=\"glyphicon-skull glyphicon-white\"></i></a></span>";
           break;
         default:
+          /* reexec */
+          actions += " <span class=\"label label-important\" "
+              "title=\"Request execution of same task\"><a href=\""
+              "do?event=requestTask&fqtn="+r.task().fqtn()+"\">"
+              "<i class=\"icon-repeat icon-white\"></i></a></span>";
+          break;
           ;
         }
         /* log */
