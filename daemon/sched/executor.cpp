@@ -20,6 +20,7 @@
 #include <QUrl>
 #include <QBuffer>
 #include <QNetworkReply>
+#include "log/qterrorcodes.h"
 
 Executor::Executor() : QObject(0), _isTemporary(false), _thread(new QThread),
   _process(0), _nam(new QNetworkAccessManager(this)), _reply(0) {
@@ -301,7 +302,8 @@ void Executor::replyFinished(QNetworkReply *reply) {
       << (success ? "successfully" : "in failure") << " with return code "
       << status << " (" << reason << ") on host '"
       << _request.target().hostname() << "' in " << _request.runningMillis()
-      << " ms, with network error code " << error;
+      << " ms, with network error '" << networkErrorAsString(error)
+      << "' (code " << error << ")";
   // LATER translate network error codes into human readable strings
   _request.setSuccess(success);
   _request.setReturnCode(status);
