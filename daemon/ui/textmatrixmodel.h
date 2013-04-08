@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,12 +16,12 @@
 
 #include <QAbstractTableModel>
 #include <QStringList>
-#include <QMap>
+#include <QHash>
 
 class TextMatrixModel : public QAbstractTableModel {
   Q_OBJECT
   QStringList _columnNames, _rowNames;
-  QMap<QString,QMap<QString,QString> > _values;
+  QHash<QString,QHash<QString,QString> > _values;
 
 public:
   explicit TextMatrixModel(QObject *parent = 0);
@@ -34,6 +34,7 @@ public:
 public slots:
   void setCellValue(const QString row, const QString column,
                     const QString value);
+  void clear();
 };
 
 #endif // TEXTTABLEMODEL_H

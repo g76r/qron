@@ -265,11 +265,15 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
     maxqueuedrequests = DEFAULT_MAXQUEUEDREQUESTS;
   _maxqueuedrequests = maxqueuedrequests;
   Log::debug() << "setting maxqueuedrequests to " << maxqueuedrequests;
-  foreach (PfNode node, root.childrenByName("alerts")) {
-    // LATER warn or fail if duplicated
-    if (!_alerter->loadConfiguration(node, errorString))
+  QList<PfNode> alerts = root.childrenByName("alerts");
+  if (alerts.size() > 1)
+    Log::warning() << "ignoring all but last duplicated alerts configuration";
+  if (alerts.size()) {
+    if (!_alerter->loadConfiguration(alerts.last(), errorString))
       return false;
-    //Log::debug() << "configured alerter";
+  } else {
+    if (!_alerter->loadConfiguration(PfNode("alerts"), errorString))
+      return false;
   }
   _onstart.clear();
   foreach (PfNode node, root.childrenByName("onstart"))

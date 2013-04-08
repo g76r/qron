@@ -112,6 +112,8 @@ signals:
   void paramsChanged(ParamSet params);
   /** Alert rules (hence configuration) has changed. */
   void rulesChanged(QList<AlertRule> rules);
+  /** Alert channels list changed. */
+  void channelsChanged(QStringList channels);
 
 private slots:
   void asyncProcessing();

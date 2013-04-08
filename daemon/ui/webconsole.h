@@ -38,6 +38,7 @@
 #include "flagssetmodel.h"
 #include "taskgroupsmodel.h"
 #include "lastemitedalertsmodel.h"
+#include "alertchannelsmodel.h"
 
 class QThread;
 
@@ -60,6 +61,7 @@ class WebConsole : public HttpHandler {
   SchedulerEventsModel *_schedulerEventsModel;
   FlagsSetModel *_flagsSetModel;
   TaskGroupsModel *_taskGroupsModel;
+  AlertChannelsModel *_alertChannelsModel;
   HtmlTreeView *_htmlTasksTreeView, *_htmlTargetsTreeView;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlResourcesAllocationView, *_htmlGlobalParamsView, *_htmlAlertParamsView,
@@ -71,7 +73,8 @@ class WebConsole : public HttpHandler {
   *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
   *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
-  *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView;
+  *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
+  *_htmlAlertChannelsView;
   ClockView *_clockView;
   CsvTableView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,

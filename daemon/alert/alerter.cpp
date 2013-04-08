@@ -50,6 +50,7 @@ Alerter::Alerter() : QObject(0), _thread(new QThread),
   qRegisterMetaType<Alert>("Alert");
   qRegisterMetaType<ParamSet>("ParamSet");
   qRegisterMetaType<QDateTime>("QDateTime");
+  qRegisterMetaType<QStringList>("QStringList");
 }
 
 Alerter::~Alerter() {
@@ -100,6 +101,9 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
                                         ALERTER_DEFAULT_REMIND_FREQUENCY);
   emit paramsChanged(_params);
   emit rulesChanged(_rules);
+  QStringList channels;
+  channels << "mail" << "udp" << "log";
+  emit channelsChanged(channels);
   return true;
 }
 

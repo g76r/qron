@@ -38,6 +38,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _schedulerEventsModel(new SchedulerEventsModel(this)),
   _flagsSetModel(new FlagsSetModel(this)),
   _taskGroupsModel(new TaskGroupsModel(this)),
+  _alertChannelsModel(new AlertChannelsModel(this)),
   _htmlTasksTreeView(new HtmlTreeView(this)),
   _htmlTargetsTreeView(new HtmlTreeView(this)),
   _htmlHostsListView(new HtmlTableView(this)),
@@ -66,6 +67,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlFlagsSetView20(new HtmlTableView(this)),
   _htmlTaskGroupsView(new HtmlTableView(this)),
   _htmlTaskGroupsEventsView(new HtmlTableView(this)),
+  _htmlAlertChannelsView(new HtmlTableView(this)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvTableView(this)),
   _csvTargetsTreeView(new CsvTableView(this)),
@@ -275,6 +277,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 0 << 3 << 4 << 5;
   _htmlTaskGroupsEventsView->setColumnIndexes(cols);
+  _htmlAlertChannelsView->setModel(_alertChannelsModel);
+  _htmlAlertChannelsView->setTableClass("table table-condensed table-hover");
+  cols.clear();
+  cols << 0; // TODO remove this workaround
+  _htmlAlertChannelsView->setColumnIndexes(cols);
+  _htmlAlertChannelsView->setRowHeaders();
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTasksTreeView->setFieldQuote('"');
@@ -341,6 +349,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("flagsset20", _htmlFlagsSetView20);
   _wuiHandler->addView("taskgroups", _htmlTaskGroupsView);
   _wuiHandler->addView("taskgroupsevents", _htmlTaskGroupsEventsView);
+  _wuiHandler->addView("alertchannels", _htmlAlertChannelsView);
   _memoryWarningLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryWarningLogger->model()
@@ -807,6 +816,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _taskGroupsModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                this, SLOT(globalParamsChanged(ParamSet)));
+    disconnect(_scheduler->alerter(), SIGNAL(channelsChanged(QStringList)),
+               _alertChannelsModel, SLOT(channelsChanged(QStringList)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -878,6 +889,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _taskGroupsModel, SLOT(setAllTasksAndGroups(QMap<QString,TaskGroup>,QMap<QString,Task>)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             this, SLOT(globalParamsChanged(ParamSet)));
+    connect(_scheduler->alerter(), SIGNAL(channelsChanged(QStringList)),
+            _alertChannelsModel, SLOT(channelsChanged(QStringList)));
     Log::addLogger(_memoryWarningLogger, false);
     Log::addLogger(_memoryInfoLogger, false);
   } else {
