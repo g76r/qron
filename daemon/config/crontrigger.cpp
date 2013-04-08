@@ -239,6 +239,8 @@ void CronTriggerData::parseCronExpression(QString cronExpression) {
   _days.reset();
   _months.reset();
   _daysofweek.reset();
+  if (cronExpression.isEmpty())
+    return;
   cronExpression += " "; // regexp are simpler if every field ends with a space
   QRegExp reExpr(RE_EXPR), reField(RE_FIELD), reStep(RE_STEP_INTERNAL);
   if (reExpr.exactMatch(cronExpression)) {
