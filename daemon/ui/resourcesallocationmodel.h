@@ -14,7 +14,7 @@
 #ifndef RESOURCESALLOCATIONMODEL_H
 #define RESOURCESALLOCATIONMODEL_H
 
-#include "textmatrixmodel.h"
+#include "textview/textmatrixmodel.h"
 #include "textviews.h"
 
 class ResourcesAllocationModel : public TextMatrixModel {

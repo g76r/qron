@@ -55,7 +55,6 @@ SOURCES += \
     ui/treemodelwithstructure.cpp \
     ui/targetstreemodel.cpp \
     config/cluster.cpp \
-    ui/textmatrixmodel.cpp \
     ui/hostslistmodel.cpp \
     ui/clusterslistmodel.cpp \
     ui/resourcesallocationmodel.cpp \
@@ -109,7 +108,6 @@ HEADERS += \
     ui/treemodelwithstructure.h \
     ui/targetstreemodel.h \
     config/cluster.h \
-    ui/textmatrixmodel.h \
     ui/hostslistmodel.h \
     ui/clusterslistmodel.h \
     ui/textviews.h \

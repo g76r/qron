@@ -14,7 +14,7 @@
 #ifndef ALERTCHANNELSMODEL_H
 #define ALERTCHANNELSMODEL_H
 
-#include "textmatrixmodel.h"
+#include "textview/textmatrixmodel.h"
 #include <QStringList>
 
 class AlertChannelsModel : public TextMatrixModel {
