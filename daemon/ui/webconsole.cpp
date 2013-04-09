@@ -69,6 +69,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskGroupsEventsView(new HtmlTableView(this)),
   _htmlAlertChannelsView(new HtmlTableView(this)),
   _htmlTasksResourcesView(new HtmlTableView(this)),
+  _htmlTasksAlertsView(new HtmlTableView(this)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvTableView(this)),
   _csvTargetsTreeView(new CsvTableView(this)),
@@ -290,6 +291,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 11 << 12 << 8;
   _htmlTasksResourcesView->setColumnIndexes(cols);
+  _htmlTasksAlertsView->setModel(_tasksModel);
+  _htmlTasksAlertsView->setTableClass("table table-condensed table-hover");
+  _htmlTasksAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
+  cols.clear();
+  cols << 11 << 6 << 23 << 24 << 12 << 16;
+  _htmlTasksAlertsView->setColumnIndexes(cols);
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTasksTreeView->setFieldQuote('"');
@@ -358,6 +366,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("taskgroupsevents", _htmlTaskGroupsEventsView);
   _wuiHandler->addView("alertchannels", _htmlAlertChannelsView);
   _wuiHandler->addView("tasksresources", _htmlTasksResourcesView);
+  _wuiHandler->addView("tasksalerts", _htmlTasksAlertsView);
   _memoryWarningLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryWarningLogger->model()

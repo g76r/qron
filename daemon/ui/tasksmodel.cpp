@@ -18,7 +18,7 @@
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 23
+#define COLUMNS 25
 #define SOON_EXECUTION_MILLIS 300000
 // 300,000 ms = 5'
 #define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
@@ -126,6 +126,18 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
           env.chop(1);
         return env;
       }
+      case 23: {
+        long long l = t.minExpectedDuration();
+        if (l > 0)
+          return QString::number(l*.001);
+        break;
+      }
+      case 24: {
+        long long l = t.maxExpectedDuration();
+        if (l < LLONG_MAX)
+          return QString::number(l*.001);
+        break;
+      }
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -151,6 +163,11 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
           return "<i class=\"glyphicon-alarm\"></i> ";
         break;
       }
+      case 13:
+      case 17:
+        if (t.instancesCount())
+          return "<i class=\"icon-play\"></i> ";
+        break;
       case 18: {
         QString fqtn = t.fqtn();
         bool enabled = t.enabled();
@@ -252,6 +269,10 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Setenv";
     case 22:
       return "Unsetenv";
+    case 23:
+      return "Min expected duration";
+    case 24:
+      return "Max expected duration";
     }
   }
   return QVariant();
