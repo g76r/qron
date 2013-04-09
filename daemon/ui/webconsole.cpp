@@ -68,6 +68,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskGroupsView(new HtmlTableView(this)),
   _htmlTaskGroupsEventsView(new HtmlTableView(this)),
   _htmlAlertChannelsView(new HtmlTableView(this)),
+  _htmlTasksResourcesView(new HtmlTableView(this)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvTableView(this)),
   _csvTargetsTreeView(new CsvTableView(this)),
@@ -104,14 +105,16 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHostsListView->setModel(_hostsListModel);
   _htmlHostsListView->setTableClass("table table-condensed table-hover");
   _htmlHostsListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlHostsListView->setEmptyPlaceholder("(no host)");
   _htmlClustersListView->setModel(_clustersListModel);
   _htmlClustersListView->setTableClass("table table-condensed table-hover");
   _htmlClustersListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
   _htmlResourcesAllocationView->setModel(_resourceAllocationModel);
   _htmlResourcesAllocationView->setTableClass("table table-condensed "
                                              "table-hover table-bordered");
   _htmlResourcesAllocationView->setRowHeaders();
-  //_htmlResourceAllocationView->setTopLeftHeader(QString::fromUtf8("Host × Resource"));
+  _htmlResourcesAllocationView->setEmptyPlaceholder("(no resource definition)");
   _htmlResourcesAllocationView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlGlobalParamsView->setModel(_globalParamsModel);
   _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
@@ -279,10 +282,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskGroupsEventsView->setColumnIndexes(cols);
   _htmlAlertChannelsView->setModel(_alertChannelsModel);
   _htmlAlertChannelsView->setTableClass("table table-condensed table-hover");
-  cols.clear();
-  cols << 0; // TODO remove this workaround
-  _htmlAlertChannelsView->setColumnIndexes(cols);
   _htmlAlertChannelsView->setRowHeaders();
+  _htmlTasksResourcesView->setModel(_tasksModel);
+  _htmlTasksResourcesView->setTableClass("table table-condensed table-hover");
+  _htmlTasksResourcesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlTasksResourcesView->setEmptyPlaceholder("(no task)");
+  cols.clear();
+  cols << 11 << 12 << 8;
+  _htmlTasksResourcesView->setColumnIndexes(cols);
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvTasksTreeView->setModel(_tasksTreeModel);
   _csvTasksTreeView->setFieldQuote('"');
@@ -350,6 +357,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("taskgroups", _htmlTaskGroupsView);
   _wuiHandler->addView("taskgroupsevents", _htmlTaskGroupsEventsView);
   _wuiHandler->addView("alertchannels", _htmlAlertChannelsView);
+  _wuiHandler->addView("tasksresources", _htmlTasksResourcesView);
   _memoryWarningLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryWarningLogger->model()

@@ -74,7 +74,7 @@ class WebConsole : public HttpHandler {
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
   *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
   *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
-  *_htmlAlertChannelsView;
+  *_htmlAlertChannelsView, *_htmlTasksResourcesView;
   ClockView *_clockView;
   CsvTableView *_csvTasksTreeView, *_csvTargetsTreeView, *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,

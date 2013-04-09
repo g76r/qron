@@ -22,8 +22,10 @@ QVariant ResourcesAllocationModel::headerData(
     int section, Qt::Orientation orientation, int role) const {
   switch(role) {
   case TextViews::HtmlPrefixRole:
-    return orientation == Qt::Horizontal ? "<i class=\"icon-glass\"></i> "
-                                         : "<i class=\"icon-hdd\"></i> ";
+    // glyphicon-celebration glyphicon-fast-food icon-glass
+    return orientation == Qt::Horizontal
+        ? "<i class=\"glyphicon-fast-food\"></i> "
+        : "<i class=\"icon-hdd\"></i> ";
   default:
     return TextMatrixModel::headerData(section, orientation, role);
   }
