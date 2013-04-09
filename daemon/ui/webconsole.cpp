@@ -289,7 +289,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksResourcesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlTasksResourcesView->setEmptyPlaceholder("(no task)");
   cols.clear();
-  cols << 11 << 12 << 8;
+  cols << 11 << 17 << 8;
   _htmlTasksResourcesView->setColumnIndexes(cols);
   _htmlTasksAlertsView->setModel(_tasksModel);
   _htmlTasksAlertsView->setTableClass("table table-condensed table-hover");
