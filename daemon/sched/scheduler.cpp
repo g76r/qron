@@ -44,7 +44,9 @@
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _configMutex(QMutex::Recursive),
   _alerter(new Alerter), _firstConfigurationLoad(true),
-  _maxtotaltaskinstances(0) {
+  _maxtotaltaskinstances(0),
+  _startdate(QDateTime::currentDateTime().toMSecsSinceEpoch()),
+  _configdate(LLONG_MIN), _execcount(0) {
   _thread->setObjectName("SchedulerThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -343,6 +345,7 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
     _alerter->emitAlert("scheduler.start");
     triggerEvents(_onschedulerstart, 0);
   }
+  _configdate = QDateTime::currentDateTime().toMSecsSinceEpoch();
   return true;
 }
 
@@ -765,6 +768,7 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
               this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
     }
     executor->execute(request);
+    ++_execcount;
     emit taskStarted(request);
     emit taskChanged(task);
     reevaluateQueuedRequests();
@@ -851,6 +855,18 @@ bool Scheduler::enableTask(const QString fqtn, bool enable) {
     reevaluateQueuedRequests();
   emit taskChanged(t);
   return true;
+}
+
+void Scheduler::enableAllTasks(bool enable) {
+  QMutexLocker ml(&_configMutex);
+  QList<Task> tasks(_tasks.values());
+  ml.unlock();
+  foreach (Task t, tasks) {
+    t.setEnabled(enable);
+    emit taskChanged(t);
+  }
+  if (enable)
+    reevaluateQueuedRequests();
 }
 
 bool Scheduler::taskExists(QString fqtn) {

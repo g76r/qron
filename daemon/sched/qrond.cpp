@@ -42,6 +42,10 @@ Qrond::~Qrond() {
   _scheduler->deleteLater();
 }
 
+Qrond *Qrond::instance() {
+  return qrondInstance();
+}
+
 void Qrond::startup(QStringList args) {
   int n = args.size();
   for (int i =0; i < n; ++i) {

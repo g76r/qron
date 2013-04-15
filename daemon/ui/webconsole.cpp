@@ -16,6 +16,7 @@
 #include <QFile>
 #include <QThread>
 #include "config/taskrequest.h"
+#include "sched/qrond.h"
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _tasksTreeModel(new TasksTreeModel(this)),
@@ -397,6 +398,73 @@ bool WebConsole::acceptRequest(HttpRequest req) {
   return true;
 }
 
+class WebConsoleParamsProvider : public ParamsProvider {
+  WebConsole *_console;
+  QString _message;
+public:
+  WebConsoleParamsProvider(WebConsole *console, HttpRequest req,
+                           HttpResponse res) : _console(console) {
+    QString message = req.base64Cookie("message");
+    //qDebug() << "message cookie:" << message;
+    if (!message.isEmpty()) {
+      char alertType = 'I';
+      QString title;
+      QString alertClass;
+      if (message.size() > 1 && message.at(1) == ':') {
+        alertType = message.at(0).toAscii();
+        message = message.mid(2);
+      }
+      switch (alertType) {
+      case 'S':
+        title = "Success:";
+        alertClass = "alert-success";
+        break;
+      case 'I':
+        title = "Info:";
+        alertClass = "alert-info";
+        break;
+      case 'E':
+        title = "Error!";
+        alertClass = "alert-error";
+        break;
+      case 'W':
+        title = "Warning!";
+        break;
+      default:
+        ;
+      }
+      _message =  "<div class=\"alert alert-block "+alertClass+"\">"
+          "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"
+          "&times;</button><h4>"+title+"</h4> "+message+"</div>";
+    } else
+      _message = "";
+    res.clearCookie("message", "/");
+  }
+  QString paramValue(const QString key, const QString defaultValue) const {
+    if (!_console->_scheduler) // should never happen
+      return defaultValue;
+    if (key.startsWith('%'))
+      return _console->_scheduler->globalParams().evaluate(key);
+    if (key == "title") // TODO remove, needs support for ${webconsole.title:-Qron Web Console}
+      return _console->_title;
+    if (key == "navtitle") // TODO remove
+      return _console->_navtitle;
+    if (key == "message")
+      return _message;
+    if (key == "startdate")
+      return _console->_scheduler->startdate().toString("yyyy-MM-dd hh:mm:ss");
+    if (key == "configdate")
+      return _console->_scheduler->configdate().toString("yyyy-MM-dd hh:mm:ss");
+    if (key == "execcount")
+      return QString::number(_console->_scheduler->execcount());
+    if (key == "maxtotaltaskinstances")
+      return QString::number(_console->_scheduler->maxtotaltaskinstances());
+    if (key == "maxqueuedrequests")
+      return QString::number(_console->_scheduler->maxqueuedrequests());
+    return defaultValue;
+  }
+};
+
 void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
   QString path = req.url().path();
   while (path.size() && path.at(path.size()-1) == '/')
@@ -451,6 +519,14 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       } else if (event == "emitAlert") {
         _scheduler->alerter()->emitAlert(alert);
         message = "S:Emitted alert '"+alert+"'.";
+      } else if (event=="enableAllTasks") {
+        bool enable = req.param("enable") == "true";
+        _scheduler->enableAllTasks(enable);
+        message = QString("S:Asked for ")+(enable?"enabling":"disabling")
+            +" all tasks at once.";
+      } else if (event=="reloadConfig") {
+        Qrond::instance()->reload();
+        message = "S:Asked for configuration reload.";
       } else
         message = "E:Internal error: unknown event '"+event+"'.";
     } else
@@ -469,46 +545,8 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     return;
   }
   if (path.startsWith("/console")) {
-    QHash<QString,QVariant> values;
-    values.insert("title", _title);
-    values.insert("navtitle", _navtitle);
-    QString message = req.base64Cookie("message");
-    //qDebug() << "message cookie:" << message;
-    if (!message.isEmpty()) {
-      char alertType = 'I';
-      QString title;
-      QString alertClass;
-      if (message.size() > 1 && message.at(1) == ':') {
-        alertType = message.at(0).toAscii();
-        message = message.mid(2);
-      }
-      switch (alertType) {
-      case 'S':
-        title = "Success:";
-        alertClass = "alert-success";
-        break;
-      case 'I':
-        title = "Info:";
-        alertClass = "alert-info";
-        break;
-      case 'E':
-        title = "Error!";
-        alertClass = "alert-error";
-        break;
-      case 'W':
-        title = "Warning!";
-        break;
-      default:
-        ;
-      }
-      values.insert("message", "<div class=\"alert alert-block "+alertClass+"\">"
-                    "<button type=\"button\" class=\"close\" "
-                    "data-dismiss=\"alert\">&times;</button>"
-                    "<h4>"+title+"</h4> "+message+"</div>");
-    } else
-      values.insert("message", "");
-    res.clearCookie("message", "/");
-    _wuiHandler->handleRequestWithContext(req, res, values);
+    WebConsoleParamsProvider params(this, req, res);
+    _wuiHandler->handleRequestWithContext(req, res, &params);
     return;
   }
   // LATER optimize resource selection (avoid if/if/if)

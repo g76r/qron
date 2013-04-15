@@ -31,6 +31,7 @@ class Qrond : public QObject {
 public:
   explicit Qrond(QObject *parent = 0);
   ~Qrond();
+  static Qrond *instance();
   Q_INVOKABLE void startup(QStringList args);
   Q_INVOKABLE void reload();
   Q_INVOKABLE void shutdown(int returnCode);

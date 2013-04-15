@@ -53,6 +53,8 @@ class Scheduler : public QObject {
   QList<Event> _onstart, _onsuccess, _onfailure;
   QList<Event> _onlog, _onnotice, _onschedulerstart;
   int _maxtotaltaskinstances, _maxqueuedrequests;
+  volatile qint64 _startdate, _configdate;
+  volatile long _execcount;
 
 public:
   Scheduler();
@@ -70,6 +72,14 @@ public:
   /** Test a flag.
     * This method is thread-safe. */
   bool isFlagSet(const QString flag) const;
+  QDateTime startdate() const {
+    return QDateTime::fromMSecsSinceEpoch(_startdate); }
+  QDateTime configdate() const {
+    return _configdate == LLONG_MIN
+        ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_configdate); }
+  long execcount() const { return _execcount; }
+  int maxtotaltaskinstances() const { return _maxtotaltaskinstances; }
+  int maxqueuedrequests() const { return _maxqueuedrequests; }
 
 public slots:
   /** Explicitely request task execution now.
@@ -130,6 +140,10 @@ public slots:
   /** Enable or disable a task.
     * This method is threadsafe */
   bool enableTask(const QString fqtn, bool enable);
+  /** Enable or disable all tasks at once.
+    * This method is threadsafe */
+  void enableAllTasks(bool enable);
+  //LATER enableAllTasksWithinGroup
   ParamSet globalParams() const { return _globalParams; }
   bool taskExists(QString fqtn);
 

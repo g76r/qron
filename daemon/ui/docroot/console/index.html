@@ -73,7 +73,14 @@
         </div>
         <div class="span4">
           <h2>Global status</h2>
-          <p>Coming soon...
+          <p class="text-right"><a class="btn btn-danger" href="do?event=reloadConfig"><i class="glyphicon-refresh glyphicon-white"></i> Reload config</a>
+          <p><table class="table table-condensed table-hover">
+            <tr><th>Scheduler started on</th><td><?value:startdate?></td></tr>
+            <tr><th>Configuration loaded on</th><td><?value:configdate?></td></tr>
+            <tr><th>Tasks executed since started</th><td><?value:execcount?></td></tr>
+            <tr><th>Maximum running tasks</th><td><?value:maxtotaltaskinstances?></td></tr>
+            <tr><th>Maximum queued requests</th><td><?value:maxqueuedrequests?></td></tr>
+          </table>
         </div>
       </div>
       <div class="row">
@@ -92,6 +99,10 @@
           <a class="btn btn-info" href="../rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML</a>
           <a class="btn btn-primary" href="tasks.html#config">Tasks page &raquo;</a>
           <a class="btn btn-primary" href="schedule.html">Schedule page &raquo;</a>
+          <span class="pull-right">
+            <a class="btn btn-danger" href="do?event=enableAllTasks&amp;enable=false"><i class="icon-ban-circle icon-white"></i> Disable all tasks</a>
+            <a class="btn btn-warning" href="do?event=enableAllTasks&amp;enable=true"><i class="icon-ban-circle icon-white"></i> Enable all tasks</a>
+          </span>
           <p><?view:tasksschedule?>
         </div>
       </div>

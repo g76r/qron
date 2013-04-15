@@ -43,6 +43,7 @@
 class QThread;
 
 class WebConsole : public HttpHandler {
+  friend class WebConsoleParamsProvider;
   Q_OBJECT
   QThread *_thread;
   Scheduler *_scheduler;
