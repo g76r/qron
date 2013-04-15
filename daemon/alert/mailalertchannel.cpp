@@ -116,7 +116,7 @@ void MailAlertChannel::processQueue(const QVariant address) {
                    << " reminders";
       QStringList recipients(addr);
       QString body;
-      QMap<QString,QString> headers;
+      QHash<QString,QString> headers;
       // LATER parametrize mail subject
       headers.insert("Subject", "qron alerts");
       headers.insert("To", addr);
