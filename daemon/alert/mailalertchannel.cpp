@@ -51,7 +51,7 @@ void MailAlertChannel::setParams(ParamSet params) {
   // to avoid double coding default values and the like
   _cancelDelay = params.valueAsInt("canceldelay", ALERTER_DEFAULT_CANCEL_DELAY);
   _gracePeriodBeforeFirstSend = params.valueAsInt("graceperiodbeforefirstsend",
-                                                  60);
+                                                  30);
   if (_cancelDelay < 1)
     _cancelDelay = ALERTER_DEFAULT_CANCEL_DELAY;
   Log::debug() << "MailAlertChannel configured " << relay << " "
