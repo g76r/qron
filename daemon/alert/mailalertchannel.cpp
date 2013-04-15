@@ -111,13 +111,24 @@ void MailAlertChannel::processQueue(const QVariant address) {
     if (queue->_lastMail.isNull() || s >= _minDelayBetweenMails) {
       Log::debug() << "MailAlertChannel::processQueue trying to send alerts "
                       "mail to " << addr << ": " << queue->_alerts.size()
-                   << " + " << queue->_cancellations.size() << " + "
-                   << queue->_reminders.size();
+                   << " new alerts + " << queue->_cancellations.size()
+                   << " cancellations + " << queue->_reminders.size()
+                   << " reminders";
       QStringList recipients(addr);
       QString body;
       QMap<QString,QString> headers;
       // LATER parametrize mail subject
       headers.insert("Subject", "qron alerts");
+      headers.insert("To", addr);
+      headers.insert("User-Agent", "qron free scheduler (www.qron.eu)");
+      headers.insert("X-qron-previous-mail", queue->_lastMail.isNull()
+                     ? "none" : queue->_lastMail.toString(Qt::ISODate));
+      headers.insert("X-qron-alerts-count",
+                     QString::number(queue->_alerts.size()));
+      headers.insert("X-qron-cancellations-count",
+                     QString::number(queue->_cancellations.size()));
+      headers.insert("X-qron-reminders-count",
+                     QString::number(queue->_reminders.size()));
       if (!_webConsoleUrl.isEmpty())
         body.append("Alerts can also be viewed here:\r\n")
             .append(_webConsoleUrl).append("\r\n\r\n");
@@ -162,8 +173,7 @@ void MailAlertChannel::processQueue(const QVariant address) {
               +QString::number(_cancelDelay)+" seconds.");
       }
       bool queued = _mailSender->send(_senderAddress, recipients, body,
-                                         headers, QList<QVariant>(),
-                                         errorString);
+                                      headers, QList<QVariant>(), errorString);
       if (queued) {
         Log::info() << "successfuly sent an alert mail to " << addr;
         queue->_alerts.clear();
