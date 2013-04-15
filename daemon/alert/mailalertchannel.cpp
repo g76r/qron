@@ -50,6 +50,8 @@ void MailAlertChannel::setParams(ParamSet params) {
   // LATER cancelDelay should be taken from Alerter, not from configuration
   // to avoid double coding default values and the like
   _cancelDelay = params.valueAsInt("canceldelay", ALERTER_DEFAULT_CANCEL_DELAY);
+  _gracePeriodBeforeFirstSend = params.valueAsInt("graceperiodbeforefirstsend",
+                                                  60);
   if (_cancelDelay < 1)
     _cancelDelay = ALERTER_DEFAULT_CANCEL_DELAY;
   Log::debug() << "MailAlertChannel configured " << relay << " "
@@ -86,8 +88,8 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
     if (!queue->_processingScheduled) {
       // wait for a while before sending a mail with only 1 alert, in case some
       // related alerts are coming soon after this one
-      // LATER parametrized the hard-coded 10" before first mail
-      TimerWithArguments::singleShot(10000, this, "processQueue", address);
+      TimerWithArguments::singleShot(_gracePeriodBeforeFirstSend*1000, this,
+                                     "processQueue", address);
       queue->_processingScheduled = true;
     }
   }
