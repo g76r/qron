@@ -1,0 +1,6 @@
+body {
+  padding-bottom: 500px;
+}
+[class^="navbar"],[class*=" navbar"] {
+  margin-bottom: 10px;
+}

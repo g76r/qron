@@ -201,12 +201,18 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
       case 18: {
-        QString infourl = t.infourl();
+        QString infourl = t.infourl(), suffix;
+        suffix = " <span class=\"label label-info\"><a "
+            "title=\"Task configuration\""
+            "href=\"tasks.html#tasksconfig."+t.fqtn()
+            +"\"><i class=\"glyphicon-cogwheel glyphicon-white\">"
+            "</i></a></span>";
         if (!infourl.isEmpty())
-          return " <span class=\"label label-info\"><a target=\"_blank\" "
+          suffix += " <span class=\"label label-info\"><a target=\"_blank\" "
               "title=\"Information / Documentation\""
               "href=\""+infourl+"\"><i class=\"icon-info-sign icon-white\">"
               "</i></a></span>";
+        return suffix;
       }
       default:
         ;
