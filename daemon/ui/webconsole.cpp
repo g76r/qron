@@ -855,8 +855,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
-               _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
+               _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
     disconnect(_scheduler, SIGNAL(noticePosted(QString)),
                _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     disconnect(_scheduler, SIGNAL(flagSet(QString)),
@@ -928,8 +928,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
-            _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
+            _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
     connect(_scheduler, SIGNAL(noticePosted(QString)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     connect(_scheduler, SIGNAL(flagSet(QString)),

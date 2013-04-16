@@ -51,7 +51,7 @@ class Scheduler : public QObject {
   Alerter *_alerter;
   bool _firstConfigurationLoad;
   QList<Event> _onstart, _onsuccess, _onfailure;
-  QList<Event> _onlog, _onnotice, _onschedulerstart;
+  QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   int _maxtotaltaskinstances, _maxqueuedrequests;
   volatile qint64 _startdate, _configdate;
   volatile long _execcount;
@@ -155,7 +155,8 @@ signals:
   void eventsConfigurationReset(QList<Event> onstart, QList<Event> onsuccess,
                                 QList<Event> onfailure, QList<Event> onlog,
                                 QList<Event> onnotice,
-                                QList<Event> onschedulerstart);
+                                QList<Event> onschedulerstart,
+                                QList<Event> onconfigload);
   void hostResourceAllocationChanged(QString host,
                                      QMap<QString,qint64> resources);
   void hostResourceConfigurationChanged(

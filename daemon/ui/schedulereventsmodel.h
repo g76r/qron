@@ -23,7 +23,7 @@
 class SchedulerEventsModel : public QAbstractListModel {
   Q_OBJECT
   QList<Event> _onstart, _onsuccess, _onfailure;
-  QList<Event> _onlog, _onnotice, _onschedulerstart;
+  QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
 
 public:
   explicit SchedulerEventsModel(QObject *parent = 0);
@@ -36,7 +36,8 @@ public slots:
   void eventsConfigurationReset(QList<Event> onstart, QList<Event> onsuccess,
                                 QList<Event> onfailure, QList<Event> onlog,
                                 QList<Event> onnotice,
-                                QList<Event> onschedulerstart);
+                                QList<Event> onschedulerstart,
+                                QList<Event> onconfigload);
 };
 
 #endif // SCHEDULEREVENTSMODEL_H

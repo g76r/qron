@@ -13,7 +13,7 @@
  */
 #include "schedulereventsmodel.h"
 
-#define COLUMNS 6
+#define COLUMNS 7
 
 SchedulerEventsModel::SchedulerEventsModel(QObject *parent)
   : QAbstractListModel(parent) {
@@ -34,14 +34,16 @@ QVariant SchedulerEventsModel::data(const QModelIndex &index, int role) const {
     case 0:
       return Event::toStringList(_onschedulerstart).join(" ");
     case 1:
-      return Event::toStringList(_onnotice).join(" ");
+      return Event::toStringList(_onconfigload).join(" ");
     case 2:
-      return Event::toStringList(_onlog).join(" ");
+      return Event::toStringList(_onnotice).join(" ");
     case 3:
-      return Event::toStringList(_onstart).join(" ");
+      return Event::toStringList(_onlog).join(" ");
     case 4:
-      return Event::toStringList(_onsuccess).join(" ");
+      return Event::toStringList(_onstart).join(" ");
     case 5:
+      return Event::toStringList(_onsuccess).join(" ");
+    case 6:
       return Event::toStringList(_onfailure).join(" ");
     }
   return QVariant();
@@ -54,14 +56,16 @@ QVariant SchedulerEventsModel::headerData(
     case 0:
       return "On scheduler start";
     case 1:
-      return "On notice";
+      return "On config load";
     case 2:
-      return "On log";
+      return "On notice";
     case 3:
-      return "On start";
+      return "On log";
     case 4:
-      return "On success";
+      return "On start";
     case 5:
+      return "On success";
+    case 6:
       return "On failure";
     }
   return QVariant();
@@ -69,12 +73,14 @@ QVariant SchedulerEventsModel::headerData(
 
 void SchedulerEventsModel::eventsConfigurationReset(
     QList<Event> onstart, QList<Event> onsuccess, QList<Event> onfailure,
-    QList<Event> onlog, QList<Event> onnotice, QList<Event> onschedulerstart) {
+    QList<Event> onlog, QList<Event> onnotice, QList<Event> onschedulerstart,
+    QList<Event> onconfigload) {
   _onstart = onstart;
   _onsuccess = onsuccess;
   _onfailure = onfailure;
   _onlog = onlog;
   _onnotice = onnotice;
   _onschedulerstart = onschedulerstart;
+  _onconfigload = onconfigload;
   emit dataChanged(createIndex(0, 0), createIndex(0, COLUMNS-1));
 }

@@ -302,10 +302,14 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
     if (!loadEventListConfiguration(node, _onnotice, errorString))
       return false;
   _onschedulerstart.clear();
+  _onconfigload.clear();
   foreach (PfNode node, root.childrenByName("onschedulerstart"))
     if (!loadEventListConfiguration(node, _onschedulerstart, errorString))
       return false;
-  // LATER onschedulerreload onschedulershutdown
+  foreach (PfNode node, root.childrenByName("onconfigload"))
+    if (!loadEventListConfiguration(node, _onconfigload, errorString))
+      return false;
+  // LATER onschedulershutdown
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
   emit tasksConfigurationReset(_tasksGroups, _tasks);
@@ -313,7 +317,7 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
   emit hostResourceConfigurationChanged(_resources);
   emit globalParamsChanged(_globalParams);
   emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
-                                _onnotice, _onschedulerstart);
+                                _onnotice, _onschedulerstart, _onconfigload);
   reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {
@@ -339,13 +343,13 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
     }
   }
   ml.unlock();
+  _configdate = QDateTime::currentDateTime().toMSecsSinceEpoch();
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
-    _alerter->emitAlert("scheduler.start");
     triggerEvents(_onschedulerstart, 0);
   }
-  _configdate = QDateTime::currentDateTime().toMSecsSinceEpoch();
+  triggerEvents(_onconfigload, 0);
   return true;
 }
 
