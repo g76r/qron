@@ -77,7 +77,9 @@ public:
   void setEnabled(bool enabled) const;
   bool lastSuccessful() const;
   void setLastSuccessful(bool successful) const;
+  /** in millis */
   long long maxExpectedDuration() const;
+  /** in millis */
   long long minExpectedDuration() const;
   ParamSet setenv() const;
   QSet<QString> unsetenv() const;
