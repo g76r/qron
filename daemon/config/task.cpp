@@ -115,9 +115,9 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
   }
   if (node.hasChild("disabled"))
     td->setEnabled(false);
-  double f = node.floatAttribute("maxexpectedduration", -1);
+  double f = node.doubleAttribute("maxexpectedduration", -1);
   td->_maxExpectedDuration = f < 0 ? LLONG_MAX : f*1000;
-  f = node.floatAttribute("minexpectedduration", -1);
+  f = node.doubleAttribute("minexpectedduration", -1);
   td->_minExpectedDuration = f < 0 ? 0 : f*1000;
   ConfigUtils::loadParamSet(node, td->_params);
   ConfigUtils::loadSetenv(node, td->_setenv);
