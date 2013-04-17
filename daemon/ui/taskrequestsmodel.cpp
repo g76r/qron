@@ -79,14 +79,14 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         case TaskRequest::Queued:
           /* cancel */
           actions += " <span class=\"label label-important\" "
-              "title=\"Cancel request\"><a href=\"do?event=cancelRequest&id="
+              "title=\"Cancel request\"><a href=\"confirm?event=cancelRequest&id="
               +QString::number(r.id())
               +"\"><i class=\"icon-remove icon-white\"></i></a></span>";
           break;
         case TaskRequest::Running:
           /* abort */
           actions += " <span class=\"label label-important\" "
-              "title=\"Abort task\"><a href=\"do?event=abortTask&id="
+              "title=\"Abort task\"><a href=\"confirm?event=abortTask&id="
               +QString::number(r.id())+"\">"
               "<i class=\"glyphicon-skull glyphicon-white\"></i></a></span>";
           break;
@@ -94,7 +94,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
           /* reexec */
           actions += " <span class=\"label label-important\" "
               "title=\"Request execution of same task\"><a href=\""
-              "do?event=requestTask&fqtn="+r.task().fqtn()+"\">"
+              "confirm?event=requestTask&fqtn="+r.task().fqtn()+"\">"
               "<i class=\"icon-repeat icon-white\"></i></a></span>";
           break;
           ;

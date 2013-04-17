@@ -443,6 +443,11 @@ public:
       _message = "";
     res.clearCookie("message", "/");
   }
+  WebConsoleParamsProvider(WebConsole *console, QString message,
+                           HttpResponse res)
+    : _console(console), _message(message) {
+    res.clearCookie("message", "/");
+  }
   QString paramValue(const QString key, const QString defaultValue) const {
     if (!_console->_scheduler) // should never happen
       return defaultValue;
@@ -476,11 +481,14 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     res.redirect("console/index.html");
     return;
   }
+
   if (path == "/console/do" || path == "/rest/do" ) {
     QString event = req.param("event");
     QString fqtn = req.param("fqtn");
     QString alert = req.param("alert");
     quint64 id = req.param("id").toULongLong();
+    QString redirect = req.base64Cookie("redirect");
+    QString referer = req.header("Referer");
     QString message;
     if (_scheduler) {
       if (event == "requestTask") {
@@ -534,9 +542,13 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
         message = "E:Internal error: unknown event '"+event+"'.";
     } else
       message = "E:Scheduler is not available.";
-    QString referer = req.header("Referer");
-    if (!referer.isEmpty()) {
+    if (!redirect.isEmpty()) {
       res.setBase64SessionCookie("message", message, "/");
+      res.clearCookie("redirect", "/");
+      res.redirect(redirect);
+    } else if (!referer.isEmpty()) {
+      res.setBase64SessionCookie("message", message, "/");
+      res.clearCookie("redirect", "/");
       res.redirect(referer);
     } else {
       if (message.startsWith("E:") || message.startsWith("W:"))
@@ -546,6 +558,49 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       res.output()->write(message.toUtf8());
     }
     return;
+  }
+  if (path == "/console/confirm") {
+    QString event = req.param("event");
+    QString fqtn = req.param("fqtn");
+    QString id = req.param("id");
+    QString referer = req.header("Referer");
+    if (referer.isEmpty())
+      referer = "index.html";
+    QString message;
+    if (_scheduler) {
+      if (event == "abortTask") {
+        message = "abort task "+id;
+      } else if (event == "cancelReqest") {
+        message = "cancel request "+id;
+      } else if (event == "enableAllTasks") {
+        message = QString(req.param("enable") == "true" ? "enable" : "disable")
+            + " all tasks";
+      } else if (event == "reloadConfig") {
+        message = "reload configuration";
+      } else if (event == "requestTask") {
+        message = "request task '"+fqtn+"' execution";
+      } else {
+        message = event;
+      }
+      message = "<div class=\"alert alert-block\">"
+          "<h4 class=\"text-center\">Are you sure you want to "+message
+          +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
+          "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
+          +"\">Yes, sure</a> <a class=\"btn\" href=\""+referer+"\">Cancel</a>"
+          "</div>";
+      res.setBase64SessionCookie("redirect", referer, "/");
+      QUrl url(req.url());
+      url.setPath("/console/message.html");
+      url.setQueryItems(QList<QPair<QString,QString> >());
+      req.overrideUrl(url);
+      WebConsoleParamsProvider params(this, message, res);
+      _wuiHandler->handleRequestWithContext(req, res, &params);
+      return;
+    } else {
+      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                 "/");
+      res.redirect(referer);
+    }
   }
   if (path.startsWith("/console")) {
     WebConsoleParamsProvider params(this, req, res);

@@ -175,7 +175,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             /* requestTask */
             " <span class=\"label label-important\" "
             "title=\"Request execution\">"
-            "<a href=\"do?event=requestTask&fqtn="
+            "<a href=\"confirm?event=requestTask&fqtn="
             +fqtn+"\"><i class=\"icon-play icon-white\"></i></a></span>"
             /* {enable,disable}Task */
             " <span class=\"label label-"+(enabled?"important":"warning")
