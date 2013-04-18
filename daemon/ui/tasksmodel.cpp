@@ -204,7 +204,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         QString infourl = t.infourl(), suffix;
         suffix = " <span class=\"label label-info\"><a "
             "title=\"Task configuration\""
-            "href=\"tasks.html#tasksconfig."+t.fqtn()
+            "href=\"tasks.html#taskconfig."+t.fqtn()
             +"\"><i class=\"glyphicon-cogwheel glyphicon-white\">"
             "</i></a></span>";
         if (!infourl.isEmpty())

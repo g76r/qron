@@ -215,7 +215,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 1 << 0 << 3 << 5 << 4 << 6 << 8 << 12;
   _htmlTasksConfigView->setColumnIndexes(cols);
-  _htmlTasksConfigView->setRowAnchor("tasksconfig.", 11);
+  _htmlTasksConfigView->setRowAnchor("taskconfig.", 11);
   _htmlTasksParamsView->setModel(_tasksModel);
   _htmlTasksParamsView->setTableClass("table table-condensed table-hover");
   _htmlTasksParamsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
@@ -224,7 +224,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 1 << 0 << 7 << 21 << 22;
   _htmlTasksParamsView->setColumnIndexes(cols);
-  _htmlTasksParamsView->setRowAnchor("tasksparams.", 11);
+  _htmlTasksParamsView->setRowAnchor("taskparams.", 11);
   _htmlTasksListView->setModel(_tasksModel);
   _htmlTasksListView->setTableClass("table table-condensed table-hover");
   _htmlTasksListView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
