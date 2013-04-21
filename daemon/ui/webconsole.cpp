@@ -404,6 +404,7 @@ bool WebConsole::acceptRequest(HttpRequest req) {
 class WebConsoleParamsProvider : public ParamsProvider {
   WebConsole *_console;
   QString _message;
+  QHash<QString,QString> _values;
 public:
   WebConsoleParamsProvider(WebConsole *console, HttpRequest req,
                            HttpResponse res) : _console(console) {
@@ -443,12 +444,9 @@ public:
       _message = "";
     res.clearCookie("message", "/");
   }
-  WebConsoleParamsProvider(WebConsole *console, QString message,
-                           HttpResponse res)
-    : _console(console), _message(message) {
-    res.clearCookie("message", "/");
-  }
   QString paramValue(const QString key, const QString defaultValue) const {
+    if (_values.contains(key))
+      return _values.value(key);
     if (!_console->_scheduler) // should never happen
       return defaultValue;
     if (key.startsWith('%'))
@@ -471,6 +469,9 @@ public:
       return QString::number(_console->_scheduler->maxqueuedrequests());
     return defaultValue;
   }
+  void setValue(QString key, QString value) {
+    _values.insert(key, value);
+  }
 };
 
 void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
@@ -481,19 +482,24 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     res.redirect("console/index.html");
     return;
   }
-
+  //Log::fatal() << "hit: " << req.url().toString();
   if (path == "/console/do" || path == "/rest/do" ) {
     QString event = req.param("event");
     QString fqtn = req.param("fqtn");
     QString alert = req.param("alert");
     quint64 id = req.param("id").toULongLong();
-    QString redirect = req.base64Cookie("redirect");
     QString referer = req.header("Referer");
+    QString redirect = req.base64Cookie("redirect", referer);
     QString message;
     if (_scheduler) {
       if (event == "requestTask") {
         // 192.168.79.76:8086/console/do?event=requestTask&fqtn=appli.batch.batch1
-        TaskRequest request = _scheduler->syncRequestTask(fqtn);
+        ParamSet params(req.paramsAsParamSet());
+        // TODO handle null values rather than replacing empty with nulls
+        foreach (QString key, params.keys())
+          if (params.value(key).isEmpty())
+            params.removeValue(key);
+        TaskRequest request = _scheduler->syncRequestTask(fqtn, params);
         if (!request.isNull())
           message = "S:Task '"+fqtn+"' submitted for execution with id "
               +QString::number(request.id())+".";
@@ -546,10 +552,6 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       res.setBase64SessionCookie("message", message, "/");
       res.clearCookie("redirect", "/");
       res.redirect(redirect);
-    } else if (!referer.isEmpty()) {
-      res.setBase64SessionCookie("message", message, "/");
-      res.clearCookie("redirect", "/");
-      res.redirect(referer);
     } else {
       if (message.startsWith("E:") || message.startsWith("W:"))
         res.setStatus(500);
@@ -563,9 +565,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     QString event = req.param("event");
     QString fqtn = req.param("fqtn");
     QString id = req.param("id");
-    QString referer = req.header("Referer");
-    if (referer.isEmpty())
-      referer = "index.html";
+    QString referer = req.header("Referer", "index.html");
     QString message;
     if (_scheduler) {
       if (event == "abortTask") {
@@ -593,7 +593,8 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       url.setPath("/console/message.html");
       url.setQueryItems(QList<QPair<QString,QString> >());
       req.overrideUrl(url);
-      WebConsoleParamsProvider params(this, message, res);
+      WebConsoleParamsProvider params(this, req, res);
+      params.setValue("message", message);
       _wuiHandler->handleRequestWithContext(req, res, &params);
       return;
     } else {
@@ -601,6 +602,67 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
                                  "/");
       res.redirect(referer);
     }
+  }
+  if (path == "/console/requestform") {
+    QString fqtn = req.param("fqtn");
+    QString referer = req.header("Referer", "index.html");
+    QString redirect = req.base64Cookie("redirect", referer);
+    if (_scheduler) {
+      Task task(_scheduler->task(fqtn));
+      if (!task.isNull()) {
+        QUrl url(req.url());
+        url.setPath("/console/adhoc.html");
+        req.overrideUrl(url);
+        WebConsoleParamsProvider params(this, req, res);
+        QString form = "<div class=\"alert alert-block\">\n"
+            "<h4 class=\"text-center\">About to start task "+fqtn+"</h4>\n";
+        if (task.label() != task.id())
+          form +="<h4 class=\"text-center\">("+task.label()+")</h4>\n";
+        form += "<p>\n";
+        if (task.requestFormFields().size())
+          form += "<p class=\"text-center\">Task parameters can be defined in "
+              "the following form:";
+        form += "<p><form class=\"form-horizontal\" action=\"do\">";
+        foreach (RequestFormField rff, task.requestFormFields())
+          form.append(rff.toHtml("input-xxlarge"));
+        /*form += "<p><p class=\"text-center\"><a class=\"btn btn-danger\" "
+            "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
+            +"\">Request task execution</a> <a class=\"btn\" href=\""
+            +referer+"\">Cancel</a>\n"*/
+        form += "<input type=\"hidden\" name=\"fqtn\" value=\""+fqtn+"\">\n"
+            "<input type=\"hidden\" name=\"event\" value=\"requestTask\">\n"
+            "<p class=\"text-center\">"
+            //"<div class=\"control-group\"><div class=\"controls\">"
+            "<button type=\"submit\" class=\"btn btn-danger\">"
+            "Request task execution</button>\n"
+            "<a class=\"btn\" href=\""+referer+"\">Cancel</a>\n"
+            //"</div></div>\n"
+            "</form>\n"
+            "</div>\n";
+        // <button type="submit" class="btn">Sign in</button>
+        params.setValue("data", form);
+        res.setBase64SessionCookie("redirect", redirect, "/");
+        _wuiHandler->handleRequestWithContext(req, res, &params);
+        return;
+      } else {
+        res.setBase64SessionCookie("message", "E:Task '"+fqtn+"' not found.",
+                                   "/");
+        res.redirect(referer);
+      }
+    } else {
+      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                 "/");
+      res.redirect(referer);
+    }
+  }
+  if (path == "/console/taskdoc") {
+    QUrl url(req.url());
+    url.setPath("/console/adhoc.html");
+    req.overrideUrl(url);
+    WebConsoleParamsProvider params(this, req, res);
+    params.setValue("data", "turlututu"); // FIXME
+    _wuiHandler->handleRequestWithContext(req, res, &params);
+    return;
   }
   if (path.startsWith("/console")) {
     WebConsoleParamsProvider params(this, req, res);

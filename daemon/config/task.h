@@ -18,6 +18,7 @@
 #include "util/paramset.h"
 #include <QSet>
 #include "taskgroup.h"
+#include "requestformfield.h"
 
 class TaskData;
 class QDebug;
@@ -88,6 +89,7 @@ public:
     return discardAliasesOnStartAsString(discardAliasesOnStart()); }
   static QString discardAliasesOnStartAsString(DiscardAliasesOnStart v);
   static DiscardAliasesOnStart discardAliasesOnStartFromString(QString v);
+  QList<RequestFormField> requestFormFields() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

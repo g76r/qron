@@ -71,7 +71,7 @@ void Executor::doExecute(TaskRequest request) {
 void Executor::localMean(TaskRequest request) {
   QStringList cmdline;
   cmdline = request.params()
-      .splitAndEvaluate(request.task().command(), &request);
+      .splitAndEvaluate(request.command(), &request);
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   QProcessEnvironment sysenv;
@@ -82,7 +82,7 @@ void Executor::localMean(TaskRequest request) {
 void Executor::sshMean(TaskRequest request) {
   QStringList cmdline, sshCmdline;
   cmdline = request.params()
-      .splitAndEvaluate(request.task().command(), &request);
+      .splitAndEvaluate(request.command(), &request);
   Log::info(request.task().fqtn(), request.id())
       << "exact command line to be executed (through ssh on host "
       << request.target().hostname() <<  "): " << cmdline.join(" ");
@@ -238,7 +238,7 @@ void Executor::httpMean(TaskRequest request) {
   QString hostname = request.params()
       .evaluate(request.target().hostname(), &request);
   QString command = request.params()
-      .evaluate(request.task().command(), &request);
+      .evaluate(request.command(), &request);
   if (command.size() && command.at(0) == '/')
     command = command.mid(1);
   url.setEncodedUrl(QString("http://%1:%2/%3").arg(hostname).arg(port)

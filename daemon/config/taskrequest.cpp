@@ -25,6 +25,8 @@ public:
   ParamSet _params;
   QDateTime _submission;
   bool _force;
+  QString _command;
+  ParamSet _setenv;
 
 private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
@@ -37,6 +39,7 @@ public:
   TaskRequestData(Task task, ParamSet params, bool force)
     : _id(newId()), _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
+      _command(task.command()), _setenv(task.setenv()),
       _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0) { }
   TaskRequestData() : _id(0), _start(LLONG_MIN), _end(LLONG_MIN),
     _success(false), _returnCode(0) { }
@@ -81,8 +84,8 @@ TaskRequest::TaskRequest() {
 TaskRequest::TaskRequest(const TaskRequest &other) : d(other.d) {
 }
 
-TaskRequest::TaskRequest(Task task, ParamSet params, bool force)
-  : d(new TaskRequestData(task, params, force)) {
+TaskRequest::TaskRequest(Task task, bool force)
+  : d(new TaskRequestData(task, task.params().createChild(), force)) {
 }
 
 TaskRequest::~TaskRequest() {
@@ -104,6 +107,11 @@ const Task TaskRequest::task() const {
 
 const ParamSet TaskRequest::params() const {
   return d ? d->_params : ParamSet();
+}
+
+void TaskRequest::overrideParam(QString key, QString value) {
+  if (d)
+    d->_params.setValue(key, value);
 }
 
 quint64 TaskRequest::id() const {
@@ -205,7 +213,7 @@ QString TaskRequest::paramValue(const QString key,
 }
 
 ParamSet TaskRequest::setenv() const {
-  return d ? d->_task.setenv() : ParamSet();
+  return d ? d->_setenv : ParamSet();
 }
 
 void TaskRequest::setTask(Task task) {
@@ -254,4 +262,18 @@ bool TaskRequest::isNull() {
 
 uint qHash(const TaskRequest &request) {
   return (uint)request.id();
+}
+
+QString TaskRequest::command() const {
+  return d ? d->_command : QString();
+}
+
+void TaskRequest::overrideCommand(QString command) {
+  if (d)
+    d->_command = command;
+}
+
+void TaskRequest::overrideSetenv(QString key, QString value) {
+  if (d)
+    d->_setenv.setValue(key, value);
 }

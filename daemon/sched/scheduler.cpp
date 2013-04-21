@@ -394,41 +394,57 @@ void Scheduler::triggerEvents(const QList<Event> list,
     e.trigger(context);
 }
 
-TaskRequest Scheduler::syncRequestTask(const QString fqtn, ParamSet params,
-                               bool force) {
+TaskRequest Scheduler::syncRequestTask(const QString fqtn,
+                                       ParamSet paramsOverriding, bool force) {
   if (this->thread() == QThread::currentThread())
-    return enqueueTaskRequest(fqtn, params, force);
+    return enqueueTaskRequest(fqtn, paramsOverriding, force);
   TaskRequest request;
   QMetaObject::invokeMethod(this, "enqueueTaskRequest",
                             Qt::BlockingQueuedConnection,
                             Q_RETURN_ARG(TaskRequest, request),
-                            Q_ARG(QString, fqtn), Q_ARG(ParamSet, params),
+                            Q_ARG(QString, fqtn),
+                            Q_ARG(ParamSet, paramsOverriding),
                             Q_ARG(bool, force));
   return request;
 }
 
-void Scheduler::asyncRequestTask(const QString fqtn, ParamSet params,
+void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
                                  bool force) {
   QMetaObject::invokeMethod(this, "enqueueTaskRequest", Qt::QueuedConnection,
-                            Q_ARG(QString, fqtn), Q_ARG(ParamSet, params),
+                            Q_ARG(QString, fqtn),
+                            Q_ARG(ParamSet, paramsOverriding),
                             Q_ARG(bool, force));
 }
 
-TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn, ParamSet params,
-                                      bool force) {
+#include "config/requestformfield.h"
+TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn,
+                                          ParamSet paramsOverriding,
+                                          bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
   ml.unlock();
   if (task.isNull()) {
-    Log::warning() << "requested task not found: " << fqtn << params << force;
+    Log::error() << "requested task not found: " << fqtn << paramsOverriding << force;
     return TaskRequest();
   }
-  if (!params.parent().isNull()) {
-    Log::warning() << "task requested with non null params' parent (parent will"
-                      " be ignored)";
+  TaskRequest request(task, force);
+  bool fieldsValidated(true);
+  foreach (RequestFormField field, task.requestFormFields()) {
+    QString name(field.param());
+    if (paramsOverriding.contains(name)) {
+      QString value(paramsOverriding.value(name));
+      if (!field.validate(value)) {
+        Log::error() << "task " << fqtn << " requested with an invalid "
+                        "parameter override: '" << name << "'' set to '"
+                     << value << "' whereas format is '" << field.format()
+                     << "'";
+        fieldsValidated = false;
+      }
+      field.apply(value, &request);
+    }
   }
-  params.setParent(task.params());
-  TaskRequest request(task, params, force);
+  if (!fieldsValidated)
+    return TaskRequest();
   if (!force && (!task.enabled()
       || task.discardAliasesOnStart() != Task::DiscardNone)) {
     // avoid stacking disabled task requests by canceling older ones
@@ -876,6 +892,11 @@ void Scheduler::enableAllTasks(bool enable) {
 bool Scheduler::taskExists(QString fqtn) {
   QMutexLocker ml(&_configMutex);
   return _tasks.contains(fqtn);
+}
+
+Task Scheduler::task(QString fqtn) {
+  QMutexLocker ml(&_configMutex);
+  return _tasks.value(fqtn);
 }
 
 void Scheduler::periodicChecks() {

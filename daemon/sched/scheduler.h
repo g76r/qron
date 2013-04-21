@@ -83,20 +83,28 @@ public:
 
 public slots:
   /** Explicitely request task execution now.
-    * This method will block current thread until the request is either
-    * queued either denied by Scheduler thread.
-    * If current thread is the Scheduler thread, the method is a direct call.
-    * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
-    * @param params override some params at request time
-    * @param force if true, any constraints or ressources are ignored
-    * @return request id if task queued, isNull() if task cannot be queued
-    */
-  TaskRequest syncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
+   * This method will block current thread until the request is either
+   * queued either denied by Scheduler thread.
+   * If current thread is the Scheduler thread, the method is a direct call.
+   * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
+   * @param paramsOverriding override params, using RequestFormField semantics
+   * @param force if true, any constraints or ressources are ignored
+   * @return isNull() if task cannot be queued
+   * @see asyncRequestTask
+   * @see RequestFormField
+   */
+  TaskRequest syncRequestTask(const QString fqtn,
+                              ParamSet paramsOverriding = ParamSet(),
                               bool force = false);
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
    * processing the request.
    * If current thread is the Scheduler thread, the call is queued anyway.
+   * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
+   * @param paramsOverriding override params, using RequestFormField semantics
+   * @param force if true, any constraints or ressources are ignored
+   * @see syncRequestTask
+   * @see RequestFormField
    */
   void asyncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
                         bool force = false);
@@ -146,6 +154,7 @@ public slots:
   //LATER enableAllTasksWithinGroup
   ParamSet globalParams() const { return _globalParams; }
   bool taskExists(QString fqtn);
+  Task task(QString fqtn);
 
 signals:
   void tasksConfigurationReset(QMap<QString,TaskGroup> tasksGroups,
@@ -201,7 +210,8 @@ private:
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
   Q_INVOKABLE TaskRequest enqueueTaskRequest(const QString fqtn,
-                                             ParamSet params, bool force);
+                                             ParamSet paramsOverriding,
+                                             bool force);
   Q_INVOKABLE TaskRequest doCancelRequest(quint64 id);
   Q_INVOKABLE TaskRequest doAbortTask(quint64 id);
   Q_DISABLE_COPY(Scheduler)

@@ -29,12 +29,13 @@ public:
   enum TaskRequestStatus { Queued, Running, Success, Failure, Canceled };
   TaskRequest();
   TaskRequest(const TaskRequest &);
-  TaskRequest(Task task, ParamSet params, bool force = false);
+  TaskRequest(Task task, bool force = false);
   ~TaskRequest();
   TaskRequest &operator=(const TaskRequest &);
   bool operator==(const TaskRequest &) const;
   const Task task() const;
   const ParamSet params() const;
+  void overrideParam(QString key, QString value);
   quint64 id() const;
   QDateTime submissionDatetime() const;
   QDateTime startDatetime() const;
@@ -83,6 +84,9 @@ public:
     }
   }
   bool isNull();
+  QString command() const;
+  void overrideCommand(QString command);
+  void overrideSetenv(QString key, QString value);
 };
 
 uint qHash(const TaskRequest &request);

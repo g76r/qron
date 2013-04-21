@@ -94,7 +94,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
           /* reexec */
           actions += " <span class=\"label label-important\" "
               "title=\"Request execution of same task\"><a href=\""
-              "confirm?event=requestTask&fqtn="+r.task().fqtn()+"\">"
+              "requestform?fqtn="+r.task().fqtn()+"\">"
               "<i class=\"icon-repeat icon-white\"></i></a></span>";
           break;
           ;

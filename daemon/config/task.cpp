@@ -23,6 +23,7 @@
 #include <QWeakPointer>
 #include "sched/scheduler.h"
 #include "config/configutils.h"
+#include "requestformfield.h"
 
 class TaskData : public QSharedData {
 public:
@@ -38,6 +39,7 @@ public:
   QWeakPointer<Scheduler> _scheduler;
   long long _maxExpectedDuration, _minExpectedDuration;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
+  QList<RequestFormField> _requestFormField;
 
 private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
@@ -195,6 +197,17 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     td->_discardAliasesOnStart = Task::DiscardAll;
     Log::error() << "invalid discardaliasesonstart on task " << td->_id << ": '"
                  << doas << "'";
+  }
+  QList<PfNode> children = node.childrenByName("requestform");
+  if (!children.isEmpty()) {
+    if (children.size() > 1)
+      Log::error() << "several requestform in task definition (ignoring all "
+                      "but last one): " << node.toString();
+    foreach (PfNode child, children.last().childrenByName("field")) {
+      RequestFormField field(child);
+      if (!field.isNull())
+        td->_requestFormField.append(field);
+    }
   }
   d = td;
 }
@@ -431,4 +444,8 @@ Task::DiscardAliasesOnStart Task::discardAliasesOnStartFromString(QString v) {
   if (v == "all")
     return Task::DiscardAll;
   return Task::DiscardUnknown;
+}
+
+QList<RequestFormField> Task::requestFormFields() const {
+  return d ? d->_requestFormField : QList<RequestFormField>();
 }

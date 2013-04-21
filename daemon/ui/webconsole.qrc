@@ -20,5 +20,6 @@
         <file>docroot/console/img/glyphicons-white.png</file>
         <file>docroot/console/css/qron.css</file>
         <file>docroot/console/message.html</file>
+        <file>docroot/console/adhoc.html</file>
     </qresource>
 </RCC>
