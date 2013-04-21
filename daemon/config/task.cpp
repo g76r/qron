@@ -46,12 +46,13 @@ private:
   mutable long long _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
   mutable bool _enabled, _lastSuccessful;
+  mutable int _lastReturnCode;
 
 public:
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
     _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
-    _enabled(true), _lastSuccessful(true) { }
+    _enabled(true), _lastSuccessful(true), _lastReturnCode(-1) { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
     _target(other._target), _infourl(other._infourl),
@@ -66,7 +67,7 @@ public:
     _lastExecution(other._lastExecution),
     _nextScheduledExecution(other._nextScheduledExecution),
     _instancesCount(other._instancesCount), _enabled(other._enabled),
-    _lastSuccessful(other._lastSuccessful) { }
+    _lastSuccessful(other._lastSuccessful), _lastReturnCode(0) { }
   QDateTime lastExecution() const {
     return _lastExecution == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
@@ -90,6 +91,9 @@ public:
   bool lastSuccessful() const { return _lastSuccessful; }
   void setLastSuccessful(bool successful) const {
     _lastSuccessful = successful; }
+  int lastReturnCode() const { return _lastReturnCode; }
+  void setLastReturnCode(int code) const {
+    _lastReturnCode = code; }
 };
 
 Task::Task() {
@@ -133,6 +137,7 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     td->setNextScheduledExecution(oldTask.nextScheduledExecution());
     td->fetchAndStoreInstancesCount(oldTask.instancesCount());
     td->setLastSuccessful(oldTask.lastSuccessful());
+    td->setLastReturnCode(oldTask.lastReturnCode());
     td->setEnabled(td->enabled() && oldTask.enabled());
   }
   // LATER load cron triggers last exec timestamp from on-disk log
@@ -405,6 +410,15 @@ bool Task::lastSuccessful() const {
 void Task::setLastSuccessful(bool successful) const {
   if (d)
     d->setLastSuccessful(successful);
+}
+
+int Task::lastReturnCode() const {
+  return d ? d->lastReturnCode() : -1;
+}
+
+void Task::setLastReturnCode(int code) const {
+  if (d)
+    d->setLastReturnCode(code);
 }
 
 long long Task::maxExpectedDuration() const {

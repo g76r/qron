@@ -86,7 +86,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return dt.isNull()
             ? QVariant()
             : dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
-              .append(t.lastSuccessful() ? " success" : " failure");
+              .append(t.lastSuccessful() ? " success" : " failure")
+              .append(" (code ").append(QString::number(t.lastReturnCode()))
+              .append(')');
       }
       case 20: {
         QString env;

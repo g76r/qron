@@ -775,7 +775,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     _alerter->cancelAlert("resource.exhausted."+task.target());
     request.setTarget(h);
     request.setStartDatetime();
-    task.setLastExecution(QDateTime::currentDateTime());
     triggerEvents(_onstart, &request); // FIXME accessing _onstart needs lock but triggering events may need unlock...
     ml.unlock();
     task.triggerStartEvents(&request);
@@ -837,8 +836,11 @@ void Scheduler::taskFinishing(TaskRequest request,
     _alerter->raiseAlert("task.failure."+fqtn);
   emit hostResourceAllocationChanged(request.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
-  if (!request.startDatetime().isNull() && !request.endDatetime().isNull())
+  if (!request.startDatetime().isNull() && !request.endDatetime().isNull()) {
+    configuredTask.setLastExecution(request.startDatetime());
     configuredTask.setLastSuccessful(request.success());
+    configuredTask.setLastReturnCode(request.returnCode());
+  }
   emit taskFinished(request, executor);
   emit taskChanged(configuredTask);
   if (request.success()) {

@@ -78,6 +78,8 @@ public:
   void setEnabled(bool enabled) const;
   bool lastSuccessful() const;
   void setLastSuccessful(bool successful) const;
+  int lastReturnCode() const;
+  void setLastReturnCode(int code) const;
   /** in millis */
   long long maxExpectedDuration() const;
   /** in millis */
