@@ -126,12 +126,10 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
       case 8: {
-        QString infourl = r.task().infourl();
-        if (!infourl.isEmpty())
-          return " <span class=\"label label-info\" "
-              "title=\"Information / Documentation\"><a target=\"_blank\" "
-              "href=\""+infourl+"\"><i class=\"icon-info-sign icon-white\">"
-              "</i></a></span>";
+        return " <span class=\"label label-info\" "
+            "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
+            +r.task().fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
+            "</i></a></span>";
       }
       default:
         ;

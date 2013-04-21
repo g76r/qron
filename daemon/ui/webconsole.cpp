@@ -298,9 +298,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksAlertsView->setModel(_tasksModel);
   _htmlTasksAlertsView->setTableClass("table table-condensed table-hover");
   _htmlTasksAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlTasksAlertsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
   cols.clear();
-  cols << 11 << 6 << 23 << 24 << 12 << 16;
+  cols << 11 << 6 << 23 << 24 << 12 << 16 << 18;
   _htmlTasksAlertsView->setColumnIndexes(cols);
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvTasksTreeView->setModel(_tasksTreeModel);
@@ -473,6 +474,20 @@ public:
     _values.insert(key, value);
   }
 };
+
+static QString linkify(QString html) {
+  QRegExp linkUrls("http(s?)://\\S+");
+  int pos = 0;
+  while ((pos = linkUrls.indexIn(html, pos)) != -1) {
+    int len = linkUrls.matchedLength();
+    QString url(html.mid(pos, len));
+    url.replace("\"", "&quot;");
+    QString linkified("<a href=\""+url+"\">"+url+"</a>");
+    html.replace(pos, len, linkified);
+    pos += linkified.size();
+  }
+  return html;
+}
 
 void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
   QString path = req.url().path();
@@ -655,14 +670,80 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       res.redirect(referer);
     }
   }
-  if (path == "/console/taskdoc") {
-    QUrl url(req.url());
-    url.setPath("/console/adhoc.html");
-    req.overrideUrl(url);
-    WebConsoleParamsProvider params(this, req, res);
-    params.setValue("data", "turlututu"); // FIXME
-    _wuiHandler->handleRequestWithContext(req, res, &params);
-    return;
+  if (path == "/console/taskdoc.html") {
+    QString fqtn = req.param("fqtn");
+    QString referer = req.header("Referer", "index.html");
+    if (_scheduler) {
+      Task task(_scheduler->task(fqtn));
+      if (!task.isNull()) {
+        WebConsoleParamsProvider params(this, req, res);
+        params.setValue("description",
+                        "<tr><th>Fully qualified task name (fqtn)</th><td>"+fqtn
+                        +"</td></tr>"
+                        "<tr><th>Task id and label</th><td>"+task.id()+" ("
+                        +task.label()+")</td></tr>"
+                        "<tr><th>Task group id and label</th><td>"
+                        +task.taskGroup().id()+" ("+task.taskGroup().label()
+                        +")</td></tr>"
+                        "<tr><th>Additional information</th><td>"
+                        +linkify(task.info())+"</td></tr>"
+                        "<tr><th>Triggers (scheduling)</th><td>"
+                        +task.triggersAsString()+"</td></tr>"
+                        "<tr><th>Minimum expected duration (seconds)</th><td>"
+                        +TasksModel::taskMinExpectedDuration(task)+"</td></tr>"
+                        "<tr><th>Maximum expected duration (seconds)</th><td>"
+                        +TasksModel::taskMaxExpectedDuration(task)+"</td></tr>");
+        params.setValue("status",
+                        "<tr><th>Enabled</th><td>"
+                        +QString(task.enabled()?"true":"false")+"</td></tr>"
+                        "<tr><th>Last execution status</th><td>"
+                        +TasksModel::taskLastExecStatus(task)+"</td></tr>"
+                        "<tr><th>Next execution</th><td>"
+                        +task.nextScheduledExecution()
+                        .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"
+                        "<tr><th>Currently running instances</th><td>"
+                        +QString::number(task.instancesCount())+" / "
+                        +QString::number(task.maxInstances())+"</td></tr>");
+        params.setValue("params",
+                        "<tr><th>Execution mean</th><td>"+task.mean()
+                        +"</td></tr>"
+                        "<tr><th>Execution target (host or cluster)</th><td>"
+                        +task.target()+"</td></tr>"
+                        "<tr><th>Command</th><td>"+task.command()+"</td></tr>"
+                        "<tr><th>Configuration parameters</th><td>"+task
+                        .params().toString(false)+"</td></tr>"
+                        "<tr><th>Request-time overridable parameters</th><td>"
+                        "coming soon...</td></tr>" // TODO
+                        "<tr><th>System environment variables set (setenv)</th>"
+                        "<td>"+TasksModel::taskSetenv(task)+"</td></tr>"
+                        "<tr><th>System environment variables unset (unsetenv)"
+                        "</th><td>"+TasksModel::taskUnsetenv(task)+"</td></tr>"
+                        "<tr><th>Consumed resources</th><td>"
+                        +task.resourcesAsString()+"</td></tr>"
+                        "<tr><th>Maximum instances count at a time</th><td>"
+                        +QString::number(task.maxInstances())+"</td></tr>"
+                        "<tr><th>Onstart envents</th><td>"
+                        +Event::toStringList(task.onstartEvents()).join(" ")
+                        +"</td></tr>"
+                        "<tr><th>Onsuccess envents</th><td>"
+                        +Event::toStringList(task.onsuccessEvents()).join(" ")
+                        +"</td></tr>"
+                        "<tr><th>Onfailure envents</th><td>"
+                        +Event::toStringList(task.onfailureEvents()).join(" ")
+                        +"</td></tr>");
+        params.setValue("fqtn", fqtn);
+        _wuiHandler->handleRequestWithContext(req, res, &params);
+        return;
+      } else {
+        res.setBase64SessionCookie("message", "E:Task '"+fqtn+"' not found.",
+                                   "/");
+        res.redirect(referer);
+      }
+    } else {
+      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                 "/");
+      res.redirect(referer);
+    }
   }
   if (path.startsWith("/console")) {
     WebConsoleParamsProvider params(this, req, res);

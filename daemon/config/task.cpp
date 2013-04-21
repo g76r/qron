@@ -27,7 +27,7 @@
 
 class TaskData : public QSharedData {
 public:
-  QString _id, _label, _mean, _command, _target, _infourl;
+  QString _id, _label, _mean, _command, _target, _info;
   TaskGroup _group;
   ParamSet _params, _setenv;
   QSet<QString> _noticeTriggers, _unsetenv;
@@ -55,7 +55,7 @@ public:
     _enabled(true), _lastSuccessful(true), _lastReturnCode(-1) { }
   TaskData(const TaskData &other) : QSharedData(), _id(other._id),
     _label(other._label), _mean(other._mean), _command(other._command),
-    _target(other._target), _infourl(other._infourl),
+    _target(other._target), _info(other._info),
     _group(other._group), _params(other._params), _setenv(other._setenv),
     _noticeTriggers(other._noticeTriggers), _unsetenv(other._unsetenv),
     _resources(other._resources),
@@ -113,7 +113,7 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
   if (td->_target.isEmpty()
       && (td->_mean == "local" || td->_mean == "donothing"))
     td->_target = "localhost";
-  td->_infourl = node.attribute("infourl");
+  td->_info = node.stringChildrenByName("info").join(" ");
   td->_maxInstances = node.attribute("maxinstances", "1").toInt();
   if (td->_maxInstances <= 0) {
     td->_maxInstances = 1;
@@ -266,8 +266,8 @@ QString Task::target() const {
   return d ? d->_target : QString();
 }
 
-QString Task::infourl() const {
-  return d ? d->_infourl : QString();
+QString Task::info() const {
+  return d ? d->_info : QString();
 }
 
 TaskGroup Task::taskGroup() const {

@@ -81,65 +81,18 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 17:
         return QString::number(t.instancesCount())+" / "
             +QString::number(t.maxInstances());
-      case 19: {
-        QDateTime dt = t.lastExecution();
-        return dt.isNull()
-            ? QVariant()
-            : dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
-              .append(t.lastSuccessful() ? " success" : " failure")
-              .append(" (code ").append(QString::number(t.lastReturnCode()))
-              .append(')');
-      }
-      case 20: {
-        QString env;
-        ParamSet setenv = t.setenv();
-        QSet<QString> keys = setenv.keys();
-        keys.remove("TASKREQUESTID");
-        keys.remove("FQTN");
-        keys.remove("TASKGROUPID");
-        keys.remove("TASKID");
-        foreach(const QString key, keys)
-          env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
-        foreach(const QString key, t.unsetenv())
-          env.append('-').append(key).append(' ');
-        if (!env.isEmpty())
-          env.chop(1);
-        return env;
-      }
-      case 21: {
-        QString env;
-        ParamSet setenv = t.setenv();
-        QSet<QString> keys = setenv.keys();
-        keys.remove("TASKREQUESTID");
-        keys.remove("FQTN");
-        keys.remove("TASKGROUPID");
-        keys.remove("TASKID");
-        foreach(const QString key, keys)
-          env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
-        if (!env.isEmpty())
-          env.chop(1);
-        return env;
-      }
-      case 22: {
-        QString env;
-        foreach(const QString key, t.unsetenv())
-          env.append(key).append(' ');
-        if (!env.isEmpty())
-          env.chop(1);
-        return env;
-      }
-      case 23: {
-        long long l = t.minExpectedDuration();
-        if (l > 0)
-          return QString::number(l*.001);
-        break;
-      }
-      case 24: {
-        long long l = t.maxExpectedDuration();
-        if (l < LLONG_MAX)
-          return QString::number(l*.001);
-        break;
-      }
+      case 19:
+        return taskLastExecStatus(t);
+      case 20:
+        return taskSystemEnvironnement(t);
+      case 21:
+        return taskSetenv(t);
+      case 22:
+        return taskUnsetenv(t);
+      case 23:
+        return taskMinExpectedDuration(t);
+      case 24:
+        return taskMaxExpectedDuration(t);
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -203,17 +156,19 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
       case 18: {
-        QString infourl = t.infourl(), suffix;
-        suffix = " <span class=\"label label-info\"><a "
+        QString suffix;
+        suffix =
+            /* taskconfig */
+            /*" <span class=\"label label-info\"><a "
             "title=\"Task configuration\""
             "href=\"tasks.html#taskconfig."+t.fqtn()
             +"\"><i class=\"glyphicon-cogwheel glyphicon-white\">"
+            "</i></a></span>"*/
+            /* taskdoc */
+            " <span class=\"label label-info\" "
+            "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
+            +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
             "</i></a></span>";
-        if (!infourl.isEmpty())
-          suffix += " <span class=\"label label-info\"><a target=\"_blank\" "
-              "title=\"Information / Documentation\""
-              "href=\""+infourl+"\"><i class=\"icon-info-sign icon-white\">"
-              "</i></a></span>";
         return suffix;
       }
       default:
@@ -225,6 +180,67 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
     }
   }
   return QVariant();
+}
+
+QString TasksModel::taskLastExecStatus(Task task) {
+  QDateTime dt = task.lastExecution();
+  return dt.isNull()
+      ? QString()
+      : dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
+        .append(task.lastSuccessful() ? " success" : " failure")
+        .append(" (code ").append(QString::number(task.lastReturnCode()))
+        .append(')');
+}
+
+QString TasksModel::taskSystemEnvironnement(Task task) {
+  QString env;
+  ParamSet setenv = task.setenv();
+  QSet<QString> keys = setenv.keys();
+  keys.remove("TASKREQUESTID");
+  keys.remove("FQTN");
+  keys.remove("TASKGROUPID");
+  keys.remove("TASKID");
+  foreach(const QString key, keys)
+    env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
+  foreach(const QString key, task.unsetenv())
+    env.append('-').append(key).append(' ');
+  if (!env.isEmpty())
+    env.chop(1);
+  return env;
+}
+
+QString TasksModel::taskSetenv(Task task){
+  QString env;
+  ParamSet setenv = task.setenv();
+  QSet<QString> keys = setenv.keys();
+  keys.remove("TASKREQUESTID");
+  keys.remove("FQTN");
+  keys.remove("TASKGROUPID");
+  keys.remove("TASKID");
+  foreach(const QString key, keys)
+    env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
+  if (!env.isEmpty())
+    env.chop(1);
+  return env;
+}
+
+QString TasksModel::taskUnsetenv(Task task)     {
+  QString env;
+  foreach(const QString key, task.unsetenv())
+    env.append(key).append(' ');
+  if (!env.isEmpty())
+    env.chop(1);
+  return env;
+}
+
+QString TasksModel::taskMinExpectedDuration(Task task) {
+  long long l = task.minExpectedDuration();
+  return (l > 0) ? QString::number(l*.001) : QString();
+}
+
+QString TasksModel::taskMaxExpectedDuration(Task task) {
+  long long l = task.maxExpectedDuration();
+  return (l < LLONG_MAX) ? QString::number(l*.001) : QString();
 }
 
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation,

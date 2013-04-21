@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2012-2013 Hallowyn and others.
+ This file is part of qron, see <http://qron.hallowyn.com/>.
+ Qron is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ Qron is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+ You should have received a copy of the GNU Affero General Public License
+ along with qron. If not, see <http://www.gnu.org/licenses/>.
+-->
+<html>
+  <head>
+    <title><?value:title?></title>
+    <link href="css/bootstrap.min.css" rel="stylesheet">
+    <link href="css/qron.css" rel="stylesheet">
+    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
+    <link href="css/glyphicons.css" rel="stylesheet">
+  </head>
+  <body>
+    <div class="navbar navbar-inverse navbar-static-top">
+      <div class="navbar-inner">
+        <div class="container">
+          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </a>
+          <a class="brand" href="#"><?value:navtitle?></a>
+          <div class="nav-collapse collapse">
+            <ul class="nav">
+              <li><a href="index.html">Overview</a></li>
+              <li><a href="tasks.html">Tasks</a></li>
+              <li><a href="infra.html">Infrastructure</a></li>
+              <li><a href="alerts.html">Alerts</a></li>
+              <li><a href="resources.html">Resources</a></li>
+              <li><a href="events.html">Events</a></li>
+              <li><a href="schedule.html">Schedule</a></li>
+              <li><a href="log.html">Log</a></li>
+              <li><a href="about.html">About</a></li>
+              <li><a><?view:now?></a></li>
+          </div>
+        </div>
+      </div>
+    </div>
+<!-- end of header -->
+
+    <div class="container">
+      <?value:message?>
+      <div class="row">
+        <div class="span12">
+          <h2>Documentation of task <?value:fqtn?></h2>
+          <p><a class="btn btn-danger" href="requestform?fqtn=<?value:fqtn?>"><i class="icon-play icon-white"></i> Request task execution</a>
+          <a class="btn btn-danger" href="confirm?event=enableTask&amp;enable=false&amp;fqtn=<?value:fqtn?>"><i class="icon-ban-circle icon-white"></i> Disable task</a>
+          <a class="btn btn-warning" href="confirm?event=enableTask&amp;enable=true&amp;fqtn=<?value:fqtn?>"><i class="icon-ban-circle icon-white"></i> Enable task</a>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span8">
+          <h3>Task Description</h3>
+          <p><a class="btn btn-primary" href="tasks.html#taskschedule.<?value:fqtn?>">Tasks page &raquo;</a>
+          <a class="btn btn-primary" href="index.html#taskschedule.<?value:fqtn?>">Overview page &raquo;</a>
+          <p><table class="table table-condensed table-hover">
+          <?value:description?>
+          </table>
+        </div>
+        <div class="span4">
+          <h3>Task Status</h3>
+          <p><a class="btn btn-info" href="../rest/txt/log/all/v1?filter=%20<?value:fqtn?>/"><i class="icon-file icon-white"></i> Task log</a>
+          <a class="btn btn-primary" href="log.html">Log page &raquo;</a>
+<p><table class="table table-condensed table-hover">
+          <?value:status?>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="span12">
+          <h3>Task Parameters and Resources</h3>
+          <p><a class="btn btn-primary" href="tasks.html#taskconfig.<?value:fqtn?>">Tasks page &raquo;</a>
+          <a class="btn btn-primary" href="resources.html">Resources page &raquo;</a>
+          <p><table class="table table-condensed table-hover">
+          <?value:params?>
+          </table>
+        </div>
+      </div>
+    </div>
+
+<!-- start of footer -->
+    <script src="js/jquery.min.js"></script>
+    <script src="js/bootstrap.min.js"></script>
+  </body>
+</html>
+
