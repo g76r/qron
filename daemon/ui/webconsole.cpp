@@ -605,11 +605,11 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
           "</div>";
       res.setBase64SessionCookie("redirect", referer, "/");
       QUrl url(req.url());
-      url.setPath("/console/message.html");
+      url.setPath("/console/adhoc.html");
       url.setQueryItems(QList<QPair<QString,QString> >());
       req.overrideUrl(url);
       WebConsoleParamsProvider params(this, req, res);
-      params.setValue("message", message);
+      params.setValue("content", message);
       _wuiHandler->handleRequestWithContext(req, res, &params);
       return;
     } else {
@@ -655,7 +655,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
             "</form>\n"
             "</div>\n";
         // <button type="submit" class="btn">Sign in</button>
-        params.setValue("data", form);
+        params.setValue("content", form);
         res.setBase64SessionCookie("redirect", redirect, "/");
         _wuiHandler->handleRequestWithContext(req, res, &params);
         return;
