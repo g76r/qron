@@ -129,7 +129,7 @@ QString AlertRule::address() const {
 QString AlertRule::emitMessage(Alert alert) const {
   QString rawMessage = d ? d->_emitMessage : QString();
   if (rawMessage.isEmpty())
-    rawMessage = "alert raised: "+alert.id();
+    rawMessage = "alert emited: "+alert.id();
   return ParamSet().evaluate(rawMessage, &alert);
 }
 

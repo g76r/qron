@@ -135,12 +135,12 @@ void MailAlertChannel::processQueue(const QVariant address) {
       // LATER HTML alert mails
       body.append("This message contains ")
           .append(QString::number(queue->_alerts.size()))
-          .append(" new raised alerts, ")
+          .append(" new emited alerts, ")
           .append(QString::number(queue->_cancellations.size()))
           .append(" alert cancellations and ")
           .append(QString::number(queue->_reminders.size()))
           .append(" reminders.\r\n\r\n");
-      body.append("NEW RAISED ALERTS:\r\n\r\n");
+      body.append("NEW EMITED ALERTS:\r\n\r\n");
       if (queue->_alerts.isEmpty())
         body.append("(none)\r\n");
       else
