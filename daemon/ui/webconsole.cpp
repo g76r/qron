@@ -585,7 +585,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     if (_scheduler) {
       if (event == "abortTask") {
         message = "abort task "+id;
-      } else if (event == "cancelReqest") {
+      } else if (event == "cancelRequest") {
         message = "cancel request "+id;
       } else if (event == "enableAllTasks") {
         message = QString(req.param("enable") == "true" ? "enable" : "disable")

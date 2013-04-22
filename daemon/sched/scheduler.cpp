@@ -507,8 +507,8 @@ TaskRequest Scheduler::doCancelRequest(quint64 id) {
       return r2;
     }
   }
-  Log::warning() << "cannot cancel task request because it is not in requests "
-                    "queue";
+  Log::warning() << "cannot cancel task request because it is not (or no "
+                    "longer) in requests queue";
   return TaskRequest();
 }
 
