@@ -20,7 +20,7 @@ public:
   EmitAlertEventData(Scheduler *scheduler = 0, const QString alert = QString())
     : EventData(scheduler), _alert(alert) { }
   void trigger(const ParamsProvider *context) const {
-    if (_scheduler)
+    if (_scheduler && !_alert.isEmpty())
       _scheduler.data()->alerter()
           ->emitAlert(ParamSet().evaluate(_alert, context));
   }
