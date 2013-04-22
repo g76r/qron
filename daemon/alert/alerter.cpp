@@ -61,6 +61,7 @@ Alerter::~Alerter() {
 bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
   Q_UNUSED(errorString) // currently no fatal error, only warnings
   _params.clear();
+  _rules.clear();
   if (!ConfigUtils::loadParamSet(root, _params, errorString))
     return false;
   foreach (PfNode node, root.childrenByName("rule")) {
