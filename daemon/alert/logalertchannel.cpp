@@ -15,7 +15,8 @@
 #include "log/log.h"
 #include <QThread>
 
-LogAlertChannel::LogAlertChannel(QObject *parent) : AlertChannel(parent) {
+LogAlertChannel::LogAlertChannel(QObject *parent, QWeakPointer<Alerter> alerter)
+  : AlertChannel(parent, alerter) {
   _thread->setObjectName("LogAlertChannelThread");
 }
 

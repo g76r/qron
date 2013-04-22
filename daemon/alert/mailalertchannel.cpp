@@ -29,8 +29,9 @@ public:
     _processingScheduled(false) { }
 };
 
-MailAlertChannel::MailAlertChannel(QObject *parent)
-  : AlertChannel(parent), _mailSender(0) {
+MailAlertChannel::MailAlertChannel(QObject *parent,
+                                   QWeakPointer<Alerter> alerter)
+  : AlertChannel(parent, alerter), _mailSender(0) {
   _thread->setObjectName("MailAlertChannelThread");
   qRegisterMetaType<MailAlertQueue>("MailAlertQueue");
 }
@@ -43,20 +44,9 @@ void MailAlertChannel::setParams(ParamSet params) {
   _mailSender = new MailSender(relay);
   _senderAddress = params.value("mail.senderaddress",
                                 "please-do-not-reply@localhost");
-  params.valueAsInt("mail.mindelaybetweenmails", 600);
-  if (_minDelayBetweenMails < 60) // hard coded 1 minute minimum
-    _minDelayBetweenMails = 60;
   _webConsoleUrl = params.value("webconsoleurl");
-  // LATER cancelDelay should be taken from Alerter, not from configuration
-  // to avoid double coding default values and the like
-  _cancelDelay = params.valueAsInt("canceldelay", ALERTER_DEFAULT_CANCEL_DELAY);
-  _gracePeriodBeforeFirstSend = params.valueAsInt("graceperiodbeforefirstsend",
-                                                  30);
-  if (_cancelDelay < 1)
-    _cancelDelay = ALERTER_DEFAULT_CANCEL_DELAY;
   Log::debug() << "MailAlertChannel configured " << relay << " "
-               << _senderAddress << " " << _minDelayBetweenMails
-               << " " << params.toString();
+               << _senderAddress << " " << params.toString();
 }
 
 MailAlertChannel::~MailAlertChannel() {
@@ -88,8 +78,9 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
     if (!queue->_processingScheduled) {
       // wait for a while before sending a mail with only 1 alert, in case some
       // related alerts are coming soon after this one
-      TimerWithArguments::singleShot(_gracePeriodBeforeFirstSend*1000, this,
-                                     "processQueue", address);
+      int period = _alerter ? _alerter.data()->gracePeriodBeforeFirstSend()
+                            : ALERTER_DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND;
+      TimerWithArguments::singleShot(period, this, "processQueue", address);
       queue->_processingScheduled = true;
     }
   }
@@ -107,8 +98,13 @@ void MailAlertChannel::processQueue(const QVariant address) {
   if (queue->_alerts.size() || queue->_cancellations.size()
       || queue->_reminders.size()) {
     QString errorString;
-    int s = queue->_lastMail.secsTo(QDateTime::currentDateTime());
-    if (queue->_lastMail.isNull() || s >= _minDelayBetweenMails) {
+    int ms = queue->_lastMail.msecsTo(QDateTime::currentDateTime());
+    int minDelayBetweenSend = _alerter
+        ? _alerter.data()->minDelayBetweenSend()
+        : ALERTER_DEFAULT_MIN_DELAY_BETWEEN_SEND;
+    //Log::fatal() << "minDelayBetweenSend: " << minDelayBetweenSend << " / "
+    //             << ms;
+    if (queue->_lastMail.isNull() || ms >= minDelayBetweenSend) {
       Log::debug() << "MailAlertChannel::processQueue trying to send alerts "
                       "mail to " << addr << ": " << queue->_alerts.size()
                    << " new alerts + " << queue->_cancellations.size()
@@ -168,9 +164,12 @@ void MailAlertChannel::processQueue(const QVariant address) {
               "\r\n"
               "Please note that there is a delay between alert cancellation\r\n"
               "request (timestamps above) and the actual time this mail is\r\n"
-              "sent (send timestamp of the mail).\r\n"
-              "This is the 'canceldelay' parameter, currently configured to\r\n"
-              +QString::number(_cancelDelay)+" seconds.");
+              "sent (send timestamp of the mail).\r\n");
+        if (_alerter)
+          body.append(
+                "This is the 'canceldelay' parameter, currently configured to"
+                "\r\n"+QString::number(_alerter.data()->cancelDelay()*.001)
+                +" seconds.");
       }
       bool queued = _mailSender->send(_senderAddress, recipients, body,
                                       headers, QList<QVariant>(), errorString);
@@ -189,8 +188,8 @@ void MailAlertChannel::processQueue(const QVariant address) {
       }
     } else {
       Log::debug() << "MailAlertChannel::processQueue postponing send";
-      TimerWithArguments::singleShot((_minDelayBetweenMails-s)*1000, this,
-                                     "processQueue", addr);
+      TimerWithArguments::singleShot(std::max(minDelayBetweenSend-ms,1),
+                                     this, "processQueue", addr);
       queue->_processingScheduled = true;
     }
   } else {

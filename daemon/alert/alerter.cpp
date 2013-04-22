@@ -26,18 +26,18 @@
 
 // LATER replace this 10" ugly batch with predictive timer (min(timestamps))
 #define ASYNC_PROCESSING_INTERVAL 10000
-#define ALERTER_DEFAULT_REMIND_FREQUENCY 60000
 
 Alerter::Alerter() : QObject(0), _thread(new QThread),
   _cancelDelay(ALERTER_DEFAULT_CANCEL_DELAY),
-  _remindFrequency(ALERTER_DEFAULT_REMIND_FREQUENCY) {
+  _remindFrequency(ALERTER_DEFAULT_REMIND_FREQUENCY),
+  _minDelayBetweenSend(ALERTER_DEFAULT_MIN_DELAY_BETWEEN_SEND){
   _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
-  _channels.insert("log", new LogAlertChannel);
-  _channels.insert("udp", new UdpAlertChannel);
-  MailAlertChannel *mailChannel = new MailAlertChannel;
+  _channels.insert("log", new LogAlertChannel(0, this));
+  _channels.insert("udp", new UdpAlertChannel(0, this));
+  MailAlertChannel *mailChannel = new MailAlertChannel(0, this);
   _channels.insert("mail", mailChannel);
   connect(this, SIGNAL(paramsChanged(ParamSet)),
           mailChannel, SLOT(setParams(ParamSet)));
@@ -96,10 +96,22 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
       }
     }
   }
-  _cancelDelay = _params.valueAsInt("canceldelay",
-                                    ALERTER_DEFAULT_CANCEL_DELAY);
-  _remindFrequency = _params.valueAsInt("remindfrequency",
-                                        ALERTER_DEFAULT_REMIND_FREQUENCY);
+  _cancelDelay =
+      _params.valueAsInt("canceldelay", ALERTER_DEFAULT_CANCEL_DELAY/1000)*1000;
+  if (_cancelDelay < 1000) // hard coded 1 second minmimum
+    _cancelDelay = ALERTER_DEFAULT_CANCEL_DELAY;
+  _remindFrequency =
+      _params.valueAsInt("remindfrequency",
+                         ALERTER_DEFAULT_REMIND_FREQUENCY/1000)*1000;
+  _minDelayBetweenSend =
+      _params.valueAsInt("mindelaybetweensend",
+                         ALERTER_DEFAULT_MIN_DELAY_BETWEEN_SEND/1000)*1000;
+  if (_minDelayBetweenSend < 60000) // hard coded 1 minute minimum
+    _minDelayBetweenSend = 60000;
+  _gracePeriodBeforeFirstSend =
+      _params.valueAsInt("graceperiodbeforefirstsend",
+                         ALERTER_DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND/1000)
+      *1000;
   emit paramsChanged(_params);
   emit rulesChanged(_rules);
   QStringList channels;
@@ -210,10 +222,10 @@ void Alerter::doCancelAlert(QString alert, bool immediately) {
   } else {
     if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
       _raisedAlerts.remove(alert);
-      QDateTime dt(QDateTime::currentDateTime().addSecs(_cancelDelay));
+      QDateTime dt(QDateTime::currentDateTime().addMSecs(_cancelDelay));
       _soonCanceledAlerts.insert(alert, dt);
-      Log::debug() << "will cancel alert " << alert << " in " << _cancelDelay
-                   << " s";
+      Log::debug() << "will cancel alert " << alert << " in "
+                   << _cancelDelay*.001 << " s";
       emit alertCancellationScheduled(alert, dt);
       //} else {
       //  Log::debug() << "would have canceled alert " << alert
@@ -231,6 +243,6 @@ void Alerter::asyncProcessing() {
   // process alerts reminders
   foreach (QString alert, _raisedAlerts.keys())
     if (!_soonCanceledAlerts.contains(alert)
-        && _remindedAlerts.value(alert).secsTo(now) > _remindFrequency)
+        && _remindedAlerts.value(alert).msecsTo(now) > _remindFrequency)
       doRemindAlert(alert);
 }

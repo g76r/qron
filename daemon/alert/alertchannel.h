@@ -18,15 +18,18 @@
 #include "config/alert.h"
 
 class QThread;
+class Alerter;
 
 class AlertChannel : public QObject {
   Q_OBJECT
 protected:
   QThread *_thread;
+  QWeakPointer<Alerter> _alerter;
 
 public:
   enum MessageType { Emit, Cancel, Remind };
-  explicit AlertChannel(QObject *parent = 0);
+  explicit AlertChannel(QObject *parent = 0, QWeakPointer<Alerter> alerter
+                        = QWeakPointer<Alerter>());
   void sendMessage(Alert alert, MessageType type);
 
 protected:

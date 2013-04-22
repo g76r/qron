@@ -32,10 +32,10 @@ class MailAlertChannel : public AlertChannel {
   QHash<QString,MailAlertQueue*> _queues;
   MailSender *_mailSender;
   QString _senderAddress, _webConsoleUrl;
-  int _minDelayBetweenMails, _cancelDelay, _gracePeriodBeforeFirstSend;
 
 public:
-  explicit MailAlertChannel(QObject *parent = 0);
+  explicit MailAlertChannel(QObject *parent = 0, QWeakPointer<Alerter> alerter
+                            = QWeakPointer<Alerter>());
   ~MailAlertChannel();
   void doSendMessage(Alert alert, MessageType type);
 

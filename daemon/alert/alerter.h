@@ -26,8 +26,11 @@
 class QThread;
 class PfNode;
 
-#define ALERTER_DEFAULT_CANCEL_DELAY 900
+#define ALERTER_DEFAULT_CANCEL_DELAY 900000
 // 900" = 15'
+#define ALERTER_DEFAULT_REMIND_FREQUENCY 60000
+#define ALERTER_DEFAULT_MIN_DELAY_BETWEEN_SEND 600000
+#define ALERTER_DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND 30000
 
 /** Main class for the alert system.
  */
@@ -42,6 +45,8 @@ class Alerter : public QObject {
   QHash<QString,QDateTime> _remindedAlerts; // alert + last reminder time
   int _cancelDelay;
   int _remindFrequency;
+  int _minDelayBetweenSend;
+  int _gracePeriodBeforeFirstSend;
 
 public:
   explicit Alerter();
@@ -85,6 +90,12 @@ public:
   /** Give access to alerts parameters.
    * This method is threadsafe. */
   ParamSet params() const { return _params; }
+  /** In ms. */
+  int cancelDelay() const { return _cancelDelay; }
+  /** In ms. */
+  int minDelayBetweenSend() const { return _minDelayBetweenSend; }
+  /** In ms. */
+  int gracePeriodBeforeFirstSend() const { return _gracePeriodBeforeFirstSend; }
 
 signals:
   /** An alert has just been raised.

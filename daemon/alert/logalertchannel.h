@@ -23,7 +23,8 @@ class LogAlertChannel : public AlertChannel {
   Q_OBJECT
 
 public:
-  explicit LogAlertChannel(QObject *parent = 0);
+  explicit LogAlertChannel(QObject *parent = 0, QWeakPointer<Alerter> alerter
+      = QWeakPointer<Alerter>());
   void doSendMessage(Alert alert, MessageType type);
 };
 
