@@ -211,7 +211,7 @@ QDateTime CronTriggerData::nextTriggering(QDateTime max) const {
       next.setDate(QDate(next.date().year(), next.date().month(), 1));
       next.setTime(QTime(0, 0, 0));
     } else if (!_days.isSet(next.date().day())
-               ||!_daysofweek.isSet(next.date().dayOfWeek()-1)) {
+               ||!_daysofweek.isSet(next.date().dayOfWeek()%7)) {
       next = next.addDays(1);
       next.setTime(QTime(0, 0, 0));
     } else if (!_hours.isSet(next.time().hour())) {
