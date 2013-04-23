@@ -243,27 +243,38 @@ void Executor::httpMean(TaskRequest request) {
     command = command.mid(1);
   url.setEncodedUrl(QString("http://%1:%2/%3").arg(hostname).arg(port)
                     .arg(command).toUtf8(), QUrl::TolerantMode);
+  QNetworkRequest networkRequest(url);
+  foreach (QString spec, request.params().valueAsStrings("setheader")) {
+    int i = spec.indexOf(':');
+    QString name = i < 0 ? spec.trimmed() : spec.left(i).trimmed();
+    QString value = i < 0 ? QString() : spec.mid(i+1).trimmed();
+    Log::fatal(request.task().fqtn(), request.id()) << "setheader: " << name << "=" << value << ".";
+    networkRequest.setRawHeader(name.toAscii(), value.toUtf8()); // TODO escape unallowed chars
+  }
   _request = request;
   if (url.isValid()) {
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact GET URL to be called: "
           << url.toString(QUrl::RemovePassword);
-      _reply = _nam->get(QNetworkRequest(url));
+      _reply = _nam->get(networkRequest);
     } else if (method.compare("put", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact PUT URL to be called: "
           << url.toString(QUrl::RemovePassword);
       QBuffer *buffer = new QBuffer(this);
       buffer->open(QIODevice::ReadOnly);
-      _reply = _nam->put(QNetworkRequest(url), buffer);
+      _reply = _nam->put(networkRequest, buffer);
+      connect(_reply, SIGNAL(finished()), buffer, SLOT(deleteLater()));
     } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact POST URL to be called: "
           << url.toString(QUrl::RemovePassword);
       QBuffer *buffer = new QBuffer(this);
       buffer->open(QIODevice::ReadOnly);
-      _reply = _nam->post(QNetworkRequest(url), buffer);
+      networkRequest.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
+      _reply = _nam->post(networkRequest, buffer);
+      connect(_reply, SIGNAL(finished()), buffer, SLOT(deleteLater()));
     } else {
       Log::error(_request.task().fqtn(), _request.id())
           << "unsupported HTTP method: " << method;
