@@ -580,7 +580,7 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
     fired = true;
   } else {
     QDateTime taskNext = task.nextScheduledExecution();
-    if (taskNext.isValid() && taskNext <= next) {
+    if (taskNext.isValid() && taskNext <= next && taskNext > now) {
       //Log::debug() << "Scheduler::checkTrigger don't trigger or plan new "
       //                "check for task " << fqtn << " "
       //             << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
@@ -597,6 +597,7 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   //             << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " " << ms;
   TimerWithArguments::singleShot(ms, this, "checkTriggersForTask", fqtn);
   task.setNextScheduledExecution(now.addMSecs(ms));
+  emit taskChanged(task);
   return fired;
 }
 
