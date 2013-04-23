@@ -72,7 +72,7 @@ public:
    * a value in seconds).
    * The grace delay should be configured longer than any time interval
    * between alerts send which recipients are human beings (e.g.
-   * "mail.mindelaybetweenmails" for mail alerts, which default is 10 mintues)
+   * "mindelaybetweensend" for mail alerts, which default is 10 mintues)
    * since it avoids flip/flop spam (which otherwise would occur if the same
    * alerts is raised and cancel several time within the same time interval
    * between alerts send).

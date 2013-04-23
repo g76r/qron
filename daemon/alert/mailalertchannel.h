@@ -24,7 +24,7 @@ class MailSender;
 
 /** Log channel that send alerts as mails.
  * It performs alerts (and alert cancellations) aggregation within at most one
- * mail every %mindelaybetweenmails seconds (default: 600" = 10').
+ * mail every %mindelaybetweensend seconds (default: 600" = 10').
  * Coming soon: it will also send reminders for alerts raised for a long time.
  */
 class MailAlertChannel : public AlertChannel {
