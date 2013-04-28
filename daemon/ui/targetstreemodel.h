@@ -20,8 +20,8 @@
 
 class TargetsTreeModel : public TreeModelWithStructure {
   Q_OBJECT
-  QMap<QString,Cluster> _clusters;
-  QMap<QString,Host> _hosts;
+  QHash<QString,Cluster> _clusters;
+  QHash<QString,Host> _hosts;
   TreeItem *_clustersItem, *_hostsItem;
 
 public:
@@ -31,8 +31,8 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllHostsAndClusters(QMap<QString,Cluster> clusters,
-                              QMap<QString,Host> hosts);
+  void setAllHostsAndClusters(QHash<QString,Cluster> clusters,
+                              QHash<QString,Host> hosts);
 };
 
 #endif // TARGETSTREEMODEL_H

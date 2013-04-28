@@ -14,7 +14,7 @@
 #include "task.h"
 #include "taskgroup.h"
 #include <QString>
-#include <QMap>
+#include <QHash>
 #include "pf/pfnode.h"
 #include "crontrigger.h"
 #include "log/log.h"
@@ -31,7 +31,7 @@ public:
   TaskGroup _group;
   ParamSet _params, _setenv;
   QSet<QString> _noticeTriggers, _unsetenv;
-  QMap<QString,qint64> _resources;
+  QHash<QString,qint64> _resources;
   int _maxInstances;
   QList<CronTrigger> _cronTriggers;
   QList<QRegExp> _stderrFilters;
@@ -184,17 +184,15 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     scheduler->loadEventListConfiguration(child, td->_onsuccess);
     scheduler->loadEventListConfiguration(child, td->_onfailure);
   }
-  foreach (PfNode child, node.childrenByName("resource")) {
-    QString kind = child.attribute("kind");
-    qint64 quantity = child.attribute("quantity").toLong(0, 0);
-    if (kind.isNull())
-      Log::error() << "ignoring resource with no or empty kind in task "
-                   << td->_id;
-    else if (quantity <= 0)
-      Log::error() << "ignoring resource of kind " << kind
-                   << "with incorrect quantity in task " << td->_id;
+  QListIterator<QPair<QString,qlonglong> > it(
+        node.stringLongPairChildrenByName("resource"));
+  while (it.hasNext()) {
+    const QPair<QString,qlonglong> &p(it.next());
+    if (p.second <= 0)
+      Log::error() << "ignoring resource of kind " << p.first
+                   << "with incorrect quantity in task " << node.toString();
     else
-      td->_resources.insert(kind, quantity);
+      td->_resources.insert(p.first, p.second);
   }
   QString doas = node.attribute("discardaliasesonstart", "all");
   td->_discardAliasesOnStart = discardAliasesOnStartFromString(doas);
@@ -290,8 +288,8 @@ QList<CronTrigger> Task::cronTriggers() const {
   return d ? d->_cronTriggers : QList<CronTrigger>();
 }
 
-QMap<QString, qint64> Task::resources() const {
-  return d ? d->_resources : QMap<QString,qint64>();
+QHash<QString, qint64> Task::resources() const {
+  return d ? d->_resources : QHash<QString,qint64>();
 }
 
 QString Task::resourcesAsString() const {

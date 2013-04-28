@@ -32,9 +32,9 @@ QVariant ResourcesAllocationModel::headerData(
 }
 
 void ResourcesAllocationModel::setResourceAllocationForHost(
-    QString host, QMap<QString,qint64> resources) {
+    QString host, QHash<QString, qint64> resources) {
   if (_mode != Configured) {
-    QMap<QString,qint64> hostConfigured = _configured.value(host);
+    QHash<QString,qint64> hostConfigured = _configured.value(host);
     foreach (QString kind, resources.keys()) {
       qint64 configured = hostConfigured.value(kind);
       qint64 free = resources.value(kind);
@@ -60,10 +60,10 @@ void ResourcesAllocationModel::setResourceAllocationForHost(
 }
 
 void ResourcesAllocationModel::setResourceConfiguration(
-    QMap<QString,QMap<QString,qint64> > resources) {
+    QHash<QString, QHash<QString, qint64> > resources) {
   _configured = resources;
   foreach (QString host, resources.keys()) {
-    QMap<QString,qint64> hostResources = resources.value(host);
+    QHash<QString,qint64> hostResources = resources.value(host);
     foreach (QString kind, hostResources.keys()) {
       QString configured = QString::number(hostResources.value(kind));
       switch (_mode) {

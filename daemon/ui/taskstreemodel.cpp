@@ -127,8 +127,8 @@ QVariant TasksTreeModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void TasksTreeModel::setAllTasksAndGroups(QMap<QString, TaskGroup> groups,
-                                          QMap<QString, Task> tasks) {
+void TasksTreeModel::setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
+                                          QHash<QString, Task> tasks) {
   beginResetModel();
   QStringList names;
   foreach(QString id, groups.keys())

@@ -24,7 +24,7 @@
 #include "config/host.h"
 #include "config/cluster.h"
 #include "config/taskrequest.h"
-#include <QMap>
+#include <QHash>
 #include "executor.h"
 #include <QVariant>
 #include "alert/alerter.h"
@@ -38,11 +38,11 @@ class Scheduler : public QObject {
   Q_OBJECT
   QThread *_thread;
   ParamSet _globalParams, _setenv;
-  QMap<QString,TaskGroup> _tasksGroups;
-  QMap<QString,Task> _tasks;
-  QMap<QString,Cluster> _clusters;
-  QMap<QString,Host> _hosts;
-  QMap<QString,QMap<QString,qint64> > _resources;
+  QHash<QString,TaskGroup> _tasksGroups;
+  QHash<QString,Task> _tasks;
+  QHash<QString,Cluster> _clusters;
+  QHash<QString,Host> _hosts;
+  QHash<QString,QHash<QString,qint64> > _resources;
   QSet<QString> _setFlags, _unsetenv;
   mutable QMutex _flagsMutex, _configMutex;
   QList<TaskRequest> _queuedRequests;
@@ -157,19 +157,19 @@ public slots:
   Task task(QString fqtn);
 
 signals:
-  void tasksConfigurationReset(QMap<QString,TaskGroup> tasksGroups,
-                               QMap<QString,Task> tasks);
-  void targetsConfigurationReset(QMap<QString,Cluster> clusters,
-                                 QMap<QString,Host> hosts);
+  void tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
+                               QHash<QString,Task> tasks);
+  void targetsConfigurationReset(QHash<QString,Cluster> clusters,
+                                 QHash<QString,Host> hosts);
   void eventsConfigurationReset(QList<Event> onstart, QList<Event> onsuccess,
                                 QList<Event> onfailure, QList<Event> onlog,
                                 QList<Event> onnotice,
                                 QList<Event> onschedulerstart,
                                 QList<Event> onconfigload);
   void hostResourceAllocationChanged(QString host,
-                                     QMap<QString,qint64> resources);
+                                     QHash<QString,qint64> resources);
   void hostResourceConfigurationChanged(
-      QMap<QString,QMap<QString,qint64> > resources);
+      QHash<QString,QHash<QString,qint64> > resources);
   /** There is no guarantee that taskQueued() is emited, taskStarted() or
     * taskFinished() can be emited witout previous taskQueued(). */
   void taskQueued(TaskRequest request);

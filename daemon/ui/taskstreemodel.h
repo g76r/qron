@@ -21,8 +21,8 @@
 
 class TasksTreeModel : public TreeModelWithStructure {
   Q_OBJECT
-  QMap<QString,TaskGroup> _groups;
-  QMap<QString,Task> _tasks;
+  QHash<QString,TaskGroup> _groups;
+  QHash<QString,Task> _tasks;
 
 public:
   explicit TasksTreeModel(QObject *parent = 0);
@@ -31,8 +31,8 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllTasksAndGroups(QMap<QString,TaskGroup> groups,
-                            QMap<QString,Task> tasks);
+  void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
+                            QHash<QString, Task> tasks);
   void taskChanged(Task task);
   void taskChanged(TaskRequest request);
 };

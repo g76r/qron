@@ -16,7 +16,7 @@
 
 #include <QAbstractListModel>
 #include <QList>
-#include <QMap>
+#include <QHash>
 #include "config/task.h"
 #include "config/taskgroup.h"
 #include "config/taskrequest.h"
@@ -32,8 +32,8 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllTasksAndGroups(QMap<QString,TaskGroup> groups,
-                            QMap<QString,Task> tasks);
+  void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
+                            QHash<QString, Task> tasks);
   void taskChanged(Task task);
   static QString taskLastExecStatus(Task task);
   static QString taskSystemEnvironnement(Task task);

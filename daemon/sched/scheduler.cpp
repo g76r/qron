@@ -56,12 +56,12 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
   qRegisterMetaType<QList<Event> >("QList<Event>");
-  qRegisterMetaType<QMap<QString,Task> >("QMap<QString,Task>");
-  qRegisterMetaType<QMap<QString,TaskGroup> >("QMap<QString,TaskGroup>");
-  qRegisterMetaType<QMap<QString,QMap<QString,qint64> > >("QMap<QString,QMap<QString,qint64> >");
-  qRegisterMetaType<QMap<QString,Cluster> >("QMap<QString,Cluster>");
-  qRegisterMetaType<QMap<QString,Host> >("QMap<QString,Host>");
-  qRegisterMetaType<QMap<QString,qint64> >("QMap<QString,qint64>");
+  qRegisterMetaType<QHash<QString,Task> >("QHash<QString,Task>");
+  qRegisterMetaType<QHash<QString,TaskGroup> >("QHash<QString,TaskGroup>");
+  qRegisterMetaType<QHash<QString,QHash<QString,qint64> > >("QHash<QString,QHash<QString,qint64> >");
+  qRegisterMetaType<QHash<QString,Cluster> >("QHash<QString,Cluster>");
+  qRegisterMetaType<QHash<QString,Host> >("QHash<QString,Host>");
+  qRegisterMetaType<QHash<QString,qint64> >("QHash<QString,qint64>");
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
@@ -151,7 +151,7 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
       //Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
     }
   }
-  QMap<QString,Task> oldTasks = _tasks;
+  QHash<QString,Task> oldTasks = _tasks;
   _tasks.clear();
   foreach (PfNode node, root.childrenByName("task")) {
     QString taskGroupId = node.attribute("taskgroup");
@@ -638,7 +638,7 @@ public:
 
 void Scheduler::postNotice(const QString notice) {
   QMutexLocker ml(&_configMutex);
-  QMap<QString,Task> tasks = _tasks;
+  QHash<QString,Task> tasks = _tasks;
   ml.unlock();
   Log::debug() << "posting notice '" << notice << "'";
   foreach (Task task, tasks.values()) {
@@ -746,9 +746,9 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
   }
   // LATER implement other cluster balancing methods than "first"
   // LATER implement best effort resource check for forced requests
-  QMap<QString,qint64> taskResources = task.resources();
+  QHash<QString,qint64> taskResources = task.resources();
   foreach (Host h, hosts) {
-    QMap<QString,qint64> hostResources = _resources.value(h.id());
+    QHash<QString,qint64> hostResources = _resources.value(h.id());
     if (!request.force()) {
       foreach (QString kind, taskResources.keys()) {
         if (hostResources.value(kind) < taskResources.value(kind)) {
@@ -821,8 +821,8 @@ void Scheduler::taskFinishing(TaskRequest request,
       _availableExecutors.append(e);
   }
   _runningRequests.remove(request);
-  QMap<QString,qint64> taskResources = requestedTask.resources();
-  QMap<QString,qint64> hostResources = _resources.value(request.target().id());
+  QHash<QString,qint64> taskResources = requestedTask.resources();
+  QHash<QString,qint64> hostResources = _resources.value(request.target().id());
   foreach (QString kind, taskResources.keys())
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));

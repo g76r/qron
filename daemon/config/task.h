@@ -52,7 +52,7 @@ public:
   void completeConfiguration(TaskGroup taskGroup);
   QList<CronTrigger> cronTriggers() const;
   /** Resources consumed. */
-  QMap<QString,qint64> resources() const;
+  QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;
   QString triggersAsString() const;
   QDateTime lastExecution() const;

@@ -24,7 +24,7 @@ public:
               AllocatedOverConfigured };
 private:
   Mode _mode;
-  QMap<QString,QMap<QString,qint64> > _configured;
+  QHash<QString,QHash<QString,qint64> > _configured;
 
 public:
   explicit ResourcesAllocationModel(
@@ -34,8 +34,9 @@ public:
 
 public slots:
   void setResourceAllocationForHost(QString host,
-                                    QMap<QString,qint64> resources);
-  void setResourceConfiguration(QMap<QString,QMap<QString,qint64> > resources);
+                                    QHash<QString,qint64> resources);
+  void setResourceConfiguration(
+      QHash<QString,QHash<QString,qint64> > resources);
 };
 
 #endif // RESOURCESALLOCATIONMODEL_H

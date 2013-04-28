@@ -31,8 +31,8 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllHostsAndClusters(QMap<QString,Cluster> clusters,
-                              QMap<QString,Host> hosts);
+  void setAllHostsAndClusters(QHash<QString, Cluster> clusters,
+                              QHash<QString, Host> hosts);
 };
 
 #endif // CLUSTERSLISTMODEL_H

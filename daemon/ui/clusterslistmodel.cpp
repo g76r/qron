@@ -74,8 +74,8 @@ QVariant ClustersListModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void ClustersListModel::setAllHostsAndClusters(QMap<QString, Cluster> clusters,
-                                               QMap<QString, Host> hosts) {
+void ClustersListModel::setAllHostsAndClusters(QHash<QString, Cluster> clusters,
+                                               QHash<QString, Host> hosts) {
   Q_UNUSED(hosts)
   beginResetModel();
   QStringList names;

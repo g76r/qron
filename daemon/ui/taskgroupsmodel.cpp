@@ -130,8 +130,8 @@ QVariant TaskGroupsModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void TaskGroupsModel::setAllTasksAndGroups(QMap<QString, TaskGroup> groups,
-                                      QMap<QString, Task> tasks) {
+void TaskGroupsModel::setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
+                                           QHash<QString, Task> tasks) {
   Q_UNUSED(tasks)
   beginResetModel();
   _groups.clear();
