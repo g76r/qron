@@ -25,9 +25,12 @@ public:
     : EventData(scheduler), _idOrFqtn(idOrFqtn), _params(params), _force(force) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler) {
-      QString fqtn = context ? context->paramValue("!fqtn") : QString();
-      QString id = context ? context->paramValue("!taskrequestid") : QString();
-      QString group = context ? context->paramValue("!taskgroupid") : QString();
+      QString fqtn = context
+          ? context->paramValue("!fqtn").toString() : QString();
+      QString id = context
+          ? context->paramValue("!taskrequestid").toString() : QString();
+      QString group = context
+          ? context->paramValue("!taskgroupid").toString() : QString();
       Log::log(fqtn.isNull() ? Log::Debug : Log::Info, fqtn, id.toLongLong())
           << "requesttask event requesting execution of task " << _idOrFqtn;
       QString idOrFqtn = _params.evaluate(_idOrFqtn, context);

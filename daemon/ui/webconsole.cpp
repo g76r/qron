@@ -445,7 +445,7 @@ public:
       _message = "";
     res.clearCookie("message", "/");
   }
-  QString paramValue(const QString key, const QString defaultValue) const {
+  QVariant paramValue(const QString key, const QVariant defaultValue) const {
     if (_values.contains(key))
       return _values.value(key);
     if (!_console->_scheduler) // should never happen

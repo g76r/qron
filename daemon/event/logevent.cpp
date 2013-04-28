@@ -26,8 +26,10 @@ public:
     return "log{"+Log::severityToString(_severity)+" "+_message+"}";
   }
   void trigger(const ParamsProvider *context) const {
-    QString fqtn = context ? context->paramValue("!fqtn") : QString();
-    QString id = context ? context->paramValue("!taskrequestid") : QString();
+    QString fqtn = context
+        ? context->paramValue("!fqtn").toString() : QString();
+    QString id = context
+        ? context->paramValue("!taskrequestid").toString() : QString();
     Log::log(_severity, fqtn, id.toLongLong())
         << ParamSet().evaluate(_message, context);
   }

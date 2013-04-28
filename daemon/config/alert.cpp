@@ -53,12 +53,12 @@ QDateTime Alert::datetime() const {
   return d ? d->_datetime : QDateTime();
 }
 
-QString Alert::paramValue(const QString key, const QString defaultValue) const {
+QVariant Alert::paramValue(const QString key,
+                           const QVariant defaultValue) const {
   if (key == "!alertid") {
     return id();
   } else if (key == "!alertdate") {
     return datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
   }
   return defaultValue;
-
 }

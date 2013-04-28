@@ -83,7 +83,6 @@ bool Scheduler::reloadConfiguration(QIODevice *source, QString &errorString) {
   PfDomHandler pdh;
   PfParser pp(&pdh);
   pp.parse(source);
-  int n = pdh.roots().size();
   if (pdh.errorOccured()) {
     errorString = pdh.errorString()+" at line "+QString::number(pdh.errorLine())
         +" column "+QString::number(pdh.errorColumn());
@@ -633,7 +632,7 @@ class NoticeContext : public ParamsProvider {
 public:
   QString _notice;
   NoticeContext(const QString notice) : _notice(notice) { }
-  QString paramValue(const QString key, const QString defaultValue) const {
+  QVariant paramValue(const QString key, const QVariant defaultValue) const {
     if (key == "!notice")
       return _notice;
     return defaultValue;

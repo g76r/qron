@@ -65,7 +65,7 @@ public:
     * Return a null Host when the task request is still queued. */
   Host target() const;
   void setTarget(Host target) const;
-  QString paramValue(const QString key, const QString defaultValue) const;
+  QVariant paramValue(const QString key, const QVariant defaultValue) const;
   ParamSet setenv() const;
   void setTask(Task task);
   bool force() const;
