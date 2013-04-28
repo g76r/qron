@@ -84,22 +84,26 @@ bool Scheduler::reloadConfiguration(QIODevice *source, QString &errorString) {
   PfParser pp(&pdh);
   pp.parse(source);
   int n = pdh.roots().size();
-  if (n < 1) {
+  if (pdh.errorOccured()) {
     errorString = pdh.errorString()+" at line "+QString::number(pdh.errorLine())
         +" column "+QString::number(pdh.errorColumn());
     Log::error() << "empty or invalid configuration: " << errorString;
     return false;
   }
-  foreach (PfNode root, pdh.roots()) {
+  QList<PfNode> roots = pdh.roots();
+  if (roots.size() == 0) {
+    Log::error() << "configuration lacking root node";
+  } else if (roots.size() == 1) {
+    PfNode &root(roots.first());
     if (root.name() == "qrontab") {
-      // LATER warn if several top level nodes
       return reloadConfiguration(root, errorString);
     } else {
-      Log::warning() << "ignoring node '" << root.name()
-                     << "' at configuration file top level";
+      Log::error() << "configuration root node is not \"qrontab\"";
     }
+  } else {
+    Log::error() << "configuration with more than one root node";
   }
-  return true;
+  return false;
 }
 
 bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
