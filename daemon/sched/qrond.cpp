@@ -77,7 +77,8 @@ void Qrond::startup(QStringList args) {
   if (rc) {
     Log::fatal() << "cannot load configuration: " << errorString;
     Log::fatal() << "qrond is aborting startup sequence";
-    shutdown(rc);
+    QMetaObject::invokeMethod(qrondInstance(), "shutdown",
+                              Qt::QueuedConnection, Q_ARG(int, rc));
   }
 }
 
