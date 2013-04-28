@@ -19,27 +19,15 @@
 
 class ConfigUtils {
 public:
-  static inline bool loadParamSet(PfNode parentnode, ParamSet &params,
-                                  QString &errorString) {
-    return loadGenericParamSet(parentnode, params, "param", errorString); }
-  static inline bool loadParamSet(PfNode parentnode, ParamSet &params) {
-    QString errorString;
-    return loadParamSet(parentnode, params, errorString); }
-  static inline bool loadSetenv(PfNode parentnode, ParamSet &params,
-                                QString &errorString) {
-    return loadGenericParamSet(parentnode, params, "setenv", errorString); }
-  static inline bool loadSetenv(PfNode parentnode, ParamSet &params) {
-    QString errorString;
-    return loadSetenv(parentnode, params, errorString); }
-  static bool loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv,
-                           QString &errorString);
-  static bool loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv) {
-    QString errorString;
-    return loadUnsetenv(parentnode, unsetenv, errorString); }
+  static inline void loadParamSet(PfNode parentnode, ParamSet &params) {
+    return loadGenericParamSet(parentnode, params, "param"); }
+  static inline void loadSetenv(PfNode parentnode, ParamSet &params) {
+    return loadGenericParamSet(parentnode, params, "setenv"); }
+  static void loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv);
 
 private:
-  static bool loadGenericParamSet(PfNode parentnode, ParamSet &params,
-                                  QString attrname, QString &errorString);
+  static void loadGenericParamSet(PfNode parentnode, ParamSet &params,
+                                  QString attrname);
   ConfigUtils();
 };
 

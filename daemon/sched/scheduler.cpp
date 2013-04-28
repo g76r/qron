@@ -135,12 +135,9 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
   }
   //Log::debug() << "replacing loggers " << loggers.size();
   Log::replaceLoggers(loggers);
-  if (!ConfigUtils::loadParamSet(root, _globalParams, errorString))
-    return false;
-  if (!ConfigUtils::loadSetenv(root, _setenv, errorString))
-    return false;
-  if (!ConfigUtils::loadUnsetenv(root, _unsetenv, errorString))
-    return false;
+  ConfigUtils::loadParamSet(root, _globalParams);
+  ConfigUtils::loadSetenv(root, _setenv);
+  ConfigUtils::loadUnsetenv(root, _unsetenv);
   _tasksGroups.clear();
   foreach (PfNode node, root.childrenByName("taskgroup")) {
     QString id = node.attribute("id");

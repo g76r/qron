@@ -62,8 +62,7 @@ bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
   Q_UNUSED(errorString) // currently no fatal error, only warnings
   _params.clear();
   _rules.clear();
-  if (!ConfigUtils::loadParamSet(root, _params, errorString))
-    return false;
+  ConfigUtils::loadParamSet(root, _params);
   foreach (PfNode node, root.childrenByName("rule")) {
     QString pattern = node.attribute("match", "**");
     bool stop = !node.attribute("stop").isNull();
