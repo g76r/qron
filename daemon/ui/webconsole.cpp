@@ -718,13 +718,13 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
                         +task.resourcesAsString()+"</td></tr>"
                         "<tr><th>Maximum instances count at a time</th><td>"
                         +QString::number(task.maxInstances())+"</td></tr>"
-                        "<tr><th>Onstart envents</th><td>"
+                        "<tr><th>Onstart events</th><td>"
                         +Event::toStringList(task.onstartEvents()).join(" ")
                         +"</td></tr>"
-                        "<tr><th>Onsuccess envents</th><td>"
+                        "<tr><th>Onsuccess events</th><td>"
                         +Event::toStringList(task.onsuccessEvents()).join(" ")
                         +"</td></tr>"
-                        "<tr><th>Onfailure envents</th><td>"
+                        "<tr><th>Onfailure events</th><td>"
                         +Event::toStringList(task.onfailureEvents()).join(" ")
                         +"</td></tr>");
         params.setValue("fqtn", fqtn);
