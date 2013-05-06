@@ -20,7 +20,7 @@
 class LastEmitedAlertsModel : public LastOccuredTextEventsModel {
   Q_OBJECT
 public:
-  explicit LastEmitedAlertsModel(QObject *parent = 0, int maxsize = 100);
+  explicit LastEmitedAlertsModel(QObject *parent = 0, int maxrows = 100);
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;

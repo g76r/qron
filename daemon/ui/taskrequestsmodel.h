@@ -35,6 +35,8 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  inline void setMaxrows(int maxrows) { _maxrows = maxrows; }
+  inline int maxrows() const { return _maxrows; }
 
 public slots:
   void taskChanged(TaskRequest request);

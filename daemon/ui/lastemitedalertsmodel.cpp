@@ -14,8 +14,8 @@
 #include "lastemitedalertsmodel.h"
 #include <QRegExp>
 
-LastEmitedAlertsModel::LastEmitedAlertsModel(QObject *parent, int maxsize)
-  : LastOccuredTextEventsModel(parent, maxsize) {
+LastEmitedAlertsModel::LastEmitedAlertsModel(QObject *parent, int maxrows)
+  : LastOccuredTextEventsModel(parent, maxrows) {
 }
 
 int LastEmitedAlertsModel::columnCount(const QModelIndex &parent) const {

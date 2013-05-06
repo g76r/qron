@@ -31,7 +31,7 @@ class LastOccuredTextEventsModel : public QAbstractListModel {
       _datetime(o._datetime) { }
   };
   QList<OccuredEvent> _occuredEvents;
-  int _maxsize;
+  int _maxrows;
   QString _eventName;
   QHash<int,QString> _prefixes;
 
@@ -40,7 +40,7 @@ protected:
 
 public:
   // LATER limit last emited alerts by age
-  explicit LastOccuredTextEventsModel(QObject *parent = 0, int maxsize = 100);
+  explicit LastOccuredTextEventsModel(QObject *parent = 0, int maxrows = 100);
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
@@ -50,6 +50,8 @@ public:
     _prefixes.insert(type, prefix); }
   inline void setPrefixRole(int prefixRole) {
     _prefixRole = prefixRole; }
+  inline void setMaxrows(int maxrows) { _maxrows = maxrows; }
+  inline int maxrows() const { return _maxrows; }
 
 public slots:
   void eventOccured(QString event);

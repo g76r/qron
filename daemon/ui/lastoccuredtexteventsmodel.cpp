@@ -16,8 +16,9 @@
 
 #define COLUMNS 2
 
-LastOccuredTextEventsModel::LastOccuredTextEventsModel(QObject *parent, int maxsize)
-  : QAbstractListModel(parent), _maxsize(maxsize) {
+LastOccuredTextEventsModel::LastOccuredTextEventsModel(QObject *parent,
+                                                       int maxrows)
+  : QAbstractListModel(parent), _maxrows(maxrows) {
 }
 
 int LastOccuredTextEventsModel::rowCount(const QModelIndex &parent) const {
@@ -72,9 +73,9 @@ void LastOccuredTextEventsModel::eventOccured(QString event, int type) {
   beginInsertRows(QModelIndex(), 0, 0);
   _occuredEvents.prepend(OccuredEvent(event, type));
   endInsertRows();
-  if (_occuredEvents.size() > _maxsize) {
-    beginRemoveRows(QModelIndex(), _maxsize, _maxsize);
-    _occuredEvents.removeAt(_maxsize);
+  if (_occuredEvents.size() > _maxrows) {
+    beginRemoveRows(QModelIndex(), _maxrows, _maxrows);
+    _occuredEvents.removeAt(_maxrows);
     endRemoveRows();
   }
 }
