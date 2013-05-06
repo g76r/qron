@@ -95,7 +95,8 @@ void Executor::sshMean(TaskRequest request) {
                                                     "true");
   QString identity = request.params().value("ssh.identity");
   QStringList options = request.params().valueAsStrings("ssh.options");
-  sshCmdline << "ssh" << "-oLogLevel=ERROR" << "-oEscapeChar=none"
+  sshCmdline << "ssh" << "-t" << "-t"
+             << "-oLogLevel=ERROR" << "-oEscapeChar=none"
              << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
              << "-oIdentitiesOnly=yes" << "-oKbdInteractiveAuthentication=no"
              << "-oBatchMode=yes" << "-oConnectionAttempts=3"
@@ -210,7 +211,10 @@ void Executor::readyReadStandardError() {
       _errBuf.remove(0, i+1);
       if (!line.isEmpty())
       if (!line.isEmpty()) {
-        foreach (QRegExp filter, _request.task().stderrFilters())
+        QList<QRegExp> filters(_request.task().stderrFilters());
+        if (filters.isEmpty() && _request.task().mean() == "ssh")
+          filters.append(QRegExp("^Connection to [^ ]* closed\\.$"));
+        foreach (QRegExp filter, filters)
           if (filter.indexIn(line) >= 0)
             goto line_filtered;
         Log::warning(_request.task().fqtn(), _request.id())
@@ -234,7 +238,7 @@ void Executor::httpMean(TaskRequest request) {
   // LATER http mean should support http auth, http proxy auth and ssl
   QString method = request.params().value("method");
   QUrl url;
-  int port = request.params().value("port", "80").toInt();
+  int port = request.params().valueAsInt("port", 80);
   QString hostname = request.params()
       .evaluate(request.target().hostname(), &request);
   QString command = request.params()
