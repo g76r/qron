@@ -42,57 +42,60 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _alertChannelsModel(new AlertChannelsModel(this)),
   _htmlTasksTreeView(new HtmlTreeView(this)),
   _htmlTargetsTreeView(new HtmlTreeView(this)),
-  _htmlHostsListView(new HtmlTableView(this)),
-  _htmlClustersListView(new HtmlTableView(this)),
-  _htmlResourcesAllocationView(new HtmlTableView(this)),
+  _htmlHostsListView(new HtmlTableView(this, 500)),
+  _htmlClustersListView(new HtmlTableView(this, 500)),
+  _htmlResourcesAllocationView(
+    new HtmlTableView(this, _htmlHostsListView->cachedRows())),
   _htmlGlobalParamsView(new HtmlTableView(this)),
   _htmlAlertParamsView(new HtmlTableView(this)),
-  _htmlRaisedAlertsView(new HtmlTableView(this)),
-  _htmlRaisedAlertsView10(new HtmlTableView(this)),
-  _htmlLastEmitedAlertsView(new HtmlTableView(this)),
-  _htmlLastEmitedAlertsView10(new HtmlTableView(this)),
-  _htmlAlertRulesView(new HtmlTableView(this)),
-  _htmlWarningLogView(new HtmlTableView(this)),
-  _htmlWarningLogView10(new HtmlTableView(this)),
-  _htmlInfoLogView(new HtmlTableView(this)),
-  _htmlTaskRequestsView(new HtmlTableView(this)),
-  _htmlTaskRequestsView20(new HtmlTableView(this)),
-  _htmlTasksScheduleView(new HtmlTableView(this)),
-  _htmlTasksConfigView(new HtmlTableView(this)),
-  _htmlTasksParamsView(new HtmlTableView(this)),
-  _htmlTasksListView(new HtmlTableView(this)),
-  _htmlTasksEventsView(new HtmlTableView(this)),
-  _htmlSchedulerEventsView(new HtmlTableView(this)),
-  _htmlLastPostedNoticesView20(new HtmlTableView(this)),
-  _htmlLastFlagsChangesView20(new HtmlTableView(this)),
-  _htmlFlagsSetView20(new HtmlTableView(this)),
-  _htmlTaskGroupsView(new HtmlTableView(this)),
-  _htmlTaskGroupsEventsView(new HtmlTableView(this)),
+  _htmlRaisedAlertsView(new HtmlTableView(this, 500)),
+  _htmlRaisedAlertsView10(new HtmlTableView(this, 500, 10)),
+  _htmlLastEmitedAlertsView(new HtmlTableView(this, 500)),
+  _htmlLastEmitedAlertsView10(new HtmlTableView(this, 500, 10)),
+  _htmlAlertRulesView(new HtmlTableView(this, 500)),
+  _htmlWarningLogView(new HtmlTableView(this, 500, 100)),
+  _htmlWarningLogView10(new HtmlTableView(this, 100, 10)),
+  _htmlInfoLogView(new HtmlTableView(this, 500, 100)),
+  _htmlTaskRequestsView(new HtmlTableView(this, 20000, 100)),
+  _htmlTaskRequestsView20(new HtmlTableView(this, 100, 20)),
+  _htmlTasksScheduleView(new HtmlTableView(this, 500)),
+  _htmlTasksConfigView(new HtmlTableView(this, 500, 100)),
+  _htmlTasksParamsView(new HtmlTableView(this, 500, 100)),
+  _htmlTasksListView(new HtmlTableView(this, 500, 100)),
+  _htmlTasksEventsView(new HtmlTableView(this, 500, 100)),
+  _htmlSchedulerEventsView(new HtmlTableView(this, 500, 100)),
+  _htmlLastPostedNoticesView20(new HtmlTableView(this, 200, 20)),
+  _htmlLastFlagsChangesView20(new HtmlTableView(this, 200, 20)),
+  _htmlFlagsSetView20(new HtmlTableView(this, 200, 20)),
+  _htmlTaskGroupsView(new HtmlTableView(this, 500)),
+  _htmlTaskGroupsEventsView(new HtmlTableView(this, 500)),
   _htmlAlertChannelsView(new HtmlTableView(this)),
-  _htmlTasksResourcesView(new HtmlTableView(this)),
-  _htmlTasksAlertsView(new HtmlTableView(this)),
+  _htmlTasksResourcesView(new HtmlTableView(this, 500)),
+  _htmlTasksAlertsView(new HtmlTableView(this, 500, 100)),
   _clockView(new ClockView(this)),
   _csvTasksTreeView(new CsvTableView(this)),
   _csvTargetsTreeView(new CsvTableView(this)),
-  _csvHostsListView(new CsvTableView(this)),
-  _csvClustersListView(new CsvTableView(this)),
-  _csvResourceAllocationView(new CsvTableView(this)),
+  _csvHostsListView(new CsvTableView(this, 500)),
+  _csvClustersListView(new CsvTableView(this, 500)),
+  _csvResourceAllocationView(new CsvTableView(this, 500)),
   _csvGlobalParamsView(new CsvTableView(this)),
   _csvAlertParamsView(new CsvTableView(this)),
-  _csvRaisedAlertsView(new CsvTableView(this)),
-  _csvLastEmitedAlertsView(new CsvTableView(this)),
-  _csvAlertRulesView(new CsvTableView(this)),
-  _csvLogView(new CsvTableView(this)),
-  _csvTaskRequestsView(new CsvTableView(this)),
-  _csvTasksView(new CsvTableView(this)),
-  _csvSchedulerEventsView(new CsvTableView(this)),
-  _csvLastPostedNoticesView(new CsvTableView(this)),
-  _csvLastFlagsChangesView(new CsvTableView(this)),
-  _csvFlagsSetView(new CsvTableView(this)),
-  _csvTaskGroupsView(new CsvTableView(this)),
+  _csvRaisedAlertsView(new CsvTableView(this, 500)),
+  _csvLastEmitedAlertsView(new CsvTableView(this, 500)),
+  _csvAlertRulesView(new CsvTableView(this, 500)),
+  _csvLogView(new CsvTableView(this, _htmlInfoLogView->cachedRows())),
+  _csvTaskRequestsView(new CsvTableView(this, 20000)),
+  _csvTasksView(new CsvTableView(this, 500)),
+  _csvSchedulerEventsView(new CsvTableView(this, 500)),
+  _csvLastPostedNoticesView(new CsvTableView(this, 500)),
+  _csvLastFlagsChangesView(new CsvTableView(this, 500)),
+  _csvFlagsSetView(new CsvTableView(this, 500)),
+  _csvTaskGroupsView(new CsvTableView(this, 500)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
-  _memoryInfoLogger(new MemoryLogger(0, Log::Info, 200)),
-  _memoryWarningLogger(new MemoryLogger(0, Log::Warning, 100)),
+  _memoryInfoLogger(new MemoryLogger(0, Log::Info,
+                                     _htmlInfoLogView->cachedRows())),
+  _memoryWarningLogger(new MemoryLogger(0, Log::Warning,
+                                        _htmlWarningLogView->cachedRows())),
   _title("Qron Web Console"), _navtitle("Qron Web Console") {
   _thread->setObjectName("WebConsoleServer");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
@@ -127,15 +130,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView->setTableClass("table table-condensed table-hover");
   _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
-  _htmlRaisedAlertsView
-      ->setEllipsePlaceholder("(alerts list too long to be displayed)");
+  //_htmlRaisedAlertsView
+  //    ->setEllipsePlaceholder("(alerts list too long to be displayed)");
   _htmlRaisedAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView10->setTableClass("table table-condensed table-hover");
   _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
-  _htmlRaisedAlertsView10
-      ->setEllipsePlaceholder("(see alerts page for more alerts)");
-  _htmlRaisedAlertsView10->setMaxrows(10);
+  //_htmlRaisedAlertsView10
+  //    ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _htmlRaisedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _lastEmitedAlertsModel->setEventName("Alert");
   _lastEmitedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ", 0);
@@ -143,18 +145,16 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _lastEmitedAlertsModel->setPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
-  _htmlLastEmitedAlertsView->setMaxrows(50);
   _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
-  _htmlLastEmitedAlertsView
-      ->setEllipsePlaceholder("(alerts list too long to be displayed)");
+  //_htmlLastEmitedAlertsView
+  //    ->setEllipsePlaceholder("(alerts list too long to be displayed)");
   _htmlLastEmitedAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView10
       ->setTableClass("table table-condensed table-hover");
-  _htmlLastEmitedAlertsView10->setMaxrows(10);
   _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
-  _htmlLastEmitedAlertsView10
-      ->setEllipsePlaceholder("(see alerts page for more alerts)");
+  //_htmlLastEmitedAlertsView10
+  //    ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _htmlLastEmitedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlAlertRulesView->setModel(_alertRulesModel);
   _htmlAlertRulesView->setTableClass("table table-condensed table-hover");
@@ -163,40 +163,37 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView->setTableClass("table table-condensed table-hover");
   _htmlWarningLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlWarningLogView->setTrClassRole(LogModel::TrClassRole);
-  _htmlWarningLogView
-      ->setEllipsePlaceholder("(download text log file for more entries)");
+  //_htmlWarningLogView
+  //    ->setEllipsePlaceholder("(download text log file for more entries)");
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlWarningLogView10->setModel(_memoryWarningLogger->model());
   _htmlWarningLogView10->setTableClass("table table-condensed table-hover");
   _htmlWarningLogView10->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlWarningLogView10->setTrClassRole(LogModel::TrClassRole);
-  _htmlWarningLogView10->setMaxrows(10);
   _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
   _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
   _htmlInfoLogView->setModel(_memoryInfoLogger->model());
   _htmlInfoLogView->setTableClass("table table-condensed table-hover");
   _htmlInfoLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlInfoLogView->setTrClassRole(LogModel::TrClassRole);
-  _htmlInfoLogView
-      ->setEllipsePlaceholder("(download text log file for more entries)");
+  //_htmlInfoLogView
+  //    ->setEllipsePlaceholder("(download text log file for more entries)");
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
   _htmlTaskRequestsView20->setTableClass("table table-condensed table-hover");
   _htmlTaskRequestsView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlTaskRequestsView20->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTaskRequestsView20->setTrClassRole(LogModel::TrClassRole);
-  _htmlTaskRequestsView20->setMaxrows(20);
-  _htmlTaskRequestsView20
-      ->setEllipsePlaceholder("(see tasks page for more entries)");
+  //_htmlTaskRequestsView20
+  //    ->setEllipsePlaceholder("(see tasks page for more entries)");
   _htmlTaskRequestsView20->setEmptyPlaceholder("(no running or queued task)");
   _htmlTaskRequestsView->setModel(_taskRequestsHistoryModel);
   _htmlTaskRequestsView->setTableClass("table table-condensed table-hover");
   _htmlTaskRequestsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlTaskRequestsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTaskRequestsView->setTrClassRole(LogModel::TrClassRole);
-  _htmlTaskRequestsView->setMaxrows(100);
-  _htmlTaskRequestsView
-      ->setEllipsePlaceholder("(tasks list too long to be displayed)");
+  //_htmlTaskRequestsView
+  //    ->setEllipsePlaceholder("(tasks list too long to be displayed)");
   _htmlTaskRequestsView->setEmptyPlaceholder("(no recent task)");
   _htmlTasksScheduleView->setModel(_tasksModel);
   _htmlTasksScheduleView->setTableClass("table table-condensed table-hover");
@@ -246,10 +243,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
   _htmlLastPostedNoticesView20
       ->setTableClass("table table-condensed table-hover");
-  _htmlLastPostedNoticesView20->setMaxrows(20);
   _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
-  _htmlLastPostedNoticesView20
-      ->setEllipsePlaceholder("(older notices not displayed)");
+  //_htmlLastPostedNoticesView20
+  //    ->setEllipsePlaceholder("(older notices not displayed)");
   _htmlLastPostedNoticesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _lastFlagsChangesModel->setEventName("Flag change");
   _lastFlagsChangesModel->setPrefix("<i class=\"icon-flag\"></i> ", 0);
@@ -258,18 +254,16 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastFlagsChangesView20->setModel(_lastFlagsChangesModel);
   _htmlLastFlagsChangesView20
       ->setTableClass("table table-condensed table-hover");
-  _htmlLastFlagsChangesView20->setMaxrows(20);
   _htmlLastFlagsChangesView20->setEmptyPlaceholder("(no flags changes)");
-  _htmlLastFlagsChangesView20
-      ->setEllipsePlaceholder("(older changes not displayed)");
+  //_htmlLastFlagsChangesView20
+  //    ->setEllipsePlaceholder("(older changes not displayed)");
   _htmlLastFlagsChangesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _flagsSetModel->setPrefix("<i class=\"icon-flag\"></i> ",
                             TextViews::HtmlPrefixRole);
   _htmlFlagsSetView20->setModel(_flagsSetModel);
   _htmlFlagsSetView20->setTableClass("table table-condensed table-hover");
-  _htmlFlagsSetView20->setMaxrows(20);
   _htmlFlagsSetView20->setEmptyPlaceholder("(no flags set)");
-  _htmlFlagsSetView20->setEllipsePlaceholder("(more flags not displayed)");
+  //_htmlFlagsSetView20->setEllipsePlaceholder("(more flags not displayed)");
   _htmlFlagsSetView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlTaskGroupsView->setModel(_taskGroupsModel);
   _htmlTaskGroupsView->setTableClass("table table-condensed table-hover");
@@ -327,7 +321,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvLogView->setFieldQuote('"');
   _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
   _csvTaskRequestsView->setFieldQuote('"');
-  _csvTaskRequestsView->setMaxrows(20000);
   _csvTasksView->setModel(_tasksModel);
   _csvTasksView->setFieldQuote('"');
   _csvSchedulerEventsView->setModel(_schedulerEventsModel);
@@ -406,9 +399,11 @@ class WebConsoleParamsProvider : public ParamsProvider {
   WebConsole *_console;
   QString _message;
   QHash<QString,QString> _values;
+  HttpRequest _req;
 public:
   WebConsoleParamsProvider(WebConsole *console, HttpRequest req,
-                           HttpResponse res) : _console(console) {
+                           HttpResponse res)
+    : _console(console), _req(req) {
     QString message = req.base64Cookie("message");
     //qDebug() << "message cookie:" << message;
     if (!message.isEmpty()) {
@@ -468,7 +463,8 @@ public:
       return QString::number(_console->_scheduler->maxtotaltaskinstances());
     if (key == "maxqueuedrequests")
       return QString::number(_console->_scheduler->maxqueuedrequests());
-    return defaultValue;
+    QString v(_req.base64Cookie(key));
+    return v.isNull() ? defaultValue : v;
   }
   void setValue(QString key, QString value) {
     _values.insert(key, value);
@@ -746,8 +742,30 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     }
   }
   if (path.startsWith("/console")) {
-    WebConsoleParamsProvider params(this, req, res);
-    _wuiHandler->handleRequestWithContext(req, res, &params);
+    QList<QPair<QString,QString> > queryItems(req.url().queryItems());
+    if (queryItems.size()) {
+      // if there are query parameters in url, transform them into cookies
+      // LATER this mechanism should be generic/framework (in libqtssu)
+      QListIterator<QPair<QString,QString> > it(queryItems);
+      QString anchor;
+      while (it.hasNext()) {
+        const QPair<QString,QString> &p(it.next());
+        if (p.first == "anchor")
+          anchor = p.second;
+        else
+          res.setBase64SessionCookie(p.first, p.second, "/");
+      }
+      QString s = req.url().path();
+      int i = s.lastIndexOf('/');
+      if (i != -1)
+        s = s.mid(i+1);
+      if (!anchor.isEmpty())
+        s.append('#').append(anchor);
+      res.redirect(s);
+    } else {
+      WebConsoleParamsProvider params(this, req, res);
+      _wuiHandler->handleRequestWithContext(req, res, &params);
+    }
     return;
   }
   // LATER optimize resource selection (avoid if/if/if)
