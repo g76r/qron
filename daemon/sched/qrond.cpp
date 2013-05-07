@@ -19,7 +19,7 @@
 #include "log/filelogger.h"
 #include <QThread>
 #include <unistd.h>
-#ifdef __unix__
+#ifdef Q_OS_UNIX
 #include <signal.h>
 #endif
 
@@ -99,7 +99,7 @@ void Qrond::shutdown(int returnCode) {
   QThread::currentThread()->exit(returnCode);
 }
 
-#ifdef __unix__
+#ifdef Q_OS_UNIX
 static void signal_handler(int signal_number) {
   //qDebug() << "signal" << signal_number;
   switch (signal_number) {
@@ -123,7 +123,7 @@ int main(int argc, char *argv[]) {
   for (int i = 1; i < argc; ++i)
     args << QString::fromUtf8(argv[i]);
   qrondInstance()->startup(args);
-#ifdef __unix__
+#ifdef Q_OS_UNIX
   struct sigaction action;
   memset(&action, 0, sizeof(struct sigaction));
   action.sa_handler = signal_handler;
@@ -134,7 +134,7 @@ int main(int argc, char *argv[]) {
   // LATER truly daemonize on Unix (pidfile...)
   // LATER servicize on Windows
   int rc = a.exec();
-#ifdef __unix__
+#ifdef Q_OS_UNIX
   action.sa_handler = SIG_IGN;
   sigaction(SIGHUP, &action, 0);
   sigaction(SIGTERM, &action, 0);
