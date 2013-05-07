@@ -37,6 +37,7 @@
 #include "event/requesttaskevent.h"
 #include <QThread>
 #include "config/configutils.h"
+#include "config/requestformfield.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 #define DEFAULT_MAXQUEUEDREQUESTS 128
@@ -416,7 +417,6 @@ void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
                             Q_ARG(bool, force));
 }
 
-#include "config/requestformfield.h"
 TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn,
                                           ParamSet paramsOverriding,
                                           bool force) {
@@ -424,7 +424,8 @@ TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn,
   Task task = _tasks.value(fqtn);
   ml.unlock();
   if (task.isNull()) {
-    Log::error() << "requested task not found: " << fqtn << paramsOverriding << force;
+    Log::error() << "requested task not found: " << fqtn << paramsOverriding
+                 << force;
     return TaskRequest();
   }
   TaskRequest request(task, force);
@@ -772,12 +773,12 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
       hostResources.insert(kind, hostResources.value(kind)
                             -taskResources.value(kind));
     _resources.insert(h.id(), hostResources);
+    ml.unlock();
     emit hostResourceAllocationChanged(h.id(), hostResources);
     _alerter->cancelAlert("resource.exhausted."+task.target());
     request.setTarget(h);
     request.setStartDatetime();
-    triggerEvents(_onstart, &request); // FIXME accessing _onstart needs lock but triggering events may need unlock...
-    ml.unlock();
+    triggerEvents(_onstart, &request);
     task.triggerStartEvents(&request);
     executor = _availableExecutors.takeFirst();
     if (!executor) {
