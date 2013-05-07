@@ -62,7 +62,7 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
     address = address.trimmed();
     MailAlertQueue *queue = _queues.value(address);
     if (!queue) {
-      queue = new MailAlertQueue(address);
+      queue = new MailAlertQueue(address); // LATER garbage collect queues
       _queues.insert(address, queue);
     }
     switch (type) {
@@ -80,8 +80,8 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
       // related alerts are coming soon after this one
       int period = _alerter ? _alerter.data()->gracePeriodBeforeFirstSend()
                             : ALERTER_DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND;
-      TimerWithArguments::singleShot(period, this, "processQueue", address);
       queue->_processingScheduled = true;
+      TimerWithArguments::singleShot(period, this, "processQueue", address);
     }
   }
 }
