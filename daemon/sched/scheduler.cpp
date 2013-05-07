@@ -691,12 +691,12 @@ void Scheduler::startQueuedTasks() {
             r2.setSuccess(false);
             r2.setEndDatetime();
             emit taskFinished(r2);
-            emit taskChanged(r.task()); // MAYDO deduplicate this signal
             if (j < i)
               --i;
             _queuedRequests.removeAt(j--);
           }
         }
+        emit taskChanged(r.task());
       }
     } else
       ++i;
@@ -745,7 +745,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     request.setEndDatetime();
     task.fetchAndAddInstancesCount(-1);
     emit taskFinished(request);
-    emit taskChanged(task);
     return true;
   }
   // LATER implement other cluster balancing methods than "first"
@@ -791,7 +790,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     executor->execute(request);
     ++_execcount;
     emit taskStarted(request);
-    emit taskChanged(task);
     reevaluateQueuedRequests();
     _runningRequests.insert(request, executor);
     return true;
