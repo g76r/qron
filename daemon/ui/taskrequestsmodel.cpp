@@ -192,13 +192,16 @@ void TaskRequestsModel::taskChanged(TaskRequest request) {
       }
       return;
     }
+    if (r.id() < request.id())
+      break;
   }
   //qDebug() << "TaskRequestsModel::taskChanged" << request.id()
   //         << request.submissionDatetime() << request.startDatetime()
   //         << request.endDatetime() << "new" << _keepFinished;
   if (!request.finished() || _keepFinished) {
-    beginInsertRows(QModelIndex(), 0, 0);
-    _requests.prepend(request);
+    // row should always be = 0 because signals from 1 thread to 1 other thread are ordered, however...
+    beginInsertRows(QModelIndex(), row, row);
+    _requests.insert(row, request);
     endInsertRows();
   }
   if (_requests.size() > _maxrows) {
