@@ -102,12 +102,18 @@ void Qrond::shutdown(int returnCode) {
 #ifdef Q_OS_UNIX
 static void signal_handler(int signal_number) {
   //qDebug() << "signal" << signal_number;
+  static QMutex mutex;
+  static bool shutingDown(false);
+  QMutexLocker ml(&mutex);
+  if (shutingDown)
+    return;
   switch (signal_number) {
   case SIGHUP:
     QMetaObject::invokeMethod(qrondInstance(), "reload", Qt::QueuedConnection);
     break;
   case SIGTERM:
   case SIGINT:
+    shutingDown = true;
     QMetaObject::invokeMethod(qrondInstance(), "shutdown",
                               Qt::QueuedConnection, Q_ARG(int, 0));
     break;
