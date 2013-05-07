@@ -333,7 +333,7 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
       r.setSuccess(false);
       r.setEndDatetime();
       // LATER maybe these signals should be emited asynchronously
-      emit taskFinished(r, QWeakPointer<Executor>());
+      emit taskFinished(r);
       emit taskChanged(r.task());
       _queuedRequests.removeAt(i--);
     } else {
@@ -460,7 +460,7 @@ TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn,
         r2.setReturnCode(-1);
         r2.setSuccess(false);
         r2.setEndDatetime();
-        emit taskFinished(r2, QWeakPointer<Executor>());
+        emit taskFinished(r2);
         _queuedRequests.removeAt(i--);
       }
     }
@@ -504,7 +504,7 @@ TaskRequest Scheduler::doCancelRequest(quint64 id) {
       r2.setReturnCode(-1);
       r2.setSuccess(false);
       r2.setEndDatetime();
-      emit taskFinished(r2, QWeakPointer<Executor>());
+      emit taskFinished(r2);
       return r2;
     }
   }
@@ -690,7 +690,7 @@ void Scheduler::startQueuedTasks() {
             r2.setReturnCode(-1);
             r2.setSuccess(false);
             r2.setEndDatetime();
-            emit taskFinished(r2, QWeakPointer<Executor>());
+            emit taskFinished(r2);
             emit taskChanged(r.task()); // MAYDO deduplicate this signal
             if (j < i)
               --i;
@@ -744,7 +744,7 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     request.setSuccess(false);
     request.setEndDatetime();
     task.fetchAndAddInstancesCount(-1);
-    emit taskFinished(request, QWeakPointer<Executor>());
+    emit taskFinished(request);
     emit taskChanged(task);
     return true;
   }
@@ -843,7 +843,7 @@ void Scheduler::taskFinishing(TaskRequest request,
     configuredTask.setLastSuccessful(request.success());
     configuredTask.setLastReturnCode(request.returnCode());
   }
-  emit taskFinished(request, executor);
+  emit taskFinished(request);
   emit taskChanged(configuredTask);
   if (request.success()) {
     triggerEvents(_onsuccess, &request);

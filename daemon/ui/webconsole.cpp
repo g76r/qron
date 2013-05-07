@@ -1054,7 +1054,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
                _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskChanged(Task)),
                _tasksModel, SLOT(taskChanged(Task)));
@@ -1080,13 +1080,13 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
                _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
                _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
                _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
@@ -1127,7 +1127,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+    connect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
             _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskChanged(Task)),
             _tasksModel, SLOT(taskChanged(Task)));
@@ -1153,13 +1153,13 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
             _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+    connect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
             _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
+    connect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
             _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));

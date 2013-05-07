@@ -176,7 +176,7 @@ signals:
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
     * be emited witout previous taskQueued(). */
   void taskStarted(TaskRequest request);
-  void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
+  void taskFinished(TaskRequest request);
   /** Called whenever a task or taskrequest changes: queued, started, finished,
    * disabled, enabled... */
   void taskChanged(Task request);
