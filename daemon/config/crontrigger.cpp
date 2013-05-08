@@ -40,7 +40,7 @@ public:
     for (int i = 0; i <= _max-_min; ++i)
       _setValues[i] = other._setValues[i];
   }
-  ~CronField() { delete _setValues; }
+  ~CronField() { delete[] _setValues; }
   void reset() { setAll(false); }
   /** Set all values at a time */
   void setAll(bool value = true) {
@@ -151,7 +151,7 @@ private:
 };
 
 CronTrigger::CronTrigger(const QString cronExpression)
-  : d(new CronTriggerData(cronExpression)) {
+  : d(cronExpression.isEmpty() ? 0 : new CronTriggerData(cronExpression)) {
 }
 
 CronTrigger::CronTrigger(const CronTrigger &other) : d(other.d) {
@@ -167,15 +167,15 @@ CronTrigger &CronTrigger::operator =(const CronTrigger &other) {
 }
 
 QString CronTrigger::cronExpression() const {
-  return d->_cronExpression;
+  return d ? d->_cronExpression : QString();
 }
 
 QString CronTrigger::canonicalCronExpression() const {
-  return d->canonicalExpression();
+  return d ? d->canonicalExpression() : QString();
 }
 
 bool CronTrigger::isValid() const {
-  return d->_isValid;
+  return d && d->_isValid;
 }
 
 int CronTrigger::nextTriggeringMsecs() const {
@@ -185,15 +185,16 @@ int CronTrigger::nextTriggeringMsecs() const {
 }
 
 QDateTime CronTrigger::nextTriggering(QDateTime max) const {
-  return d->nextTriggering(max);
+  return d ? d->nextTriggering(max) : QDateTime();
 }
 
 QDateTime CronTrigger::lastTriggered() const {
-  return d->lastTriggered();
+  return d ? d->lastTriggered() : QDateTime();
 }
 
 void CronTrigger::setLastTriggered(const QDateTime lastTriggered) const {
-  d->setLastTriggered(lastTriggered);
+  if (d)
+    d->setLastTriggered(lastTriggered);
 }
 
 QDateTime CronTriggerData::nextTriggering(QDateTime max) const {
