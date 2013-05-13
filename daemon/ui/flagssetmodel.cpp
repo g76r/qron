@@ -67,9 +67,6 @@ void FlagsSetModel::setFlag(QString flag) {
     const SetFlag &sf(_setFlags.at(row));
     if (sf._flag == flag)
       return;
-  }
-  for (row = 0; row < _setFlags.size(); ++row) {
-    const SetFlag &sf(_setFlags.at(row));
     if (sf._flag > flag)
       break;
   }

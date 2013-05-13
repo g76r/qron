@@ -30,6 +30,7 @@ QVariant TextSetModel::data(const QModelIndex &index, int role) const {
 
 void TextSetModel::insertValue(const QString value) {
   // LATER optimize TextSetModel::insertValue
+  // see e.g. FlagsSetModel::setFlag or use QMap instead of QList
   if (!_values.contains(value)) {
     beginResetModel();
     _values.append(value);
@@ -40,6 +41,7 @@ void TextSetModel::insertValue(const QString value) {
 
 void TextSetModel::removeValue(const QString value) {
   // LATER optimize TextSetModel::removeValue
+  // see e.g. FlagsSetModel::setFlag or use QMap instead of QList
   if (_values.contains(value)) {
     beginResetModel();
     _values.removeOne(value);

@@ -23,8 +23,8 @@
 #define RAISED_ALERTS_MAXROWS 500
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
-  _tasksTreeModel(new TasksTreeModel(this)),
-  _targetsTreeModel(new TargetsTreeModel(this)),
+  //_tasksTreeModel(new TasksTreeModel(this)),
+  //_targetsTreeModel(new TargetsTreeModel(this)),
   _hostsListModel(new HostsListModel(this)),
   _clustersListModel(new ClustersListModel(this)),
   _resourceAllocationModel(new ResourcesAllocationModel(this)),
@@ -44,8 +44,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _flagsSetModel(new FlagsSetModel(this)),
   _taskGroupsModel(new TaskGroupsModel(this)),
   _alertChannelsModel(new AlertChannelsModel(this)),
-  _htmlTasksTreeView(new HtmlTreeView(this)),
-  _htmlTargetsTreeView(new HtmlTreeView(this)),
+  //_htmlTasksTreeView(new HtmlTreeView(this)),
+  //_htmlTargetsTreeView(new HtmlTreeView(this)),
   _htmlHostsListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlClustersListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlResourcesAllocationView(
@@ -83,8 +83,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksResourcesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlTasksAlertsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
   _clockView(new ClockView(this)),
-  _csvTasksTreeView(new CsvTableView(this)),
-  _csvTargetsTreeView(new CsvTableView(this)),
+  //_csvTasksTreeView(new CsvTableView(this)),
+  //_csvTargetsTreeView(new CsvTableView(this)),
   _csvHostsListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvClustersListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvResourceAllocationView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
@@ -115,12 +115,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
-  _htmlTasksTreeView->setModel(_tasksTreeModel);
-  _htmlTasksTreeView->setTableClass("table table-condensed table-hover");
-  _htmlTasksTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlTargetsTreeView->setModel(_targetsTreeModel);
-  _htmlTargetsTreeView->setTableClass("table table-condensed table-hover");
-  _htmlTargetsTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  //_htmlTasksTreeView->setModel(_tasksTreeModel);
+  //_htmlTasksTreeView->setTableClass("table table-condensed table-hover");
+  //_htmlTasksTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  //_htmlTargetsTreeView->setModel(_targetsTreeModel);
+  //_htmlTargetsTreeView->setTableClass("table table-condensed table-hover");
+  //_htmlTargetsTreeView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlHostsListView->setModel(_hostsListModel);
   _htmlHostsListView->setTableClass("table table-condensed table-hover");
   _htmlHostsListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
@@ -312,10 +312,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 11 << 6 << 23 << 24 << 12 << 16 << 18;
   _htmlTasksAlertsView->setColumnIndexes(cols);
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
-  _csvTasksTreeView->setModel(_tasksTreeModel);
-  _csvTasksTreeView->setFieldQuote('"');
-  _csvTargetsTreeView->setModel(_targetsTreeModel);
-  _csvTargetsTreeView->setFieldQuote('"');
+  //_csvTasksTreeView->setModel(_tasksTreeModel);
+  //_csvTasksTreeView->setFieldQuote('"');
+  //_csvTargetsTreeView->setModel(_targetsTreeModel);
+  //_csvTargetsTreeView->setFieldQuote('"');
   _csvHostsListView->setModel(_hostsListModel);
   _csvHostsListView->setFieldQuote('"');
   _csvClustersListView->setModel(_clustersListModel);
@@ -348,8 +348,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvTaskGroupsView->setModel(_taskGroupsModel);
   _csvTaskGroupsView->setFieldQuote('"');
   _wuiHandler->addFilter("\\.html$");
-  _wuiHandler->addView("taskstree", _htmlTasksTreeView);
-  _wuiHandler->addView("targetstree", _htmlTargetsTreeView);
+  //_wuiHandler->addView("taskstree", _htmlTasksTreeView);
+  //_wuiHandler->addView("targetstree", _htmlTargetsTreeView);
   _wuiHandler->addView("resourcesallocation", _htmlResourcesAllocationView);
   _wuiHandler->addView("hostslist", _htmlHostsListView);
   _wuiHandler->addView("clusterslist", _htmlClustersListView);
@@ -783,17 +783,17 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     return;
   }
   // LATER optimize resource selection (avoid if/if/if)
-  if (path == "/rest/csv/tasks/tree/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvTasksTreeView->text().toUtf8().constData());
-    return;
-  }
-  if (path == "/rest/html/tasks/tree/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTasksTreeView->text().toUtf8().constData());
-    return;
-  }
+  //  if (path == "/rest/csv/tasks/tree/v1") {
+  //    res.setContentType("text/csv;charset=UTF-8");
+  //    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+  //    res.output()->write(_csvTasksTreeView->text().toUtf8().constData());
+  //    return;
+  //  }
+  //  if (path == "/rest/html/tasks/tree/v1") {
+  //    res.setContentType("text/html;charset=UTF-8");
+  //    res.output()->write(_htmlTasksTreeView->text().toUtf8().constData());
+  //    return;
+  //  }
   if (path == "/rest/csv/tasks/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
@@ -1036,10 +1036,10 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
 
 void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
-    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-               _tasksTreeModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-               _targetsTreeModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
+    //    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+    //               _tasksTreeModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
+    //    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
+    //               _targetsTreeModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
                _tasksModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
     disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
@@ -1050,12 +1050,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _resourceAllocationModel, SLOT(setResourceConfiguration(QHash<QString,QHash<QString,qint64> >)));
     disconnect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QHash<QString,qint64>)),
                _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QHash<QString,qint64>)));
-    disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
-               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    //    disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
+    //               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    //    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
+    //               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    //    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
+    //               _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(taskChanged(Task)),
                _tasksModel, SLOT(taskChanged(Task)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
@@ -1109,10 +1109,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   }
   _scheduler = scheduler;
   if (_scheduler) {
-    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-            _tasksTreeModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-            _targetsTreeModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
+    //    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+    //            _tasksTreeModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
+    //    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
+    //            _targetsTreeModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
             _tasksModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
     connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
@@ -1123,12 +1123,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourceAllocationModel, SLOT(setResourceConfiguration(QHash<QString,QHash<QString,qint64> >)));
     connect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QHash<QString,qint64>)),
             _resourceAllocationModel, SLOT(setResourceAllocationForHost(QString,QHash<QString,qint64>)));
-    connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
-            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    //    connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
+    //            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    //    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
+    //            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
+    //    connect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
+    //            _tasksTreeModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(taskChanged(Task)),
             _tasksModel, SLOT(taskChanged(Task)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
