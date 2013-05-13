@@ -90,6 +90,7 @@ class WebConsole : public HttpHandler {
 
 public:
   WebConsole();
+  ~WebConsole();
   QString name() const;
   bool acceptRequest(HttpRequest req);
   void handleRequest(HttpRequest req, HttpResponse res);

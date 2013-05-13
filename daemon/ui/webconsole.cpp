@@ -17,6 +17,7 @@
 #include <QThread>
 #include "config/taskrequest.h"
 #include "sched/qrond.h"
+#include <QCoreApplication>
 
 #define CONFIG_TABLES_MAXROWS 500
 #define FLAGS_SET_MAXROWS 500
@@ -396,8 +397,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   connect(this, SIGNAL(alertEmited(QString,int)),
           _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
   moveToThread(_thread);
-  _memoryInfoLogger->moveToThread(_thread);
+  _memoryInfoLogger->moveToThread(_thread); // TODO won't be deleted
   _memoryWarningLogger->moveToThread(_thread);
+}
+
+WebConsole::~WebConsole() {
+  _memoryInfoLogger->moveToThread(QCoreApplication::instance()->thread());
+  _memoryWarningLogger->moveToThread(QCoreApplication::instance()->thread());
 }
 
 QString WebConsole::name() const {

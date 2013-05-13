@@ -32,14 +32,13 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _webconsole(new WebConsole), _configPath("/etc/qron.conf") {
   _webconsole->setScheduler(_scheduler);
   _httpd->appendHandler(_webconsole);
+  //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
+  //        _httpd, SLOT(deleteLater()));
+  //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
+  //        _scheduler, SLOT(deleteLater()));
 }
 
 Qrond::~Qrond() {
-  // HttpServer and Scheduler will be deleted, but their threads won't since
-  // they lies in main thread which event loop is no longer running
-  // WebConsole will be deleted since HttpServer connects its deleteLater()
-  _httpd->deleteLater();
-  _scheduler->deleteLater();
 }
 
 Qrond *Qrond::instance() {
@@ -96,7 +95,18 @@ void Qrond::reload() {
 void Qrond::shutdown(int returnCode) {
   Log::info() << "qrond is shuting down";
   // TODO wait for running tasks while starting new ones is disabled
-  QThread::currentThread()->exit(returnCode);
+  // delete HttpServer and Scheduler
+  // WebConsole will be deleted since HttpServer connects its deleteLater()
+  _httpd->deleteLater();
+  // give a chance to WebConsole to fully shutdown before Scheduler deletion
+  ::usleep(100000); // FIXME
+  _scheduler->deleteLater();
+  // give a chance for last main loop events, incl. QThread::deleteLater() for
+  // HttpServer, Scheduler and children
+  ::usleep(100000); // FIXME
+  // shutdown main thread and stop QCoreApplication::exec() in main()
+  QCoreApplication::exit(returnCode);
+  // Qrond instance will be deleted by Q_GLOBAL_STATIC
 }
 
 #ifdef Q_OS_UNIX
@@ -147,6 +157,7 @@ int main(int argc, char *argv[]) {
   sigaction(SIGINT, &action, 0);
 #endif
   ::usleep(100000); // give a chance for last asynchronous log writing
+  // LATER clearLoggers should not be called but rather managed as a singleton in libqtssu
   Log::clearLoggers(); // this deletes logger and console
   return rc;
 }
