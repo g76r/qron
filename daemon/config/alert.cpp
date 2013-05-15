@@ -29,7 +29,7 @@ Alert::Alert() : d(new AlertData) {
 Alert::Alert(const QString id, AlertRule rule) : d(new AlertData(id, rule)) {
 }
 
-Alert::Alert(const Alert &rhs) : d(rhs.d) {
+Alert::Alert(const Alert &rhs) : ParamsProvider(), d(rhs.d) {
 }
 
 Alert &Alert::operator=(const Alert &rhs) {

@@ -81,7 +81,8 @@ public:
 TaskRequest::TaskRequest() {
 }
 
-TaskRequest::TaskRequest(const TaskRequest &other) : d(other.d) {
+TaskRequest::TaskRequest(const TaskRequest &other)
+  : ParamsProvider(), d(other.d) {
 }
 
 TaskRequest::TaskRequest(Task task, bool force)
