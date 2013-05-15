@@ -33,6 +33,9 @@ Event &Event::operator=(const Event &rhs) {
 Event::~Event() {
 }
 
+EventData::~EventData() {
+}
+
 void Event::trigger(const ParamsProvider *context) const {
   if (d)
     d->trigger(context);
