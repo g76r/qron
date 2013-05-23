@@ -41,13 +41,11 @@ void Executor::execute(TaskRequest request) {
   QMetaObject::invokeMethod(this, "doExecute", Q_ARG(TaskRequest, request));
 }
 
-#include <unistd.h> // FIXME remove
 void Executor::doExecute(TaskRequest request) {
   const QString mean = request.task().mean();
   Log::debug(request.task().fqtn(), request.id())
       << "starting task '" << request.task().fqtn() << "' through mean '"
       << mean << "' after " << request.queuedMillis() << " ms in queue";
-  ::usleep(20000); // FIXME remove 20ms pause
   if (mean == "local")
     localMean(request);
   else if (mean == "ssh")

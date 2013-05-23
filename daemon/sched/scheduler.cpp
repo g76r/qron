@@ -37,7 +37,6 @@
 #include "event/requesttaskevent.h"
 #include <QThread>
 #include "config/configutils.h"
-#include <unistd.h> // FIXME remove
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 #define DEFAULT_MAXQUEUEDREQUESTS 128
@@ -677,8 +676,6 @@ void Scheduler::startQueuedTasks() {
   for (int i = 0; i < _queuedRequests.size(); ) {
     TaskRequest r = _queuedRequests[i];
     if (startQueuedTask(r)) {
-      Log::debug(r.task().fqtn(), r.id()) << "about (10) to start task '"; // FIXME remove
-      ::usleep(10000); // FIXME remove
       _queuedRequests.removeAt(i);
       if (r.task().discardAliasesOnStart() != Task::DiscardNone) {
         // remove other requests of same task
@@ -700,16 +697,12 @@ void Scheduler::startQueuedTasks() {
           }
         }
       }
-      Log::debug(r.task().fqtn(), r.id()) << "about (11) to start task '"; // FIXME remove
-      ::usleep(10000); // FIXME remove
     } else
       ++i;
   }
 }
 
 bool Scheduler::startQueuedTask(TaskRequest request) {
-  Log::debug(request.task().fqtn(), request.id()) << "about (1) to start task '"; // FIXME remove
-  ::usleep(10000); // FIXME remove
   Task task(request.task());
   QString fqtn(task.fqtn());
   Executor *executor = 0;
@@ -723,8 +716,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     return false;
   }
   _alerter->cancelAlert("scheduler.maxtotaltaskinstances.reached");
-  Log::debug(request.task().fqtn(), request.id()) << "about (2) to start task '"; // FIXME remove
-  ::usleep(10000); // FIXME remove
   if (request.force())
     task.fetchAndAddInstancesCount(1);
   else if (task.fetchAndAddInstancesCount(1) >= task.maxInstances()) {
@@ -756,8 +747,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     emit taskChanged(task);
     return true;
   }
-  Log::debug(request.task().fqtn(), request.id()) << "about (3) to start task '"; // FIXME remove
-  ::usleep(10000); // FIXME remove
   // LATER implement other cluster balancing methods than "first"
   // LATER implement best effort resource check for forced requests
   QMap<QString,qint64> taskResources = task.resources();
@@ -778,8 +767,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
             << "' for task '" << fqtn << "'";
       }
     }
-    Log::debug(request.task().fqtn(), request.id()) << "about (4a) to start task '"; // FIXME remove
-    ::usleep(10000); // FIXME remove
     // a host with enough resources was found
     foreach (QString kind, taskResources.keys())
       hostResources.insert(kind, hostResources.value(kind)
@@ -793,8 +780,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     ml.unlock();
     task.triggerStartEvents(&request);
     executor = _availableExecutors.takeFirst();
-    Log::debug(request.task().fqtn(), request.id()) << "about (5a) to start task '"; // FIXME remove
-    ::usleep(10000); // FIXME remove
     if (!executor) {
       // this should only happen with force == true
       executor = new Executor;
@@ -808,14 +793,10 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     emit taskChanged(task);
     reevaluateQueuedRequests();
     _runningRequests.insert(request, executor);
-    Log::debug(request.task().fqtn(), request.id()) << "about (6a) to start task '"; // FIXME remove
-    ::usleep(10000); // FIXME remove
     return true;
 nexthost:;
   }
   // no host has enough resources to execute the task
-  Log::debug(request.task().fqtn(), request.id()) << "about (4b) to start task '"; // FIXME remove
-  ::usleep(10000); // FIXME remove
   ml.unlock();
   task.fetchAndAddInstancesCount(-1);
   Log::warning(fqtn, request.id())
