@@ -234,7 +234,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksParamsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
-  cols << 1 << 0 << 7 << 21 << 22;
+  cols << 1 << 0 << 7 << 25 << 21 << 22;
   _htmlTasksParamsView->setColumnIndexes(cols);
   _htmlTasksParamsView->setRowAnchor("taskparams.", 11);
   _htmlTasksListView->setModel(_tasksModel);

@@ -18,7 +18,7 @@
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 25
+#define COLUMNS 26
 #define SOON_EXECUTION_MILLIS 300000
 // 300,000 ms = 5'
 #define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
@@ -93,6 +93,13 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return taskMinExpectedDuration(t);
       case 24:
         return taskMaxExpectedDuration(t);
+      case 25: {
+        QString s("{ ");
+        foreach (const RequestFormField rff, t.requestFormFields())
+          s.append(rff.param()).append(" ");
+        s.append("}");
+        return s;
+      }
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -170,6 +177,15 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
             "</i></a></span>";
         return suffix;
+      }
+      case 25: {
+        if (t.requestFormFields().isEmpty())
+          break;
+        return /* taskdoc */
+            " <span class=\"label label-info\" "
+            "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
+            +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
+            "</i></a></span>";
       }
       default:
         ;
@@ -297,6 +313,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Min expected duration";
     case 24:
       return "Max expected duration";
+    case 25:
+      return "Request-time overridable params";
     }
   }
   return QVariant();
