@@ -100,7 +100,7 @@ void Executor::sshMean(TaskRequest request) {
              << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
              << "-oIdentitiesOnly=yes" << "-oKbdInteractiveAuthentication=no"
              << "-oBatchMode=yes" << "-oConnectionAttempts=3"
-             << "-oPasswordAuthentication=false";
+             << "-oTCPKeepAlive=yes" << "-oPasswordAuthentication=false";
   if (ignoreknownhosts == "true")
     sshCmdline << "-oUserKnownHostsFile=/dev/null"
                << "-oGlobalKnownHostsFile=/dev/null"
