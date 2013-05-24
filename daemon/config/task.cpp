@@ -461,3 +461,14 @@ Task::DiscardAliasesOnStart Task::discardAliasesOnStartFromString(QString v) {
 QList<RequestFormField> Task::requestFormFields() const {
   return d ? d->_requestFormField : QList<RequestFormField>();
 }
+
+QString Task::requestFormFieldsAsHtmlDescription() const {
+  QList<RequestFormField> list = requestFormFields();
+  if (list.isEmpty())
+    return "(none)";
+  QString v("<ul>");
+  foreach (const RequestFormField rff, list)
+    v.append("<li>").append(rff.toHumanReadableDescription()); // LATER escape HTML
+  v.append("</ul>");
+  return v;
+}

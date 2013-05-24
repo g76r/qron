@@ -92,6 +92,7 @@ public:
   static QString discardAliasesOnStartAsString(DiscardAliasesOnStart v);
   static DiscardAliasesOnStart discardAliasesOnStartFromString(QString v);
   QList<RequestFormField> requestFormFields() const;
+  QString requestFormFieldsAsHtmlDescription() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

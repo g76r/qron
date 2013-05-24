@@ -31,7 +31,8 @@ public:
   RequestFormField(PfNode node);
   RequestFormField &operator=(const RequestFormField &);
   ~RequestFormField();
-  QString toHtml(QString inputClass = "") const;
+  QString toHtmlFormFragment(QString inputClass = "") const;
+  QString toHumanReadableDescription() const;
   bool validate(QString value) const;
   void apply(QString value, TaskRequest *request) const;
   bool isNull() const;

@@ -655,7 +655,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
               "the following form:";
         form += "<p><form class=\"form-horizontal\" action=\"do\">";
         foreach (RequestFormField rff, task.requestFormFields())
-          form.append(rff.toHtml("input-xxlarge"));
+          form.append(rff.toHtmlFormFragment("input-xxlarge"));
         /*form += "<p><p class=\"text-center\"><a class=\"btn btn-danger\" "
             "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
             +"\">Request task execution</a> <a class=\"btn\" href=\""
@@ -696,12 +696,14 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
         params.setValue("description",
                         "<tr><th>Fully qualified task name (fqtn)</th><td>"+fqtn
                         +"</td></tr>"
-                        "<tr><th>Task id and label</th><td>"+task.id()+" ("
-                        +task.label()+")</td></tr>"
-                        "<tr><th>Task group id and label</th><td>"
-                        +task.taskGroup().id()+" ("+task.taskGroup().label()
-                        +")</td></tr>"
-                        "<tr><th>Additional information</th><td>"
+                        "<tr><th>Task id and label</th><td>"+task.id()
+                        +((task.label()!=task.id())
+                          ? " ("+task.label()+")</td></tr>" : "")
+                        +"<tr><th>Task group id and label</th><td>"
+                        +task.taskGroup().id()
+                        +((task.taskGroup().label()!=task.taskGroup().id())
+                          ? " ("+task.taskGroup().label()+")</td></tr>" : "")
+                        +"<tr><th>Additional information</th><td>"
                         +linkify(task.info())+"</td></tr>"
                         "<tr><th>Triggers (scheduling)</th><td>"
                         +task.triggersAsString()+"</td></tr>"
@@ -729,7 +731,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
                         "<tr><th>Configuration parameters</th><td>"+task
                         .params().toString(false)+"</td></tr>"
                         "<tr><th>Request-time overridable parameters</th><td>"
-                        "coming soon...</td></tr>" // TODO
+                        +task.requestFormFieldsAsHtmlDescription()+"</td></tr>"
                         "<tr><th>System environment variables set (setenv)</th>"
                         "<td>"+TasksModel::taskSetenv(task)+"</td></tr>"
                         "<tr><th>System environment variables unset (unsetenv)"

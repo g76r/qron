@@ -75,7 +75,7 @@ RequestFormField &RequestFormField::operator=(const RequestFormField &rhs) {
   return *this;
 }
 
-QString RequestFormField::toHtml(QString inputClass) const {
+QString RequestFormField::toHtmlFormFragment(QString inputClass) const {
   if (!d)
     return QString();
   return "<div class=\"control-group\">\n"
@@ -87,6 +87,31 @@ QString RequestFormField::toHtml(QString inputClass) const {
       "class=\""+inputClass+"\">\n"
       "  </div>\n"
       "</div>\n";
+}
+
+QString RequestFormField::toHumanReadableDescription() const {
+  QString v;
+  if (d) {
+    v = "id: "+d->_param;
+    if (!d->_label.isEmpty())
+      v.append(" label: ").append(d->_label);
+    if (!d->_suggestion.isEmpty())
+      v.append(" suggestion: ").append(d->_suggestion);
+    if (!d->_placeholder.isEmpty())
+      v.append(" placeholder: ").append(d->_placeholder);
+    if (d->_format.isValid())
+      v.append(" format: ").append(d->_format.pattern());
+    if (!d->_setenv.isEmpty()) {
+      v.append(" setenv: ");
+      for (QListIterator<QPair<QString,QString> > i(d->_setenv); i.hasNext();) {
+        QPair<QString,QString> p(i.next());
+        v.append(p.first).append("=").append(p.second);
+      }
+    }
+    if (!d->_appendcommand.isEmpty())
+      v.append(" appendcommand: ").append(d->_appendcommand.join(" "));
+  }
+  return v;
 }
 
 bool RequestFormField::validate(QString value) const {
