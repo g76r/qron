@@ -47,7 +47,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _alerter(new Alerter), _firstConfigurationLoad(true),
   _maxtotaltaskinstances(0),
   _startdate(QDateTime::currentDateTime().toMSecsSinceEpoch()),
-  _configdate(LLONG_MIN), _execcount(0) {
+  _configdate(LLONG_MIN), _execCount(0) {
   _thread->setObjectName("SchedulerThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -788,7 +788,7 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
               this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
     }
     executor->execute(request);
-    ++_execcount;
+    ++_execCount;
     emit taskStarted(request);
     reevaluateQueuedRequests();
     _runningRequests.insert(request, executor);

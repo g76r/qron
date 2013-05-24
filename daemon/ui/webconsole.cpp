@@ -478,7 +478,11 @@ public:
     if (key == "configdate")
       return _console->_scheduler->configdate().toString("yyyy-MM-dd hh:mm:ss");
     if (key == "execcount")
-      return QString::number(_console->_scheduler->execcount());
+      return QString::number(_console->_scheduler->execCount());
+    if (key == "taskscount")
+      return QString::number(_console->_scheduler->tasksCount());
+    if (key == "tasksgroupscount")
+      return QString::number(_console->_scheduler->tasksGroupsCount());
     if (key == "maxtotaltaskinstances")
       return QString::number(_console->_scheduler->maxtotaltaskinstances());
     if (key == "maxqueuedrequests")

@@ -54,7 +54,7 @@ class Scheduler : public QObject {
   QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   int _maxtotaltaskinstances, _maxqueuedrequests;
   volatile qint64 _startdate, _configdate;
-  volatile long _execcount;
+  volatile long _execCount;
 
 public:
   Scheduler();
@@ -77,7 +77,9 @@ public:
   QDateTime configdate() const {
     return _configdate == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_configdate); }
-  long execcount() const { return _execcount; }
+  long execCount() const { return _execCount; }
+  int tasksCount() const { return _tasks.count(); }
+  int tasksGroupsCount() const { return _tasksGroups.count(); }
   int maxtotaltaskinstances() const { return _maxtotaltaskinstances; }
   int maxqueuedrequests() const { return _maxqueuedrequests; }
 
