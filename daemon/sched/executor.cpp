@@ -252,8 +252,8 @@ void Executor::httpMean(TaskRequest request) {
     int i = spec.indexOf(':');
     QString name = i < 0 ? spec.trimmed() : spec.left(i).trimmed();
     QString value = i < 0 ? QString() : spec.mid(i+1).trimmed();
-    Log::fatal(request.task().fqtn(), request.id()) << "setheader: " << name << "=" << value << ".";
-    networkRequest.setRawHeader(name.toAscii(), value.toUtf8()); // TODO escape unallowed chars
+    //Log::fatal(request.task().fqtn(), request.id()) << "setheader: " << name << "=" << value << ".";
+    networkRequest.setRawHeader(name.toAscii(), value.toUtf8());
   }
   _request = request;
   if (url.isValid()) {
