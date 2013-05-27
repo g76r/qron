@@ -610,6 +610,9 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       } else if (event == "enableAllTasks") {
         message = QString(req.param("enable") == "true" ? "enable" : "disable")
             + " all tasks";
+      } else if (event == "enableTask") {
+        message = QString(req.param("enable") == "true" ? "enable" : "disable")
+            + " task '"+fqtn+"'";
       } else if (event == "reloadConfig") {
         message = "reload configuration";
       } else if (event == "requestTask") {
@@ -717,8 +720,10 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
                         +TasksModel::taskMaxExpectedDuration(task)+"</td></tr>");
         params.setValue("status",
                         "<tr><th>Enabled</th><td>"
-                        +QString(task.enabled()?"true":"false")+"</td></tr>"
-                        "<tr><th>Last execution status</th><td>"
+                        +QString(task.enabled()
+                                 ? "true"
+                                 : "<i class=\"icon-ban-circle\"></i> false")
+                        +"</td></tr><tr><th>Last execution status</th><td>"
                         +TasksModel::taskLastExecStatus(task)+"</td></tr>"
                         "<tr><th>Next execution</th><td>"
                         +task.nextScheduledExecution()
