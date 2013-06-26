@@ -17,8 +17,11 @@
 #include <QAbstractListModel>
 #include <QDateTime>
 
+/** Model holding currently set flags, one per line, along with the time it
+  * was set on. */
 class FlagsSetModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(FlagsSetModel)
   class SetFlag {
   public:
     QString _flag;

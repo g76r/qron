@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,6 +22,7 @@ QVariant ResourcesAllocationModel::headerData(
     int section, Qt::Orientation orientation, int role) const {
   switch(role) {
   case TextViews::HtmlPrefixRole:
+    // LATER move icons to WebConsole
     // glyphicon-celebration glyphicon-fast-food icon-glass
     return orientation == Qt::Horizontal
         ? "<i class=\"glyphicon-fast-food\"></i> "
@@ -31,6 +32,7 @@ QVariant ResourcesAllocationModel::headerData(
   }
 }
 
+// LATER rename misleading signal and slot ("allocation" -> "available")
 void ResourcesAllocationModel::setResourceAllocationForHost(
     QString host, QHash<QString, qint64> resources) {
   if (_mode != Configured) {

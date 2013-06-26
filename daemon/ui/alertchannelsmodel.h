@@ -17,8 +17,12 @@
 #include "textview/textmatrixmodel.h"
 #include <QStringList>
 
+/** Model holding alert channels list, one per line. Currently almost
+ * useless. */
 class AlertChannelsModel : public TextMatrixModel {
   Q_OBJECT
+  Q_DISABLE_COPY(AlertChannelsModel)
+
 public:
   explicit AlertChannelsModel(QObject *parent = 0);
   

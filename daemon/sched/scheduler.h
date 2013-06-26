@@ -36,6 +36,7 @@ class QThread;
 
 class Scheduler : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(Scheduler)
   QThread *_thread;
   ParamSet _globalParams, _setenv;
   QHash<QString,TaskGroup> _tasksGroups;
@@ -53,7 +54,7 @@ class Scheduler : public QObject {
   QList<Event> _onstart, _onsuccess, _onfailure;
   QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   int _maxtotaltaskinstances, _maxqueuedrequests;
-  volatile qint64 _startdate, _configdate;
+  volatile qint64 _startdate, _configdate; // FIXME remove volatiles
   volatile long _execCount;
 
 public:
@@ -216,7 +217,6 @@ private:
                                              bool force);
   Q_INVOKABLE TaskRequest doCancelRequest(quint64 id);
   Q_INVOKABLE TaskRequest doAbortTask(quint64 id);
-  Q_DISABLE_COPY(Scheduler)
 };
 
 #endif // SCHEDULER_H

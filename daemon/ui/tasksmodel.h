@@ -21,9 +21,13 @@
 #include "config/taskgroup.h"
 #include "config/taskrequest.h"
 
+/** Model holding tasks along with their attributes, one task per line, in
+ * fqtn alphabetical order. */
 class TasksModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(TasksModel)
   QList<Task> _tasks;
+
 public:
   explicit TasksModel(QObject *parent = 0);
   int rowCount(const QModelIndex &parent) const;

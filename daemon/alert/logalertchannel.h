@@ -21,6 +21,7 @@
  */
 class LogAlertChannel : public AlertChannel {
   Q_OBJECT
+  Q_DISABLE_COPY(LogAlertChannel)
 
 public:
   explicit LogAlertChannel(QObject *parent = 0, QWeakPointer<Alerter> alerter

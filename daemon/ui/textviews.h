@@ -14,6 +14,7 @@
 #ifndef TEXTVIEWS_H
 #define TEXTVIEWS_H
 
+/** Common constants among console text views. */
 namespace TextViews {
   static const int HtmlPrefixRole = Qt::UserRole;
   static const int TrClassRole = Qt::UserRole+1;

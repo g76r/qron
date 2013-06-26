@@ -21,7 +21,7 @@
 class EventData : public QSharedData {
 public:
   QWeakPointer<Scheduler> _scheduler;
-  EventData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }
+  explicit EventData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }
   virtual ~EventData();
   virtual QString toString() const;
   virtual void trigger(const ParamsProvider *context) const;

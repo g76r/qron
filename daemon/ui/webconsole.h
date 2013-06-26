@@ -45,6 +45,7 @@ class QThread;
 class WebConsole : public HttpHandler {
   friend class WebConsoleParamsProvider;
   Q_OBJECT
+  Q_DISABLE_COPY(WebConsole)
   QThread *_thread;
   Scheduler *_scheduler;
   //TasksTreeModel *_tasksTreeModel;

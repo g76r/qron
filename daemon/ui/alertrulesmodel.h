@@ -18,8 +18,11 @@
 #include <QList>
 #include "config/alertrule.h"
 
+/** Model holding alert rules configuration, one rule per line, in their
+ * evaluation order. */
 class AlertRulesModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(AlertRulesModel)
   QList<AlertRule> _rules;
 
 public:

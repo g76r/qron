@@ -17,8 +17,10 @@
 #include <QAbstractItemModel>
 #include "textviews.h"
 
+// LATER unused class: remove or move or use (and fix)
 class TreeModelWithStructure : public QAbstractItemModel {
   Q_OBJECT
+  Q_DISABLE_COPY(TreeModelWithStructure)
 protected:
   class TreeItem;
   TreeItem *_root;

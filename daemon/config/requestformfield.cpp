@@ -25,12 +25,12 @@ public:
   QRegExp _format;
   QStringList _appendcommand;
   QList<QPair<QString,QString> > _setenv;
-  RequestFormFieldData() { }
+  /*RequestFormFieldData() { }
   RequestFormFieldData(const RequestFormFieldData &o) : QSharedData(),
     _param(o._param), _label(o._label), _placeholder(o._placeholder),
     _suggestion(o._suggestion), _format(o._format),
     _appendcommand(o._appendcommand), _setenv(o._setenv) {
-  }
+  }*/
 };
 
 RequestFormField::RequestFormField() : d(new RequestFormFieldData) {

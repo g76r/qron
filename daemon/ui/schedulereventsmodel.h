@@ -22,6 +22,7 @@
  */
 class SchedulerEventsModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(SchedulerEventsModel)
   QList<Event> _onstart, _onsuccess, _onfailure;
   QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
 

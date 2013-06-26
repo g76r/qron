@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,8 +17,13 @@
 #include "textview/textmatrixmodel.h"
 #include "textviews.h"
 
+/** Model holding resources allocation matrix, one resource kind per column and
+ * one host per line.
+ * Can display either configured qunatities or allocated or free or free /
+ * configured or allocated / configured. */
 class ResourcesAllocationModel : public TextMatrixModel {
   Q_OBJECT
+  Q_DISABLE_COPY(ResourcesAllocationModel)
 public:
   enum Mode { Configured, Allocated, Free, FreeOverConfigured,
               AllocatedOverConfigured };

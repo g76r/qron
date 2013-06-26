@@ -43,11 +43,11 @@ public:
       _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0) { }
   TaskRequestData() : _id(0), _start(LLONG_MIN), _end(LLONG_MIN),
     _success(false), _returnCode(0) { }
-  TaskRequestData(const TaskRequestData &other) : QSharedData(), _id(other._id),
+  /*TaskRequestData(const TaskRequestData &other) : QSharedData(), _id(other._id),
     _task(other._task), _params(other._params), _submission(other._submission),
     _force(other._force), _start(other._start), _end(other._end),
     _success(other._success), _returnCode(other._returnCode),
-    _target(other._target) { }
+    _target(other._target) { }*/
   QDateTime start() const {
     return _start == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_start); }

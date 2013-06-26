@@ -21,6 +21,7 @@
 
 class Qrond : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(Qrond)
   QHostAddress _webconsoleAddress;
   quint16 _webconsolePort;
   Scheduler *_scheduler;

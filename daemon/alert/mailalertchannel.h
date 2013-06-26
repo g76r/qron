@@ -23,12 +23,12 @@ class MailAlertQueue;
 class MailSender;
 
 /** Log channel that send alerts as mails.
- * It performs alerts (and alert cancellations) aggregation within at most one
- * mail every %mindelaybetweensend seconds (default: 600" = 10').
- * Coming soon: it will also send reminders for alerts raised for a long time.
+ * It performs alerts (including cancellations and reminders) aggregation within
+ * at most one mail every %mindelaybetweensend seconds (default: 600" = 10').
  */
 class MailAlertChannel : public AlertChannel {
   Q_OBJECT
+  Q_DISABLE_COPY(MailAlertChannel)
   QHash<QString,MailAlertQueue*> _queues;
   MailSender *_mailSender;
   QString _senderAddress, _webConsoleUrl;

@@ -18,8 +18,10 @@
 #include "config/cluster.h"
 #include "config/host.h"
 
+// LATER unused class: remove or move or use (and fix)
 class TargetsTreeModel : public TreeModelWithStructure {
   Q_OBJECT
+  Q_DISABLE_COPY(TargetsTreeModel)
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
   TreeItem *_clustersItem, *_hostsItem;

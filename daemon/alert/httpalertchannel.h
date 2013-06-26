@@ -16,16 +16,12 @@
 
 #include "alertchannel.h"
 
-class HttpAlertChannel : public AlertChannel
-{
+// LATER remove or implement
+class HttpAlertChannel : public AlertChannel {
   Q_OBJECT
+  Q_DISABLE_COPY(HttpAlertChannel)
 public:
   explicit HttpAlertChannel(QObject *parent = 0);
-  
-signals:
-  
-public slots:
-  
 };
 
 #endif // HTTPALERTCHANNEL_H

@@ -50,6 +50,7 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
       case 0:
         return _prefix;
       case 3:
+        // LATER move icon to WebConsole
         QString s = " <span class=\"label label-important\">"
             "<a title=\"Cancel alert\"href=\"do?event=cancelAlert&alert="
             +ra._alert+"&immediately=true\"><i class=\"icon-ok icon-white\">"

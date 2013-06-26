@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,16 +16,12 @@
 
 #include "alertchannel.h"
 
-class ClearFlagAlertChannel : public AlertChannel
-{
+// LATER remove or implement
+class ClearFlagAlertChannel : public AlertChannel {
   Q_OBJECT
+  Q_DISABLE_COPY(ClearFlagAlertChannel)
 public:
   explicit ClearFlagAlertChannel(QObject *parent = 0);
-  
-signals:
-  
-public slots:
-  
 };
 
 #endif // CLEARFLAGALERTCHANNEL_H

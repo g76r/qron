@@ -16,9 +16,12 @@
 
 #include "lastoccuredtexteventsmodel.h"
 
-/** LastOccuredTextEventsModel with an additional "Actions" column. */
+/** Model holding last emited alerts and last emite alert cancellations, one
+ * event per line.
+ * It's a LastOccuredTextEventsModel with an additional "Actions" column. */
 class LastEmitedAlertsModel : public LastOccuredTextEventsModel {
   Q_OBJECT
+  Q_DISABLE_COPY(LastEmitedAlertsModel)
 public:
   explicit LastEmitedAlertsModel(QObject *parent = 0, int maxrows = 100);
   int columnCount(const QModelIndex &parent) const;

@@ -19,8 +19,11 @@
 #include "config/cluster.h"
 #include "config/host.h"
 
+/** Model holding list of configured hosts, one per line, along with its
+ * configuration attributes. */
 class HostsListModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(HostsListModel)
   QList<Host> _hosts;
 
 public:

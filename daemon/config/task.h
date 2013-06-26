@@ -29,6 +29,7 @@ class Event;
 
 class Task {
   QSharedDataPointer<TaskData> d;
+
 public:
   enum DiscardAliasesOnStart { DiscardNone, DiscardAll, DiscardUnknown };
   Task();

@@ -39,6 +39,7 @@ class PfNode;
  */
 class Alerter : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(Alerter)
   QThread *_thread;
   ParamSet _params;
   QHash<QString,AlertChannel*> _channels;

@@ -34,7 +34,7 @@ public:
   static QStringList toStringList(const QList<Event> list);
 
 protected:
-  Event(EventData *data);
+  explicit Event(EventData *data);
 };
 
 #endif // EVENT_H

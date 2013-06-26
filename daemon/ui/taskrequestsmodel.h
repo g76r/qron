@@ -22,8 +22,11 @@
 #include <QList>
 #include "textviews.h"
 
+/** Model holding tasks requests along with their attributes, one request per
+ * line, in reverse request order. */
 class TaskRequestsModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(TaskRequestsModel)
   QList<TaskRequest> _requests;
   int _maxrows;
   bool _keepFinished;

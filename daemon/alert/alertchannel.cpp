@@ -22,6 +22,7 @@ AlertChannel::AlertChannel(QObject *parent, QWeakPointer<Alerter> alerter)
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
+  qRegisterMetaType<Alert>("Alert");
   qRegisterMetaType<AlertChannel::MessageType>("AlertChannel::MessageType");
 }
 

@@ -18,8 +18,11 @@
 #include "config/taskgroup.h"
 #include "config/task.h"
 
+/** Model holding tasks groups along with their attributes, one group per line,
+ * in id alphabetical order. */
 class TaskGroupsModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(TaskGroupsModel)
   QList<TaskGroup> _groups;
 
 public:

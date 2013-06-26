@@ -18,10 +18,10 @@
 
 class QUdpSocket;
 
-/** Log channel that send alerts as arbitrary UDP packets.
- */
+/** Log channel that send alerts as arbitrary UDP packets. */
 class UdpAlertChannel : public AlertChannel {
   Q_OBJECT
+  Q_DISABLE_COPY(UdpAlertChannel)
   QUdpSocket *_socket;
 
 public:

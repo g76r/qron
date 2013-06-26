@@ -25,6 +25,7 @@ class TaskRequestData;
 
 class TaskRequest : public ParamsProvider {
   QSharedDataPointer<TaskRequestData> d;
+
 public:
   enum TaskRequestStatus { Queued, Running, Success, Failure, Canceled };
   TaskRequest();

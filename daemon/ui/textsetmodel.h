@@ -17,8 +17,10 @@
 #include <QAbstractListModel>
 #include <QStringList>
 
+// LATER unused class: remove or move or use
 class TextSetModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(TextSetModel)
   QStringList _values;
 
 public:

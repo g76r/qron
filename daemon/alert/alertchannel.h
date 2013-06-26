@@ -20,8 +20,12 @@
 class QThread;
 class Alerter;
 
+/** Base class for alert channels
+ * @see MailAlertChannel
+ * @see LogAlertChannel */
 class AlertChannel : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(AlertChannel)
 protected:
   QThread *_thread;
   QWeakPointer<Alerter> _alerter;
@@ -30,6 +34,9 @@ public:
   enum MessageType { Emit, Cancel, Remind };
   explicit AlertChannel(QObject *parent = 0, QWeakPointer<Alerter> alerter
                         = QWeakPointer<Alerter>());
+  /** Asynchronously call implementation of doSendMessage() within dedicated
+   * thread.
+   * This method is thread-safe. */
   void sendMessage(Alert alert, MessageType type);
 
 protected:

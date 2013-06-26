@@ -18,8 +18,12 @@
 #include <QDateTime>
 #include <QString>
 
+// LATER move to libqtssu
+/** Model holding generic text events along with the date their occured, one
+ * event per line, in reverse order of occurrence. */
 class LastOccuredTextEventsModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(LastOccuredTextEventsModel)
   class OccuredEvent {
   public:
     QString _event;

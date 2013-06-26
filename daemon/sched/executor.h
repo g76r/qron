@@ -26,6 +26,7 @@ class QNetworkReply;
 
 class Executor : public QObject {
   Q_OBJECT
+  Q_DISABLE_COPY(Executor)
   bool _isTemporary;
   QThread *_thread;
   QProcess *_process;
@@ -67,7 +68,6 @@ private:
   inline void prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
                          QHash<QString, QString> *setenv = 0);
   Q_INVOKABLE void doAbort();
-  Q_DISABLE_COPY(Executor)
 };
 
 #endif // EXECUTOR_H

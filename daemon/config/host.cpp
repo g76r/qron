@@ -19,14 +19,13 @@
 #include "log/log.h"
 
 class HostData : public QSharedData {
-  friend class Host;
+public:
   QString _id, _label, _hostname;
   QHash<QString,qint64> _resources;
-public:
-  HostData() { }
+  /*HostData() { }
   HostData(const HostData &other) : QSharedData(), _id(other._id),
     _label(other._label), _hostname(other._hostname),
-    _resources(other._resources) { }
+    _resources(other._resources) { }*/
 };
 
 Host::Host() : d(new HostData) {

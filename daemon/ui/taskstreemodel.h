@@ -19,8 +19,10 @@
 #include "config/task.h"
 #include "config/taskrequest.h"
 
+// LATER unused class: remove or move or use (and fix)
 class TasksTreeModel : public TreeModelWithStructure {
   Q_OBJECT
+  Q_DISABLE_COPY(TasksTreeModel)
   QHash<QString,TaskGroup> _groups;
   QHash<QString,Task> _tasks;
 

@@ -18,8 +18,11 @@
 #include <QString>
 #include <QDateTime>
 
+/** Model holding raised alerts along with their raise and scheduled
+ * cancellation dates, one alert per line, in reverse order of raising. */
 class RaisedAlertsModel : public QAbstractListModel {
   Q_OBJECT
+  Q_DISABLE_COPY(RaisedAlertsModel)
   class RaisedAlert {
   public:
     QString _alert;

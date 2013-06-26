@@ -16,15 +16,12 @@
 
 #include "alertchannel.h"
 
+// LATER remove or implement
 class PostNoticeAlertChannel : public AlertChannel {
   Q_OBJECT
+  Q_DISABLE_COPY(PostNoticeAlertChannel)
 public:
   explicit PostNoticeAlertChannel(QObject *parent = 0);
-  
-signals:
-  
-public slots:
-  
 };
 
 #endif // POSTNOTICEALERTCHANNEL_H
