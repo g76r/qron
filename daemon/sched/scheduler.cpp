@@ -818,7 +818,7 @@ void Scheduler::taskFinishing(TaskRequest request,
   if (executor) {
     Executor *e = executor.data();
     if (e->isTemporary())
-      e->deleteLater();
+      e->deleteLater(); // deleteLater() because it lives in its own thread
     else
       _availableExecutors.append(e);
   }

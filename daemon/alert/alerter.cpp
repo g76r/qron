@@ -55,7 +55,7 @@ Alerter::Alerter() : QObject(0), _thread(new QThread),
 
 Alerter::~Alerter() {
   foreach (AlertChannel *channel, _channels.values())
-    channel->deleteLater();
+    channel->deleteLater(); // cant be a child cause it lives it its own thread
 }
 
 bool Alerter::loadConfiguration(PfNode root, QString &errorString) {

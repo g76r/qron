@@ -97,10 +97,10 @@ void Qrond::shutdown(int returnCode) {
   // TODO wait for running tasks while starting new ones is disabled
   // delete HttpServer and Scheduler
   // WebConsole will be deleted since HttpServer connects its deleteLater()
-  _httpd->deleteLater();
+  _httpd->deleteLater(); // cannot be a child because it lives it its own thread
   // give a chance to WebConsole to fully shutdown before Scheduler deletion
   ::usleep(100000); // FIXME
-  _scheduler->deleteLater();
+  _scheduler->deleteLater(); // cant be a child cause it lives it its own thread
   // give a chance for last main loop events, incl. QThread::deleteLater() for
   // HttpServer, Scheduler and children
   ::usleep(100000); // FIXME
@@ -156,6 +156,7 @@ int main(int argc, char *argv[]) {
   sigaction(SIGTERM, &action, 0);
   sigaction(SIGINT, &action, 0);
 #endif
+  // TODO may we turn log synchronous rather than call usleep ?
   ::usleep(100000); // give a chance for last asynchronous log writing
   // LATER clearLoggers should not be called but rather managed as a singleton in libqtssu
   Log::clearLoggers(); // this deletes logger and console
