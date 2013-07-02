@@ -41,26 +41,25 @@ public:
     // LATER run in a separate thread to avoid network/dns/etc. hangups
     if (!_port) // address is invalid
       return;
-    QUdpSocket *socket = new QUdpSocket;
-    socket->connectToHost(_host, _port, QIODevice::WriteOnly);
-    if (socket->waitForConnected(200/*2000*/)) {
+    QUdpSocket socket;
+    socket.connectToHost(_host, _port, QIODevice::WriteOnly);
+    if (socket.waitForConnected(200/*2000*/)) {
       const QString message = ParamSet().evaluate(_message, context);
-      qint64 rc = socket->write(message.toUtf8());
+      qint64 rc = socket.write(message.toUtf8());
       if (rc < 0)
-        Log::warning() << "error when emiting UDP event: " << socket->error()
-                       << " " << socket->errorString();
+        Log::warning() << "error when emiting UDP event: " << socket.error()
+                       << " " << socket.errorString();
       //else
       //  Log::debug() << "UDP event emited on " << _host << ":" << _port
       //               << " for " << rc << " bytes: " << message;
     } else {
-      Log::warning() << "error when emiting UDP event: " << socket->error()
-                     << " " << socket->errorString() << _host << _port;
+      Log::warning() << "error when emiting UDP event: " << socket.error()
+                     << " " << socket.errorString() << _host << _port;
     }
-    socket->disconnectFromHost();
-    while(socket->state() != QAbstractSocket::UnconnectedState
-          && socket->waitForBytesWritten(200/*10000*/))
+    socket.disconnectFromHost();
+    while(socket.state() != QAbstractSocket::UnconnectedState
+          && socket.waitForBytesWritten(200/*10000*/))
       ;
-    socket->deleteLater();
   }
   QString toString() const {
     return "udp{"+_host+":"+QString::number(_port)+" "+_message+"}";

@@ -185,7 +185,7 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   _request.setSuccess(success);
   _request.setReturnCode(exitCode);
   emit taskFinished(_request, this);
-  _process->deleteLater();
+  delete _process;
   _process = 0;
   _errBuf.clear();
   _request = TaskRequest();
@@ -266,19 +266,19 @@ void Executor::httpMean(TaskRequest request) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact PUT URL to be called: "
           << url.toString(QUrl::RemovePassword);
-      QBuffer *buffer = new QBuffer(this);
+      QBuffer *buffer = new QBuffer;
       buffer->open(QIODevice::ReadOnly);
       _reply = _nam->put(networkRequest, buffer);
-      connect(_reply, SIGNAL(finished()), buffer, SLOT(deleteLater()));
+      buffer->setParent(_reply);
     } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact POST URL to be called: "
           << url.toString(QUrl::RemovePassword);
-      QBuffer *buffer = new QBuffer(this);
+      QBuffer *buffer = new QBuffer;
       buffer->open(QIODevice::ReadOnly);
       networkRequest.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
       _reply = _nam->post(networkRequest, buffer);
-      connect(_reply, SIGNAL(finished()), buffer, SLOT(deleteLater()));
+      buffer->setParent(_reply);
     } else {
       Log::error(_request.task().fqtn(), _request.id())
           << "unsupported HTTP method: " << method;
@@ -301,9 +301,9 @@ void Executor::httpMean(TaskRequest request) {
 
 void Executor::replyFinished(QNetworkReply *reply) {
   QString fqtn(_request.task().fqtn());
-  if (reply != _reply)
-    Log::debug(fqtn, _request.id()) << "Executor::replyFinished receive "
-                                       "strange pointer";
+  if (reply != _reply || !reply)
+    Log::warning(fqtn, _request.id())
+        << "Executor::replyFinished receive strange pointer";
   int status = reply
       ->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   QString reason = reply
