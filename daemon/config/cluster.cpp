@@ -22,10 +22,6 @@ class ClusterData : public QSharedData {
 public:
   QString _id, _label, _balancing;
   QList<Host> _hosts;
-  /*ClusterData() { }
-  ClusterData(const ClusterData &other) : QSharedData(), _id(other._id),
-    _label(other._label), _balancing(other._balancing), _hosts(other._hosts) { }
-  */
 };
 
 Cluster::Cluster() : d(new ClusterData) {

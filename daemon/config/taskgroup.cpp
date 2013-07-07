@@ -29,13 +29,6 @@ public:
   QList<Event> _onstart, _onsuccess, _onfailure;
   QWeakPointer<Scheduler> _scheduler;
   QSet<QString> _unsetenv;
-  /*TaskGroupData() { }
-  TaskGroupData(const TaskGroupData &other) : QSharedData(), _id(other._id),
-    _label(other._label), _params(other._params), _setenv(other._setenv),
-    _onstart(other._onstart), _onsuccess(other._onsuccess),
-    _onfailure(other._onfailure), _scheduler(other._scheduler),
-    _unsetenv(other._unsetenv) { }
-  ~TaskGroupData() { }*/
 };
 
 TaskGroup::TaskGroup() : d(new TaskGroupData) {

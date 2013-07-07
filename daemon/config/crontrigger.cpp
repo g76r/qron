@@ -125,13 +125,6 @@ public:
       _nextTriggering(-1) {
     parseCronExpression(cronExpression);
   }
-  /*CronTriggerData(const CronTriggerData &other) : QSharedData(),
-    _cronExpression(other._cronExpression),
-    _seconds(other._seconds), _minutes(other._minutes), _hours(other._hours),
-    _days(other._days), _months(other._months), _daysofweek(other._daysofweek),
-    _isValid(other._isValid), _lastTriggered(other._lastTriggered),
-    _nextTriggering(other._nextTriggering) {
-  }*/
   QString canonicalExpression() const {
     return QString("%1 %2 %3 %4 %5 %6").arg(_seconds).arg(_minutes).arg(_hours)
         .arg(_days).arg(_months).arg(_daysofweek);

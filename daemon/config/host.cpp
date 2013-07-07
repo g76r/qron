@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,10 +22,6 @@ class HostData : public QSharedData {
 public:
   QString _id, _label, _hostname;
   QHash<QString,qint64> _resources;
-  /*HostData() { }
-  HostData(const HostData &other) : QSharedData(), _id(other._id),
-    _label(other._label), _hostname(other._hostname),
-    _resources(other._resources) { }*/
 };
 
 Host::Host() : d(new HostData) {

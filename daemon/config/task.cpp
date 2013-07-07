@@ -53,22 +53,6 @@ public:
     _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true), _lastSuccessful(true), _lastReturnCode(-1) { }
-  /*TaskData(const TaskData &other) : QSharedData(), _id(other._id),
-    _label(other._label), _mean(other._mean), _command(other._command),
-    _target(other._target), _info(other._info),
-    _group(other._group), _params(other._params), _setenv(other._setenv),
-    _noticeTriggers(other._noticeTriggers), _unsetenv(other._unsetenv),
-    _resources(other._resources),
-    _maxInstances(other._maxInstances), _cronTriggers(other._cronTriggers),
-    _stderrFilters(other._stderrFilters),
-    _maxExpectedDuration(other._maxExpectedDuration),
-    _minExpectedDuration(other._minExpectedDuration),
-    _discardAliasesOnStart(other._discardAliasesOnStart),
-    _lastExecution(other._lastExecution),
-    _nextScheduledExecution(other._nextScheduledExecution),
-    _instancesCount(other._instancesCount), _enabled(other._enabled),
-    _lastSuccessful(other._lastSuccessful), _lastReturnCode(0) { }*/
-  // FIXME why _lastReturnCode(0) ?
   QDateTime lastExecution() const {
     return _lastExecution == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
