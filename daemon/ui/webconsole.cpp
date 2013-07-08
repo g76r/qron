@@ -298,7 +298,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksAlertsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
   cols.clear();
-  cols << 11 << 6 << 23 << 24 << 12 << 16 << 18;
+  cols << 11 << 6 << 23 << 26 << 24 << 12 << 16 << 18;
   _htmlTasksAlertsView->setColumnIndexes(cols);
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvHostsListView->setModel(_hostsListModel);
@@ -707,6 +707,8 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
                                  : "<i class=\"icon-ban-circle\"></i> false")
                         +"</td></tr><tr><th>Last execution status</th><td>"
                         +TasksModel::taskLastExecStatus(task)+"</td></tr>"
+                        "<tr><th>Last execution duration (seconds)</th><td>"
+                        +TasksModel::taskLastExecDuration(task)+"</td></tr>"
                         "<tr><th>Next execution</th><td>"
                         +task.nextScheduledExecution()
                         .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"

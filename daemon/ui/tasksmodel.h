@@ -40,6 +40,7 @@ public slots:
                             QHash<QString, Task> tasks);
   void taskChanged(Task task);
   static QString taskLastExecStatus(Task task);
+  static QString taskLastExecDuration(Task task);
   static QString taskSystemEnvironnement(Task task);
   static QString taskSetenv(Task task);
   static QString taskUnsetenv(Task task);

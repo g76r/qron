@@ -18,7 +18,7 @@
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 26
+#define COLUMNS 27
 #define SOON_EXECUTION_MILLIS 300000
 // 300,000 ms = 5'
 #define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
@@ -100,6 +100,8 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         s.append("}");
         return s;
       }
+      case 26:
+        return taskLastExecDuration(t);
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -209,6 +211,11 @@ QString TasksModel::taskLastExecStatus(Task task) {
         .append(')');
 }
 
+QString TasksModel::taskLastExecDuration(Task task) {
+  int millis = task.lastTotalMillis();
+  return millis >= 0 ? QString::number(millis/1000.0) : QString();
+}
+
 QString TasksModel::taskSystemEnvironnement(Task task) {
   QString env;
   ParamSet setenv = task.setenv();
@@ -316,6 +323,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Max expected duration";
     case 25:
       return "Request-time overridable params";
+    case 26:
+      return "Last execution duration";
     }
   }
   return QVariant();

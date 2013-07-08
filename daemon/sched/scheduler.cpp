@@ -840,6 +840,7 @@ void Scheduler::taskFinishing(TaskRequest request,
     configuredTask.setLastExecution(request.startDatetime());
     configuredTask.setLastSuccessful(request.success());
     configuredTask.setLastReturnCode(request.returnCode());
+    configuredTask.setLastTotalMillis(request.totalMillis());
   }
   emit taskFinished(request);
   emit taskChanged(configuredTask);

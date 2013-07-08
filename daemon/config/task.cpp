@@ -46,13 +46,14 @@ private:
   mutable long long _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
   mutable bool _enabled, _lastSuccessful;
-  mutable int _lastReturnCode;
+  mutable int _lastReturnCode, _lastTotalMillis;
 
 public:
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
     _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
-    _enabled(true), _lastSuccessful(true), _lastReturnCode(-1) { }
+    _enabled(true), _lastSuccessful(true), _lastReturnCode(-1),
+    _lastTotalMillis(-1) { }
   QDateTime lastExecution() const {
     return _lastExecution == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
@@ -79,6 +80,9 @@ public:
   int lastReturnCode() const { return _lastReturnCode; }
   void setLastReturnCode(int code) const {
     _lastReturnCode = code; }
+  int lastTotalMillis() const { return _lastTotalMillis; }
+  void setLastTotalMillis(int lastTotalMillis) const {
+    _lastTotalMillis = lastTotalMillis; }
 };
 
 Task::Task() {
@@ -123,6 +127,7 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     td->fetchAndStoreInstancesCount(oldTask.instancesCount());
     td->setLastSuccessful(oldTask.lastSuccessful());
     td->setLastReturnCode(oldTask.lastReturnCode());
+    td->setLastTotalMillis(oldTask.lastTotalMillis());
     td->setEnabled(td->enabled() && oldTask.enabled());
   }
   // LATER load cron triggers last exec timestamp from on-disk log
@@ -402,6 +407,15 @@ int Task::lastReturnCode() const {
 void Task::setLastReturnCode(int code) const {
   if (d)
     d->setLastReturnCode(code);
+}
+
+int Task::lastTotalMillis() const {
+  return d ? d->lastTotalMillis() : -1;
+}
+
+void Task::setLastTotalMillis(int lastTotalMillis) const {
+  if (d)
+    d->setLastTotalMillis(lastTotalMillis);
 }
 
 long long Task::maxExpectedDuration() const {

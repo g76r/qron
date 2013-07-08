@@ -81,6 +81,8 @@ public:
   void setLastSuccessful(bool successful) const;
   int lastReturnCode() const;
   void setLastReturnCode(int code) const;
+  int lastTotalMillis() const;
+  void setLastTotalMillis(int lastTotalMillis) const;
   /** in millis */
   long long maxExpectedDuration() const;
   /** in millis */
