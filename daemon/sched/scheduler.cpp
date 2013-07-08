@@ -372,7 +372,7 @@ bool Scheduler::loadEventListConfiguration(PfNode listnode, QList<Event> &list,
       list.append(EmitAlertEvent(this, node.contentAsString()));
     } else if (node.name() == "requesttask") {
       ParamSet params;
-      // FIXME loadparams
+      // TODO loadparams
       list.append(RequestTaskEvent(this, node.contentAsString(), params,
                                    node.hasChild("force")));
     } else if (node.name() == "udp") {

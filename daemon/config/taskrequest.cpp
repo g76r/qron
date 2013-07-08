@@ -29,11 +29,10 @@ public:
   ParamSet _setenv;
 
 private:
-  // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
   mutable qint64 _start, _end;
   mutable bool _success;
   mutable int _returnCode;
-  mutable Host _target; // FIXME not thread safe
+  mutable Host _target;
 
 public:
   TaskRequestData(Task task, ParamSet params, bool force)
@@ -59,8 +58,8 @@ public:
   void setSuccess(bool success) const { _success = success; }
   int returnCode() const { return _returnCode; }
   void setReturnCode(int returnCode) const { _returnCode = returnCode; }
-  Host target() const { return _target; } // FIXME not thread safe
-  void setTarget(Host host) const { _target = host; } // FIXME not thread safe
+  Host target() const { return _target; }
+  void setTarget(Host host) const { _target = host; }
   static quint64 newId() {
     QDateTime now = QDateTime::currentDateTime();
     return now.date().year() * 100000000000000LL

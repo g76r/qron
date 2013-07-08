@@ -99,11 +99,11 @@ void Qrond::shutdown(int returnCode) {
   // WebConsole will be deleted since HttpServer connects its deleteLater()
   _httpd->deleteLater(); // cannot be a child because it lives it its own thread
   // give a chance to WebConsole to fully shutdown before Scheduler deletion
-  ::usleep(100000); // FIXME
+  ::usleep(100000); // TODO remove
   _scheduler->deleteLater(); // cant be a child cause it lives it its own thread
   // give a chance for last main loop events, incl. QThread::deleteLater() for
   // HttpServer, Scheduler and children
-  ::usleep(100000); // FIXME
+  ::usleep(100000); // TODO remove
   // shutdown main thread and stop QCoreApplication::exec() in main()
   QCoreApplication::exit(returnCode);
   // Qrond instance will be deleted by Q_GLOBAL_STATIC

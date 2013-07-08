@@ -54,7 +54,7 @@ class Scheduler : public QObject {
   QList<Event> _onstart, _onsuccess, _onfailure;
   QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   int _maxtotaltaskinstances, _maxqueuedrequests;
-  volatile qint64 _startdate, _configdate; // FIXME remove volatiles
+  volatile qint64 _startdate, _configdate; // TODO remove volatiles and use QDateTime
   volatile long _execCount;
 
 public:

@@ -18,11 +18,7 @@
 #include "httpd/templatinghttphandler.h"
 #include "textview/htmltableview.h"
 #include "textview/csvtableview.h"
-//#include "textview/htmltreeview.h"
-//#include "textview/csvtreeview.h"
 #include "sched/scheduler.h"
-//#include "taskstreemodel.h"
-//#include "targetstreemodel.h"
 #include "resourcesallocationmodel.h"
 #include "hostslistmodel.h"
 #include "clusterslistmodel.h"
@@ -48,8 +44,6 @@ class WebConsole : public HttpHandler {
   Q_DISABLE_COPY(WebConsole)
   QThread *_thread;
   Scheduler *_scheduler;
-  //TasksTreeModel *_tasksTreeModel;
-  //TargetsTreeModel *_targetsTreeModel;
   HostsListModel *_hostsListModel;
   ClustersListModel *_clustersListModel;
   ResourcesAllocationModel *_resourceAllocationModel;
@@ -64,7 +58,6 @@ class WebConsole : public HttpHandler {
   FlagsSetModel *_flagsSetModel;
   TaskGroupsModel *_taskGroupsModel;
   AlertChannelsModel *_alertChannelsModel;
-  //HtmlTreeView *_htmlTasksTreeView, *_htmlTargetsTreeView;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlResourcesAllocationView, *_htmlGlobalParamsView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
@@ -78,7 +71,6 @@ class WebConsole : public HttpHandler {
   *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
   *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView;
   ClockView *_clockView;
-  //CsvTableView *_csvTasksTreeView, *_csvTargetsTreeView;
   CsvTableView *_csvHostsListView,
   *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,

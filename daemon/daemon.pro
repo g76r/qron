@@ -53,10 +53,7 @@ SOURCES += \
     config/host.cpp \
     config/taskrequest.cpp \
     sched/executor.cpp \
-    ui/taskstreemodel.cpp \
     ui/webconsole.cpp \
-    ui/treemodelwithstructure.cpp \
-    ui/targetstreemodel.cpp \
     config/cluster.cpp \
     ui/hostslistmodel.cpp \
     ui/clusterslistmodel.cpp \
@@ -72,7 +69,6 @@ SOURCES += \
     alert/clearflagalertchannel.cpp \
     alert/httpalertchannel.cpp \
     alert/execalertchannel.cpp \
-    ui/textsetmodel.cpp \
     ui/raisedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
     ui/taskrequestsmodel.cpp \
@@ -107,10 +103,7 @@ HEADERS += \
     config/host.h \
     config/taskrequest.h \
     sched/executor.h \
-    ui/taskstreemodel.h \
     ui/webconsole.h \
-    ui/treemodelwithstructure.h \
-    ui/targetstreemodel.h \
     config/cluster.h \
     ui/hostslistmodel.h \
     ui/clusterslistmodel.h \
@@ -127,7 +120,6 @@ HEADERS += \
     alert/clearflagalertchannel.h \
     alert/httpalertchannel.h \
     alert/execalertchannel.h \
-    ui/textsetmodel.h \
     ui/raisedalertsmodel.h \
     ui/alertrulesmodel.h \
     ui/taskrequestsmodel.h \
