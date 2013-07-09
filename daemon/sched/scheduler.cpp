@@ -553,11 +553,19 @@ void Scheduler::checkTriggersForTask(QVariant fqtn) {
 void Scheduler::checkTriggersForAllTasks() {
   //Log::debug() << "Scheduler::checkTriggersForAllTasks ";
   QMutexLocker ml(&_configMutex);
+  QList<Task> tasksWithoutTimeTrigger;
   foreach (Task task, _tasks.values()) {
     QString fqtn = task.fqtn();
     foreach (const CronTrigger trigger, task.cronTriggers())
       checkTrigger(trigger, task, fqtn);
+    if (task.cronTriggers().isEmpty()) {
+      task.setNextScheduledExecution(QDateTime());
+      tasksWithoutTimeTrigger.append(task);
+    }
   }
+  ml.unlock();
+  foreach (const Task task, tasksWithoutTimeTrigger)
+    emit taskChanged(task);
 }
 
 bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
