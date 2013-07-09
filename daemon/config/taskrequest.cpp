@@ -33,15 +33,18 @@ private:
   mutable bool _success;
   mutable int _returnCode;
   mutable Host _target;
+  mutable bool _abortable;
 
 public:
   TaskRequestData(Task task, ParamSet params, bool force)
     : _id(newId()), _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
       _command(task.command()), _setenv(task.setenv()),
-      _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0) { }
-  TaskRequestData() : _id(0), _start(LLONG_MIN), _end(LLONG_MIN),
-    _success(false), _returnCode(0) { }
+      _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
+      _abortable(false) { }
+  TaskRequestData() : _id(0), _force(false),
+    _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
+    _abortable(false) { }
   QDateTime start() const {
     return _start == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_start); }
@@ -60,6 +63,8 @@ public:
   void setReturnCode(int returnCode) const { _returnCode = returnCode; }
   Host target() const { return _target; }
   void setTarget(Host host) const { _target = host; }
+  bool abortable() const { return _abortable; }
+  void setAbortable(bool abortable) const { _abortable = abortable; }
   static quint64 newId() {
     QDateTime now = QDateTime::currentDateTime();
     return now.date().year() * 100000000000000LL
@@ -271,4 +276,13 @@ void TaskRequest::overrideCommand(QString command) {
 void TaskRequest::overrideSetenv(QString key, QString value) {
   if (d)
     d->_setenv.setValue(key, value);
+}
+
+bool TaskRequest::abortable() const {
+  return d && d->abortable();
+}
+
+void TaskRequest::setAbortable(bool abortable) const {
+  if (d)
+    d->setAbortable(abortable);
 }

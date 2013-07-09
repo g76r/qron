@@ -88,6 +88,8 @@ public:
   QString command() const;
   void overrideCommand(QString command);
   void overrideSetenv(QString key, QString value);
+  bool abortable() const;
+  void setAbortable(bool abortable = true) const;
 };
 
 uint qHash(const TaskRequest &request);

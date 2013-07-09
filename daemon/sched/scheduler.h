@@ -177,7 +177,7 @@ signals:
     * taskFinished() can be emited witout previous taskQueued(). */
   void taskQueued(TaskRequest request);
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
-    * be emited witout previous taskQueued(). */
+    * be emited witout previous taskStarted(). */
   void taskStarted(TaskRequest request);
   void taskFinished(TaskRequest request);
   /** Called whenever a task or taskrequest changes: queued, started, finished,

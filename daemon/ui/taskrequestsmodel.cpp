@@ -85,10 +85,14 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
           break;
         case TaskRequest::Running:
           /* abort */
-          actions += " <span class=\"label label-important\" "
-              "title=\"Abort task\"><a href=\"confirm?event=abortTask&id="
-              +QString::number(r.id())+"\">"
-              "<i class=\"glyphicon-skull glyphicon-white\"></i></a></span>";
+          if (r.abortable())
+            actions += " <span class=\"label label-important\" "
+                "title=\"Abort task\"><a href=\"confirm?event=abortTask&id="
+                +QString::number(r.id())+"\">"
+                "<i class=\"glyphicon-skull glyphicon-white\"></i></a></span>";
+          else
+            actions += " <span class=\"label\" title=\"Cannot abort task\">"
+                "<i class=\"glyphicon-skull glyphicon-white\"></i></span>";
           break;
         default:
           /* reexec */

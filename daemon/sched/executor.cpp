@@ -57,6 +57,7 @@ void Executor::doExecute(TaskRequest request) {
     request.setReturnCode(0);
     request.setStartDatetime();
     request.setEndDatetime();
+    emit taskStarted(request);
     emit taskFinished(request, this);
   } else {
     Log::error(request.task().fqtn(), request.id())
@@ -76,6 +77,7 @@ void Executor::localMean(TaskRequest request) {
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   QProcessEnvironment sysenv;
   prepareEnv(request, &sysenv);
+  request.setAbortable();
   execProcess(request, cmdline, sysenv);
 }
 
@@ -95,12 +97,16 @@ void Executor::sshMean(TaskRequest request) {
                                                     "true");
   QString identity = request.params().value("ssh.identity");
   QStringList options = request.params().valueAsStrings("ssh.options");
-  sshCmdline << "ssh" << "-t" << "-t"
-             << "-oLogLevel=ERROR" << "-oEscapeChar=none"
+  bool disablepty = request.params().value("ssh.disablepty") == "true";
+  sshCmdline << "ssh" << "-oLogLevel=ERROR" << "-oEscapeChar=none"
              << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
              << "-oIdentitiesOnly=yes" << "-oKbdInteractiveAuthentication=no"
              << "-oBatchMode=yes" << "-oConnectionAttempts=3"
              << "-oTCPKeepAlive=yes" << "-oPasswordAuthentication=false";
+  if (!disablepty) {
+    sshCmdline << "-t" << "-t";
+    request.setAbortable();
+  }
   if (ignoreknownhosts == "true")
     sshCmdline << "-oUserKnownHostsFile=/dev/null"
                << "-oGlobalKnownHostsFile=/dev/null"
@@ -153,6 +159,7 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline,
   Log::debug(_request.task().fqtn(), _request.id())
       << "about to start system process '" << program << "' with args "
       << cmdline << " and environment " << sysenv.toStringList();
+  emit taskStarted(request);
   _process->start(program, cmdline);
 }
 
@@ -185,7 +192,7 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   _request.setSuccess(success);
   _request.setReturnCode(exitCode);
   emit taskFinished(_request, this);
-  delete _process;
+  _process->deleteLater(); // TODO actually delete should only be done when QProcess::finished() is emited, but we get here too when QProcess::error() is emited
   _process = 0;
   _errBuf.clear();
   _request = TaskRequest();
@@ -257,6 +264,8 @@ void Executor::httpMean(TaskRequest request) {
   }
   _request = request;
   if (url.isValid()) {
+    request.setAbortable();
+    emit taskStarted(request);
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact GET URL to be called: "
@@ -364,8 +373,15 @@ void Executor::doAbort() {
   if (_request.isNull()) {
     Log::warning() << "cannot abort task because this executor is not "
                       "currently responsible for any task";
-  }
-  else if (_process) {
+  } else if (!_request.abortable()) {
+    if (_request.task().mean() == "ssh")
+      Log::warning(_request.task().fqtn(), _request.id())
+          << "cannot abort task because ssh tasks are not abortable when "
+             "ssh.disablepty is set to true";
+    else
+      Log::warning(_request.task().fqtn(), _request.id())
+          << "cannot abort task because is marked as not abortable";
+  } else if (_process) {
     _process->kill();
   } else if (_reply) {
     _reply->abort();

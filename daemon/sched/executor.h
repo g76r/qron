@@ -46,6 +46,9 @@ public:
   void abort();
 
 signals:
+  /** There is no guarantee that taskStarted() is emited, taskFinished() can
+    * be emited witout previous taskStarted(). */
+  void taskStarted(TaskRequest request);
   /** Signal emited whenever a task is no longer running or queued:
     * when finished on failure, finished on success, or cannot be started
     * because of a failure on start. */

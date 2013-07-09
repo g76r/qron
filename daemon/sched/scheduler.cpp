@@ -244,6 +244,8 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
       Executor *e = new Executor;
       connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
               this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
+      connect(e, SIGNAL(taskStarted(TaskRequest)),
+              this, SIGNAL(taskStarted(TaskRequest)));
       _availableExecutors.append(e);
     }
   } else {
@@ -794,10 +796,11 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
       executor->setTemporary();
       connect(executor, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
               this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
+      connect(executor, SIGNAL(taskStarted(TaskRequest)),
+              this, SIGNAL(taskStarted(TaskRequest)));
     }
     executor->execute(request);
     ++_execCount;
-    emit taskStarted(request);
     reevaluateQueuedRequests();
     _runningRequests.insert(request, executor);
     return true;
