@@ -1177,5 +1177,5 @@ void WebConsole::alertCancellationEmited(QString alert) {
 void WebConsole::globalParamsChanged(ParamSet globalParams) {
   _title = globalParams.value("webconsole.title", "Qron Web Console");
   _navtitle = globalParams.value("webconsole.navtitle", _title);
-  _cssoverload = globalParams.value("webconsole.cssoverload");
+  _cssoverload = globalParams.value("webconsole.cssoverload", " ");
 }
