@@ -79,7 +79,7 @@ class WebConsole : public HttpHandler {
   *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
-  QString _title, _navtitle, _cssoverload;
+  QString _title, _navtitle, _cssoverload, _customaction_taskdetail;
 
 public:
   WebConsole();

@@ -27,6 +27,7 @@ class TasksModel : public QAbstractListModel {
   Q_OBJECT
   Q_DISABLE_COPY(TasksModel)
   QList<Task> _tasks;
+  QString _customActions;
 
 public:
   explicit TasksModel(QObject *parent = 0);
@@ -34,6 +35,10 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  /** Way to add custom html at the end of "Actions" column. Will be evaluated
+   * through Task.params(). */
+  void setCustomActions(QString customActions) {
+    _customActions = customActions; }
 
 public slots:
   void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,

@@ -30,6 +30,7 @@ class TaskRequestsModel : public QAbstractListModel {
   QList<TaskRequest> _requests;
   int _maxrows;
   bool _keepFinished;
+  QString _customActions;
 
 public:
   explicit TaskRequestsModel(QObject *parent = 0, int maxrows = 100,
@@ -40,6 +41,10 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   inline void setMaxrows(int maxrows) { _maxrows = maxrows; }
   inline int maxrows() const { return _maxrows; }
+  /** Way to add custom html at the end of "Actions" column. Will be evaluated
+   * through TaskRequest.params(). */
+  void setCustomActions(QString customActions) {
+    _customActions = customActions; }
 
 public slots:
   void taskChanged(TaskRequest request);

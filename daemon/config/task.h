@@ -27,7 +27,7 @@ class CronTrigger;
 class Scheduler;
 class Event;
 
-class Task {
+class Task : public ParamsProvider {
   QSharedDataPointer<TaskData> d;
 
 public:
@@ -96,6 +96,8 @@ public:
   static DiscardAliasesOnStart discardAliasesOnStartFromString(QString v);
   QList<RequestFormField> requestFormFields() const;
   QString requestFormFieldsAsHtmlDescription() const;
+  QVariant paramValue(const QString key,
+                      const QVariant defaultValue = QVariant()) const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

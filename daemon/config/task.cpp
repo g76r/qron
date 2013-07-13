@@ -471,3 +471,20 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
   v.append("</ul>");
   return v;
 }
+
+QVariant Task::paramValue(const QString key,
+                          const QVariant defaultValue) const {
+  //Log::fatal() << "Task::paramvalue " << key;
+  if (d) {
+    if (key == "!taskid") {
+      return id();
+    } else if (key == "!fqtn") {
+      return fqtn();
+    } else if (key == "!taskgroupid") {
+      return taskGroup().id();
+    } else if (key == "!target") {
+      return target();
+    }
+  }
+  return defaultValue;
+}

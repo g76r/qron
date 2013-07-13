@@ -179,6 +179,8 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
             +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
             "</i></a></span>";
+        if (!_customActions.isEmpty())
+          suffix.append(" ").append(t.params().evaluate(_customActions, &t));
         return suffix;
       }
       case 25: {

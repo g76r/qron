@@ -130,10 +130,13 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
       case 8: {
-        return " <span class=\"label label-info\" "
+        QString suffix = " <span class=\"label label-info\" "
             "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
             +r.task().fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
             "</i></a></span>";
+        if (!_customActions.isEmpty())
+          suffix.append(" ").append(r.params().evaluate(_customActions, &r));
+        return suffix;
       }
       default:
         ;
