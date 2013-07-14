@@ -50,6 +50,7 @@ public:
   QString target() const;
   QString info() const;
   TaskGroup taskGroup() const;
+  void setFqtn(QString fqtn) const;
   void completeConfiguration(TaskGroup taskGroup);
   QList<CronTrigger> cronTriggers() const;
   /** Resources consumed. */
@@ -98,6 +99,14 @@ public:
   QString requestFormFieldsAsHtmlDescription() const;
   QVariant paramValue(const QString key,
                       const QVariant defaultValue = QVariant()) const;
+  /** Human readable list of other triggers, i.e. indirect triggers such
+   * as the one implied by (onsuccess(requesttask foo)) on task bar.
+   * Note that not all indirect triggers can be listed here since some cannot
+   * be predicted, e.g. (onsuccess(requesttask %{baz})). Only predictable ones
+   * are listed. */
+  QStringList otherTriggers() const;
+  void appendOtherTriggers(QString text);
+  void clearOtherTriggers();
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

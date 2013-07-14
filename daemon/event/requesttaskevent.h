@@ -26,6 +26,7 @@ public:
                    ParamSet params = ParamSet(), bool force = false);
   RequestTaskEvent(const RequestTaskEvent &);
   ~RequestTaskEvent();
+  QString idOrFqtn() const;
 };
 
 #endif // REQUESTTASKEVENT_H

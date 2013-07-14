@@ -42,6 +42,18 @@
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 #define DEFAULT_MAXQUEUEDREQUESTS 128
 
+class Scheduler::RequestTaskEventLink {
+public:
+  RequestTaskEvent _event;
+  QString _eventType;
+  QString _contextLabel;
+  Task _contextTask;
+  RequestTaskEventLink(RequestTaskEvent event, QString eventType,
+                       QString contextLabel, Task contextTask)
+    : _event(event), _eventType(eventType), _contextLabel(contextLabel),
+      _contextTask(contextTask) { }
+};
+
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _configMutex(QMutex::Recursive),
   _alerter(new Alerter), _firstConfigurationLoad(true),
@@ -172,8 +184,12 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
           Log::warning() << "duplicate task " << fqtn << " in configuration";
         Log::debug() << "loading task " << fqtn << " " << oldTasks.value(fqtn).fqtn();
         Task task(node, this, oldTasks.value(fqtn));
+        /* setFqtn must remain apart from completeConfiguration because
+         * TaskRequestEventLink keeps the old Task object whereas
+         * completeConfiguration creates a new one (since it's not const) */
+        task.setFqtn(fqtn);
         task.completeConfiguration(taskGroup);
-        _tasks.insert(task.fqtn(), task);
+        _tasks.insert(fqtn, task);
         //Log::debug() << "configured task '" << task.fqtn() << "'";
       }
     }
@@ -282,37 +298,58 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
   }
   _onstart.clear();
   foreach (PfNode node, root.childrenByName("onstart"))
-    if (!loadEventListConfiguration(node, _onstart, errorString))
+    if (!loadEventListConfiguration(node, _onstart, ""))
       return false;
   _onsuccess.clear();
   foreach (PfNode node, root.childrenByName("onsuccess"))
-    if (!loadEventListConfiguration(node, _onsuccess, errorString))
+    if (!loadEventListConfiguration(node, _onsuccess, ""))
       return false;
   _onfailure.clear();
   foreach (PfNode node, root.childrenByName("onfailure"))
-    if (!loadEventListConfiguration(node, _onfailure, errorString))
+    if (!loadEventListConfiguration(node, _onfailure, ""))
       return false;
   foreach (PfNode node, root.childrenByName("onfinish"))
-    if (!loadEventListConfiguration(node, _onsuccess, errorString)
-        || !loadEventListConfiguration(node, _onfailure, errorString))
+    if (!loadEventListConfiguration(node, _onsuccess, "")
+        || !loadEventListConfiguration(node, _onfailure, ""))
       return false;
   _onlog.clear();
   foreach (PfNode node, root.childrenByName("onlog"))
-    if (!loadEventListConfiguration(node, _onlog, errorString))
+    if (!loadEventListConfiguration(node, _onlog, ""))
       return false;
   _onnotice.clear();
   foreach (PfNode node, root.childrenByName("onnotice"))
-    if (!loadEventListConfiguration(node, _onnotice, errorString))
+    if (!loadEventListConfiguration(node, _onnotice, ""))
       return false;
   _onschedulerstart.clear();
   _onconfigload.clear();
   foreach (PfNode node, root.childrenByName("onschedulerstart"))
-    if (!loadEventListConfiguration(node, _onschedulerstart, errorString))
+    if (!loadEventListConfiguration(node, _onschedulerstart, ""))
       return false;
   foreach (PfNode node, root.childrenByName("onconfigload"))
-    if (!loadEventListConfiguration(node, _onconfigload, errorString))
+    if (!loadEventListConfiguration(node, _onconfigload, ""))
       return false;
   // LATER onschedulershutdown
+  foreach (const RequestTaskEventLink &link, _requestTaskEventLinks) {
+    QString id = link._event.idOrFqtn();
+    QString fqtn(link._contextTask.fqtn());
+    if (!link._contextTask.isNull() && !id.contains('.')) { // id to group
+      id = fqtn.left(fqtn.lastIndexOf('.')+1)+id;
+    }
+    Task t(_tasks.value(id));
+    if (!t.isNull()) {
+      QString context(link._contextLabel);
+      if (!link._contextTask.isNull())
+        context = fqtn;
+      if (context.isEmpty())
+        context = "*";
+      t.appendOtherTriggers("*"+link._eventType+"("+context+")");
+      //Log::fatal() << "*** " << t.otherTriggers() << " *** " << link._contextLabel << " *** " << fqtn;
+      _tasks.insert(id, t);
+    } else
+      Log::debug() << "cannot translate event " << link._eventType
+                   << " for task '" << id << "'";
+  }
+  _requestTaskEventLinks.clear();
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
   emit tasksConfigurationReset(_tasksGroups, _tasks);
@@ -356,9 +393,10 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
   return true;
 }
 
-bool Scheduler::loadEventListConfiguration(PfNode listnode, QList<Event> &list,
-                                           QString &errorString) {
-  Q_UNUSED(errorString)
+bool Scheduler::loadEventListConfiguration(
+    PfNode listnode, QList<Event> &list, QString contextLabel,
+    Task contextTask) {
+  Q_UNUSED(contextTask)
   foreach (PfNode node, listnode.children()) {
     if (node.name() == "postnotice") {
       list.append(PostNoticeEvent(this, node.contentAsString()));
@@ -375,8 +413,12 @@ bool Scheduler::loadEventListConfiguration(PfNode listnode, QList<Event> &list,
     } else if (node.name() == "requesttask") {
       ParamSet params;
       // TODO loadparams
-      list.append(RequestTaskEvent(this, node.contentAsString(), params,
-                                   node.hasChild("force")));
+      RequestTaskEvent event(this, node.contentAsString(), params,
+                             node.hasChild("force"));
+      _requestTaskEventLinks.append(
+            RequestTaskEventLink(event, listnode.name(), contextLabel,
+                                 contextTask));
+      list.append(event);
     } else if (node.name() == "udp") {
       list.append(UdpEvent(node.attribute("address"),
                            node.attribute("message")));

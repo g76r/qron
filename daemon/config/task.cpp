@@ -40,6 +40,7 @@ public:
   long long _maxExpectedDuration, _minExpectedDuration;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormField;
+  QStringList _otherTriggers;
 
 private:
   // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
@@ -47,6 +48,7 @@ private:
   mutable QAtomicInt _instancesCount;
   mutable bool _enabled, _lastSuccessful;
   mutable int _lastReturnCode, _lastTotalMillis;
+  mutable QString _fqtn; // mutable because computed after group id is parsed
 
 public:
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
@@ -83,6 +85,8 @@ public:
   int lastTotalMillis() const { return _lastTotalMillis; }
   void setLastTotalMillis(int lastTotalMillis) const {
     _lastTotalMillis = lastTotalMillis; }
+  QString fqtn() const { return _fqtn; }
+  void setFqtn(QString fqtn) const { _fqtn = fqtn; }
 };
 
 Task::Task() {
@@ -164,16 +168,6 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
       }
     }
   }
-  foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventListConfiguration(child, td->_onstart);
-  foreach (PfNode child, node.childrenByName("onsuccess"))
-    scheduler->loadEventListConfiguration(child, td->_onsuccess);
-  foreach (PfNode child, node.childrenByName("onfailure"))
-    scheduler->loadEventListConfiguration(child, td->_onfailure);
-  foreach (PfNode child, node.childrenByName("onfinish")) {
-    scheduler->loadEventListConfiguration(child, td->_onsuccess);
-    scheduler->loadEventListConfiguration(child, td->_onfailure);
-  }
   QListIterator<QPair<QString,qlonglong> > it(
         node.stringLongPairChildrenByName("resource"));
   while (it.hasNext()) {
@@ -201,6 +195,21 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
       if (!field.isNull())
         td->_requestFormField.append(field);
     }
+  }
+  d = td;
+  foreach (PfNode child, node.childrenByName("onstart"))
+    scheduler->loadEventListConfiguration(child, td->_onstart, td->_id, *this);
+  foreach (PfNode child, node.childrenByName("onsuccess"))
+    scheduler->loadEventListConfiguration(
+          child, td->_onsuccess, td->_id, *this);
+  foreach (PfNode child, node.childrenByName("onfailure"))
+    scheduler->loadEventListConfiguration(
+          child, td->_onfailure, td->_id, *this);
+  foreach (PfNode child, node.childrenByName("onfinish")) {
+    scheduler->loadEventListConfiguration(
+          child, td->_onsuccess, td->_id, *this);
+    scheduler->loadEventListConfiguration(
+          child, td->_onfailure, td->_id, *this);
   }
   d = td;
 }
@@ -235,7 +244,12 @@ QString Task::id() const {
 }
 
 QString Task::fqtn() const {
-  return d ? d->_group.id()+"."+d->_id : QString();
+  return d ? d->fqtn() : QString();
+}
+
+void Task::setFqtn(QString fqtn) const {
+  if (d)
+    d->setFqtn(fqtn);
 }
 
 QString Task::label() const {
@@ -300,6 +314,8 @@ QString Task::triggersAsString() const {
       s.append("(").append(t.cronExpression()).append(") ");
     foreach (QString t, d->_noticeTriggers)
       s.append("^").append(t).append(" ");
+    foreach (QString t, d->_otherTriggers)
+      s.append(t).append(" ");
   }
   if (!s.isEmpty())
     s.chop(1); // remove last space
@@ -487,4 +503,18 @@ QVariant Task::paramValue(const QString key,
     }
   }
   return defaultValue;
+}
+
+QStringList Task::otherTriggers() const {
+  return d ? d->_otherTriggers : QStringList();
+}
+
+void Task::appendOtherTriggers(QString text) {
+  if (d)
+    d->_otherTriggers.append(text);
+}
+
+void Task::clearOtherTriggers() {
+  if (d)
+    d->_otherTriggers.clear();
 }

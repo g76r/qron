@@ -58,3 +58,8 @@ RequestTaskEvent::RequestTaskEvent(const RequestTaskEvent &rhs) : Event(rhs) {
 
 RequestTaskEvent::~RequestTaskEvent() {
 }
+
+QString RequestTaskEvent::idOrFqtn() const {
+  return d ? ((const RequestTaskEventData*)d.constData())->_idOrFqtn
+           : QString();
+}

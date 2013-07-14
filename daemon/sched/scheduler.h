@@ -37,6 +37,7 @@ class QThread;
 class Scheduler : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Scheduler)
+  class RequestTaskEventLink;
   QThread *_thread;
   ParamSet _globalParams, _setenv;
   QHash<QString,TaskGroup> _tasksGroups;
@@ -56,16 +57,15 @@ class Scheduler : public QObject {
   int _maxtotaltaskinstances, _maxqueuedrequests;
   volatile qint64 _startdate, _configdate; // TODO remove volatiles and use QDateTime
   volatile long _execCount;
+  QList<RequestTaskEventLink> _requestTaskEventLinks;
 
 public:
   Scheduler();
   ~Scheduler();
   bool reloadConfiguration(QIODevice *source, QString &errorString);
-  bool loadEventListConfiguration(PfNode listnode, QList<Event> &list,
-                                  QString &errorString);
-  inline bool loadEventListConfiguration(PfNode listnode, QList<Event> &list) {
-    QString errorString;
-    return loadEventListConfiguration(listnode, list, errorString); }
+  bool loadEventListConfiguration(
+      PfNode listnode, QList<Event> &list, QString contextLabel,
+      Task contextTask = Task());
   static void triggerEvents(const QList<Event> list,
                             const ParamsProvider *context);
   void customEvent(QEvent *event);
