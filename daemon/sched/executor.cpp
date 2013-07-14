@@ -255,10 +255,12 @@ void Executor::httpMean(TaskRequest request) {
   url.setEncodedUrl(QString("http://%1:%2/%3").arg(hostname).arg(port)
                     .arg(command).toUtf8(), QUrl::TolerantMode);
   QNetworkRequest networkRequest(url);
-  foreach (QString spec, request.params().valueAsStrings("setheader")) {
-    int i = spec.indexOf(':');
-    QString name = i < 0 ? spec.trimmed() : spec.left(i).trimmed();
-    QString value = i < 0 ? QString() : spec.mid(i+1).trimmed();
+  foreach (QString name, request.setenv().keys()) {
+    const QString expr(request.setenv().rawValue(name));
+    if (name.endsWith(":")) // ignoring : at end of header name
+      name.chop(1);
+    name.replace(QRegExp("[^a-zA-Z_0-9\\-]+"), "_");
+    const QString value = request.params().evaluate(expr, &request);
     //Log::fatal(request.task().fqtn(), request.id()) << "setheader: " << name << "=" << value << ".";
     networkRequest.setRawHeader(name.toAscii(), value.toUtf8());
   }
