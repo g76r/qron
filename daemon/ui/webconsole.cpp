@@ -63,7 +63,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                           this, _taskRequestsHistoryModel->maxrows(), 100)),
   _htmlTaskRequestsView20(new HtmlTableView(
                             this, _unfinishedTaskRequestModel->maxrows(), 20)),
-  _htmlTasksScheduleView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
+  _htmlTasksScheduleView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
   _htmlTasksConfigView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
   _htmlTasksParamsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
   _htmlTasksListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
