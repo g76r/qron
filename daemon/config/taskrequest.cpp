@@ -27,44 +27,35 @@ public:
   bool _force;
   QString _command;
   ParamSet _setenv;
-
-private:
+  // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
+  // be used in a mutable QSharedData field as soon as the object embedding the
+  // QSharedData is used by several thread at a time, hence the qint64
   mutable qint64 _start, _end;
   mutable bool _success;
   mutable int _returnCode;
+  // note: Host is not thread-safe either, however setTarget() is not likely to
+  // be called without at less one other reference of the Host object, therefore
+  // ~Host() would never be called within setTarget() context which would make
+  // it thread-safe.
+  // There may be a possibility if configuration reload or ressource management
+  // or any other Host change occurs. Therefore in addition setTarget() makes a
+  // deep copy (through Host.detach()) of original object, so there are no race
+  // conditions as soon as target() return value is never modified, which should
+  // be the case forever.
   mutable Host _target;
   mutable bool _abortable;
 
-public:
   TaskRequestData(Task task, ParamSet params, bool force)
     : _id(newId()), _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
       _command(task.command()), _setenv(task.setenv()),
-      _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
-      _abortable(false) { }
+      _start(LLONG_MIN), _end(LLONG_MIN),
+      _success(false), _returnCode(0), _abortable(false) { }
   TaskRequestData() : _id(0), _force(false),
-    _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
+      _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
     _abortable(false) { }
-  QDateTime start() const {
-    return _start == LLONG_MIN
-        ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_start); }
-  qint64 startMillis() const { return _start; }
-  void setStart(QDateTime timestamp) const {
-    _start = timestamp.toMSecsSinceEpoch(); }
-  QDateTime end() const {
-    return _end == LLONG_MIN
-        ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_end); }
-  qint64 endMillis() const { return _end; }
-  void setEnd(QDateTime timestamp) const {
-    _end = timestamp.toMSecsSinceEpoch(); }
-  bool success() const { return _success; }
-  void setSuccess(bool success) const { _success = success; }
-  int returnCode() const { return _returnCode; }
-  void setReturnCode(int returnCode) const { _returnCode = returnCode; }
-  Host target() const { return _target; }
-  void setTarget(Host host) const { _target = host; }
-  bool abortable() const { return _abortable; }
-  void setAbortable(bool abortable) const { _abortable = abortable; }
+
+private:
   static quint64 newId() {
     QDateTime now = QDateTime::currentDateTime();
     return now.date().year() * 100000000000000LL
@@ -122,49 +113,54 @@ QDateTime TaskRequest::submissionDatetime() const {
   return d ? d->_submission : QDateTime();
 }
 
+
 QDateTime TaskRequest::startDatetime() const {
-  return d ? d->start() : QDateTime();
+  return d && d->_start != LLONG_MIN
+      ? QDateTime::fromMSecsSinceEpoch(d->_start) : QDateTime();
 }
 
 void TaskRequest::setStartDatetime(QDateTime datetime) const {
   if (d)
-    d->setStart(datetime);
+    d->_start = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
 QDateTime TaskRequest::endDatetime() const {
-  return d ? d->end() : QDateTime();
+  return d && d->_end != LLONG_MIN
+      ? QDateTime::fromMSecsSinceEpoch(d->_end) : QDateTime();
 }
 
 void TaskRequest::setEndDatetime(QDateTime datetime) const {
   if (d)
-    d->setEnd(datetime);
+    d->_end = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
 bool TaskRequest::success() const {
-  return d ? d->success() : false;
+  return d ? d->_success : false;
 }
 
 void TaskRequest::setSuccess(bool success) const {
   if (d)
-    d->setSuccess(success);
+    d->_success = success;
 }
 
 int TaskRequest::returnCode() const {
-  return d ? d->returnCode() : 0;
+  return d ? d->_returnCode : -1;
 }
 
 void TaskRequest::setReturnCode(int returnCode) const {
   if (d)
-    d->setReturnCode(returnCode);
+    d->_returnCode = returnCode;
 }
 
-Host TaskRequest::target() const {
-  return d ? d->target() : Host();
+const Host TaskRequest::target() const {
+  return d ? d->_target : Host();
 }
 
 void TaskRequest::setTarget(Host target) const {
-  if (d)
-    d->setTarget(target);
+  if (d) {
+    target.detach();
+    d->_target = target;
+  }
 }
 
 QVariant TaskRequest::paramValue(const QString key,
@@ -227,13 +223,13 @@ bool TaskRequest::force() const {
 
 TaskRequest::TaskRequestStatus TaskRequest::status() const {
   if (d) {
-    if (d->endMillis() != LLONG_MIN) {
-      if (d->startMillis() == LLONG_MIN)
+    if (d->_end != LLONG_MIN) {
+      if (d->_start == LLONG_MIN)
         return Canceled;
       else
-        return d->success() ? Success : Failure;
+        return d->_success ? Success : Failure;
     }
-    if (d->startMillis() != LLONG_MIN)
+    if (d->_start != LLONG_MIN)
       return Running;
   }
   return Queued;
@@ -279,10 +275,10 @@ void TaskRequest::overrideSetenv(QString key, QString value) {
 }
 
 bool TaskRequest::abortable() const {
-  return d && d->abortable();
+  return d && d->_abortable;
 }
 
 void TaskRequest::setAbortable(bool abortable) const {
   if (d)
-    d->setAbortable(abortable);
+    d->_abortable = abortable;
 }

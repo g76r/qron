@@ -114,11 +114,8 @@ public:
   QString _cronExpression;
   CronField _seconds, _minutes, _hours, _days, _months, _daysofweek;
   bool _isValid;
-
-private:
   mutable qint64 _lastTriggered, _nextTriggering;
 
-public:
   CronTriggerData(const QString cronExpression = QString())
     : _seconds(0, 59), _minutes(0, 59), _hours(0, 23), _days(1,31),
       _months(1, 12), _daysofweek(0, 6), _isValid(false), _lastTriggered(-1),
@@ -131,12 +128,6 @@ public:
   }
   QString toString() const { return _cronExpression; }
   operator QString() const { return _cronExpression; }
-  QDateTime lastTriggered() const {
-    return QDateTime::fromMSecsSinceEpoch(_lastTriggered); }
-  void setLastTriggered(const QDateTime lastTriggered) const {
-    _lastTriggered =
-        lastTriggered.isValid() ? lastTriggered.toMSecsSinceEpoch() : -1;
-    _nextTriggering = -1; }
   QDateTime nextTriggering(QDateTime max) const;
 
 private:
@@ -182,12 +173,16 @@ QDateTime CronTrigger::nextTriggering(QDateTime max) const {
 }
 
 QDateTime CronTrigger::lastTriggered() const {
-  return d ? d->lastTriggered() : QDateTime();
+  return d && d->_lastTriggered >= 0
+      ? QDateTime::fromMSecsSinceEpoch(d->_lastTriggered) : QDateTime();
 }
 
 void CronTrigger::setLastTriggered(const QDateTime lastTriggered) const {
-  if (d)
-    d->setLastTriggered(lastTriggered);
+  if (d) {
+    d->_lastTriggered = lastTriggered.isValid()
+        ? lastTriggered.toMSecsSinceEpoch() : -1;
+    d->_nextTriggering = -1;
+  }
 }
 
 QDateTime CronTriggerData::nextTriggering(QDateTime max) const {

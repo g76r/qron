@@ -64,7 +64,7 @@ public:
     * running, i.e. if the task target was a cluster, this is the host which
     * was choosen within the cluster.
     * Return a null Host when the task request is still queued. */
-  Host target() const;
+  const Host target() const;
   void setTarget(Host target) const;
   QVariant paramValue(const QString key, const QVariant defaultValue) const;
   ParamSet setenv() const;

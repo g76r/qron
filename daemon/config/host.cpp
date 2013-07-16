@@ -83,3 +83,7 @@ QString Host::resourcesAsString() const {
     }
   return s.append("}");
 }
+
+void Host::detach() {
+  d.detach();
+}

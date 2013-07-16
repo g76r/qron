@@ -41,52 +41,23 @@ public:
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormField;
   QStringList _otherTriggers;
-
-private:
-  // LATER using qint64 on 32 bits systems is not thread-safe but only crash-free
-  mutable long long _lastExecution, _nextScheduledExecution;
+  // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
+  // be used in a mutable QSharedData field as soon as the object embedding the
+  // QSharedData is used by several thread at a time, hence the qint64
+  mutable qint64 _lastExecution, _nextScheduledExecution;
   mutable QAtomicInt _instancesCount;
   mutable bool _enabled, _lastSuccessful;
   mutable int _lastReturnCode, _lastTotalMillis;
-  mutable QString _fqtn; // mutable because computed after group id is parsed
+  // note: QString is not thread-safe either, however setFqtn() is called only
+  // once at Task creation time, before the Task object is shared with any other
+  // thread, therefore thread-safe-ness is not needed
+  mutable QString _fqtn;
 
-public:
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
     _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true), _lastSuccessful(true), _lastReturnCode(-1),
     _lastTotalMillis(-1) { }
-  QDateTime lastExecution() const {
-    return _lastExecution == LLONG_MIN
-        ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_lastExecution); }
-  void setLastExecution(QDateTime timestamp) const {
-    _lastExecution = timestamp.isValid()
-        ? timestamp.toMSecsSinceEpoch() : LLONG_MIN ; }
-  QDateTime nextScheduledExecution() const {
-    return _nextScheduledExecution == LLONG_MIN
-        ? QDateTime()
-        : QDateTime::fromMSecsSinceEpoch(_nextScheduledExecution); }
-  void setNextScheduledExecution(QDateTime timestamp) const {
-    _nextScheduledExecution = timestamp.isValid()
-        ? timestamp.toMSecsSinceEpoch() : LLONG_MIN ; }
-  int instancesCount() const { return _instancesCount; }
-  int fetchAndAddInstancesCount(int valueToAdd) const {
-    return _instancesCount.fetchAndAddOrdered(valueToAdd); }
-  int fetchAndStoreInstancesCount(int value) const {
-    return _instancesCount.fetchAndStoreOrdered(value); }
-  bool enabled() const { return _enabled; }
-  void setEnabled(bool enabled) const { _enabled = enabled; }
-  bool lastSuccessful() const { return _lastSuccessful; }
-  void setLastSuccessful(bool successful) const {
-    _lastSuccessful = successful; }
-  int lastReturnCode() const { return _lastReturnCode; }
-  void setLastReturnCode(int code) const {
-    _lastReturnCode = code; }
-  int lastTotalMillis() const { return _lastTotalMillis; }
-  void setLastTotalMillis(int lastTotalMillis) const {
-    _lastTotalMillis = lastTotalMillis; }
-  QString fqtn() const { return _fqtn; }
-  void setFqtn(QString fqtn) const { _fqtn = fqtn; }
 };
 
 Task::Task() {
@@ -113,7 +84,7 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     Log::error() << "ignoring invalid task maxinstances " << node.toPf();
   }
   if (node.hasChild("disabled"))
-    td->setEnabled(false);
+    td->_enabled = false;
   double f = node.doubleAttribute("maxexpectedduration", -1);
   td->_maxExpectedDuration = f < 0 ? LLONG_MAX : (long long)(f*1000);
   f = node.doubleAttribute("minexpectedduration", -1);
@@ -126,13 +97,15 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
   if (oldTask.d) {
     foreach (const CronTrigger ct, oldTask.d->_cronTriggers)
       oldCronTriggers.insert(ct.canonicalCronExpression(), ct);
-    td->setLastExecution(oldTask.lastExecution());
-    td->setNextScheduledExecution(oldTask.nextScheduledExecution());
-    td->fetchAndStoreInstancesCount(oldTask.instancesCount());
-    td->setLastSuccessful(oldTask.lastSuccessful());
-    td->setLastReturnCode(oldTask.lastReturnCode());
-    td->setLastTotalMillis(oldTask.lastTotalMillis());
-    td->setEnabled(td->enabled() && oldTask.enabled());
+    td->_lastExecution = oldTask.lastExecution().isValid()
+        ? oldTask.lastExecution().toMSecsSinceEpoch() : -1;
+    td->_nextScheduledExecution = oldTask.nextScheduledExecution().isValid()
+        ? oldTask.nextScheduledExecution().toMSecsSinceEpoch() : -1;
+    td->_instancesCount = oldTask.instancesCount();
+    td->_lastSuccessful = oldTask.lastSuccessful();
+    td->_lastReturnCode = oldTask.lastReturnCode();
+    td->_lastTotalMillis = oldTask.lastTotalMillis();
+    td->_enabled = td->_enabled && oldTask.enabled();
   }
   // LATER load cron triggers last exec timestamp from on-disk log
   foreach (PfNode child, node.childrenByName("trigger")) {
@@ -244,12 +217,12 @@ QString Task::id() const {
 }
 
 QString Task::fqtn() const {
-  return d ? d->fqtn() : QString();
+  return d ? d->_fqtn : QString();
 }
 
 void Task::setFqtn(QString fqtn) const {
   if (d)
-    d->setFqtn(fqtn);
+    d->_fqtn = fqtn;
 }
 
 QString Task::label() const {
@@ -323,21 +296,26 @@ QString Task::triggersAsString() const {
 }
 
 QDateTime Task::lastExecution() const {
-  return d ? d->lastExecution() : QDateTime();
+  return d && d->_lastExecution != LLONG_MIN
+      ? QDateTime::fromMSecsSinceEpoch(d->_lastExecution) : QDateTime();
 }
 
 QDateTime Task::nextScheduledExecution() const {
-  return d ? d->nextScheduledExecution() : QDateTime();
+  return d && d->_nextScheduledExecution != LLONG_MIN
+      ? QDateTime::fromMSecsSinceEpoch(d->_nextScheduledExecution)
+      : QDateTime();
 }
 
 void Task::setLastExecution(const QDateTime timestamp) const {
   if (d)
-    d->setLastExecution(timestamp);
+    d->_lastExecution = timestamp.isValid()
+        ? timestamp.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
 void Task::setNextScheduledExecution(const QDateTime timestamp) const {
   if (d)
-    d->setNextScheduledExecution(timestamp);
+    d->_nextScheduledExecution = timestamp.isValid()
+        ? timestamp.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
 int Task::maxInstances() const {
@@ -345,11 +323,11 @@ int Task::maxInstances() const {
 }
 
 int Task::instancesCount() const {
-  return d ? d->instancesCount() : 0;
+  return d ? d->_instancesCount.operator int() : 0;
 }
 
 int Task::fetchAndAddInstancesCount(int valueToAdd) const {
-  return d ? d->fetchAndAddInstancesCount(valueToAdd) : 0;
+  return d ? d->_instancesCount.fetchAndAddOrdered(valueToAdd) : 0;
 }
 
 const QList<QRegExp> Task::stderrFilters() const {
@@ -400,38 +378,38 @@ const QList<Event> Task::onfailureEvents() const {
 }
 
 bool Task::enabled() const {
-  return d ? d->enabled() : false;
+  return d ? d->_enabled : false;
 }
 void Task::setEnabled(bool enabled) const {
   if (d)
-    d->setEnabled(enabled);
+    d->_enabled = enabled;
 }
 
 bool Task::lastSuccessful() const {
-  return d ? d->lastSuccessful() : false;
+  return d ? d->_lastSuccessful : false;
 }
 
 void Task::setLastSuccessful(bool successful) const {
   if (d)
-    d->setLastSuccessful(successful);
+    d->_lastSuccessful = successful;
 }
 
 int Task::lastReturnCode() const {
-  return d ? d->lastReturnCode() : -1;
+  return d ? d->_lastReturnCode : -1;
 }
 
 void Task::setLastReturnCode(int code) const {
   if (d)
-    d->setLastReturnCode(code);
+    d->_lastReturnCode = code;
 }
 
 int Task::lastTotalMillis() const {
-  return d ? d->lastTotalMillis() : -1;
+  return d ? d->_lastTotalMillis : -1;
 }
 
 void Task::setLastTotalMillis(int lastTotalMillis) const {
   if (d)
-    d->setLastTotalMillis(lastTotalMillis);
+    d->_lastTotalMillis = lastTotalMillis;
 }
 
 long long Task::maxExpectedDuration() const {

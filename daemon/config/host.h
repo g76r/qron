@@ -35,6 +35,7 @@ public:
   /** Resources available. */
   QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;
+  void detach();
 };
 
 #endif // HOST_H
