@@ -45,6 +45,11 @@ void MailAlertChannel::setParams(ParamSet params) {
   _senderAddress = params.value("mail.senderaddress",
                                 "please-do-not-reply@localhost");
   _webConsoleUrl = params.value("webconsoleurl");
+  _alertSubject = params.value("mail.alertsubject", "NEW QRON ALERT");
+  _reminderSubject = params.value("mail.remindersubject",
+                                  "QRON ALERT REMINDER");
+  _cancelSubject = params.value("mail.cancelsubject", "canceling qron alert");
+  _enableHtmlBody = params.value("mail.enablehtml", "true") == "true";
   Log::debug() << "MailAlertChannel configured " << relay << " "
                << _senderAddress << " " << params.toString();
 }
@@ -111,10 +116,17 @@ void MailAlertChannel::processQueue(const QVariant address) {
                    << " cancellations + " << queue->_reminders.size()
                    << " reminders";
       QStringList recipients(addr);
-      QString body;
+      QString text, subject, boundary("THISISTHEMIMEBOUNDARY"), s;
+      QString html;
       QHash<QString,QString> headers;
-      // LATER parametrize mail subject
-      headers.insert("Subject", "qron alerts");
+      // headers
+      if (queue->_alerts.size())
+        subject = _alertSubject;
+      else if (queue->_reminders.size())
+        subject = _reminderSubject;
+      else
+        subject = _cancelSubject;
+      headers.insert("Subject", subject);
       headers.insert("To", addr);
       headers.insert("User-Agent", "qron free scheduler (www.qron.eu)");
       headers.insert("X-qron-previous-mail", queue->_lastMail.isNull()
@@ -125,52 +137,95 @@ void MailAlertChannel::processQueue(const QVariant address) {
                      QString::number(queue->_cancellations.size()));
       headers.insert("X-qron-reminders-count",
                      QString::number(queue->_reminders.size()));
-      if (!_webConsoleUrl.isEmpty())
-        body.append("Alerts can also be viewed here:\r\n")
+      // body
+      html = "<html><head><title>"+subject+"</title></head><body>";
+      if (!_webConsoleUrl.isEmpty()) {
+        text.append("Alerts can also be viewed here:\r\n")
             .append(_webConsoleUrl).append("\r\n\r\n");
-      // LATER HTML alert mails
-      body.append("This message contains ")
-          .append(QString::number(queue->_alerts.size()))
+        html.append("<p>Alerts can also be viewed here: <a href=\"")
+            .append(_webConsoleUrl).append("\">").append(_webConsoleUrl)
+            .append("</a>.\n");
+      }
+      s = "This message contains ";
+      s.append(QString::number(queue->_alerts.size()))
           .append(" new emited alerts, ")
           .append(QString::number(queue->_cancellations.size()))
           .append(" alert cancellations and ")
           .append(QString::number(queue->_reminders.size()))
-          .append(" reminders.\r\n\r\n");
-      body.append("NEW EMITED ALERTS:\r\n\r\n");
-      if (queue->_alerts.isEmpty())
-        body.append("(none)\r\n");
-      else
-        foreach (Alert alert, queue->_alerts)
-          body.append(alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz"))
-              .append(" ").append(alert.rule().emitMessage(alert))
+          .append(" reminders.");
+      text.append(s).append("\r\n\r\n");
+      html.append("<p>").append(s).append("\n");
+      text.append("NEW EMITED ALERTS:\r\n\r\n");
+      html.append("<p>NEW EMITED ALERTS:\n<ul>\n");
+      if (queue->_alerts.isEmpty()) {
+        text.append("(none)\r\n");
+        html.append("<li>(none)\n");
+      } else {
+        foreach (Alert alert, queue->_alerts) {
+          s = alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+          s.append(" ").append(alert.rule().emitMessage(alert))
               .append("\r\n");
-      body.append("\r\nAlerts reminders (alerts still raised):\r\n\r\n");
-      if (queue->_reminders.isEmpty())
-        body.append("(none)\r\n");
-      else
-        foreach (Alert alert, queue->_reminders)
-          body.append(alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz"))
-              .append(" ").append(alert.rule().reminderMessage(alert))
+          text.append(s);
+          html.append("<li style=\"background:#ff8080\">").append(s);
+        }
+      }
+      text.append("\r\nAlerts reminders (alerts still raised):\r\n\r\n");
+      html.append("</ul>\n<p>Alerts reminders (alerts still raised):\n<ul>\n");
+      if (queue->_reminders.isEmpty()) {
+        text.append("(none)\r\n");
+        html.append("<li>(none)\n");
+      } else {
+        foreach (Alert alert, queue->_reminders) {
+          s = alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+          s.append(" ").append(alert.rule().reminderMessage(alert))
               .append("\r\n");
-      body.append("\r\nFormer alerts canceled:\r\n\r\n");
-      if (queue->_cancellations.isEmpty())
-        body.append("(none)\r\n");
-      else {
-        foreach (Alert alert, queue->_cancellations)
-          body.append(alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz"))
-              .append(" ").append(alert.rule().cancelMessage(alert))
+          text.append(s);
+          html.append("<li style=\"background:#ffff80\">").append(s);
+        }
+      }
+      text.append("\r\nFormer alerts canceled:\r\n\r\n");
+      html.append("</ul>\n<p>Former alerts canceled:\n<ul>\n");
+      if (queue->_cancellations.isEmpty()) {
+        text.append("(none)\r\n");
+        html.append("<li>(none)\n");
+      } else {
+        foreach (Alert alert, queue->_cancellations) {
+          s = alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+          s.append(" ").append(alert.rule().cancelMessage(alert))
               .append("\r\n");
-        body.append(
+          text.append(s);
+          html.append("<li style=\"background:#80ff80\">").append(s);
+        }
+        text.append(
               "\r\n"
               "Please note that there is a delay between alert cancellation\r\n"
               "request (timestamps above) and the actual time this mail is\r\n"
               "sent (send timestamp of the mail).\r\n");
-        if (_alerter)
-          body.append(
-                "This is the 'canceldelay' parameter, currently configured to"
-                "\r\n"+QString::number(_alerter.data()->cancelDelay()*.001)
-                +" seconds.");
+        html.append(
+              "</ul>\n"
+              "<p>Please note that there is a delay between alert cancellation"
+              "request (timestamps above) and the actual time this mail is"
+              "sent (send timestamp of the mail).\n");
+        if (_alerter) {
+          s = "This is the 'canceldelay' parameter, currently configured to"
+              +QString::number(_alerter.data()->cancelDelay()*.001)
+              +" seconds.";
+          text.append(s);
+          html.append("<p>").append(s);
+        }
       }
+      html.append("</body></html>\n");
+      // mime handling
+      QString body;
+      if (_enableHtmlBody) {
+        headers.insert("Content-Type",
+                       "multipart/alternative; boundary="+boundary);
+        body = "--"+boundary+"\r\nContent-Type: text/plain\r\n\r\n"+text
+            +"\r\n\r\n--"+boundary+"\r\nContent-Type: text/html\r\n\r\n"+html
+            +"\r\n\r\n--"+boundary+"--\r\n";
+      } else
+        body = text;
+      // queuing
       bool queued = _mailSender->send(_senderAddress, recipients, body,
                                       headers, QList<QVariant>(), errorString);
       if (queued) {
