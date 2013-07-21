@@ -144,7 +144,7 @@ CronTrigger::CronTrigger(const CronTrigger &other) : d(other.d) {
 CronTrigger::~CronTrigger() {
 }
 
-CronTrigger &CronTrigger::operator =(const CronTrigger &other) {
+CronTrigger &CronTrigger::operator=(const CronTrigger &other) {
   if (this != &other)
     d.operator=(other.d);
   return *this;

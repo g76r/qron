@@ -34,7 +34,7 @@ public:
   TaskGroup(PfNode node, ParamSet parentParamSet, ParamSet parentSetenv,
             QSet<QString> parentUnsetenv, Scheduler *scheduler);
   ~TaskGroup();
-  TaskGroup &operator =(const TaskGroup &other);
+  TaskGroup &operator=(const TaskGroup &other);
   QString id() const;
   QString label() const;
   ParamSet params() const;

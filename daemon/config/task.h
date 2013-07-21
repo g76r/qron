@@ -36,7 +36,7 @@ public:
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, const Task oldTask);
   ~Task();
-  Task &operator =(const Task &other);
+  Task &operator=(const Task &other);
   bool operator==(const Task &other);
   ParamSet params() const;
   bool isNull() const;

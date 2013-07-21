@@ -66,7 +66,7 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
 TaskGroup::~TaskGroup() {
 }
 
-TaskGroup &TaskGroup::operator =(const TaskGroup &other) {
+TaskGroup &TaskGroup::operator=(const TaskGroup &other) {
   if (this != &other)
     d.operator=(other.d);
   return *this;

@@ -28,7 +28,7 @@ public:
   explicit CronTrigger(const QString cronExpression = QString());
   CronTrigger(const CronTrigger &other);
   ~CronTrigger();
-  CronTrigger &operator =(const CronTrigger &other);
+  CronTrigger &operator=(const CronTrigger &other);
   /** Cron expression as it was initialy given */
   QString cronExpression() const;
   /** Cron expression in a canonical/unique form */

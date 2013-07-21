@@ -190,7 +190,7 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
 Task::~Task() {
 }
 
-Task &Task::operator =(const Task &other) {
+Task &Task::operator=(const Task &other) {
   if (this != &other)
     d.operator=(other.d);
   return *this;
