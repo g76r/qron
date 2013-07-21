@@ -53,18 +53,11 @@
     <div class="container">
       <?value:message?>
       <div class="row">
-        <!--<div class="span6">
-          <h2>Recently emited alerts</h2>
-          <p><a class="btn btn-info" href="../rest/csv/alerts/emited/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/alerts/emited/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="alerts.html">Alerts page &raquo;</a>
-          <p><?view:lastemitedalerts10?>
-        </div>-->
         <div class="span8">
           <h2>Currently raised alerts</h2>
-          <p><a class="btn btn-info" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="alerts.html">Alerts page &raquo;</a>
+          <p><a class="btn btn-primary" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="alerts.html">Alerts page &raquo;</a>
           <p><?view:raisedalerts10?>
         </div>
         <div class="span4">
@@ -84,19 +77,19 @@
       <div class="row">
         <div class="span12">
           <h2>Currently running or queued tasks</h2>
-          <p><a class="btn btn-info" href="../rest/csv/taskrequests/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/taskrequests/list/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="tasks.html#requests">Tasks page &raquo;</a>
+          <p><a class="btn btn-primary" href="../rest/csv/taskrequests/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/taskrequests/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="tasks.html#requests">Tasks page &raquo;</a>
           <p><?view:taskrequests20?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
           <h2>Tasks schedule</h2>
-          <p><a class="btn btn-info" href="../rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="tasks.html#config">Tasks page &raquo;</a>
-          <a class="btn btn-primary" href="schedule.html">Schedule page &raquo;</a>
+          <p><a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="tasks.html#config">Tasks page &raquo;</a>
+          <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <span class="pull-right">
             <a class="btn btn-danger" href="confirm?event=enableAllTasks&amp;enable=false"><i class="icon-ban-circle icon-white"></i> Disable all tasks</a>
             <a class="btn btn-warning" href="confirm?event=enableAllTasks&amp;enable=true"><i class="icon-ban-circle icon-white"></i> Enable all tasks</a>
@@ -107,10 +100,10 @@
       <div class="row">
         <div class="span12">
           <h2>Last warnings and errors</h2>
-          <p><a class="btn btn-info" href="../rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-info" href="../rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-info" href="../rest/txt/log/current/v1"><i class="icon-file icon-white"></i> Current log file</a>
-          <a class="btn btn-primary" href="log.html">Log page &raquo;</a>
+          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="icon-file icon-white"></i> Current log file</a>
+          <a class="btn btn-info" href="log.html">Log page &raquo;</a>
           <p><?view:warninglog10?>
         </div>
       </div>
