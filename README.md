@@ -19,8 +19,9 @@ BUILD INSTRUCTIONS
 
 This program requires Qt >= 4.7 to be built.
 
-The git repository uses git submodules to handle libqtpf dependency, therefore
-you should use following steps to clone repository and submodules repositories:
+The git repository uses git submodules to handle libqtpf and libqtssu
+dependencies, therefore you should use following steps to clone repository
+and submodules repositories:
 
 ``` bash
 git clone git://github.com/g76r/qron.git
@@ -29,9 +30,9 @@ git submodule init
 git submodule update
 ```
 
-Then one should build libqtpf before qron since it's a dependency.
-This can be done with the top directory qmake project or with any external
-program such as an IDE like Qt Creator.
+Then one should build dependencies before qron.
+This can be done transparently using the top directory qmake project or any
+external program such as an IDE like Qt Creator.
 For instance, these commands work on most modern linux distros:
 
 ``` bash
@@ -45,4 +46,11 @@ On some old distros that still use Qt 3 as the default, you may need to type:
 qmake-qt4
 make
 ```
+
+CONTRIBUTIONS
+-------------
+
+We do not yet accept code contributions, but we accept bug reports and feature
+requests. Please feel free to fill in a github's issue or to contact us by
+mail (see web site: http://www.qron.eu/).
 
