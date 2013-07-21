@@ -55,7 +55,6 @@ void Executor::doExecute(TaskRequest request) {
   else if (mean == "donothing") {
     request.setSuccess(true);
     request.setReturnCode(0);
-    request.setStartDatetime();
     request.setEndDatetime();
     emit taskStarted(request);
     emit taskFinished(request, this);
