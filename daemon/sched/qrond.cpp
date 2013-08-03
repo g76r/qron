@@ -82,11 +82,10 @@ void Qrond::startup(QStringList args) {
                  << ": " << _httpd->errorString();
   QFile *config = new QFile(_configPath);
   // LATER have a config directory rather only one file
-  QString errorString;
-  int rc = _scheduler->reloadConfiguration(config, errorString) ? 0 : 1;
+  int rc = _scheduler->reloadConfiguration(config) ? 0 : 1;
   delete config;
   if (rc) {
-    Log::fatal() << "cannot load configuration: " << errorString;
+    Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
     QMetaObject::invokeMethod(qrondInstance(), "shutdown",
                               Qt::QueuedConnection, Q_ARG(int, rc));
@@ -94,14 +93,13 @@ void Qrond::startup(QStringList args) {
 }
 
 void Qrond::reload() {
-  QString errorString;
   QFile *config = new QFile(_configPath);
   // LATER have a config directory rather only one file
   Log::info() << "reloading configuration";
-  int rc = _scheduler->reloadConfiguration(config, errorString) ? 0 : 1;
+  int rc = _scheduler->reloadConfiguration(config) ? 0 : 1;
   delete config;
   if (rc)
-    Log::error() << "cannot reload configuration: " << errorString;
+    Log::error() << "cannot reload configuration";
 }
 
 void Qrond::shutdown(int returnCode) {

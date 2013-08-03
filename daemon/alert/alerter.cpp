@@ -58,8 +58,7 @@ Alerter::~Alerter() {
     channel->deleteLater(); // cant be a child cause it lives it its own thread
 }
 
-bool Alerter::loadConfiguration(PfNode root, QString &errorString) {
-  Q_UNUSED(errorString) // currently no fatal error, only warnings
+bool Alerter::loadConfiguration(PfNode root) {
   _params.clear();
   _rules.clear();
   ConfigUtils::loadParamSet(root, _params);

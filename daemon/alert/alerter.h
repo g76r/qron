@@ -55,7 +55,7 @@ class Alerter : public QObject {
 public:
   explicit Alerter();
   ~Alerter();
-  bool loadConfiguration(PfNode root, QString &errorString);
+  bool loadConfiguration(PfNode root);
   /** Immediatly emit an alert, regardless of raised alert, even if the same
    * alert has just been emited.
    * In most cases it is strongly recommanded to call raiseAlert() instead.

@@ -88,10 +88,10 @@ Scheduler::~Scheduler() {
   _alerter->deleteLater();
 }
 
-bool Scheduler::reloadConfiguration(QIODevice *source, QString &errorString) {
+bool Scheduler::reloadConfiguration(QIODevice *source) {
   if (!source->isOpen())
     if (!source->open(QIODevice::ReadOnly)) {
-      errorString = source->errorString();
+      QString errorString = source->errorString();
       Log::error() << "cannot read configuration: " << errorString;
       return false;
     }
@@ -99,7 +99,8 @@ bool Scheduler::reloadConfiguration(QIODevice *source, QString &errorString) {
   PfParser pp(&pdh);
   pp.parse(source);
   if (pdh.errorOccured()) {
-    errorString = pdh.errorString()+" at line "+QString::number(pdh.errorLine())
+    QString errorString = pdh.errorString()+" at line "
+        +QString::number(pdh.errorLine())
         +" column "+QString::number(pdh.errorColumn());
     Log::error() << "empty or invalid configuration: " << errorString;
     return false;
@@ -110,7 +111,15 @@ bool Scheduler::reloadConfiguration(QIODevice *source, QString &errorString) {
   } else if (roots.size() == 1) {
     PfNode &root(roots.first());
     if (root.name() == "qrontab") {
-      return reloadConfiguration(root, errorString);
+      bool ok = false;
+      if (QThread::currentThread() == thread())
+        ok = reloadConfiguration(root);
+      else
+        QMetaObject::invokeMethod(this, "reloadConfiguration",
+                                  Qt::BlockingQueuedConnection,
+                                  Q_RETURN_ARG(bool, ok),
+                                  Q_ARG(PfNode, root));
+      return ok;
     } else {
       Log::error() << "configuration root node is not \"qrontab\"";
     }
@@ -120,13 +129,10 @@ bool Scheduler::reloadConfiguration(QIODevice *source, QString &errorString) {
   return false;
 }
 
-bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
-  // should not need a config (biglock) mutex if loadConfiguration is always executed by Scheduler's thread
-  // however using only Scheduler's thread need to cope with QString&
+bool Scheduler::reloadConfiguration(PfNode root) {
   QMutexLocker ml(&_configMutex);
-  // LATER decide if it is a good thing never returning false and not using errorString (which is currently the implementation)
-  // alternative: (i) actually use bool + errorString, which implies not clearing member data in case the method fails
-  // or (ii) remove bool and errorString from signature and rely on event loop instead of mutexes
+  // LATER make sanity checks before loading the config and return false, to
+  // have a chance to avoid loading a totally stupid configuration
   _resources.clear();
   _unsetenv.clear();
   _globalParams.clear();
@@ -292,10 +298,10 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
   if (alerts.size() > 1)
     Log::warning() << "ignoring all but last duplicated alerts configuration";
   if (alerts.size()) {
-    if (!_alerter->loadConfiguration(alerts.last(), errorString))
+    if (!_alerter->loadConfiguration(alerts.last()))
       return false;
   } else {
-    if (!_alerter->loadConfiguration(PfNode("alerts"), errorString))
+    if (!_alerter->loadConfiguration(PfNode("alerts")))
       return false;
   }
   _onstart.clear();

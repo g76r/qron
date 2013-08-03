@@ -66,7 +66,7 @@ class Scheduler : public QObject {
 public:
   Scheduler();
   ~Scheduler();
-  bool reloadConfiguration(QIODevice *source, QString &errorString);
+  bool reloadConfiguration(QIODevice *source);
   bool loadEventListConfiguration(
       PfNode listnode, QList<Event> &list, QString contextLabel,
       Task contextTask = Task());
@@ -216,7 +216,7 @@ private:
   bool startQueuedTask(TaskRequest request);
   /** @return true iff the triggers fires a task request */
   bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
-  bool reloadConfiguration(PfNode root, QString &errorString);
+  Q_INVOKABLE bool reloadConfiguration(PfNode root);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
   Q_INVOKABLE TaskRequest enqueueTaskRequest(const QString fqtn,
