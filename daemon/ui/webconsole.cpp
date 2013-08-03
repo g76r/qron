@@ -105,7 +105,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                                      _htmlInfoLogView->cachedRows())),
   _memoryWarningLogger(new MemoryLogger(0, Log::Warning,
                                         _htmlWarningLogView->cachedRows())),
-  _title("Qron Web Console"), _navtitle("Qron Web Console") {
+  _title("Qron Web Console"), _navtitle("Qron Web Console"),
+  _authorizer(new InMemoryRulesAuthorizer(this)), _usersDatabase(0),
+  _ownUsersDatabase(false), _accessControlEnabled(false) {
   _thread->setObjectName("WebConsoleServer");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -381,15 +383,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   moveToThread(_thread);
   _memoryInfoLogger->moveToThread(_thread); // TODO won't be deleted
   _memoryWarningLogger->moveToThread(_thread);
+  _authorizer->allow("", "/console/(css|jsp|js)/.*") // anyone for static rsrc
+      .allow("operate", "/(rest|console)/do") // operate for operation
+      .deny("", "/(rest|console)/do") // nobody else
+      .allow("read"); // read for everything else
 }
 
 WebConsole::~WebConsole() {
   _memoryInfoLogger->moveToThread(QCoreApplication::instance()->thread());
   _memoryWarningLogger->moveToThread(QCoreApplication::instance()->thread());
-}
-
-QString WebConsole::name() const {
-  return "WebConsole";
 }
 
 bool WebConsole::acceptRequest(HttpRequest req) {
@@ -402,10 +404,11 @@ class WebConsoleParamsProvider : public ParamsProvider {
   QString _message;
   QHash<QString,QString> _values;
   HttpRequest _req;
+  HttpRequestContext _ctxt;
 public:
   WebConsoleParamsProvider(WebConsole *console, HttpRequest req,
-                           HttpResponse res)
-    : _console(console), _req(req) {
+                           HttpResponse res, HttpRequestContext ctxt)
+    : _console(console), _req(req), _ctxt(ctxt) {
     QString message = req.base64Cookie("message");
     //qDebug() << "message cookie:" << message;
     if (!message.isEmpty()) {
@@ -472,7 +475,7 @@ public:
     if (key == "maxqueuedrequests")
       return QString::number(_console->_scheduler->maxqueuedrequests());
     QString v(_req.base64Cookie(key));
-    return v.isNull() ? defaultValue : v;
+    return v.isNull() ? _ctxt.paramValue(key, defaultValue) : v;
   }
   void setValue(QString key, QString value) {
     _values.insert(key, value);
@@ -493,13 +496,27 @@ static QString linkify(QString html) {
   return html;
 }
 
-void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
+bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
+                               HttpRequestContext ctxt) {
+  Q_UNUSED(ctxt)
   QString path = req.url().path();
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);
   if (path.isEmpty()) {
     res.redirect("console/index.html");
-    return;
+    return true;
+  }
+  if (_accessControlEnabled
+      && !_authorizer->authorize(ctxt.paramValue("userid").toString(), path)) {
+    res.setStatus(403);
+    QUrl url(req.url());
+    url.setPath("/console/adhoc.html");
+    url.setQueryItems(QList<QPair<QString,QString> >());
+    req.overrideUrl(url);
+    WebConsoleParamsProvider params(this, req, res, ctxt);
+    params.setValue("content", "<h2>Permission denied</h2>");
+    _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+    return true;
   }
   //Log::fatal() << "hit: " << req.url().toString();
   if (path == "/console/do" || path == "/rest/do" ) {
@@ -578,7 +595,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       message.append("\n");
       res.output()->write(message.toUtf8());
     }
-    return;
+    return true;
   }
   if (path == "/console/confirm") {
     QString event = req.param("event");
@@ -615,10 +632,10 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
       url.setPath("/console/adhoc.html");
       url.setQueryItems(QList<QPair<QString,QString> >());
       req.overrideUrl(url);
-      WebConsoleParamsProvider params(this, req, res);
+      WebConsoleParamsProvider params(this, req, res, ctxt);
       params.setValue("content", message);
-      _wuiHandler->handleRequestWithContext(req, res, &params);
-      return;
+      _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+      return true;
     } else {
       res.setBase64SessionCookie("message", "E:Scheduler is not available.",
                                  "/");
@@ -635,7 +652,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
         QUrl url(req.url());
         url.setPath("/console/adhoc.html");
         req.overrideUrl(url);
-        WebConsoleParamsProvider params(this, req, res);
+        WebConsoleParamsProvider params(this, req, res, ctxt);
         QString form = "<div class=\"alert alert-block\">\n"
             "<h4 class=\"text-center\">About to start task "+fqtn+"</h4>\n";
         if (task.label() != task.id())
@@ -664,8 +681,8 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
         // <button type="submit" class="btn">Sign in</button>
         params.setValue("content", form);
         res.setBase64SessionCookie("redirect", redirect, "/");
-        _wuiHandler->handleRequestWithContext(req, res, &params);
-        return;
+        _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+        return true;
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+fqtn+"' not found.",
                                    "/");
@@ -683,7 +700,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
     if (_scheduler) {
       Task task(_scheduler->task(fqtn));
       if (!task.isNull()) {
-        WebConsoleParamsProvider params(this, req, res);
+        WebConsoleParamsProvider params(this, req, res, ctxt);
         params.setValue("description",
                         "<tr><th>Fully qualified task name (fqtn)</th><td>"+fqtn
                         +"</td></tr>"
@@ -747,8 +764,8 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
         params.setValue("fqtn", fqtn);
         params.setValue("customactions", task.params()
                         .evaluate(_customaction_taskdetail, &task));
-        _wuiHandler->handleRequestWithContext(req, res, &params);
-        return;
+        _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+        return true;
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+fqtn+"' not found.",
                                    "/");
@@ -782,126 +799,126 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
         s.append('#').append(anchor);
       res.redirect(s);
     } else {
-      WebConsoleParamsProvider params(this, req, res);
-      _wuiHandler->handleRequestWithContext(req, res, &params);
+      WebConsoleParamsProvider params(this, req, res, ctxt);
+      _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
     }
-    return;
+    return true;
   }
   // LATER optimize resource selection (avoid if/if/if)
   if (path == "/rest/csv/tasks/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvTasksView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/tasks/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTasksListView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/tasks/events/v1") { // FIXME
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTasksEventsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/hosts/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvHostsListView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/hosts/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlHostsListView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/clusters/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvClustersListView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/clusters/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlClustersListView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/resources/allocation/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvResourceAllocationView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/resources/allocation/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlResourcesAllocationView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/params/global/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvGlobalParamsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/params/global/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlGlobalParamsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/alerts/params/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvAlertParamsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/alerts/params/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlAlertParamsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/alerts/raised/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvRaisedAlertsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/alerts/raised/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlRaisedAlertsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/alerts/emited/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvLastEmitedAlertsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/alerts/emited/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlLastEmitedAlertsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/alerts/rules/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvAlertRulesView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/alerts/rules/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlAlertRulesView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/log/info/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvLogView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/log/info/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlInfoLogView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/txt/log/current/v1") {
     QString path(Log::pathToLastFullestLog());
@@ -927,7 +944,7 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
                                           : "Document not found.");
       }
     }
-    return;
+    return true;
   }
   if (path == "/rest/txt/log/all/v1") {
     QStringList paths(Log::pathsToFullestLogs());
@@ -951,81 +968,82 @@ void WebConsole::handleRequest(HttpRequest req, HttpResponse res) {
         }
       }
     }
-    return;
+    return true;
   }
   if (path == "/rest/csv/taskrequests/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvTaskRequestsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/taskrequests/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTaskRequestsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/scheduler/events/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvSchedulerEventsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/scheduler/events/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlSchedulerEventsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/notices/lastposted/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvLastPostedNoticesView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/notices/lastposted/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlLastPostedNoticesView20->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/flags/lastchanges/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvLastFlagsChangesView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/flags/lastchanges/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlLastFlagsChangesView20->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/flags/set/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvFlagsSetView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/flags/set/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlFlagsSetView20->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/csv/taskgroups/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
     res.output()->write(_csvTaskGroupsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/taskgroups/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTaskGroupsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   if (path == "/rest/html/taskgroups/events/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTaskGroupsEventsView->text().toUtf8().constData());
-    return;
+    return true;
   }
   res.setStatus(404);
   res.output()->write("Not found.");
+  return true;
 }
 
 void WebConsole::setScheduler(Scheduler *scheduler) {
@@ -1090,6 +1108,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                this, SLOT(globalParamsChanged(ParamSet)));
     disconnect(_scheduler->alerter(), SIGNAL(channelsChanged(QStringList)),
                _alertChannelsModel, SLOT(channelsChanged(QStringList)));
+    disconnect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
+               this, SLOT(enableAccessControl(bool)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -1153,11 +1173,23 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             this, SLOT(globalParamsChanged(ParamSet)));
     connect(_scheduler->alerter(), SIGNAL(channelsChanged(QStringList)),
             _alertChannelsModel, SLOT(channelsChanged(QStringList)));
+    connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
+            this, SLOT(enableAccessControl(bool)));
     Log::addLogger(_memoryWarningLogger, false);
     Log::addLogger(_memoryInfoLogger, false);
   } else {
     _title = "Qron Web Console";
   }
+}
+
+
+void WebConsole::setUsersDatabase(UsersDatabase *usersDatabase,
+                                  bool takeOwnership) {
+  _authorizer->setUsersDatabase(usersDatabase, takeOwnership);
+}
+
+void WebConsole::enableAccessControl(bool enabled) {
+  _accessControlEnabled = enabled;
 }
 
 void WebConsole::flagSet(QString flag) {

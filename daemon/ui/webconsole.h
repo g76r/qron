@@ -35,6 +35,8 @@
 #include "taskgroupsmodel.h"
 #include "lastemitedalertsmodel.h"
 #include "alertchannelsmodel.h"
+#include "auth/inmemoryrulesauthorizer.h"
+#include "auth/usersdatabase.h"
 
 class QThread;
 
@@ -80,14 +82,21 @@ class WebConsole : public HttpHandler {
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
   QString _title, _navtitle, _cssoverload, _customaction_taskdetail;
+  InMemoryRulesAuthorizer *_authorizer;
+  UsersDatabase *_usersDatabase;
+  bool _ownUsersDatabase, _accessControlEnabled;
 
 public:
   WebConsole();
   ~WebConsole();
-  QString name() const;
   bool acceptRequest(HttpRequest req);
-  void handleRequest(HttpRequest req, HttpResponse res);
+  bool handleRequest(HttpRequest req, HttpResponse res,
+                     HttpRequestContext ctxt);
   void setScheduler(Scheduler *scheduler);
+  void setUsersDatabase(UsersDatabase *usersDatabase, bool takeOwnership);
+
+public slots:
+  void enableAccessControl(bool enabled);
 
 signals:
   void flagChange(QString change, int type);

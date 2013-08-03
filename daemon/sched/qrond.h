@@ -26,7 +26,6 @@ class Qrond : public QObject {
   quint16 _webconsolePort;
   Scheduler *_scheduler;
   HttpServer *_httpd;
-  WebConsole *_webconsole;
   QString _configPath;
 
 public:

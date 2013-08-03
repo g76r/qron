@@ -31,6 +31,8 @@
 #include <QMutex>
 #include "event/event.h"
 #include "pf/pfnode.h"
+#include "auth/inmemoryauthenticator.h"
+#include "auth/inmemoryusersdatabase.h"
 
 class QThread;
 
@@ -51,6 +53,8 @@ class Scheduler : public QObject {
   QHash<TaskRequest,Executor*> _runningRequests;
   QList<Executor*> _availableExecutors;
   Alerter *_alerter;
+  InMemoryAuthenticator *_authenticator;
+  InMemoryUsersDatabase *_usersDatabase;
   bool _firstConfigurationLoad;
   QList<Event> _onstart, _onsuccess, _onfailure;
   QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
@@ -70,6 +74,8 @@ public:
                             const ParamsProvider *context);
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
+  Authenticator *authenticator() { return _authenticator; }
+  UsersDatabase *usersDatabase() { return _usersDatabase; }
   /** Test a flag.
     * This method is thread-safe. */
   bool isFlagSet(const QString flag) const;
@@ -173,6 +179,7 @@ signals:
                                      QHash<QString,qint64> resources);
   void hostResourceConfigurationChanged(
       QHash<QString,QHash<QString,qint64> > resources);
+  void accessControlConfigurationChanged(bool enabled);
   /** There is no guarantee that taskQueued() is emited, taskStarted() or
     * taskFinished() can be emited witout previous taskQueued(). */
   void taskQueued(TaskRequest request);

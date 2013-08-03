@@ -56,7 +56,9 @@ public:
 
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _configMutex(QMutex::Recursive),
-  _alerter(new Alerter), _firstConfigurationLoad(true),
+  _alerter(new Alerter), _authenticator(new InMemoryAuthenticator(this)),
+  _usersDatabase(new InMemoryUsersDatabase(this)),
+  _firstConfigurationLoad(true),
   _maxtotaltaskinstances(0),
   _startdate(QDateTime::currentDateTime().toMSecsSinceEpoch()),
   _configdate(LLONG_MIN), _execCount(0) {
@@ -350,6 +352,47 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
                    << " for task '" << id << "'";
   }
   _requestTaskEventLinks.clear();
+  _authenticator->clearUsers();
+  _usersDatabase->clearUsers();
+  bool accessControlEnabled = false;
+  foreach (PfNode node, root.childrenByName("access-control")) {
+    if (accessControlEnabled)
+      Log::warning() << "multiple 'access-control' in configuration";
+    accessControlEnabled = true;
+    foreach (PfNode node, node.childrenByName("user")) {
+      QString id = node.attribute("id");
+      QString password = node.attribute("password");
+      QString md5 = node.attribute("md5");
+      QString sha1 = node.attribute("sha1");
+      QString ldap = node.attribute("ldap");
+      int passwordCount = (password.isEmpty() ? 0 : 1)
+          + (md5.isEmpty() ? 0 : 1)
+          + (sha1.isEmpty() ? 0 : 1)
+          + (ldap.isEmpty() ? 0 : 1);
+      QStringList roles = node.stringListAttribute("roles");
+      if (id.isEmpty())
+        Log::error() << "found user with no id";
+      if (passwordCount == 0)
+        Log::error() << "user '" << id << "' with no password specification";
+      if (passwordCount > 1)
+        Log::error() << "user '" << id
+                     << "' with severalpassword specifications";
+      else {
+        if (!password.isEmpty())
+          _authenticator
+              ->insertUser(id, password, InMemoryAuthenticator::Plain);
+        else if (!md5.isEmpty())
+          _authenticator->insertUser(id, md5, InMemoryAuthenticator::Md5Hex);
+        else if (!sha1.isEmpty())
+          _authenticator->insertUser(id, sha1, InMemoryAuthenticator::Sha1Hex);
+        else if (!ldap.isEmpty())
+          _authenticator
+              ->insertUser(id, ldap, InMemoryAuthenticator::OpenLdapStyle);
+        _usersDatabase->insertUser(id, roles.toSet());
+        //Log::fatal() << "user: " << id << " : " << roles.toSet();
+      }
+    }
+  }
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
   emit tasksConfigurationReset(_tasksGroups, _tasks);
@@ -358,6 +401,7 @@ bool Scheduler::reloadConfiguration(PfNode root, QString &errorString) {
   emit globalParamsChanged(_globalParams);
   emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
                                 _onnotice, _onschedulerstart, _onconfigload);
+  emit accessControlConfigurationChanged(accessControlEnabled);
   reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {

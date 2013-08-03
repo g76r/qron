@@ -19,6 +19,8 @@
 #include "log/filelogger.h"
 #include <QThread>
 #include <unistd.h>
+#include "httpd/pipelinehttphandler.h"
+#include "httpd/basicauthhttphandler.h"
 #ifdef Q_OS_UNIX
 #include <signal.h>
 #endif
@@ -29,9 +31,19 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _webconsoleAddress(QHostAddress::Any), _webconsolePort(8086),
   _scheduler(new Scheduler),
   _httpd(new HttpServer(8, 32)), // LATER should be configurable
-  _webconsole(new WebConsole), _configPath("/etc/qron.conf") {
-  _webconsole->setScheduler(_scheduler);
-  _httpd->appendHandler(_webconsole);
+  _configPath("/etc/qron.conf") {
+  WebConsole *webconsole = new WebConsole;
+  webconsole->setScheduler(_scheduler);
+  PipelineHttpHandler *pipeline = new PipelineHttpHandler;
+  BasicAuthHttpHandler *basicauth = new BasicAuthHttpHandler;
+  basicauth->setAuthenticator(_scheduler->authenticator(), false)
+      .setRealm("qron");
+  connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
+          basicauth, SLOT(setAuthIsMandatory(bool)));
+  webconsole->setUsersDatabase(_scheduler->usersDatabase(), false);
+  pipeline->appendHandler(basicauth);
+  pipeline->appendHandler(webconsole);
+  _httpd->appendHandler(pipeline);
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
   //        _httpd, SLOT(deleteLater()));
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
