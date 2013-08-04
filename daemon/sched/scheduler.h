@@ -66,6 +66,7 @@ class Scheduler : public QObject {
 public:
   Scheduler();
   ~Scheduler();
+  /** This method is thread-safe */
   bool reloadConfiguration(QIODevice *source);
   bool loadEventListConfiguration(
       PfNode listnode, QList<Event> &list, QString contextLabel,

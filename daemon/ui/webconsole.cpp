@@ -578,8 +578,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         message = QString("S:Asked for ")+(enable?"enabling":"disabling")
             +" all tasks at once.";
       } else if (event=="reloadConfig") {
-        Qrond::instance()->reload();
-        message = "S:Asked for configuration reload.";
+        bool ok = Qrond::instance()->reload();
+        message = ok ? "S:Configuration reloaded."
+                     : "E:Cannot reload configuration.";
       } else
         message = "E:Internal error: unknown event '"+event+"'.";
     } else

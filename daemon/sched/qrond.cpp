@@ -92,7 +92,7 @@ void Qrond::startup(QStringList args) {
   }
 }
 
-void Qrond::reload() {
+bool Qrond::reload() {
   QFile *config = new QFile(_configPath);
   // LATER have a config directory rather only one file
   Log::info() << "reloading configuration";
@@ -100,6 +100,7 @@ void Qrond::reload() {
   delete config;
   if (rc)
     Log::error() << "cannot reload configuration";
+  return !rc;
 }
 
 void Qrond::shutdown(int returnCode) {

@@ -33,7 +33,8 @@ public:
   ~Qrond();
   static Qrond *instance();
   Q_INVOKABLE void startup(QStringList args);
-  Q_INVOKABLE void reload();
+  /** This method is thread-safe */
+  Q_INVOKABLE bool reload();
   Q_INVOKABLE void shutdown(int returnCode);
 };
 
