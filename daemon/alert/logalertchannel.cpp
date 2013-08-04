@@ -29,9 +29,6 @@ void LogAlertChannel::doSendMessage(Alert alert, MessageType type) {
   case Cancel:
     Log::log(alert.rule().cancelMessage(alert),
              Log::severityFromString(alert.rule().address()));
-    break;
-  case Remind:
-    ; // ignore reminders
   }
 
 }

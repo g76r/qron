@@ -31,7 +31,7 @@ protected:
   QWeakPointer<Alerter> _alerter;
 
 public:
-  enum MessageType { Emit, Cancel, Remind };
+  enum MessageType { Emit, Cancel };
   explicit AlertChannel(QObject *parent = 0, QWeakPointer<Alerter> alerter
                         = QWeakPointer<Alerter>());
   /** Asynchronously call implementation of doSendMessage() within dedicated

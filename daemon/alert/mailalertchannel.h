@@ -21,6 +21,7 @@
 
 class MailAlertQueue;
 class MailSender;
+class QTimer;
 
 /** Log channel that send alerts as mails.
  * It performs alerts (including cancellations and reminders) aggregation within
@@ -34,6 +35,8 @@ class MailAlertChannel : public AlertChannel {
   QString _senderAddress, _webConsoleUrl, _alertSubject, _reminderSubject,
   _cancelSubject, _alertStyle, _reminderStyle, _cancelStyle;
   bool _enableHtmlBody;
+  int _remindFrequency;
+  QTimer *_asyncProcessingTimer;
 
 public:
   explicit MailAlertChannel(QObject *parent = 0, QWeakPointer<Alerter> alerter
@@ -43,6 +46,9 @@ public:
 
 public slots:
   void setParams(ParamSet params);
+
+private slots:
+  void asyncProcessing();
 
 private:
   Q_INVOKABLE void processQueue(const QVariant address);

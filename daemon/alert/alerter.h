@@ -46,9 +46,7 @@ class Alerter : public QObject {
   QList<AlertRule> _rules;
   QHash<QString,QDateTime> _raisedAlerts; // alert + raise time
   QHash<QString,QDateTime> _soonCanceledAlerts; // alert + scheduled cancel time
-  QHash<QString,QDateTime> _remindedAlerts; // alert + last reminder time
   int _cancelDelay;
-  int _remindFrequency;
   int _minDelayBetweenSend;
   int _gracePeriodBeforeFirstSend;
 
@@ -136,7 +134,6 @@ private slots:
 private:
   Q_INVOKABLE void doEmitAlert(QString alert);
   void doEmitAlertCancellation(QString alert);
-  void doRemindAlert(QString alert);
   Q_INVOKABLE void doRaiseAlert(QString alert);
   Q_INVOKABLE void doCancelAlert(QString alert, bool immediately = false);
   inline void sendMessage(Alert alert, AlertChannel::MessageType type);

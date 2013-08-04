@@ -23,8 +23,6 @@ UdpAlertChannel::UdpAlertChannel(QObject *parent, QWeakPointer<Alerter> alerter)
 }
 
 void UdpAlertChannel::doSendMessage(Alert alert, MessageType type) {
-  if (type == Remind)
-    return; // ignore reminders
   if (!_socket)
     _socket = new QUdpSocket(this);
   // LATER support IPv6 numeric addresses (they contain colons)
