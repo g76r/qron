@@ -32,7 +32,7 @@ class MailAlertChannel : public AlertChannel {
   QHash<QString,MailAlertQueue*> _queues;
   MailSender *_mailSender;
   QString _senderAddress, _webConsoleUrl, _alertSubject, _reminderSubject,
-  _cancelSubject;
+  _cancelSubject, _alertStyle, _reminderStyle, _cancelStyle;
   bool _enableHtmlBody;
 
 public:

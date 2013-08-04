@@ -64,8 +64,9 @@ bool Alerter::loadConfiguration(PfNode root) {
   ConfigUtils::loadParamSet(root, _params);
   foreach (PfNode node, root.childrenByName("rule")) {
     QString pattern = node.attribute("match", "**");
-    bool stop = !node.attribute("stop").isNull();
-    bool notifyCancel = node.attribute("nocancelnotify").isNull();
+    bool stop = node.hasChild("stop");
+    bool notifyCancel = !node.hasChild("nocancelnotify");
+    bool notifyReminder = !node.hasChild("noremindernotify");
     //Log::debug() << "found alert rule section " << pattern << " " << stop;
     int channelsCount = 0;
     foreach (PfNode node, node.children()) {
@@ -81,7 +82,8 @@ bool Alerter::loadConfiguration(PfNode root) {
                          << QString::fromUtf8(node.toPf())
                          << "' with matching pattern " << pattern;
           } else {
-            AlertRule rule(node, pattern, channel, name, stop, notifyCancel);
+            AlertRule rule(node, pattern, channel, name, stop, notifyCancel,
+                           notifyReminder);
             _rules.append(rule);
             Log::debug() << "configured alert rule " << name << " " << pattern
                          << " " << stop << " "
@@ -161,7 +163,7 @@ void Alerter::doRemindAlert(QString alert) {
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
       //Log::debug() << "alert matching rule #" << n;
-      if (rule.notifyCancel())
+      if (rule.notifyReminder())
         sendMessage(Alert(alert, rule), AlertChannel::Remind);
       if (rule.stop())
         break;

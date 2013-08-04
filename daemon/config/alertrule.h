@@ -32,7 +32,7 @@ public:
   AlertRule(const AlertRule &);
   AlertRule(const PfNode node, const QString pattern,
             QWeakPointer<AlertChannel> channel, QString channelName, bool stop,
-            bool notifyCancel);
+            bool notifyCancel, bool notifyReminder);
   AlertRule &operator=(const AlertRule &);
   ~AlertRule();
   QString pattern() const;
@@ -47,6 +47,7 @@ public:
   QString rawCancelMessage() const;
   bool stop() const;
   bool notifyCancel() const;
+  bool notifyReminder() const;
   bool isNull() const;
   /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
    * "some.path.with.\*.star.and.\\.backslash" into regular expressions.

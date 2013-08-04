@@ -25,7 +25,7 @@ public:
   QWeakPointer<AlertChannel> _channel;
   QString _address, _emitMessage, _cancelMessage, _reminderMessage,
   _channelName;
-  bool _stop, _notifyCancel;
+  bool _stop, _notifyCancel, _notifyReminder;
 };
 
 AlertRule::AlertRule() {
@@ -45,7 +45,7 @@ AlertRule::~AlertRule() {
 
 AlertRule::AlertRule(const PfNode node, const QString pattern,
                      QWeakPointer<AlertChannel> channel, QString channelName,
-                     bool stop, bool notifyCancel)
+                     bool stop, bool notifyCancel, bool notifyReminder)
   : d(new AlertRuleData) {
   d->_pattern = pattern;
   d->_patterRegExp = compilePattern(pattern);
@@ -57,6 +57,7 @@ AlertRule::AlertRule(const PfNode node, const QString pattern,
   d->_reminderMessage = node.attribute("remindermessage"); // LATER check uniqueness
   d->_stop = stop;
   d->_notifyCancel = notifyCancel;
+  d->_notifyReminder = notifyReminder;
 }
 
 QRegExp AlertRule::compilePattern(const QString pattern) {
@@ -161,6 +162,10 @@ bool AlertRule::stop() const {
 
 bool AlertRule::notifyCancel() const {
   return d ? d->_notifyCancel : false;
+}
+
+bool AlertRule::notifyReminder() const {
+  return d ? d->_notifyReminder : false;
 }
 
 bool AlertRule::isNull() const {

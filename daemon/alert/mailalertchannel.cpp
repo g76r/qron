@@ -49,6 +49,10 @@ void MailAlertChannel::setParams(ParamSet params) {
   _reminderSubject = params.value("mail.remindersubject",
                                   "QRON ALERT REMINDER");
   _cancelSubject = params.value("mail.cancelsubject", "canceling qron alert");
+  _alertStyle = params.value("mail.alertstyle",
+                             "background:#ff0000;color:#ffffff;");
+  _reminderStyle = params.value("mail.reminderstyle", "background:#ffff80");
+  _cancelStyle = params.value("mail.cancelstyle", "background:#8080ff");
   _enableHtmlBody = params.value("mail.enablehtml", "true") == "true";
   Log::debug() << "MailAlertChannel configured " << relay << " "
                << _senderAddress << " " << params.toString();
@@ -166,7 +170,8 @@ void MailAlertChannel::processQueue(const QVariant address) {
           s.append(" ").append(alert.rule().emitMessage(alert))
               .append("\r\n");
           text.append(s);
-          html.append("<li style=\"background:#ff8080\">").append(s);
+          html.append("<li style=\"").append(_alertStyle).append("\">")
+              .append(s);
         }
       }
       text.append("\r\nAlerts reminders (alerts still raised):\r\n\r\n");
@@ -180,7 +185,8 @@ void MailAlertChannel::processQueue(const QVariant address) {
           s.append(" ").append(alert.rule().reminderMessage(alert))
               .append("\r\n");
           text.append(s);
-          html.append("<li style=\"background:#ffff80\">").append(s);
+          html.append("<li style=\"").append(_reminderStyle).append("\">")
+              .append(s);
         }
       }
       text.append("\r\nFormer alerts canceled:\r\n\r\n");
@@ -194,7 +200,8 @@ void MailAlertChannel::processQueue(const QVariant address) {
           s.append(" ").append(alert.rule().cancelMessage(alert))
               .append("\r\n");
           text.append(s);
-          html.append("<li style=\"background:#80ff80\">").append(s);
+          html.append("<li style=\"").append(_cancelStyle).append("\">")
+              .append(s);
         }
         text.append(
               "\r\n"
