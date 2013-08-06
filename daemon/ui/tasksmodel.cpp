@@ -205,12 +205,17 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
 
 QString TasksModel::taskLastExecStatus(Task task) {
   QDateTime dt = task.lastExecution();
-  return dt.isNull()
-      ? QString()
-      : dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
-        .append(task.lastSuccessful() ? " success" : " failure")
-        .append(" (code ").append(QString::number(task.lastReturnCode()))
-        .append(')');
+  if (dt.isNull())
+    return QString();
+  QString returnCode = QString::number(task.lastReturnCode());
+  QString returnCodeLabel =
+      task.params().value("return.code."+returnCode+".label");
+  QString s = dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
+      .append(task.lastSuccessful() ? " success" : " failure")
+      .append(" (code ").append(returnCode);
+  if (!returnCodeLabel.isEmpty())
+    s.append(" : ").append(returnCodeLabel);
+  return s.append(')');
 }
 
 QString TasksModel::taskLastExecDuration(Task task) {
