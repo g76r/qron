@@ -48,7 +48,7 @@ class WebConsole : public HttpHandler {
   Scheduler *_scheduler;
   HostsListModel *_hostsListModel;
   ClustersListModel *_clustersListModel;
-  ResourcesAllocationModel *_resourceAllocationModel;
+  ResourcesAllocationModel *_freeResourcesModel, *_resourcesLwmModel;
   ParamSetModel *_globalParamsModel, *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
   LastEmitedAlertsModel *_lastEmitedAlertsModel;
@@ -61,7 +61,8 @@ class WebConsole : public HttpHandler {
   TaskGroupsModel *_taskGroupsModel;
   AlertChannelsModel *_alertChannelsModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
-  *_htmlResourcesAllocationView, *_htmlGlobalParamsView, *_htmlAlertParamsView,
+  *_htmlFreeResourcesView, *_htmlResourcesLwmView,
+  *_htmlGlobalParamsView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView,
@@ -74,7 +75,8 @@ class WebConsole : public HttpHandler {
   *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView;
   ClockView *_clockView;
   CsvTableView *_csvHostsListView,
-  *_csvClustersListView, *_csvResourceAllocationView, *_csvGlobalParamsView,
+  *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
+  *_csvGlobalParamsView,
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
   *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,

@@ -26,10 +26,10 @@ class ResourcesAllocationModel : public TextMatrixModel {
   Q_DISABLE_COPY(ResourcesAllocationModel)
 public:
   enum Mode { Configured, Allocated, Free, FreeOverConfigured,
-              AllocatedOverConfigured };
+              AllocatedOverConfigured, LowWaterMark, LwmOverConfigured };
 private:
   Mode _mode;
-  QHash<QString,QHash<QString,qint64> > _configured;
+  QHash<QString,QHash<QString,qint64> > _configured, _lwm;
 
 public:
   explicit ResourcesAllocationModel(
