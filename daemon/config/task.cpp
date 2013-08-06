@@ -98,9 +98,9 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
     foreach (const CronTrigger ct, oldTask.d->_cronTriggers)
       oldCronTriggers.insert(ct.canonicalCronExpression(), ct);
     td->_lastExecution = oldTask.lastExecution().isValid()
-        ? oldTask.lastExecution().toMSecsSinceEpoch() : -1;
+        ? oldTask.lastExecution().toMSecsSinceEpoch() : LLONG_MIN;
     td->_nextScheduledExecution = oldTask.nextScheduledExecution().isValid()
-        ? oldTask.nextScheduledExecution().toMSecsSinceEpoch() : -1;
+        ? oldTask.nextScheduledExecution().toMSecsSinceEpoch() : LLONG_MIN;
     td->_instancesCount = oldTask.instancesCount();
     td->_lastSuccessful = oldTask.lastSuccessful();
     td->_lastReturnCode = oldTask.lastReturnCode();
