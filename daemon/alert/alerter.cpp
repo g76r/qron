@@ -50,6 +50,7 @@ Alerter::Alerter() : QObject(0), _thread(new QThread),
   qRegisterMetaType<ParamSet>("ParamSet");
   qRegisterMetaType<QDateTime>("QDateTime");
   qRegisterMetaType<QStringList>("QStringList");
+  qRegisterMetaType<AlertChannel::MessageType>("AlertChannel::MessageType");
 }
 
 Alerter::~Alerter() {
@@ -114,38 +115,29 @@ bool Alerter::loadConfiguration(PfNode root) {
 }
 
 void Alerter::emitAlert(QString alert) {
-  QMetaObject::invokeMethod(this, "doEmitAlert", Q_ARG(QString, alert));
+  QMetaObject::invokeMethod(this, "doEmitAlert", Q_ARG(QString, alert),
+                            Q_ARG(AlertChannel::MessageType,
+                                  AlertChannel::Emit));
 }
 
-void Alerter::doEmitAlert(QString alert) {
-  Log::debug() << "emiting alert " << alert;
+void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type) {
+  Log::debug() << "emiting alert " << alert << " " << type;
   int n = 0;
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
       //Log::debug() << "alert matching rule #" << n;
       if (rule.stop())
         break;
-      sendMessage(Alert(alert, rule), AlertChannel::Emit);
+      sendMessage(Alert(alert, rule), type);
     }
     ++n;
   }
-  emit alertEmited(alert);
-}
-
-void Alerter::doEmitAlertCancellation(QString alert) {
-  Log::debug() << "emiting alert cancellation " << alert;
-  int n = 0;
-  foreach (AlertRule rule, _rules) {
-    if (rule.patternRegExp().exactMatch(alert)) {
-      //Log::debug() << "alert matching rule #" << n;
-      if (rule.stop())
-        break;
-      sendMessage(Alert(alert, rule), AlertChannel::Cancel);
-    }
-    ++n;
+  if (type == AlertChannel::Cancel) {
+    _soonCanceledAlerts.remove(alert);
+    emit alertCanceled(alert);
+  } else {
+    emit alertEmited(alert);
   }
-  _soonCanceledAlerts.remove(alert);
-  emit alertCanceled(alert);
 }
 
 void Alerter::sendMessage(Alert alert, AlertChannel::MessageType type) {
@@ -171,7 +163,7 @@ void Alerter::doRaiseAlert(QString alert) {
       _raisedAlerts.insert(alert, now);
       Log::debug() << "raising alert " << alert;
       emit alertRaised(alert);
-      doEmitAlert(alert);
+      doEmitAlert(alert, AlertChannel::Raise);
     }
   }
 }
@@ -190,7 +182,7 @@ void Alerter::doCancelAlert(QString alert, bool immediately) {
   if (immediately) {
     if (_raisedAlerts.contains(alert) || _soonCanceledAlerts.contains(alert)) {
       Log::debug() << "do cancel alert immediately: " << alert;
-      doEmitAlertCancellation(alert);
+      doEmitAlert(alert, AlertChannel::Cancel);
       _raisedAlerts.remove(alert);
     }
   } else {
@@ -213,5 +205,5 @@ void Alerter::asyncProcessing() {
   // process alerts cancellations after cancel delay
   foreach (QString alert, _soonCanceledAlerts.keys())
     if (_soonCanceledAlerts.value(alert) <= now)
-      doEmitAlertCancellation(alert);
+      doEmitAlert(alert, AlertChannel::Cancel);
 }

@@ -23,6 +23,7 @@ LogAlertChannel::LogAlertChannel(QObject *parent, QWeakPointer<Alerter> alerter)
 void LogAlertChannel::doSendMessage(Alert alert, MessageType type) {
   switch(type) {
   case Emit:
+  case Raise:
     Log::log(alert.rule().emitMessage(alert),
              Log::severityFromString(alert.rule().address()));
     break;

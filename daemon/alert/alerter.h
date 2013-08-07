@@ -132,8 +132,7 @@ private slots:
   void asyncProcessing();
 
 private:
-  Q_INVOKABLE void doEmitAlert(QString alert);
-  void doEmitAlertCancellation(QString alert);
+  Q_INVOKABLE void doEmitAlert(QString alert, AlertChannel::MessageType type);
   Q_INVOKABLE void doRaiseAlert(QString alert);
   Q_INVOKABLE void doCancelAlert(QString alert, bool immediately = false);
   inline void sendMessage(Alert alert, AlertChannel::MessageType type);

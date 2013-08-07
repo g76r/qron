@@ -92,13 +92,14 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
       _queues.insert(address, queue);
     }
     switch (type) {
-    case Emit:
-      queue->_alerts.append(alert);
-      if (alert.rule().notifyCancel()
-          && alert.rule().notifyReminder()) {
+    case Raise:
+      if (alert.rule().notifyReminder()) {
         queue->_reminders.insert(alert.id(), alert);
         queue->_lastReminded.insert(alert.id(), QDateTime());
       }
+      // fall into next case
+    case Emit:
+      queue->_alerts.append(alert);
       break;
     case Cancel:
       if (alert.rule().notifyCancel())
