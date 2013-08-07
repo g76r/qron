@@ -249,11 +249,11 @@ void MailAlertChannel::processQueue(const QVariant address) {
               "sent (send timestamp of the mail).\r\n");
         html.append(
               "</ul>\n"
-              "<p>Please note that there is a delay between alert cancellation"
-              "request (timestamps above) and the actual time this mail is"
+              "<p>Please note that there is a delay between alert cancellation "
+              "request (timestamps above) and the actual time this mail is "
               "sent (send timestamp of the mail).\n");
         if (_alerter) {
-          s = "This is the 'canceldelay' parameter, currently configured to"
+          s = "This is the 'canceldelay' parameter, currently configured to "
               +QString::number(_alerter.data()->cancelDelay()*.001)
               +" seconds.";
           text.append(s);
