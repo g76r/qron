@@ -38,6 +38,10 @@ Alert &Alert::operator=(const Alert &rhs) {
   return *this;
 }
 
+bool Alert::operator<(const Alert &other) const {
+  return this != &other && d->_id < other.d->_id;
+}
+
 Alert::~Alert() {
 }
 

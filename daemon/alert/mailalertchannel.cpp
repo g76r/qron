@@ -139,12 +139,16 @@ void MailAlertChannel::processQueue(const QVariant address) {
       }
   }
   if (haveJob) {
+    QSet<QString> newAlertsIds;
+    foreach (const Alert &alert, queue->_alerts)
+      newAlertsIds.insert(alert.id());
     QList<Alert> reminders;
     foreach (const QString &id, queue->_reminders.keys()) {
-      if (queue->_lastReminded.value(id).isValid()) // ignore new alerts
+      if (!newAlertsIds.contains(id)) // ignore alerts also reported as new ones
         reminders.append(queue->_reminders.value(id));
       queue->_lastReminded.insert(id, now); // update all timestamps
     }
+    qSort(reminders);
     QString errorString;
     int ms = queue->_lastMail.msecsTo(QDateTime::currentDateTime());
     int minDelayBetweenSend = _alerter

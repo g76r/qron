@@ -28,7 +28,9 @@ public:
   Alert();
   Alert(const QString id, AlertRule rule);
   Alert(const Alert&);
-  Alert &operator=(const Alert&);
+  Alert &operator=(const Alert &other);
+  /** Compare id()'s */
+  bool operator<(const Alert &other) const;
   ~Alert();
   QString id() const;
   AlertRule rule() const;
