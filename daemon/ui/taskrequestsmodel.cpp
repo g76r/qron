@@ -131,7 +131,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       switch(index.column()) {
       case 8: {
         QString suffix = " <span class=\"label label-info\" "
-            "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
+            "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
             +r.task().fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
             "</i></a></span>";
         if (!_customActions.isEmpty())

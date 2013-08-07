@@ -176,7 +176,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             "</i></a></span>"*/
             /* taskdoc */
             " <span class=\"label label-info\" "
-            "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
+            "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
             +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
             "</i></a></span>";
         if (!_customActions.isEmpty())
@@ -188,7 +188,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
           break;
         return /* taskdoc */
             " <span class=\"label label-info\" "
-            "title=\"Information / Documentation\"><a href=\"taskdoc.html?fqtn="
+            "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
             +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
             "</i></a></span>";
       }

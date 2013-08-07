@@ -31,12 +31,17 @@ QVariant LastEmitedAlertsModel::data(const QModelIndex &index, int role) const {
     v = LastOccuredTextEventsModel::data(this->index(index.row(), 1,
                                                      index.parent()),
                                          Qt::DisplayRole);
-    QRegExp re("task\\.[^\\.]+\\.(.*)");
-    if (re.exactMatch(v.toString()))
-      return " <span class=\"label label-info\" title=\"Related alerts log\">"
+    static QRegExp re("task\\.[^\\.]+\\.(.*)");
+    if (re.exactMatch(v.toString())) {
+      return " <span class=\"label label-info\" title=\"Related tasks log\">"
           "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
           +re.cap(1)
-          +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>";
+          +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>"
+          " <span class=\"label label-info\" title=\"Detailed task info\">"
+          "<a href=\"taskdoc.html?fqtn="+re.cap(1)+"\">"
+          "<i class=\"icon-info-sign icon-white\"></i></a></span>";
+    }
+
   }
   return QVariant();
 }

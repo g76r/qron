@@ -55,12 +55,16 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
             "<a title=\"Cancel alert\"href=\"do?event=cancelAlert&alert="
             +ra._alert+"&immediately=true\"><i class=\"icon-ok icon-white\">"
             "</i></a></span>";
-        QRegExp re("task\\.[^\\.]+\\.(.*)");
-        if (re.exactMatch(ra._alert))
+        static QRegExp re("task\\.[^\\.]+\\.(.*)");
+        if (re.exactMatch(ra._alert)) {
           s += " <span class=\"label label-info\" title=\"Related tasks log\">"
               "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
               +re.cap(1)
-              +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>";
+              +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>"
+              " <span class=\"label label-info\" title=\"Detailed task info\">"
+              "<a href=\"taskdoc.html?fqtn="+re.cap(1)+"\">"
+              "<i class=\"icon-info-sign icon-white\"></i></a></span>";
+        }
         return s;
       }
     }
