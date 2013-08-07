@@ -44,7 +44,7 @@ AlertRule::~AlertRule() {
 }
 
 AlertRule::AlertRule(const PfNode node, const QString pattern,
-                     QWeakPointer<AlertChannel> channel, QString channelName,
+                     AlertChannel *channel, QString channelName,
                      bool stop, bool notifyCancel, bool notifyReminder)
   : d(new AlertRuleData) {
   d->_pattern = pattern;

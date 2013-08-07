@@ -63,36 +63,33 @@ bool Alerter::loadConfiguration(PfNode root) {
   ConfigUtils::loadParamSet(root, _params);
   foreach (PfNode node, root.childrenByName("rule")) {
     QString pattern = node.attribute("match", "**");
-    bool stop = node.hasChild("stop");
     bool notifyCancel = !node.hasChild("nocancelnotify");
     bool notifyReminder = !node.hasChild("noremindernotify");
     //Log::debug() << "found alert rule section " << pattern << " " << stop;
-    int channelsCount = 0;
     foreach (PfNode node, node.children()) {
-      if (node.name() == "match" || node.name() == "stop") {
+      if (node.name() == "match" || node.name() == "stop"
+          || node.name() == "nocancelnotify"
+          || node.name() == "noremindernotify") {
         // ignore
       } else {
         QString name = node.name();
         AlertChannel *channel = _channels.value(name);
         if (channel) {
-          if (stop && channelsCount++) {
-            Log::error() << "do not support several channel for the same "
-                            "alert rule if (stop) is set, ignoring channel '"
-                         << QString::fromUtf8(node.toPf())
-                         << "' with matching pattern " << pattern;
-          } else {
-            AlertRule rule(node, pattern, channel, name, stop, notifyCancel,
-                           notifyReminder);
-            _rules.append(rule);
-            Log::debug() << "configured alert rule " << name << " " << pattern
-                         << " " << stop << " "
-                         << rule.patternRegExp().pattern();
-          }
+          AlertRule rule(node, pattern, channel, name, false, notifyCancel,
+                         notifyReminder);
+          _rules.append(rule);
+          Log::debug() << "configured alert rule " << name << " " << pattern
+                       << " " << rule.patternRegExp().pattern();
         } else {
           Log::warning() << "alert channel '" << name << "' unknown in alert "
                             "rule with matching pattern " << pattern;
         }
       }
+    }
+    if (node.hasChild("stop")) {
+      Log::debug() << "configured alert rule stop " << pattern;
+      _rules.append(AlertRule(PfNode(), pattern, 0,
+                              "stop", true, false, false));
     }
   }
   _cancelDelay =
@@ -126,9 +123,9 @@ void Alerter::doEmitAlert(QString alert) {
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
       //Log::debug() << "alert matching rule #" << n;
-      sendMessage(Alert(alert, rule), AlertChannel::Emit);
       if (rule.stop())
         break;
+      sendMessage(Alert(alert, rule), AlertChannel::Emit);
     }
     ++n;
   }
@@ -141,9 +138,9 @@ void Alerter::doEmitAlertCancellation(QString alert) {
   foreach (AlertRule rule, _rules) {
     if (rule.patternRegExp().exactMatch(alert)) {
       //Log::debug() << "alert matching rule #" << n;
-      sendMessage(Alert(alert, rule), AlertChannel::Cancel);
       if (rule.stop())
         break;
+      sendMessage(Alert(alert, rule), AlertChannel::Cancel);
     }
     ++n;
   }

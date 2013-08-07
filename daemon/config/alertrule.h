@@ -31,12 +31,13 @@ public:
   AlertRule();
   AlertRule(const AlertRule &);
   AlertRule(const PfNode node, const QString pattern,
-            QWeakPointer<AlertChannel> channel, QString channelName, bool stop,
+            AlertChannel *channel, QString channelName, bool stop,
             bool notifyCancel, bool notifyReminder);
   AlertRule &operator=(const AlertRule &);
   ~AlertRule();
   QString pattern() const;
   QRegExp patternRegExp() const;
+  /** Null if stop rule or being shuting down and channel already destroyed. */
   QWeakPointer<AlertChannel> channel() const;
   QString channelName() const;
   QString address() const;

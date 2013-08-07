@@ -39,15 +39,21 @@ QVariant AlertRulesModel::data(const QModelIndex &index, int role) const {
       case 0:
         return rule.pattern();
       case 1:
-        return rule.stop() ? "STOP" : QVariant();
-      case 2:
         return rule.channelName();
-      case 3:
+      case 2:
         return rule.address();
-      case 4:
+      case 3:
         return rule.rawMessage();
-      case 5:
+      case 4:
         return rule.rawCancelMessage();
+      case 5: {
+        QString s;
+        if (!rule.notifyCancel())
+          s.append("nonotifycancel ");
+        if (!rule.notifyReminder())
+          s.append("nonotifyreminder");
+        return s;
+      }
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -73,15 +79,15 @@ QVariant AlertRulesModel::headerData(int section, Qt::Orientation orientation,
     case 0:
       return "Pattern";
     case 1:
-      return "Stop";
-    case 2:
       return "Channel";
-    case 3:
+    case 2:
       return "Address";
-    case 4:
+    case 3:
       return "Message";
-    case 5:
+    case 4:
       return "Cancel message";
+    case 5:
+      return "Parameters";
     }
   }
   return QVariant();
