@@ -22,8 +22,10 @@
 #include <QNetworkReply>
 #include "log/qterrorcodes.h"
 
-Executor::Executor() : QObject(0), _isTemporary(false), _thread(new QThread),
-  _process(0), _nam(new QNetworkAccessManager(this)), _reply(0) {
+Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
+  _stderrWasUsed(false), _thread(new QThread),
+  _process(0), _nam(new QNetworkAccessManager(this)), _reply(0),
+  _alerter(alerter) {
   _thread->setObjectName(QString("Executor-%1")
                          .arg((long)_thread, sizeof(long)*2, 16,
                               QLatin1Char('0')));
@@ -46,6 +48,7 @@ void Executor::doExecute(TaskRequest request) {
   Log::debug(request.task().fqtn(), request.id())
       << "starting task '" << request.task().fqtn() << "' through mean '"
       << mean << "' after " << request.queuedMillis() << " ms in queue";
+  _stderrWasUsed = false;
   if (mean == "local")
     localMean(request);
   else if (mean == "ssh")
@@ -190,6 +193,8 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
       << _request.runningMillis() << " ms";
   _request.setSuccess(success);
   _request.setReturnCode(exitCode);
+  if (!_stderrWasUsed  && _alerter)
+    _alerter->cancelAlert("task.stderr."+_request.task().fqtn());
   emit taskFinished(_request, this);
   _process->deleteLater(); // TODO actually delete should only be done when QProcess::finished() is emited, but we get here too when QProcess::error() is emited
   _process = 0;
@@ -197,13 +202,9 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   _request = TaskRequest();
 }
 
-void Executor::readyReadStandardError() {
-  //qDebug() << "************ readyReadStandardError" << _request.id() << _process;
+void Executor::readyProcessWarningOutput() {
   // LATER provide a way to define several stderr filter regexps
   // LATER provide a way to choose log level for stderr
-  if (!_process)
-    return;
-  _process->setReadChannel(QProcess::StandardError);
   QByteArray ba;
   while (!(ba = _process->read(1024)).isEmpty()) {
     _errBuf.append(ba);
@@ -211,32 +212,49 @@ void Executor::readyReadStandardError() {
     while (((i = _errBuf.indexOf('\n')) >= 0)) {
       QString line;
       if (i > 0 && _errBuf.at(i-1) == '\r')
-        line = QString::fromUtf8(_errBuf.mid(0, i-1));
+        line = QString::fromUtf8(_errBuf.mid(0, i-1)).trimmed();
       else
-        line = QString::fromUtf8(_errBuf.mid(0, i));
+        line = QString::fromUtf8(_errBuf.mid(0, i)).trimmed();
       _errBuf.remove(0, i+1);
-      if (!line.isEmpty())
       if (!line.isEmpty()) {
+        static QRegExp sshConnClosed("^Connection to [^ ]* closed\\.$");
         QList<QRegExp> filters(_request.task().stderrFilters());
         if (filters.isEmpty() && _request.task().mean() == "ssh")
-          filters.append(QRegExp("^Connection to [^ ]* closed\\.$"));
+          filters.append(sshConnClosed);
         foreach (QRegExp filter, filters)
           if (filter.indexIn(line) >= 0)
             goto line_filtered;
         Log::warning(_request.task().fqtn(), _request.id())
-            << "task stderr: " << line.trimmed();
+            << "task stderr: " << line;
+        if (!_stderrWasUsed) {
+          _stderrWasUsed = true;
+          if (_alerter)
+            _alerter->raiseAlert("task.stderr."+_request.task().fqtn());
+        }
 line_filtered:;
       }
     }
   }
 }
 
+void Executor::readyReadStandardError() {
+  //qDebug() << "************ readyReadStandardError" << _request.task().fqtn() << _request.id() << _process;
+  if (!_process)
+    return;
+  _process->setReadChannel(QProcess::StandardError);
+  readyProcessWarningOutput();
+}
+
 void Executor::readyReadStandardOutput() {
-  //qDebug() << "************ readyReadStandardOutput" << _request.id() << _process;
+  //qDebug() << "************ readyReadStandardOutput" << _request.task().fqtn() << _request.id() << _process;
   if (!_process)
     return;
   _process->setReadChannel(QProcess::StandardOutput);
-  while (!_process->read(1024).isEmpty());
+  if (_request.task().mean() == "ssh"
+      && _request.params().value("ssh.disablepty") != "true")
+    readyProcessWarningOutput(); // with pty, stderr and stdout are merged
+  else
+    while (!_process->read(1024).isEmpty());
   // LATER make it possible to log stdout too (as debug, depending on task cfg)
 }
 
@@ -264,6 +282,7 @@ void Executor::httpMean(TaskRequest request) {
     networkRequest.setRawHeader(name.toAscii(), value.toUtf8());
   }
   _request = request;
+  // LATER read request output, at less to avoid server being blocked and request never finish
   if (url.isValid()) {
     request.setAbortable();
     emit taskStarted(request);

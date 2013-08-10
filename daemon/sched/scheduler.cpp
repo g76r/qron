@@ -265,7 +265,7 @@ bool Scheduler::reloadConfiguration(PfNode root) {
     Log::debug() << "adding " << executorsToAdd << " executors to reach "
                     "maxtotaltaskinstances of " << maxtotaltaskinstances;
     for (int i = 0; i < executorsToAdd; ++i) {
-      Executor *e = new Executor;
+      Executor *e = new Executor(_alerter);
       connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
               this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
       connect(e, SIGNAL(taskStarted(TaskRequest)),
@@ -884,7 +884,7 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     executor = _availableExecutors.takeFirst();
     if (!executor) {
       // this should only happen with force == true
-      executor = new Executor;
+      executor = new Executor(_alerter);
       executor->setTemporary();
       connect(executor, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
               this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));

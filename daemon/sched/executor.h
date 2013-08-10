@@ -19,6 +19,7 @@
 #include "config/host.h"
 #include <QWeakPointer>
 #include <QProcess>
+#include "alert/alerter.h"
 
 class QThread;
 class QNetworkAccessManager;
@@ -27,7 +28,7 @@ class QNetworkReply;
 class Executor : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Executor)
-  bool _isTemporary;
+  bool _isTemporary, _stderrWasUsed;
   QThread *_thread;
   QProcess *_process;
   QByteArray _errBuf;
@@ -35,9 +36,10 @@ class Executor : public QObject {
   QNetworkAccessManager *_nam;
   QProcessEnvironment _baseenv;
   QNetworkReply *_reply;
+  Alerter *_alerter;
 
 public:
-  explicit Executor();
+  explicit Executor(Alerter *alerter);
   void setTemporary(bool temporary = true) { _isTemporary = temporary; }
   bool isTemporary() const { return _isTemporary; }
   /** Execute a request now. This method is thread-safe. */
@@ -57,6 +59,7 @@ signals:
 private slots:
   void processError(QProcess::ProcessError error);
   void processFinished(int exitCode, QProcess::ExitStatus exitStatus);
+  void readyProcessWarningOutput();
   void readyReadStandardError();
   void readyReadStandardOutput();
   void replyFinished(QNetworkReply *reply);
