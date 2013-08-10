@@ -24,22 +24,24 @@
 class LastOccuredTextEventsModel : public QAbstractListModel {
   Q_OBJECT
   Q_DISABLE_COPY(LastOccuredTextEventsModel)
+
+protected:
   class OccuredEvent {
   public:
     QString _event;
     int _type;
     QDateTime _datetime;
+    OccuredEvent() : _type(0) { }
     OccuredEvent(QString event, int type) : _event(event), _type(type),
       _datetime(QDateTime::currentDateTime()) { }
     OccuredEvent(const OccuredEvent &o) : _event(o._event), _type(o._type),
       _datetime(o._datetime) { }
   };
+
   QList<OccuredEvent> _occuredEvents;
   int _maxrows;
   QString _eventName;
   QHash<int,QString> _prefixes;
-
-protected:
   int _prefixRole;
 
 public:
