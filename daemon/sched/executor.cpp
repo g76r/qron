@@ -184,6 +184,10 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   readyReadStandardError();
   readyReadStandardOutput();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
+  success = _request.task().params()
+      .valueAsBool("return.code.default.success", success);
+  success = _request.task().params()
+      .valueAsBool("return.code."+QString::number(exitCode)+".success",success);
   _request.setEndDatetime();
   Log::log(success ? Log::Info : Log::Warning, _request.task().fqtn(),
            _request.id())
@@ -338,8 +342,15 @@ void Executor::replyFinished(QNetworkReply *reply) {
   QString reason = reply
       ->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
   QNetworkReply::NetworkError error = reply->error();
-  bool success = (status < 300 && status >= 100
-                  && error == QNetworkReply::NoError);
+  bool success;
+  if (error == QNetworkReply::NoError) {
+    success =  status >= 200 && status <= 299;
+    success = _request.task().params()
+        .valueAsBool("return.code.default.success", success);
+    success = _request.task().params()
+        .valueAsBool("return.code."+QString::number(status)+".success",success);
+  } else
+    success = false;
   _request.setEndDatetime();
   Log::log(success ? Log::Info : Log::Warning, fqtn, _request.id())
       << "task '" << fqtn << "' finished "
