@@ -20,6 +20,7 @@
 #include <QWeakPointer>
 #include <QProcess>
 #include "alert/alerter.h"
+#include <QNetworkReply>
 
 class QThread;
 class QNetworkAccessManager;
@@ -62,7 +63,8 @@ private slots:
   void readyProcessWarningOutput();
   void readyReadStandardError();
   void readyReadStandardOutput();
-  void replyFinished(QNetworkReply *reply);
+  void replyError(QNetworkReply::NetworkError error);
+  void replyFinished();
 
 private:
   Q_INVOKABLE void doExecute(TaskRequest request);
@@ -74,6 +76,7 @@ private:
   inline void prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
                          QHash<QString, QString> *setenv = 0);
   Q_INVOKABLE void doAbort();
+  void replyHasFinished(QNetworkReply *reply, QNetworkReply::NetworkError error);
 };
 
 #endif // EXECUTOR_H

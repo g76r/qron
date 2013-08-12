@@ -29,8 +29,6 @@ Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   _thread->setObjectName(QString("Executor-%1")
                          .arg((long)_thread, sizeof(long)*2, 16,
                               QLatin1Char('0')));
-  connect(_nam, SIGNAL(finished(QNetworkReply*)),
-          this, SLOT(replyFinished(QNetworkReply*)));
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
@@ -299,19 +297,13 @@ void Executor::httpMean(TaskRequest request) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact PUT URL to be called: "
           << url.toString(QUrl::RemovePassword);
-      QBuffer *buffer = new QBuffer;
-      buffer->open(QIODevice::ReadOnly);
-      _reply = _nam->put(networkRequest, buffer);
-      buffer->setParent(_reply);
+      _reply = _nam->put(networkRequest, QByteArray());
     } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
       Log::info(_request.task().fqtn(), _request.id())
           << "exact POST URL to be called: "
           << url.toString(QUrl::RemovePassword);
-      QBuffer *buffer = new QBuffer;
-      buffer->open(QIODevice::ReadOnly);
       networkRequest.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-      _reply = _nam->post(networkRequest, buffer);
-      buffer->setParent(_reply);
+      _reply = _nam->post(networkRequest, QByteArray());
     } else {
       Log::error(_request.task().fqtn(), _request.id())
           << "unsupported HTTP method: " << method;
@@ -320,6 +312,13 @@ void Executor::httpMean(TaskRequest request) {
       _request.setEndDatetime();
       emit taskFinished(_request, this);
       _request = TaskRequest();
+    }
+    if (_reply) {
+      connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)),
+              this, SLOT(replyError(QNetworkReply::NetworkError)));
+      connect(_reply, SIGNAL(finished()), this, SLOT(replyFinished()));
+      if (_reply->isFinished()) // race condition seems very unlikely, but...
+        replyHasFinished(_reply, _reply->error());
     }
   } else {
     Log::error(_request.task().fqtn(), _request.id())
@@ -332,16 +331,37 @@ void Executor::httpMean(TaskRequest request) {
   }
 }
 
-void Executor::replyFinished(QNetworkReply *reply) {
+void Executor::replyError(QNetworkReply::NetworkError error) {
+  replyHasFinished(qobject_cast<QNetworkReply*>(sender()), error);
+}
+
+void Executor::replyFinished() {
+  replyHasFinished(qobject_cast<QNetworkReply*>(sender()),
+                  QNetworkReply::NoError);
+}
+
+// executed by the first emitted signal among QNetworkReply::error() and
+// QNetworkReply::finished(), therefore it can be called twice when an error
+// occurs (in fact most of the time where an error occurs, but in cases where
+// error() is not followed by finished() and I am not sure there are such cases)
+void Executor::replyHasFinished(QNetworkReply *reply,
+                               QNetworkReply::NetworkError error) {
   QString fqtn(_request.task().fqtn());
-  if (reply != _reply || !reply)
-    Log::warning(fqtn, _request.id())
-        << "Executor::replyFinished receive strange pointer";
+  if (!reply) {
+    Log::debug(fqtn, _request.id())
+        << "Executor::replyFinished receive null pointer (this is normal on "
+           "most network errors)";
+    return;
+  }
+  if (reply != _reply) {
+    Log::error(fqtn, _request.id())
+        << "Executor::replyFinished receive unrelated pointer";
+    return;
+  }
   int status = reply
       ->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   QString reason = reply
       ->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-  QNetworkReply::NetworkError error = reply->error();
   bool success;
   if (error == QNetworkReply::NoError) {
     success =  status >= 200 && status <= 299;
