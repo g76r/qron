@@ -21,6 +21,7 @@
 #include <QProcess>
 #include "alert/alerter.h"
 #include <QNetworkReply>
+#include <QTimer>
 
 class QThread;
 class QNetworkAccessManager;
@@ -38,6 +39,7 @@ class Executor : public QObject {
   QProcessEnvironment _baseenv;
   QNetworkReply *_reply;
   Alerter *_alerter;
+  QTimer *_abortTimeout;
 
 public:
   explicit Executor(Alerter *alerter);
@@ -65,6 +67,7 @@ private slots:
   void readyReadStandardOutput();
   void replyError(QNetworkReply::NetworkError error);
   void replyFinished();
+  void doAbort();
 
 private:
   Q_INVOKABLE void doExecute(TaskRequest request);
@@ -75,8 +78,9 @@ private:
                    QProcessEnvironment sysenv);
   inline void prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
                          QHash<QString, QString> *setenv = 0);
-  Q_INVOKABLE void doAbort();
-  void replyHasFinished(QNetworkReply *reply, QNetworkReply::NetworkError error);
+  void replyHasFinished(QNetworkReply *reply,
+                        QNetworkReply::NetworkError error);
+  void taskFinishing(bool success, int returnCode);
 };
 
 #endif // EXECUTOR_H

@@ -25,7 +25,7 @@
 Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   _stderrWasUsed(false), _thread(new QThread),
   _process(0), _nam(new QNetworkAccessManager(this)), _reply(0),
-  _alerter(alerter) {
+  _alerter(alerter), _abortTimeout(new QTimer(this)) {
   _thread->setObjectName(QString("Executor-%1")
                          .arg((long)_thread, sizeof(long)*2, 16,
                               QLatin1Char('0')));
@@ -34,6 +34,8 @@ Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   _thread->start();
   _baseenv = QProcessEnvironment::systemEnvironment();
   moveToThread(_thread);
+  _abortTimeout->setSingleShot(true);
+  connect(_abortTimeout, SIGNAL(timeout()), this, SLOT(doAbort()));
   //qDebug() << "creating new task executor" << this;
 }
 
@@ -46,7 +48,11 @@ void Executor::doExecute(TaskRequest request) {
   Log::debug(request.task().fqtn(), request.id())
       << "starting task '" << request.task().fqtn() << "' through mean '"
       << mean << "' after " << request.queuedMillis() << " ms in queue";
+  _request = request;
   _stderrWasUsed = false;
+  long long maxDurationBeforeAbort = request.task().maxDurationBeforeAbort();
+  if (maxDurationBeforeAbort <= LONG_MAX)
+    _abortTimeout->start(maxDurationBeforeAbort);
   if (mean == "local")
     localMean(request);
   else if (mean == "ssh")
@@ -54,18 +60,12 @@ void Executor::doExecute(TaskRequest request) {
   else if (mean == "http")
     httpMean(request);
   else if (mean == "donothing") {
-    request.setSuccess(true);
-    request.setReturnCode(0);
-    request.setEndDatetime();
     emit taskStarted(request);
-    emit taskFinished(request, this);
+    taskFinishing(true, 0);
   } else {
     Log::error(request.task().fqtn(), request.id())
         << "cannot execute task with unknown mean '" << mean << "'";
-    request.setSuccess(false);
-    request.setReturnCode(-1);
-    request.setEndDatetime();
-    emit taskFinished(request, this);
+    taskFinishing(false, -1);
   }
 }
 
@@ -136,13 +136,9 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline,
     Log::warning(request.task().fqtn(), request.id())
         << "cannot execute task with empty command '"
         << request.task().fqtn() << "'";
-    request.setSuccess(false);
-    request.setReturnCode(-1);
-    request.setEndDatetime();
-    emit taskFinished(request, this);
+    taskFinishing(false, -1);
     return;
   }
-  _request = request;
   _errBuf.clear();
   _process = new QProcess(this);
   _process->setProcessChannelMode(QProcess::SeparateChannels);
@@ -193,15 +189,12 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
       << (success ? "successfully" : "in failure") << " with return code "
       << exitCode << " on host '" << _request.target().hostname() << "' in "
       << _request.runningMillis() << " ms";
-  _request.setSuccess(success);
-  _request.setReturnCode(exitCode);
   if (!_stderrWasUsed  && _alerter)
     _alerter->cancelAlert("task.stderr."+_request.task().fqtn());
-  emit taskFinished(_request, this);
   _process->deleteLater(); // TODO actually delete should only be done when QProcess::finished() is emited, but we get here too when QProcess::error() is emited
   _process = 0;
   _errBuf.clear();
-  _request = TaskRequest();
+  taskFinishing(success, exitCode);
 }
 
 void Executor::readyProcessWarningOutput() {
@@ -283,7 +276,6 @@ void Executor::httpMean(TaskRequest request) {
     //Log::fatal(request.task().fqtn(), request.id()) << "setheader: " << name << "=" << value << ".";
     networkRequest.setRawHeader(name.toAscii(), value.toUtf8());
   }
-  _request = request;
   // LATER read request output, at less to avoid server being blocked and request never finish
   if (url.isValid()) {
     request.setAbortable();
@@ -307,11 +299,7 @@ void Executor::httpMean(TaskRequest request) {
     } else {
       Log::error(_request.task().fqtn(), _request.id())
           << "unsupported HTTP method: " << method;
-      _request.setSuccess(false);
-      _request.setReturnCode(-1);
-      _request.setEndDatetime();
-      emit taskFinished(_request, this);
-      _request = TaskRequest();
+      taskFinishing(false, -1);
     }
     if (_reply) {
       connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)),
@@ -323,11 +311,7 @@ void Executor::httpMean(TaskRequest request) {
   } else {
     Log::error(_request.task().fqtn(), _request.id())
         << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
-    _request.setSuccess(false);
-    _request.setReturnCode(-1);
-    _request.setEndDatetime();
-    emit taskFinished(_request, this);
-    _request = TaskRequest();
+    taskFinishing(false, -1);
   }
 }
 
@@ -380,12 +364,9 @@ void Executor::replyHasFinished(QNetworkReply *reply,
       << " ms, with network error '" << networkErrorAsString(error)
       << "' (code " << error << ")";
   // LATER translate network error codes into human readable strings
-  _request.setSuccess(success);
-  _request.setReturnCode(status);
-  emit taskFinished(_request, this);
-  _request = TaskRequest();
   reply->deleteLater();
   _reply = 0;
+  taskFinishing(success, status);
 }
 
 void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
@@ -433,11 +414,24 @@ void Executor::doAbort() {
       Log::warning(_request.task().fqtn(), _request.id())
           << "cannot abort task because is marked as not abortable";
   } else if (_process) {
+    Log::info(_request.task().fqtn(), _request.id())
+        << "process task abort requested";
     _process->kill();
   } else if (_reply) {
+    Log::info(_request.task().fqtn(), _request.id())
+        << "http task abort requested";
     _reply->abort();
   } else {
     Log::warning(_request.task().fqtn(), _request.id())
         << "cannot abort task because its execution mean is not abortable";
   }
+}
+
+void Executor::taskFinishing(bool success, int returnCode) {
+  _abortTimeout->stop();
+  _request.setSuccess(success);
+  _request.setReturnCode(returnCode);
+  _request.setEndDatetime();
+  emit taskFinished(_request, this);
+  _request = TaskRequest();
 }

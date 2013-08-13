@@ -312,7 +312,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksAlertsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
   cols.clear();
-  cols << 11 << 6 << 23 << 26 << 24 << 12 << 16 << 18;
+  cols << 11 << 6 << 23 << 26 << 24 << 27 << 12 << 16 << 18;
   _htmlTasksAlertsView->setColumnIndexes(cols);
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvHostsListView->setModel(_hostsListModel);
@@ -736,7 +736,11 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Minimum expected duration (seconds)</th><td>"
                         +TasksModel::taskMinExpectedDuration(task)+"</td></tr>"
                         "<tr><th>Maximum expected duration (seconds)</th><td>"
-                        +TasksModel::taskMaxExpectedDuration(task)+"</td></tr>");
+                        +TasksModel::taskMaxExpectedDuration(task)+"</td></tr>"
+                        "<tr><th>Maximum duration before abort "
+                        "(seconds)</th><td>"
+                        +TasksModel::taskMaxDurationBeforeAbort(task)
+                        +"</td></tr>");
         params.setValue("status",
                         "<tr><th>Enabled</th><td>"
                         +QString(task.enabled()

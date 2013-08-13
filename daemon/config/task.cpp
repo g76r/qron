@@ -37,7 +37,7 @@ public:
   QList<QRegExp> _stderrFilters;
   QList<Event> _onstart, _onsuccess, _onfailure;
   QWeakPointer<Scheduler> _scheduler;
-  long long _maxExpectedDuration, _minExpectedDuration;
+  long long _maxExpectedDuration, _minExpectedDuration, _maxDurationBeforeAbort;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormField;
   QStringList _otherTriggers;
@@ -54,6 +54,7 @@ public:
   mutable QString _fqtn;
 
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
+    _maxDurationBeforeAbort(LLONG_MAX),
     _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true), _lastSuccessful(true), _lastReturnCode(-1),
@@ -89,6 +90,8 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
   td->_maxExpectedDuration = f < 0 ? LLONG_MAX : (long long)(f*1000);
   f = node.doubleAttribute("minexpectedduration", -1);
   td->_minExpectedDuration = f < 0 ? 0 : (long long)(f*1000);
+  f = node.doubleAttribute("maxdurationbeforeabort", -1);
+  td->_maxDurationBeforeAbort = f < 0 ? LLONG_MAX : (long long)(f*1000);
   ConfigUtils::loadParamSet(node, td->_params);
   ConfigUtils::loadSetenv(node, td->_setenv);
   ConfigUtils::loadUnsetenv(node, td->_unsetenv);
@@ -417,6 +420,10 @@ long long Task::maxExpectedDuration() const {
 }
 long long Task::minExpectedDuration() const {
   return d ? d->_minExpectedDuration : 0;
+}
+
+long long Task::maxDurationBeforeAbort() const {
+  return d ? d->_maxDurationBeforeAbort : LLONG_MAX;
 }
 
 ParamSet Task::setenv() const {

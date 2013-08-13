@@ -84,10 +84,12 @@ public:
   void setLastReturnCode(int code) const;
   int lastTotalMillis() const;
   void setLastTotalMillis(int lastTotalMillis) const;
-  /** in millis */
+  /** in millis, LLONG_MAX if not set */
   long long maxExpectedDuration() const;
-  /** in millis */
+  /** in millis, 0 if not set */
   long long minExpectedDuration() const;
+  /** in millis, LLONG_MAX if not set */
+  long long maxDurationBeforeAbort() const;
   ParamSet setenv() const;
   QSet<QString> unsetenv() const;
   DiscardAliasesOnStart discardAliasesOnStart() const;

@@ -18,7 +18,7 @@
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 27
+#define COLUMNS 28
 #define SOON_EXECUTION_MILLIS 300000
 // 300,000 ms = 5'
 #define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
@@ -102,6 +102,8 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       }
       case 26:
         return taskLastExecDuration(t);
+      case 27:
+        return taskMaxDurationBeforeAbort(t);
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -274,6 +276,11 @@ QString TasksModel::taskMaxExpectedDuration(Task task) {
   return (l < LLONG_MAX) ? QString::number(l*.001) : QString();
 }
 
+QString TasksModel::taskMaxDurationBeforeAbort(Task task) {
+  long long l = task.maxDurationBeforeAbort();
+  return (l < LLONG_MAX) ? QString::number(l*.001) : QString();
+}
+
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
                                 int role) const {
   if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
@@ -332,6 +339,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Request-time overridable params";
     case 26:
       return "Last execution duration";
+    case 27:
+      return "Max duration before abort";
     }
   }
   return QVariant();

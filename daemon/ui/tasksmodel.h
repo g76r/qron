@@ -51,6 +51,7 @@ public slots:
   static QString taskUnsetenv(Task task);
   static QString taskMinExpectedDuration(Task task);
   static QString taskMaxExpectedDuration(Task task);
+  static QString taskMaxDurationBeforeAbort(Task task);
 
 private slots:
   void forceTimeRelatedDataRefresh();
