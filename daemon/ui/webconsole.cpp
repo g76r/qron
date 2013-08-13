@@ -718,6 +718,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       Task task(_scheduler->task(fqtn));
       if (!task.isNull()) {
         WebConsoleParamsProvider params(this, req, res, ctxt);
+        int instancesCount = task.instancesCount();
         params.setValue("description",
                         "<tr><th>Fully qualified task name (fqtn)</th><td>"+fqtn
                         +"</td></tr>"
@@ -749,7 +750,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +task.nextScheduledExecution()
                         .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"
                         "<tr><th>Currently running instances</th><td>"
-                        +QString::number(task.instancesCount())+" / "
+                        +(instancesCount ? "<i class=\"icon-play\"></i> " : "")
+                        +QString::number(instancesCount)+" / "
                         +QString::number(task.maxInstances())+"</td></tr>");
         params.setValue("params",
                         "<tr><th>Execution mean</th><td>"+task.mean()
