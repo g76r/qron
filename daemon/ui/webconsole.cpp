@@ -954,23 +954,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       res.setStatus(404);
       res.output()->write("No log file found.");
     } else {
-      QFile file(path);
-      if (file.open(QIODevice::ReadOnly)) {
-        const QString filter = req.param("filter");
-        res.setContentType("text/plain;charset=UTF-8");
-        if (filter.isEmpty())
-          IOUtils::copy(res.output(), &file, 100*1024*1024);
-        else
-          IOUtils::grepString(res.output(), &file, 100*1024*1024, filter);
-      } else {
-        Log::warning() << "web console cannot open log file " << path
-                       << " : error #" << file.error() << " : "
-                       << file.errorString();
-        int status = file.error() == QFile::PermissionsError ? 403 : 404;
-        res.setStatus(status);
-        res.output()->write(status == 403 ? "Permission denied."
-                                          : "Document not found.");
-      }
+      res.setContentType("text/plain;charset=UTF-8");
+      QString filter = req.param("filter"), regexp = req.param("regexp");
+      copyFilteredFile(path, res.output(), regexp.isEmpty() ? filter : regexp,
+                       !regexp.isEmpty());
     }
     return true;
   }
@@ -981,20 +968,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       res.output()->write("No log file found.");
     } else {
       res.setContentType("text/plain;charset=UTF-8");
-      const QString filter = req.param("filter");
-      foreach (const QString path, paths) {
-        QFile file(path);
-        if (file.open(QIODevice::ReadOnly)) {
-          if (filter.isEmpty())
-            IOUtils::copy(res.output(), &file, 100*1024*1024);
-          else
-            IOUtils::grepString(res.output(), &file, 100*1024*1024, filter);
-        } else {
-          Log::warning() << "web console cannot open log file " << path
-                         << " : error #" << file.error() << " : "
-                         << file.errorString();
-        }
-      }
+      QString filter = req.param("filter"), regexp = req.param("regexp");
+      copyFilteredFile(paths, res.output(), regexp.isEmpty() ? filter : regexp,
+                       !regexp.isEmpty());
     }
     return true;
   }
@@ -1257,4 +1233,21 @@ void WebConsole::globalParamsChanged(ParamSet globalParams) {
   _tasksModel->setCustomActions(customactions_taskslist);
   _unfinishedTaskRequestModel->setCustomActions(customactions_requestslist);
   _taskRequestsHistoryModel->setCustomActions(customactions_requestslist);
+}
+
+void WebConsole::copyFilteredFile(QStringList paths, QIODevice *output,
+                                  QString pattern, bool useRegexp) {
+  foreach (const QString path, paths) {
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly)) {
+      if (pattern.isEmpty())
+        IOUtils::copy(output, &file, 100*1024*1024);
+      else
+        IOUtils::grepString(output, &file, 100*1024*1024, pattern, useRegexp);
+    } else {
+      Log::warning() << "web console cannot open log file " << path
+                     << " : error #" << file.error() << " : "
+                     << file.errorString();
+    }
+  }
 }

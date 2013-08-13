@@ -110,6 +110,15 @@ private slots:
   void alertEmited(QString alert);
   void alertCancellationEmited(QString alert);
   void globalParamsChanged(ParamSet globalParams);
+
+private:
+  static void copyFilteredFile(QStringList paths, QIODevice *output,
+                               QString pattern, bool useRegexp);
+  static void copyFilteredFile(QString path, QIODevice *output,
+                               QString pattern, bool useRegexp) {
+    QStringList paths;
+    path.append(path);
+    copyFilteredFile(paths, output, pattern, useRegexp); }
 };
 
 #endif // WEBCONSOLE_H
