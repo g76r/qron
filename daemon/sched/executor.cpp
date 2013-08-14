@@ -191,7 +191,12 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
       << _request.runningMillis() << " ms";
   if (!_stderrWasUsed  && _alerter)
     _alerter->cancelAlert("task.stderr."+_request.task().fqtn());
-  _process->deleteLater(); // TODO actually delete should only be done when QProcess::finished() is emited, but we get here too when QProcess::error() is emited
+  /* Qt doc is not explicit if delete should only be done when
+     * QProcess::finished() is emited, but we get here too when
+     * QProcess::error() is emited.
+     * In the other hand it is not sure that finished() is always emited
+     * after an error(), may be in some case error() can be emited alone. */
+  _process->deleteLater();
   _process = 0;
   _errBuf.clear();
   taskFinishing(success, exitCode);
@@ -412,7 +417,7 @@ void Executor::doAbort() {
              "ssh.disablepty is set to true";
     else
       Log::warning(_request.task().fqtn(), _request.id())
-          << "cannot abort task because is marked as not abortable";
+          << "cannot abort task because it is marked as not abortable";
   } else if (_process) {
     Log::info(_request.task().fqtn(), _request.id())
         << "process task abort requested";
