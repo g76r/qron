@@ -397,7 +397,10 @@ void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
         << request.params().keys(true).size() << " ["
         << request.params().evaluate("%!yyyy %!fqtn %{!fqtn}", &_request)
         << "]";*/
-    key.replace(QRegExp("[^a-zA-Z_0-9]+"), "_");
+    static QRegExp notIdentifier("[^a-zA-Z_0-9]+");
+    key.replace(QRegExp(notIdentifier), "_");
+    if (key.size() > 0 && strchr("0123456789", key[0].toAscii()))
+      key.insert(0, '_');
     const QString value = request.params().evaluate(expr, &request);
     if (setenv)
       setenv->insert(key, value);
