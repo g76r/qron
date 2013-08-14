@@ -376,8 +376,11 @@ void Executor::replyHasFinished(QNetworkReply *reply,
 
 void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
                           QHash<QString,QString> *setenv) {
+  if (request.task().params().valueAsBool("clearsysenv"))
+    *sysenv = QProcessEnvironment();
+  else
+    *sysenv = _baseenv;
   // first clean system base env from any unset variables
-  *sysenv = _baseenv;
   foreach (const QString pattern, request.task().unsetenv()) {
     QRegExp re(pattern, Qt::CaseInsensitive, QRegExp::WildcardUnix);
     foreach (const QString key, sysenv->keys())
