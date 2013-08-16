@@ -165,7 +165,7 @@ void Executor::processError(QProcess::ProcessError error) {
     return; // LATER add log
   readyReadStandardError();
   readyReadStandardOutput();
-  Log::error(_request.task().fqtn(), _request.id())
+  Log::warning(_request.task().fqtn(), _request.id()) // TODO info if aborting
       << "task error #" << error << " : " << _process->errorString();
   _process->kill();
   processFinished(-1, QProcess::CrashExit);
@@ -336,10 +336,15 @@ void Executor::replyFinished() {
 void Executor::replyHasFinished(QNetworkReply *reply,
                                QNetworkReply::NetworkError error) {
   QString fqtn(_request.task().fqtn());
+  if (!_reply) {
+    Log::debug() << "Executor::replyFinished called as it is not responsible "
+                    "of any http request";
+    // seems normal on some network error ?
+    return;
+  }
   if (!reply) {
-    Log::debug(fqtn, _request.id())
-        << "Executor::replyFinished receive null pointer (this is normal on "
-           "most network errors)";
+    Log::error(fqtn, _request.id())
+        << "Executor::replyFinished receive null pointer";
     return;
   }
   if (reply != _reply) {
