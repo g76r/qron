@@ -24,6 +24,7 @@
 #include "sched/scheduler.h"
 #include "config/configutils.h"
 #include "requestformfield.h"
+#include "util/htmlutils.h"
 
 class TaskData : public QSharedData {
 public:
@@ -468,7 +469,8 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
     return "(none)";
   QString v("<ul>");
   foreach (const RequestFormField rff, list)
-    v.append("<li>").append(rff.toHumanReadableDescription()); // LATER escape HTML
+    v.append("<li>")
+        .append(HtmlUtils::htmlEncode(rff.toHumanReadableDescription()));
   v.append("</ul>");
   return v;
 }

@@ -18,6 +18,7 @@
 #include "config/taskrequest.h"
 #include "sched/qrond.h"
 #include <QCoreApplication>
+#include "util/htmlutils.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define FLAGS_SET_MAXROWS 500
@@ -498,20 +499,6 @@ public:
   }
 };
 
-static QString linkify(QString html) {
-  QRegExp linkUrls("http(s?)://\\S+");
-  int pos = 0;
-  while ((pos = linkUrls.indexIn(html, pos)) != -1) {
-    int len = linkUrls.matchedLength();
-    QString url(html.mid(pos, len));
-    url.replace("\"", "&quot;");
-    QString linkified("<a href=\""+url+"\">"+url+"</a>");
-    html.replace(pos, len, linkified);
-    pos += linkified.size();
-  }
-  return html;
-}
-
 bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                                HttpRequestContext ctxt) {
   Q_UNUSED(ctxt)
@@ -724,13 +711,15 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +"</td></tr>"
                         "<tr><th>Task id and label</th><td>"+task.id()
                         +((task.label()!=task.id())
-                          ? " ("+task.label()+")</td></tr>" : "")
+                          ? " ("+HtmlUtils::htmlEncode(task.label())
+                            +")</td></tr>" : "")
                         +"<tr><th>Task group id and label</th><td>"
                         +task.taskGroup().id()
                         +((task.taskGroup().label()!=task.taskGroup().id())
-                          ? " ("+task.taskGroup().label()+")</td></tr>" : "")
+                          ? " ("+HtmlUtils::htmlEncode(task.taskGroup().label())
+                            +")</td></tr>" : "")
                         +"<tr><th>Additional information</th><td>"
-                        +linkify(task.info())+"</td></tr>"
+                        +HtmlUtils::htmlEncode(task.info())+"</td></tr>"
                         "<tr><th>Triggers (scheduling)</th><td>"
                         +task.triggersAsString()+"</td></tr>"
                         "<tr><th>Minimum expected duration (seconds)</th><td>"
@@ -747,9 +736,11 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                                  ? "true"
                                  : "<i class=\"icon-ban-circle\"></i> false")
                         +"</td></tr><tr><th>Last execution status</th><td>"
-                        +TasksModel::taskLastExecStatus(task)+"</td></tr>"
+                        +HtmlUtils::htmlEncode(
+                          TasksModel::taskLastExecStatus(task))+"</td></tr>"
                         "<tr><th>Last execution duration (seconds)</th><td>"
-                        +TasksModel::taskLastExecDuration(task)+"</td></tr>"
+                        +HtmlUtils::htmlEncode(
+                          TasksModel::taskLastExecDuration(task))+"</td></tr>"
                         "<tr><th>Next execution</th><td>"
                         +task.nextScheduledExecution()
                         .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"
@@ -762,9 +753,11 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +"</td></tr>"
                         "<tr><th>Execution target (host or cluster)</th><td>"
                         +task.target()+"</td></tr>"
-                        "<tr><th>Command</th><td>"+task.command()+"</td></tr>"
-                        "<tr><th>Configuration parameters</th><td>"+task
-                        .params().toString(false)+"</td></tr>"
+                        "<tr><th>Command</th><td>"
+                        +HtmlUtils::htmlEncode(task.command())+"</td></tr>"
+                        "<tr><th>Configuration parameters</th><td>"
+                        +HtmlUtils::htmlEncode(task.params().toString(false))
+                        +"</td></tr>"
                         "<tr><th>Request-time overridable parameters</th><td>"
                         +task.requestFormFieldsAsHtmlDescription()+"</td></tr>"
                         "<tr><th>System environment variables set (setenv)</th>"
