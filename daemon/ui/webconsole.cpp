@@ -1240,9 +1240,9 @@ void WebConsole::copyFilteredFile(QStringList paths, QIODevice *output,
     QFile file(path);
     if (file.open(QIODevice::ReadOnly)) {
       if (pattern.isEmpty())
-        IOUtils::copy(output, &file, 100*1024*1024);
+        IOUtils::copy(output, &file);
       else
-        IOUtils::grepString(output, &file, 100*1024*1024, pattern, useRegexp);
+        IOUtils::grep(output, &file, pattern, useRegexp);
     } else {
       Log::warning() << "web console cannot open log file " << path
                      << " : error #" << file.error() << " : "
