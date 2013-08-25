@@ -38,3 +38,11 @@ void ConfigUtils::loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv) {
       unsetenv.insert(name);
   }
 }
+
+QString ConfigUtils::sanitizeId(QString string, bool allowDot) {
+  static QRegExp unallowedChars("[^a-zA-Z0-9_\\-]+");
+  static QRegExp unallowedCharsWithDot("[^a-zA-Z0-9_\\-\\.]+");
+  static QString placeholder("_");
+  return string.replace(allowDot ? unallowedCharsWithDot : unallowedChars,
+                        placeholder);
+}

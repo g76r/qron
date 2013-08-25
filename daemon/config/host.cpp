@@ -17,6 +17,7 @@
 #include <QHash>
 #include "pf/pfnode.h"
 #include "log/log.h"
+#include "configutils.h"
 
 class HostData : public QSharedData {
 public:
@@ -32,9 +33,10 @@ Host::Host(const Host &other) : d(other.d) {
 
 Host::Host(PfNode node) {
   HostData *hd = new HostData;
-  hd->_id = node.attribute("id"); // LATER check uniqueness
+  hd->_id = ConfigUtils::sanitizeId(node.attribute("id")); // LATER check uniqueness
   hd->_label = node.attribute("label", hd->_id);
-  hd->_hostname = node.attribute("hostname", hd->_id);
+  hd->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname", hd->_id),
+                                          true);
   QListIterator<QPair<QString,qlonglong> > it(
         node.stringLongPairChildrenByName("resource"));
   while (it.hasNext()) {
@@ -43,7 +45,7 @@ Host::Host(PfNode node) {
       Log::warning() << "ignoring resource of kind " << p.first
                      << "with incorrect quantity in host" << node.toString();
     else
-      hd->_resources.insert(p.first, p.second);
+      hd->_resources.insert(ConfigUtils::sanitizeId(p.first), p.second);
   }
   d = hd;
 }

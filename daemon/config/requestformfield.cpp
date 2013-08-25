@@ -18,6 +18,7 @@
 #include "pf/pfnode.h"
 #include "log/log.h"
 #include "taskrequest.h"
+#include "configutils.h"
 
 class RequestFormFieldData : public QSharedData {
 public:
@@ -43,7 +44,7 @@ RequestFormField::RequestFormField(PfNode node) {
                  << node.toString();
     return;
   }
-  d->_param = sl.first();
+  d->_param = ConfigUtils::sanitizeId(sl.first());
   d->_label = node.attribute("label", d->_param);
   d->_placeholder = node.attribute("placeholder", d->_label);
   d->_suggestion = node.attribute("suggestion");

@@ -42,7 +42,7 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                      Scheduler *scheduler) {
   TaskGroupData *tgd = new TaskGroupData;
   tgd->_scheduler = scheduler;
-  tgd->_id = node.attribute("id"); // LATER check uniqueness
+  tgd->_id = ConfigUtils::sanitizeId(node.attribute("id"), true); // LATER check uniqueness
   tgd->_label = node.attribute("label", tgd->_id);
   tgd->_params.setParent(parentParamSet);
   ConfigUtils::loadParamSet(node, tgd->_params);

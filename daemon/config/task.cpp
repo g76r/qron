@@ -71,11 +71,11 @@ Task::Task(const Task &other) : d(other.d) {
 Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
-  td->_id = node.attribute("id"); // LATER check uniqueness
+  td->_id = ConfigUtils::sanitizeId(node.attribute("id")); // LATER check uniqueness
   td->_label = node.attribute("label", td->_id);
-  td->_mean = node.attribute("mean"); // LATER check validity
+  td->_mean = ConfigUtils::sanitizeId(node.attribute("mean")); // LATER check validity
   td->_command = node.attribute("command");
-  td->_target = node.attribute("target");
+  td->_target = ConfigUtils::sanitizeId(node.attribute("target"));
   if (td->_target.isEmpty()
       && (td->_mean == "local" || td->_mean == "donothing"))
     td->_target = "localhost";
@@ -153,7 +153,7 @@ Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
       Log::error() << "ignoring resource of kind " << p.first
                    << "with incorrect quantity in task " << node.toString();
     else
-      td->_resources.insert(p.first, p.second);
+      td->_resources.insert(ConfigUtils::sanitizeId(p.first), p.second);
   }
   QString doas = node.attribute("discardaliasesonstart", "all");
   td->_discardAliasesOnStart = discardAliasesOnStartFromString(doas);
