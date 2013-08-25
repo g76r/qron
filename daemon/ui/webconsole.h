@@ -37,6 +37,7 @@
 #include "alertchannelsmodel.h"
 #include "auth/inmemoryrulesauthorizer.h"
 #include "auth/usersdatabase.h"
+#include "httpd/graphvizimagehttphandler.h"
 
 class QThread;
 
@@ -81,12 +82,17 @@ class WebConsole : public HttpHandler {
   *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView;
+  GraphvizImageHttpHandler *_tasksDeploymentDiagram;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
   QString _title, _navtitle, _cssoverload, _customaction_taskdetail;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
   bool _ownUsersDatabase, _accessControlEnabled;
+  QHash<QString,TaskGroup> _tasksGroups;
+  QHash<QString,Task> _tasks;
+  QHash<QString,Cluster> _clusters;
+  QHash<QString,Host> _hosts;
 
 public:
   WebConsole();
@@ -110,6 +116,10 @@ private slots:
   void alertEmited(QString alert);
   void alertCancellationEmited(QString alert);
   void globalParamsChanged(ParamSet globalParams);
+  void tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
+                               QHash<QString,Task> tasks);
+  void targetsConfigurationReset(QHash<QString,Cluster> clusters,
+                                 QHash<QString,Host> hosts);
 
 private:
   static void copyFilteredFile(QStringList paths, QIODevice *output,
@@ -119,6 +129,7 @@ private:
     QStringList paths;
     path.append(path);
     copyFilteredFile(paths, output, pattern, useRegexp); }
+  void recomputeDiagrams();
 };
 
 #endif // WEBCONSOLE_H

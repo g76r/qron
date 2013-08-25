@@ -107,6 +107,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                              this, _lastFlagsChangesModel->maxrows())),
   _csvFlagsSetView(new CsvTableView(this, FLAGS_SET_MAXROWS)),
   _csvTaskGroupsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
+  _tasksDeploymentDiagram(new GraphvizImageHttpHandler(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
   _memoryInfoLogger(new MemoryLogger(0, Log::Info,
                                      _htmlInfoLogView->cachedRows())),
@@ -1044,6 +1045,14 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlTaskGroupsEventsView->text().toUtf8().constData());
     return true;
   }
+  if (path == "/rest/png/tasks/deploy/v1") {
+    return _tasksDeploymentDiagram->handleRequest(req, res, ctxt);
+  }
+  if (path == "/rest/dot/tasks/deploy/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_tasksDeploymentDiagram->source(0).toUtf8());
+    return true;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
   return true;
@@ -1117,6 +1126,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _alertChannelsModel, SLOT(channelsChanged(QStringList)));
     disconnect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
                this, SLOT(enableAccessControl(bool)));
+    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
+               this, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
+    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+               this, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -1186,6 +1199,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _alertChannelsModel, SLOT(channelsChanged(QStringList)));
     connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
             this, SLOT(enableAccessControl(bool)));
+    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
+            this, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
+    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+            this, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
     Log::addLogger(_memoryWarningLogger, false);
     Log::addLogger(_memoryInfoLogger, false);
   } else {
@@ -1249,4 +1266,99 @@ void WebConsole::copyFilteredFile(QStringList paths, QIODevice *output,
                      << file.errorString();
     }
   }
+}
+
+void WebConsole::tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
+                                         QHash<QString,Task> tasks) {
+  _tasksGroups = tasksGroups;
+  _tasks = tasks;
+  recomputeDiagrams();
+}
+
+void WebConsole::targetsConfigurationReset(QHash<QString,Cluster> clusters,
+                                           QHash<QString,Host> hosts) {
+  _clusters = clusters;
+  _hosts = hosts;
+  recomputeDiagrams();
+}
+
+#define CLUSTER_NODE "shape=box,peripheries=2,style=filled,fillcolor=wheat"
+#define HOST_NODE "shape=box,style=filled,fillcolor=wheat"
+#define TASK_NODE "shape=ellipse,style=filled,fillcolor=powderblue"
+#define TASKGROUP_NODE "shape=ellipse,style=dashed"
+#define CLUSTER_HOST_EDGE "dir=forward,arrowhead=vee"
+#define TASK_TARGET_EDGE "dir=forward,arrowhead=vee"
+#define TASKGROUP_TASK_EDGE "style=dashed"
+#define TASKGROUP_EDGE "style=dashed"
+
+void WebConsole::recomputeDiagrams() {
+  // LATER avoid recomputing twice per config reload
+  QSet<QString> displayedGroups, displayedHosts;
+  // search for:
+  // * displayed groups, i.e. (i) not those containing no task and (ii) also
+  //   adding virtual parent groups (e.g. a group "foo.bar" as a virtual
+  //   parent "foo" which is not an actual group but which make the rendering
+  //   more readable
+  // * displayed targets, i.e. hosts that are targets of at less one cluster
+  //   or one task
+  foreach (const Task &task, _tasks.values()) {
+    QString s = task.taskGroup().id();
+    displayedGroups.insert(s);
+    for (int i = 0; (i = s.indexOf('.', i+1)) > 0; )
+      displayedGroups.insert(s.mid(0, i));
+    s = task.target();
+    if (!s.isEmpty())
+      displayedHosts.insert(s);
+  }
+  foreach (const Cluster &cluster, _clusters.values())
+     foreach (const Host &host, cluster.hosts())
+       displayedHosts.insert(host.id());
+  /***************************************************************************/
+  // tasks deployment diagram
+  QString gv;
+  gv.append("graph g {\n"
+            "graph[rankdir=LR,bgcolor=\"transparent\"]\n"
+            "subgraph{graph[rank=sink]\n");
+  foreach (const Host &host, _hosts.values())
+    if (displayedHosts.contains(host.id()))
+      gv.append("\"").append(host.id()).append("\"").append("[label=\"")
+          .append(host.id()).append(" (")
+          .append(host.hostname()).append(")\"," HOST_NODE "]\n");
+  gv.append("}\n");
+  foreach (const Cluster &cluster, _clusters.values()) {
+    gv.append("\"").append(cluster.id()).append("\"")
+        .append("[" CLUSTER_NODE "]\n");
+    foreach (const Host &host, cluster.hosts())
+      gv.append("\"").append(cluster.id()).append("\"--\"").append(host.id())
+          .append("\"[" CLUSTER_HOST_EDGE "]\n");
+  }
+  gv.append("subgraph{graph[rank=source]\n");
+  foreach (const QString &id, displayedGroups) {
+    if (!id.contains('.')) // root groups
+      gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
+  }
+  gv.append("}\n");
+  foreach (const QString &id, displayedGroups) {
+    if (id.contains('.')) // non root groups
+      gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
+  }
+  foreach (const QString &parent, displayedGroups) {
+    QString prefix = parent + ".";
+    foreach (const QString &child, displayedGroups) {
+      if (child.startsWith(prefix))
+        gv.append("\"").append(parent).append("\" -- \"")
+            .append(child).append("\" [" TASKGROUP_EDGE "]\n");
+    }
+  }
+  foreach (const Task &task, _tasks.values()) {
+    gv.append("\"").append(task.fqtn()).append("\" [" TASK_NODE "]\n");
+    gv.append("\"").append(task.taskGroup().id()).append("\"--")
+        .append("\"").append(task.fqtn())
+        .append("\" [" TASKGROUP_TASK_EDGE "]\n");
+    gv.append("\"").append(task.fqtn()).append("\"--\"")
+        .append(task.target()).append("\" [label=\"").append(task.mean())
+        .append("\"," TASK_TARGET_EDGE "]\n");
+  }
+  gv.append("}");
+  _tasksDeploymentDiagram->setSource(gv);
 }
