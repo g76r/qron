@@ -599,6 +599,7 @@ TaskRequest Scheduler::doCancelRequest(quint64 id) {
       r2.setSuccess(false);
       r2.setEndDatetime();
       emit taskFinished(r2);
+      _queuedRequests.removeAt(i);
       return r2;
     }
   }
