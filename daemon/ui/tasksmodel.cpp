@@ -161,6 +161,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         if (!dt.isNull() && !t.lastSuccessful())
           return "<i class=\"icon-minus-sign\"></i> ";
       }
+      case 27:
+        return t.maxDurationBeforeAbort() < LLONG_MAX
+            ? "<i class=\"glyphicon-skull\"></i> " : QVariant();
       default:
         ;
       }
