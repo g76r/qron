@@ -90,7 +90,7 @@ bool Alerter::loadConfiguration(PfNode root) {
     if (node.hasChild("stop")) {
       Log::debug() << "configured alert rule stop " << pattern;
       _rules.append(AlertRule(PfNode(), pattern, 0,
-                              "stop", true, false, false));
+                              "stop", true, true, true));
     }
   }
   _cancelDelay =
