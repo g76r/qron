@@ -408,6 +408,7 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
                                 _onnotice, _onschedulerstart, _onconfigload);
   emit accessControlConfigurationChanged(accessControlEnabled);
+  emit configReloaded(); // must be last signal
   reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {

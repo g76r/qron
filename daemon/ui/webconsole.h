@@ -93,6 +93,7 @@ class WebConsole : public HttpHandler {
   QHash<QString,Task> _tasks;
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
+  QMultiHash<QString,Event> _schedulerEvents;
 
 public:
   WebConsole();
@@ -120,6 +121,11 @@ private slots:
                                QHash<QString,Task> tasks);
   void targetsConfigurationReset(QHash<QString,Cluster> clusters,
                                  QHash<QString,Host> hosts);
+  void schedulerEventsConfigurationReset(
+      QList<Event> onstart, QList<Event> onsuccess, QList<Event> onfailure,
+      QList<Event> onlog, QList<Event> onnotice, QList<Event> onschedulerstart,
+      QList<Event> onconfigload);
+  void configReloaded();
 
 private:
   static void copyFilteredFile(QStringList paths, QIODevice *output,

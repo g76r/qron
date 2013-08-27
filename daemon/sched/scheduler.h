@@ -181,6 +181,11 @@ signals:
   void hostResourceConfigurationChanged(
       QHash<QString,QHash<QString,qint64> > resources);
   void accessControlConfigurationChanged(bool enabled);
+  /** Emitted when config (re)load is complete, after all other config reload
+   * signals: tasksConfigurationReset() targetsConfigurationReset()
+   * eventsConfigurationReset() hostResourceAllocationChanged()
+   * hostResourceConfigurationChanged() accessControlConfigurationChanged() */
+  void configReloaded();
   /** There is no guarantee that taskQueued() is emited, taskStarted() or
     * taskFinished() can be emited witout previous taskQueued(). */
   void taskQueued(TaskRequest request);
