@@ -30,6 +30,9 @@ public:
   QString toString() const {
     return "http{"+_url+"}";
   }
+  QString eventType() const {
+    return "http";
+  }
 };
 
 HttpEvent::HttpEvent(const QString url, const ParamSet params)

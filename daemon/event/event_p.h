@@ -23,7 +23,10 @@ public:
   QWeakPointer<Scheduler> _scheduler;
   explicit EventData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }
   virtual ~EventData();
+  /** Human readable description of event */
   virtual QString toString() const;
+  /** Type of event for programmatic test, e.g. "postnotice", "setflag" */
+  virtual QString eventType() const;
   virtual void trigger(const ParamsProvider *context) const;
 };
 

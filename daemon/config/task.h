@@ -40,7 +40,6 @@ public:
   bool operator==(const Task &other);
   ParamSet params() const;
   bool isNull() const;
-  QSet<QString> noticeTriggers() const;
   /** Fully qualified task name (i.e. "taskGroupId.taskId") */
   QString id() const;
   QString fqtn() const;
@@ -52,11 +51,9 @@ public:
   TaskGroup taskGroup() const;
   void setFqtn(QString fqtn) const;
   void completeConfiguration(TaskGroup taskGroup);
-  QList<CronTrigger> cronTriggers() const;
   /** Resources consumed. */
   QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;
-  QString triggersAsString() const;
   QDateTime lastExecution() const;
   void setLastExecution(const QDateTime timestamp) const;
   QDateTime nextScheduledExecution() const;
@@ -76,6 +73,9 @@ public:
   const QList<Event> onstartEvents() const;
   const QList<Event> onsuccessEvents() const;
   const QList<Event> onfailureEvents() const;
+  /** Events hash with "onsuccess", "onfailure"... key, mainly for UI purpose.
+   */
+  const QMultiHash<QString, Event> allEvents() const;
   bool enabled() const;
   void setEnabled(bool enabled) const;
   bool lastSuccessful() const;
@@ -101,6 +101,12 @@ public:
   QString requestFormFieldsAsHtmlDescription() const;
   QVariant paramValue(const QString key,
                       const QVariant defaultValue = QVariant()) const;
+  /** Human readable list of all triggers as one string, for UI purpose. */
+  QString triggersAsString() const;
+  /** Cron triggers list */
+  const QList<CronTrigger> cronTriggers() const;
+  /** Notice triggers set */
+  const QSet<QString> noticeTriggers() const;
   /** Human readable list of other triggers, i.e. indirect triggers such
    * as the one implied by (onsuccess(requesttask foo)) on task bar.
    * Note that not all indirect triggers can be listed here since some cannot

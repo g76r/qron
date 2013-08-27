@@ -27,6 +27,9 @@ public:
   QString toString() const {
     return "+" + _flag;
   }
+  QString eventType() const {
+    return "setflag";
+  }
 };
 
 SetFlagEvent::SetFlagEvent(Scheduler *scheduler, const QString flag)

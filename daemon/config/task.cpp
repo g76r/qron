@@ -212,7 +212,7 @@ bool Task::isNull() const {
   return !d;
 }
 
-QSet<QString> Task::noticeTriggers() const {
+const QSet<QString> Task::noticeTriggers() const {
   return d ? d->_noticeTriggers : QSet<QString>();
 }
 
@@ -263,10 +263,6 @@ void Task::completeConfiguration(TaskGroup taskGroup) {
   QString filter = params().value("stderrfilter");
   if (!filter.isEmpty())
     d->_stderrFilters.append(QRegExp(filter));
-}
-
-QList<CronTrigger> Task::cronTriggers() const {
-  return d ? d->_cronTriggers : QList<CronTrigger>();
 }
 
 QHash<QString, qint64> Task::resources() const {
@@ -381,6 +377,18 @@ const QList<Event> Task::onfailureEvents() const {
   return d ? d->_onfailure : QList<Event>();
 }
 
+const QMultiHash<QString,Event> Task::allEvents() const {
+  // LATER avoid creating the collection at every call
+  QMultiHash<QString,Event> hash;
+  foreach (const Event &event, onstartEvents())
+    hash.insertMulti("onstart", event);
+  foreach (const Event &event, onsuccessEvents())
+    hash.insertMulti("onsuccess", event);
+  foreach (const Event &event, onfailureEvents())
+    hash.insertMulti("onfailure", event);
+  return hash;
+}
+
 bool Task::enabled() const {
   return d ? d->_enabled : false;
 }
@@ -490,6 +498,10 @@ QVariant Task::paramValue(const QString key,
     }
   }
   return defaultValue;
+}
+
+const QList<CronTrigger> Task::cronTriggers() const {
+  return d ? d->_cronTriggers : QList<CronTrigger>();
 }
 
 QStringList Task::otherTriggers() const {

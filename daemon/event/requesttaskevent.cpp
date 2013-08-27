@@ -46,6 +46,9 @@ public:
   QString toString() const {
     return "*" + _idOrFqtn;
   }
+  QString eventType() const {
+    return "requesttask";
+  }
 };
 
 RequestTaskEvent::RequestTaskEvent(Scheduler *scheduler, const QString idOrFqtn,

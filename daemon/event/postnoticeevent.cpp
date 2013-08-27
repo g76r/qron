@@ -23,6 +23,9 @@ public:
   QString toString() const {
     return "^"+_notice;
   }
+  QString eventType() const {
+    return "postnotice";
+  }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler)
       _scheduler.data()->postNotice(ParamSet().evaluate(_notice, context));

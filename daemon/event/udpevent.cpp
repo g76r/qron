@@ -64,6 +64,9 @@ public:
   QString toString() const {
     return "udp{"+_host+":"+QString::number(_port)+" "+_message+"}";
   }
+  QString eventType() const {
+    return "udp";
+  }
 };
 
 UdpEvent::UdpEvent(const QString address, const QString message)

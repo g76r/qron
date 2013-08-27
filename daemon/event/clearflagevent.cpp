@@ -27,6 +27,9 @@ public:
   QString toString() const {
     return "-" + _flag;
   }
+  QString eventType() const {
+    return "clearflag";
+  }
 };
 
 ClearFlagEvent::ClearFlagEvent(Scheduler *scheduler, const QString flag)

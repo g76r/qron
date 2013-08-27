@@ -45,6 +45,10 @@ QString EventData::toString() const {
   return "Event";
 }
 
+QString EventData::eventType() const {
+  return "unknown";
+}
+
 void EventData::trigger(const ParamsProvider *context) const {
   Q_UNUSED(context)
   Log::warning() << "EventData::trigger() called whereas it should never";
@@ -52,6 +56,10 @@ void EventData::trigger(const ParamsProvider *context) const {
 
 QString Event::toString() const {
   return d ? d->toString() : QString();
+}
+
+QString Event::eventType() const {
+  return d ? d->eventType() : QString();
 }
 
 QStringList Event::toStringList(const QList<Event> list) {

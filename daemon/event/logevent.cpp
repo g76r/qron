@@ -25,6 +25,9 @@ public:
   QString toString() const {
     return "log{"+Log::severityToString(_severity)+" "+_message+"}";
   }
+  QString eventType() const {
+    return "log";
+  }
   void trigger(const ParamsProvider *context) const {
     QString fqtn = context
         ? context->paramValue("!fqtn").toString() : QString();

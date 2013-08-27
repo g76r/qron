@@ -27,6 +27,9 @@ public:
   QString toString() const {
     return "!+"+_alert;
   }
+  QString eventType() const {
+    return "raisealert";
+  }
 };
 
 RaiseAlertEvent::RaiseAlertEvent(Scheduler *scheduler, const QString alert)

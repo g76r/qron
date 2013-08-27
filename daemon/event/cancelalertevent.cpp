@@ -28,6 +28,9 @@ public:
   QString toString() const {
     return "!-"+_alert;
   }
+  QString eventType() const {
+    return "cancelalert";
+  }
 };
 
 CancelAlertEvent::CancelAlertEvent(Scheduler *scheduler, const QString alert)

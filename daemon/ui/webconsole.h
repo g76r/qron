@@ -82,7 +82,7 @@ class WebConsole : public HttpHandler {
   *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView;
-  GraphvizImageHttpHandler *_tasksDeploymentDiagram;
+  GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
   QString _title, _navtitle, _cssoverload, _customaction_taskdetail;

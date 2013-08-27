@@ -30,7 +30,10 @@ public:
   Event &operator=(const Event &);
   ~Event();
   void trigger(const ParamsProvider *context) const;
+  /** Human readable description of event */
   QString toString() const;
+  /** Type of event for programmatic test, e.g. "postnotice", "setflag" */
+  QString eventType() const;
   static QStringList toStringList(const QList<Event> list);
 
 protected:
