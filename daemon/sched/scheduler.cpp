@@ -745,6 +745,10 @@ public:
 };
 
 void Scheduler::postNotice(const QString notice) {
+  if (notice.isNull()) {
+    Log::warning() << "cannot post a null/empty notice";
+    return;
+  }
   QMutexLocker ml(&_configMutex);
   QHash<QString,Task> tasks = _tasks;
   ml.unlock();

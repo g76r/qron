@@ -13,13 +13,14 @@
  */
 #include "postnoticeevent.h"
 #include "event_p.h"
+#include "config/configutils.h"
 
 class PostNoticeEventData : public EventData {
 public:
   QString _notice;
   PostNoticeEventData(Scheduler *scheduler = 0,
                       const QString notice = QString())
-    : EventData(scheduler), _notice(notice) { }
+    : EventData(scheduler), _notice(ConfigUtils::sanitizeId(notice, true)) { }
   QString toString() const {
     return "^"+_notice;
   }

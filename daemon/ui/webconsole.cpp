@@ -1325,20 +1325,22 @@ void WebConsole::configReloaded() {
 #define TASK_TARGET_EDGE "dir=forward,arrowhead=vee"
 #define TASKGROUP_TASK_EDGE "style=dashed"
 #define TASKGROUP_EDGE "style=dashed"
-#define NOTICE_NODE "shape=octagon,style=filled,fillcolor=forestgreen"
-#define FLAG_NODE "shape=egg,style=filled,fillcolor=gold"
+#define NOTICE_NODE "shape=note,style=filled,fillcolor=forestgreen"
+#define FLAG_NODE "shape=invtrapezium,style=\"rounded,filled\",fillcolor=gold"
 #define CRON_TRIGGER_NODE "shape=none"
 #define NO_TRIGGER_NODE "shape=none"
 #define TASK_TRIGGER_EDGE "dir=back,arrowtail=vee"
 #define TASK_NOTRIGGER_EDGE "dir=back,arrowtail=odot,style=dashed"
 #define TASK_POSTNOTICE_EDGE "dir=forward,arrowhead=vee"
 #define TASK_REQUESTTASK_EDGE TASK_POSTNOTICE_EDGE
-#define GLOBAL_EVENT_NODE "shape=pentagon"
+#define GLOBAL_EVENT_NODE "shape=none"
+//#define GLOBAL_EVENT_NODE "shape=pentagon"
 #define GLOBAL_POSTNOTICE_EDGE "dir=back,arrowtail=vee"
 #define GLOBAL_REQUESTTASK_EDGE TASK_POSTNOTICE_EDGE
 
 void WebConsole::recomputeDiagrams() {
-  QSet<QString> displayedGroups, displayedHosts, notices, fqtns;
+  QSet<QString> displayedGroups, displayedHosts, notices, fqtns,
+      displayedGlobalEventsCause;
   // search for:
   // * displayed groups, i.e. (i) not those containing no task and (ii) also
   //   adding virtual parent groups (e.g. a group "foo.bar" as a virtual
@@ -1383,12 +1385,19 @@ void WebConsole::recomputeDiagrams() {
       }
     }
   }
+  foreach (const QString &cause, _schedulerEvents.uniqueKeys()) {
+    foreach (const Event &event, _schedulerEvents.values(cause)) {
+      const QString eventType = event.eventType();
+      if (eventType == "postnotice" || eventType == "requesttask")
+        displayedGlobalEventsCause.insert(cause);
+    }
+  }
   /***************************************************************************/
   // tasks deployment diagram
   QString gv;
   gv.append("graph g {\n"
             "graph[rankdir=LR,bgcolor=\"transparent\"]\n"
-            "subgraph{graph[rank=sink]\n");
+            "subgraph{graph[rank=max]\n");
   foreach (const Host &host, _hosts.values())
     if (displayedHosts.contains(host.id()))
       gv.append("\"").append(host.id()).append("\"").append("[label=\"")
@@ -1402,7 +1411,7 @@ void WebConsole::recomputeDiagrams() {
       gv.append("\"").append(cluster.id()).append("\"--\"").append(host.id())
           .append("\"[" CLUSTER_HOST_EDGE "]\n");
   }
-  gv.append("subgraph{graph[rank=source]\n");
+  gv.append("subgraph{graph[rank=min]\n");
   foreach (const QString &id, displayedGroups) {
     if (!id.contains('.')) // root groups
       gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
@@ -1437,14 +1446,16 @@ void WebConsole::recomputeDiagrams() {
   gv.clear();
   gv.append("graph g {\n"
             "graph[rankdir=LR,bgcolor=\"transparent\"]\n"
-            "subgraph{graph[rank=sink]\n");
-  // LATER add flags
+            "subgraph{graph[rank=max]\n");
+  foreach (const QString &cause, displayedGlobalEventsCause)
+    gv.append("\"$global_").append(cause).append("\" [label=\"")
+        .append(cause).append("\"," GLOBAL_EVENT_NODE "]\n");
   gv.append("}\n");
-  // FIXME protect notices against special chars
+  // LATER add flags
   foreach (const QString &notice, notices)
     gv.append("\"$notice_").append(notice).append("\"")
         .append("[label=\"^").append(notice).append("\"," NOTICE_NODE "]\n");
-  gv.append("subgraph{graph[rank=source]\n");
+  gv.append("subgraph{graph[rank=min]\n");
   foreach (const QString &id, displayedGroups) {
     if (!id.contains('.')) // root groups
       gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
@@ -1489,8 +1500,8 @@ void WebConsole::recomputeDiagrams() {
           .append("\" [" TASK_NOTRIGGER_EDGE "]\n");
     }
     const QMultiHash<QString,Event> events = task.allEvents();
-    foreach (const QString &instant, events.uniqueKeys()) {
-      foreach (const Event &event, events.values(instant)) {
+    foreach (const QString &cause, events.uniqueKeys()) {
+      foreach (const Event &event, events.values(cause)) {
         const QString eventType = event.eventType();
         if (eventType == "postnotice") {
           QString notice = event.toString();
@@ -1498,7 +1509,7 @@ void WebConsole::recomputeDiagrams() {
             // LATER fix this ugly assumption on human readable string
             notice.remove(0, 1);
             gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
-                .append(notice).append("\" [label=\"").append(instant)
+                .append(notice).append("\" [label=\"").append(cause)
                 .append("\"," TASK_POSTNOTICE_EDGE "]\n");
           }
         } else if (eventType == "requesttask") {
@@ -1510,43 +1521,33 @@ void WebConsole::recomputeDiagrams() {
               target = task.taskGroup().id()+"."+target;
             if (fqtns.contains(target))
               gv.append("\"").append(task.fqtn()).append("\"--\"")
-                  .append(target).append("\" [label=\"").append(instant)
+                  .append(target).append("\" [label=\"").append(cause)
                   .append("\"," TASK_REQUESTTASK_EDGE "]\n");
           }
         }
       }
     }
-    // TODO flags (set,clear,[],[!])
+    // LATER flags (set,clear,[],[!])
   }
-  foreach (const QString &instant, _schedulerEvents.uniqueKeys()) {
-    QList<Event> events;
-    foreach (const Event &event, _schedulerEvents.values(instant)) {
+  foreach (const QString &cause, _schedulerEvents.uniqueKeys()) {
+    foreach (const Event &event, _schedulerEvents.values(cause)) {
       const QString eventType = event.eventType();
-      if (eventType == "postnotice" || eventType == "requesttask")
-        events.append(event);
-    }
-    if (!events.isEmpty()) {
-      gv.append("\"$global_").append(instant).append("\" [label=\"")
-          .append(instant).append("\"," GLOBAL_EVENT_NODE "]\n");
-      foreach (const Event &event, events) {
-        const QString eventType = event.eventType();
-        if (eventType == "postnotice") {
-          QString notice = event.toString();
-          if (notice.size() > 1) {
-            // LATER fix this ugly assumption on human readable string
-            notice.remove(0, 1);
-            gv.append("\"$notice_").append(notice).append("\"--\"$global_")
-                .append(instant).append("\" [" GLOBAL_POSTNOTICE_EDGE "]\n");
-          }
-        } else if (eventType == "requesttask") {
-          QString target = event.toString();
-          if (target.size() > 1) {
-            // LATER fix this ugly assumption on human readable string
-            target.remove(0, 1);
-            if (fqtns.contains(target))
-              gv.append("\"").append(target).append("\"--\"$global_")
-                  .append(instant).append("\" [" GLOBAL_REQUESTTASK_EDGE "]\n");
-          }
+      if (eventType == "postnotice") {
+        QString notice = event.toString();
+        if (notice.size() > 1) {
+          // LATER fix this ugly assumption on human readable string
+          notice.remove(0, 1);
+          gv.append("\"$notice_").append(notice).append("\"--\"$global_")
+              .append(cause).append("\" [" GLOBAL_POSTNOTICE_EDGE "]\n");
+        }
+      } else if (eventType == "requesttask") {
+        QString target = event.toString();
+        if (target.size() > 1) {
+          // LATER fix this ugly assumption on human readable string
+          target.remove(0, 1);
+          if (fqtns.contains(target))
+            gv.append("\"").append(target).append("\"--\"$global_")
+                .append(cause).append("\" [" GLOBAL_REQUESTTASK_EDGE "]\n");
         }
       }
     }
