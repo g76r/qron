@@ -1452,9 +1452,11 @@ void WebConsole::recomputeDiagrams() {
         .append(cause).append("\"," GLOBAL_EVENT_NODE "]\n");
   gv.append("}\n");
   // LATER add flags
-  foreach (const QString &notice, notices)
+  foreach (QString notice, notices) {
+    notice.remove('"');
     gv.append("\"$notice_").append(notice).append("\"")
         .append("[label=\"^").append(notice).append("\"," NOTICE_NODE "]\n");
+  }
   gv.append("subgraph{graph[rank=min]\n");
   foreach (const QString &id, displayedGroups) {
     if (!id.contains('.')) // root groups
@@ -1488,9 +1490,11 @@ void WebConsole::recomputeDiagrams() {
           .append(QString::number(cronid))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     }
-    foreach (const QString &notice, task.noticeTriggers())
+    foreach (QString notice, task.noticeTriggers()) {
+      notice.remove('"');
       gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
           .append(notice).append("\" [" TASK_TRIGGER_EDGE "]\n");
+    }
     if (task.noticeTriggers().isEmpty() && task.cronTriggers().isEmpty()
         && task.otherTriggers().isEmpty()) {
       gv.append("\"$notrigger_").append(QString::number(++cronid))
@@ -1508,6 +1512,7 @@ void WebConsole::recomputeDiagrams() {
           if (notice.size() > 1) {
             // LATER fix this ugly assumption on human readable string
             notice.remove(0, 1);
+            notice.remove('"');
             gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
                 .append(notice).append("\" [label=\"").append(cause)
                 .append("\"," TASK_POSTNOTICE_EDGE "]\n");
@@ -1537,6 +1542,7 @@ void WebConsole::recomputeDiagrams() {
         if (notice.size() > 1) {
           // LATER fix this ugly assumption on human readable string
           notice.remove(0, 1);
+          notice.remove('"');
           gv.append("\"$notice_").append(notice).append("\"--\"$global_")
               .append(cause).append("\" [" GLOBAL_POSTNOTICE_EDGE "]\n");
         }

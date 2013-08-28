@@ -20,7 +20,7 @@ public:
   QString _notice;
   PostNoticeEventData(Scheduler *scheduler = 0,
                       const QString notice = QString())
-    : EventData(scheduler), _notice(ConfigUtils::sanitizeId(notice, true)) { }
+    : EventData(scheduler), _notice(notice) { }
   QString toString() const {
     return "^"+_notice;
   }

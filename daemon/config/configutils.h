@@ -24,6 +24,8 @@ public:
   static inline void loadSetenv(PfNode parentnode, ParamSet &params) {
     return loadGenericParamSet(parentnode, params, "setenv"); }
   static void loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv);
+  /** For identifier, with or without dot. Cannot contain ParamSet interpreted
+   * expressions such as %!yyyy. */
   static QString sanitizeId(QString string, bool allowDot = false);
 
 private:
