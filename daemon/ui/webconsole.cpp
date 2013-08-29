@@ -970,7 +970,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     } else {
       res.setContentType("text/plain;charset=UTF-8");
       QString filter = req.param("filter"), regexp = req.param("regexp");
-      copyFilteredFile(paths, res.output(), regexp.isEmpty() ? filter : regexp,
+      copyFilteredFiles(paths, res.output(), regexp.isEmpty() ? filter : regexp,
                        !regexp.isEmpty());
     }
     return true;
@@ -1263,8 +1263,8 @@ void WebConsole::globalParamsChanged(ParamSet globalParams) {
   _taskRequestsHistoryModel->setCustomActions(customactions_requestslist);
 }
 
-void WebConsole::copyFilteredFile(QStringList paths, QIODevice *output,
-                                  QString pattern, bool useRegexp) {
+void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
+                                   QString pattern, bool useRegexp) {
   foreach (const QString path, paths) {
     QFile file(path);
     if (file.open(QIODevice::ReadOnly)) {
