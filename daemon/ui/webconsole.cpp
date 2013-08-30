@@ -31,6 +31,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _resourcesLwmModel(
     new ResourcesAllocationModel(this,
                                  ResourcesAllocationModel::LwmOverConfigured)),
+  _resourcesConsumptionModel(new ResourcesConsumptionModel(this)),
   _globalParamsModel(new ParamSetModel(this)),
   _alertParamsModel(new ParamSetModel(this)),
   _raisedAlertsModel(new RaisedAlertsModel(this)),
@@ -53,6 +54,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
     new HtmlTableView(this, _htmlHostsListView->cachedRows())),
   _htmlResourcesLwmView(
     new HtmlTableView(this, _htmlHostsListView->cachedRows())),
+  _htmlResourcesConsumptionView(
+    new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlGlobalParamsView(new HtmlTableView(this)),
   _htmlAlertParamsView(new HtmlTableView(this)),
   _htmlRaisedAlertsView(new HtmlTableView(this, RAISED_ALERTS_MAXROWS)),
@@ -90,6 +93,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvClustersListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvFreeResourcesView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvResourcesLwmView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
+  _csvResourcesConsumptionView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvGlobalParamsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvAlertParamsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvRaisedAlertsView(new CsvTableView(this, RAISED_ALERTS_MAXROWS)),
@@ -141,6 +145,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesLwmView->setRowHeaders();
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
   _htmlResourcesLwmView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlResourcesConsumptionView->setModel(_resourcesConsumptionModel);
+  _htmlResourcesConsumptionView
+      ->setTableClass("table table-condensed table-hover table-bordered");
+  _htmlResourcesConsumptionView->setRowHeaders();
+  _htmlResourcesConsumptionView
+      ->setEmptyPlaceholder("(no resource definition)");
+  _htmlResourcesConsumptionView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlGlobalParamsView->setModel(_globalParamsModel);
   _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
   _htmlAlertParamsView->setModel(_alertParamsModel);
@@ -328,6 +339,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvResourcesLwmView->setModel(_resourcesLwmModel);
   _csvResourcesLwmView->setFieldQuote('"');
   _csvResourcesLwmView->setRowHeaders();
+  _csvResourcesConsumptionView->setModel(_resourcesConsumptionModel);
+  _csvResourcesConsumptionView->setFieldQuote('"');
+  _csvResourcesConsumptionView->setRowHeaders();
   _csvGlobalParamsView->setModel(_globalParamsModel);
   _csvGlobalParamsView->setFieldQuote('"');
   _csvAlertParamsView->setModel(_alertParamsModel);
@@ -355,6 +369,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("freeresources", _htmlFreeResourcesView);
   _wuiHandler->addView("resourceslwm", _htmlResourcesLwmView);
+  _wuiHandler->addView("resourcesconsumption", _htmlResourcesConsumptionView);
   _wuiHandler->addView("hostslist", _htmlHostsListView);
   _wuiHandler->addView("clusterslist", _htmlClustersListView);
   _wuiHandler->addView("globalparams", _htmlGlobalParamsView);
@@ -883,6 +898,19 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlResourcesLwmView->text().toUtf8().constData());
     return true;
   }
+  if (path == "/rest/csv/resources/consumption/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvResourcesConsumptionView
+                        ->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/resources/consumption/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlResourcesConsumptionView
+                        ->text().toUtf8().constData());
+    return true;
+  }
   if (path == "/rest/csv/params/global/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
@@ -1139,6 +1167,14 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                this, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
                this, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
+    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+               _resourcesConsumptionModel, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
+    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
+               _resourcesConsumptionModel, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
+    disconnect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
+               _resourcesConsumptionModel, SLOT(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)));
+    disconnect(_scheduler, SIGNAL(configReloaded()),
+               _resourcesConsumptionModel, SLOT(configReloaded()));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -1215,6 +1251,14 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
             this, SLOT(schedulerEventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
     connect(_scheduler, SIGNAL(configReloaded()), this, SLOT(configReloaded()));
+    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+            _resourcesConsumptionModel, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
+    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
+            _resourcesConsumptionModel, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
+    connect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
+            _resourcesConsumptionModel, SLOT(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)));
+    connect(_scheduler, SIGNAL(configReloaded()),
+            _resourcesConsumptionModel, SLOT(configReloaded()));
     Log::addLogger(_memoryWarningLogger, false);
     Log::addLogger(_memoryInfoLogger, false);
   } else {

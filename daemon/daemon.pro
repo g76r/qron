@@ -93,7 +93,8 @@ SOURCES += \
     config/configutils.cpp \
     ui/lastemitedalertsmodel.cpp \
     ui/alertchannelsmodel.cpp \
-    config/requestformfield.cpp
+    config/requestformfield.cpp \
+    ui/resourcesconsumptionmodel.cpp
 
 HEADERS += \
     config/task.h \
@@ -145,7 +146,8 @@ HEADERS += \
     config/configutils.h \
     ui/lastemitedalertsmodel.h \
     ui/alertchannelsmodel.h \
-    config/requestformfield.h
+    config/requestformfield.h \
+    ui/resourcesconsumptionmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

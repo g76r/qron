@@ -73,6 +73,20 @@
         </div>
       </div>
       <div class="row">
+        <div class="span12">
+          <h2>Resources consumption matrix</h2>
+          <p>The table below shows resources potential consumption according
+          to current configuration of tasks and hosts. First line displays
+          the minimal possible availability per host if all tasks were running
+          at the same time, in most cases this is not likely to be reached.
+          <p><a class="btn btn-primary" href="../rest/csv/resources/consumption/v1"><i class="icon-file icon-white"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/resources/consumption/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
+          <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
+          <p><?view:resourcesconsumption?>
+        </div>
+      </div>
+      <div class="row">
         <div class="span6">
           <a name="config"></a>
           <h2>Tasks resources configuration</h2>
@@ -94,19 +108,6 @@
           <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:clusterslist?>
         </div>
-<!--
-        <div class="span12">
-          <h2>Resources configuration matrix</h2>
-          <p>The table below shows resources potential consumption according
-          to current configuration of tasks and hosts.
-          <p>
-          <a class="btn btn-primary" href="tasks.html">Tasks page &raquo;</a>
-          <a class="btn btn-primary" href="infra.html">Infrastructure page &raquo;</a>
-          <p>Coming soon...<view:resourcesmatrix>
-        </div>
--->
-
-<!-- LATER: matrix with high water mark -->
 
       </div>
     </div>
