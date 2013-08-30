@@ -59,6 +59,14 @@ Host &Host::operator=(const Host &other) {
   return *this;
 }
 
+bool Host::operator==(const Host &other) const {
+  return id() == other.id();
+}
+
+bool Host::operator<(const Host &other) const {
+  return id() < other.id();
+}
+
 QString Host::id() const {
   return d->_id;
 }

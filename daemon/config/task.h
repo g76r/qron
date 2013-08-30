@@ -37,7 +37,8 @@ public:
   Task(PfNode node, Scheduler *scheduler, const Task oldTask);
   ~Task();
   Task &operator=(const Task &other);
-  bool operator==(const Task &other);
+  bool operator==(const Task &other) const;
+  bool operator<(const Task &other) const;
   ParamSet params() const;
   bool isNull() const;
   /** Fully qualified task name (i.e. "taskGroupId.taskId") */

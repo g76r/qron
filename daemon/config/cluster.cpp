@@ -47,6 +47,14 @@ Cluster &Cluster::operator=(const Cluster &other) {
   return *this;
 }
 
+bool Cluster::operator==(const Cluster &other) const {
+  return id() == other.id();
+}
+
+bool Cluster::operator<(const Cluster &other) const {
+  return id() < other.id();
+}
+
 void Cluster::appendHost(Host host) {
   d->_hosts.append(host);
 }

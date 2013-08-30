@@ -30,6 +30,8 @@ public:
   Cluster(PfNode node);
   ~Cluster();
   Cluster &operator=(const Cluster &other);
+  bool operator==(const Cluster &other) const;
+  bool operator<(const Cluster &other) const;
   void appendHost(Host host);
   const QList<Host> hosts() const;
   QString id() const;

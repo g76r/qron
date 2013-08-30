@@ -200,8 +200,12 @@ Task &Task::operator=(const Task &other) {
   return *this;
 }
 
-bool Task::operator==(const Task &other) {
-  return (!d && !other.d) || (d && other.d && fqtn() == other.fqtn());
+bool Task::operator==(const Task &other) const {
+  return fqtn() == other.fqtn();
+}
+
+bool Task::operator<(const Task &other) const {
+  return fqtn() < other.fqtn();
 }
 
 ParamSet Task::params() const {

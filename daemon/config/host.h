@@ -28,7 +28,9 @@ public:
   Host(PfNode node);
   Host(const Host &other);
   ~Host();
-  Host &operator=(const Host &);
+  Host &operator=(const Host &other);
+  bool operator==(const Host &other) const;
+  bool operator<(const Host &other) const;
   QString id() const;
   QString hostname() const;
   bool isNull() const;
