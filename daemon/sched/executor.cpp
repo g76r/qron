@@ -51,7 +51,7 @@ void Executor::doExecute(TaskRequest request) {
   _request = request;
   _stderrWasUsed = false;
   long long maxDurationBeforeAbort = request.task().maxDurationBeforeAbort();
-  if (maxDurationBeforeAbort <= LONG_MAX)
+  if (maxDurationBeforeAbort <= INT_MAX)
     _abortTimeout->start(maxDurationBeforeAbort);
   if (mean == "local")
     localMean(request);
