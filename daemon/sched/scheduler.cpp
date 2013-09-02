@@ -493,9 +493,9 @@ void Scheduler::triggerEvents(const QList<Event> list,
 TaskRequest Scheduler::syncRequestTask(const QString fqtn,
                                        ParamSet paramsOverriding, bool force) {
   if (this->thread() == QThread::currentThread())
-    return enqueueTaskRequest(fqtn, paramsOverriding, force);
+    return doRequestTask(fqtn, paramsOverriding, force);
   TaskRequest request;
-  QMetaObject::invokeMethod(this, "enqueueTaskRequest",
+  QMetaObject::invokeMethod(this, "doRequestTask",
                             Qt::BlockingQueuedConnection,
                             Q_RETURN_ARG(TaskRequest, request),
                             Q_ARG(QString, fqtn),
@@ -506,21 +506,24 @@ TaskRequest Scheduler::syncRequestTask(const QString fqtn,
 
 void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
                                  bool force) {
-  QMetaObject::invokeMethod(this, "enqueueTaskRequest", Qt::QueuedConnection,
+  QMetaObject::invokeMethod(this, "doRequestTask", Qt::QueuedConnection,
                             Q_ARG(QString, fqtn),
                             Q_ARG(ParamSet, paramsOverriding),
                             Q_ARG(bool, force));
 }
 
-TaskRequest Scheduler::enqueueTaskRequest(const QString fqtn,
-                                          ParamSet paramsOverriding,
-                                          bool force) {
+TaskRequest Scheduler::doRequestTask(QString fqtn, ParamSet paramsOverriding,
+                                     bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
   ml.unlock();
   if (task.isNull()) {
     Log::error() << "requested task not found: " << fqtn << paramsOverriding
                  << force;
+    return TaskRequest();
+  }
+  if (!task.enabled()) {
+    Log::info(fqtn) << "ignoring request since task is disabled: " << fqtn;
     return TaskRequest();
   }
   TaskRequest request(task, force);

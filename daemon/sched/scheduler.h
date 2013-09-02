@@ -101,8 +101,7 @@ public slots:
    * @param force if true, any constraints or ressources are ignored
    * @return isNull() if task cannot be queued
    * @see asyncRequestTask
-   * @see RequestFormField
-   */
+   * @see RequestFormField */
   TaskRequest syncRequestTask(const QString fqtn,
                               ParamSet paramsOverriding = ParamSet(),
                               bool force = false);
@@ -114,8 +113,7 @@ public slots:
    * @param paramsOverriding override params, using RequestFormField semantics
    * @param force if true, any constraints or ressources are ignored
    * @see syncRequestTask
-   * @see RequestFormField
-   */
+   * @see RequestFormField */
   void asyncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
                         bool force = false);
   /** Cancel a queued request.
@@ -152,8 +150,7 @@ public slots:
     * This method must be called every time something occurs that could make a
     * queued task runnable. Calling this method several time within the same
     * event loop iteration will trigger reevaluation only once (same pattern as
-    * QWidget::update()).
-    */
+    * QWidget::update()). */
   void reevaluateQueuedRequests();
   /** Enable or disable a task.
     * This method is threadsafe */
@@ -211,23 +208,20 @@ private slots:
 
 private:
   /** Reevaluate queued requests and start any task that can be started.
-    * @see reevaluateQueuedRequests()
-    */
+    * @see reevaluateQueuedRequests() */
   void startQueuedTasks();
   /** Check if it is permitted for a task to run now, if yes start it.
    * If request.force() is true, start a task despite any constraint or limit,
    * even create a new (temporary) executor thread if needed.
-   * @return true if the task was started or canceled
-   */
+   * @return true if the task was started or canceled */
   bool startQueuedTask(TaskRequest request);
   /** @return true iff the triggers fires a task request */
   bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
   Q_INVOKABLE bool reloadConfiguration(PfNode root);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
-  Q_INVOKABLE TaskRequest enqueueTaskRequest(const QString fqtn,
-                                             ParamSet paramsOverriding,
-                                             bool force);
+  Q_INVOKABLE TaskRequest doRequestTask(QString fqtn, ParamSet paramsOverriding,
+                                        bool force);
   Q_INVOKABLE TaskRequest doCancelRequest(quint64 id);
   Q_INVOKABLE TaskRequest doAbortTask(quint64 id);
 };
