@@ -1390,8 +1390,12 @@ void WebConsole::recomputeDiagrams() {
   //   adding virtual parent groups (e.g. a group "foo.bar" as a virtual
   //   parent "foo" which is not an actual group but which make the rendering
   //   more readable
-  // * displayed targets, i.e. hosts that are targets of at less one cluster
+  // * displayed hosts, i.e. hosts that are targets of at less one cluster
   //   or one task
+  // * notices, from notice triggers and postnotice events
+  // * fqtns
+  // * displayed global event causes, i.e. global event causes (e.g. onstartup)
+  //   with displayed events (e.g. requesttask, postnotice)
   foreach (const Task &task, _tasks.values()) {
     QString s = task.taskGroup().id();
     displayedGroups.insert(s);
@@ -1407,7 +1411,9 @@ void WebConsole::recomputeDiagrams() {
        displayedHosts.insert(host.id());
   foreach (const Task &task, _tasks.values()) {
     notices.unite(task.noticeTriggers());
-    const QMultiHash<QString,Event> events = task.allEvents();
+    QMultiHash<QString,Event> events;
+    events.unite(task.allEvents());
+    events.unite(task.taskGroup().allEvents());
     foreach (const Event &event, events.values()) {
       if (event.eventType() == "postnotice") {
         QString notice = event.toString();
@@ -1501,16 +1507,19 @@ void WebConsole::recomputeDiagrams() {
     gv.append("\"$notice_").append(notice).append("\"")
         .append("[label=\"^").append(notice).append("\"," NOTICE_NODE "]\n");
   }
+  // root groups
   gv.append("subgraph{graph[rank=min]\n");
   foreach (const QString &id, displayedGroups) {
     if (!id.contains('.')) // root groups
       gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
   }
   gv.append("}\n");
+  // other groups
   foreach (const QString &id, displayedGroups) {
     if (id.contains('.')) // non root groups
       gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
   }
+  // groups edges
   foreach (const QString &parent, displayedGroups) {
     QString prefix = parent + ".";
     foreach (const QString &child, displayedGroups) {
@@ -1519,13 +1528,16 @@ void WebConsole::recomputeDiagrams() {
             .append(child).append("\" [" TASKGROUP_EDGE "]\n");
     }
   }
+  // tasks
   int cronid = 0;
   foreach (const Task &task, _tasks.values()) {
+    // tasks and group to task edges
     gv.append("\"").append(task.fqtn()).append("\" [label=\"")
         .append(task.id()).append("\"," TASK_NODE "]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
         .append("\"").append(task.fqtn())
         .append("\" [" TASKGROUP_TASK_EDGE "]\n");
+    // cron triggers
     foreach (const CronTrigger &cron, task.cronTriggers()) {
       gv.append("\"$cron_").append(QString::number(++cronid))
           .append("\" [label=\"(").append(cron.cronExpression())
@@ -1534,11 +1546,13 @@ void WebConsole::recomputeDiagrams() {
           .append(QString::number(cronid))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     }
+    // notice triggers
     foreach (QString notice, task.noticeTriggers()) {
       notice.remove('"');
       gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
           .append(notice).append("\" [" TASK_TRIGGER_EDGE "]\n");
     }
+    // no trigger pseudo-trigger
     if (task.noticeTriggers().isEmpty() && task.cronTriggers().isEmpty()
         && task.otherTriggers().isEmpty()) {
       gv.append("\"$notrigger_").append(QString::number(++cronid))
@@ -1547,7 +1561,10 @@ void WebConsole::recomputeDiagrams() {
           .append(QString::number(cronid))
           .append("\" [" TASK_NOTRIGGER_EDGE "]\n");
     }
-    const QMultiHash<QString,Event> events = task.allEvents();
+    // events caused by task
+    QMultiHash<QString,Event> events;
+    events.unite(task.allEvents());
+    events.unite(task.taskGroup().allEvents());
     foreach (const QString &cause, events.uniqueKeys()) {
       foreach (const Event &event, events.values(cause)) {
         const QString eventType = event.eventType();

@@ -47,6 +47,7 @@ public:
   const QList<Event> onfailureEvents() const;
   ParamSet setenv() const;
   QSet<QString> unsetenv() const;
+  const QMultiHash<QString,Event> allEvents() const;
 };
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);

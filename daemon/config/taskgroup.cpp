@@ -125,3 +125,15 @@ ParamSet TaskGroup::setenv() const {
 QSet<QString> TaskGroup::unsetenv() const {
   return d ? d->_unsetenv : QSet<QString>();
 }
+
+const QMultiHash<QString,Event> TaskGroup::allEvents() const {
+  // LATER avoid creating the collection at every call
+  QMultiHash<QString,Event> hash;
+  foreach (const Event &event, onstartEvents())
+    hash.insertMulti("onstart", event);
+  foreach (const Event &event, onsuccessEvents())
+    hash.insertMulti("onsuccess", event);
+  foreach (const Event &event, onfailureEvents())
+    hash.insertMulti("onfailure", event);
+  return hash;
+}
