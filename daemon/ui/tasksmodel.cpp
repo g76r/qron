@@ -160,6 +160,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         QDateTime dt = t.lastExecution();
         if (!dt.isNull() && !t.lastSuccessful())
           return "<i class=\"icon-minus-sign\"></i> ";
+        break;
       }
       case 27:
         return t.maxDurationBeforeAbort() < LLONG_MAX
