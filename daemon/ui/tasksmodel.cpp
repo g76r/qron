@@ -189,15 +189,6 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
           suffix.append(" ").append(t.params().evaluate(_customActions, &t));
         return suffix;
       }
-      case 25: {
-        if (t.requestFormFields().isEmpty())
-          break;
-        return /* taskdoc */
-            " <span class=\"label label-info\" "
-            "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-            +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
-            "</i></a></span>";
-      }
       default:
         ;
       }

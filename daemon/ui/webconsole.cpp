@@ -241,7 +241,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksConfigView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
-  cols << 1 << 0 << 3 << 5 << 4 << 6 << 8 << 12;
+  cols << 1 << 0 << 3 << 5 << 4 << 6 << 8 << 12 << 18;
   _htmlTasksConfigView->setColumnIndexes(cols);
   _htmlTasksConfigView->setRowAnchor("taskconfig.", 11);
   _htmlTasksParamsView->setModel(_tasksModel);
@@ -250,7 +250,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksParamsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
-  cols << 1 << 0 << 7 << 25 << 21 << 22;
+  cols << 1 << 0 << 7 << 25 << 21 << 22 << 18;
   _htmlTasksParamsView->setColumnIndexes(cols);
   _htmlTasksParamsView->setRowAnchor("taskparams.", 11);
   _htmlTasksListView->setModel(_tasksModel);
@@ -264,7 +264,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksEventsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
-  cols << 11 << 6 << 14 << 15 << 16;
+  cols << 11 << 6 << 14 << 15 << 16 << 18;
   _htmlTasksEventsView->setColumnIndexes(cols);
   _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
   _htmlSchedulerEventsView->setTableClass("table table-condensed table-hover");
