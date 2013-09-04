@@ -663,6 +663,7 @@ void Scheduler::checkTriggersForAllTasks() {
     }
   }
   ml.unlock();
+  // LATER if this is usefull only to remove next exec time when reloading config w/o time trigger, this should be called in reloadConfig
   foreach (const Task task, tasksWithoutTimeTrigger)
     emit taskChanged(task);
 }
@@ -703,7 +704,8 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   //             << fqtn << " "
   //             << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
   //             << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " " << ms;
-  TimerWithArguments::singleShot(ms, this, "checkTriggersForTask", fqtn);
+  TimerWithArguments::singleShot(ms < INT_MAX ? ms : INT_MAX,
+                                 this, "checkTriggersForTask", fqtn);
   task.setNextScheduledExecution(now.addMSecs(ms));
   emit taskChanged(task);
   return fired;
