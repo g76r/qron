@@ -145,7 +145,7 @@ static void signal_handler(int signal_number) {
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
-  Log::addConsoleLogger(Log::Fatal);
+  Log::addConsoleLogger(Log::Info, true);
   QStringList args;
   for (int i = 1; i < argc; ++i)
     args << QString::fromUtf8(argv[i]);

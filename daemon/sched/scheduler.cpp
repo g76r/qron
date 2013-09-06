@@ -158,7 +158,7 @@ bool Scheduler::reloadConfiguration(PfNode root) {
     }
   }
   //Log::debug() << "replacing loggers " << loggers.size();
-  Log::replaceLoggers(loggers);
+  Log::replaceLoggersPlusConsole(Log::Fatal, loggers);
   ConfigUtils::loadParamSet(root, _globalParams);
   ConfigUtils::loadSetenv(root, _setenv);
   ConfigUtils::loadUnsetenv(root, _unsetenv);
