@@ -487,8 +487,7 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
   return v;
 }
 
-QVariant Task::paramValue(const QString key,
-                          const QVariant defaultValue) const {
+QVariant Task::paramValue(QString key, QVariant defaultValue) const {
   //Log::fatal() << "Task::paramvalue " << key;
   if (d) {
     if (key == "!taskid") {

@@ -57,8 +57,7 @@ QDateTime Alert::datetime() const {
   return d ? d->_datetime : QDateTime();
 }
 
-QVariant Alert::paramValue(const QString key,
-                           const QVariant defaultValue) const {
+QVariant Alert::paramValue(QString key, QVariant defaultValue) const {
   if (key == "!alertid") {
     return id();
   } else if (key == "!alertdate") {

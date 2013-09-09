@@ -100,8 +100,7 @@ public:
   static DiscardAliasesOnStart discardAliasesOnStartFromString(QString v);
   QList<RequestFormField> requestFormFields() const;
   QString requestFormFieldsAsHtmlDescription() const;
-  QVariant paramValue(const QString key,
-                      const QVariant defaultValue = QVariant()) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
   /** Human readable list of all triggers as one string, for UI purpose. */
   QString triggersAsString() const;
   /** Cron triggers list */

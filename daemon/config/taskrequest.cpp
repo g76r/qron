@@ -163,8 +163,7 @@ void TaskRequest::setTarget(Host target) const {
   }
 }
 
-QVariant TaskRequest::paramValue(const QString key,
-                                 const QVariant defaultValue) const {
+QVariant TaskRequest::paramValue(QString key, QVariant defaultValue) const {
   //Log::fatal() << "TaskRequest::paramvalue " << key;
   if (!d)
     return defaultValue;

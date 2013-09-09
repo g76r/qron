@@ -35,7 +35,7 @@ public:
   QString id() const;
   AlertRule rule() const;
   QDateTime datetime() const;
-  QVariant paramValue(const QString key, const QVariant defaultValue) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
 };
 
 #endif // ALERT_H
