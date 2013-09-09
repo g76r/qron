@@ -22,7 +22,7 @@ class Scheduler;
 
 class PostNoticeEvent : public Event {
 public:
-  PostNoticeEvent(Scheduler *scheduler = 0, const QString notice = QString());
+  PostNoticeEvent(Scheduler *scheduler = 0, QString notice = QString());
   PostNoticeEvent(const PostNoticeEvent &);
   ~PostNoticeEvent();
 };

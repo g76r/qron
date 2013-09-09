@@ -21,7 +21,7 @@ class Scheduler;
 
 class ClearFlagEvent : public Event {
 public:
-  ClearFlagEvent(Scheduler *scheduler = 0, const QString flag = QString());
+  ClearFlagEvent(Scheduler *scheduler = 0, QString flag = QString());
   ClearFlagEvent(const ClearFlagEvent &);
   ~ClearFlagEvent();
 };

@@ -18,7 +18,7 @@ class CancelAlertEventData : public EventData {
 public:
   QString _alert;
   CancelAlertEventData(Scheduler *scheduler = 0,
-                       const QString alert = QString())
+                       QString alert = QString())
     : EventData(scheduler), _alert(alert) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler)
@@ -33,7 +33,7 @@ public:
   }
 };
 
-CancelAlertEvent::CancelAlertEvent(Scheduler *scheduler, const QString alert)
+CancelAlertEvent::CancelAlertEvent(Scheduler *scheduler, QString alert)
   : Event(new CancelAlertEventData(scheduler, alert)) {
 }
 

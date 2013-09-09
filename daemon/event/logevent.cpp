@@ -19,7 +19,7 @@ class LogEventData : public EventData {
 public:
   QString _message;
   Log::Severity _severity;
-  LogEventData(const QString logMessage = QString(),
+  LogEventData(QString logMessage = QString(),
                Log::Severity severity = Log::Info)
     : _message(logMessage), _severity(severity) { }
   QString toString() const {
@@ -38,7 +38,7 @@ public:
   }
 };
 
-LogEvent::LogEvent(Log::Severity severity, const QString message)
+LogEvent::LogEvent(Log::Severity severity, QString message)
   : Event(new LogEventData(message, severity)) {
 }
 

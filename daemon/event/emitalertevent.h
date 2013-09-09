@@ -21,7 +21,7 @@ class Scheduler;
 
 class EmitAlertEvent : public Event {
 public:
-  EmitAlertEvent(Scheduler *scheduler = 0, const QString alert = QString());
+  EmitAlertEvent(Scheduler *scheduler = 0, QString alert = QString());
   EmitAlertEvent(const EmitAlertEvent &);
   ~EmitAlertEvent();
 };

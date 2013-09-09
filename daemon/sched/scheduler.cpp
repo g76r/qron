@@ -484,14 +484,14 @@ bool Scheduler::loadEventListConfiguration(
   return true;
 }
 
-void Scheduler::triggerEvents(const QList<Event> list,
-                                  const ParamsProvider *context) {
+void Scheduler::triggerEvents(QList<Event> list,
+                              const ParamsProvider *context) {
   foreach (const Event e, list)
     e.trigger(context);
 }
 
-TaskRequest Scheduler::syncRequestTask(const QString fqtn,
-                                       ParamSet paramsOverriding, bool force) {
+TaskRequest Scheduler::syncRequestTask(QString fqtn, ParamSet paramsOverriding,
+                                       bool force) {
   if (this->thread() == QThread::currentThread())
     return doRequestTask(fqtn, paramsOverriding, force);
   TaskRequest request;
@@ -711,7 +711,7 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   return fired;
 }
 
-void Scheduler::setFlag(const QString flag) {
+void Scheduler::setFlag(QString flag) {
   QMutexLocker ml(&_flagsMutex);
   Log::debug() << "setting flag '" << flag << "'"
                << (_setFlags.contains(flag) ? " which was already set"
@@ -722,7 +722,7 @@ void Scheduler::setFlag(const QString flag) {
   reevaluateQueuedRequests();
 }
 
-void Scheduler::clearFlag(const QString flag) {
+void Scheduler::clearFlag(QString flag) {
   QMutexLocker ml(&_flagsMutex);
   Log::debug() << "clearing flag '" << flag << "'"
                << (_setFlags.contains(flag) ? ""
@@ -733,7 +733,7 @@ void Scheduler::clearFlag(const QString flag) {
   reevaluateQueuedRequests();
 }
 
-bool Scheduler::isFlagSet(const QString flag) const {
+bool Scheduler::isFlagSet(QString flag) const {
   QMutexLocker ml(&_flagsMutex);
   return _setFlags.contains(flag);
 }
@@ -749,7 +749,7 @@ public:
   }
 };
 
-void Scheduler::postNotice(const QString notice) {
+void Scheduler::postNotice(QString notice) {
   if (notice.isNull()) {
     Log::warning() << "cannot post a null/empty notice";
     return;
@@ -980,7 +980,7 @@ void Scheduler::taskFinishing(TaskRequest request,
   reevaluateQueuedRequests();
 }
 
-bool Scheduler::enableTask(const QString fqtn, bool enable) {
+bool Scheduler::enableTask(QString fqtn, bool enable) {
   QMutexLocker ml(&_configMutex);
   Task t = _tasks.value(fqtn);
   //Log::fatal() << "enableTask " << fqtn << " " << enable << " " << t.id();

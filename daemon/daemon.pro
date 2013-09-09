@@ -65,8 +65,6 @@ SOURCES += \
     alert/udpalertchannel.cpp \
     alert/mailalertchannel.cpp \
     alert/logalertchannel.cpp \
-    alert/setflagalertchannel.cpp \
-    alert/clearflagalertchannel.cpp \
     alert/httpalertchannel.cpp \
     alert/execalertchannel.cpp \
     ui/raisedalertsmodel.cpp \
@@ -76,7 +74,6 @@ SOURCES += \
     event/event.cpp \
     event/postnoticeevent.cpp \
     event/logevent.cpp \
-    alert/postnoticealertchannel.cpp \
     event/udpevent.cpp \
     event/httpevent.cpp \
     event/setflagevent.cpp \
@@ -117,8 +114,6 @@ HEADERS += \
     alert/udpalertchannel.h \
     alert/mailalertchannel.h \
     alert/logalertchannel.h \
-    alert/setflagalertchannel.h \
-    alert/clearflagalertchannel.h \
     alert/httpalertchannel.h \
     alert/execalertchannel.h \
     ui/raisedalertsmodel.h \
@@ -129,7 +124,6 @@ HEADERS += \
     event/postnoticeevent.h \
     event/event_p.h \
     event/logevent.h \
-    alert/postnoticealertchannel.h \
     event/udpevent.h \
     event/httpevent.h \
     event/setflagevent.h \

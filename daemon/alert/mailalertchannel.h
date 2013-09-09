@@ -25,8 +25,7 @@ class QTimer;
 
 /** Log channel that send alerts as mails.
  * It performs alerts (including cancellations and reminders) aggregation within
- * at most one mail every %mindelaybetweensend seconds (default: 600" = 10').
- */
+ * at most one mail every %mindelaybetweensend seconds (default: 600" = 10'). */
 class MailAlertChannel : public AlertChannel {
   Q_OBJECT
   Q_DISABLE_COPY(MailAlertChannel)
@@ -51,7 +50,7 @@ private slots:
   void asyncProcessing();
 
 private:
-  Q_INVOKABLE void processQueue(const QVariant address);
+  Q_INVOKABLE void processQueue(QVariant address);
 };
 
 #endif // MAILALERTCHANNEL_H

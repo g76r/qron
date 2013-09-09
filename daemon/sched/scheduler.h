@@ -71,15 +71,14 @@ public:
   bool loadEventListConfiguration(
       PfNode listnode, QList<Event> &list, QString contextLabel,
       Task contextTask = Task());
-  static void triggerEvents(const QList<Event> list,
-                            const ParamsProvider *context);
+  static void triggerEvents(QList<Event> list, const ParamsProvider *context);
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
   Authenticator *authenticator() { return _authenticator; }
   UsersDatabase *usersDatabase() { return _usersDatabase; }
   /** Test a flag.
     * This method is thread-safe. */
-  bool isFlagSet(const QString flag) const;
+  bool isFlagSet(QString flag) const;
   QDateTime startdate() const {
     return QDateTime::fromMSecsSinceEpoch(_startdate); }
   QDateTime configdate() const {
@@ -102,7 +101,7 @@ public slots:
    * @return isNull() if task cannot be queued
    * @see asyncRequestTask
    * @see RequestFormField */
-  TaskRequest syncRequestTask(const QString fqtn,
+  TaskRequest syncRequestTask(QString fqtn,
                               ParamSet paramsOverriding = ParamSet(),
                               bool force = false);
   /** Explicitely request task execution now, but do not wait for validity
@@ -138,13 +137,13 @@ public slots:
   /** Set a flag, which will be evaluated by any following task constraints
     * evaluation.
     * This method is thread-safe. */
-  void setFlag(const QString flag);
+  void setFlag(QString flag);
   /** Clear a flag.
     * This method is thread-safe. */
-  void clearFlag(const QString flag);
+  void clearFlag(QString flag);
   /** Post a notice.
     * This method is thread-safe. */
-  void postNotice(const QString notice);
+  void postNotice(QString notice);
   /** Ask for queued requests to be reevaluated during next event loop
     * iteration.
     * This method must be called every time something occurs that could make a
@@ -154,13 +153,15 @@ public slots:
   void reevaluateQueuedRequests();
   /** Enable or disable a task.
     * This method is threadsafe */
-  bool enableTask(const QString fqtn, bool enable);
+  bool enableTask(QString fqtn, bool enable);
   /** Enable or disable all tasks at once.
     * This method is threadsafe */
   void enableAllTasks(bool enable);
   //LATER enableAllTasksWithinGroup
   ParamSet globalParams() const { return _globalParams; }
+  /** This method is threadsafe */
   bool taskExists(QString fqtn);
+  /** This method is threadsafe */
   Task task(QString fqtn);
 
 signals:

@@ -22,8 +22,7 @@ public:
   QString _message;
   QString _host;
   quint16 _port;
-  UdpEventData(const QString address = QString(),
-               const QString message = QString())
+  UdpEventData(QString address = QString(), QString message = QString())
     : _message(message), _port(0) {
     // LATER support IPv6 numeric addresses (they contain colons)
     QStringList tokens(address.split(":"));
@@ -44,7 +43,7 @@ public:
     QUdpSocket socket;
     socket.connectToHost(_host, _port, QIODevice::WriteOnly);
     if (socket.waitForConnected(200/*2000*/)) {
-      const QString message = ParamSet().evaluate(_message, context);
+      QString message = ParamSet().evaluate(_message, context);
       qint64 rc = socket.write(message.toUtf8());
       if (rc < 0)
         Log::warning() << "error when emiting UDP event: " << socket.error()
@@ -69,7 +68,7 @@ public:
   }
 };
 
-UdpEvent::UdpEvent(const QString address, const QString message)
+UdpEvent::UdpEvent(QString address, QString message)
   : Event(new UdpEventData(address, message)) {
 }
 

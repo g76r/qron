@@ -19,8 +19,7 @@ public:
   QString _idOrFqtn;
   ParamSet _params;
   bool _force;
-  RequestTaskEventData(Scheduler *scheduler = 0,
-                       const QString idOrFqtn = QString(),
+  RequestTaskEventData(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
                        ParamSet params = ParamSet(), bool force = false)
     : EventData(scheduler), _idOrFqtn(idOrFqtn), _params(params), _force(force) { }
   void trigger(const ParamsProvider *context) const {
@@ -51,7 +50,7 @@ public:
   }
 };
 
-RequestTaskEvent::RequestTaskEvent(Scheduler *scheduler, const QString idOrFqtn,
+RequestTaskEvent::RequestTaskEvent(Scheduler *scheduler, QString idOrFqtn,
                                    ParamSet params, bool force)
   : Event(new RequestTaskEventData(scheduler, idOrFqtn, params, force)) {
 }

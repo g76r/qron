@@ -62,7 +62,7 @@ QString Event::eventType() const {
   return d ? d->eventType() : QString();
 }
 
-QStringList Event::toStringList(const QList<Event> list) {
+QStringList Event::toStringList(QList<Event> list) {
   QStringList sl;
   foreach (const Event e, list)
     sl.append(e.toString());

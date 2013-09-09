@@ -118,7 +118,7 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
   }
 }
 
-void MailAlertChannel::processQueue(const QVariant address) {
+void MailAlertChannel::processQueue(QVariant address) {
   const QString addr(address.toString());
   MailAlertQueue *queue = _queues.value(addr);
   if (!queue) { // should never happen

@@ -92,11 +92,11 @@ bool TaskRequest::operator==(const TaskRequest &other) const {
   return (!d && !other.d) || (d && other.d && d->_id == other.d->_id);
 }
 
-const Task TaskRequest::task() const {
+Task TaskRequest::task() const {
   return d ? d->_task : Task();
 }
 
-const ParamSet TaskRequest::params() const {
+ParamSet TaskRequest::params() const {
   return d ? d->_params : ParamSet();
 }
 
@@ -152,7 +152,7 @@ void TaskRequest::setReturnCode(int returnCode) const {
     d->_returnCode = returnCode;
 }
 
-const Host TaskRequest::target() const {
+Host TaskRequest::target() const {
   return d ? d->_target : Host();
 }
 

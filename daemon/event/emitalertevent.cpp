@@ -17,7 +17,7 @@
 class EmitAlertEventData : public EventData {
 public:
   QString _alert;
-  EmitAlertEventData(Scheduler *scheduler = 0, const QString alert = QString())
+  EmitAlertEventData(Scheduler *scheduler = 0, QString alert = QString())
     : EventData(scheduler), _alert(alert) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler && !_alert.isEmpty())
@@ -32,7 +32,7 @@ public:
   }
 };
 
-EmitAlertEvent::EmitAlertEvent(Scheduler *scheduler, const QString alert)
+EmitAlertEvent::EmitAlertEvent(Scheduler *scheduler, QString alert)
   : Event(new EmitAlertEventData(scheduler, alert)) {
 }
 

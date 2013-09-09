@@ -106,15 +106,15 @@ void TaskGroup::triggerFailureEvents(const ParamsProvider *context) const {
   Scheduler::triggerEvents(d->_onfailure, context);
 }
 
-const QList<Event> TaskGroup::onstartEvents() const {
+QList<Event> TaskGroup::onstartEvents() const {
   return d->_onstart;
 }
 
-const QList<Event> TaskGroup::onsuccessEvents() const {
+QList<Event> TaskGroup::onsuccessEvents() const {
   return d->_onsuccess;
 }
 
-const QList<Event> TaskGroup::onfailureEvents() const {
+QList<Event> TaskGroup::onfailureEvents() const {
   return d->_onfailure;
 }
 
@@ -126,7 +126,7 @@ QSet<QString> TaskGroup::unsetenv() const {
   return d ? d->_unsetenv : QSet<QString>();
 }
 
-const QMultiHash<QString,Event> TaskGroup::allEvents() const {
+QMultiHash<QString, Event> TaskGroup::allEvents() const {
   // LATER avoid creating the collection at every call
   QMultiHash<QString,Event> hash;
   foreach (const Event &event, onstartEvents())

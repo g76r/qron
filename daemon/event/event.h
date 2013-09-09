@@ -34,7 +34,7 @@ public:
   QString toString() const;
   /** Type of event for programmatic test, e.g. "postnotice", "setflag" */
   QString eventType() const;
-  static QStringList toStringList(const QList<Event> list);
+  static QStringList toStringList(QList<Event> list);
 
 protected:
   explicit Event(EventData *data);

@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,15 +24,17 @@ class AlertChannel;
 class PfNode;
 class Alert;
 
+/** Alert rule is the configuration object defining the matching between an
+ * alert id pattern and a alert channel, with optional additional parameters. */
 class AlertRule {
   QSharedDataPointer<AlertRuleData> d;
 
 public:
   AlertRule();
   AlertRule(const AlertRule &);
-  AlertRule(const PfNode node, const QString pattern,
-            AlertChannel *channel, QString channelName, bool stop,
-            bool notifyCancel, bool notifyReminder);
+  AlertRule(PfNode node, QString pattern, AlertChannel *channel,
+            QString channelName, bool stop, bool notifyCancel,
+            bool notifyReminder);
   AlertRule &operator=(const AlertRule &);
   ~AlertRule();
   QString pattern() const;
@@ -51,9 +53,8 @@ public:
   bool notifyReminder() const;
   bool isNull() const;
   /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
-   * "some.path.with.\*.star.and.\\.backslash" into regular expressions.
-   */
-  static QRegExp compilePattern(const QString pattern);
+   * "some.path.with.\*.star.and.\\.backslash" into regular expressions. */
+  static QRegExp compilePattern(QString pattern);
 };
 
 #endif // ALERTRULE_H

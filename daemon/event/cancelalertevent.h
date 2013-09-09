@@ -21,7 +21,7 @@ class Scheduler;
 
 class CancelAlertEvent : public Event {
 public:
-  CancelAlertEvent(Scheduler *scheduler = 0, const QString alert = QString());
+  CancelAlertEvent(Scheduler *scheduler = 0, QString alert = QString());
   CancelAlertEvent(const CancelAlertEvent &);
   ~CancelAlertEvent();
 };

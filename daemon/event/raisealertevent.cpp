@@ -17,7 +17,7 @@
 class RaiseAlertEventData : public EventData {
 public:
   QString _alert;
-  RaiseAlertEventData(Scheduler *scheduler = 0, const QString alert = QString())
+  RaiseAlertEventData(Scheduler *scheduler = 0, QString alert = QString())
     : EventData(scheduler), _alert(alert) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler)
@@ -32,7 +32,7 @@ public:
   }
 };
 
-RaiseAlertEvent::RaiseAlertEvent(Scheduler *scheduler, const QString alert)
+RaiseAlertEvent::RaiseAlertEvent(Scheduler *scheduler, QString alert)
   : Event(new RaiseAlertEventData(scheduler, alert)) {
 }
 

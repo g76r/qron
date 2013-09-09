@@ -20,8 +20,7 @@ class HttpEventData : public EventData {
 public:
   QString _url;
   ParamSet _params;
-  HttpEventData(const QString url = QString(),
-                const ParamSet params = ParamSet())
+  HttpEventData(QString url = QString(), ParamSet params = ParamSet())
     : _url(url), _params(params) { }
   void trigger(const ParamsProvider *context) const {
     QUrl url(_params.evaluate(_url, context));
@@ -35,7 +34,7 @@ public:
   }
 };
 
-HttpEvent::HttpEvent(const QString url, const ParamSet params)
+HttpEvent::HttpEvent(QString url, ParamSet params)
   : Event(new HttpEventData(url, params)) {
 }
 

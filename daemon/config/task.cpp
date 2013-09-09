@@ -68,7 +68,7 @@ Task::Task() {
 Task::Task(const Task &other) : d(other.d) {
 }
 
-Task::Task(PfNode node, Scheduler *scheduler, const Task oldTask) {
+Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
   td->_id = ConfigUtils::sanitizeId(node.attribute("id")); // LATER check uniqueness
@@ -216,7 +216,7 @@ bool Task::isNull() const {
   return !d;
 }
 
-const QSet<QString> Task::noticeTriggers() const {
+QSet<QString> Task::noticeTriggers() const {
   return d ? d->_noticeTriggers : QSet<QString>();
 }
 
@@ -310,13 +310,13 @@ QDateTime Task::nextScheduledExecution() const {
       : QDateTime();
 }
 
-void Task::setLastExecution(const QDateTime timestamp) const {
+void Task::setLastExecution(QDateTime timestamp) const {
   if (d)
     d->_lastExecution = timestamp.isValid()
         ? timestamp.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
-void Task::setNextScheduledExecution(const QDateTime timestamp) const {
+void Task::setNextScheduledExecution(QDateTime timestamp) const {
   if (d)
     d->_nextScheduledExecution = timestamp.isValid()
         ? timestamp.toMSecsSinceEpoch() : LLONG_MIN;
@@ -334,7 +334,7 @@ int Task::fetchAndAddInstancesCount(int valueToAdd) const {
   return d ? d->_instancesCount.fetchAndAddOrdered(valueToAdd) : 0;
 }
 
-const QList<QRegExp> Task::stderrFilters() const {
+QList<QRegExp> Task::stderrFilters() const {
   return d ? d->_stderrFilters : QList<QRegExp>();
 }
 
@@ -369,19 +369,19 @@ void Task::triggerFailureEvents(const ParamsProvider *context) const {
   }
 }
 
-const QList<Event> Task::onstartEvents() const {
+QList<Event> Task::onstartEvents() const {
   return d ? d->_onstart : QList<Event>();
 }
 
-const QList<Event> Task::onsuccessEvents() const {
+QList<Event> Task::onsuccessEvents() const {
   return d ? d->_onsuccess : QList<Event>();
 }
 
-const QList<Event> Task::onfailureEvents() const {
+QList<Event> Task::onfailureEvents() const {
   return d ? d->_onfailure : QList<Event>();
 }
 
-const QMultiHash<QString,Event> Task::allEvents() const {
+QMultiHash<QString, Event> Task::allEvents() const {
   // LATER avoid creating the collection at every call
   QMultiHash<QString,Event> hash;
   foreach (const Event &event, onstartEvents())
@@ -503,7 +503,7 @@ QVariant Task::paramValue(QString key, QVariant defaultValue) const {
   return defaultValue;
 }
 
-const QList<CronTrigger> Task::cronTriggers() const {
+QList<CronTrigger> Task::cronTriggers() const {
   return d ? d->_cronTriggers : QList<CronTrigger>();
 }
 

@@ -20,8 +20,7 @@ class UdpEventData;
 
 class UdpEvent : public Event {
 public:
-  UdpEvent(const QString address = QString(),
-           const QString message = QString());
+  UdpEvent(QString address = QString(), QString message = QString());
   UdpEvent(const UdpEvent &);
   ~UdpEvent();
 };

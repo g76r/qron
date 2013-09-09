@@ -21,8 +21,7 @@ class HttpEventData;
 
 class HttpEvent : public Event{
 public:
-  HttpEvent(const QString url = QString(),
-            const ParamSet params = ParamSet());
+  HttpEvent(QString url = QString(), ParamSet params = ParamSet());
   HttpEvent(const HttpEvent &);
   ~HttpEvent();
 };

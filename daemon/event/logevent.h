@@ -22,8 +22,7 @@ class Scheduler;
 
 class LogEvent : public Event {
 public:
-  LogEvent(Log::Severity severity = Log::Info,
-           const QString message = QString());
+  LogEvent(Log::Severity severity = Log::Info, QString message = QString());
   LogEvent(const LogEvent &);
   ~LogEvent();
 };

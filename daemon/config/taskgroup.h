@@ -42,12 +42,12 @@ public:
   void triggerStartEvents(const ParamsProvider *context) const;
   void triggerSuccessEvents(const ParamsProvider *context) const;
   void triggerFailureEvents(const ParamsProvider *context) const;
-  const QList<Event> onstartEvents() const;
-  const QList<Event> onsuccessEvents() const;
-  const QList<Event> onfailureEvents() const;
+  QList<Event> onstartEvents() const;
+  QList<Event> onsuccessEvents() const;
+  QList<Event> onfailureEvents() const;
   ParamSet setenv() const;
   QSet<QString> unsetenv() const;
-  const QMultiHash<QString,Event> allEvents() const;
+  QMultiHash<QString,Event> allEvents() const;
 };
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);

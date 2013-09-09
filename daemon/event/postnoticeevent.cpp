@@ -18,8 +18,7 @@
 class PostNoticeEventData : public EventData {
 public:
   QString _notice;
-  PostNoticeEventData(Scheduler *scheduler = 0,
-                      const QString notice = QString())
+  PostNoticeEventData(Scheduler *scheduler = 0, QString notice = QString())
     : EventData(scheduler), _notice(notice) { }
   QString toString() const {
     return "^"+_notice;
@@ -33,7 +32,7 @@ public:
   }
 };
 
-PostNoticeEvent::PostNoticeEvent(Scheduler *scheduler, const QString notice)
+PostNoticeEvent::PostNoticeEvent(Scheduler *scheduler, QString notice)
   : Event(new PostNoticeEventData(scheduler, notice)) {
 }
 

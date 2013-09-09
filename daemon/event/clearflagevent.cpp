@@ -18,7 +18,7 @@
 class ClearFlagEventData : public EventData {
 public:
   QString _flag;
-  ClearFlagEventData(Scheduler *scheduler = 0, const QString flag = QString())
+  ClearFlagEventData(Scheduler *scheduler = 0, QString flag = QString())
     : EventData(scheduler), _flag(flag) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler)
@@ -32,7 +32,7 @@ public:
   }
 };
 
-ClearFlagEvent::ClearFlagEvent(Scheduler *scheduler, const QString flag)
+ClearFlagEvent::ClearFlagEvent(Scheduler *scheduler, QString flag)
   : Event(new ClearFlagEventData(scheduler, flag)) {
 }
 

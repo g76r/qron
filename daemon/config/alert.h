@@ -21,12 +21,14 @@
 
 class AlertData;
 
+/** Class used to represent alert data during emission, in or between Alerter
+ * and AlertChannel classes. */
 class Alert : public ParamsProvider {
   QSharedDataPointer<AlertData> d;
 
 public:
   Alert();
-  Alert(const QString id, AlertRule rule);
+  Alert(QString id, AlertRule rule);
   Alert(const Alert&);
   Alert &operator=(const Alert &other);
   /** Compare id()'s */

@@ -43,7 +43,7 @@ AlertRule &AlertRule::operator=(const AlertRule &rhs) {
 AlertRule::~AlertRule() {
 }
 
-AlertRule::AlertRule(const PfNode node, const QString pattern,
+AlertRule::AlertRule(PfNode node, QString pattern,
                      AlertChannel *channel, QString channelName,
                      bool stop, bool notifyCancel, bool notifyReminder)
   : d(new AlertRuleData) {
@@ -60,7 +60,7 @@ AlertRule::AlertRule(const PfNode node, const QString pattern,
   d->_notifyReminder = notifyReminder;
 }
 
-QRegExp AlertRule::compilePattern(const QString pattern) {
+QRegExp AlertRule::compilePattern(QString pattern) {
   QString re;
   for (int i = 0; i < pattern.size(); ++i) {
     QChar c = pattern.at(i);

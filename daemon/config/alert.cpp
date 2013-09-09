@@ -26,7 +26,7 @@ public:
 Alert::Alert() : d(new AlertData) {
 }
 
-Alert::Alert(const QString id, AlertRule rule) : d(new AlertData(id, rule)) {
+Alert::Alert(QString id, AlertRule rule) : d(new AlertData(id, rule)) {
 }
 
 Alert::Alert(const Alert &rhs) : ParamsProvider(), d(rhs.d) {

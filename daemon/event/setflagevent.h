@@ -21,7 +21,7 @@ class Scheduler;
 
 class SetFlagEvent : public Event {
 public:
-  SetFlagEvent(Scheduler *scheduler = 0, const QString flag = QString());
+  SetFlagEvent(Scheduler *scheduler = 0, QString flag = QString());
   SetFlagEvent(const SetFlagEvent &);
   ~SetFlagEvent();
 };

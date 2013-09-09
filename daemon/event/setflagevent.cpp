@@ -18,7 +18,7 @@
 class SetFlagEventData : public EventData {
 public:
   QString _flag;
-  SetFlagEventData(Scheduler *scheduler, const QString flag)
+  SetFlagEventData(Scheduler *scheduler, QString flag)
     : EventData(scheduler), _flag(flag) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler)
@@ -32,7 +32,7 @@ public:
   }
 };
 
-SetFlagEvent::SetFlagEvent(Scheduler *scheduler, const QString flag)
+SetFlagEvent::SetFlagEvent(Scheduler *scheduler, QString flag)
   : Event(new SetFlagEventData(scheduler, flag)) {
 }
 

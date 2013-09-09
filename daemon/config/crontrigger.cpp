@@ -177,7 +177,7 @@ QDateTime CronTrigger::lastTriggered() const {
       ? QDateTime::fromMSecsSinceEpoch(d->_lastTriggered) : QDateTime();
 }
 
-void CronTrigger::setLastTriggered(const QDateTime lastTriggered) const {
+void CronTrigger::setLastTriggered(QDateTime lastTriggered) const {
   if (d) {
     d->_lastTriggered = lastTriggered.isValid()
         ? lastTriggered.toMSecsSinceEpoch() : -1;

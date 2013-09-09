@@ -51,8 +51,8 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  inline void setEventName(const QString eventName) { _eventName = eventName; }
-  inline void setPrefix(const QString prefix, int type = 0) {
+  inline void setEventName(QString eventName) { _eventName = eventName; }
+  inline void setPrefix(QString prefix, int type = 0) {
     _prefixes.insert(type, prefix); }
   inline void setPrefixRole(int prefixRole) {
     _prefixRole = prefixRole; }

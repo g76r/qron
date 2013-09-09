@@ -53,7 +53,7 @@ public:
    * @return -1 if not available within 10 years */
   int nextTriggeringMsecs() const;
   QDateTime lastTriggered() const;
-  void setLastTriggered(const QDateTime lastTriggered) const;
+  void setLastTriggered(QDateTime lastTriggered) const;
   void clearLastTriggered() const { setLastTriggered(QDateTime()); }
 };
 

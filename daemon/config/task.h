@@ -34,7 +34,7 @@ public:
   enum DiscardAliasesOnStart { DiscardNone, DiscardAll, DiscardUnknown };
   Task();
   Task(const Task &other);
-  Task(PfNode node, Scheduler *scheduler, const Task oldTask);
+  Task(PfNode node, Scheduler *scheduler, Task oldTask);
   ~Task();
   Task &operator=(const Task &other);
   bool operator==(const Task &other) const;
@@ -56,9 +56,9 @@ public:
   QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;
   QDateTime lastExecution() const;
-  void setLastExecution(const QDateTime timestamp) const;
+  void setLastExecution(QDateTime timestamp) const;
   QDateTime nextScheduledExecution() const;
-  void setNextScheduledExecution(const QDateTime timestamp) const;
+  void setNextScheduledExecution(QDateTime timestamp) const;
   /** Maximum allowed simultaneous instances (includes running and queued
     * instances). Default: 1. */
   int maxInstances() const;
@@ -66,17 +66,17 @@ public:
   int instancesCount() const;
   /** Atomic fetch-and-add of the current instances count. */
   int fetchAndAddInstancesCount(int valueToAdd) const;
-  const QList<QRegExp> stderrFilters() const;
+  QList<QRegExp> stderrFilters() const;
   void appendStderrFilter(QRegExp filter);
   void triggerStartEvents(const ParamsProvider *context) const;
   void triggerSuccessEvents(const ParamsProvider *context) const;
   void triggerFailureEvents(const ParamsProvider *context) const;
-  const QList<Event> onstartEvents() const;
-  const QList<Event> onsuccessEvents() const;
-  const QList<Event> onfailureEvents() const;
+  QList<Event> onstartEvents() const;
+  QList<Event> onsuccessEvents() const;
+  QList<Event> onfailureEvents() const;
   /** Events hash with "onsuccess", "onfailure"... key, mainly for UI purpose.
    */
-  const QMultiHash<QString, Event> allEvents() const;
+  QMultiHash<QString, Event> allEvents() const;
   bool enabled() const;
   void setEnabled(bool enabled) const;
   bool lastSuccessful() const;
@@ -104,9 +104,9 @@ public:
   /** Human readable list of all triggers as one string, for UI purpose. */
   QString triggersAsString() const;
   /** Cron triggers list */
-  const QList<CronTrigger> cronTriggers() const;
+  QList<CronTrigger> cronTriggers() const;
   /** Notice triggers set */
-  const QSet<QString> noticeTriggers() const;
+  QSet<QString> noticeTriggers() const;
   /** Human readable list of other triggers, i.e. indirect triggers such
    * as the one implied by (onsuccess(requesttask foo)) on task bar.
    * Note that not all indirect triggers can be listed here since some cannot
