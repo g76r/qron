@@ -162,12 +162,6 @@ bool CronTrigger::isValid() const {
   return d && d->_isValid;
 }
 
-int CronTrigger::nextTriggeringMsecs() const {
-  // LATER handle case were lastTrigger is far away in the past
-  QDateTime next = nextTriggering(QDateTime::currentDateTime().addYears(10));
-  return next.isValid() ? QDateTime::currentDateTime().msecsTo(next) : -1;
-}
-
 QDateTime CronTrigger::nextTriggering(QDateTime max) const {
   return d ? d->nextTriggering(max) : QDateTime();
 }

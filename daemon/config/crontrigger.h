@@ -46,12 +46,15 @@ public:
     return nextTriggering(QDateTime::currentDateTime().addYears(10)); }
   /** Syntaxic sugar returning msecs from current time
    * @return -1 if not available within 10 years */
-  int nextTriggeringMsecs(QDateTime lastTriggered) const {
+  qint64 nextTriggeringMsecs(QDateTime lastTriggered) const {
     setLastTriggered(lastTriggered);
     return nextTriggeringMsecs(); }
   /** Syntaxic sugar returning msecs from current time
    * @return -1 if not available within 10 years */
-  int nextTriggeringMsecs() const;
+  qint64 nextTriggeringMsecs() const {
+    // LATER handle case were lastTrigger is far away in the past
+    QDateTime next = nextTriggering(QDateTime::currentDateTime().addYears(10));
+    return next.isValid() ? QDateTime::currentDateTime().msecsTo(next) : -1; }
   QDateTime lastTriggered() const;
   void setLastTriggered(QDateTime lastTriggered) const;
   void clearLastTriggered() const { setLastTriggered(QDateTime()); }
