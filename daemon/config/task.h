@@ -92,7 +92,7 @@ public:
   /** in millis, LLONG_MAX if not set */
   long long maxDurationBeforeAbort() const;
   ParamSet setenv() const;
-  QSet<QString> unsetenv() const;
+  ParamSet unsetenv() const;
   DiscardAliasesOnStart discardAliasesOnStart() const;
   inline QString discardAliasesOnStartAsString() const {
     return discardAliasesOnStartAsString(discardAliasesOnStart()); }

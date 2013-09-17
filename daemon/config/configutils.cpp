@@ -16,8 +16,10 @@
 ConfigUtils::ConfigUtils() {
 }
 
-void ConfigUtils::loadGenericParamSet(PfNode parentnode, ParamSet &params,
+void ConfigUtils::loadGenericParamSet(PfNode parentnode, ParamSet *params,
                                       QString attrname) {
+  if (!params)
+    return;
   QListIterator<QPair<QString,QString> > it(
         parentnode.stringsPairChildrenByName(attrname));
   while (it.hasNext()) {
@@ -26,16 +28,18 @@ void ConfigUtils::loadGenericParamSet(PfNode parentnode, ParamSet &params,
       Log::warning() << "invalid empty param in " << parentnode.toPf();
     else {
       QString value = p.second;
-      params.setValue(p.first, value.isNull() ? QString("") : value);
+      params->setValue(p.first, value.isNull() ? QString("") : value);
     }
   }
 }
 
-void ConfigUtils::loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv) {
+void ConfigUtils::loadUnsetenv(PfNode parentnode, ParamSet *unsetenv) {
+  if (!unsetenv)
+    return;
   foreach (QString content, parentnode.stringChildrenByName("unsetenv")) {
     QStringList names = content.split(QRegExp("\\s"));
     foreach (const QString name, names)
-      unsetenv.insert(name);
+      unsetenv->setValue(name, QString());
   }
 }
 

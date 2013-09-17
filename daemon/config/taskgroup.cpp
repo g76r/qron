@@ -25,10 +25,9 @@
 class TaskGroupData : public QSharedData {
 public:
   QString _id, _label;
-  ParamSet _params, _setenv;
+  ParamSet _params, _setenv, _unsetenv;
   QList<Event> _onstart, _onsuccess, _onfailure;
   QWeakPointer<Scheduler> _scheduler;
-  QSet<QString> _unsetenv;
 };
 
 TaskGroup::TaskGroup() : d(new TaskGroupData) {
@@ -38,27 +37,27 @@ TaskGroup::TaskGroup(const TaskGroup &other) : d(other.d) {
 }
 
 TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
-                     ParamSet parentSetenv, QSet<QString> parentUnsetenv,
+                     ParamSet parentSetenv, ParamSet parentUnsetenv,
                      Scheduler *scheduler) {
   TaskGroupData *tgd = new TaskGroupData;
   tgd->_scheduler = scheduler;
   tgd->_id = ConfigUtils::sanitizeId(node.attribute("id"), true); // LATER check uniqueness
   tgd->_label = node.attribute("label", tgd->_id);
   tgd->_params.setParent(parentParamSet);
-  ConfigUtils::loadParamSet(node, tgd->_params);
+  ConfigUtils::loadParamSet(node, &tgd->_params);
   tgd->_setenv.setParent(parentSetenv);
-  ConfigUtils::loadSetenv(node, tgd->_setenv);
-  ConfigUtils::loadUnsetenv(node, tgd->_unsetenv);
-  tgd->_unsetenv |= parentUnsetenv;
+  ConfigUtils::loadSetenv(node, &tgd->_setenv);
+  ConfigUtils::loadUnsetenv(node, &tgd->_unsetenv);
+  tgd->_unsetenv.setParent(parentUnsetenv);
   foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventListConfiguration(child, tgd->_onstart, tgd->_id);
+    scheduler->loadEventListConfiguration(child, &tgd->_onstart, tgd->_id);
   foreach (PfNode child, node.childrenByName("onsuccess"))
-    scheduler->loadEventListConfiguration(child, tgd->_onsuccess, tgd->_id);
+    scheduler->loadEventListConfiguration(child, &tgd->_onsuccess, tgd->_id);
   foreach (PfNode child, node.childrenByName("onfailure"))
-    scheduler->loadEventListConfiguration(child, tgd->_onfailure, tgd->_id);
+    scheduler->loadEventListConfiguration(child, &tgd->_onfailure, tgd->_id);
   foreach (PfNode child, node.childrenByName("onfinish")) {
-    scheduler->loadEventListConfiguration(child, tgd->_onsuccess, tgd->_id);
-    scheduler->loadEventListConfiguration(child, tgd->_onfailure, tgd->_id);
+    scheduler->loadEventListConfiguration(child, &tgd->_onsuccess, tgd->_id);
+    scheduler->loadEventListConfiguration(child, &tgd->_onfailure, tgd->_id);
   }
   d = tgd;
 }
@@ -122,8 +121,8 @@ ParamSet TaskGroup::setenv() const {
   return d ? d->_setenv : ParamSet();
 }
 
-QSet<QString> TaskGroup::unsetenv() const {
-  return d ? d->_unsetenv : QSet<QString>();
+ParamSet TaskGroup::unsetenv() const {
+  return d ? d->_unsetenv : ParamSet();
 }
 
 QMultiHash<QString, Event> TaskGroup::allEvents() const {

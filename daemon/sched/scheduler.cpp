@@ -159,9 +159,9 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   }
   //Log::debug() << "replacing loggers " << loggers.size();
   Log::replaceLoggersPlusConsole(Log::Fatal, loggers);
-  ConfigUtils::loadParamSet(root, _globalParams);
-  ConfigUtils::loadSetenv(root, _setenv);
-  ConfigUtils::loadUnsetenv(root, _unsetenv);
+  ConfigUtils::loadParamSet(root, &_globalParams);
+  ConfigUtils::loadSetenv(root, &_setenv);
+  ConfigUtils::loadUnsetenv(root, &_unsetenv);
   _tasksGroups.clear();
   foreach (PfNode node, root.childrenByName("taskgroup")) {
     QString id = node.attribute("id");
@@ -306,35 +306,35 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   }
   _onstart.clear();
   foreach (PfNode node, root.childrenByName("onstart"))
-    if (!loadEventListConfiguration(node, _onstart, ""))
+    if (!loadEventListConfiguration(node, &_onstart, ""))
       return false;
   _onsuccess.clear();
   foreach (PfNode node, root.childrenByName("onsuccess"))
-    if (!loadEventListConfiguration(node, _onsuccess, ""))
+    if (!loadEventListConfiguration(node, &_onsuccess, ""))
       return false;
   _onfailure.clear();
   foreach (PfNode node, root.childrenByName("onfailure"))
-    if (!loadEventListConfiguration(node, _onfailure, ""))
+    if (!loadEventListConfiguration(node, &_onfailure, ""))
       return false;
   foreach (PfNode node, root.childrenByName("onfinish"))
-    if (!loadEventListConfiguration(node, _onsuccess, "")
-        || !loadEventListConfiguration(node, _onfailure, ""))
+    if (!loadEventListConfiguration(node, &_onsuccess, "")
+        || !loadEventListConfiguration(node, &_onfailure, ""))
       return false;
   _onlog.clear();
   foreach (PfNode node, root.childrenByName("onlog"))
-    if (!loadEventListConfiguration(node, _onlog, ""))
+    if (!loadEventListConfiguration(node, &_onlog, ""))
       return false;
   _onnotice.clear();
   foreach (PfNode node, root.childrenByName("onnotice"))
-    if (!loadEventListConfiguration(node, _onnotice, ""))
+    if (!loadEventListConfiguration(node, &_onnotice, ""))
       return false;
   _onschedulerstart.clear();
   _onconfigload.clear();
   foreach (PfNode node, root.childrenByName("onschedulerstart"))
-    if (!loadEventListConfiguration(node, _onschedulerstart, ""))
+    if (!loadEventListConfiguration(node, &_onschedulerstart, ""))
       return false;
   foreach (PfNode node, root.childrenByName("onconfigload"))
-    if (!loadEventListConfiguration(node, _onconfigload, ""))
+    if (!loadEventListConfiguration(node, &_onconfigload, ""))
       return false;
   // LATER onschedulershutdown
   foreach (const RequestTaskEventLink &link, _requestTaskEventLinks) {
@@ -405,6 +405,8 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   emit targetsConfigurationReset(_clusters, _hosts);
   emit hostResourceConfigurationChanged(_resources);
   emit globalParamsChanged(_globalParams);
+  emit globalSetenvChanged(_setenv);
+  emit globalUnsetenvChanged(_unsetenv);
   emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
                                 _onnotice, _onschedulerstart, _onconfigload);
   emit accessControlConfigurationChanged(accessControlEnabled);
@@ -445,22 +447,24 @@ bool Scheduler::reloadConfiguration(PfNode root) {
 }
 
 bool Scheduler::loadEventListConfiguration(
-    PfNode listnode, QList<Event> &list, QString contextLabel,
+    PfNode listnode, QList<Event> *list, QString contextLabel,
     Task contextTask) {
   Q_UNUSED(contextTask)
+  if (!list)
+    return true;
   foreach (PfNode node, listnode.children()) {
     if (node.name() == "postnotice") {
-      list.append(PostNoticeEvent(this, node.contentAsString()));
+      list->append(PostNoticeEvent(this, node.contentAsString()));
     } else if (node.name() == "setflag") {
-      list.append(SetFlagEvent(this, node.contentAsString()));
+      list->append(SetFlagEvent(this, node.contentAsString()));
     } else if (node.name() == "clearflag") {
-      list.append(ClearFlagEvent(this, node.contentAsString()));
+      list->append(ClearFlagEvent(this, node.contentAsString()));
     } else if (node.name() == "raisealert") {
-      list.append(RaiseAlertEvent(this, node.contentAsString()));
+      list->append(RaiseAlertEvent(this, node.contentAsString()));
     } else if (node.name() == "cancelalert") {
-      list.append(CancelAlertEvent(this, node.contentAsString()));
+      list->append(CancelAlertEvent(this, node.contentAsString()));
     } else if (node.name() == "emitalert") {
-      list.append(EmitAlertEvent(this, node.contentAsString()));
+      list->append(EmitAlertEvent(this, node.contentAsString()));
     } else if (node.name() == "requesttask") {
       ParamSet params;
       // TODO loadparams
@@ -469,14 +473,14 @@ bool Scheduler::loadEventListConfiguration(
       _requestTaskEventLinks.append(
             RequestTaskEventLink(event, listnode.name(), contextLabel,
                                  contextTask));
-      list.append(event);
+      list->append(event);
     } else if (node.name() == "udp") {
-      list.append(UdpEvent(node.attribute("address"),
-                           node.attribute("message")));
+      list->append(UdpEvent(node.attribute("address"),
+                            node.attribute("message")));
     } else if (node.name() == "log") {
-      list.append(LogEvent(
-                    Log::severityFromString(node.attribute("severity", "info")),
-                    node.attribute("message")));
+      list->append(LogEvent(
+                     Log::severityFromString(node.attribute("severity", "info")),
+                     node.attribute("message")));
     } else {
       Log::warning() << "unknown event type: " << node.name();
     }

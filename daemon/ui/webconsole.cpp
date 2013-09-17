@@ -33,6 +33,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                                  ResourcesAllocationModel::LwmOverConfigured)),
   _resourcesConsumptionModel(new ResourcesConsumptionModel(this)),
   _globalParamsModel(new ParamSetModel(this)),
+  _globalSetenvModel(new ParamSetModel(this)),
+  _globalUnsetenvModel(new ParamSetModel(this)),
   _alertParamsModel(new ParamSetModel(this)),
   _raisedAlertsModel(new RaisedAlertsModel(this)),
   _lastEmitedAlertsModel(new LastEmitedAlertsModel(this, 500)),
@@ -57,6 +59,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesConsumptionView(
     new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlGlobalParamsView(new HtmlTableView(this)),
+  _htmlGlobalSetenvView(new HtmlTableView(this)),
+  _htmlGlobalUnsetenvView(new HtmlTableView(this)),
   _htmlAlertParamsView(new HtmlTableView(this)),
   _htmlRaisedAlertsView(new HtmlTableView(this, RAISED_ALERTS_MAXROWS)),
   _htmlRaisedAlertsView10(new HtmlTableView(this, RAISED_ALERTS_MAXROWS, 10)),
@@ -95,6 +99,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvResourcesLwmView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvResourcesConsumptionView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvGlobalParamsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
+  _csvGlobalSetenvView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
+  _csvGlobalUnsetenvView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvAlertParamsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvRaisedAlertsView(new CsvTableView(this, RAISED_ALERTS_MAXROWS)),
   _csvLastEmitedAlertsView(new CsvTableView(
@@ -121,6 +127,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _title("Qron Web Console"), _navtitle("Qron Web Console"),
   _authorizer(new InMemoryRulesAuthorizer(this)), _usersDatabase(0),
   _ownUsersDatabase(false), _accessControlEnabled(false) {
+  QList<int> cols;
   _thread->setObjectName("WebConsoleServer");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -154,6 +161,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesConsumptionView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlGlobalParamsView->setModel(_globalParamsModel);
   _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
+  _htmlGlobalSetenvView->setModel(_globalSetenvModel);
+  _htmlGlobalSetenvView->setTableClass("table table-condensed table-hover");
+  _htmlGlobalUnsetenvView->setModel(_globalUnsetenvModel);
+  _htmlGlobalUnsetenvView->setTableClass("table table-condensed table-hover");
+  cols.clear();
+  cols << 1;
+  _htmlGlobalUnsetenvView->setColumnIndexes(cols);
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _htmlAlertParamsView->setTableClass("table table-condensed table-hover");
   _raisedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ",
@@ -231,7 +245,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksScheduleView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
   _htmlTasksScheduleView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
-  QList<int> cols;
+  cols.clear();
   cols << 11 << 2 << 5 << 6 << 19 << 10 << 17 << 18;
   _htmlTasksScheduleView->setColumnIndexes(cols);
   _htmlTasksScheduleView->setRowAnchor("taskschedule.", 11);
@@ -344,6 +358,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvResourcesConsumptionView->setRowHeaders();
   _csvGlobalParamsView->setModel(_globalParamsModel);
   _csvGlobalParamsView->setFieldQuote('"');
+  _csvGlobalSetenvView->setModel(_globalSetenvModel);
+  _csvGlobalSetenvView->setFieldQuote('"');
+  _csvGlobalUnsetenvView->setModel(_globalUnsetenvModel);
+  _csvGlobalUnsetenvView->setFieldQuote('"');
   _csvAlertParamsView->setModel(_alertParamsModel);
   _csvAlertParamsView->setFieldQuote('"');
   _csvRaisedAlertsView->setModel(_raisedAlertsModel);
@@ -373,6 +391,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("hostslist", _htmlHostsListView);
   _wuiHandler->addView("clusterslist", _htmlClustersListView);
   _wuiHandler->addView("globalparams", _htmlGlobalParamsView);
+  _wuiHandler->addView("globalsetenv", _htmlGlobalSetenvView);
+  _wuiHandler->addView("globalunsetenv", _htmlGlobalUnsetenvView);
   _wuiHandler->addView("alertparams", _htmlAlertParamsView);
   _wuiHandler->addView("raisedalerts", _htmlRaisedAlertsView);
   _wuiHandler->addView("raisedalerts10", _htmlRaisedAlertsView10);
@@ -922,6 +942,28 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlGlobalParamsView->text().toUtf8().constData());
     return true;
   }
+  if (path == "/rest/csv/setenv/global/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvGlobalSetenvView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/setenv/global/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlGlobalSetenvView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/csv/unsetenv/global/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvGlobalUnsetenvView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/unsetenv/global/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlGlobalUnsetenvView->text().toUtf8().constData());
+    return true;
+  }
   if (path == "/rest/csv/alerts/params/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
@@ -1115,6 +1157,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _tasksModel, SLOT(taskChanged(Task)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
+    disconnect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
+               _globalSetenvModel, SLOT(paramsChanged(ParamSet)));
+    disconnect(_scheduler, SIGNAL(globalUnsetenvChanged(ParamSet)),
+               _globalUnsetenvModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler->alerter(), SIGNAL(paramsChanged(ParamSet)),
                _alertParamsModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
@@ -1196,6 +1242,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _tasksModel, SLOT(taskChanged(Task)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
+    connect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
+            _globalSetenvModel, SLOT(paramsChanged(ParamSet)));
+    connect(_scheduler, SIGNAL(globalUnsetenvChanged(ParamSet)),
+            _globalUnsetenvModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler->alerter(), SIGNAL(paramsChanged(ParamSet)),
             _alertParamsModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),

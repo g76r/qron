@@ -52,7 +52,8 @@ class WebConsole : public HttpHandler {
   ClustersListModel *_clustersListModel;
   ResourcesAllocationModel *_freeResourcesModel, *_resourcesLwmModel;
   ResourcesConsumptionModel *_resourcesConsumptionModel;
-  ParamSetModel *_globalParamsModel, *_alertParamsModel;
+  ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
+  *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
   LastEmitedAlertsModel *_lastEmitedAlertsModel;
   LastOccuredTextEventsModel *_lastPostedNoticesModel, *_lastFlagsChangesModel;
@@ -65,7 +66,8 @@ class WebConsole : public HttpHandler {
   AlertChannelsModel *_alertChannelsModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
-  *_htmlResourcesConsumptionView, *_htmlGlobalParamsView, *_htmlAlertParamsView,
+  *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
+  *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView,
@@ -80,6 +82,7 @@ class WebConsole : public HttpHandler {
   CsvTableView *_csvHostsListView,
   *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
+  *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
   *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,

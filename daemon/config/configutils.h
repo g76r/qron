@@ -19,17 +19,17 @@
 
 class ConfigUtils {
 public:
-  static inline void loadParamSet(PfNode parentnode, ParamSet &params) {
+  static inline void loadParamSet(PfNode parentnode, ParamSet *params) {
     return loadGenericParamSet(parentnode, params, "param"); }
-  static inline void loadSetenv(PfNode parentnode, ParamSet &params) {
+  static inline void loadSetenv(PfNode parentnode, ParamSet *params) {
     return loadGenericParamSet(parentnode, params, "setenv"); }
-  static void loadUnsetenv(PfNode parentnode, QSet<QString> &unsetenv);
+  static void loadUnsetenv(PfNode parentnode, ParamSet *unsetenv);
   /** For identifier, with or without dot. Cannot contain ParamSet interpreted
    * expressions such as %!yyyy. */
   static QString sanitizeId(QString string, bool allowDot = false);
 
 private:
-  static void loadGenericParamSet(PfNode parentnode, ParamSet &params,
+  static void loadGenericParamSet(PfNode parentnode, ParamSet *params,
                                   QString attrname);
   ConfigUtils();
 };

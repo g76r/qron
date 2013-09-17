@@ -30,8 +30,8 @@ class TaskData : public QSharedData {
 public:
   QString _id, _label, _mean, _command, _target, _info;
   TaskGroup _group;
-  ParamSet _params, _setenv;
-  QSet<QString> _noticeTriggers, _unsetenv;
+  ParamSet _params, _setenv, _unsetenv;
+  QSet<QString> _noticeTriggers;
   QHash<QString,qint64> _resources;
   int _maxInstances;
   QList<CronTrigger> _cronTriggers;
@@ -93,9 +93,9 @@ Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
   td->_minExpectedDuration = f < 0 ? 0 : (long long)(f*1000);
   f = node.doubleAttribute("maxdurationbeforeabort", -1);
   td->_maxDurationBeforeAbort = f < 0 ? LLONG_MAX : (long long)(f*1000);
-  ConfigUtils::loadParamSet(node, td->_params);
-  ConfigUtils::loadSetenv(node, td->_setenv);
-  ConfigUtils::loadUnsetenv(node, td->_unsetenv);
+  ConfigUtils::loadParamSet(node, &td->_params);
+  ConfigUtils::loadSetenv(node, &td->_setenv);
+  ConfigUtils::loadUnsetenv(node, &td->_unsetenv);
   QHash<QString,CronTrigger> oldCronTriggers;
   // copy mutable fields from old task and build old cron triggers dictionary
   if (oldTask.d) {
@@ -175,18 +175,18 @@ Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
   }
   d = td;
   foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventListConfiguration(child, td->_onstart, td->_id, *this);
+    scheduler->loadEventListConfiguration(child, &td->_onstart, td->_id, *this);
   foreach (PfNode child, node.childrenByName("onsuccess"))
     scheduler->loadEventListConfiguration(
-          child, td->_onsuccess, td->_id, *this);
+          child, &td->_onsuccess, td->_id, *this);
   foreach (PfNode child, node.childrenByName("onfailure"))
     scheduler->loadEventListConfiguration(
-          child, td->_onfailure, td->_id, *this);
+          child, &td->_onfailure, td->_id, *this);
   foreach (PfNode child, node.childrenByName("onfinish")) {
     scheduler->loadEventListConfiguration(
-          child, td->_onsuccess, td->_id, *this);
+          child, &td->_onsuccess, td->_id, *this);
     scheduler->loadEventListConfiguration(
-          child, td->_onfailure, td->_id, *this);
+          child, &td->_onfailure, td->_id, *this);
   }
   d = td;
 }
@@ -263,7 +263,7 @@ void Task::completeConfiguration(TaskGroup taskGroup) {
   d->_group = taskGroup;
   d->_params.setParent(taskGroup.params());
   d->_setenv.setParent(taskGroup.setenv());
-  d->_unsetenv |= taskGroup.unsetenv();
+  d->_unsetenv.setParent(taskGroup.unsetenv());
   QString filter = params().value("stderrfilter");
   if (!filter.isEmpty())
     d->_stderrFilters.append(QRegExp(filter));
@@ -443,8 +443,8 @@ ParamSet Task::setenv() const {
   return d ? d->_setenv : ParamSet();
 }
 
-QSet<QString> Task::unsetenv() const {
-  return d ? d->_unsetenv : QSet<QString>();
+ParamSet Task::unsetenv() const {
+  return d ? d->_unsetenv : ParamSet();
 }
 
 Task::DiscardAliasesOnStart Task::discardAliasesOnStart() const {

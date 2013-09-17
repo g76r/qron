@@ -32,7 +32,7 @@ public:
   TaskGroup();
   TaskGroup(const TaskGroup &other);
   TaskGroup(PfNode node, ParamSet parentParamSet, ParamSet parentSetenv,
-            QSet<QString> parentUnsetenv, Scheduler *scheduler);
+            ParamSet parentUnsetenv, Scheduler *scheduler);
   ~TaskGroup();
   TaskGroup &operator=(const TaskGroup &other);
   QString id() const;
@@ -46,7 +46,7 @@ public:
   QList<Event> onsuccessEvents() const;
   QList<Event> onfailureEvents() const;
   ParamSet setenv() const;
-  QSet<QString> unsetenv() const;
+  ParamSet unsetenv() const;
   QMultiHash<QString,Event> allEvents() const;
 };
 

@@ -41,13 +41,13 @@ class Scheduler : public QObject {
   Q_DISABLE_COPY(Scheduler)
   class RequestTaskEventLink;
   QThread *_thread;
-  ParamSet _globalParams, _setenv;
+  ParamSet _globalParams, _setenv, _unsetenv;
   QHash<QString,TaskGroup> _tasksGroups;
   QHash<QString,Task> _tasks;
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
   QHash<QString,QHash<QString,qint64> > _resources;
-  QSet<QString> _setFlags, _unsetenv;
+  QSet<QString> _setFlags;
   mutable QMutex _flagsMutex, _configMutex;
   QList<TaskRequest> _queuedRequests;
   QHash<TaskRequest,Executor*> _runningRequests;
@@ -68,8 +68,7 @@ public:
   ~Scheduler();
   /** This method is thread-safe */
   bool reloadConfiguration(QIODevice *source);
-  bool loadEventListConfiguration(
-      PfNode listnode, QList<Event> &list, QString contextLabel,
+  bool loadEventListConfiguration(PfNode listnode, QList<Event> *list, QString contextLabel,
       Task contextTask = Task());
   static void triggerEvents(QList<Event> list, const ParamsProvider *context);
   void customEvent(QEvent *event);
@@ -195,6 +194,8 @@ signals:
    * disabled, enabled... */
   void taskChanged(Task request);
   void globalParamsChanged(ParamSet globalParams);
+  void globalSetenvChanged(ParamSet globalSetenv);
+  void globalUnsetenvChanged(ParamSet globalUnsetenv);
   void noticePosted(QString notice);
   void flagSet(QString flag);
   void flagCleared(QString flag);

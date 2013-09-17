@@ -386,7 +386,7 @@ void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
   else
     *sysenv = _baseenv;
   // first clean system base env from any unset variables
-  foreach (const QString pattern, request.task().unsetenv()) {
+  foreach (const QString pattern, request.task().unsetenv().keys()) {
     QRegExp re(pattern, Qt::CaseInsensitive, QRegExp::WildcardUnix);
     foreach (const QString key, sysenv->keys())
       if (re.exactMatch(key))

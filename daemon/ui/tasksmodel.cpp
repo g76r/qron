@@ -223,14 +223,9 @@ QString TasksModel::taskLastExecDuration(Task task) {
 QString TasksModel::taskSystemEnvironnement(Task task) {
   QString env;
   ParamSet setenv = task.setenv();
-  QSet<QString> keys = setenv.keys();
-  keys.remove("TASKREQUESTID");
-  keys.remove("FQTN");
-  keys.remove("TASKGROUPID");
-  keys.remove("TASKID");
-  foreach(const QString key, keys)
+  foreach(const QString key, setenv.keys(false))
     env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
-  foreach(const QString key, task.unsetenv())
+  foreach(const QString key, task.unsetenv().keys(false))
     env.append('-').append(key).append(' ');
   if (!env.isEmpty())
     env.chop(1);
@@ -240,12 +235,7 @@ QString TasksModel::taskSystemEnvironnement(Task task) {
 QString TasksModel::taskSetenv(Task task){
   QString env;
   ParamSet setenv = task.setenv();
-  QSet<QString> keys = setenv.keys();
-  keys.remove("TASKREQUESTID");
-  keys.remove("FQTN");
-  keys.remove("TASKGROUPID");
-  keys.remove("TASKID");
-  foreach(const QString key, keys)
+  foreach(const QString key, setenv.keys(false))
     env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
   if (!env.isEmpty())
     env.chop(1);
@@ -254,7 +244,7 @@ QString TasksModel::taskSetenv(Task task){
 
 QString TasksModel::taskUnsetenv(Task task)     {
   QString env;
-  foreach(const QString key, task.unsetenv())
+  foreach(const QString key, task.unsetenv().keys(false))
     env.append(key).append(' ');
   if (!env.isEmpty())
     env.chop(1);

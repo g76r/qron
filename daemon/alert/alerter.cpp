@@ -61,7 +61,7 @@ Alerter::~Alerter() {
 bool Alerter::loadConfiguration(PfNode root) {
   _params.clear();
   _rules.clear();
-  ConfigUtils::loadParamSet(root, _params);
+  ConfigUtils::loadParamSet(root, &_params);
   foreach (PfNode node, root.childrenByName("rule")) {
     QString pattern = node.attribute("match", "**");
     bool notifyCancel = !node.hasChild("nocancelnotify");
