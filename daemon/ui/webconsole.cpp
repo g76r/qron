@@ -1459,8 +1459,9 @@ void WebConsole::recomputeDiagrams() {
     fqtns.insert(task.fqtn());
   }
   foreach (const Cluster &cluster, _clusters.values())
-     foreach (const Host &host, cluster.hosts())
-       displayedHosts.insert(host.id());
+    foreach (const Host &host, cluster.hosts())
+      if (!host.isNull())
+        displayedHosts.insert(host.id());
   foreach (const Task &task, _tasks.values()) {
     notices.unite(task.noticeTriggers());
     QMultiHash<QString,Event> events;
@@ -1506,14 +1507,15 @@ void WebConsole::recomputeDiagrams() {
           .append(host.id()).append(" (")
           .append(host.hostname()).append(")\"," HOST_NODE "]\n");
   gv.append("}\n");
-  foreach (const Cluster &cluster, _clusters.values()) {
-    gv.append("\"").append(cluster.id()).append("\"")
-        .append("[label=\"").append(cluster.id()).append("\\n(")
-        .append(cluster.balancing()).append(")\"," CLUSTER_NODE "]\n");
-    foreach (const Host &host, cluster.hosts())
-      gv.append("\"").append(cluster.id()).append("\"--\"").append(host.id())
-          .append("\"[" CLUSTER_HOST_EDGE "]\n");
-  }
+  foreach (const Cluster &cluster, _clusters.values())
+    if (!cluster.isNull()) {
+      gv.append("\"").append(cluster.id()).append("\"")
+          .append("[label=\"").append(cluster.id()).append("\\n(")
+          .append(cluster.balancing()).append(")\"," CLUSTER_NODE "]\n");
+      foreach (const Host &host, cluster.hosts())
+        gv.append("\"").append(cluster.id()).append("\"--\"").append(host.id())
+            .append("\"[" CLUSTER_HOST_EDGE "]\n");
+    }
   gv.append("subgraph{graph[rank=min]\n");
   foreach (const QString &id, displayedGroups) {
     if (!id.contains('.')) // root groups

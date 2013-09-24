@@ -17,6 +17,7 @@
 #include "host.h"
 #include <QList>
 #include "pf/pfnode.h"
+#include "log/log.h"
 
 class ClusterData : public QSharedData {
 public:
@@ -35,7 +36,13 @@ Cluster::Cluster(PfNode node) {
   hgd->_id = node.attribute("id"); // LATER check uniqueness
   hgd->_label = node.attribute("label", hgd->_id);
   hgd->_balancing = node.attribute("balancing", "first"); // LATER check validity
-  d = hgd;
+  if (hgd->_balancing == "first" || hgd->_balancing == "each")
+    d = hgd;
+  else {
+    Log::error() << "invalid cluster balancing method '" << hgd->_balancing
+                 << "': " << node.toString();
+    delete hgd;
+  }
 }
 
 Cluster::~Cluster() {
@@ -47,6 +54,10 @@ Cluster &Cluster::operator=(const Cluster &other) {
   return *this;
 }
 
+bool Cluster::isNull() const {
+  return !d;
+}
+
 bool Cluster::operator==(const Cluster &other) const {
   return id() == other.id();
 }
@@ -56,17 +67,18 @@ bool Cluster::operator<(const Cluster &other) const {
 }
 
 void Cluster::appendHost(Host host) {
-  d->_hosts.append(host);
+  if (d)
+    d->_hosts.append(host);
 }
 
 QList<Host> Cluster::hosts() const {
-  return d->_hosts;
+  return d ? d->_hosts : QList<Host>();
 }
 
 QString Cluster::id() const {
-  return d->_id;
+  return d ? d->_id : QString();
 }
 
 QString Cluster::balancing() const {
-  return d->_balancing;
+  return d ? d->_balancing : QString();
 }

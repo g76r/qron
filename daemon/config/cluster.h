@@ -30,6 +30,7 @@ public:
   Cluster(PfNode node);
   ~Cluster();
   Cluster &operator=(const Cluster &other);
+  bool isNull() const;
   bool operator==(const Cluster &other) const;
   bool operator<(const Cluster &other) const;
   void appendHost(Host host);
