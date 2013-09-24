@@ -97,12 +97,11 @@ public slots:
    * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
    * @param paramsOverriding override params, using RequestFormField semantics
    * @param force if true, any constraints or ressources are ignored
-   * @return isNull() if task cannot be queued
+   * @return isEmpty() if task cannot be queued
    * @see asyncRequestTask
    * @see RequestFormField */
-  TaskRequest syncRequestTask(QString fqtn,
-                              ParamSet paramsOverriding = ParamSet(),
-                              bool force = false);
+  QList<TaskRequest> syncRequestTask(
+      QString fqtn, ParamSet paramsOverriding = ParamSet(), bool force = false);
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
    * processing the request.
@@ -222,8 +221,9 @@ private:
   Q_INVOKABLE bool reloadConfiguration(PfNode root);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
-  Q_INVOKABLE TaskRequest doRequestTask(QString fqtn, ParamSet paramsOverriding,
-                                        bool force);
+  Q_INVOKABLE QList<TaskRequest> doRequestTask(
+      QString fqtn, ParamSet paramsOverriding, bool force);
+  TaskRequest enqueueRequest(TaskRequest request, ParamSet paramsOverriding);
   Q_INVOKABLE TaskRequest doCancelRequest(quint64 id);
   Q_INVOKABLE TaskRequest doAbortTask(quint64 id);
 };

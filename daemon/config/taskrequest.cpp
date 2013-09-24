@@ -20,7 +20,7 @@ static QAtomicInt _sequence;
 
 class TaskRequestData : public QSharedData {
 public:
-  quint64 _id;
+  quint64 _id, _groupId;
   Task _task;
   ParamSet _params;
   QDateTime _submission;
@@ -45,8 +45,9 @@ public:
   mutable Host _target;
   mutable bool _abortable;
 
-  TaskRequestData(Task task, ParamSet params, bool force)
-    : _id(newId()), _task(task), _params(params),
+  TaskRequestData(Task task, ParamSet params, bool force, quint64 groupId = 0)
+    : _id(newId()), _groupId(groupId ? groupId : _id),
+      _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
       _command(task.command()), _setenv(task.setenv()),
       _start(LLONG_MIN), _end(LLONG_MIN),
@@ -79,6 +80,11 @@ TaskRequest::TaskRequest(Task task, bool force)
   : d(new TaskRequestData(task, task.params().createChild(), force)) {
 }
 
+TaskRequest::TaskRequest(Task task, quint64 groupId, bool force)
+  : d(new TaskRequestData(task, task.params().createChild(), force, groupId)) {
+}
+
+
 TaskRequest::~TaskRequest() {
 }
 
@@ -107,6 +113,10 @@ void TaskRequest::overrideParam(QString key, QString value) {
 
 quint64 TaskRequest::id() const {
   return d ? d->_id : 0;
+}
+
+quint64 TaskRequest::groupId() const {
+  return d ? d->_groupId : 0;
 }
 
 QDateTime TaskRequest::submissionDatetime() const {
@@ -175,6 +185,8 @@ QVariant TaskRequest::paramValue(QString key, QVariant defaultValue) const {
     return task().taskGroup().id();
   } else if (key == "!taskrequestid") {
     return QString::number(id());
+  } else if (key == "!taskrequestgroupid") {
+    return QString::number(groupId());
   } else if (key == "!runningms") {
     return QString::number(runningMillis());
   } else if (key == "!runnings") {

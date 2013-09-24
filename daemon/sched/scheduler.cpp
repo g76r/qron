@@ -68,6 +68,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _thread->start();
   qRegisterMetaType<Task>("Task");
   qRegisterMetaType<TaskRequest>("TaskRequest");
+  qRegisterMetaType<QList<TaskRequest> >("QList<TaskRequest>");
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
   qRegisterMetaType<QList<Event> >("QList<Event>");
@@ -222,6 +223,8 @@ bool Scheduler::reloadConfiguration(PfNode root) {
                      << "' not found, won't add it to cluster '"
                      << cluster.id() << "'";
     }
+    if (cluster.hosts().isEmpty())
+      Log::warning() << "cluster '" << cluster.id() << "' has no member";
     _clusters.insert(cluster.id(), cluster);
     //Log::debug() << "configured cluster '" << cluster.id() << "' with "
     //             << cluster.hosts().size() << " hosts";
@@ -494,18 +497,18 @@ void Scheduler::triggerEvents(QList<Event> list,
     e.trigger(context);
 }
 
-TaskRequest Scheduler::syncRequestTask(QString fqtn, ParamSet paramsOverriding,
-                                       bool force) {
+QList<TaskRequest> Scheduler::syncRequestTask(
+    QString fqtn, ParamSet paramsOverriding, bool force) {
   if (this->thread() == QThread::currentThread())
     return doRequestTask(fqtn, paramsOverriding, force);
-  TaskRequest request;
+  QList<TaskRequest> requests;
   QMetaObject::invokeMethod(this, "doRequestTask",
                             Qt::BlockingQueuedConnection,
-                            Q_RETURN_ARG(TaskRequest, request),
+                            Q_RETURN_ARG(QList<TaskRequest>, requests),
                             Q_ARG(QString, fqtn),
                             Q_ARG(ParamSet, paramsOverriding),
                             Q_ARG(bool, force));
-  return request;
+  return requests;
 }
 
 void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
@@ -516,21 +519,21 @@ void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
                             Q_ARG(bool, force));
 }
 
-TaskRequest Scheduler::doRequestTask(QString fqtn, ParamSet paramsOverriding,
-                                     bool force) {
+QList<TaskRequest> Scheduler::doRequestTask(
+    QString fqtn, ParamSet paramsOverriding, bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
+  Cluster cluster = _clusters.value(task.target());
   ml.unlock();
   if (task.isNull()) {
     Log::error() << "requested task not found: " << fqtn << paramsOverriding
                  << force;
-    return TaskRequest();
+    return QList<TaskRequest>();
   }
   if (!task.enabled()) {
     Log::info(fqtn) << "ignoring request since task is disabled: " << fqtn;
-    return TaskRequest();
+    return QList<TaskRequest>();
   }
-  TaskRequest request(task, force);
   bool fieldsValidated(true);
   foreach (RequestFormField field, task.requestFormFields()) {
     QString name(field.param());
@@ -543,17 +546,52 @@ TaskRequest Scheduler::doRequestTask(QString fqtn, ParamSet paramsOverriding,
                      << "'";
         fieldsValidated = false;
       }
-      field.apply(value, &request);
     }
   }
   if (!fieldsValidated)
-    return TaskRequest();
-  if (!force && (!task.enabled()
+    return QList<TaskRequest>();
+  QList<TaskRequest> requests;
+  if (cluster.balancing() == "each") {
+    qint64 groupId = 0;
+    foreach (Host host, cluster.hosts()) {
+      TaskRequest request(task, groupId, force);
+      if (!groupId)
+        groupId = request.groupId();
+      request.setTarget(host);
+      request = enqueueRequest(request, paramsOverriding);
+      if (!request.isNull())
+        requests.append(request);
+    }
+  } else {
+    TaskRequest request;
+    request = enqueueRequest(TaskRequest(task, force), paramsOverriding);
+    if (!request.isNull())
+      requests.append(request);
+  }
+  if (!requests.isEmpty()) {
+    reevaluateQueuedRequests();
+    emit taskChanged(task);
+  }
+  return requests;
+}
+
+TaskRequest Scheduler::enqueueRequest(
+    TaskRequest request, ParamSet paramsOverriding) {
+  Task task(request.task());
+  QString fqtn(task.fqtn());
+  foreach (RequestFormField field, task.requestFormFields()) {
+    QString name(field.param());
+    if (paramsOverriding.contains(name)) {
+      QString value(paramsOverriding.value(name));
+      field.apply(value, &request);
+    }
+  }
+  if (!request.force() && (!task.enabled()
       || task.discardAliasesOnStart() != Task::DiscardNone)) {
     // avoid stacking disabled task requests by canceling older ones
     for (int i = 0; i < _queuedRequests.size(); ++i) {
       const TaskRequest &r2 = _queuedRequests[i];
-      if (fqtn == r2.task().fqtn()) {
+      if (fqtn == r2.task().fqtn() && request.groupId() != r2.groupId()) {
         Log::info(fqtn, r2.id())
             << "canceling task because another instance of the same task "
                "is queued"
@@ -576,13 +614,12 @@ TaskRequest Scheduler::doRequestTask(QString fqtn, ParamSet paramsOverriding,
   }
   _alerter->cancelAlert("scheduler.maxqueuedrequests.reached");
   Log::debug(fqtn, request.id())
-      << "queuing task";
+      << "queuing task " << fqtn << "/" << request.id()
+      << " with request group id " << request.groupId();
   // note: a request must always be queued even if the task can be started
   // immediately, to avoid the new tasks being started before queued ones
   _queuedRequests.append(request);
-  reevaluateQueuedRequests();
   emit taskQueued(request);
-  emit taskChanged(task);
   return request;
 }
 
@@ -680,11 +717,12 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    TaskRequest request = syncRequestTask(fqtn);
-    if (!request.isNull())
-      Log::debug(fqtn, request.id())
-          << "cron trigger '" << trigger.cronExpression()
-          << "' triggered task '" << fqtn << "'";
+    QList<TaskRequest> requests = syncRequestTask(fqtn);
+    if (!requests.isEmpty())
+      foreach (TaskRequest request, requests)
+        Log::debug(fqtn, request.id())
+            << "cron trigger '" << trigger.cronExpression()
+            << "' triggered task '" << fqtn << "'";
     else
       Log::debug(fqtn) << "cron trigger '" << trigger.cronExpression()
                        << "' failed to trigger task '" << fqtn << "'";
@@ -800,7 +838,7 @@ void Scheduler::startQueuedTasks() {
         QString fqtn(r.task().fqtn());
         for (int j = 0; j < _queuedRequests.size(); ++j ) {
           TaskRequest r2 = _queuedRequests[j];
-          if (fqtn == r2.task().fqtn()) {
+          if (fqtn == r2.task().fqtn() && r.groupId() != r2.groupId()) {
             Log::info(fqtn, r2.id())
                 << "canceling task because another instance of the same task "
                    "is starting: " << fqtn << "/" << r.id();
@@ -846,16 +884,19 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
   }
   _alerter->cancelAlert("task.maxinstancesreached."+fqtn);
   // LATER check flags
+  QString target = request.target().id();
+  if (target.isEmpty())
+    target = task.target();
   QMutexLocker ml(&_configMutex);
   QList<Host> hosts;
-  Host host = _hosts.value(task.target());
+  Host host = _hosts.value(target);
   if (host.isNull())
-    hosts.append(_clusters.value(task.target()).hosts());
+    hosts.append(_clusters.value(target).hosts());
   else
     hosts.append(host);
   if (hosts.isEmpty()) {
     Log::error(fqtn, request.id()) << "cannot execute task '" << fqtn
-        << "' because its target '" << task.target() << "' is not defined";
+        << "' because its target '" << target << "' is invalid";
     _alerter->raiseAlert("task.failure."+fqtn);
     request.setReturnCode(-1);
     request.setSuccess(false);
@@ -891,7 +932,7 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     _resources.insert(h.id(), hostResources);
     ml.unlock();
     emit hostResourceAllocationChanged(h.id(), hostResources);
-    _alerter->cancelAlert("resource.exhausted."+task.target());
+    _alerter->cancelAlert("resource.exhausted."+target);
     request.setTarget(h);
     request.setStartDatetime();
     triggerEvents(_onstart, &request);
@@ -919,9 +960,9 @@ nexthost:;
   Log::warning(fqtn, request.id())
       << "cannot execute task '" << fqtn
       << "' now because there is not enough resources on target '"
-      << task.target() << "'";
+      << target << "'";
   // LATER suffix alert with resources kind (one alert per exhausted kind)
-  _alerter->raiseAlert("resource.exhausted."+task.target());
+  _alerter->raiseAlert("resource.exhausted."+target);
   return false;
 }
 

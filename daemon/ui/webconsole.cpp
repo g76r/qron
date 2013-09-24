@@ -575,11 +575,13 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         foreach (QString key, params.keys())
           if (params.value(key).isEmpty())
             params.removeValue(key);
-        TaskRequest request = _scheduler->syncRequestTask(fqtn, params);
-        if (!request.isNull())
-          message = "S:Task '"+fqtn+"' submitted for execution with id "
-              +QString::number(request.id())+".";
-        else
+        QList<TaskRequest> requests = _scheduler->syncRequestTask(fqtn, params);
+        if (!requests.isEmpty()) {
+          message = "S:Task '"+fqtn+"' submitted for execution with id";
+          foreach (TaskRequest request, requests)
+              message.append(' ').append(QString::number(request.id()));
+          message.append('.');
+        } else
           message = "E:Execution request of task '"+fqtn
               +"' failed (see logs for more information).";
       } else if (event == "cancelRequest") {
@@ -1506,7 +1508,8 @@ void WebConsole::recomputeDiagrams() {
   gv.append("}\n");
   foreach (const Cluster &cluster, _clusters.values()) {
     gv.append("\"").append(cluster.id()).append("\"")
-        .append("[" CLUSTER_NODE "]\n");
+        .append("[label=\"").append(cluster.id()).append("\\n(")
+        .append(cluster.balancing()).append(")\"," CLUSTER_NODE "]\n");
     foreach (const Host &host, cluster.hosts())
       gv.append("\"").append(cluster.id()).append("\"--\"").append(host.id())
           .append("\"[" CLUSTER_HOST_EDGE "]\n");

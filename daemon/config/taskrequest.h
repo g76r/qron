@@ -31,6 +31,7 @@ public:
   TaskRequest();
   TaskRequest(const TaskRequest &);
   TaskRequest(Task task, bool force = false);
+  TaskRequest(Task task, quint64 groupId, bool force = false);
   ~TaskRequest();
   TaskRequest &operator=(const TaskRequest &);
   bool operator==(const TaskRequest &) const;
@@ -38,6 +39,7 @@ public:
   ParamSet params() const;
   void overrideParam(QString key, QString value);
   quint64 id() const;
+  quint64 groupId() const;
   QDateTime submissionDatetime() const;
   QDateTime startDatetime() const;
   void setStartDatetime(QDateTime datetime
@@ -63,7 +65,8 @@ public:
   /** Note that this is the exact target on which the task is running/has been
     * running, i.e. if the task target was a cluster, this is the host which
     * was choosen within the cluster.
-    * Return a null Host when the task request is still queued. */
+    * Most of the time, return a null Host when the task request is still
+    * queued. */
   Host target() const;
   void setTarget(Host target) const;
   QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
