@@ -14,7 +14,7 @@
 #ifndef TASKSMODEL_H
 #define TASKSMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include <QList>
 #include <QHash>
 #include "config/task.h"
@@ -23,7 +23,7 @@
 
 /** Model holding tasks along with their attributes, one task per line, in
  * fqtn alphabetical order. */
-class TasksModel : public QAbstractListModel {
+class TasksModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TasksModel)
   QList<Task> _tasks;

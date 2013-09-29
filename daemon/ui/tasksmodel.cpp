@@ -23,7 +23,7 @@
 // 300,000 ms = 5'
 #define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
 
-TasksModel::TasksModel(QObject *parent) : QAbstractListModel(parent) {
+TasksModel::TasksModel(QObject *parent) : QAbstractTableModel(parent) {
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(forceTimeRelatedDataRefresh()));
   timer->start(FULL_REFRESH_INTERVAL);

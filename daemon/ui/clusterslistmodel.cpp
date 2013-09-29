@@ -18,7 +18,7 @@
 #define COLUMNS 3
 
 ClustersListModel::ClustersListModel(QObject *parent)
-  : QAbstractListModel(parent) {
+  : QAbstractTableModel(parent) {
 }
 
 int ClustersListModel::rowCount(const QModelIndex &parent) const {

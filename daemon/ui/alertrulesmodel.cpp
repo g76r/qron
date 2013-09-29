@@ -17,7 +17,7 @@
 
 #define COLUMNS 6
 
-AlertRulesModel::AlertRulesModel(QObject *parent) : QAbstractListModel(parent) {
+AlertRulesModel::AlertRulesModel(QObject *parent) : QAbstractTableModel(parent) {
 }
 
 int AlertRulesModel::rowCount(const QModelIndex &parent) const {

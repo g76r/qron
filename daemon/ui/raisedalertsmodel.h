@@ -14,13 +14,13 @@
 #ifndef RAISEDALERTSMODEL_H
 #define RAISEDALERTSMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include <QString>
 #include <QDateTime>
 
 /** Model holding raised alerts along with their raise and scheduled
  * cancellation dates, one alert per line, in reverse order of raising. */
-class RaisedAlertsModel : public QAbstractListModel {
+class RaisedAlertsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(RaisedAlertsModel)
   class RaisedAlert {

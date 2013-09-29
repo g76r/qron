@@ -16,7 +16,7 @@
 #define COLUMNS 7
 
 SchedulerEventsModel::SchedulerEventsModel(QObject *parent)
-  : QAbstractListModel(parent) {
+  : QAbstractTableModel(parent) {
 }
 
 int SchedulerEventsModel::rowCount(const QModelIndex &parent) const {

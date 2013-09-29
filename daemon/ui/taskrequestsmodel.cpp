@@ -17,7 +17,7 @@
 
 TaskRequestsModel::TaskRequestsModel(QObject *parent, int maxrows,
                                      bool keepFinished)
-  : QAbstractListModel(parent), _maxrows(maxrows), _keepFinished(keepFinished) {
+  : QAbstractTableModel(parent), _maxrows(maxrows), _keepFinished(keepFinished) {
 }
 
 int TaskRequestsModel::rowCount(const QModelIndex &parent) const {

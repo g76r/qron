@@ -18,7 +18,7 @@
 
 LastOccuredTextEventsModel::LastOccuredTextEventsModel(QObject *parent,
                                                        int maxrows)
-  : QAbstractListModel(parent), _maxrows(maxrows) {
+  : QAbstractTableModel(parent), _maxrows(maxrows) {
 }
 
 int LastOccuredTextEventsModel::rowCount(const QModelIndex &parent) const {

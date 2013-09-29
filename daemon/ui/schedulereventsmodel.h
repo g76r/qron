@@ -14,12 +14,12 @@
 #ifndef SCHEDULEREVENTSMODEL_H
 #define SCHEDULEREVENTSMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include "event/event.h"
 #include <QList>
 
 /** One-line table holding all Scheduler's events lists. */
-class SchedulerEventsModel : public QAbstractListModel {
+class SchedulerEventsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(SchedulerEventsModel)
   QList<Event> _onstart, _onsuccess, _onfailure;

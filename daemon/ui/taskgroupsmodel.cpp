@@ -18,7 +18,8 @@
 
 #define COLUMNS 9
 
-TaskGroupsModel::TaskGroupsModel(QObject *parent) : QAbstractListModel(parent) {
+TaskGroupsModel::TaskGroupsModel(QObject *parent)
+  : QAbstractTableModel(parent) {
 }
 
 int TaskGroupsModel::rowCount(const QModelIndex &parent) const {

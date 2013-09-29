@@ -18,7 +18,7 @@
 #define COLUMNS 4
 
 RaisedAlertsModel::RaisedAlertsModel(QObject *parent)
-  : QAbstractListModel(parent) {
+  : QAbstractTableModel(parent) {
 }
 
 int RaisedAlertsModel::rowCount(const QModelIndex &parent) const {

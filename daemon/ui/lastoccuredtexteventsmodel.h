@@ -14,14 +14,14 @@
 #ifndef LASTOCCUREDTEXTEVENTSMODEL_H
 #define LASTOCCUREDTEXTEVENTSMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include <QDateTime>
 #include <QString>
 
 // LATER move to libqtssu
 /** Model holding generic text events along with the date their occured, one
  * event per line, in reverse order of occurrence. */
-class LastOccuredTextEventsModel : public QAbstractListModel {
+class LastOccuredTextEventsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(LastOccuredTextEventsModel)
 

@@ -14,14 +14,15 @@
 #ifndef HOSTSLISTMODEL_H
 #define HOSTSLISTMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include "textviews.h"
 #include "config/cluster.h"
 #include "config/host.h"
 
+// TODO rename to HostsModel
 /** Model holding list of configured hosts, one per line, along with its
  * configuration attributes. */
-class HostsListModel : public QAbstractListModel {
+class HostsListModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(HostsListModel)
   QList<Host> _hosts;

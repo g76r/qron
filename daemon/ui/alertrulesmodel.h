@@ -14,13 +14,13 @@
 #ifndef ALERTRULESMODEL_H
 #define ALERTRULESMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include <QList>
 #include "config/alertrule.h"
 
 /** Model holding alert rules configuration, one rule per line, in their
  * evaluation order. */
-class AlertRulesModel : public QAbstractListModel {
+class AlertRulesModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(AlertRulesModel)
   QList<AlertRule> _rules;

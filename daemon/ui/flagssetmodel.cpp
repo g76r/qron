@@ -15,7 +15,7 @@
 
 #define COLUMNS 2
 
-FlagsSetModel::FlagsSetModel(QObject *parent) : QAbstractListModel(parent) {
+FlagsSetModel::FlagsSetModel(QObject *parent) : QAbstractTableModel(parent) {
 }
 
 int FlagsSetModel::rowCount(const QModelIndex &parent) const {

@@ -17,7 +17,7 @@
 
 #define COLUMNS 3
 
-HostsListModel::HostsListModel(QObject *parent) : QAbstractListModel(parent) {
+HostsListModel::HostsListModel(QObject *parent) : QAbstractTableModel(parent) {
 }
 
 int HostsListModel::rowCount(const QModelIndex &parent) const {

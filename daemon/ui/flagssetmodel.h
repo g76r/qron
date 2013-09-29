@@ -14,12 +14,12 @@
 #ifndef FLAGSSETMODEL_H
 #define FLAGSSETMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include <QDateTime>
 
 /** Model holding currently set flags, one per line, along with the time it
   * was set on. */
-class FlagsSetModel : public QAbstractListModel {
+class FlagsSetModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(FlagsSetModel)
   class SetFlag {

@@ -14,14 +14,15 @@
 #ifndef CLUSTERSLISTMODEL_H
 #define CLUSTERSLISTMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include "textviews.h"
 #include "config/cluster.h"
 #include "config/host.h"
 
 /** Model holding list of configured clusters, one per line, along with its
  * configuration attributes. */
-class ClustersListModel : public QAbstractListModel {
+// TODO rename to ClustersModel
+class ClustersListModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(ClustersListModel)
   QList<Cluster> _clusters;

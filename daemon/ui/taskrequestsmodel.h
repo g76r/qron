@@ -14,7 +14,7 @@
 #ifndef TASKREQUESTSMODEL_H
 #define TASKREQUESTSMODEL_H
 
-#include <QAbstractListModel>
+#include <QAbstractTableModel>
 #include <QString>
 #include <QDateTime>
 #include "config/taskrequest.h"
@@ -24,7 +24,7 @@
 
 /** Model holding tasks requests along with their attributes, one request per
  * line, in reverse request order. */
-class TaskRequestsModel : public QAbstractListModel {
+class TaskRequestsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TaskRequestsModel)
   QList<TaskRequest> _requests;
