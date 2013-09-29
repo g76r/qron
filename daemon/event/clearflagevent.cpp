@@ -13,7 +13,6 @@
  */
 #include "clearflagevent.h"
 #include "event_p.h"
-#include <QWeakPointer>
 
 class ClearFlagEventData : public EventData {
 public:

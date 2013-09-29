@@ -269,8 +269,8 @@ void Executor::httpMean(TaskRequest request) {
       .evaluate(request.command(), &request);
   if (command.size() && command.at(0) == '/')
     command = command.mid(1);
-  url.setEncodedUrl(QString("http://%1:%2/%3").arg(hostname).arg(port)
-                    .arg(command).toUtf8(), QUrl::TolerantMode);
+  url.setUrl(QString("http://%1:%2/%3").arg(hostname).arg(port).arg(command),
+             QUrl::TolerantMode);
   QNetworkRequest networkRequest(url);
   foreach (QString name, request.setenv().keys()) {
     const QString expr(request.setenv().rawValue(name));
@@ -279,7 +279,7 @@ void Executor::httpMean(TaskRequest request) {
     name.replace(QRegExp("[^a-zA-Z_0-9\\-]+"), "_");
     const QString value = request.params().evaluate(expr, &request);
     //Log::fatal(request.task().fqtn(), request.id()) << "setheader: " << name << "=" << value << ".";
-    networkRequest.setRawHeader(name.toAscii(), value.toUtf8());
+    networkRequest.setRawHeader(name.toLatin1(), value.toUtf8());
   }
   // LATER read request output, at less to avoid server being blocked and request never finish
   if (url.isValid()) {
@@ -404,7 +404,7 @@ void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
         << "]";*/
     static QRegExp notIdentifier("[^a-zA-Z_0-9]+");
     key.replace(QRegExp(notIdentifier), "_");
-    if (key.size() > 0 && strchr("0123456789", key[0].toAscii()))
+    if (key.size() > 0 && strchr("0123456789", key[0].toLatin1()))
       key.insert(0, '_');
     const QString value = request.params().evaluate(expr, &request);
     if (setenv)

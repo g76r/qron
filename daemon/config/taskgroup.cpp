@@ -18,7 +18,7 @@
 #include "pf/pfnode.h"
 #include <QtDebug>
 #include "event/event.h"
-#include <QWeakPointer>
+#include <QPointer>
 #include "sched/scheduler.h"
 #include "config/configutils.h"
 
@@ -27,7 +27,7 @@ public:
   QString _id, _label;
   ParamSet _params, _setenv, _unsetenv;
   QList<Event> _onstart, _onsuccess, _onfailure;
-  QWeakPointer<Scheduler> _scheduler;
+  QPointer<Scheduler> _scheduler;
 };
 
 TaskGroup::TaskGroup() : d(new TaskGroupData) {

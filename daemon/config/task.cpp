@@ -20,7 +20,7 @@
 #include "log/log.h"
 #include <QAtomicInt>
 #include "event/event.h"
-#include <QWeakPointer>
+#include <QPointer>
 #include "sched/scheduler.h"
 #include "config/configutils.h"
 #include "requestformfield.h"
@@ -37,7 +37,7 @@ public:
   QList<CronTrigger> _cronTriggers;
   QList<QRegExp> _stderrFilters;
   QList<Event> _onstart, _onsuccess, _onfailure;
-  QWeakPointer<Scheduler> _scheduler;
+  QPointer<Scheduler> _scheduler;
   long long _maxExpectedDuration, _minExpectedDuration, _maxDurationBeforeAbort;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormField;
@@ -327,7 +327,8 @@ int Task::maxInstances() const {
 }
 
 int Task::instancesCount() const {
-  return d ? d->_instancesCount.operator int() : 0;
+  // LATER what did happen to operator int() in Qt5 ?
+  return d ? d->_instancesCount.fetchAndAddRelaxed(0) : 0;
 }
 
 int Task::fetchAndAddInstancesCount(int valueToAdd) const {

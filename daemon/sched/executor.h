@@ -17,7 +17,7 @@
 #include <QObject>
 #include "config/taskrequest.h"
 #include "config/host.h"
-#include <QWeakPointer>
+#include <QPointer>
 #include <QProcess>
 #include "alert/alerter.h"
 #include <QNetworkReply>
@@ -57,7 +57,7 @@ signals:
   /** Signal emited whenever a task is no longer running or queued:
     * when finished on failure, finished on success, or cannot be started
     * because of a failure on start. */
-  void taskFinished(TaskRequest request, QWeakPointer<Executor> executor);
+  void taskFinished(TaskRequest request, QPointer<Executor> executor);
 
 private slots:
   void processError(QProcess::ProcessError error);

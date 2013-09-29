@@ -22,7 +22,7 @@ class AlertRuleData : public QSharedData {
 public:
   QString _pattern;
   QRegExp _patterRegExp;
-  QWeakPointer<AlertChannel> _channel;
+  QPointer<AlertChannel> _channel;
   QString _address, _emitMessage, _cancelMessage, _reminderMessage,
   _channelName;
   bool _stop, _notifyCancel, _notifyReminder;
@@ -64,7 +64,7 @@ QRegExp AlertRule::compilePattern(QString pattern) {
   QString re;
   for (int i = 0; i < pattern.size(); ++i) {
     QChar c = pattern.at(i);
-    switch (c.toAscii()) {
+    switch (c.toLatin1()) {
     case '*':
       if (i >= pattern.size()-1 || pattern.at(i+1) != '*')
         re.append("[^.]*");
@@ -76,7 +76,7 @@ QRegExp AlertRule::compilePattern(QString pattern) {
     case '\\':
       if (i < pattern.size()-1) {
         c = pattern.at(++i);
-        switch (c.toAscii()) {
+        switch (c.toLatin1()) {
         case '*':
         case '\\':
           re.append('\\').append(c);
@@ -114,8 +114,8 @@ QRegExp AlertRule::patternRegExp() const {
   return d ? d->_patterRegExp : QRegExp();
 }
 
-QWeakPointer<AlertChannel> AlertRule::channel() const {
-  return d ? d->_channel : QWeakPointer<AlertChannel>();
+QPointer<AlertChannel> AlertRule::channel() const {
+  return d ? d->_channel : QPointer<AlertChannel>();
 }
 
 QString AlertRule::channelName() const {

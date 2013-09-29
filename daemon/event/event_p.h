@@ -15,12 +15,12 @@
 #define EVENT_P_H
 
 #include "event.h"
-#include <QWeakPointer>
+#include <QPointer>
 #include "sched/scheduler.h"
 
 class EventData : public QSharedData {
 public:
-  QWeakPointer<Scheduler> _scheduler;
+  QPointer<Scheduler> _scheduler;
   explicit EventData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }
   virtual ~EventData();
   /** Human readable description of event */

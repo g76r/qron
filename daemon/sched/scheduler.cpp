@@ -70,7 +70,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<QList<TaskRequest> >("QList<TaskRequest>");
   qRegisterMetaType<Host>("Host");
-  qRegisterMetaType<QWeakPointer<Executor> >("QWeakPointer<Executor>");
+  qRegisterMetaType<QPointer<Executor> >("QPointer<Executor>");
   qRegisterMetaType<QList<Event> >("QList<Event>");
   qRegisterMetaType<QHash<QString,Task> >("QHash<QString,Task>");
   qRegisterMetaType<QHash<QString,TaskGroup> >("QHash<QString,TaskGroup>");
@@ -269,8 +269,8 @@ bool Scheduler::reloadConfiguration(PfNode root) {
                     "maxtotaltaskinstances of " << maxtotaltaskinstances;
     for (int i = 0; i < executorsToAdd; ++i) {
       Executor *e = new Executor(_alerter);
-      connect(e, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
-              this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
+      connect(e, SIGNAL(taskFinished(TaskRequest,QPointer<Executor>)),
+              this, SLOT(taskFinishing(TaskRequest,QPointer<Executor>)));
       connect(e, SIGNAL(taskStarted(TaskRequest)),
               this, SIGNAL(taskStarted(TaskRequest)));
       _availableExecutors.append(e);
@@ -942,8 +942,8 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
       // this should only happen with force == true
       executor = new Executor(_alerter);
       executor->setTemporary();
-      connect(executor, SIGNAL(taskFinished(TaskRequest,QWeakPointer<Executor>)),
-              this, SLOT(taskFinishing(TaskRequest,QWeakPointer<Executor>)));
+      connect(executor, SIGNAL(taskFinished(TaskRequest,QPointer<Executor>)),
+              this, SLOT(taskFinishing(TaskRequest,QPointer<Executor>)));
       connect(executor, SIGNAL(taskStarted(TaskRequest)),
               this, SIGNAL(taskStarted(TaskRequest)));
     }
@@ -967,7 +967,7 @@ nexthost:;
 }
 
 void Scheduler::taskFinishing(TaskRequest request,
-                              QWeakPointer<Executor> executor) {
+                              QPointer<Executor> executor) {
   Task requestedTask(request.task());
   QString fqtn(requestedTask.fqtn());
   QMutexLocker ml(&_configMutex);

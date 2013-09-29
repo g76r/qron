@@ -17,7 +17,7 @@
 #include "log/log.h"
 #include <QThread>
 
-UdpAlertChannel::UdpAlertChannel(QObject *parent, QWeakPointer<Alerter> alerter)
+UdpAlertChannel::UdpAlertChannel(QObject *parent, QPointer<Alerter> alerter)
   : AlertChannel(parent, alerter), _socket(0) {
   _thread->setObjectName("UdpAlertChannelThread");
 }

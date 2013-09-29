@@ -35,7 +35,7 @@ public:
 };
 
 MailAlertChannel::MailAlertChannel(QObject *parent,
-                                   QWeakPointer<Alerter> alerter)
+                                   QPointer<Alerter> alerter)
   : AlertChannel(parent, alerter), _mailSender(0),
     _remindFrequency(ALERTER_DEFAULT_REMIND_FREQUENCY),
     _asyncProcessingTimer(new QTimer) {

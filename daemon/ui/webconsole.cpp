@@ -19,6 +19,7 @@
 #include "sched/qrond.h"
 #include <QCoreApplication>
 #include "util/htmlutils.h"
+#include <QUrlQuery>
 
 #define CONFIG_TABLES_MAXROWS 500
 #define FLAGS_SET_MAXROWS 500
@@ -470,7 +471,7 @@ public:
       QString title;
       QString alertClass;
       if (message.size() > 1 && message.at(1) == ':') {
-        alertType = message.at(0).toAscii();
+        alertType = message.at(0).toLatin1();
         message = message.mid(2);
       }
       switch (alertType) {
@@ -551,7 +552,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.setStatus(403);
     QUrl url(req.url());
     url.setPath("/console/adhoc.html");
-    url.setQueryItems(QList<QPair<QString,QString> >());
+    url.setQuery(QString());
     req.overrideUrl(url);
     WebConsoleParamsProvider params(this, req, res, ctxt);
     params.setValue("content", "<h2>Permission denied</h2>");
@@ -673,7 +674,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       res.setBase64SessionCookie("redirect", referer, "/");
       QUrl url(req.url());
       url.setPath("/console/adhoc.html");
-      url.setQueryItems(QList<QPair<QString,QString> >());
+      url.setQuery(QString());
       req.overrideUrl(url);
       WebConsoleParamsProvider params(this, req, res, ctxt);
       params.setValue("content", message);
@@ -833,7 +834,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     }
   }
   if (path.startsWith("/console")) {
-    QList<QPair<QString,QString> > queryItems(req.url().queryItems());
+    QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
     if (queryItems.size()) {
       // if there are query parameters in url, transform them into cookies
       // LATER this mechanism should be generic/framework (in libqtssu)

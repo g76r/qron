@@ -13,7 +13,6 @@
  */
 #include "setflagevent.h"
 #include "event_p.h"
-#include <QWeakPointer>
 
 class SetFlagEventData : public EventData {
 public:

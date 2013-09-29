@@ -141,7 +141,7 @@ void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type) {
 }
 
 void Alerter::sendMessage(Alert alert, AlertChannel::MessageType type) {
-  QWeakPointer<AlertChannel> channel = alert.rule().channel();
+  QPointer<AlertChannel> channel = alert.rule().channel();
   if (channel)
     channel.data()->sendMessage(alert, type);
 }

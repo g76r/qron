@@ -15,7 +15,7 @@
 #define ALERTRULE_H
 
 #include <QSharedDataPointer>
-#include <QWeakPointer>
+#include <QPointer>
 #include <QString>
 #include <QRegExp>
 
@@ -40,7 +40,7 @@ public:
   QString pattern() const;
   QRegExp patternRegExp() const;
   /** Null if stop rule or being shuting down and channel already destroyed. */
-  QWeakPointer<AlertChannel> channel() const;
+  QPointer<AlertChannel> channel() const;
   QString channelName() const;
   QString address() const;
   QString emitMessage(Alert alert) const;

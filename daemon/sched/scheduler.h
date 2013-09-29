@@ -200,7 +200,7 @@ signals:
   void flagCleared(QString flag);
 
 private slots:
-  void taskFinishing(TaskRequest request, QWeakPointer<Executor> executor);
+  void taskFinishing(TaskRequest request, QPointer<Executor> executor);
   void periodicChecks();
   /** Fire expired triggers for a given task. */
   void checkTriggersForTask(QVariant fqtn);
