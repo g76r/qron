@@ -740,15 +740,20 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
       return false; // don't plan new check if already planned
     }
   }
-  // plan new check
-  qint64 ms = now.msecsTo(next);
-  //Log::debug() << "Scheduler::checkTrigger planning new check for task "
-  //             << fqtn << " "
-  //             << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
-  //             << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " " << ms;
-  TimerWithArguments::singleShot(ms < INT_MAX ? ms : INT_MAX,
-                                 this, "checkTriggersForTask", fqtn);
-  task.setNextScheduledExecution(now.addMSecs(ms));
+  if (next.isValid()) {
+    // plan new check
+    qint64 ms = now.msecsTo(next);
+    //Log::debug() << "Scheduler::checkTrigger planning new check for task "
+    //             << fqtn << " "
+    //             << now.toString("yyyy-MM-dd hh:mm:ss,zzz") << " "
+    //             << next.toString("yyyy-MM-dd hh:mm:ss,zzz") << " " << ms;
+    // LATER one timer per trigger, not a new timer each time
+    TimerWithArguments::singleShot(ms < INT_MAX ? ms : INT_MAX,
+                                   this, "checkTriggersForTask", fqtn);
+    task.setNextScheduledExecution(now.addMSecs(ms));
+  } else {
+    task.setNextScheduledExecution(QDateTime());
+  }
   emit taskChanged(task);
   return fired;
 }
