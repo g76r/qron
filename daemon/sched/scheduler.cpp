@@ -368,6 +368,66 @@ bool Scheduler::reloadConfiguration(PfNode root) {
     if (accessControlEnabled)
       Log::warning() << "multiple 'access-control' in configuration";
     accessControlEnabled = true;
+    foreach (PfNode node, node.childrenByName("user-file")) {
+      QString path = node.contentAsString().trimmed();
+      QString cipher = node.attribute("cipher", "password").trimmed().toLower();
+      // implicitly, format is: login:crypted_password:role1,role2,rolen
+      // later, other formats may be supported
+      QFile file(path);
+      if (!file.open(QIODevice::ReadOnly)) {
+        Log::error() << "cannot open access control user file '" << path
+                     << "': " << file.errorString();
+        continue;
+      }
+      QByteArray row;
+      while (row = file.readLine(65535), !row.isNull()) {
+        QString line = QString::fromUtf8(row).trimmed();
+        if (line.size() == 0 || line.startsWith('#'))
+          continue; // ignore empty lines and support # as a comment mark
+        QStringList fields = line.split(':');
+        if (fields.size() < 3) {
+          Log::error() << "access control user file '" << path
+                       << "' contains invalid line: " << line;
+          continue;
+        }
+        QString id = fields[0].trimmed();
+        QString password = fields[1].trimmed();
+        QSet<QString> roles;
+        foreach (const QString role,
+                 fields[2].trimmed().split(',', QString::SkipEmptyParts))
+          roles.insert(role.trimmed());
+        if (id.isEmpty() || password.isEmpty() || roles.isEmpty()) {
+          Log::error() << "access control user file '" << path
+                       << "' contains a line with empty mandatory fields: "
+                       << line;
+          continue;
+        }
+        InMemoryAuthenticator::Encoding encoding;
+        if (cipher == "password" || cipher == "plain") {
+          encoding = InMemoryAuthenticator::Plain;
+        } else if (cipher == "md5hex") {
+          encoding = InMemoryAuthenticator::Md5Hex;
+        } else if (cipher == "md5" || cipher == "md5b64") {
+          encoding = InMemoryAuthenticator::Md5Base64;
+        } else if (cipher == "sha1" || cipher == "sha1hex") {
+          encoding = InMemoryAuthenticator::Sha1Hex;
+        } else if (cipher == "sha1b64") {
+          encoding = InMemoryAuthenticator::Sha1Base64;
+        } else if (cipher == "ldap") {
+          encoding = InMemoryAuthenticator::OpenLdapStyle;
+        } else {
+          Log::error() << "access control user file '" << path
+                       << "' with unsupported cipher type: '" << cipher << "'";
+          break;
+        }
+        _authenticator->insertUser(id, password, encoding);
+        _usersDatabase->insertUser(id, roles);
+      }
+      if (file.error() != QFileDevice::NoError)
+        Log::error() << "error reading access control user file '" << path
+                     << "': " << file.errorString();
+    }
+
     foreach (PfNode node, node.childrenByName("user")) {
       QString id = node.attribute("id");
       QString password = node.attribute("password");
