@@ -33,6 +33,7 @@
 #include "pf/pfnode.h"
 #include "auth/inmemoryauthenticator.h"
 #include "auth/inmemoryusersdatabase.h"
+#include <QFileSystemWatcher>
 
 class QThread;
 
@@ -62,6 +63,8 @@ class Scheduler : public QObject {
   qint64 _startdate, _configdate;
   long _execCount;
   QList<RequestTaskEventLink> _requestTaskEventLinks;
+  QFileSystemWatcher *_accessControlFilesWatcher;
+  PfNode _accessControlNode;
 
 public:
   Scheduler();
@@ -206,6 +209,7 @@ private slots:
   void checkTriggersForTask(QVariant fqtn);
   /** Fire expired triggers for all tasks. */
   void checkTriggersForAllTasks();
+  void reloadAccessControlConfig();
 
 private:
   /** Reevaluate queued requests and start any task that can be started.
