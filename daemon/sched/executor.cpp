@@ -228,7 +228,8 @@ void Executor::readyProcessWarningOutput() {
             << "task stderr: " << line;
         if (!_stderrWasUsed) {
           _stderrWasUsed = true;
-          if (_alerter)
+          if (_alerter && !_request.task().params()
+              .valueAsBool("disable.alert.stderr", false))
             _alerter->raiseAlert("task.stderr."+_request.task().fqtn());
         }
 line_filtered:;
