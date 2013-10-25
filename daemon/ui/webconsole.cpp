@@ -20,6 +20,7 @@
 #include <QCoreApplication>
 #include "util/htmlutils.h"
 #include <QUrlQuery>
+#include "util/standardformats.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define FLAGS_SET_MAXROWS 500
@@ -517,6 +518,10 @@ public:
       return _message;
     if (key == "startdate")
       return _console->_scheduler->startdate().toString("yyyy-MM-dd hh:mm:ss");
+    if (key == "uptime")
+      return StandardFormats::toCoarseHumanReadableTimeInterval(
+            _console->_scheduler->startdate()
+            .msecsTo(QDateTime::currentDateTime()));
     if (key == "configdate")
       return _console->_scheduler->configdate().toString("yyyy-MM-dd hh:mm:ss");
     if (key == "execcount")
