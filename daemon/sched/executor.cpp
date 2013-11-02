@@ -308,11 +308,15 @@ void Executor::httpMean(TaskRequest request) {
       taskFinishing(false, -1);
     }
     if (_reply) {
+      // note that the apparent critical window between QNAM::get/put/post()
+      // and connection to reply signals is not actually critical since
+      // QNetworkReply lies in the same thread than QNAM and Executor, and
+      // therefore no QNetworkReply slot can executed meanwhile hence no
+      // QNetworkReply::finished() cannot be emitted before connection
+      // FIXME is connection to error() usefull ? can error() be emited w/o finished() ?
       connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)),
               this, SLOT(replyError(QNetworkReply::NetworkError)));
       connect(_reply, SIGNAL(finished()), this, SLOT(replyFinished()));
-      if (_reply->isFinished()) // race condition seems very unlikely, but...
-        replyHasFinished(_reply, _reply->error());
     }
   } else {
     Log::error(_request.task().fqtn(), _request.id())
