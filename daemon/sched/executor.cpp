@@ -424,8 +424,8 @@ void Executor::abort() {
 
 void Executor::doAbort() {
   if (_request.isNull()) {
-    Log::warning() << "cannot abort task because this executor is not "
-                      "currently responsible for any task";
+    Log::error() << "cannot abort task because this executor is not "
+                    "currently responsible for any task";
   } else if (!_request.abortable()) {
     if (_request.task().mean() == "ssh")
       Log::warning(_request.task().fqtn(), _request.id())
