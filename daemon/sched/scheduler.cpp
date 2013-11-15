@@ -145,6 +145,7 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   foreach (PfNode node, root.childrenByName("log")) {
     QString level = node.attribute("level");
     QString filename = node.attribute("file");
+    bool buffered = !node.hasChild("unbuffered");
     if (level.isEmpty()) {
       Log::warning() << "invalid log level in configuration: "
                      << node.toPf();
@@ -153,8 +154,8 @@ bool Scheduler::reloadConfiguration(PfNode root) {
                      << node.toPf();
     } else {
       Log::debug() << "adding logger " << node.toPf();
-      loggers.append(new FileLogger(filename,
-                                    Log::severityFromString(level)));
+      loggers.append(new FileLogger(filename, Log::severityFromString(level),
+                                    buffered));
     }
   }
   //Log::debug() << "replacing loggers " << loggers.size();
