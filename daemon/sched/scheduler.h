@@ -49,8 +49,7 @@ class Scheduler : public QObject {
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
   QHash<QString,QHash<QString,qint64> > _resources;
-  QSet<QString> _setFlags;
-  mutable QMutex _flagsMutex, _configMutex;
+  mutable QMutex _configMutex;
   QList<TaskRequest> _queuedRequests;
   QHash<TaskRequest,Executor*> _runningRequests;
   QList<Executor*> _availableExecutors;
@@ -79,9 +78,6 @@ public:
   Alerter *alerter() { return _alerter; }
   Authenticator *authenticator() { return _authenticator; }
   UsersDatabase *usersDatabase() { return _usersDatabase; }
-  /** Test a flag.
-    * This method is thread-safe. */
-  bool isFlagSet(QString flag) const;
   QDateTime startdate() const {
     return QDateTime::fromMSecsSinceEpoch(_startdate); }
   QDateTime configdate() const {
@@ -136,13 +132,6 @@ public slots:
   TaskRequest abortTask(quint64 id);
   TaskRequest abortTask(TaskRequest request) {
     return abortTask(request.id()); }
-  /** Set a flag, which will be evaluated by any following task constraints
-    * evaluation.
-    * This method is thread-safe. */
-  void setFlag(QString flag);
-  /** Clear a flag.
-    * This method is thread-safe. */
-  void clearFlag(QString flag);
   /** Post a notice.
     * This method is thread-safe. */
   void postNotice(QString notice);
@@ -201,8 +190,6 @@ signals:
   void globalSetenvChanged(ParamSet globalSetenv);
   void globalUnsetenvChanged(ParamSet globalUnsetenv);
   void noticePosted(QString notice);
-  void flagSet(QString flag);
-  void flagCleared(QString flag);
 
 private slots:
   void taskFinishing(TaskRequest request, QPointer<Executor> executor);

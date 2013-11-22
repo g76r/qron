@@ -23,7 +23,6 @@
 #include "util/standardformats.h"
 
 #define CONFIG_TABLES_MAXROWS 500
-#define FLAGS_SET_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
@@ -41,7 +40,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _raisedAlertsModel(new RaisedAlertsModel(this)),
   _lastEmitedAlertsModel(new LastEmitedAlertsModel(this, 500)),
   _lastPostedNoticesModel(new LastOccuredTextEventsModel(this, 200)),
-  _lastFlagsChangesModel(new LastOccuredTextEventsModel(this, 200)),
   _alertRulesModel(new AlertRulesModel(this)),
   // memory cost: about 1.5 kB / request, e.g. 30 MB for 20000 requests
   // (this is an empirical measurement and thus includes model + csv view
@@ -49,7 +47,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _unfinishedTaskRequestModel(new TaskRequestsModel(this, 1000, false)),
   _tasksModel(new TasksModel(this)),
   _schedulerEventsModel(new SchedulerEventsModel(this)),
-  _flagsSetModel(new FlagsSetModel(this)),
   _taskGroupsModel(new TaskGroupsModel(this)),
   _alertChannelsModel(new AlertChannelsModel(this)),
   _logConfigurationModel(new LogFilesModel(this)),
@@ -87,9 +84,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlSchedulerEventsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
   _htmlLastPostedNoticesView20(new HtmlTableView(
                                  this, _lastPostedNoticesModel->maxrows(), 20)),
-  _htmlLastFlagsChangesView20(new HtmlTableView(
-                                this, _lastFlagsChangesModel->maxrows(), 20)),
-  _htmlFlagsSetView20(new HtmlTableView(this, FLAGS_SET_MAXROWS, 20)),
   _htmlTaskGroupsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlTaskGroupsEventsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlAlertChannelsView(new HtmlTableView(this)),
@@ -117,9 +111,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvSchedulerEventsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvLastPostedNoticesView(new CsvTableView(
                               this, _lastPostedNoticesModel->maxrows())),
-  _csvLastFlagsChangesView(new CsvTableView(
-                             this, _lastFlagsChangesModel->maxrows())),
-  _csvFlagsSetView(new CsvTableView(this, FLAGS_SET_MAXROWS)),
   _csvTaskGroupsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvLogFilesView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _tasksDeploymentDiagram(new GraphvizImageHttpHandler(this)),
@@ -297,24 +288,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   //_htmlLastPostedNoticesView20
   //    ->setEllipsePlaceholder("(older notices not displayed)");
   _htmlLastPostedNoticesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _lastFlagsChangesModel->setEventName("Flag change");
-  _lastFlagsChangesModel->setPrefix("<i class=\"icon-flag\"></i> ", 0);
-  _lastFlagsChangesModel->setPrefix("<i class=\"icon-minus\"></i> ", 1);
-  _lastFlagsChangesModel->setPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlLastFlagsChangesView20->setModel(_lastFlagsChangesModel);
-  _htmlLastFlagsChangesView20
-      ->setTableClass("table table-condensed table-hover");
-  _htmlLastFlagsChangesView20->setEmptyPlaceholder("(no flags changes)");
-  //_htmlLastFlagsChangesView20
-  //    ->setEllipsePlaceholder("(older changes not displayed)");
-  _htmlLastFlagsChangesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _flagsSetModel->setPrefix("<i class=\"icon-flag\"></i> ",
-                            TextViews::HtmlPrefixRole);
-  _htmlFlagsSetView20->setModel(_flagsSetModel);
-  _htmlFlagsSetView20->setTableClass("table table-condensed table-hover");
-  _htmlFlagsSetView20->setEmptyPlaceholder("(no flags set)");
-  //_htmlFlagsSetView20->setEllipsePlaceholder("(more flags not displayed)");
-  _htmlFlagsSetView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlTaskGroupsView->setModel(_taskGroupsModel);
   _htmlTaskGroupsView->setTableClass("table table-condensed table-hover");
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
@@ -388,10 +361,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvSchedulerEventsView->setFieldQuote('"');
   _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
   _csvLastPostedNoticesView->setFieldQuote('"');
-  _csvLastFlagsChangesView->setModel(_lastFlagsChangesModel);
-  _csvLastFlagsChangesView->setFieldQuote('"');
-  _csvFlagsSetView->setModel(_flagsSetModel);
-  _csvFlagsSetView->setFieldQuote('"');
   _csvTaskGroupsView->setModel(_taskGroupsModel);
   _csvTaskGroupsView->setFieldQuote('"');
   _csvLogFilesView->setModel(_logConfigurationModel);
@@ -423,8 +392,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("tasksevents", _htmlTasksEventsView);
   _wuiHandler->addView("schedulerevents", _htmlSchedulerEventsView);
   _wuiHandler->addView("lastpostednotices20", _htmlLastPostedNoticesView20);
-  _wuiHandler->addView("lastflagschanges20", _htmlLastFlagsChangesView20);
-  _wuiHandler->addView("flagsset20", _htmlFlagsSetView20);
   _wuiHandler->addView("taskgroups", _htmlTaskGroupsView);
   _wuiHandler->addView("taskgroupsevents", _htmlTaskGroupsEventsView);
   _wuiHandler->addView("alertchannels", _htmlAlertChannelsView);
@@ -443,8 +410,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
   _memoryInfoLogger->model()->setWarningTrClass("warning");
   _memoryInfoLogger->model()->setErrorTrClass("error");
-  connect(this, SIGNAL(flagChange(QString,int)),
-          _lastFlagsChangesModel, SLOT(eventOccured(QString,int)));
   connect(this, SIGNAL(alertEmited(QString,int)),
           _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
   moveToThread(_thread);
@@ -1097,28 +1062,6 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlLastPostedNoticesView20->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/csv/flags/lastchanges/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvLastFlagsChangesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/flags/lastchanges/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlLastFlagsChangesView20->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/flags/set/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvFlagsSetView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/flags/set/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlFlagsSetView20->text().toUtf8().constData());
-    return true;
-  }
   if (path == "/rest/csv/taskgroups/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
@@ -1223,14 +1166,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
     disconnect(_scheduler, SIGNAL(noticePosted(QString)),
                _lastPostedNoticesModel, SLOT(eventOccured(QString)));
-    disconnect(_scheduler, SIGNAL(flagSet(QString)),
-               this, SLOT(flagSet(QString)));
-    disconnect(_scheduler, SIGNAL(flagCleared(QString)),
-               this, SLOT(flagCleared(QString)));
-    disconnect(_scheduler, SIGNAL(flagSet(QString)),
-               _flagsSetModel, SLOT(setFlag(QString)));
-    disconnect(_scheduler, SIGNAL(flagCleared(QString)),
-               _flagsSetModel, SLOT(clearFlag(QString)));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
                _taskGroupsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
@@ -1310,14 +1245,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
     connect(_scheduler, SIGNAL(noticePosted(QString)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
-    connect(_scheduler, SIGNAL(flagSet(QString)),
-            this, SLOT(flagSet(QString)));
-    connect(_scheduler, SIGNAL(flagCleared(QString)),
-            this, SLOT(flagCleared(QString)));
-    connect(_scheduler, SIGNAL(flagSet(QString)),
-            _flagsSetModel, SLOT(setFlag(QString)));
-    connect(_scheduler, SIGNAL(flagCleared(QString)),
-            _flagsSetModel, SLOT(clearFlag(QString)));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
             _taskGroupsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
@@ -1358,14 +1285,6 @@ void WebConsole::setUsersDatabase(UsersDatabase *usersDatabase,
 
 void WebConsole::enableAccessControl(bool enabled) {
   _accessControlEnabled = enabled;
-}
-
-void WebConsole::flagSet(QString flag) {
-  emit flagChange("+"+flag, 0);
-}
-
-void WebConsole::flagCleared(QString flag) {
-  emit flagChange("-"+flag, 1);
 }
 
 void WebConsole::alertEmited(QString alert) {
@@ -1454,7 +1373,6 @@ void WebConsole::configReloaded() {
 #define TASKGROUP_TASK_EDGE "style=dashed"
 #define TASKGROUP_EDGE "style=dashed"
 #define NOTICE_NODE "shape=note,style=filled,fillcolor=forestgreen"
-#define FLAG_NODE "shape=invtrapezium,style=\"rounded,filled\",fillcolor=gold"
 #define CRON_TRIGGER_NODE "shape=none"
 #define NO_TRIGGER_NODE "shape=none"
 #define TASK_TRIGGER_EDGE "dir=back,arrowtail=vee"
@@ -1588,7 +1506,6 @@ void WebConsole::recomputeDiagrams() {
     gv.append("\"$global_").append(cause).append("\" [label=\"")
         .append(cause).append("\"," GLOBAL_EVENT_NODE "]\n");
   gv.append("}\n");
-  // LATER add flags
   foreach (QString notice, notices) {
     notice.remove('"');
     gv.append("\"$notice_").append(notice).append("\"")
@@ -1680,7 +1597,6 @@ void WebConsole::recomputeDiagrams() {
         }
       }
     }
-    // LATER flags (set,clear,[],[!])
   }
   foreach (const QString &cause, _schedulerEvents.uniqueKeys()) {
     foreach (const Event &event, _schedulerEvents.values(cause)) {

@@ -76,15 +76,12 @@ SOURCES += \
     event/logevent.cpp \
     event/udpevent.cpp \
     event/httpevent.cpp \
-    event/setflagevent.cpp \
-    event/clearflagevent.cpp \
     event/raisealertevent.cpp \
     event/cancelalertevent.cpp \
     event/emitalertevent.cpp \
     event/requesttaskevent.cpp \
     ui/schedulereventsmodel.cpp \
     ui/lastoccuredtexteventsmodel.cpp \
-    ui/flagssetmodel.cpp \
     ui/taskgroupsmodel.cpp \
     sched/qrond.cpp \
     config/configutils.cpp \
@@ -128,15 +125,12 @@ HEADERS += \
     event/logevent.h \
     event/udpevent.h \
     event/httpevent.h \
-    event/setflagevent.h \
-    event/clearflagevent.h \
     event/raisealertevent.h \
     event/cancelalertevent.h \
     event/emitalertevent.h \
     event/requesttaskevent.h \
     ui/schedulereventsmodel.h \
     ui/lastoccuredtexteventsmodel.h \
-    ui/flagssetmodel.h \
     ui/taskgroupsmodel.h \
     sched/qrond.h \
     config/configutils.h \

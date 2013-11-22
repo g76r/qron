@@ -32,7 +32,7 @@ public:
   void trigger(const ParamsProvider *context) const;
   /** Human readable description of event */
   QString toString() const;
-  /** Type of event for programmatic test, e.g. "postnotice", "setflag" */
+  /** Type of event for programmatic test, e.g. "postnotice" */
   QString eventType() const;
   static QStringList toStringList(QList<Event> list);
 

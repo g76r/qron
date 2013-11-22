@@ -32,7 +32,6 @@
 #include "taskrequestsmodel.h"
 #include "tasksmodel.h"
 #include "schedulereventsmodel.h"
-#include "flagssetmodel.h"
 #include "taskgroupsmodel.h"
 #include "lastemitedalertsmodel.h"
 #include "alertchannelsmodel.h"
@@ -57,12 +56,11 @@ class WebConsole : public HttpHandler {
   *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
   LastEmitedAlertsModel *_lastEmitedAlertsModel;
-  LastOccuredTextEventsModel *_lastPostedNoticesModel, *_lastFlagsChangesModel;
+  LastOccuredTextEventsModel *_lastPostedNoticesModel;
   AlertRulesModel *_alertRulesModel;
   TaskRequestsModel *_taskRequestsHistoryModel, *_unfinishedTaskRequestModel;
   TasksModel *_tasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
-  FlagsSetModel *_flagsSetModel;
   TaskGroupsModel *_taskGroupsModel;
   AlertChannelsModel *_alertChannelsModel;
   LogFilesModel *_logConfigurationModel;
@@ -77,8 +75,8 @@ class WebConsole : public HttpHandler {
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
   *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
-  *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
-  *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
+  *_htmlLastPostedNoticesView20,
+  *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
   *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView,
   *_htmlLogFilesView;
   ClockView *_clockView;
@@ -89,7 +87,7 @@ class WebConsole : public HttpHandler {
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
   *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
-  *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView,
+  *_csvTaskGroupsView,
   *_csvLogFilesView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
@@ -117,12 +115,9 @@ public slots:
   void enableAccessControl(bool enabled);
 
 signals:
-  void flagChange(QString change, int type);
   void alertEmited(QString alert, int type);
 
 private slots:
-  void flagSet(QString flag);
-  void flagCleared(QString flag);
   void alertEmited(QString alert);
   void alertCancellationEmited(QString alert);
   void globalParamsChanged(ParamSet globalParams);

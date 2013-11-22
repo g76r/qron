@@ -25,7 +25,7 @@ public:
   virtual ~EventData();
   /** Human readable description of event */
   virtual QString toString() const;
-  /** Type of event for programmatic test, e.g. "postnotice", "setflag" */
+  /** Type of event for programmatic test, e.g. "postnotice" */
   virtual QString eventType() const;
   virtual void trigger(const ParamsProvider *context) const;
 };

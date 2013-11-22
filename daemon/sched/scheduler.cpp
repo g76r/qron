@@ -32,8 +32,6 @@
 #include "event/raisealertevent.h"
 #include "event/cancelalertevent.h"
 #include "event/emitalertevent.h"
-#include "event/setflagevent.h"
-#include "event/clearflagevent.h"
 #include "event/requesttaskevent.h"
 #include <QThread>
 #include "config/configutils.h"
@@ -537,10 +535,6 @@ bool Scheduler::loadEventListConfiguration(
   foreach (PfNode node, listnode.children()) {
     if (node.name() == "postnotice") {
       list->append(PostNoticeEvent(this, node.contentAsString()));
-    } else if (node.name() == "setflag") {
-      list->append(SetFlagEvent(this, node.contentAsString()));
-    } else if (node.name() == "clearflag") {
-      list->append(ClearFlagEvent(this, node.contentAsString()));
     } else if (node.name() == "raisealert") {
       list->append(RaiseAlertEvent(this, node.contentAsString()));
     } else if (node.name() == "cancelalert") {
@@ -837,33 +831,6 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   return fired;
 }
 
-void Scheduler::setFlag(QString flag) {
-  QMutexLocker ml(&_flagsMutex);
-  Log::debug() << "setting flag '" << flag << "'"
-               << (_setFlags.contains(flag) ? " which was already set"
-                                            : "");
-  _setFlags.insert(flag);
-  ml.unlock();
-  emit flagSet(flag);
-  reevaluateQueuedRequests();
-}
-
-void Scheduler::clearFlag(QString flag) {
-  QMutexLocker ml(&_flagsMutex);
-  Log::debug() << "clearing flag '" << flag << "'"
-               << (_setFlags.contains(flag) ? ""
-                                            : " which was already cleared");
-  _setFlags.remove(flag);
-  ml.unlock();
-  emit flagCleared(flag);
-  reevaluateQueuedRequests();
-}
-
-bool Scheduler::isFlagSet(QString flag) const {
-  QMutexLocker ml(&_flagsMutex);
-  return _setFlags.contains(flag);
-}
-
 class NoticeContext : public ParamsProvider {
 public:
   QString _notice;
@@ -967,7 +934,6 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     return false;
   }
   _alerter->cancelAlert("task.maxinstancesreached."+fqtn);
-  // LATER check flags
   QString target = request.target().id();
   if (target.isEmpty())
     target = task.target();
