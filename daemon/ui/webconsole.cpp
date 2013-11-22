@@ -52,6 +52,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _flagsSetModel(new FlagsSetModel(this)),
   _taskGroupsModel(new TaskGroupsModel(this)),
   _alertChannelsModel(new AlertChannelsModel(this)),
+  _logConfigurationModel(new LogFilesModel(this)),
   _htmlHostsListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlClustersListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlFreeResourcesView(
@@ -94,6 +95,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertChannelsView(new HtmlTableView(this)),
   _htmlTasksResourcesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlTasksAlertsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
+  _htmlLogFilesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _clockView(new ClockView(this)),
   _csvHostsListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvClustersListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
@@ -119,6 +121,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                              this, _lastFlagsChangesModel->maxrows())),
   _csvFlagsSetView(new CsvTableView(this, FLAGS_SET_MAXROWS)),
   _csvTaskGroupsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
+  _csvLogFilesView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _tasksDeploymentDiagram(new GraphvizImageHttpHandler(this)),
   _tasksTriggerDiagram(new GraphvizImageHttpHandler(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
@@ -344,6 +347,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 11 << 6 << 23 << 26 << 24 << 27 << 12 << 16 << 18;
   _htmlTasksAlertsView->setColumnIndexes(cols);
+  _htmlLogFilesView->setModel(_logConfigurationModel);
+  _htmlLogFilesView->setTableClass("table table-condensed table-hover");
+  _htmlLogFilesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlLogFilesView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
+  _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvHostsListView->setModel(_hostsListModel);
   _csvHostsListView->setFieldQuote('"');
@@ -386,6 +394,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvFlagsSetView->setFieldQuote('"');
   _csvTaskGroupsView->setModel(_taskGroupsModel);
   _csvTaskGroupsView->setFieldQuote('"');
+  _csvLogFilesView->setModel(_logConfigurationModel);
+  _csvLogFilesView->setFieldQuote('"');
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("freeresources", _htmlFreeResourcesView);
   _wuiHandler->addView("resourceslwm", _htmlResourcesLwmView);
@@ -420,6 +430,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("alertchannels", _htmlAlertChannelsView);
   _wuiHandler->addView("tasksresources", _htmlTasksResourcesView);
   _wuiHandler->addView("tasksalerts", _htmlTasksAlertsView);
+  _wuiHandler->addView("logfiles", _htmlLogFilesView);
   _memoryWarningLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryWarningLogger->model()
@@ -1140,6 +1151,17 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_tasksTriggerDiagram->source(0).toUtf8());
     return true;
   }
+  if (path == "/rest/csv/log/files/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvLogFilesView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/log/files/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlLogFilesView->text().toUtf8().constData());
+    return true;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
   return true;
@@ -1229,6 +1251,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _resourcesConsumptionModel, SLOT(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)));
     disconnect(_scheduler, SIGNAL(configReloaded()),
                _resourcesConsumptionModel, SLOT(configReloaded()));
+    disconnect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
+               _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -1317,6 +1341,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourcesConsumptionModel, SLOT(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)));
     connect(_scheduler, SIGNAL(configReloaded()),
             _resourcesConsumptionModel, SLOT(configReloaded()));
+    connect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
+            _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
     Log::addLogger(_memoryWarningLogger, false);
     Log::addLogger(_memoryInfoLogger, false);
   } else {

@@ -39,6 +39,7 @@
 #include "auth/inmemoryrulesauthorizer.h"
 #include "auth/usersdatabase.h"
 #include "httpd/graphvizimagehttphandler.h"
+#include "logfilesmodel.h"
 
 class QThread;
 
@@ -64,6 +65,7 @@ class WebConsole : public HttpHandler {
   FlagsSetModel *_flagsSetModel;
   TaskGroupsModel *_taskGroupsModel;
   AlertChannelsModel *_alertChannelsModel;
+  LogFilesModel *_logConfigurationModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
@@ -77,7 +79,8 @@ class WebConsole : public HttpHandler {
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
   *_htmlLastPostedNoticesView20, *_htmlLastFlagsChangesView20,
   *_htmlFlagsSetView20, *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
-  *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView;
+  *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView,
+  *_htmlLogFilesView;
   ClockView *_clockView;
   CsvTableView *_csvHostsListView,
   *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
@@ -86,7 +89,8 @@ class WebConsole : public HttpHandler {
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
   *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
-  *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView;
+  *_csvLastFlagsChangesView, *_csvFlagsSetView, *_csvTaskGroupsView,
+  *_csvLogFilesView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;

@@ -91,7 +91,9 @@ SOURCES += \
     ui/lastemitedalertsmodel.cpp \
     ui/alertchannelsmodel.cpp \
     config/requestformfield.cpp \
-    ui/resourcesconsumptionmodel.cpp
+    ui/resourcesconsumptionmodel.cpp \
+    config/logfile.cpp \
+    ui/logfilesmodel.cpp
 
 HEADERS += \
     config/task.h \
@@ -141,7 +143,9 @@ HEADERS += \
     ui/lastemitedalertsmodel.h \
     ui/alertchannelsmodel.h \
     config/requestformfield.h \
-    ui/resourcesconsumptionmodel.h
+    ui/resourcesconsumptionmodel.h \
+    config/logfile.h \
+    ui/logfilesmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc

@@ -70,6 +70,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<TaskRequest>("TaskRequest");
   qRegisterMetaType<QList<TaskRequest> >("QList<TaskRequest>");
   qRegisterMetaType<Host>("Host");
+  qRegisterMetaType<LogFile>("LogFile");
   qRegisterMetaType<QPointer<Executor> >("QPointer<Executor>");
   qRegisterMetaType<QList<Event> >("QList<Event>");
   qRegisterMetaType<QHash<QString,Task> >("QHash<QString,Task>");
@@ -78,6 +79,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<QHash<QString,Cluster> >("QHash<QString,Cluster>");
   qRegisterMetaType<QHash<QString,Host> >("QHash<QString,Host>");
   qRegisterMetaType<QHash<QString,qint64> >("QHash<QString,qint64>");
+  qRegisterMetaType<QList<LogFile> >("QList<LogFile>");
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
@@ -143,6 +145,7 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   _setenv.setValue("TASKGROUPID", "%!taskgroupid");
   _setenv.setValue("TASKID", "%!taskid");
   QList<Logger*> loggers;
+  QList<LogFile> logfiles;
   foreach (PfNode node, root.childrenByName("log")) {
     QString level = node.attribute("level");
     QString filename = node.attribute("file");
@@ -155,10 +158,12 @@ bool Scheduler::reloadConfiguration(PfNode root) {
                      << node.toPf();
     } else {
       Log::debug() << "adding logger " << node.toPf();
-      loggers.append(new FileLogger(filename, Log::severityFromString(level),
-                                    buffered));
+      Log::Severity minimumSeverity = Log::severityFromString(level);
+      loggers.append(new FileLogger(filename, minimumSeverity, buffered));
+      logfiles.append(LogFile(filename, minimumSeverity, buffered));
     }
   }
+  emit logConfigurationChanged(logfiles);
   //Log::debug() << "replacing loggers " << loggers.size();
   Log::replaceLoggersPlusConsole(Log::Fatal, loggers);
   ConfigUtils::loadParamSet(root, &_globalParams);

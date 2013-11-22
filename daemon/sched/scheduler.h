@@ -34,6 +34,7 @@
 #include "auth/inmemoryauthenticator.h"
 #include "auth/inmemoryusersdatabase.h"
 #include <QFileSystemWatcher>
+#include "config/logfile.h"
 
 class QThread;
 
@@ -180,6 +181,7 @@ signals:
   void hostResourceConfigurationChanged(
       QHash<QString,QHash<QString,qint64> > resources);
   void accessControlConfigurationChanged(bool enabled);
+  void logConfigurationChanged(QList<LogFile> logfiles);
   /** Emitted when config (re)load is complete, after all other config reload
    * signals: tasksConfigurationReset() targetsConfigurationReset()
    * eventsConfigurationReset() hostResourceAllocationChanged()
