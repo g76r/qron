@@ -39,11 +39,6 @@ public:
    * through Task.params(). */
   void setCustomActions(QString customActions) {
     _customActions = customActions; }
-
-public slots:
-  void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
-                            QHash<QString, Task> tasks);
-  void taskChanged(Task task);
   static QString taskLastExecStatus(Task task);
   static QString taskLastExecDuration(Task task);
   static QString taskSystemEnvironnement(Task task);
@@ -52,6 +47,11 @@ public slots:
   static QString taskMinExpectedDuration(Task task);
   static QString taskMaxExpectedDuration(Task task);
   static QString taskMaxDurationBeforeAbort(Task task);
+
+public slots:
+  void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
+                            QHash<QString, Task> tasks);
+  void taskChanged(Task task);
 
 private slots:
   void forceTimeRelatedDataRefresh();

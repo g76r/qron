@@ -103,6 +103,8 @@ public:
   QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
   /** Human readable list of all triggers as one string, for UI purpose. */
   QString triggersAsString() const;
+  QString triggersWithCalendarsAsString() const;
+  bool triggersHaveCalendar() const;
   /** Cron triggers list */
   QList<CronTrigger> cronTriggers() const;
   /** Notice triggers set */

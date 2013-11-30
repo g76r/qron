@@ -18,7 +18,7 @@
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 28
+#define COLUMNS 29
 #define SOON_EXECUTION_MILLIS 300000
 // 300,000 ms = 5'
 #define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
@@ -104,6 +104,8 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return taskLastExecDuration(t);
       case 27:
         return taskMaxDurationBeforeAbort(t);
+      case 28:
+        return t.triggersWithCalendarsAsString();
       }
       break;
     case TextViews::HtmlPrefixRole:
@@ -114,12 +116,15 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return "<i class=\"glyphicon-cogwheel\"></i> ";
       case 1:
         return "<i class=\"glyphicon-cogwheels\"></i> ";
-      case 6: {
+      case 6:
+      case 28: {
         QString prefix;
         if (!t.enabled())
           prefix = "<i class=\"icon-ban-circle\"></i> disabled ";
         if (t.triggersAsString().isEmpty())
           prefix += "<i class=\"icon-remove\"></i> no trigger ";
+        if (t.triggersHaveCalendar())
+          prefix += "<i class=\"icon-calendar\"></i> ";
         return prefix;
       }
       case 10: {
@@ -326,6 +331,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Last execution duration";
     case 27:
       return "Max duration before abort";
+    case 28:
+      return "Triggers with calendars";
     }
   }
   return QVariant();

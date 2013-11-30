@@ -78,6 +78,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<QHash<QString,Host> >("QHash<QString,Host>");
   qRegisterMetaType<QHash<QString,qint64> >("QHash<QString,qint64>");
   qRegisterMetaType<QList<LogFile> >("QList<LogFile>");
+  qRegisterMetaType<QHash<QString,Calendar> >("QHash<QString,Calendar>");
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
@@ -167,6 +168,17 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   ConfigUtils::loadParamSet(root, &_globalParams);
   ConfigUtils::loadSetenv(root, &_setenv);
   ConfigUtils::loadUnsetenv(root, &_unsetenv);
+  _calendars.clear();
+  foreach (PfNode node, root.childrenByName("calendar")) {
+    QString name = node.contentAsString();
+    Calendar calendar(node);
+    if (name.isEmpty())
+      Log::error() << "ignoring anonymous calendar: " << node.toPf();
+    else if (calendar.isNull())
+      Log::error() << "ignoring empty calendar: " << node.toPf();
+    else
+      _calendars.insert(name, calendar);
+  }
   _tasksGroups.clear();
   foreach (PfNode node, root.childrenByName("taskgroup")) {
     QString id = node.attribute("id");
@@ -392,6 +404,7 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   emit globalUnsetenvChanged(_unsetenv);
   emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
                                 _onnotice, _onschedulerstart, _onconfigload);
+  emit calendarsConfigurationReset(_calendars);
   emit accessControlConfigurationChanged(accessControlEnabled);
   emit configReloaded(); // must be last signal
   reevaluateQueuedRequests();
@@ -1124,4 +1137,9 @@ void Scheduler::periodicChecks() {
   // if current system time goes back (which btw should never occur on well
   // managed production servers, however it with naive sysops)
   checkTriggersForAllTasks();
+}
+
+Calendar Scheduler::calendarByName(QString name) const {
+  QMutexLocker ml(&_configMutex);
+  return _calendars.value(name);
 }

@@ -50,6 +50,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _taskGroupsModel(new TaskGroupsModel(this)),
   _alertChannelsModel(new AlertChannelsModel(this)),
   _logConfigurationModel(new LogFilesModel(this)),
+  _calendarsModel(new CalendarsModel(this)),
   _htmlHostsListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlClustersListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlFreeResourcesView(
@@ -90,6 +91,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksResourcesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _htmlTasksAlertsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
   _htmlLogFilesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
+  _htmlCalendarsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
   _clockView(new ClockView(this)),
   _csvHostsListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvClustersListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
@@ -113,6 +115,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                               this, _lastPostedNoticesModel->maxrows())),
   _csvTaskGroupsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _csvLogFilesView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
+  _csvCalendarsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
   _tasksDeploymentDiagram(new GraphvizImageHttpHandler(this)),
   _tasksTriggerDiagram(new GraphvizImageHttpHandler(this)),
   _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
@@ -251,7 +254,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksConfigView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
-  cols << 1 << 0 << 3 << 5 << 4 << 6 << 8 << 12 << 18;
+  cols << 1 << 0 << 3 << 5 << 4 << 28 << 8 << 12 << 18;
   _htmlTasksConfigView->setColumnIndexes(cols);
   _htmlTasksConfigView->setRowAnchor("taskconfig.", 11);
   _htmlTasksParamsView->setModel(_tasksModel);
@@ -325,6 +328,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLogFilesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLogFilesView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
+  _htmlCalendarsView->setModel(_calendarsModel);
+  _htmlCalendarsView->setTableClass("table table-condensed table-hover");
+  _htmlCalendarsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  _htmlCalendarsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
+  _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _csvHostsListView->setModel(_hostsListModel);
   _csvHostsListView->setFieldQuote('"');
@@ -365,6 +373,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvTaskGroupsView->setFieldQuote('"');
   _csvLogFilesView->setModel(_logConfigurationModel);
   _csvLogFilesView->setFieldQuote('"');
+  _csvCalendarsView->setModel(_calendarsModel);
+  _csvCalendarsView->setFieldQuote('"');
   _wuiHandler->addFilter("\\.html$");
   _wuiHandler->addView("freeresources", _htmlFreeResourcesView);
   _wuiHandler->addView("resourceslwm", _htmlResourcesLwmView);
@@ -398,6 +408,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("tasksresources", _htmlTasksResourcesView);
   _wuiHandler->addView("tasksalerts", _htmlTasksAlertsView);
   _wuiHandler->addView("logfiles", _htmlLogFilesView);
+  _wuiHandler->addView("calendars", _htmlCalendarsView);
   _memoryWarningLogger->model()
       ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
   _memoryWarningLogger->model()
@@ -742,7 +753,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +"<tr><th>Additional information</th><td>"
                         +HtmlUtils::htmlEncode(task.info())+"</td></tr>"
                         "<tr><th>Triggers (scheduling)</th><td>"
-                        +task.triggersAsString()+"</td></tr>"
+                        +task.triggersWithCalendarsAsString()+"</td></tr>"
                         "<tr><th>Minimum expected duration (seconds)</th><td>"
                         +TasksModel::taskMinExpectedDuration(task)+"</td></tr>"
                         "<tr><th>Maximum expected duration (seconds)</th><td>"
@@ -1105,6 +1116,17 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlLogFilesView->text().toUtf8().constData());
     return true;
   }
+  if (path == "/rest/csv/calendars/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvCalendarsView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/calendars/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlCalendarsView->text().toUtf8().constData());
+    return true;
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
   return true;
@@ -1164,6 +1186,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
                _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    disconnect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
+               _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
     disconnect(_scheduler, SIGNAL(noticePosted(QString)),
                _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
@@ -1243,6 +1267,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
     connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
             _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    connect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
+            _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
     connect(_scheduler, SIGNAL(noticePosted(QString)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),

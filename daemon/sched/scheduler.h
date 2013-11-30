@@ -35,6 +35,7 @@
 #include "auth/inmemoryusersdatabase.h"
 #include <QFileSystemWatcher>
 #include "config/logfile.h"
+#include "config/calendar.h"
 
 class QThread;
 
@@ -65,6 +66,7 @@ class Scheduler : public QObject {
   QList<RequestTaskEventLink> _requestTaskEventLinks;
   QFileSystemWatcher *_accessControlFilesWatcher;
   PfNode _accessControlNode;
+  QHash<QString,Calendar> _calendars;
 
 public:
   Scheduler();
@@ -88,6 +90,7 @@ public:
   int tasksGroupsCount() const { return _tasksGroups.count(); }
   int maxtotaltaskinstances() const { return _maxtotaltaskinstances; }
   int maxqueuedrequests() const { return _maxqueuedrequests; }
+  Calendar calendarByName(QString name) const;
 
 public slots:
   /** Explicitely request task execution now.
@@ -165,6 +168,7 @@ signals:
                                 QList<Event> onnotice,
                                 QList<Event> onschedulerstart,
                                 QList<Event> onconfigload);
+  void calendarsConfigurationReset(QHash<QString,Calendar> calendars);
   void hostResourceAllocationChanged(QString host,
                                      QHash<QString,qint64> resources);
   void hostResourceConfigurationChanged(

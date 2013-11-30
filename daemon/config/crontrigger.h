@@ -18,6 +18,7 @@
 #include <QString>
 #include <QDateTime>
 #include <QMetaType>
+#include "calendar.h"
 
 class CronTriggerData;
 
@@ -58,6 +59,8 @@ public:
   QDateTime lastTriggered() const;
   void setLastTriggered(QDateTime lastTriggered) const;
   void clearLastTriggered() const { setLastTriggered(QDateTime()); }
+  void setCalendar(Calendar calendar);
+  Calendar calendar() const;
 };
 
 Q_DECLARE_METATYPE(CronTrigger)

@@ -113,6 +113,7 @@ class CronTriggerData : public QSharedData {
 public:
   QString _cronExpression;
   CronField _seconds, _minutes, _hours, _days, _months, _daysofweek;
+  Calendar _calendar;
   bool _isValid;
   mutable qint64 _lastTriggered, _nextTriggering;
 
@@ -194,7 +195,8 @@ QDateTime CronTriggerData::nextTriggering(QDateTime max) const {
       next.setDate(QDate(next.date().year(), next.date().month(), 1));
       next.setTime(QTime(0, 0, 0));
     } else if (!_days.isSet(next.date().day())
-               ||!_daysofweek.isSet(next.date().dayOfWeek()%7)) {
+               ||!_daysofweek.isSet(next.date().dayOfWeek()%7)
+               ||!_calendar.isIncluded(next.date())) {
       next = next.addDays(1);
       next.setTime(QTime(0, 0, 0));
     } else if (!_hours.isSet(next.time().hour())) {
@@ -300,6 +302,15 @@ void CronTriggerData::parseCronExpression(QString cronExpression) {
   } else
     Log::warning() << "unsupported cron trigger expression: '"
                    << cronExpression << "'";
+}
+
+void CronTrigger::setCalendar(Calendar calendar) {
+  if (d)
+    d->_calendar = calendar;
+}
+
+Calendar CronTrigger::calendar() const {
+  return d ? d->_calendar : Calendar();
 }
 
 #if 0

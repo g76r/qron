@@ -127,10 +127,35 @@ Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
       } else if (triggerType == "cron") {
           CronTrigger trigger(content);
           if (trigger.isValid()) {
+            // keep last triggered timestamp from previously defined trigger
             CronTrigger oldTrigger =
                 oldCronTriggers.value(trigger.canonicalCronExpression());
             if (oldTrigger.isValid())
               trigger.setLastTriggered(oldTrigger.lastTriggered());
+            // ifincalendar
+            QList<PfNode> list = grandchild.childrenByName("ifincalendar");
+            if (list.size() > 1)
+              Log::error() << "ignoring multiple calendar definition: "
+                           << grandchild.toPf();
+            else if (list.size() == 1) {
+              PfNode ggchild = list.first();
+              content = ggchild.contentAsString();
+              if (!content.isEmpty()) {
+                Calendar calendar = scheduler->calendarByName(content);
+                if (calendar.isNull())
+                  Log::error() << "ignoring undefined calendar '" << content
+                               << "': " << ggchild.toPf();
+                else
+                  trigger.setCalendar(calendar);
+              } else {
+                Calendar calendar = Calendar(ggchild);
+                if (calendar.isNull())
+                  Log::warning() << "ignoring empty calendar: "
+                                 << ggchild.toPf();
+                else
+                  trigger.setCalendar(calendar);
+              }
+            }
             td->_cronTriggers.append(trigger);
             //Log::debug() << "configured cron trigger '" << content
             //             << "' on task '" << td->_id << "'";
@@ -297,6 +322,34 @@ QString Task::triggersAsString() const {
   if (!s.isEmpty())
     s.chop(1); // remove last space
   return s;
+}
+
+QString Task::triggersWithCalendarsAsString() const {
+  QString s;
+  if (d) {
+    foreach (CronTrigger t, d->_cronTriggers) {
+      s.append("(").append(t.cronExpression());
+      if (!t.calendar().isNull())
+        s.append(" ").append(t.calendar().toPf(true));
+      s.append(") ");
+    }
+    foreach (QString t, d->_noticeTriggers)
+      s.append("^").append(t).append(" ");
+    foreach (QString t, d->_otherTriggers)
+      s.append(t).append(" ");
+  }
+  if (!s.isEmpty())
+    s.chop(1); // remove last space
+  return s;
+}
+
+bool Task::triggersHaveCalendar() const {
+  if (d) {
+    foreach (CronTrigger t, d->_cronTriggers)
+      if (!t.calendar().isNull())
+        return true;
+  }
+  return false;
 }
 
 QDateTime Task::lastExecution() const {

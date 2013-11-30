@@ -21,10 +21,10 @@ CONFIG -= app_bundle
 INCLUDEPATH += ../libqtpf ../libqtssu
 win32:debug:LIBS += -L../libqtpf/pf-build-windows/debug \
   -L../libqtpf/pfsql-build-windows/debug \
-  -L../ssu-build-windows/debug
+  -L../libqtssu-build-windows/debug
 win32:release:LIBS += -L../libqtpf/pf-build-windows/release \
   -L../libqtpf/pfsql-build-windows/release \
-  -L../ssu-build-windows/release
+  -L../libqtssu-build-windows/release
 unix:LIBS += -L../libqtpf/pf -L../libqtpf/pfsql -L../libqtssu
 LIBS += -lqtpf -lqtssu
 
@@ -90,7 +90,9 @@ SOURCES += \
     config/requestformfield.cpp \
     ui/resourcesconsumptionmodel.cpp \
     config/logfile.cpp \
-    ui/logfilesmodel.cpp
+    ui/logfilesmodel.cpp \
+    config/calendar.cpp \
+    ui/calendarsmodel.cpp
 
 HEADERS += \
     config/task.h \
@@ -139,7 +141,9 @@ HEADERS += \
     config/requestformfield.h \
     ui/resourcesconsumptionmodel.h \
     config/logfile.h \
-    ui/logfilesmodel.h
+    ui/logfilesmodel.h \
+    config/calendar.h \
+    ui/calendarsmodel.h
 
 RESOURCES += \
     ui/webconsole.qrc
