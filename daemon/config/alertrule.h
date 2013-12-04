@@ -52,9 +52,6 @@ public:
   bool notifyCancel() const;
   bool notifyReminder() const;
   bool isNull() const;
-  /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
-   * "some.path.with.\*.star.and.\\.backslash" into regular expressions. */
-  static QRegExp compilePattern(QString pattern);
 };
 
 #endif // ALERTRULE_H

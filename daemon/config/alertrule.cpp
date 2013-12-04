@@ -17,6 +17,7 @@
 #include "pf/pfnode.h"
 #include "util/paramset.h"
 #include "alert.h"
+#include "configutils.h"
 
 class AlertRuleData : public QSharedData {
 public:
@@ -48,7 +49,7 @@ AlertRule::AlertRule(PfNode node, QString pattern,
                      bool stop, bool notifyCancel, bool notifyReminder)
   : d(new AlertRuleData) {
   d->_pattern = pattern;
-  d->_patterRegExp = compilePattern(pattern);
+  d->_patterRegExp = ConfigUtils::readDotHierarchicalFilter(pattern);
   d->_channel = channel;
   d->_channelName = channelName;
   d->_address = node.attribute("address"); // LATER check uniqueness
@@ -58,52 +59,6 @@ AlertRule::AlertRule(PfNode node, QString pattern,
   d->_stop = stop;
   d->_notifyCancel = notifyCancel;
   d->_notifyReminder = notifyReminder;
-}
-
-QRegExp AlertRule::compilePattern(QString pattern) {
-  QString re;
-  for (int i = 0; i < pattern.size(); ++i) {
-    QChar c = pattern.at(i);
-    switch (c.toLatin1()) {
-    case '*':
-      if (i >= pattern.size()-1 || pattern.at(i+1) != '*')
-        re.append("[^.]*");
-      else {
-        re.append(".*");
-        ++i;
-      }
-      break;
-    case '\\':
-      if (i < pattern.size()-1) {
-        c = pattern.at(++i);
-        switch (c.toLatin1()) {
-        case '*':
-        case '\\':
-          re.append('\\').append(c);
-          break;
-        default:
-          re.append("\\\\").append(c);
-        }
-      }
-      break;
-    case '.':
-    case '[':
-    case ']':
-    case '(':
-    case ')':
-    case '+':
-    case '?':
-    case '^':
-    case '$':
-    case 0: // actual 0 or non-ascii
-      // LATER fix regexp conversion, it is erroneous with some special chars
-      re.append('\\').append(c);
-      break;
-    default:
-      re.append(c);
-    }
-  }
-  return QRegExp(re);
 }
 
 QString AlertRule::pattern() const {

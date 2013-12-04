@@ -50,3 +50,64 @@ QString ConfigUtils::sanitizeId(QString string, bool allowDot) {
   return string.replace(allowDot ? unallowedCharsWithDot : unallowedChars,
                         placeholder);
 }
+
+QRegExp ConfigUtils::readRawOrRegexpFilter(
+    QString s, Qt::CaseSensitivity cs) {
+  if (s.size() > 1 && s[0] == '/' && s[s.size()-1] == '/' )
+    return QRegExp(s.mid(1, s.size()-2), cs);
+  return QRegExp(s, cs, QRegExp::FixedString);
+}
+
+QRegExp ConfigUtils::readDotHierarchicalFilter(
+    QString s, Qt::CaseSensitivity cs) {
+  if (s.size() > 1 && s[0] == '/' && s[s.size()-1] == '/' )
+    return QRegExp(s.mid(1, s.size()-2), cs);
+  return convertDotHierarchicalFilterToRegexp(s, cs);
+}
+
+QRegExp ConfigUtils::convertDotHierarchicalFilterToRegexp(
+    QString pattern, Qt::CaseSensitivity cs) {
+  QString re;
+  for (int i = 0; i < pattern.size(); ++i) {
+    QChar c = pattern.at(i);
+    switch (c.toLatin1()) {
+    case '*':
+      if (i >= pattern.size()-1 || pattern.at(i+1) != '*')
+        re.append("[^.]*");
+      else {
+        re.append(".*");
+        ++i;
+      }
+      break;
+    case '\\':
+      if (i < pattern.size()-1) {
+        c = pattern.at(++i);
+        switch (c.toLatin1()) {
+        case '*':
+        case '\\':
+          re.append('\\').append(c);
+          break;
+        default:
+          re.append("\\\\").append(c);
+        }
+      }
+      break;
+    case '.':
+    case '[':
+    case ']':
+    case '(':
+    case ')':
+    case '+':
+    case '?':
+    case '^':
+    case '$':
+    case 0: // actual 0 or non-ascii
+      // LATER fix regexp conversion, it is erroneous with some special chars
+      re.append('\\').append(c);
+      break;
+    default:
+      re.append(c);
+    }
+  }
+  return QRegExp(re, cs);
+}

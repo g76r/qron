@@ -16,6 +16,7 @@
 
 #include "pf/pfnode.h"
 #include "util/paramset.h"
+#include <QRegExp>
 
 class ConfigUtils {
 public:
@@ -27,11 +28,22 @@ public:
   /** For identifier, with or without dot. Cannot contain ParamSet interpreted
    * expressions such as %!yyyy. */
   static QString sanitizeId(QString string, bool allowDot = false);
+  /** Interpret s as regexp if it starts and ends with a /, else as raw text */
+  static QRegExp readRawOrRegexpFilter(
+      QString s, Qt::CaseSensitivity cs = Qt::CaseSensitive);
+  /** Interpret s as regexp if it starts and ends with a /, else as
+   * dot-hierarchical globing with * meaning [^.]* and ** meaning .* */
+  static QRegExp readDotHierarchicalFilter(
+      QString s, Qt::CaseSensitivity cs = Qt::CaseSensitive);
 
 private:
   static void loadGenericParamSet(PfNode parentnode, ParamSet *params,
                                   QString attrname);
   ConfigUtils();
+  /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
+   * "some.path.with.\*.star.and.\\.backslash" into regular expressions. */
+  static QRegExp convertDotHierarchicalFilterToRegexp(
+      QString pattern, Qt::CaseSensitivity cs = Qt::CaseSensitive);
 };
 
 #endif // CONFIGUTILS_H
