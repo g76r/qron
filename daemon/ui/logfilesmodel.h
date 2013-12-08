@@ -20,6 +20,7 @@
 
 class LogFilesModel : public QAbstractTableModel {
   Q_OBJECT
+  Q_DISABLE_COPY(LogFilesModel)
   QList<LogFile> _logfiles;
 
 public:
