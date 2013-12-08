@@ -20,7 +20,7 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/qron.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/glyphicons.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
     <style type="text/css"><?value:cssoverload?></style>
   </head>
   <body>
@@ -28,9 +28,7 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="fa fa-bars"></span>
           </a>
           <a class="brand" href="#"><?value:navtitle?></a>
           <div class="nav-collapse collapse">
@@ -56,9 +54,9 @@
       <div class="row">
         <div class="span12">
           <h2>Task <?value:fqtn?></h2>
-          <p><a class="btn btn-danger" href="requestform?fqtn=<?value:fqtn?>"><i class="icon-play icon-white"></i> Request task execution</a>
-          <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;fqtn=<?value:fqtn?>"><i class="icon-ban-circle icon-white"></i> Disable task</a>
-          <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;fqtn=<?value:fqtn?>"><i class="icon-ban-circle icon-white"></i> Enable task</a>
+          <p><a class="btn btn-danger" href="requestform?fqtn=<?value:fqtn?>"><i class="fa fa-play"></i> Request task execution</a>
+          <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;fqtn=<?value:fqtn?>"><i class="fa fa-ban"></i> Disable task</a>
+          <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;fqtn=<?value:fqtn?>"><i class="fa fa-ban"></i> Enable task</a>
           <?value:customactions?>
         </div>
       </div>
@@ -73,7 +71,7 @@
         </div>
         <div class="span4">
           <h3>Task Status</h3>
-          <p><a class="btn btn-primary" href="../rest/txt/log/all/v1?filter=%20<?value:fqtn?>/" target="_blank"><i class="icon-file icon-white"></i> Task log</a>
+          <p><a class="btn btn-primary" href="../rest/txt/log/all/v1?filter=%20<?value:fqtn?>/" target="_blank"><i class="fa fa-file"></i> Task log</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
 <p><table class="table table-condensed table-hover">
           <?value:status?>

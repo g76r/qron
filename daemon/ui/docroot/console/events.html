@@ -20,7 +20,7 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/qron.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/glyphicons.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
     <style type="text/css"><?value:cssoverload?></style>
   </head>
   <body>
@@ -28,9 +28,7 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="fa fa-bars"></span>
           </a>
           <a class="brand" href="#"><?value:navtitle?></a>
           <div class="nav-collapse collapse">
@@ -58,8 +56,8 @@
           <a name="config"></a>
           <h2>Global events configuration</h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/scheduler/events/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/scheduler/events/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/scheduler/events/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/scheduler/events/v1"><i class="fa fa-file"></i> HTML</a>
 	  <p><?view:schedulerevents?>
 	</div>
       </div>
@@ -68,8 +66,8 @@
           <a name="config"></a>
           <h2>Tasks groups events configuration</h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/taskgroups/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/taskgroups/events/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/taskgroups/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/taskgroups/events/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <p><?view:taskgroupsevents?>
         </div>
@@ -79,8 +77,8 @@
           <a name="config"></a>
           <h2>Tasks events configuration</h2>
           <p>Note: every task inherits its taskgroup and global events configuration shown above, in addition to its own configuration shown below.
-          <p><a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/events/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/tasks/events/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <p><?view:tasksevents?>
         </div>
@@ -89,16 +87,16 @@
         <div class="span6">
           <h2>Recently posted notices</h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/notices/lastposted/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/notices/lastposted/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/notices/lastposted/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/notices/lastposted/v1"><i class="fa fa-file"></i> HTML</a>
           <p><?view:lastpostednotices20?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
           <h2>Tasks trigger diagram</h2>
-          <p><a class="btn btn-primary" href="../rest/png/tasks/trigger/v1"><i class="icon-file icon-white"></i> PNG</a>
-          <a class="btn btn-primary" href="../rest/dot/tasks/trigger/v1"><i class="icon-file icon-white"></i> DOT</a>
+          <p><a class="btn btn-primary" href="../rest/png/tasks/trigger/v1"><i class="fa fa-file"></i> PNG</a>
+          <a class="btn btn-primary" href="../rest/dot/tasks/trigger/v1"><i class="fa fa-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <p class="text-center"><a href="../rest/png/tasks/trigger/v1"><img src="../rest/png/tasks/trigger/v1" alt="Tasks trigger diagram"/></a>
         </div>

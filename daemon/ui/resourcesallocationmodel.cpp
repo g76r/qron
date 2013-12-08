@@ -23,10 +23,10 @@ QVariant ResourcesAllocationModel::headerData(
   switch(role) {
   case TextViews::HtmlPrefixRole:
     // LATER move icons to WebConsole
-    // glyphicon-celebration glyphicon-fast-food icon-glass
+    // glyphicon-celebration glyphicon-fast-food icon-glass glyphicon-fast-food
     return orientation == Qt::Horizontal
-        ? "<i class=\"glyphicon-fast-food\"></i> "
-        : "<i class=\"icon-hdd\"></i> ";
+        ? "<i class=\"fa fa-beer\"></i> "
+        : "<i class=\"fa fa-hdd-o\"></i> ";
   default:
     return TextMatrixModel::headerData(section, orientation, role);
   }

@@ -169,7 +169,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlGlobalUnsetenvView->setColumnIndexes(cols);
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _htmlAlertParamsView->setTableClass("table table-condensed table-hover");
-  _raisedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ",
+  _raisedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ",
                                 TextViews::HtmlPrefixRole);
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView->setTableClass("table table-condensed table-hover");
@@ -184,8 +184,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   //    ->setEllipsePlaceholder("(see alerts page for more alerts)");
   _htmlRaisedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
   _lastEmitedAlertsModel->setEventName("Alert");
-  _lastEmitedAlertsModel->setPrefix("<i class=\"icon-bell\"></i> ", 0);
-  _lastEmitedAlertsModel->setPrefix("<i class=\"icon-ok\"></i> ", 1);
+  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ", 0);
+  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-check\"></i> ", 1);
   _lastEmitedAlertsModel->setPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
@@ -282,7 +282,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
   _htmlSchedulerEventsView->setTableClass("table table-condensed table-hover");
   _lastPostedNoticesModel->setEventName("Notice");
-  _lastPostedNoticesModel->setPrefix("<i class=\"icon-comment\"></i> ");
+  _lastPostedNoticesModel->setPrefix("<i class=\"fa fa-comment\"></i> ");
   _lastPostedNoticesModel->setPrefixRole(TextViews::HtmlPrefixRole);
   _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
   _htmlLastPostedNoticesView20
@@ -410,15 +410,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView("logfiles", _htmlLogFilesView);
   _wuiHandler->addView("calendars", _htmlCalendarsView);
   _memoryWarningLogger->model()
-      ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
+      ->setWarningIcon("<i class=\"fa fa-warning fa-fw\"></i> ");
   _memoryWarningLogger->model()
-      ->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
+      ->setErrorIcon("<i class=\"fa fa-minus-circle fa-fw\"></i> ");
   _memoryWarningLogger->model()->setWarningTrClass("warning");
   _memoryWarningLogger->model()->setErrorTrClass("error");
   _memoryInfoLogger->model()
-      ->setWarningIcon("<i class=\"icon-warning-sign\"></i> ");
+      ->setWarningIcon("<i class=\"fa fa-warning fa-fw\"></i> ");
   _memoryInfoLogger->model()
-      ->setErrorIcon("<i class=\"icon-minus-sign\"></i> ");
+      ->setErrorIcon("<i class=\"fa fa-minus-circle fa-fw\"></i> ");
   _memoryInfoLogger->model()->setWarningTrClass("warning");
   _memoryInfoLogger->model()->setErrorTrClass("error");
   connect(this, SIGNAL(alertEmited(QString,int)),
@@ -766,7 +766,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Enabled</th><td>"
                         +QString(task.enabled()
                                  ? "true"
-                                 : "<i class=\"icon-ban-circle\"></i> false")
+                                 : "<i class=\"fa fa-ban\"></i> false")
                         +"</td></tr><tr><th>Last execution status</th><td>"
                         +HtmlUtils::htmlEncode(
                           TasksModel::taskLastExecStatus(task))+"</td></tr>"
@@ -777,7 +777,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +task.nextScheduledExecution()
                         .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"
                         "<tr><th>Currently running instances</th><td>"
-                        +(instancesCount ? "<i class=\"icon-play\"></i> " : "")
+                        +(instancesCount ? "<i class=\"fa fa-play\"></i> " : "")
                         +QString::number(instancesCount)+" / "
                         +QString::number(task.maxInstances())+"</td></tr>");
         params.setValue("params",

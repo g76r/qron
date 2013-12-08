@@ -20,7 +20,7 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/qron.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/glyphicons.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
     <style type="text/css"><?value:cssoverload?></style>
   </head>
   <body>
@@ -28,9 +28,7 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="fa fa-bars"></span>
           </a>
           <a class="brand" href="#"><?value:navtitle?></a>
           <div class="nav-collapse collapse">
@@ -56,14 +54,14 @@
       <div class="row">
         <div class="span8">
           <h2>Currently raised alerts</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/alerts/raised/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/raised/list/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="alerts.html">Alerts page &raquo;</a>
           <p><?view:raisedalerts10?>
         </div>
         <div class="span4">
           <h2>Global status</h2>
-          <p class="text-right"><a class="btn btn-danger" href="confirm?event=reloadConfig"><i class="glyphicon-refresh glyphicon-white"></i> Reload config</a>
+          <p class="text-right"><a class="btn btn-danger" href="confirm?event=reloadConfig"><i class="fa fa-refresh"></i> Reload config</a>
           <p><table class="table table-condensed table-hover">
             <tr><th>Scheduler started on</th><td><?value:startdate?></td></tr>
             <tr><th>Uptime</th><td><?value:uptime?></td></tr>
@@ -79,8 +77,8 @@
       <div class="row">
         <div class="span12">
           <h2>Currently running or queued tasks</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/taskrequests/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/taskrequests/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/taskrequests/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/taskrequests/list/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html#requests">Tasks page &raquo;</a>
           <p><?view:taskrequests20?>
         </div>
@@ -88,13 +86,13 @@
       <div class="row">
         <div class="span12">
           <h2>Tasks schedule</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html#config">Tasks page &raquo;</a>
           <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <span class="pull-right">
-            <a class="btn btn-danger" href="confirm?event=enableAllTasks&amp;enable=false"><i class="icon-ban-circle icon-white"></i> Disable all tasks</a>
-            <a class="btn btn-warning" href="confirm?event=enableAllTasks&amp;enable=true"><i class="icon-ban-circle icon-white"></i> Enable all tasks</a>
+            <a class="btn btn-danger" href="confirm?event=enableAllTasks&amp;enable=false"><i class="fa fa-ban"></i> Disable all tasks</a>
+            <a class="btn btn-warning" href="confirm?event=enableAllTasks&amp;enable=true"><i class="fa fa-ban"></i> Enable all tasks</a>
           </span>
           <p><?view:tasksschedule?>
         </div>
@@ -102,9 +100,9 @@
       <div class="row">
         <div class="span12">
           <h2>Last warnings and errors</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="icon-file icon-white"></i> Current log file</a>
+          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="fa fa-file"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="fa fa-file"></i> Current log file</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
           <p><?view:warninglog10?>
         </div>

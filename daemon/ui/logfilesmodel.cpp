@@ -48,10 +48,10 @@ QVariant LogFilesModel::data(const QModelIndex &index, int role) const {
        // LATER move Twitter Bootstrap specific icons to WebConsole
       switch(index.column()) {
       case 0:
-        return "<i class=\"icon-file\"></i> ";
+        return "<i class=\"fa fa-file\"></i> ";
       case 2:
         return logfile.buffered() ? QVariant()
-                                  : "<i class=\"icon-download-alt\"></i> ";
+                                  : "<i class=\"fa fa-download\"></i> ";
       }
       break;
     default:

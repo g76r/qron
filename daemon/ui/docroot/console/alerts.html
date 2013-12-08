@@ -20,7 +20,7 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/qron.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/glyphicons.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
     <style type="text/css"><?value:cssoverload?></style>
   </head>
   <body>
@@ -28,9 +28,7 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="fa fa-bars"></span>
           </a>
           <a class="brand" href="#"><?value:navtitle?></a>
           <div class="nav-collapse collapse">
@@ -71,21 +69,21 @@
         <div class="span8">
           <h2>Currently raised alerts</h2>
           <form class="form-inline" action="do" type="GET">
-          <a class="btn btn-primary" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/raised/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/alerts/raised/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/raised/list/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="raiseAlert" />
               <input class="input-large" name="alert" type="text" placeholder="alert name" />
-              <button class="btn btn-danger" type="submit" value="submit"><i class="icon icon-bell icon-white"></i> Raise alert</button>
+              <button class="btn btn-danger" type="submit" value="submit"><i class="icon fa fa-bell"></i> Raise alert</button>
           </span>
           </form>
           <p><?view:raisedalerts?>
         </div>
         <div class="span4">
           <h2>Alert params</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/params/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/params/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/alerts/params/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/params/v1"><i class="fa fa-file"></i> HTML</a>
           <p><?view:alertparams?>
         </div>
       </div>
@@ -93,13 +91,13 @@
         <div class="span8">
           <h2>Recently emited alerts</h2>
           <form class="form-inline" action="do" type="GET">
-          <a class="btn btn-primary" href="../rest/csv/alerts/emited/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/emited/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/alerts/emited/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/emited/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="emitAlert" />
               <input class="input-large" name="alert" type="text" placeholder="alert name" />
-              <button class="btn btn-danger" type="submit" value="submit"><i class="icon icon-bell icon-white"></i> Emit alert</button>
+              <button class="btn btn-danger" type="submit" value="submit"><i class="icon fa fa-bell"></i> Emit alert</button>
           </span>
           </form>
           <p><?view:lastemitedalerts?>
@@ -118,16 +116,16 @@
            per matching rule.
            If a stop rule matches an alert, next rules are not evaluated
            regardless if they match the alert or not.
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/rules/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/rules/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/alerts/rules/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/rules/v1"><i class="fa fa-file"></i> HTML</a>
           <p><?view:alertrules?>
         </div>
       </div>
       <div class="row">
         <div class="span12">
           <h2>Tasks parameters related to alerts</h2>
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file icon-white"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <p><?view:tasksalerts?>
         </div>

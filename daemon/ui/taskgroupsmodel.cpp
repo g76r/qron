@@ -82,7 +82,7 @@ QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
     case TextViews::HtmlPrefixRole:
       switch(index.column()) {
       case 0:
-        return "<i class=\"glyphicon-cogwheels\"></i> ";
+        return "<i class=\"fa fa-cogs\"></i> ";
       default:
         ;
       }

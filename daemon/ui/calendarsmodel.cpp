@@ -44,7 +44,7 @@ QVariant CalendarsModel::data(const QModelIndex &index, int role) const {
       switch(index.column()) {
       case 0:
         // LATER move icons to WebConsole
-        return "<i class=\"icon-calendar\"></i> ";
+        return "<i class=\"fa fa-calendar\"></i> ";
       }
       break;
     default:

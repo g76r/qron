@@ -62,13 +62,13 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 2:
         switch(r.status()) {
         case TaskRequest::Queued:
-          return "<i class=\"icon-inbox\"></i> ";
+          return "<i class=\"fa fa-inbox\"></i> ";
         case TaskRequest::Running:
-          return "<i class=\"icon-play\"></i> ";
+          return "<i class=\"fa fa-play\"></i> ";
         case TaskRequest::Failure:
-          return "<i class=\"icon-minus-sign\"></i> ";
+          return "<i class=\"fa fa-minus-circle\"></i> ";
         case TaskRequest::Canceled:
-          return "<i class=\"icon-remove\"></i> ";
+          return "<i class=\"fa fa-times\"></i> ";
         case TaskRequest::Success:
           ;
         }
@@ -81,7 +81,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
           actions += " <span class=\"label label-important\" "
               "title=\"Cancel request\"><a href=\"confirm?event=cancelRequest&id="
               +QString::number(r.id())
-              +"\"><i class=\"icon-remove icon-white\"></i></a></span>";
+              +"\"><i class=\"fa fa-times\"></i></a></span>";
           break;
         case TaskRequest::Running:
           /* abort */
@@ -89,17 +89,17 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
             actions += " <span class=\"label label-important\" "
                 "title=\"Abort task\"><a href=\"confirm?event=abortTask&id="
                 +QString::number(r.id())+"\">"
-                "<i class=\"glyphicon-skull glyphicon-white\"></i></a></span>";
+                "<i class=\"fa fa-fire\"></i></a></span>";
           else
             actions += " <span class=\"label\" title=\"Cannot abort task\">"
-                "<i class=\"glyphicon-skull glyphicon-white\"></i></span>";
+                "<i class=\"fa fa-fire\"></i></span>";
           break;
         default:
           /* reexec */
           actions += " <span class=\"label label-important\" "
               "title=\"Request execution of same task\"><a href=\""
               "requestform?fqtn="+r.task().fqtn()+"\">"
-              "<i class=\"icon-repeat icon-white\"></i></a></span>";
+              "<i class=\"fa fa-repeat\"></i></a></span>";
           break;
           ;
         }
@@ -107,7 +107,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
         actions += " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
             +r.task().fqtn()+"/"+QString::number(r.id())
-            +"%20\"><i class=\"icon-th-list icon-white\"></i></a></span>";
+            +"%20\"><i class=\"fa fa-list\"></i></a></span>";
         return actions;
         // LATER add cancel button for queued requests
       }
@@ -132,7 +132,7 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 8: {
         QString suffix = " <span class=\"label label-info\" "
             "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-            +r.task().fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
+            +r.task().fqtn()+"\"><i class=\"fa fa-info-circle\">"
             "</i></a></span>";
         if (!_customActions.isEmpty())
           suffix.append(" ").append(r.params().evaluate(_customActions, &r));

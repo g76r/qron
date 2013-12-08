@@ -113,18 +113,18 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 0:
       case 11:
         // LATER move icons to WebConsole
-        return "<i class=\"glyphicon-cogwheel\"></i> ";
+        return "<i class=\"fa fa-cog\"></i> ";
       case 1:
-        return "<i class=\"glyphicon-cogwheels\"></i> ";
+        return "<i class=\"fa fa-cogs\"></i> ";
       case 6:
       case 28: {
         QString prefix;
         if (!t.enabled())
-          prefix = "<i class=\"icon-ban-circle\"></i> disabled ";
+          prefix = "<i class=\"fa fa-ban\"></i> disabled ";
         if (t.triggersAsString().isEmpty())
-          prefix += "<i class=\"icon-remove\"></i> no trigger ";
+          prefix += "<i class=\"fa fa-times\"></i> no trigger ";
         if (t.triggersHaveCalendar())
-          prefix += "<i class=\"icon-calendar\"></i> ";
+          prefix += "<i class=\"fa fa-calendar\"></i> ";
         return prefix;
       }
       case 10: {
@@ -132,13 +132,13 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         if (!dt.isNull()
             && dt.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()
             < SOON_EXECUTION_MILLIS)
-          return "<i class=\"glyphicon-alarm\"></i> ";
+          return "<i class=\"fa fa-clock-o\"></i> ";
         break;
       }
       case 13:
       case 17:
         if (t.instancesCount())
-          return "<i class=\"icon-play\"></i> ";
+          return "<i class=\"fa fa-play\"></i> ";
         break;
       case 18: {
         QString fqtn = t.fqtn();
@@ -148,28 +148,27 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             " <span class=\"label label-important\" "
             "title=\"Request execution\">"
             "<a href=\"requestform?fqtn="
-            +fqtn+"\"><i class=\"icon-play icon-white\"></i></a></span>"
+            +fqtn+"\"><i class=\"fa fa-play\"></i></a></span>"
             /* {enable,disable}Task */
             " <span class=\"label label-"+(enabled?"important":"warning")
             +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
             "<a href=\"do?event=enableTask&fqtn="+fqtn+"&enable="
-            +(enabled?"false":"true")+"\"><i class=\"icon-ban-circle"
-            //+(enabled?"ban-circle":"ok-circle")
-            +" icon-white\"></i></a></span>"
+            +(enabled?"false":"true")+"\"><i class=\"fa fa-ban\"></i>"
+            "</a></span>"
             /* log */
             " <span class=\"label label-info\" title=\"Log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
-            +fqtn+"/\"><i class=\"icon-th-list icon-white\"></i></a></span>";
+            +fqtn+"/\"><i class=\"fa fa-list\"></i></a></span>";
       }
       case 19: {
         QDateTime dt = t.lastExecution();
         if (!dt.isNull() && !t.lastSuccessful())
-          return "<i class=\"icon-minus-sign\"></i> ";
+          return "<i class=\"fa fa-minus-circle\"></i> ";
         break;
       }
       case 27:
         return t.maxDurationBeforeAbort() < LLONG_MAX
-            ? "<i class=\"glyphicon-skull\"></i> " : QVariant();
+            ? "<i class=\"fa fa-fire\"></i> " : QVariant();
       default:
         ;
       }
@@ -183,12 +182,12 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             /*" <span class=\"label label-info\"><a "
             "title=\"Task configuration\""
             "href=\"tasks.html#taskconfig."+t.fqtn()
-            +"\"><i class=\"glyphicon-cogwheel glyphicon-white\">"
+            +"\"><i class=\"fa fa-cogs\">"
             "</i></a></span>"*/
             /* taskdoc */
             " <span class=\"label label-info\" "
             "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-            +t.fqtn()+"\"><i class=\"icon-info-sign icon-white\">"
+            +t.fqtn()+"\"><i class=\"fa fa-info-circle\">"
             "</i></a></span>";
         if (!_customActions.isEmpty())
           suffix.append(" ").append(t.params().evaluate(_customActions, &t));

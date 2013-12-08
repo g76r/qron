@@ -60,9 +60,9 @@ QVariant AlertRulesModel::data(const QModelIndex &index, int role) const {
        // LATER move Twitter Bootstrap specific icons to WebConsole
       switch(index.column()) {
       case 0:
-        return "<i class=\"icon-filter\"></i> ";
+        return "<i class=\"fa fa-filter\"></i> ";
       case 1:
-        return rule.stop() ? "<i class=\"icon-stop\"></i> " : QVariant();
+        return rule.stop() ? "<i class=\"fa fa-stop\"></i> " : QVariant();
       }
       break;
     default:

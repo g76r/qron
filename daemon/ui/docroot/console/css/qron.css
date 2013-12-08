@@ -4,3 +4,6 @@ body {
 [class^="navbar"],[class*=" navbar"] {
   margin-bottom: 10px;
 }
+span[class^="label"],span[class*=" label"] a {
+  color: white;
+}

@@ -51,7 +51,7 @@ QVariant ClustersListModel::data(const QModelIndex &index, int role) const {
     case TextViews::HtmlPrefixRole:
       // LATER move icon to WebConsole
       if (index.column() == 0)
-        return "<i class=\"icon-random\"></i> ";
+        return "<i class=\"fa fa-random\"></i> ";
       break;
     default:
       ;

@@ -20,7 +20,7 @@
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/qron.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/glyphicons.css" rel="stylesheet">
+    <link href="css/font-awesome.min.css" rel="stylesheet">
     <style type="text/css"><?value:cssoverload?></style>
   </head>
   <body>
@@ -28,9 +28,7 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
-            <span class="icon-bar"></span>
+            <span class="fa fa-bars"></span>
           </a>
           <a class="brand" href="#"><?value:navtitle?></a>
           <div class="nav-collapse collapse">
@@ -57,20 +55,20 @@
         <div class="span12">
           <a name="warninglog"></a>
           <h2>Last warnings and errors</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="icon-file icon-white"></i> Current log file</a>
-          <a class="btn btn-primary" href="../rest/txt/log/all/v1"><i class="icon-file icon-white"></i> All log files concatened</a>
+          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="fa fa-file"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="fa fa-file"></i> Current log file</a>
+          <a class="btn btn-primary" href="../rest/txt/log/all/v1"><i class="fa fa-file"></i> All log files concatened</a>
           <a class="btn btn-info" href="#infolog">Last log entries including infos &raquo;</a>
           <p><?view:warninglog?>
         </div>
         <div class="span12">
           <a name="infolog"></a>
           <h2>Last log entries</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="icon-file icon-white"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="icon-file icon-white"></i> HTML</a>
-          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="icon-file icon-white"></i> Current log file</a>
-          <a class="btn btn-primary" href="../rest/txt/log/all/v1"><i class="icon-file icon-white"></i> All log files concatened</a>
+          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="fa fa-file"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="fa fa-file"></i> Current log file</a>
+          <a class="btn btn-primary" href="../rest/txt/log/all/v1"><i class="fa fa-file"></i> All log files concatened</a>
           <p><?view:infolog?>
         </div>
       </div>

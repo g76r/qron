@@ -23,9 +23,9 @@ QVariant ResourcesConsumptionModel::headerData(
   case TextViews::HtmlPrefixRole:
     // LATER move icons to WebConsole
     if (orientation == Qt::Horizontal)
-        return "<i class=\"icon-hdd\"></i> ";
+        return "<i class=\"fa fa-hdd-o\"></i> ";
     if (section > 0) // every line but max line
-        return "<i class=\"glyphicon-cogwheel\"></i> ";
+        return "<i class=\"fa fa-cog\"></i> ";
     return QVariant();
   default:
     return TextMatrixModel::headerData(section, orientation, role);

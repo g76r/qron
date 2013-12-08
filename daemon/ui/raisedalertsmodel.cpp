@@ -53,17 +53,17 @@ QVariant RaisedAlertsModel::data(const QModelIndex &index, int role) const {
         // LATER move icon to WebConsole
         QString s = " <span class=\"label label-important\">"
             "<a title=\"Cancel alert\"href=\"do?event=cancelAlert&alert="
-            +ra._alert+"&immediately=true\"><i class=\"icon-ok icon-white\">"
+            +ra._alert+"&immediately=true\"><i class=\"fa fa-check\">"
             "</i></a></span>";
         static QRegExp re("task\\.[^\\.]+\\.(.*)");
         if (re.exactMatch(ra._alert)) {
           s += " <span class=\"label label-info\" title=\"Related tasks log\">"
               "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
               +re.cap(1)
-              +"/\"><i class=\"icon-th-list icon-white\"></i></a></span>"
+              +"/\"><i class=\"fa fa-list\"></i></a></span>"
               " <span class=\"label label-info\" title=\"Detailed task info\">"
               "<a href=\"taskdoc.html?fqtn="+re.cap(1)+"\">"
-              "<i class=\"icon-info-sign icon-white\"></i></a></span>";
+              "<i class=\"fa fa-info-circle\"></i></a></span>";
         }
         return s;
       }
