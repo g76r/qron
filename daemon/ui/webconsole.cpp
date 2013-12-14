@@ -1390,6 +1390,7 @@ void WebConsole::configReloaded() {
   recomputeDiagrams();
 }
 
+#define GRAPH "rankdir=LR,bgcolor=transparent,splines=ortho"
 #define CLUSTER_NODE "shape=box,peripheries=2,style=filled,fillcolor=coral"
 #define HOST_NODE "shape=box,style=filled,fillcolor=coral"
 #define TASK_NODE "shape=ellipse,style=filled,fillcolor=skyblue"
@@ -1475,7 +1476,7 @@ void WebConsole::recomputeDiagrams() {
   // tasks deployment diagram
   QString gv;
   gv.append("graph g {\n"
-            "graph[rankdir=LR,bgcolor=\"transparent\"]\n"
+            "graph[" GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
   foreach (const Host &host, _hosts.values())
     if (displayedHosts.contains(host.id()))
@@ -1526,7 +1527,7 @@ void WebConsole::recomputeDiagrams() {
   // tasks trigger diagram
   gv.clear();
   gv.append("graph g {\n"
-            "graph[rankdir=LR,bgcolor=\"transparent\"]\n"
+            "graph[" GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
   foreach (const QString &cause, displayedGlobalEventsCause)
     gv.append("\"$global_").append(cause).append("\" [label=\"")
