@@ -19,14 +19,16 @@ public:
   QString _id;
   AlertRule _rule;
   QDateTime _datetime;
-  AlertData(const QString id = QString(), AlertRule rule = AlertRule())
-    : _id(id), _rule(rule), _datetime(QDateTime::currentDateTime()) { }
+  AlertData(const QString id = QString(), AlertRule rule = AlertRule(),
+            QDateTime datetime = QDateTime::currentDateTime())
+    : _id(id), _rule(rule), _datetime(datetime) { }
 };
 
 Alert::Alert() : d(new AlertData) {
 }
 
-Alert::Alert(QString id, AlertRule rule) : d(new AlertData(id, rule)) {
+Alert::Alert(QString id, AlertRule rule, QDateTime datetime)
+  : d(new AlertData(id, rule, datetime)) {
 }
 
 Alert::Alert(const Alert &rhs) : ParamsProvider(), d(rhs.d) {

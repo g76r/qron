@@ -28,7 +28,8 @@ class Alert : public ParamsProvider {
 
 public:
   Alert();
-  Alert(QString id, AlertRule rule);
+  Alert(QString id, AlertRule rule,
+        QDateTime datetime = QDateTime::currentDateTime());
   Alert(const Alert&);
   Alert &operator=(const Alert &other);
   /** Compare id()'s */

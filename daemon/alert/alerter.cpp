@@ -120,7 +120,8 @@ void Alerter::emitAlert(QString alert) {
                                   AlertChannel::Emit));
 }
 
-void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type) {
+void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type,
+                          QDateTime date) {
   Log::debug() << "emiting alert " << alert << " " << type;
   int n = 0;
   foreach (AlertRule rule, _rules) {
@@ -128,7 +129,10 @@ void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type) {
       //Log::debug() << "alert matching rule #" << n;
       if (rule.stop())
         break;
-      sendMessage(Alert(alert, rule), type);
+      QPointer<AlertChannel> channel = rule.channel();
+      if (channel) {
+        channel.data()->sendMessage(Alert(alert, rule, date), type);
+      }
     }
     ++n;
   }
@@ -138,12 +142,6 @@ void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type) {
   } else {
     emit alertEmited(alert);
   }
-}
-
-void Alerter::sendMessage(Alert alert, AlertChannel::MessageType type) {
-  QPointer<AlertChannel> channel = alert.rule().channel();
-  if (channel)
-    channel.data()->sendMessage(alert, type);
 }
 
 void Alerter::raiseAlert(QString alert) {
@@ -203,7 +201,10 @@ void Alerter::doCancelAlert(QString alert, bool immediately) {
 void Alerter::asyncProcessing() {
   QDateTime now(QDateTime::currentDateTime());
   // process alerts cancellations after cancel delay
-  foreach (QString alert, _soonCanceledAlerts.keys())
-    if (_soonCanceledAlerts.value(alert) <= now)
-      doEmitAlert(alert, AlertChannel::Cancel);
+  foreach (QString alert, _soonCanceledAlerts.keys()) {
+    QDateTime scheduledDate = _soonCanceledAlerts.value(alert);
+    if (scheduledDate <= now)
+      doEmitAlert(alert, AlertChannel::Cancel,
+                  scheduledDate.addMSecs(-_cancelDelay));
+  }
 }
