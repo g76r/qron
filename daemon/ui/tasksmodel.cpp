@@ -113,7 +113,8 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 0:
       case 11:
         // LATER move icons to WebConsole
-        return "<i class=\"fa fa-cog\"></i> ";
+        return "<i class=\"fa fa-cog\"></i> <a href=\"taskdoc.html?fqtn="
+            +t.fqtn()+"\">";
       case 1:
         return "<i class=\"fa fa-cogs\"></i> ";
       case 6:
@@ -175,6 +176,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       break;
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
+      case 0:
+      case 11:
+        return "</a>";
       case 18: {
         QString suffix;
         suffix =
@@ -187,7 +191,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
             /* taskdoc */
             " <span class=\"label label-info\" "
             "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-            +t.fqtn()+"\"><i class=\"fa fa-info-circle\">"
+            +t.fqtn()+"\"><i class=\"fa fa-cog\">"
             "</i></a></span>";
         if (!_customActions.isEmpty())
           suffix.append(" ").append(t.params().evaluate(_customActions, &t));

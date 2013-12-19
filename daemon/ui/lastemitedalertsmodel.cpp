@@ -40,7 +40,7 @@ QVariant LastEmitedAlertsModel::data(const QModelIndex &index, int role) const {
           +"/\"><i class=\"fa fa-list\"></i></a></span>"
           " <span class=\"label label-info\" title=\"Detailed task info\">"
           "<a href=\"taskdoc.html?fqtn="+re.cap(1)+"\">"
-          "<i class=\"fa fa-info-circle\"></i></a></span>";
+          "<i class=\"fa fa-cog\"></i></a></span>";
     }
 
   }

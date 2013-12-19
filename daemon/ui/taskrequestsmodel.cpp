@@ -59,6 +59,8 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
     }
     case TextViews::HtmlPrefixRole:
       switch(index.column()) {
+      case 1:
+        return "<a href=\"taskdoc.html?fqtn="+r.task().fqtn()+"\">";
       case 2:
         switch(r.status()) {
         case TaskRequest::Queued:
@@ -129,10 +131,12 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       }
     case TextViews::HtmlSuffixRole:
       switch(index.column()) {
+      case 1:
+        return "</a>";
       case 8: {
         QString suffix = " <span class=\"label label-info\" "
             "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-            +r.task().fqtn()+"\"><i class=\"fa fa-info-circle\">"
+            +r.task().fqtn()+"\"><i class=\"fa fa-cog\">"
             "</i></a></span>";
         if (!_customActions.isEmpty())
           suffix.append(" ").append(r.params().evaluate(_customActions, &r));
