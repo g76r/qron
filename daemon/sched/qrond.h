@@ -18,6 +18,7 @@
 #include "sched/scheduler.h"
 #include "httpd/httpserver.h"
 #include "ui/webconsole.h"
+#include "httpd/basicauthhttphandler.h"
 
 class Qrond : public QObject {
   Q_OBJECT
@@ -26,7 +27,8 @@ class Qrond : public QObject {
   quint16 _webconsolePort;
   Scheduler *_scheduler;
   HttpServer *_httpd;
-  QString _configPath;
+  QString _configPath, _httpAuthRealm;
+  BasicAuthHttpHandler *_httpAuthHandler;
 
 public:
   explicit Qrond(QObject *parent = 0);

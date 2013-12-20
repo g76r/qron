@@ -20,7 +20,6 @@
 #include <QThread>
 #include <unistd.h>
 #include "httpd/pipelinehttphandler.h"
-#include "httpd/basicauthhttphandler.h"
 #ifdef Q_OS_UNIX
 #include <signal.h>
 #endif
@@ -31,17 +30,16 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _webconsoleAddress(QHostAddress::Any), _webconsolePort(8086),
   _scheduler(new Scheduler),
   _httpd(new HttpServer(8, 32)), // LATER should be configurable
-  _configPath("/etc/qron.conf") {
+  _configPath("/etc/qron.conf"), _httpAuthRealm("qron") {
   WebConsole *webconsole = new WebConsole;
   webconsole->setScheduler(_scheduler);
   PipelineHttpHandler *pipeline = new PipelineHttpHandler;
-  BasicAuthHttpHandler *basicauth = new BasicAuthHttpHandler;
-  basicauth->setAuthenticator(_scheduler->authenticator(), false)
-      .setRealm("qron");
+  _httpAuthHandler = new BasicAuthHttpHandler;
+  _httpAuthHandler->setAuthenticator(_scheduler->authenticator(), false);
   connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
-          basicauth, SLOT(setAuthIsMandatory(bool)));
+          _httpAuthHandler, SLOT(setAuthIsMandatory(bool)));
   webconsole->setUsersDatabase(_scheduler->usersDatabase(), false);
-  pipeline->appendHandler(basicauth);
+  pipeline->appendHandler(_httpAuthHandler);
   pipeline->appendHandler(webconsole);
   _httpd->appendHandler(pipeline);
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
@@ -61,21 +59,25 @@ void Qrond::startup(QStringList args) {
   int n = args.size();
   for (int i =0; i < n; ++i) {
     const QString &arg = args[i];
-    if (i < n-1 && arg == "-l") {
+    if (i < n-1 && (arg == "-l" || arg == "--http-address")) {
       _webconsoleAddress.setAddress(args[++i]);
-    } else if (i < n-1 && arg == "-p") {
+    } else if (i < n-1 && (arg == "-p" || arg == "--http-port")) {
       int p = QString(args[++i]).toInt();
       if (p >= 1 && p <= 65535)
         _webconsolePort = p;
       else
         Log::error() << "bad port number: " << arg
                      << " using default instead (8086)";
-    } else if (i < n-1 && arg == "-c") {
+    } else if (i < n-1 && (arg == "-c" || arg == "--config-path")) {
        _configPath = args[++i];
+    } else if (i < n-1 && arg == "--http-auth-realm") {
+       _httpAuthRealm = args[++i];
+       _httpAuthRealm.replace("\"", "'");
     } else {
       Log::warning() << "unknown command line parameter: " << arg;
     }
   }
+  _httpAuthHandler->setRealm(_httpAuthRealm);
   if (!_httpd->listen(_webconsoleAddress, _webconsolePort))
     Log::error() << "cannot start webconsole on "
                  << _webconsoleAddress.toString() << ":" << _webconsolePort
