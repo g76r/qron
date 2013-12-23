@@ -123,7 +123,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                                      _htmlInfoLogView->cachedRows())),
   _memoryWarningLogger(new MemoryLogger(0, Log::Warning,
                                         _htmlWarningLogView->cachedRows())),
-  _title("Qron Web Console"), _navtitle("Qron Web Console"),
+  _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
   _authorizer(new InMemoryRulesAuthorizer(this)), _usersDatabase(0),
   _ownUsersDatabase(false), _accessControlEnabled(false) {
   QList<int> cols;
@@ -499,6 +499,8 @@ public:
       return _console->_title;
     if (key == "navtitle") // TODO remove
       return _console->_navtitle;
+    if (key == "titlehref") // TODO remove
+      return _console->_titlehref;
     if (key == "cssoverload") // TODO remove
       return _console->_cssoverload;
     if (key == "message")
@@ -1324,6 +1326,7 @@ void WebConsole::alertCancellationEmited(QString alert) {
 void WebConsole::globalParamsChanged(ParamSet globalParams) {
   _title = globalParams.rawValue("webconsole.title", "Qron Web Console");
   _navtitle = globalParams.rawValue("webconsole.navtitle", _title);
+  _titlehref = globalParams.rawValue("webconsole.titlehref", _titlehref);
   _cssoverload = globalParams.rawValue("webconsole.cssoverload", "");
   QString customactions_taskslist =
       globalParams.rawValue("webconsole.customactions.taskslist");

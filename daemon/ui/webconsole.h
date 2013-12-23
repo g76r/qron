@@ -93,7 +93,7 @@ class WebConsole : public HttpHandler {
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
-  QString _title, _navtitle, _cssoverload, _customaction_taskdetail;
+  QString _title, _navtitle, _titlehref, _cssoverload, _customaction_taskdetail;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
   bool _ownUsersDatabase, _accessControlEnabled;

@@ -30,7 +30,7 @@
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
             <span class="fa fa-bars"></span>
           </a>
-          <a class="brand" href="#"><?value:navtitle?></a>
+          <a class="brand" href="<?value:titlehref?>"><?value:navtitle?></a>
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li><a href="index.html">Overview</a></li>
@@ -59,7 +59,7 @@
           <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="fa fa-file"></i> Current log file</a>
           <a class="btn btn-primary" href="../rest/txt/log/all/v1"><i class="fa fa-file"></i> All log files concatened</a>
-          <a class="btn btn-info" href="#infolog">Last log entries including infos &raquo;</a>
+          <a class="btn btn-info" href="<?value:titlehref?>infolog">Last log entries including infos &raquo;</a>
           <p><?view:warninglog?>
         </div>
         <div class="span12">
