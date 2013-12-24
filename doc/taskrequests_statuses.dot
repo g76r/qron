@@ -1,0 +1,11 @@
+graph g {
+node [shape=box,style="filled,rounded",color=wheat]
+edge [dir=forward,arrowhead=vee]
+begin [style=invis]
+begin -- Queued [label="on execution request\n(manual or triggered)",arrowtail=dot,dir=both]
+Queued -- Canceled [label="manual or auto (e.g.\non duplicated periodic tasks)"]
+Queued -- Running [label="when all prerequesites\nare ok (resources, etc.)"]
+Running -- Success [label="depending on return code\nand mean (ssh: 0,\nhttp: 200..299, etc.)"]
+Running -- Failure [label="depending on return code\nand mean (ssh: !0,\nhttp: >= 300, etc.)"]
+Queued -- Failure [label="when some config errors\ndisable starting"]
+}
