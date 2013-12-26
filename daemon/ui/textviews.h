@@ -14,12 +14,16 @@
 #ifndef TEXTVIEWS_H
 #define TEXTVIEWS_H
 
+#include "log/logmodel.h"
+
+// TODO remove these constants and those in logmodel.h and replace w/ kind of TextViewDelegate
+
 /** Common constants among console text views. */
 namespace TextViews {
-  static const int HtmlPrefixRole = Qt::UserRole;
-  static const int TrClassRole = Qt::UserRole+1;
-  static const int LinkRole = Qt::UserRole+2;
-  static const int HtmlSuffixRole = Qt::UserRole+3;
+  static const int HtmlPrefixRole = LogModel::HtmlPrefixRole;
+  static const int TrClassRole = LogModel::TrClassRole;
+  static const int LinkRole = Qt::UserRole+20;
+  static const int HtmlSuffixRole = Qt::UserRole+21;
 }
 
 #endif // TEXTVIEWS_H

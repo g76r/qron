@@ -24,412 +24,339 @@
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
+#define LOG_MAXROWS 500
+#define SHORT_LOG_MAXROWS 100
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
-  _hostsListModel(new HostsListModel(this)),
-  _clustersListModel(new ClustersListModel(this)),
-  _freeResourcesModel(new ResourcesAllocationModel(this)),
-  _resourcesLwmModel(
-    new ResourcesAllocationModel(this,
-                                 ResourcesAllocationModel::LwmOverConfigured)),
-  _resourcesConsumptionModel(new ResourcesConsumptionModel(this)),
-  _globalParamsModel(new ParamSetModel(this)),
-  _globalSetenvModel(new ParamSetModel(this)),
-  _globalUnsetenvModel(new ParamSetModel(this)),
-  _alertParamsModel(new ParamSetModel(this)),
-  _raisedAlertsModel(new RaisedAlertsModel(this)),
-  _lastEmitedAlertsModel(new LastEmitedAlertsModel(this, 500)),
-  _lastPostedNoticesModel(new LastOccuredTextEventsModel(this, 200)),
-  _alertRulesModel(new AlertRulesModel(this)),
+  _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
+  _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false) {
+  QList<int> cols;
+
+  // HTTP handlers
+  _tasksDeploymentDiagram = new GraphvizImageHttpHandler(this);
+  _tasksTriggerDiagram = new GraphvizImageHttpHandler(this);
+  _wuiHandler = new TemplatingHttpHandler(this, "/console", ":docroot/console");
+  _wuiHandler->addFilter("\\.html$");
+
+  // models
+  _hostsListModel = new HostsListModel(this);
+  _clustersListModel = new ClustersListModel(this);
+  _freeResourcesModel = new ResourcesAllocationModel(this);
+  _resourcesLwmModel = new ResourcesAllocationModel(
+        this, ResourcesAllocationModel::LwmOverConfigured);
+  _resourcesConsumptionModel = new ResourcesConsumptionModel(this);
+  _globalParamsModel = new ParamSetModel(this);
+  _globalSetenvModel = new ParamSetModel(this);
+  _globalUnsetenvModel = new ParamSetModel(this);
+  _alertParamsModel = new ParamSetModel(this);
+  _raisedAlertsModel = new RaisedAlertsModel(this);
+  _raisedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ", // TODO delegate
+                                TextViews::HtmlPrefixRole);
+  _lastEmitedAlertsModel = new LastEmitedAlertsModel(this, 500);
+  _lastEmitedAlertsModel->setEventName("Alert");
+  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ", 0); // TODO delegate
+  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-check\"></i> ", 1);
+  connect(this, SIGNAL(alertEmited(QString,int)),
+          _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
+  _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
+  _lastPostedNoticesModel->setEventName("Notice");
+  _lastPostedNoticesModel->setPrefix("<i class=\"fa fa-comment\"></i> "); // TODO delegate
+  _alertRulesModel = new AlertRulesModel(this);
   // memory cost: about 1.5 kB / request, e.g. 30 MB for 20000 requests
   // (this is an empirical measurement and thus includes model + csv view
-  _taskRequestsHistoryModel(new TaskRequestsModel(this, 20000)),
-  _unfinishedTaskRequestModel(new TaskRequestsModel(this, 1000, false)),
-  _tasksModel(new TasksModel(this)),
-  _schedulerEventsModel(new SchedulerEventsModel(this)),
-  _taskGroupsModel(new TaskGroupsModel(this)),
-  _alertChannelsModel(new AlertChannelsModel(this)),
-  _logConfigurationModel(new LogFilesModel(this)),
-  _calendarsModel(new CalendarsModel(this)),
-  _htmlHostsListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlClustersListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlFreeResourcesView(
-    new HtmlTableView(this, _htmlHostsListView->cachedRows())),
-  _htmlResourcesLwmView(
-    new HtmlTableView(this, _htmlHostsListView->cachedRows())),
-  _htmlResourcesConsumptionView(
-    new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlGlobalParamsView(new HtmlTableView(this)),
-  _htmlGlobalSetenvView(new HtmlTableView(this)),
-  _htmlGlobalUnsetenvView(new HtmlTableView(this)),
-  _htmlAlertParamsView(new HtmlTableView(this)),
-  _htmlRaisedAlertsView(new HtmlTableView(this, RAISED_ALERTS_MAXROWS)),
-  _htmlRaisedAlertsView10(new HtmlTableView(this, RAISED_ALERTS_MAXROWS, 10)),
-  _htmlLastEmitedAlertsView(new HtmlTableView(
-                              this, _lastEmitedAlertsModel->maxrows())),
-  _htmlLastEmitedAlertsView10(new HtmlTableView(
-                                this, _lastEmitedAlertsModel->maxrows(), 10)),
-  _htmlAlertRulesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlWarningLogView(new HtmlTableView(this, 500, 100)),
-  _htmlWarningLogView10(new HtmlTableView(this, 100, 10)),
-  _htmlInfoLogView(new HtmlTableView(this, 500, 100)),
-  _htmlTaskRequestsView(new HtmlTableView(
-                          this, _taskRequestsHistoryModel->maxrows(), 100)),
-  _htmlTaskRequestsView20(new HtmlTableView(
-                            this, _unfinishedTaskRequestModel->maxrows(), 20)),
-  _htmlTasksScheduleView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
-  _htmlTasksConfigView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
-  _htmlTasksParamsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
-  _htmlTasksListView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
-  _htmlTasksEventsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
-  _htmlSchedulerEventsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
-  _htmlLastPostedNoticesView20(new HtmlTableView(
-                                 this, _lastPostedNoticesModel->maxrows(), 20)),
-  _htmlTaskGroupsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlTaskGroupsEventsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlAlertChannelsView(new HtmlTableView(this)),
-  _htmlTasksResourcesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlTasksAlertsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS, 100)),
-  _htmlLogFilesView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _htmlCalendarsView(new HtmlTableView(this, CONFIG_TABLES_MAXROWS)),
-  _clockView(new ClockView(this)),
-  _csvHostsListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvClustersListView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvFreeResourcesView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvResourcesLwmView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvResourcesConsumptionView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvGlobalParamsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvGlobalSetenvView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvGlobalUnsetenvView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvAlertParamsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvRaisedAlertsView(new CsvTableView(this, RAISED_ALERTS_MAXROWS)),
-  _csvLastEmitedAlertsView(new CsvTableView(
-                             this, _lastEmitedAlertsModel->maxrows())),
-  _csvAlertRulesView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvLogView(new CsvTableView(this, _htmlInfoLogView->cachedRows())),
-  _csvTaskRequestsView(new CsvTableView(
-                         this, _taskRequestsHistoryModel->maxrows())),
-  _csvTasksView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvSchedulerEventsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvLastPostedNoticesView(new CsvTableView(
-                              this, _lastPostedNoticesModel->maxrows())),
-  _csvTaskGroupsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvLogFilesView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _csvCalendarsView(new CsvTableView(this, CONFIG_TABLES_MAXROWS)),
-  _tasksDeploymentDiagram(new GraphvizImageHttpHandler(this)),
-  _tasksTriggerDiagram(new GraphvizImageHttpHandler(this)),
-  _wuiHandler(new TemplatingHttpHandler(this, "/console", ":docroot/console")),
-  _memoryInfoLogger(new MemoryLogger(0, Log::Info,
-                                     _htmlInfoLogView->cachedRows())),
-  _memoryWarningLogger(new MemoryLogger(0, Log::Warning,
-                                        _htmlWarningLogView->cachedRows())),
-  _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
-  _authorizer(new InMemoryRulesAuthorizer(this)), _usersDatabase(0),
-  _ownUsersDatabase(false), _accessControlEnabled(false) {
-  QList<int> cols;
-  _thread->setObjectName("WebConsoleServer");
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
-  _thread->start();
-  _htmlHostsListView->setModel(_hostsListModel);
-  _htmlHostsListView->setTableClass("table table-condensed table-hover");
-  _htmlHostsListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlHostsListView->setEmptyPlaceholder("(no host)");
-  _htmlClustersListView->setModel(_clustersListModel);
-  _htmlClustersListView->setTableClass("table table-condensed table-hover");
-  _htmlClustersListView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
-  _htmlFreeResourcesView->setModel(_freeResourcesModel);
-  _htmlFreeResourcesView->setTableClass("table table-condensed "
-                                             "table-hover table-bordered");
-  _htmlFreeResourcesView->setRowHeaders();
-  _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
-  _htmlFreeResourcesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlResourcesLwmView->setModel(_resourcesLwmModel);
-  _htmlResourcesLwmView->setTableClass("table table-condensed "
-                                             "table-hover table-bordered");
-  _htmlResourcesLwmView->setRowHeaders();
-  _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
-  _htmlResourcesLwmView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlResourcesConsumptionView->setModel(_resourcesConsumptionModel);
-  _htmlResourcesConsumptionView
-      ->setTableClass("table table-condensed table-hover table-bordered");
-  _htmlResourcesConsumptionView->setRowHeaders();
-  _htmlResourcesConsumptionView
-      ->setEmptyPlaceholder("(no resource definition)");
-  _htmlResourcesConsumptionView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlGlobalParamsView->setModel(_globalParamsModel);
-  _htmlGlobalParamsView->setTableClass("table table-condensed table-hover");
-  _htmlGlobalSetenvView->setModel(_globalSetenvModel);
-  _htmlGlobalSetenvView->setTableClass("table table-condensed table-hover");
-  _htmlGlobalUnsetenvView->setModel(_globalUnsetenvModel);
-  _htmlGlobalUnsetenvView->setTableClass("table table-condensed table-hover");
-  cols.clear();
-  cols << 1;
-  _htmlGlobalUnsetenvView->setColumnIndexes(cols);
-  _htmlAlertParamsView->setModel(_alertParamsModel);
-  _htmlAlertParamsView->setTableClass("table table-condensed table-hover");
-  _raisedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ",
-                                TextViews::HtmlPrefixRole);
-  _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
-  _htmlRaisedAlertsView->setTableClass("table table-condensed table-hover");
-  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
-  //_htmlRaisedAlertsView
-  //    ->setEllipsePlaceholder("(alerts list too long to be displayed)");
-  _htmlRaisedAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
-  _htmlRaisedAlertsView10->setTableClass("table table-condensed table-hover");
-  _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
-  //_htmlRaisedAlertsView10
-  //    ->setEllipsePlaceholder("(see alerts page for more alerts)");
-  _htmlRaisedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _lastEmitedAlertsModel->setEventName("Alert");
-  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ", 0);
-  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-check\"></i> ", 1);
-  _lastEmitedAlertsModel->setPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
-  _htmlLastEmitedAlertsView->setTableClass("table table-condensed table-hover");
-  _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
-  //_htmlLastEmitedAlertsView
-  //    ->setEllipsePlaceholder("(alerts list too long to be displayed)");
-  _htmlLastEmitedAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
-  _htmlLastEmitedAlertsView10
-      ->setTableClass("table table-condensed table-hover");
-  _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
-  //_htmlLastEmitedAlertsView10
-  //    ->setEllipsePlaceholder("(see alerts page for more alerts)");
-  _htmlLastEmitedAlertsView10->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlAlertRulesView->setModel(_alertRulesModel);
-  _htmlAlertRulesView->setTableClass("table table-condensed table-hover");
-  _htmlAlertRulesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlWarningLogView->setModel(_memoryWarningLogger->model());
-  _htmlWarningLogView->setTableClass("table table-condensed table-hover");
-  _htmlWarningLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlWarningLogView->setTrClassRole(LogModel::TrClassRole);
-  //_htmlWarningLogView
-  //    ->setEllipsePlaceholder("(download text log file for more entries)");
-  _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
-  _htmlWarningLogView10->setModel(_memoryWarningLogger->model());
-  _htmlWarningLogView10->setTableClass("table table-condensed table-hover");
-  _htmlWarningLogView10->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlWarningLogView10->setTrClassRole(LogModel::TrClassRole);
-  _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
-  _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
-  _htmlInfoLogView->setModel(_memoryInfoLogger->model());
-  _htmlInfoLogView->setTableClass("table table-condensed table-hover");
-  _htmlInfoLogView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlInfoLogView->setTrClassRole(LogModel::TrClassRole);
-  //_htmlInfoLogView
-  //    ->setEllipsePlaceholder("(download text log file for more entries)");
-  _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
-  _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
-  _htmlTaskRequestsView20->setTableClass("table table-condensed table-hover");
-  _htmlTaskRequestsView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlTaskRequestsView20->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTaskRequestsView20->setTrClassRole(LogModel::TrClassRole);
-  //_htmlTaskRequestsView20
-  //    ->setEllipsePlaceholder("(see tasks page for more entries)");
-  _htmlTaskRequestsView20->setEmptyPlaceholder("(no running or queued task)");
-  _htmlTaskRequestsView->setModel(_taskRequestsHistoryModel);
-  _htmlTaskRequestsView->setTableClass("table table-condensed table-hover");
-  _htmlTaskRequestsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlTaskRequestsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTaskRequestsView->setTrClassRole(LogModel::TrClassRole);
-  //_htmlTaskRequestsView
-  //    ->setEllipsePlaceholder("(tasks list too long to be displayed)");
-  _htmlTaskRequestsView->setEmptyPlaceholder("(no recent task)");
-  _htmlTasksScheduleView->setModel(_tasksModel);
-  _htmlTasksScheduleView->setTableClass("table table-condensed table-hover");
-  _htmlTasksScheduleView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlTasksScheduleView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 11 << 2 << 5 << 6 << 19 << 10 << 17 << 18;
-  _htmlTasksScheduleView->setColumnIndexes(cols);
-  _htmlTasksScheduleView->setRowAnchor("taskschedule.", 11);
-  _htmlTasksConfigView->setModel(_tasksModel);
-  _htmlTasksConfigView->setTableClass("table table-condensed table-hover");
-  _htmlTasksConfigView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlTasksConfigView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 1 << 0 << 3 << 5 << 4 << 28 << 8 << 12 << 18;
-  _htmlTasksConfigView->setColumnIndexes(cols);
-  _htmlTasksConfigView->setRowAnchor("taskconfig.", 11);
-  _htmlTasksParamsView->setModel(_tasksModel);
-  _htmlTasksParamsView->setTableClass("table table-condensed table-hover");
-  _htmlTasksParamsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlTasksParamsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 1 << 0 << 7 << 25 << 21 << 22 << 18;
-  _htmlTasksParamsView->setColumnIndexes(cols);
-  _htmlTasksParamsView->setRowAnchor("taskparams.", 11);
-  _htmlTasksListView->setModel(_tasksModel);
-  _htmlTasksListView->setTableClass("table table-condensed table-hover");
-  _htmlTasksListView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlTasksListView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTasksListView->setEmptyPlaceholder("(no task in configuration)");
-  _htmlTasksEventsView->setModel(_tasksModel);
-  _htmlTasksEventsView->setTableClass("table table-condensed table-hover");
-  _htmlTasksEventsView->setHtmlPrefixRole(LogModel::HtmlPrefixRole);
-  _htmlTasksEventsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 11 << 6 << 14 << 15 << 16 << 18;
-  _htmlTasksEventsView->setColumnIndexes(cols);
-  _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
-  _htmlSchedulerEventsView->setTableClass("table table-condensed table-hover");
-  _lastPostedNoticesModel->setEventName("Notice");
-  _lastPostedNoticesModel->setPrefix("<i class=\"fa fa-comment\"></i> ");
-  _lastPostedNoticesModel->setPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
-  _htmlLastPostedNoticesView20
-      ->setTableClass("table table-condensed table-hover");
-  _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
-  //_htmlLastPostedNoticesView20
-  //    ->setEllipsePlaceholder("(older notices not displayed)");
-  _htmlLastPostedNoticesView20->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlTaskGroupsView->setModel(_taskGroupsModel);
-  _htmlTaskGroupsView->setTableClass("table table-condensed table-hover");
-  _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
-  _htmlTaskGroupsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  cols.clear();
-  cols << 0 << 1 << 2 << 7 << 8;
-  _htmlTaskGroupsView->setColumnIndexes(cols);
-  _htmlTaskGroupsEventsView->setModel(_taskGroupsModel);
-  _htmlTaskGroupsEventsView->setTableClass("table table-condensed table-hover");
-  _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
-  _htmlTaskGroupsEventsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  cols.clear();
-  cols << 0 << 3 << 4 << 5;
-  _htmlTaskGroupsEventsView->setColumnIndexes(cols);
-  _htmlAlertChannelsView->setModel(_alertChannelsModel);
-  _htmlAlertChannelsView->setTableClass("table table-condensed table-hover");
-  _htmlAlertChannelsView->setRowHeaders();
-  _htmlTasksResourcesView->setModel(_tasksModel);
-  _htmlTasksResourcesView->setTableClass("table table-condensed table-hover");
-  _htmlTasksResourcesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlTasksResourcesView->setEmptyPlaceholder("(no task)");
-  cols.clear();
-  cols << 11 << 17 << 8;
-  _htmlTasksResourcesView->setColumnIndexes(cols);
-  _htmlTasksAlertsView->setModel(_tasksModel);
-  _htmlTasksAlertsView->setTableClass("table table-condensed table-hover");
-  _htmlTasksAlertsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlTasksAlertsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
-  cols.clear();
-  cols << 11 << 6 << 23 << 26 << 24 << 27 << 12 << 16 << 18;
-  _htmlTasksAlertsView->setColumnIndexes(cols);
-  _htmlLogFilesView->setModel(_logConfigurationModel);
-  _htmlLogFilesView->setTableClass("table table-condensed table-hover");
-  _htmlLogFilesView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlLogFilesView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
-  _htmlCalendarsView->setModel(_calendarsModel);
-  _htmlCalendarsView->setTableClass("table table-condensed table-hover");
-  _htmlCalendarsView->setHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  _htmlCalendarsView->setHtmlSuffixRole(TextViews::HtmlSuffixRole);
-  _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
-  _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
-  _csvHostsListView->setModel(_hostsListModel);
-  _csvHostsListView->setFieldQuote('"');
-  _csvClustersListView->setModel(_clustersListModel);
-  _csvClustersListView->setFieldQuote('"');
-  _csvFreeResourcesView->setModel(_freeResourcesModel);
-  _csvFreeResourcesView->setFieldQuote('"');
-  _csvFreeResourcesView->setRowHeaders();
-  _csvResourcesLwmView->setModel(_resourcesLwmModel);
-  _csvResourcesLwmView->setFieldQuote('"');
-  _csvResourcesLwmView->setRowHeaders();
-  _csvResourcesConsumptionView->setModel(_resourcesConsumptionModel);
-  _csvResourcesConsumptionView->setFieldQuote('"');
-  _csvResourcesConsumptionView->setRowHeaders();
-  _csvGlobalParamsView->setModel(_globalParamsModel);
-  _csvGlobalParamsView->setFieldQuote('"');
-  _csvGlobalSetenvView->setModel(_globalSetenvModel);
-  _csvGlobalSetenvView->setFieldQuote('"');
-  _csvGlobalUnsetenvView->setModel(_globalUnsetenvModel);
-  _csvGlobalUnsetenvView->setFieldQuote('"');
-  _csvAlertParamsView->setModel(_alertParamsModel);
-  _csvAlertParamsView->setFieldQuote('"');
-  _csvRaisedAlertsView->setModel(_raisedAlertsModel);
-  _csvRaisedAlertsView->setFieldQuote('"');
-  _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
-  _csvLastEmitedAlertsView->setFieldQuote('"');
-  _csvLogView->setModel(_memoryInfoLogger->model());
-  _csvLogView->setFieldQuote('"');
-  _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
-  _csvTaskRequestsView->setFieldQuote('"');
-  _csvTasksView->setModel(_tasksModel);
-  _csvTasksView->setFieldQuote('"');
-  _csvSchedulerEventsView->setModel(_schedulerEventsModel);
-  _csvSchedulerEventsView->setFieldQuote('"');
-  _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
-  _csvLastPostedNoticesView->setFieldQuote('"');
-  _csvTaskGroupsView->setModel(_taskGroupsModel);
-  _csvTaskGroupsView->setFieldQuote('"');
-  _csvLogFilesView->setModel(_logConfigurationModel);
-  _csvLogFilesView->setFieldQuote('"');
-  _csvCalendarsView->setModel(_calendarsModel);
-  _csvCalendarsView->setFieldQuote('"');
-  _wuiHandler->addFilter("\\.html$");
-  _wuiHandler->addView("freeresources", _htmlFreeResourcesView);
-  _wuiHandler->addView("resourceslwm", _htmlResourcesLwmView);
-  _wuiHandler->addView("resourcesconsumption", _htmlResourcesConsumptionView);
-  _wuiHandler->addView("hostslist", _htmlHostsListView);
-  _wuiHandler->addView("clusterslist", _htmlClustersListView);
-  _wuiHandler->addView("globalparams", _htmlGlobalParamsView);
-  _wuiHandler->addView("globalsetenv", _htmlGlobalSetenvView);
-  _wuiHandler->addView("globalunsetenv", _htmlGlobalUnsetenvView);
-  _wuiHandler->addView("alertparams", _htmlAlertParamsView);
-  _wuiHandler->addView("raisedalerts", _htmlRaisedAlertsView);
-  _wuiHandler->addView("raisedalerts10", _htmlRaisedAlertsView10);
-  _wuiHandler->addView("lastemitedalerts", _htmlLastEmitedAlertsView);
-  _wuiHandler->addView("lastemitedalerts10", _htmlLastEmitedAlertsView10);
-  _wuiHandler->addView("now", _clockView);
-  _wuiHandler->addView("alertrules", _htmlAlertRulesView);
-  _wuiHandler->addView("warninglog10", _htmlWarningLogView10);
-  _wuiHandler->addView("warninglog", _htmlWarningLogView);
-  _wuiHandler->addView("infolog", _htmlInfoLogView);
-  _wuiHandler->addView("taskrequests", _htmlTaskRequestsView);
-  _wuiHandler->addView("taskrequests20", _htmlTaskRequestsView20);
-  _wuiHandler->addView("tasksschedule", _htmlTasksScheduleView);
-  _wuiHandler->addView("tasksconfig", _htmlTasksConfigView);
-  _wuiHandler->addView("tasksparams", _htmlTasksParamsView);
-  _wuiHandler->addView("tasksevents", _htmlTasksEventsView);
-  _wuiHandler->addView("schedulerevents", _htmlSchedulerEventsView);
-  _wuiHandler->addView("lastpostednotices20", _htmlLastPostedNoticesView20);
-  _wuiHandler->addView("taskgroups", _htmlTaskGroupsView);
-  _wuiHandler->addView("taskgroupsevents", _htmlTaskGroupsEventsView);
-  _wuiHandler->addView("alertchannels", _htmlAlertChannelsView);
-  _wuiHandler->addView("tasksresources", _htmlTasksResourcesView);
-  _wuiHandler->addView("tasksalerts", _htmlTasksAlertsView);
-  _wuiHandler->addView("logfiles", _htmlLogFilesView);
-  _wuiHandler->addView("calendars", _htmlCalendarsView);
+  _taskRequestsHistoryModel = new TaskRequestsModel(this, 20000);
+  _unfinishedTaskRequestModel = new TaskRequestsModel(this, 1000, false);
+  _tasksModel = new TasksModel(this);
+  _schedulerEventsModel = new SchedulerEventsModel(this);
+  _taskGroupsModel = new TaskGroupsModel(this);
+  _alertChannelsModel = new AlertChannelsModel(this);
+  _logConfigurationModel = new LogFilesModel(this);
+  _calendarsModel = new CalendarsModel(this);
+  _memoryInfoLogger = new MemoryLogger(0, Log::Info, LOG_MAXROWS);
+  _memoryInfoLogger->model()
+      ->setWarningIcon("<i class=\"fa fa-warning fa-fw\"></i> "); // TODO delegate
+  _memoryInfoLogger->model()
+      ->setErrorIcon("<i class=\"fa fa-minus-circle fa-fw\"></i> ");
+  _memoryInfoLogger->model()->setWarningTrClass("warning");
+  _memoryInfoLogger->model()->setErrorTrClass("error");
+  _memoryWarningLogger = new MemoryLogger(0, Log::Warning, LOG_MAXROWS);
   _memoryWarningLogger->model()
       ->setWarningIcon("<i class=\"fa fa-warning fa-fw\"></i> ");
   _memoryWarningLogger->model()
       ->setErrorIcon("<i class=\"fa fa-minus-circle fa-fw\"></i> ");
   _memoryWarningLogger->model()->setWarningTrClass("warning");
   _memoryWarningLogger->model()->setErrorTrClass("error");
-  _memoryInfoLogger->model()
-      ->setWarningIcon("<i class=\"fa fa-warning fa-fw\"></i> ");
-  _memoryInfoLogger->model()
-      ->setErrorIcon("<i class=\"fa fa-minus-circle fa-fw\"></i> ");
-  _memoryInfoLogger->model()->setWarningTrClass("warning");
-  _memoryInfoLogger->model()->setErrorTrClass("error");
-  connect(this, SIGNAL(alertEmited(QString,int)),
-          _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
-  moveToThread(_thread);
-  _memoryInfoLogger->moveToThread(_thread); // TODO won't be deleted
-  _memoryWarningLogger->moveToThread(_thread);
+
+  // HTML views
+  HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
+  HtmlTableView::setDefaultHtmlPrefixRole(TextViews::HtmlPrefixRole);
+  HtmlTableView::setDefaultHtmlSuffixRole(TextViews::HtmlSuffixRole);
+  _htmlHostsListView =
+      new HtmlTableView(this, "hostslist", CONFIG_TABLES_MAXROWS);
+  _htmlHostsListView->setModel(_hostsListModel);
+  _htmlHostsListView->setEmptyPlaceholder("(no host)");
+  _wuiHandler->addView(_htmlHostsListView);
+  _htmlClustersListView =
+    new HtmlTableView(this, "clusterslist", CONFIG_TABLES_MAXROWS);
+  _htmlClustersListView->setModel(_clustersListModel);
+  _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
+  _wuiHandler->addView(_htmlClustersListView);
+  _htmlFreeResourcesView =
+    new HtmlTableView(this, "freeresources", CONFIG_TABLES_MAXROWS);
+  _htmlFreeResourcesView->setModel(_freeResourcesModel);
+  _htmlFreeResourcesView->setRowHeaders();
+  _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
+  _wuiHandler->addView(_htmlFreeResourcesView);
+  _htmlResourcesLwmView =
+    new HtmlTableView(this, "resourceslwm", CONFIG_TABLES_MAXROWS);
+  _htmlResourcesLwmView->setModel(_resourcesLwmModel);
+  _htmlResourcesLwmView->setRowHeaders();
+  _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
+  _wuiHandler->addView(_htmlResourcesLwmView);
+  _htmlResourcesConsumptionView =
+    new HtmlTableView(this, "resourcesconsumption", CONFIG_TABLES_MAXROWS);
+  _htmlResourcesConsumptionView->setModel(_resourcesConsumptionModel);
+  _htmlResourcesConsumptionView->setRowHeaders();
+  _htmlResourcesConsumptionView
+      ->setEmptyPlaceholder("(no resource definition)");
+  _wuiHandler->addView(_htmlResourcesConsumptionView);
+  _htmlGlobalParamsView = new HtmlTableView(this, "globalparams");
+  _htmlGlobalParamsView->setModel(_globalParamsModel);
+  _wuiHandler->addView(_htmlGlobalParamsView);
+  _htmlGlobalSetenvView = new HtmlTableView(this, "globalsetenv");
+  _htmlGlobalSetenvView->setModel(_globalSetenvModel);
+  _wuiHandler->addView(_htmlGlobalSetenvView);
+  _htmlGlobalUnsetenvView = new HtmlTableView(this, "globalunsetenv");
+  _htmlGlobalUnsetenvView->setModel(_globalUnsetenvModel);
+  _wuiHandler->addView(_htmlGlobalUnsetenvView);
+  cols.clear();
+  cols << 1;
+  _htmlGlobalUnsetenvView->setColumnIndexes(cols);
+  _htmlAlertParamsView = new HtmlTableView(this, "alertparams");
+  _htmlAlertParamsView->setModel(_alertParamsModel);
+  _wuiHandler->addView(_htmlAlertParamsView);
+  _htmlRaisedAlertsView =
+      new HtmlTableView(this, "raisedalerts", RAISED_ALERTS_MAXROWS);
+  _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
+  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
+  _wuiHandler->addView(_htmlRaisedAlertsView);
+  _htmlRaisedAlertsView10 =
+    new HtmlTableView(this, "raisedalerts10", RAISED_ALERTS_MAXROWS, 10);
+  _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
+  _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
+  _wuiHandler->addView(_htmlRaisedAlertsView10);
+  _htmlLastEmitedAlertsView =
+      new HtmlTableView(this, "lastemitedalerts",
+                        _lastEmitedAlertsModel->maxrows());
+  _wuiHandler->addView(_htmlLastEmitedAlertsView);
+  _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
+  _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
+  _htmlLastEmitedAlertsView10 =
+      new HtmlTableView(this, "lastemitedalerts10",
+                        _lastEmitedAlertsModel->maxrows(), 10);
+  _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
+  _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
+  _wuiHandler->addView(_htmlLastEmitedAlertsView10);
+  _htmlAlertRulesView =
+      new HtmlTableView(this, "alertrules", CONFIG_TABLES_MAXROWS);
+  _htmlAlertRulesView->setModel(_alertRulesModel);
+  _wuiHandler->addView(_htmlAlertRulesView);
+  _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
+  _htmlWarningLogView->setModel(_memoryWarningLogger->model());
+  _htmlWarningLogView->setTrClassRole(LogModel::TrClassRole); // TODO delegate
+  _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
+  _wuiHandler->addView(_htmlWarningLogView);
+  _htmlWarningLogView10 =
+      new HtmlTableView(this, "warninglog10", SHORT_LOG_MAXROWS, 10);
+  _htmlWarningLogView10->setModel(_memoryWarningLogger->model());
+  _htmlWarningLogView10->setTrClassRole(LogModel::TrClassRole); // TODO delegate
+  _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
+  _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
+  _wuiHandler->addView(_htmlWarningLogView10);
+  _htmlInfoLogView = new HtmlTableView(this, "infolog", LOG_MAXROWS, 100);
+  _htmlInfoLogView->setModel(_memoryInfoLogger->model());
+  _htmlInfoLogView->setTrClassRole(LogModel::TrClassRole);
+  _wuiHandler->addView(_htmlInfoLogView);
+  _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
+  _htmlTaskRequestsView20 =
+      new HtmlTableView(this, "taskrequests20",
+                        _unfinishedTaskRequestModel->maxrows(), 20);
+  _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
+  _htmlTaskRequestsView20->setTrClassRole(LogModel::TrClassRole);
+  _htmlTaskRequestsView20->setEmptyPlaceholder("(no running or queued task)");
+  _wuiHandler->addView(_htmlTaskRequestsView20);
+  _htmlTaskRequestsView =
+      new HtmlTableView(this, "taskrequests",
+                        _taskRequestsHistoryModel->maxrows(), 100);
+  _htmlTaskRequestsView->setModel(_taskRequestsHistoryModel);
+  _htmlTaskRequestsView->setTrClassRole(LogModel::TrClassRole); // TODO delegate
+  _htmlTaskRequestsView->setEmptyPlaceholder("(no recent task)");
+  _wuiHandler->addView(_htmlTaskRequestsView);
+  _htmlTasksScheduleView =
+      new HtmlTableView(this, "tasksschedule", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksScheduleView->setModel(_tasksModel);
+  _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
+  cols.clear();
+  cols << 11 << 2 << 5 << 6 << 19 << 10 << 17 << 18;
+  _htmlTasksScheduleView->setColumnIndexes(cols);
+  _htmlTasksScheduleView->enableRowAnchor(11);
+  _wuiHandler->addView(_htmlTasksScheduleView);
+  _htmlTasksConfigView =
+      new HtmlTableView(this, "tasksconfig", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksConfigView->setModel(_tasksModel);
+  _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
+  cols.clear();
+  cols << 1 << 0 << 3 << 5 << 4 << 28 << 8 << 12 << 18;
+  _htmlTasksConfigView->setColumnIndexes(cols);
+  _htmlTasksConfigView->enableRowAnchor(11);
+  _wuiHandler->addView(_htmlTasksConfigView);
+  _htmlTasksParamsView =
+      new HtmlTableView(this, "tasksparams", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksParamsView->setModel(_tasksModel);
+  _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
+  cols.clear();
+  cols << 1 << 0 << 7 << 25 << 21 << 22 << 18;
+  _htmlTasksParamsView->setColumnIndexes(cols);
+  _htmlTasksParamsView->enableRowAnchor(11);
+  _wuiHandler->addView(_htmlTasksParamsView);
+  _htmlTasksListView = // note that this view is only used in /rest urls
+      new HtmlTableView(this, "taskslist", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksListView->setModel(_tasksModel);
+  _htmlTasksListView->setEmptyPlaceholder("(no task in configuration)");
+  _htmlTasksEventsView =
+      new HtmlTableView(this, "tasksevents", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksEventsView->setModel(_tasksModel);
+  _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
+  cols.clear();
+  cols << 11 << 6 << 14 << 15 << 16 << 18;
+  _htmlTasksEventsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlTasksEventsView);
+  _htmlSchedulerEventsView =
+      new HtmlTableView(this, "schedulerevents", CONFIG_TABLES_MAXROWS, 100);
+  _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
+  _wuiHandler->addView(_htmlSchedulerEventsView);
+  _htmlLastPostedNoticesView20 =
+      new HtmlTableView(this, "lastpostednotices20",
+                        _lastPostedNoticesModel->maxrows(), 20);
+  _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
+  _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
+  _wuiHandler->addView(_htmlLastPostedNoticesView20);
+  _htmlTaskGroupsView =
+      new HtmlTableView(this, "taskgroups", CONFIG_TABLES_MAXROWS);
+  _htmlTaskGroupsView->setModel(_taskGroupsModel);
+  _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
+  cols.clear();
+  cols << 0 << 1 << 2 << 7 << 8;
+  _htmlTaskGroupsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlTaskGroupsView);
+  _htmlTaskGroupsEventsView =
+      new HtmlTableView(this, "taskgroupsevents", CONFIG_TABLES_MAXROWS);
+  _htmlTaskGroupsEventsView->setModel(_taskGroupsModel);
+  _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
+  cols.clear();
+  cols << 0 << 3 << 4 << 5;
+  _htmlTaskGroupsEventsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlTaskGroupsEventsView);
+  _htmlAlertChannelsView = new HtmlTableView(this, "alertchannels");
+  _htmlAlertChannelsView->setModel(_alertChannelsModel);
+  _htmlAlertChannelsView->setRowHeaders();
+  _wuiHandler->addView(_htmlAlertChannelsView);
+  _htmlTasksResourcesView =
+      new HtmlTableView(this, "tasksresources", CONFIG_TABLES_MAXROWS);
+  _htmlTasksResourcesView->setModel(_tasksModel);
+  _htmlTasksResourcesView->setEmptyPlaceholder("(no task)");
+  cols.clear();
+  cols << 11 << 17 << 8;
+  _htmlTasksResourcesView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlTasksResourcesView);
+  _htmlTasksAlertsView =
+      new HtmlTableView(this, "tasksalerts", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksAlertsView->setModel(_tasksModel);
+  _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
+  cols.clear();
+  cols << 11 << 6 << 23 << 26 << 24 << 27 << 12 << 16 << 18;
+  _htmlTasksAlertsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlTasksAlertsView);
+  _htmlLogFilesView =
+      new HtmlTableView(this, "logfiles", CONFIG_TABLES_MAXROWS);
+  _htmlLogFilesView->setModel(_logConfigurationModel);
+  _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
+  _wuiHandler->addView(_htmlLogFilesView);
+  _htmlCalendarsView =
+      new HtmlTableView(this, "calendars", CONFIG_TABLES_MAXROWS);
+  _htmlCalendarsView->setModel(_calendarsModel);
+  _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
+  _wuiHandler->addView(_htmlCalendarsView);
+
+  // CSV views
+  CsvTableView::setDefaultFieldQuote('"');
+  _csvHostsListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvHostsListView->setModel(_hostsListModel);
+  _csvClustersListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvClustersListView->setModel(_clustersListModel);
+  _csvFreeResourcesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvFreeResourcesView->setModel(_freeResourcesModel);
+  _csvFreeResourcesView->setRowHeaders();
+  _csvResourcesLwmView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvResourcesLwmView->setModel(_resourcesLwmModel);
+  _csvResourcesLwmView->setRowHeaders();
+  _csvResourcesConsumptionView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvResourcesConsumptionView->setModel(_resourcesConsumptionModel);
+  _csvResourcesConsumptionView->setRowHeaders();
+  _csvGlobalParamsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGlobalParamsView->setModel(_globalParamsModel);
+  _csvGlobalSetenvView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGlobalSetenvView->setModel(_globalSetenvModel);
+  _csvGlobalUnsetenvView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGlobalUnsetenvView->setModel(_globalUnsetenvModel);
+  _csvAlertParamsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvAlertParamsView->setModel(_alertParamsModel);
+  _csvRaisedAlertsView = new CsvTableView(this, RAISED_ALERTS_MAXROWS);
+  _csvRaisedAlertsView->setModel(_raisedAlertsModel);
+  _csvLastEmitedAlertsView =
+      new CsvTableView(this, _lastEmitedAlertsModel->maxrows());
+  _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
+  _csvAlertRulesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvAlertRulesView->setModel(_alertRulesModel);
+  _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
+  _csvLogView->setModel(_memoryInfoLogger->model());
+  _csvTaskRequestsView =
+        new CsvTableView(this, _taskRequestsHistoryModel->maxrows());
+  _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
+  _csvTasksView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvTasksView->setModel(_tasksModel);
+  _csvSchedulerEventsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvSchedulerEventsView->setModel(_schedulerEventsModel);
+  _csvLastPostedNoticesView =
+      new CsvTableView(this, _lastPostedNoticesModel->maxrows());
+  _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
+  _csvTaskGroupsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvTaskGroupsView->setModel(_taskGroupsModel);
+  _csvLogFilesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvLogFilesView->setModel(_logConfigurationModel);
+  _csvCalendarsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvCalendarsView->setModel(_calendarsModel);
+
+  // other views
+  _clockView = new ClockView(this);
+  _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
+  _wuiHandler->addView("now", _clockView);
+
+  // access control
+  _authorizer = new InMemoryRulesAuthorizer(this);
   _authorizer->allow("", "/console/(css|jsp|js)/.*") // anyone for static rsrc
       .allow("operate", "/(rest|console)/do") // operate for operation
       .deny("", "/(rest|console)/do") // nobody else
       .allow("read"); // read for everything else
+
+  // dedicated thread
+  _thread->setObjectName("WebConsoleServer");
+  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
+  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  _thread->start();
+  moveToThread(_thread);
+  _memoryInfoLogger->moveToThread(_thread); // TODO won't be deleted whereas they should
+  _memoryWarningLogger->moveToThread(_thread);
 }
 
 WebConsole::~WebConsole() {
