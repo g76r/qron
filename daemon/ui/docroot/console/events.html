@@ -77,9 +77,12 @@
           <a name="config"></a>
           <h2>Tasks events configuration</h2>
           <p>Note: every task inherits its taskgroup and global events configuration shown above, in addition to its own configuration shown below.
-          <p><a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <p><form class="form-inline" onSubmit="return false;">
+          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/tasks/events/v1"><i class="fa fa-file"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
+          <input class="input-medium search-query" id="filter-tasksevents" type="text" placeholder="Quick search..." />
+          </form>
           <p><?view:tasksevents?>
         </div>
       </div>
@@ -117,6 +120,21 @@
 <!-- start of footer -->
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script>
+var tasksevents_rows = $('table#tasksevents tbody tr');
+function tasksevents_filter() {
+  tasksevents_rows.each(function() {
+    var filter = $('#filter-tasksevents').val();
+    if ($(this).text().search(filter) >= 0) {
+      $(this).show();
+    } else {
+      $(this).hide();
+    }
+  });
+}
+$('#filter-tasksevents').bind('input', function() {tasksevents_filter();});
+tasksevents_filter();
+  </script>
   </body>
 </html>
 
