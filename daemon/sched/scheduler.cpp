@@ -759,6 +759,7 @@ TaskRequest Scheduler::doAbortTask(quint64 id) {
       Executor *executor = _runningRequests.value(r2);
       if (executor) {
         Log::warning(fqtn, id) << "aborting task as requested";
+        // TODO should return TaskRequest() if executor cannot actually abort
         executor->abort();
         return r2;
       }

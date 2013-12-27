@@ -423,6 +423,7 @@ void Executor::abort() {
 }
 
 void Executor::doAbort() {
+  // TODO should return a boolean to indicate if abort was actually done or not
   if (_request.isNull()) {
     Log::error() << "cannot abort task because this executor is not "
                     "currently responsible for any task";
