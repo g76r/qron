@@ -15,7 +15,6 @@
 #define HOSTSLISTMODEL_H
 
 #include <QAbstractTableModel>
-#include "textviews.h"
 #include "config/cluster.h"
 #include "config/host.h"
 

@@ -41,8 +41,7 @@ protected:
   QList<OccuredEvent> _occuredEvents;
   int _maxrows;
   QString _eventName;
-  QHash<int,QString> _prefixes;
-  int _prefixRole;
+  QList<QString> _additionnalColumnsHeaders;
 
 public:
   // LATER limit last emited alerts by age
@@ -51,13 +50,15 @@ public:
   int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  inline void setEventName(QString eventName) { _eventName = eventName; }
-  inline void setPrefix(QString prefix, int type = 0) {
-    _prefixes.insert(type, prefix); }
-  inline void setPrefixRole(int prefixRole) {
-    _prefixRole = prefixRole; }
-  inline void setMaxrows(int maxrows) { _maxrows = maxrows; }
-  inline int maxrows() const { return _maxrows; }
+  LastOccuredTextEventsModel *setEventName(QString eventName) {
+    _eventName = eventName; return this; }
+  LastOccuredTextEventsModel *setMaxrows(int maxrows) {
+    _maxrows = maxrows; return this; }
+  int maxrows() const { return _maxrows; }
+  LastOccuredTextEventsModel *addEmptyColumn(QString header) {
+    _additionnalColumnsHeaders.append(header); return this; }
+  LastOccuredTextEventsModel *removeEmptyColumns() {
+    _additionnalColumnsHeaders.clear(); return this; }
 
 public slots:
   void eventOccured(QString event);

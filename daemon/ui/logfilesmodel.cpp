@@ -12,7 +12,6 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "logfilesmodel.h"
-#include "textviews.h"
 
 #define COLUMNS 3
 
@@ -41,17 +40,7 @@ QVariant LogFilesModel::data(const QModelIndex &index, int role) const {
       case 1:
         return Log::severityToString(logfile.minimumSeverity());
       case 2:
-        return logfile.buffered() ? QObject::tr("yes") : QObject::tr("no");
-      }
-      break;
-    case TextViews::HtmlPrefixRole:
-       // LATER move Twitter Bootstrap specific icons to WebConsole
-      switch(index.column()) {
-      case 0:
-        return "<i class=\"fa fa-file\"></i> ";
-      case 2:
-        return logfile.buffered() ? QVariant()
-                                  : "<i class=\"fa fa-download\"></i> ";
+        return logfile.buffered();
       }
       break;
     default:

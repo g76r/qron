@@ -20,7 +20,6 @@
 #include "config/taskrequest.h"
 #include "config/host.h"
 #include <QList>
-#include "textviews.h"
 
 /** Model holding tasks requests along with their attributes, one request per
  * line, in reverse request order. */

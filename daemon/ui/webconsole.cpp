@@ -21,6 +21,10 @@
 #include "util/htmlutils.h"
 #include <QUrlQuery>
 #include "util/standardformats.h"
+#include "textview/htmlitemdelegate.h"
+#include "ui/htmltaskitemdelegate.h"
+#include "ui/htmltaskrequestitemdelegate.h"
+#include "ui/htmlalertitemdelegate.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -50,17 +54,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _globalUnsetenvModel = new ParamSetModel(this);
   _alertParamsModel = new ParamSetModel(this);
   _raisedAlertsModel = new RaisedAlertsModel(this);
-  _raisedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ", // TODO delegate
-                                TextViews::HtmlPrefixRole);
-  _lastEmitedAlertsModel = new LastEmitedAlertsModel(this, 500);
-  _lastEmitedAlertsModel->setEventName("Alert");
-  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-bell\"></i> ", 0); // TODO delegate
-  _lastEmitedAlertsModel->setPrefix("<i class=\"fa fa-check\"></i> ", 1);
+  _lastEmitedAlertsModel = new LastOccuredTextEventsModel(this, 500);
+  _lastEmitedAlertsModel->setEventName("Alert")
+      ->addEmptyColumn("Actions");
   connect(this, SIGNAL(alertEmited(QString,int)),
           _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
-  _lastPostedNoticesModel->setPrefix("<i class=\"fa fa-comment\"></i> "); // TODO delegate
   _alertRulesModel = new AlertRulesModel(this);
   // memory cost: about 1.5 kB / request, e.g. 30 MB for 20000 requests
   // (this is an empirical measurement and thus includes model + csv view
@@ -73,45 +73,42 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new CalendarsModel(this);
   _memoryInfoLogger = new MemoryLogger(0, Log::Info, LOG_MAXROWS);
-  _memoryInfoLogger->model()
-      ->setWarningIcon("<i class=\"fa fa-warning fa-fw\"></i> "); // TODO delegate
-  _memoryInfoLogger->model()
-      ->setErrorIcon("<i class=\"fa fa-minus-circle fa-fw\"></i> ");
-  _memoryInfoLogger->model()->setWarningTrClass("warning");
-  _memoryInfoLogger->model()->setErrorTrClass("error");
   _memoryWarningLogger = new MemoryLogger(0, Log::Warning, LOG_MAXROWS);
-  _memoryWarningLogger->model()
-      ->setWarningIcon("<i class=\"fa fa-warning fa-fw\"></i> ");
-  _memoryWarningLogger->model()
-      ->setErrorIcon("<i class=\"fa fa-minus-circle fa-fw\"></i> ");
-  _memoryWarningLogger->model()->setWarningTrClass("warning");
-  _memoryWarningLogger->model()->setErrorTrClass("error");
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
-  HtmlTableView::setDefaultHtmlPrefixRole(TextViews::HtmlPrefixRole);
-  HtmlTableView::setDefaultHtmlSuffixRole(TextViews::HtmlSuffixRole);
   _htmlHostsListView =
       new HtmlTableView(this, "hostslist", CONFIG_TABLES_MAXROWS);
   _htmlHostsListView->setModel(_hostsListModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
+  ((HtmlItemDelegate*)_htmlHostsListView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-hdd-o\"></i> ");
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView =
     new HtmlTableView(this, "clusterslist", CONFIG_TABLES_MAXROWS);
   _htmlClustersListView->setModel(_clustersListModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
+  ((HtmlItemDelegate*)_htmlClustersListView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-random\"></i> ");
   _wuiHandler->addView(_htmlClustersListView);
   _htmlFreeResourcesView =
     new HtmlTableView(this, "freeresources", CONFIG_TABLES_MAXROWS);
   _htmlFreeResourcesView->setModel(_freeResourcesModel);
   _htmlFreeResourcesView->setRowHeaders();
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
+  // glyphicon-celebration glyphicon-fast-food icon-glass glyphicon-fast-food
+  ((HtmlItemDelegate*)_htmlFreeResourcesView->itemDelegate())
+      ->setPrefixForColumn(HtmlItemDelegate::Header, "<i class=\"fa fa-beer\"></i> ")
+      ->setPrefixForRow(HtmlItemDelegate::Header, "<i class=\"fa fa-hdd-o\"></i> ");
   _wuiHandler->addView(_htmlFreeResourcesView);
   _htmlResourcesLwmView =
     new HtmlTableView(this, "resourceslwm", CONFIG_TABLES_MAXROWS);
   _htmlResourcesLwmView->setModel(_resourcesLwmModel);
   _htmlResourcesLwmView->setRowHeaders();
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
+  ((HtmlItemDelegate*)_htmlResourcesLwmView->itemDelegate())
+      ->setPrefixForColumn(HtmlItemDelegate::Header, "<i class=\"fa fa-beer\"></i> ")
+      ->setPrefixForRow(HtmlItemDelegate::Header, "<i class=\"fa fa-hdd-o\"></i> ");
   _wuiHandler->addView(_htmlResourcesLwmView);
   _htmlResourcesConsumptionView =
     new HtmlTableView(this, "resourcesconsumption", CONFIG_TABLES_MAXROWS);
@@ -119,6 +116,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesConsumptionView->setRowHeaders();
   _htmlResourcesConsumptionView
       ->setEmptyPlaceholder("(no resource definition)");
+  ((HtmlItemDelegate*)_htmlResourcesConsumptionView->itemDelegate())
+      ->setPrefixForColumn(HtmlItemDelegate::Header, "<i class=\"fa fa-hdd-o\"></i> ")
+      //->setPrefixForRow(HtmlItemDelegate::Header, "<i class=\"fa fa-cog\"></i> ")
+      ->setPrefixForRow(0, "<strong>")
+      ->setSuffixForRow(0, "</strong>");
   _wuiHandler->addView(_htmlResourcesConsumptionView);
   _htmlGlobalParamsView = new HtmlTableView(this, "globalparams");
   _htmlGlobalParamsView->setModel(_globalParamsModel);
@@ -139,58 +141,112 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       new HtmlTableView(this, "raisedalerts", RAISED_ALERTS_MAXROWS);
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
+  _htmlRaisedAlertsView->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsView, 0, 3, true));
+  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-bell\"></i> ");
   _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlRaisedAlertsView10 =
     new HtmlTableView(this, "raisedalerts10", RAISED_ALERTS_MAXROWS, 10);
   _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
+  _htmlRaisedAlertsView10->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsView10, 0, 3, true));
+  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView10->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-bell\"></i> ");
   _wuiHandler->addView(_htmlRaisedAlertsView10);
   _htmlLastEmitedAlertsView =
       new HtmlTableView(this, "lastemitedalerts",
                         _lastEmitedAlertsModel->maxrows());
-  _wuiHandler->addView(_htmlLastEmitedAlertsView);
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
+  QHash<QString,QString> alertsIcons;
+  alertsIcons.insert("0", "<i class=\"fa fa-bell\"></i> ");
+  alertsIcons.insert("1", "<i class=\"fa fa-check\"></i> ");
+  _htmlLastEmitedAlertsView->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlLastEmitedAlertsView, 1, 3, false));
+  ((HtmlAlertItemDelegate*)_htmlLastEmitedAlertsView->itemDelegate())
+      ->setPrefixForColumn(1, "%1", 2, alertsIcons);
+  cols.clear();
+  cols << 0 << 1 << 3;
+  _htmlLastEmitedAlertsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlLastEmitedAlertsView);
   _htmlLastEmitedAlertsView10 =
       new HtmlTableView(this, "lastemitedalerts10",
                         _lastEmitedAlertsModel->maxrows(), 10);
   _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
+  ((HtmlItemDelegate*)_htmlLastEmitedAlertsView10->itemDelegate())
+      ->setPrefixForColumn(1, "%1", 2, alertsIcons);
+  cols.clear();
+  cols << 0 << 1 << 3;
+  _htmlLastEmitedAlertsView10->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlLastEmitedAlertsView10);
   _htmlAlertRulesView =
       new HtmlTableView(this, "alertrules", CONFIG_TABLES_MAXROWS);
   _htmlAlertRulesView->setModel(_alertRulesModel);
+  QHash<QString,QString> alertRulesIcons;
+  alertRulesIcons.insert("stop", "<i class=\"fa fa-stop\"></i> ");
+  ((HtmlItemDelegate*)_htmlAlertRulesView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-filter\"></i> ")
+      ->setPrefixForColumn(1, "%1", 1, alertRulesIcons);
   _wuiHandler->addView(_htmlAlertRulesView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
   _htmlWarningLogView->setModel(_memoryWarningLogger->model());
-  _htmlWarningLogView->setTrClassRole(LogModel::TrClassRole); // TODO delegate
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
+  QHash<QString,QString> logTrClasses, logIcons;
+  logTrClasses.insert("WARNING", "warning");
+  logTrClasses.insert("ERROR", "error");
+  logIcons.insert("WARNING", "<i class=\"fa fa-warning fa-fw\"></i> ");
+  logIcons.insert("ERROR", "<i class=\"fa fa-minus-circle fa-fw\"></i> ");
+  _htmlWarningLogView->setTrClass("%1", 4, logTrClasses);
+  ((HtmlItemDelegate*)_htmlWarningLogView->itemDelegate())
+      ->setPrefixForColumn(5, "%1", 4, logIcons);
   _wuiHandler->addView(_htmlWarningLogView);
   _htmlWarningLogView10 =
       new HtmlTableView(this, "warninglog10", SHORT_LOG_MAXROWS, 10);
   _htmlWarningLogView10->setModel(_memoryWarningLogger->model());
-  _htmlWarningLogView10->setTrClassRole(LogModel::TrClassRole); // TODO delegate
   _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
   _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
+  _htmlWarningLogView10->setTrClass("%1", 4, logTrClasses);
+  ((HtmlItemDelegate*)_htmlWarningLogView10->itemDelegate())
+      ->setPrefixForColumn(5, "%1", 4, logIcons);
   _wuiHandler->addView(_htmlWarningLogView10);
   _htmlInfoLogView = new HtmlTableView(this, "infolog", LOG_MAXROWS, 100);
   _htmlInfoLogView->setModel(_memoryInfoLogger->model());
-  _htmlInfoLogView->setTrClassRole(LogModel::TrClassRole);
+  _htmlInfoLogView->setTrClass("%1", 4, logTrClasses);
+  ((HtmlItemDelegate*)_htmlInfoLogView->itemDelegate())
+      ->setPrefixForColumn(5, "%1", 4, logIcons);
   _wuiHandler->addView(_htmlInfoLogView);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlTaskRequestsView20 =
       new HtmlTableView(this, "taskrequests20",
                         _unfinishedTaskRequestModel->maxrows(), 20);
   _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
-  _htmlTaskRequestsView20->setTrClassRole(LogModel::TrClassRole);
+  QHash<QString,QString> taskRequestsTrClasses;
+  taskRequestsTrClasses.insert("failure", "error");
+  taskRequestsTrClasses.insert("queued", "warning");
+  taskRequestsTrClasses.insert("running", "info");
+  _htmlTaskRequestsView20->setTrClass("%1", 2, taskRequestsTrClasses);
   _htmlTaskRequestsView20->setEmptyPlaceholder("(no running or queued task)");
+  cols.clear();
+  cols << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8;
+  _htmlTaskRequestsView20->setColumnIndexes(cols);
+  _htmlTaskRequestsView20
+      ->setItemDelegate(new HtmlTaskRequestItemDelegate(
+                          _htmlTaskRequestsView20));
   _wuiHandler->addView(_htmlTaskRequestsView20);
   _htmlTaskRequestsView =
       new HtmlTableView(this, "taskrequests",
                         _taskRequestsHistoryModel->maxrows(), 100);
   _htmlTaskRequestsView->setModel(_taskRequestsHistoryModel);
-  _htmlTaskRequestsView->setTrClassRole(LogModel::TrClassRole); // TODO delegate
+  _htmlTaskRequestsView->setTrClass("%1", 2, taskRequestsTrClasses);
   _htmlTaskRequestsView->setEmptyPlaceholder("(no recent task)");
+  cols.clear();
+  cols << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8;
+  _htmlTaskRequestsView->setColumnIndexes(cols);
+  _htmlTaskRequestsView
+      ->setItemDelegate(new HtmlTaskRequestItemDelegate(_htmlTaskRequestsView));
   _wuiHandler->addView(_htmlTaskRequestsView);
   _htmlTasksScheduleView =
       new HtmlTableView(this, "tasksschedule", CONFIG_TABLES_MAXROWS, 100);
@@ -200,6 +256,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 11 << 2 << 5 << 6 << 19 << 10 << 17 << 18;
   _htmlTasksScheduleView->setColumnIndexes(cols);
   _htmlTasksScheduleView->enableRowAnchor(11);
+  _htmlTasksScheduleView->setItemDelegate(
+        new HtmlTaskItemDelegate(_htmlTasksScheduleView));
   _wuiHandler->addView(_htmlTasksScheduleView);
   _htmlTasksConfigView =
       new HtmlTableView(this, "tasksconfig", CONFIG_TABLES_MAXROWS, 100);
@@ -209,6 +267,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 1 << 0 << 3 << 5 << 4 << 28 << 8 << 12 << 18;
   _htmlTasksConfigView->setColumnIndexes(cols);
   _htmlTasksConfigView->enableRowAnchor(11);
+  _htmlTasksConfigView->setItemDelegate(
+        new HtmlTaskItemDelegate(_htmlTasksConfigView));
   _wuiHandler->addView(_htmlTasksConfigView);
   _htmlTasksParamsView =
       new HtmlTableView(this, "tasksparams", CONFIG_TABLES_MAXROWS, 100);
@@ -218,11 +278,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 1 << 0 << 7 << 25 << 21 << 22 << 18;
   _htmlTasksParamsView->setColumnIndexes(cols);
   _htmlTasksParamsView->enableRowAnchor(11);
+  _htmlTasksParamsView->setItemDelegate(
+        new HtmlTaskItemDelegate(_htmlTasksParamsView));
   _wuiHandler->addView(_htmlTasksParamsView);
   _htmlTasksListView = // note that this view is only used in /rest urls
       new HtmlTableView(this, "taskslist", CONFIG_TABLES_MAXROWS, 100);
   _htmlTasksListView->setModel(_tasksModel);
   _htmlTasksListView->setEmptyPlaceholder("(no task in configuration)");
+  _htmlTasksListView->setItemDelegate(
+        new HtmlTaskItemDelegate(_htmlTasksListView));
   _htmlTasksEventsView =
       new HtmlTableView(this, "tasksevents", CONFIG_TABLES_MAXROWS, 100);
   _htmlTasksEventsView->setModel(_tasksModel);
@@ -230,6 +294,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 11 << 6 << 14 << 15 << 16 << 18;
   _htmlTasksEventsView->setColumnIndexes(cols);
+  _htmlTasksEventsView->setItemDelegate(
+        new HtmlTaskItemDelegate(_htmlTasksEventsView));
   _wuiHandler->addView(_htmlTasksEventsView);
   _htmlSchedulerEventsView =
       new HtmlTableView(this, "schedulerevents", CONFIG_TABLES_MAXROWS, 100);
@@ -240,6 +306,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                         _lastPostedNoticesModel->maxrows(), 20);
   _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
   _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
+  cols.clear();
+  cols << 0 << 1;
+  _htmlLastPostedNoticesView20->setColumnIndexes(cols);
+  ((HtmlItemDelegate*)_htmlLastPostedNoticesView20->itemDelegate())
+      ->setPrefixForColumn(1, "<i class=\"fa fa-comment\"></i> ");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
   _htmlTaskGroupsView =
       new HtmlTableView(this, "taskgroups", CONFIG_TABLES_MAXROWS);
@@ -248,6 +319,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 0 << 1 << 2 << 7 << 8;
   _htmlTaskGroupsView->setColumnIndexes(cols);
+  ((HtmlItemDelegate*)_htmlTaskGroupsView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-cogs\"></i> ");
   _wuiHandler->addView(_htmlTaskGroupsView);
   _htmlTaskGroupsEventsView =
       new HtmlTableView(this, "taskgroupsevents", CONFIG_TABLES_MAXROWS);
@@ -268,6 +341,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 11 << 17 << 8;
   _htmlTasksResourcesView->setColumnIndexes(cols);
+  _htmlTasksResourcesView->setItemDelegate(
+        new HtmlTaskItemDelegate(_htmlTasksResourcesView));
   _wuiHandler->addView(_htmlTasksResourcesView);
   _htmlTasksAlertsView =
       new HtmlTableView(this, "tasksalerts", CONFIG_TABLES_MAXROWS, 100);
@@ -276,16 +351,25 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 11 << 6 << 23 << 26 << 24 << 27 << 12 << 16 << 18;
   _htmlTasksAlertsView->setColumnIndexes(cols);
+  _htmlTasksAlertsView->setItemDelegate(
+        new HtmlTaskItemDelegate(_htmlTasksAlertsView));
   _wuiHandler->addView(_htmlTasksAlertsView);
   _htmlLogFilesView =
       new HtmlTableView(this, "logfiles", CONFIG_TABLES_MAXROWS);
   _htmlLogFilesView->setModel(_logConfigurationModel);
   _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
+  QHash<QString,QString> bufferLogFileIcons;
+  bufferLogFileIcons.insert("true", "<i class=\"fa fa-download\"></i> ");
+  ((HtmlItemDelegate*)_htmlLogFilesView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-file\"></i> ")
+      ->setPrefixForColumn(2, "%1", 2, bufferLogFileIcons);
   _wuiHandler->addView(_htmlLogFilesView);
   _htmlCalendarsView =
       new HtmlTableView(this, "calendars", CONFIG_TABLES_MAXROWS);
   _htmlCalendarsView->setModel(_calendarsModel);
   _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
+  ((HtmlItemDelegate*)_htmlCalendarsView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-calendar\"></i> ");
   _wuiHandler->addView(_htmlCalendarsView);
 
   // CSV views

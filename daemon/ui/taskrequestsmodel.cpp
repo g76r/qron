@@ -13,7 +13,7 @@
  */
 #include "taskrequestsmodel.h"
 
-#define COLUMNS 9
+#define COLUMNS 10
 
 TaskRequestsModel::TaskRequestsModel(QObject *parent, int maxrows,
                                      bool keepFinished)
@@ -54,98 +54,14 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
       case 7:
         return r.endDatetime().isNull() || r.startDatetime().isNull()
             ? QVariant() : QString::number(r.runningMillis()/1000.0);
+      case 8:
+        return _customActions.isEmpty()
+            ? QVariant() : r.params().evaluate(_customActions, &r);
+      case 9:
+        return r.abortable();
       }
       break;
     }
-    case TextViews::HtmlPrefixRole:
-      switch(index.column()) {
-      case 1:
-        return "<a href=\"taskdoc.html?fqtn="+r.task().fqtn()+"\">";
-      case 2:
-        switch(r.status()) {
-        case TaskRequest::Queued:
-          return "<i class=\"fa fa-inbox\"></i> ";
-        case TaskRequest::Running:
-          return "<i class=\"fa fa-play\"></i> ";
-        case TaskRequest::Failure:
-          return "<i class=\"fa fa-minus-circle\"></i> ";
-        case TaskRequest::Canceled:
-          return "<i class=\"fa fa-times\"></i> ";
-        case TaskRequest::Success:
-          ;
-        }
-        break;
-      case 8: {
-        QString actions;
-        switch(r.status()) {
-        case TaskRequest::Queued:
-          /* cancel */
-          actions += " <span class=\"label label-important\" "
-              "title=\"Cancel request\"><a href=\"confirm?event=cancelRequest&id="
-              +QString::number(r.id())
-              +"\"><i class=\"fa fa-times\"></i></a></span>";
-          break;
-        case TaskRequest::Running:
-          /* abort */
-          if (r.abortable())
-            actions += " <span class=\"label label-important\" "
-                "title=\"Abort task\"><a href=\"confirm?event=abortTask&id="
-                +QString::number(r.id())+"\">"
-                "<i class=\"fa fa-fire\"></i></a></span>";
-          else
-            actions += " <span class=\"label\" title=\"Cannot abort task\">"
-                "<i class=\"fa fa-fire\"></i></span>";
-          break;
-        default:
-          /* reexec */
-          actions += " <span class=\"label label-important\" "
-              "title=\"Request execution of same task\"><a href=\""
-              "requestform?fqtn="+r.task().fqtn()+"\">"
-              "<i class=\"fa fa-repeat\"></i></a></span>";
-          break;
-          ;
-        }
-        /* log */
-        actions += " <span class=\"label label-info\" title=\"Log\">"
-            "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
-            +r.task().fqtn()+"/"+QString::number(r.id())
-            +"%20\"><i class=\"fa fa-list\"></i></a></span>";
-        return actions;
-        // LATER add cancel button for queued requests
-      }
-      default:
-        ;
-      }
-      break;
-    case TextViews::TrClassRole:
-      switch(r.status()) {
-      case TaskRequest::Queued:
-        return "warning";
-      case TaskRequest::Running:
-        return "info";
-      case TaskRequest::Failure:
-        return "error";
-      case TaskRequest::Canceled:
-      case TaskRequest::Success:
-        ;
-      }
-    case TextViews::HtmlSuffixRole:
-      switch(index.column()) {
-      case 1:
-        return "</a>";
-      case 8: {
-        QString suffix = " <span class=\"label label-info\" "
-            "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-            +r.task().fqtn()+"\"><i class=\"fa fa-cog\">"
-            "</i></a></span>";
-        if (!_customActions.isEmpty())
-          suffix.append(" ").append(r.params().evaluate(_customActions, &r));
-        return suffix;
-      }
-      default:
-        ;
-      }
-      break;
     default:
       ;
     }
@@ -176,6 +92,8 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
         return "Seconds running";
       case 8:
         return "Actions";
+      case 9:
+        return "Abortable";
       }
     } else {
       return QString::number(section);

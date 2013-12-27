@@ -14,7 +14,7 @@
 #include "lastoccuredtexteventsmodel.h"
 #include <QtDebug>
 
-#define COLUMNS 2
+#define COLUMNS 3
 
 LastOccuredTextEventsModel::LastOccuredTextEventsModel(QObject *parent,
                                                        int maxrows)
@@ -28,7 +28,7 @@ int LastOccuredTextEventsModel::rowCount(const QModelIndex &parent) const {
 
 int LastOccuredTextEventsModel::columnCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
-  return COLUMNS;
+  return COLUMNS+_additionnalColumnsHeaders.size();
 }
 
 QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) const {
@@ -41,9 +41,10 @@ QVariant LastOccuredTextEventsModel::data(const QModelIndex &index, int role) co
         return oe._datetime.toString("yyyy-MM-dd hh:mm:ss,zzz");
       case 1:
         return oe._event;
+      case 2:
+        return oe._type;
       }
-    } else if (role == _prefixRole && index.column() == 1)
-      return _prefixes.value(oe._type);
+    }
   }
   return QVariant();
 }
@@ -57,6 +58,10 @@ QVariant LastOccuredTextEventsModel::headerData(
         return "Timestamp";
       case 1:
         return _eventName;
+      case 2:
+        return "Type";
+      default:
+        return _additionnalColumnsHeaders.value(section-COLUMNS);
       }
     } else {
       return QString::number(section);

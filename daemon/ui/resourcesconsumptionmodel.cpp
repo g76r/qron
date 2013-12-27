@@ -17,34 +17,6 @@ ResourcesConsumptionModel::ResourcesConsumptionModel(QObject *parent)
   : TextMatrixModel(parent) {
 }
 
-QVariant ResourcesConsumptionModel::headerData(
-    int section, Qt::Orientation orientation, int role) const {
-  switch(role) {
-  case TextViews::HtmlPrefixRole:
-    // LATER move icons to WebConsole
-    if (orientation == Qt::Horizontal)
-        return "<i class=\"fa fa-hdd-o\"></i> ";
-    if (section > 0) // every line but max line
-        return "<i class=\"fa fa-cog\"></i> ";
-    return QVariant();
-  default:
-    return TextMatrixModel::headerData(section, orientation, role);
-  }
-}
-
-QVariant ResourcesConsumptionModel::data(const QModelIndex &index,
-                                         int role) const {
-  if (index.row() == 0) {
-    switch (role) {
-    case TextViews::HtmlPrefixRole:
-      return "<strong>";
-    case TextViews::HtmlSuffixRole:
-      return "</strong>";
-    }
-  }
-  return TextMatrixModel::data(index, role);
-}
-
 void ResourcesConsumptionModel::tasksConfigurationReset(
     QHash<QString,TaskGroup> tasksGroups, QHash<QString,Task> tasks) {
   Q_UNUSED(tasksGroups)

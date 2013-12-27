@@ -15,7 +15,6 @@
 #define RESOURCESCONSUMPTIONMODEL_H
 
 #include "textview/textmatrixmodel.h"
-#include "textviews.h"
 #include <QHash>
 #include <QList>
 #include <QString>
@@ -36,8 +35,6 @@ class ResourcesConsumptionModel : public TextMatrixModel {
 
 public:
   ResourcesConsumptionModel(QObject *parent = 0);
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-  QVariant data(const QModelIndex &index, int role) const;
 
 public slots:
   void tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,

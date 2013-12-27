@@ -13,15 +13,14 @@
  */
 #include "tasksmodel.h"
 #include <QDateTime>
-#include "textviews.h"
 #include "event/event.h"
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 29
-#define SOON_EXECUTION_MILLIS 300000
-// 300,000 ms = 5'
-#define FULL_REFRESH_INTERVAL (SOON_EXECUTION_MILLIS/5)
+#define COLUMNS 31
+// 60,000 ms = 1'
+// should stay below HtmlTaskItemDelegate's SOON_EXECUTION_MILLIS
+#define FULL_REFRESH_INTERVAL 60000
 
 TasksModel::TasksModel(QObject *parent) : QAbstractTableModel(parent) {
   QTimer *timer = new QTimer(this);
@@ -81,6 +80,9 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 17:
         return QString::number(t.instancesCount())+" / "
             +QString::number(t.maxInstances());
+      case 18:
+        return _customActions.isEmpty()
+            ? QVariant() : t.params().evaluate(_customActions, &t);
       case 19:
         return taskLastExecStatus(t);
       case 20:
@@ -106,99 +108,10 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return taskMaxDurationBeforeAbort(t);
       case 28:
         return t.triggersWithCalendarsAsString();
-      }
-      break;
-    case TextViews::HtmlPrefixRole:
-      switch(index.column()) {
-      case 0:
-      case 11:
-        // LATER move icons to WebConsole
-        return "<i class=\"fa fa-cog\"></i> <a href=\"taskdoc.html?fqtn="
-            +t.fqtn()+"\">";
-      case 1:
-        return "<i class=\"fa fa-cogs\"></i> ";
-      case 6:
-      case 28: {
-        QString prefix;
-        if (!t.enabled())
-          prefix = "<i class=\"fa fa-ban\"></i> disabled ";
-        if (t.triggersAsString().isEmpty())
-          prefix += "<i class=\"fa fa-times\"></i> no trigger ";
-        if (t.triggersHaveCalendar())
-          prefix += "<i class=\"fa fa-calendar\"></i> ";
-        return prefix;
-      }
-      case 10: {
-        QDateTime dt = t.nextScheduledExecution();
-        if (!dt.isNull()
-            && dt.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()
-            < SOON_EXECUTION_MILLIS)
-          return "<i class=\"fa fa-clock-o\"></i> ";
-        break;
-      }
-      case 13:
-      case 17:
-        if (t.instancesCount())
-          return "<i class=\"fa fa-play\"></i> ";
-        break;
-      case 18: {
-        QString fqtn = t.fqtn();
-        bool enabled = t.enabled();
-        return
-            /* requestTask */
-            " <span class=\"label label-important\" "
-            "title=\"Request execution\">"
-            "<a href=\"requestform?fqtn="
-            +fqtn+"\"><i class=\"fa fa-play\"></i></a></span>"
-            /* {enable,disable}Task */
-            " <span class=\"label label-"+(enabled?"important":"warning")
-            +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
-            "<a href=\"do?event=enableTask&fqtn="+fqtn+"&enable="
-            +(enabled?"false":"true")+"\"><i class=\"fa fa-ban\"></i>"
-            "</a></span>"
-            /* log */
-            " <span class=\"label label-info\" title=\"Log\">"
-            "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter=%20"
-            +fqtn+"/\"><i class=\"fa fa-list\"></i></a></span>";
-      }
-      case 19: {
-        QDateTime dt = t.lastExecution();
-        if (!dt.isNull() && !t.lastSuccessful())
-          return "<i class=\"fa fa-minus-circle\"></i> ";
-        break;
-      }
-      case 27:
-        return t.maxDurationBeforeAbort() < LLONG_MAX
-            ? "<i class=\"fa fa-fire\"></i> " : QVariant();
-      default:
-        ;
-      }
-      break;
-    case TextViews::HtmlSuffixRole:
-      switch(index.column()) {
-      case 0:
-      case 11:
-        return "</a>";
-      case 18: {
-        QString suffix;
-        suffix =
-            /* taskconfig */
-            /*" <span class=\"label label-info\"><a "
-            "title=\"Task configuration\""
-            "href=\"tasks.html#taskconfig."+t.fqtn()
-            +"\"><i class=\"fa fa-cogs\">"
-            "</i></a></span>"*/
-            /* taskdoc */
-            " <span class=\"label label-info\" "
-            "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-            +t.fqtn()+"\"><i class=\"fa fa-cog\">"
-            "</i></a></span>";
-        if (!_customActions.isEmpty())
-          suffix.append(" ").append(t.params().evaluate(_customActions, &t));
-        return suffix;
-      }
-      default:
-        ;
+      case 29:
+        return t.enabled();
+      case 30:
+        return t.triggersHaveCalendar();
       }
       break;
     default:
@@ -336,6 +249,10 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Max duration before abort";
     case 28:
       return "Triggers with calendars";
+    case 29:
+      return "Enabled";
+    case 30:
+      return "Has triggers with calendars";
     }
   }
   return QVariant();

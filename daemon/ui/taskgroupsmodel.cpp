@@ -13,7 +13,6 @@
  */
 #include "taskgroupsmodel.h"
 #include <QDateTime>
-#include "textviews.h"
 #include "event/event.h"
 
 #define COLUMNS 9
@@ -77,14 +76,6 @@ QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
           env.chop(1);
         return env;
       }
-      }
-      break;
-    case TextViews::HtmlPrefixRole:
-      switch(index.column()) {
-      case 0:
-        return "<i class=\"fa fa-cogs\"></i> ";
-      default:
-        ;
       }
       break;
     default:

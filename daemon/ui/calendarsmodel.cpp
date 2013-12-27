@@ -12,7 +12,6 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "calendarsmodel.h"
-#include "textviews.h"
 
 #define COLUMNS 2
 
@@ -38,13 +37,6 @@ QVariant CalendarsModel::data(const QModelIndex &index, int role) const {
         return c.name();
       case 1:
         return c.rulesAsString();
-      }
-      break;
-    case TextViews::HtmlPrefixRole:
-      switch(index.column()) {
-      case 0:
-        // LATER move icons to WebConsole
-        return "<i class=\"fa fa-calendar\"></i> ";
       }
       break;
     default:

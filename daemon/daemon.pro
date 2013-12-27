@@ -85,14 +85,16 @@ SOURCES += \
     ui/taskgroupsmodel.cpp \
     sched/qrond.cpp \
     config/configutils.cpp \
-    ui/lastemitedalertsmodel.cpp \
     ui/alertchannelsmodel.cpp \
     config/requestformfield.cpp \
     ui/resourcesconsumptionmodel.cpp \
     config/logfile.cpp \
     ui/logfilesmodel.cpp \
     config/calendar.cpp \
-    ui/calendarsmodel.cpp
+    ui/calendarsmodel.cpp \
+    ui/htmltaskitemdelegate.cpp \
+    ui/htmltaskrequestitemdelegate.cpp \
+    ui/htmlalertitemdelegate.cpp
 
 HEADERS += \
     config/task.h \
@@ -106,7 +108,6 @@ HEADERS += \
     config/cluster.h \
     ui/hostslistmodel.h \
     ui/clusterslistmodel.h \
-    ui/textviews.h \
     ui/resourcesallocationmodel.h \
     alert/alerter.h \
     config/alert.h \
@@ -136,14 +137,16 @@ HEADERS += \
     ui/taskgroupsmodel.h \
     sched/qrond.h \
     config/configutils.h \
-    ui/lastemitedalertsmodel.h \
     ui/alertchannelsmodel.h \
     config/requestformfield.h \
     ui/resourcesconsumptionmodel.h \
     config/logfile.h \
     ui/logfilesmodel.h \
     config/calendar.h \
-    ui/calendarsmodel.h
+    ui/calendarsmodel.h \
+    ui/htmltaskitemdelegate.h \
+    ui/htmltaskrequestitemdelegate.h \
+    ui/htmlalertitemdelegate.h
 
 RESOURCES += \
     ui/webconsole.qrc

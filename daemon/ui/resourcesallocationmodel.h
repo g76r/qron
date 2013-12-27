@@ -15,7 +15,6 @@
 #define RESOURCESALLOCATIONMODEL_H
 
 #include "textview/textmatrixmodel.h"
-#include "textviews.h"
 
 /** Model holding resources allocation matrix, one resource kind per column and
  * one host per line.
@@ -35,7 +34,6 @@ public:
   explicit ResourcesAllocationModel(
       QObject *parent = 0, ResourcesAllocationModel::Mode mode
       = ResourcesAllocationModel::FreeOverConfigured);
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
   void setResourceAllocationForHost(QString host,

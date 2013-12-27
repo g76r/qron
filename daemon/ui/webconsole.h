@@ -33,7 +33,6 @@
 #include "tasksmodel.h"
 #include "schedulereventsmodel.h"
 #include "taskgroupsmodel.h"
-#include "lastemitedalertsmodel.h"
 #include "alertchannelsmodel.h"
 #include "auth/inmemoryrulesauthorizer.h"
 #include "auth/usersdatabase.h"
@@ -56,8 +55,7 @@ class WebConsole : public HttpHandler {
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
   *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
-  LastEmitedAlertsModel *_lastEmitedAlertsModel;
-  LastOccuredTextEventsModel *_lastPostedNoticesModel;
+  LastOccuredTextEventsModel *_lastEmitedAlertsModel, *_lastPostedNoticesModel;
   AlertRulesModel *_alertRulesModel;
   TaskRequestsModel *_taskRequestsHistoryModel, *_unfinishedTaskRequestModel;
   TasksModel *_tasksModel;

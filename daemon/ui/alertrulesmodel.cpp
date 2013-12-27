@@ -13,7 +13,6 @@
  */
 #include "alertrulesmodel.h"
 #include "alert/alertchannel.h"
-#include "textviews.h"
 
 #define COLUMNS 6
 
@@ -54,15 +53,6 @@ QVariant AlertRulesModel::data(const QModelIndex &index, int role) const {
           s.append("nonotifyreminder");
         return s;
       }
-      }
-      break;
-    case TextViews::HtmlPrefixRole:
-       // LATER move Twitter Bootstrap specific icons to WebConsole
-      switch(index.column()) {
-      case 0:
-        return "<i class=\"fa fa-filter\"></i> ";
-      case 1:
-        return rule.stop() ? "<i class=\"fa fa-stop\"></i> " : QVariant();
       }
       break;
     default:

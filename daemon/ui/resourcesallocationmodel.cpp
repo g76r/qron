@@ -18,20 +18,6 @@ ResourcesAllocationModel::ResourcesAllocationModel(
   : TextMatrixModel(parent), _mode(mode) {
 }
 
-QVariant ResourcesAllocationModel::headerData(
-    int section, Qt::Orientation orientation, int role) const {
-  switch(role) {
-  case TextViews::HtmlPrefixRole:
-    // LATER move icons to WebConsole
-    // glyphicon-celebration glyphicon-fast-food icon-glass glyphicon-fast-food
-    return orientation == Qt::Horizontal
-        ? "<i class=\"fa fa-beer\"></i> "
-        : "<i class=\"fa fa-hdd-o\"></i> ";
-  default:
-    return TextMatrixModel::headerData(section, orientation, role);
-  }
-}
-
 // LATER rename misleading signal and slot ("allocation" -> "available")
 void ResourcesAllocationModel::setResourceAllocationForHost(
     QString host, QHash<QString, qint64> resources) {
