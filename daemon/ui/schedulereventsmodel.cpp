@@ -32,19 +32,19 @@ QVariant SchedulerEventsModel::data(const QModelIndex &index, int role) const {
   if (role == Qt::DisplayRole && index.isValid())
     switch(index.column()) {
     case 0:
-      return Event::toStringList(_onschedulerstart).join(" ");
+      return Event::toStringList(_onschedulerstart).join("\n");
     case 1:
-      return Event::toStringList(_onconfigload).join(" ");
+      return Event::toStringList(_onconfigload).join("\n");
     case 2:
-      return Event::toStringList(_onnotice).join(" ");
+      return Event::toStringList(_onnotice).join("\n");
     case 3:
-      return Event::toStringList(_onlog).join(" ");
+      return Event::toStringList(_onlog).join("\n");
     case 4:
-      return Event::toStringList(_onstart).join(" ");
+      return Event::toStringList(_onstart).join("\n");
     case 5:
-      return Event::toStringList(_onsuccess).join(" ");
+      return Event::toStringList(_onsuccess).join("\n");
     case 6:
-      return Event::toStringList(_onfailure).join(" ");
+      return Event::toStringList(_onfailure).join("\n");
     }
   return QVariant();
 }

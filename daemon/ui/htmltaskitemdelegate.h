@@ -23,6 +23,8 @@ class HtmlTaskItemDelegate : public HtmlItemDelegate {
 public:
   explicit HtmlTaskItemDelegate(QObject *parent = 0);
   QString text(const QModelIndex &index) const;
+  QString headerText(int section, Qt::Orientation orientation,
+                     const QAbstractItemModel *model) const;
 };
 
 #endif // HTMLTASKITEMDELEGATE_H

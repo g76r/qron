@@ -41,13 +41,13 @@ QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
       case 1:
         return tg.label();
       case 2:
-        return tg.params().toString(false);
+        return tg.params().toString(false, false);
       case 3:
-        return Event::toStringList(tg.onstartEvents()).join(" ");
+        return Event::toStringList(tg.onstartEvents()).join("\n");
       case 4:
-        return Event::toStringList(tg.onsuccessEvents()).join(" ");
+        return Event::toStringList(tg.onsuccessEvents()).join("\n");
       case 5:
-        return Event::toStringList(tg.onfailureEvents()).join(" ");
+        return Event::toStringList(tg.onfailureEvents()).join("\n");
       case 6: {
         QString env;
         ParamSet setenv = tg.setenv();

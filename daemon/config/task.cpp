@@ -300,13 +300,18 @@ QHash<QString, qint64> Task::resources() const {
 
 QString Task::resourcesAsString() const {
   QString s;
-  s.append("{ ");
-  if (d)
+  if (d) {
+    bool first = true;
     foreach(QString key, d->_resources.keys()) {
-      s.append(key).append("=")
-          .append(QString::number(d->_resources.value(key))).append(" ");
+      if (first)
+        first = false;
+      else
+        s.append(' ');
+      s.append(key).append('=')
+          .append(QString::number(d->_resources.value(key)));
     }
-  return s.append("}");
+  }
+  return s;
 }
 
 QString Task::triggersAsString() const {

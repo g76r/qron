@@ -82,14 +82,16 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHostsListView->setModel(_hostsListModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   ((HtmlItemDelegate*)_htmlHostsListView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"fa fa-hdd-o\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"fa fa-hdd-o\"></i> ")
+      ->setPrefixForColumnHeader(2, "<i class=\"fa fa-beer\"></i> ");
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView =
     new HtmlTableView(this, "clusterslist", CONFIG_TABLES_MAXROWS);
   _htmlClustersListView->setModel(_clustersListModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
   ((HtmlItemDelegate*)_htmlClustersListView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"fa fa-random\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"fa fa-random\"></i> ")
+      ->setPrefixForColumnHeader(1, "<i class=\"fa fa-hdd-o\"></i> ");
   _wuiHandler->addView(_htmlClustersListView);
   _htmlFreeResourcesView =
     new HtmlTableView(this, "freeresources", CONFIG_TABLES_MAXROWS);
@@ -98,8 +100,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
   // glyphicon-celebration glyphicon-fast-food icon-glass glyphicon-fast-food
   ((HtmlItemDelegate*)_htmlFreeResourcesView->itemDelegate())
-      ->setPrefixForColumn(HtmlItemDelegate::Header, "<i class=\"fa fa-beer\"></i> ")
-      ->setPrefixForRow(HtmlItemDelegate::Header, "<i class=\"fa fa-hdd-o\"></i> ");
+      ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
+                                 "<i class=\"fa fa-beer\"></i> ")
+      ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
+                              "<i class=\"fa fa-hdd-o\"></i> ");
   _wuiHandler->addView(_htmlFreeResourcesView);
   _htmlResourcesLwmView =
     new HtmlTableView(this, "resourceslwm", CONFIG_TABLES_MAXROWS);
@@ -107,8 +111,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesLwmView->setRowHeaders();
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
   ((HtmlItemDelegate*)_htmlResourcesLwmView->itemDelegate())
-      ->setPrefixForColumn(HtmlItemDelegate::Header, "<i class=\"fa fa-beer\"></i> ")
-      ->setPrefixForRow(HtmlItemDelegate::Header, "<i class=\"fa fa-hdd-o\"></i> ");
+      ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
+                                 "<i class=\"fa fa-beer\"></i> ")
+      ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
+                              "<i class=\"fa fa-hdd-o\"></i> ");
   _wuiHandler->addView(_htmlResourcesLwmView);
   _htmlResourcesConsumptionView =
     new HtmlTableView(this, "resourcesconsumption", CONFIG_TABLES_MAXROWS);
@@ -117,8 +123,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesConsumptionView
       ->setEmptyPlaceholder("(no resource definition)");
   ((HtmlItemDelegate*)_htmlResourcesConsumptionView->itemDelegate())
-      ->setPrefixForColumn(HtmlItemDelegate::Header, "<i class=\"fa fa-hdd-o\"></i> ")
-      //->setPrefixForRow(HtmlItemDelegate::Header, "<i class=\"fa fa-cog\"></i> ")
+      ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
+                                 "<i class=\"fa fa-hdd-o\"></i> ")
+      ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
+                              "<i class=\"fa fa-cog\"></i> ")
+      ->setPrefixForRowHeader(0, "")
       ->setPrefixForRow(0, "<strong>")
       ->setSuffixForRow(0, "</strong>");
   _wuiHandler->addView(_htmlResourcesConsumptionView);
@@ -299,6 +308,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlTasksEventsView);
   _htmlSchedulerEventsView =
       new HtmlTableView(this, "schedulerevents", CONFIG_TABLES_MAXROWS, 100);
+  ((HtmlItemDelegate*)_htmlSchedulerEventsView->itemDelegate())
+      ->setPrefixForColumnHeader(0, "<i class=\"fa fa-rocket\"></i> ")
+      ->setPrefixForColumnHeader(1, "<i class=\"fa fa-refresh\"></i> ")
+      ->setPrefixForColumnHeader(2, "<i class=\"fa fa-comment\"></i> ")
+      ->setPrefixForColumnHeader(3, "<i class=\"fa fa-file\"></i> ")
+      ->setPrefixForColumnHeader(4, "<i class=\"fa fa-rocket\"></i> ")
+      ->setPrefixForColumnHeader(5, "<i class=\"fa fa-flag-checkered\"></i> ")
+      ->setPrefixForColumnHeader(6, "<i class=\"fa fa-minus-circle\"></i> ")
+      ->setMaxCellContentLength(2000);
   _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
   _wuiHandler->addView(_htmlSchedulerEventsView);
   _htmlLastPostedNoticesView20 =
@@ -329,6 +347,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols.clear();
   cols << 0 << 3 << 4 << 5;
   _htmlTaskGroupsEventsView->setColumnIndexes(cols);
+  ((HtmlItemDelegate*)_htmlTaskGroupsEventsView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"fa fa-cogs\"></i> ")
+      ->setPrefixForColumnHeader(3, "<i class=\"fa fa-rocket\"></i> ")
+      ->setPrefixForColumnHeader(4, "<i class=\"fa fa-flag-checkered\"></i> ")
+      ->setPrefixForColumnHeader(5, "<i class=\"fa fa-minus-circle\"></i> ");
   _wuiHandler->addView(_htmlTaskGroupsEventsView);
   _htmlAlertChannelsView = new HtmlTableView(this, "alertchannels");
   _htmlAlertChannelsView->setModel(_alertChannelsModel);
@@ -801,7 +824,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Command</th><td>"
                         +HtmlUtils::htmlEncode(task.command())+"</td></tr>"
                         "<tr><th>Configuration parameters</th><td>"
-                        +HtmlUtils::htmlEncode(task.params().toString(false))
+                        +HtmlUtils::htmlEncode(task.params().toString(false,
+                                                                      false))
                         +"</td></tr>"
                         "<tr><th>Request-time overridable parameters</th><td>"
                         +task.requestFormFieldsAsHtmlDescription()+"</td></tr>"

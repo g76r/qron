@@ -85,13 +85,18 @@ QHash<QString, qint64> Host::resources() const {
 
 QString Host::resourcesAsString() const {
   QString s;
-  s.append("{ ");
-  if (!isNull())
+  if (!isNull()) {
+    bool first = true;
     foreach(QString key, d->_resources.keys()) {
-      s.append(key).append("=")
-          .append(QString::number(d->_resources.value(key))).append(" ");
+      if (first)
+        first = false;
+      else
+        s.append(' ');
+      s.append(key).append('=')
+          .append(QString::number(d->_resources.value(key)));
     }
-  return s.append("}");
+  }
+  return s;
 }
 
 void Host::detach() {

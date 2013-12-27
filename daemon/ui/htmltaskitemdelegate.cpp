@@ -66,6 +66,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
         .toBool();
     QString fqtn = index.model()->index(index.row(), 11, index.parent()).data()
         .toString();
+    text = index.data().toString(); // disable truncating and HTML encoding
     text.prepend(/* requestTask */ QString() +
                  "<span class=\"label label-important\" "
                  "title=\"Request execution\"><a href=\"requestform?"
@@ -97,6 +98,38 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
       text.prepend("<i class=\"fa fa-fire\"></i> ");
     break;
   }
+  }
+  return text;
+}
+
+#include<QtDebug>
+QString HtmlTaskItemDelegate::headerText(
+    int section, Qt::Orientation orientation,
+    const QAbstractItemModel *model) const {
+  QString text = HtmlItemDelegate::headerText(section, orientation, model);
+  //qDebug() << "***" << model << orientation << section;
+  if (orientation == Qt::Horizontal) {
+    switch (section) {
+    case 5:
+      text.prepend("<i class=\"fa fa-crosshairs\"></i> ");
+      break;
+    case 6:
+    case 28:
+      text.prepend("<i class=\"fa fa-bolt\"></i> ");
+      break;
+    case 8:
+      text.prepend("<i class=\"fa fa-beer\"></i> ");
+      break;
+    case 14:
+      text.prepend("<i class=\"fa fa-rocket\"></i> ");
+      break;
+    case 15:
+      text.prepend("<i class=\"fa fa-flag-checkered\"></i> ");
+      break;
+    case 16:
+      text.prepend("<i class=\"fa fa-minus-circle\"></i> ");
+      break;
+    }
   }
   return text;
 }

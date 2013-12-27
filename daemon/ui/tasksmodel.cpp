@@ -58,7 +58,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 6:
         return t.triggersAsString();
       case 7:
-        return t.params().toString(false);
+        return t.params().toString(false, false);
       case 8:
         return t.resourcesAsString();
       case 9:
@@ -72,11 +72,11 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 13:
         return t.instancesCount();
       case 14:
-        return Event::toStringList(t.onstartEvents()).join(" ");
+        return Event::toStringList(t.onstartEvents()).join("\n");
       case 15:
-        return Event::toStringList(t.onsuccessEvents()).join(" ");
+        return Event::toStringList(t.onsuccessEvents()).join("\n");
       case 16:
-        return Event::toStringList(t.onfailureEvents()).join(" ");
+        return Event::toStringList(t.onfailureEvents()).join("\n");
       case 17:
         return QString::number(t.instancesCount())+" / "
             +QString::number(t.maxInstances());
@@ -96,10 +96,11 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 24:
         return taskMaxExpectedDuration(t);
       case 25: {
-        QString s("{ ");
+        QString s;
         foreach (const RequestFormField rff, t.requestFormFields())
           s.append(rff.param()).append(" ");
-        s.append("}");
+        if (!t.requestFormFields().isEmpty())
+          s.chop(1);
         return s;
       }
       case 26:
