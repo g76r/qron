@@ -21,6 +21,7 @@
 
 class AlertData;
 
+// LATER move to alert directory
 /** Class used to represent alert data during emission, in or between Alerter
  * and AlertChannel classes. */
 class Alert : public ParamsProvider {

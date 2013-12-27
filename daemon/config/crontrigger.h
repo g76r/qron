@@ -22,6 +22,7 @@
 
 class CronTriggerData;
 
+// LATER move to sched directory
 class CronTrigger {
   QSharedDataPointer<CronTriggerData> d;
 

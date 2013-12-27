@@ -16,7 +16,7 @@
 
 #include "alertchannel.h"
 
-// LATER remove or implement
+// LATER implement
 class ExecAlertChannel : public AlertChannel {
   Q_OBJECT
   Q_DISABLE_COPY(ExecAlertChannel)

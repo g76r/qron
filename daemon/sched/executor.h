@@ -27,6 +27,8 @@ class QThread;
 class QNetworkAccessManager;
 class QNetworkReply;
 
+/** Class handling execution of a task after its being dequeued, from start
+ * to end or cancellation. */
 class Executor : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Executor)

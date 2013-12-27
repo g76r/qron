@@ -18,7 +18,6 @@ ResourcesAllocationModel::ResourcesAllocationModel(
   : TextMatrixModel(parent), _mode(mode) {
 }
 
-// LATER rename misleading signal and slot ("allocation" -> "available")
 void ResourcesAllocationModel::setResourceAllocationForHost(
     QString host, QHash<QString, qint64> resources) {
   if (_mode != Configured) {

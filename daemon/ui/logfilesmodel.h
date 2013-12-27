@@ -18,6 +18,7 @@
 #include <QList>
 #include "config/logfile.h"
 
+/** Model holding log files configuration, one file per line. */
 class LogFilesModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(LogFilesModel)

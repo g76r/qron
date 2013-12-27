@@ -19,6 +19,7 @@
 /** Specific item delegate for task requests. */
 class HtmlTaskRequestItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
+  Q_DISABLE_COPY(HtmlTaskRequestItemDelegate)
 public:
   explicit HtmlTaskRequestItemDelegate(QObject *parent = 0);
   QString text(const QModelIndex &index) const;

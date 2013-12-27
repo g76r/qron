@@ -17,9 +17,7 @@ AlertChannelsModel::AlertChannelsModel(QObject *parent)
   : TextMatrixModel(parent) {
 }
 
-//#include "log/log.h"
 void AlertChannelsModel::channelsChanged(QStringList channels) {
-  //Log::fatal() << "channelsChanged " << channels;
   clear();
   foreach (const QString channel, channels)
     setCellValue(channel, "enabled", "true");

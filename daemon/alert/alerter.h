@@ -36,7 +36,8 @@ class PfNode;
 // 30"
 
 /** Main class for the alert system.
- */
+ * Mainly responsible for configuration, alerts dispatching among channels and
+ * other events handling. */
 class Alerter : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Alerter)

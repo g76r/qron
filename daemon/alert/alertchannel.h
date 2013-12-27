@@ -22,7 +22,9 @@ class Alerter;
 
 /** Base class for alert channels
  * @see MailAlertChannel
- * @see LogAlertChannel */
+ * @see LogAlertChannel
+ * @see UdpAlertChannel
+ * @see Alerter */
 class AlertChannel : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(AlertChannel)

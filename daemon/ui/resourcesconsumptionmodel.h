@@ -24,7 +24,7 @@
 #include "config/cluster.h"
 
 /** Model holding maximum possible resources consumption per host, one host per
- * column and one task per line, plus total line. */
+ * column and one task per line, plus total line on first line. */
 class ResourcesConsumptionModel : public TextMatrixModel {
   Q_OBJECT
   Q_DISABLE_COPY(ResourcesConsumptionModel)

@@ -42,6 +42,9 @@
 
 class QThread;
 
+/** Central class for qron web console.
+ * Mainly sets HTML templating and views up and dispatches request between views
+ * and event handling. */
 class WebConsole : public HttpHandler {
   friend class WebConsoleParamsProvider;
   Q_OBJECT

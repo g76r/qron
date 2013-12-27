@@ -18,6 +18,7 @@
 #include <QHash>
 #include "config/calendar.h"
 
+/** Model holding named calendars list, one per line. */
 class CalendarsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(CalendarsModel)

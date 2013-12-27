@@ -21,6 +21,8 @@ class ClusterData;
 class Host;
 class PfNode;
 
+/** A cluster is a set of hosts grouped together as a target for load balancing,
+ * failover or dispatching purposes. */
 class Cluster {
   QSharedDataPointer<ClusterData> d;
 

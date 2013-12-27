@@ -36,6 +36,7 @@ public:
       = ResourcesAllocationModel::FreeOverConfigured);
 
 public slots:
+  // LATER rename misleading signal and slot ("allocation" -> "available")
   void setResourceAllocationForHost(QString host,
                                     QHash<QString,qint64> resources);
   void setResourceConfiguration(

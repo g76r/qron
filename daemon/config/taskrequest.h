@@ -23,6 +23,7 @@
 
 class TaskRequestData;
 
+// LATER move to sched directory
 class TaskRequest : public ParamsProvider {
   QSharedDataPointer<TaskRequestData> d;
 
