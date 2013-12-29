@@ -23,6 +23,7 @@
 #include <QTimer>
 #include <QCoreApplication>
 #include "config/configutils.h"
+#include "alert.h"
 
 // LATER replace this 10" ugly batch with predictive timer (min(timestamps))
 #define ASYNC_PROCESSING_INTERVAL 10000

@@ -25,6 +25,9 @@ class QDebug;
 class Scheduler;
 class Event;
 
+/** A task group is a mean to tie tasks together to make them share some
+ * configuration and to indicate that they are related (e.g. they belong to
+ * the same application or have the same criticity). */
 class TaskGroup {
   QSharedDataPointer<TaskGroupData> d;
 

@@ -21,7 +21,7 @@ class ExecAlertChannel : public AlertChannel {
   Q_OBJECT
   Q_DISABLE_COPY(ExecAlertChannel)
 public:
-  explicit ExecAlertChannel(QObject *parent = 0);
+  ExecAlertChannel(QObject *parent, QPointer<Alerter> alerter);
 };
 
 #endif // EXECALERTCHANNEL_H

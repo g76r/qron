@@ -17,7 +17,6 @@
 #include <QObject>
 #include "util/paramset.h"
 #include "config/alertrule.h"
-#include "config/alert.h"
 #include "alertchannel.h"
 #include <QHash>
 #include <QString>

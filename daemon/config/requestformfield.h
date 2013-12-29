@@ -22,6 +22,10 @@ class PfNode;
 class TaskRequest;
 class ParamSet;
 
+/** Request-time user-overridable task parameter.
+ * Define an actual task parameter along with user interface hints and
+ * other-than-actual-parameter ways to affect the task execution (e.g. a
+ * RequestFormField can change the value of TaskRequest::command()). */
 class RequestFormField {
   QSharedDataPointer<RequestFormFieldData> d;
 

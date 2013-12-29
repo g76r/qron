@@ -15,13 +15,12 @@
 #define ALERT_H
 
 #include <QSharedDataPointer>
-#include "alertrule.h"
+#include "config/alertrule.h"
 #include <QDateTime>
 #include "util/paramsprovider.h"
 
 class AlertData;
 
-// LATER move to alert directory
 /** Class used to represent alert data during emission, in or between Alerter
  * and AlertChannel classes. */
 class Alert : public ParamsProvider {

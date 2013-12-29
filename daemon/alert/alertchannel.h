@@ -15,12 +15,13 @@
 #define ALERTCHANNEL_H
 
 #include <QObject>
-#include "config/alert.h"
+#include <QPointer>
+#include "alert.h"
 
 class QThread;
 class Alerter;
 
-/** Base class for alert channels
+/** Base class for alert channels.
  * @see MailAlertChannel
  * @see LogAlertChannel
  * @see UdpAlertChannel
@@ -34,8 +35,7 @@ protected:
 
 public:
   enum MessageType { Emit, Raise, Cancel };
-  explicit AlertChannel(QObject *parent = 0, QPointer<Alerter> alerter
-                        = QPointer<Alerter>());
+  AlertChannel(QObject *parent, QPointer<Alerter> alerter);
   /** Asynchronously call implementation of doSendMessage() within dedicated
    * thread.
    * This method is thread-safe. */

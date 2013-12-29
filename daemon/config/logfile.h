@@ -19,10 +19,14 @@
 
 class LogFileData;
 
+/** Log file definition. */
 class LogFile {
   QSharedDataPointer<LogFileData> d;
 
 public:
+  /** @param pathPattern interpreted using Paramset::evaluate() hence can
+   * contain placeholders like %!yyyy%!mm%!dd
+   * @param buffered allow write buffering (both user space and system) */
   LogFile(QString pathPattern = QString(),
           Log::Severity minimumSeverity = Log::Debug, bool buffered = true);
   LogFile(const LogFile &);

@@ -13,6 +13,6 @@
  */
 #include "httpalertchannel.h"
 
-HttpAlertChannel::HttpAlertChannel(QObject *parent) :
-  AlertChannel(parent) {
+HttpAlertChannel::HttpAlertChannel(QObject *parent, QPointer<Alerter> alerter)
+  : AlertChannel(parent, alerter) {
 }

@@ -25,8 +25,7 @@ class UdpAlertChannel : public AlertChannel {
   QUdpSocket *_socket;
 
 public:
-  explicit UdpAlertChannel(QObject *parent = 0, QPointer<Alerter> alerter
-                           = QPointer<Alerter>());
+  UdpAlertChannel(QObject *parent, QPointer<Alerter> alerter);
   void doSendMessage(Alert alert, MessageType type);
 };
 

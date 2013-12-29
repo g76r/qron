@@ -15,7 +15,7 @@
 #define EXECUTOR_H
 
 #include <QObject>
-#include "config/taskrequest.h"
+#include "sched/taskrequest.h"
 #include "config/host.h"
 #include <QPointer>
 #include <QProcess>

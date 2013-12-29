@@ -18,6 +18,7 @@
 #include "util/paramset.h"
 #include <QRegExp>
 
+/** Miscellaneous tools for handling configuration */
 class ConfigUtils {
 public:
   static inline void loadParamSet(PfNode parentnode, ParamSet *params) {

@@ -17,7 +17,7 @@
 #include <QPair>
 #include "pf/pfnode.h"
 #include "log/log.h"
-#include "taskrequest.h"
+#include "sched/taskrequest.h"
 #include "configutils.h"
 
 class RequestFormFieldData : public QSharedData {

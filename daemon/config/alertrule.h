@@ -25,7 +25,8 @@ class PfNode;
 class Alert;
 
 /** Alert rule is the configuration object defining the matching between an
- * alert id pattern and a alert channel, with optional additional parameters. */
+ * alert id pattern and a alert channel, with optional additional parameters.
+ * @see Alerter */
 class AlertRule {
   QSharedDataPointer<AlertRuleData> d;
 

@@ -17,7 +17,7 @@
 #include <QAbstractTableModel>
 #include <QString>
 #include <QDateTime>
-#include "config/taskrequest.h"
+#include "sched/taskrequest.h"
 #include "config/host.h"
 #include <QList>
 

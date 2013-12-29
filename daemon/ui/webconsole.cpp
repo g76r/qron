@@ -15,7 +15,7 @@
 #include "util/ioutils.h"
 #include <QFile>
 #include <QThread>
-#include "config/taskrequest.h"
+#include "sched/taskrequest.h"
 #include "sched/qrond.h"
 #include <QCoreApplication>
 #include "util/htmlutils.h"

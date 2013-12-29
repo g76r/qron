@@ -22,7 +22,7 @@
 
 class CronTriggerData;
 
-// LATER move to sched directory
+/** Time trigger defined with a cron-like expression */
 class CronTrigger {
   QSharedDataPointer<CronTriggerData> d;
 

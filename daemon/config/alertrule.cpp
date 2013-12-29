@@ -16,7 +16,7 @@
 #include "alert/alertchannel.h"
 #include "pf/pfnode.h"
 #include "util/paramset.h"
-#include "alert.h"
+#include "alert/alert.h"
 #include "configutils.h"
 
 class AlertRuleData : public QSharedData {

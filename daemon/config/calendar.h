@@ -20,6 +20,10 @@
 
 class CalendarData;
 
+/** Definition of days when a event can occur or not.
+ * Used with CronTrigger to handle special arbitrary daus such as public
+ * holidays.
+ * @see CronTrigger */
 class Calendar {
   QSharedDataPointer<CalendarData> d;
 

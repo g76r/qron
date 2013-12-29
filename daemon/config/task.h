@@ -27,6 +27,7 @@ class CronTrigger;
 class Scheduler;
 class Event;
 
+/** Core task definition object, being it a standalone task or workflow. */
 class Task : public ParamsProvider {
   QSharedDataPointer<TaskData> d;
 

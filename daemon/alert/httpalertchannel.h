@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2013 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ class HttpAlertChannel : public AlertChannel {
   Q_OBJECT
   Q_DISABLE_COPY(HttpAlertChannel)
 public:
-  explicit HttpAlertChannel(QObject *parent = 0);
+  HttpAlertChannel(QObject *parent, QPointer<Alerter> alerter);
 };
 
 #endif // HTTPALERTCHANNEL_H

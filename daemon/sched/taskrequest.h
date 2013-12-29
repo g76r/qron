@@ -15,15 +15,17 @@
 #define TASKREQUEST_H
 
 #include <QSharedDataPointer>
-#include "task.h"
+#include "config/task.h"
 #include "util/paramset.h"
 #include <QDateTime>
-#include "host.h"
+#include "config/host.h"
 #include "util/paramsprovider.h"
 
 class TaskRequestData;
 
-// LATER move to sched directory
+/** A task request is an instance of a task created when the execution is
+ * requested (hence the name) and used to track the execution until it is
+ * finished and even after. */
 class TaskRequest : public ParamsProvider {
   QSharedDataPointer<TaskRequestData> d;
 

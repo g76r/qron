@@ -38,8 +38,7 @@ class MailAlertChannel : public AlertChannel {
   QTimer *_asyncProcessingTimer;
 
 public:
-  explicit MailAlertChannel(QObject *parent = 0, QPointer<Alerter> alerter
-                            = QPointer<Alerter>());
+  explicit MailAlertChannel(QObject *parent, QPointer<Alerter> alerter);
   ~MailAlertChannel();
   void doSendMessage(Alert alert, MessageType type);
 

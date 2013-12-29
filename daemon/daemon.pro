@@ -51,7 +51,7 @@ SOURCES += \
     sched/scheduler.cpp \
     config/crontrigger.cpp \
     config/host.cpp \
-    config/taskrequest.cpp \
+    sched/taskrequest.cpp \
     sched/executor.cpp \
     ui/webconsole.cpp \
     config/cluster.cpp \
@@ -59,7 +59,7 @@ SOURCES += \
     ui/clusterslistmodel.cpp \
     ui/resourcesallocationmodel.cpp \
     alert/alerter.cpp \
-    config/alert.cpp \
+    alert/alert.cpp \
     config/alertrule.cpp \
     alert/alertchannel.cpp \
     alert/udpalertchannel.cpp \
@@ -102,7 +102,7 @@ HEADERS += \
     sched/scheduler.h \
     config/crontrigger.h \
     config/host.h \
-    config/taskrequest.h \
+    sched/taskrequest.h \
     sched/executor.h \
     ui/webconsole.h \
     config/cluster.h \
@@ -110,7 +110,7 @@ HEADERS += \
     ui/clusterslistmodel.h \
     ui/resourcesallocationmodel.h \
     alert/alerter.h \
-    config/alert.h \
+    alert/alert.h \
     config/alertrule.h \
     alert/alertchannel.h \
     alert/udpalertchannel.h \
