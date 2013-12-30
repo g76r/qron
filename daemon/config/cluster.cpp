@@ -18,6 +18,7 @@
 #include <QList>
 #include "pf/pfnode.h"
 #include "log/log.h"
+#include "configutils.h"
 
 class ClusterData : public QSharedData {
 public:
@@ -33,9 +34,9 @@ Cluster::Cluster(const Cluster &other) : d(other.d) {
 
 Cluster::Cluster(PfNode node) {
   ClusterData *hgd = new ClusterData;
-  hgd->_id = node.attribute("id"); // LATER check uniqueness
+  hgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
   hgd->_label = node.attribute("label", hgd->_id);
-  hgd->_balancing = node.attribute("balancing", "first"); // LATER check validity
+  hgd->_balancing = node.attribute("balancing", "first");
   if (hgd->_balancing == "first" || hgd->_balancing == "each")
     d = hgd;
   else {

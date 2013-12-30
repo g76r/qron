@@ -26,6 +26,7 @@ class PfNode;
 class CronTrigger;
 class Scheduler;
 class Event;
+class Step;
 
 /** Core task definition object, being it a standalone task or workflow. */
 class Task : public ParamsProvider {
@@ -35,7 +36,8 @@ public:
   enum DiscardAliasesOnStart { DiscardNone, DiscardAll, DiscardUnknown };
   Task();
   Task(const Task &other);
-  Task(PfNode node, Scheduler *scheduler, Task oldTask);
+  Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
+       QHash<QString,Task> oldTasks, Task workflow);
   ~Task();
   Task &operator=(const Task &other);
   bool operator==(const Task &other) const;
@@ -51,8 +53,6 @@ public:
   QString target() const;
   QString info() const;
   TaskGroup taskGroup() const;
-  void setFqtn(QString fqtn) const;
-  void completeConfiguration(TaskGroup taskGroup);
   /** Resources consumed. */
   QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;
@@ -118,6 +118,10 @@ public:
   QStringList otherTriggers() const;
   void appendOtherTriggers(QString text);
   void clearOtherTriggers();
+  /** Workflow steps. Empty list for standalone tasks. */
+  QHash<QString,Step> steps() const;
+  /** Workflow task to which this task belongs, if any. */
+  Task workflow() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

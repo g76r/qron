@@ -94,7 +94,9 @@ SOURCES += \
     ui/calendarsmodel.cpp \
     ui/htmltaskitemdelegate.cpp \
     ui/htmltaskrequestitemdelegate.cpp \
-    ui/htmlalertitemdelegate.cpp
+    ui/htmlalertitemdelegate.cpp \
+    config/step.cpp \
+    sched/stepinstance.cpp
 
 HEADERS += \
     config/task.h \
@@ -146,7 +148,9 @@ HEADERS += \
     ui/calendarsmodel.h \
     ui/htmltaskitemdelegate.h \
     ui/htmltaskrequestitemdelegate.h \
-    ui/htmlalertitemdelegate.h
+    ui/htmlalertitemdelegate.h \
+    config/step.h \
+    sched/stepinstance.h
 
 RESOURCES += \
     ui/webconsole.qrc

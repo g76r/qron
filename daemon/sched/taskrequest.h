@@ -23,6 +23,7 @@
 
 class TaskRequestData;
 
+// TODO rename to TaskInstance for consistency with StepInstance
 /** A task request is an instance of a task created when the execution is
  * requested (hence the name) and used to track the execution until it is
  * finished and even after. */

@@ -17,7 +17,7 @@
 #include <QUrl>
 #include <QTimer>
 
-#define COLUMNS 31
+#define COLUMNS 32
 // 60,000 ms = 1'
 // should stay below HtmlTaskItemDelegate's SOON_EXECUTION_MILLIS
 #define FULL_REFRESH_INTERVAL 60000
@@ -113,6 +113,8 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
         return t.enabled();
       case 30:
         return t.triggersHaveCalendar();
+      case 31:
+        return t.workflow().fqtn();
       }
       break;
     default:
@@ -254,6 +256,8 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
       return "Enabled";
     case 30:
       return "Has triggers with calendars";
+    case 31:
+      return "Workflow";
     }
   }
   return QVariant();

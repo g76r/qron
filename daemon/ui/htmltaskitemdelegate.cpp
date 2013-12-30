@@ -24,16 +24,26 @@ HtmlTaskItemDelegate::HtmlTaskItemDelegate(QObject *parent)
 
 QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
+  bool isSubtask = !index.model()->index(index.row(), 31, index.parent())
+      .data().toString().isEmpty();
   switch (index.column()) {
   case 0:
-  case 11:
-    text.prepend("<i class=\"fa fa-cog\"></i> "
-                 "<a href=\"taskdoc.html?fqtn="
+  case 11: {
+    QString mean = index.model()->index(index.row(), 3, index.parent()).data()
+        .toString();
+    text.prepend("<a href=\"taskdoc.html?fqtn="
                  +index.model()->index(index.row(), 11, index.parent()).data()
                  .toString()+
                  "\">");
+    if (mean == "workflow")
+      text.prepend("<i class=\"fa fa-sitemap\"></i> ");
+    else if (isSubtask)
+      text.prepend("<i class=\"fa fa-puzzle-piece\"></i> ");
+    else
+      text.prepend("<i class=\"fa fa-cog\"></i> ");
     text.append("</a>");
     break;
+  }
   case 1:
     text.prepend("<i class=\"fa fa-cogs\"></i> ");
     break;
@@ -42,8 +52,8 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     bool noTrigger = text.isEmpty();
     if (index.model()->index(index.row(), 30, index.parent()).data().toBool())
       text.prepend("<i class=\"fa fa-calendar\"></i> ");
-    if (noTrigger)
-      text.prepend("<i class=\"fa fa-times\"></i> no trigger ");
+    if (noTrigger && !isSubtask)
+      text.prepend("<i class=\"fa fa-circle-o\"></i> no trigger ");
     if (!index.model()->index(index.row(), 29, index.parent()).data().toBool())
       text.prepend("<i class=\"fa fa-ban\"></i> disabled ");
     break;

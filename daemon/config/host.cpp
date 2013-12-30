@@ -33,7 +33,7 @@ Host::Host(const Host &other) : d(other.d) {
 
 Host::Host(PfNode node) {
   HostData *hd = new HostData;
-  hd->_id = ConfigUtils::sanitizeId(node.attribute("id")); // LATER check uniqueness
+  hd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
   hd->_label = node.attribute("label", hd->_id);
   hd->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname", hd->_id),
                                           true);

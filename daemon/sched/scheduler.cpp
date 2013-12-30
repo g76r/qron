@@ -36,6 +36,7 @@
 #include <QThread>
 #include "config/configutils.h"
 #include "config/requestformfield.h"
+#include "config/step.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 #define DEFAULT_MAXQUEUEDREQUESTS 128
@@ -181,51 +182,66 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   }
   _tasksGroups.clear();
   foreach (PfNode node, root.childrenByName("taskgroup")) {
-    QString id = node.attribute("id");
-    if (id.isEmpty()) {
-      Log::error() << "ignoring taskgroup with invalid id: " << node.toPf();
-    } else {
-      if (_tasksGroups.contains(id))
-        Log::warning() << "duplicate taskgroup " << id << " in configuration";
-      TaskGroup taskGroup(node, _globalParams, _setenv, _unsetenv, this);
-      _tasksGroups.insert(taskGroup.id(), taskGroup);
-      //Log::debug() << "configured taskgroup '" << taskGroup.id() << "'";
+    TaskGroup taskGroup(node, _globalParams, _setenv, _unsetenv, this);
+    QString id = taskGroup.id();
+    if (taskGroup.isNull() || id.isEmpty()) {
+      Log::error() << "ignoring invalid taskgroup: " << node.toPf();
+      goto ignore_taskgroup;
     }
+    if (_tasksGroups.contains(id)) {
+      Log::error() << "ignoring duplicate taskgroup " << id;
+      goto ignore_taskgroup;
+    }
+    _tasksGroups.insert(taskGroup.id(), taskGroup);
+ignore_taskgroup:;
   }
   QHash<QString,Task> oldTasks = _tasks;
   _tasks.clear();
   foreach (PfNode node, root.childrenByName("task")) {
     QString taskGroupId = node.attribute("taskgroup");
     TaskGroup taskGroup = _tasksGroups.value(taskGroupId);
+    Task task(node, this, taskGroup, oldTasks, Task());
     if (taskGroupId.isEmpty() || taskGroup.isNull()) {
       Log::error() << "ignoring task with invalid taskgroup: " << node.toPf();
-    } else {
-      QString id = node.attribute("id");
-      if (id.isEmpty() || id.contains(QRegExp("[^a-zA-Z0-9_\\-]"))) {
-        Log::error() << "ignoring task with invalid id: " << node.toPf();
-      } else {
-        QString fqtn = taskGroup.id()+"."+id;
-        if (_tasks.contains(fqtn))
-          Log::warning() << "duplicate task " << fqtn << " in configuration";
-        Log::debug() << "loading task " << fqtn << " " << oldTasks.value(fqtn).fqtn();
-        Task task(node, this, oldTasks.value(fqtn));
-        /* setFqtn must remain apart from completeConfiguration because
-         * TaskRequestEventLink keeps the old Task object whereas
-         * completeConfiguration creates a new one (since it's not const) */
-        task.setFqtn(fqtn);
-        task.completeConfiguration(taskGroup);
-        _tasks.insert(fqtn, task);
-        //Log::debug() << "configured task '" << task.fqtn() << "'";
+      goto ignore_task;
+    }
+    if (task.isNull()) { // Task cstr detected an error
+      Log::error() << "ignoring invalid task: " << node.toString();
+      goto ignore_task;
+    }
+    if (_tasks.contains(task.fqtn())) {
+      Log::error() << "ignoring duplicate task " << task.fqtn();
+      goto ignore_task;
+    }
+    foreach (Step s, task.steps()) { // check for uniqueness of subtasks ids
+      Task subtask = s.subtask();
+      if (!subtask.isNull()) {
+        QString subFqtn = subtask.fqtn();
+        if (_tasks.contains(subFqtn)) {
+          Log::error() << "ignoring task " << task.fqtn()
+                       << " since its subtask " << subFqtn
+                       << " has a duplicate id";
+          goto ignore_task;
+        }
       }
     }
+    _tasks.insert(task.fqtn(), task);
+    foreach (Step s, task.steps()) {
+      Task subtask = s.subtask();
+      if (!subtask.isNull())
+        _tasks.insert(subtask.fqtn(), subtask);
+    }
+ignore_task:;
   }
   _hosts.clear();
   foreach (PfNode node, root.childrenByName("host")) {
     Host host(node);
-    _hosts.insert(host.id(), host);
-    //Log::debug() << "configured host '" << host.id() << "' with hostname '"
-    //             << host.hostname() << "'";
-    _resources.insert(host.id(), host.resources());
+    if (_hosts.contains(host.id())) {
+      Log::error() << "ignoring duplicate host: " << host.id();
+    } else {
+      _hosts.insert(host.id(), host);
+      _resources.insert(host.id(), host.resources());
+    }
   }
   _clusters.clear();
   foreach (PfNode node, root.childrenByName("cluster")) {
@@ -241,9 +257,13 @@ bool Scheduler::reloadConfiguration(PfNode root) {
     }
     if (cluster.hosts().isEmpty())
       Log::warning() << "cluster '" << cluster.id() << "' has no member";
-    _clusters.insert(cluster.id(), cluster);
-    //Log::debug() << "configured cluster '" << cluster.id() << "' with "
-    //             << cluster.hosts().size() << " hosts";
+    if (_clusters.contains(cluster.id()))
+      Log::error() << "ignoring duplicate cluster: " << cluster.id();
+    else if (_hosts.contains(cluster.id()))
+      Log::error() << "ignoring cluster which id conflicts with a host: "
+                    << cluster.id();
+    else
+      _clusters.insert(cluster.id(), cluster);
   }
   int maxtotaltaskinstances = 0;
   foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {
@@ -542,7 +562,6 @@ void Scheduler::reloadAccessControlConfig() {
 bool Scheduler::loadEventListConfiguration(
     PfNode listnode, QList<Event> *list, QString contextLabel,
     Task contextTask) {
-  Q_UNUSED(contextTask)
   if (!list)
     return true;
   foreach (PfNode node, listnode.children()) {

@@ -25,10 +25,11 @@
 #include "config/configutils.h"
 #include "requestformfield.h"
 #include "util/htmlutils.h"
+#include "step.h"
 
 class TaskData : public QSharedData {
 public:
-  QString _id, _label, _mean, _command, _target, _info;
+  QString _id, _label, _mean, _command, _target, _info, _fqtn;
   TaskGroup _group;
   ParamSet _params, _setenv, _unsetenv;
   QSet<QString> _noticeTriggers;
@@ -42,6 +43,9 @@ public:
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormField;
   QStringList _otherTriggers;
+  Task _workflow;
+  QHash<QString,Step> _steps;
+  QString _begin;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -49,10 +53,6 @@ public:
   mutable QAtomicInt _instancesCount;
   mutable bool _enabled, _lastSuccessful;
   mutable int _lastReturnCode, _lastTotalMillis;
-  // note: QString is not thread-safe either, however setFqtn() is called only
-  // once at Task creation time, before the Task object is shared with any other
-  // thread, therefore thread-safe-ness is not needed
-  mutable QString _fqtn;
 
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
     _maxDurationBeforeAbort(LLONG_MAX),
@@ -68,18 +68,22 @@ Task::Task() {
 Task::Task(const Task &other) : d(other.d) {
 }
 
-Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
+Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
+           QHash<QString, Task> oldTasks, Task workflow) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
-  td->_id = ConfigUtils::sanitizeId(node.attribute("id")); // LATER check uniqueness
+  td->_id = ConfigUtils::sanitizeId(node.contentAsString()); // LATER check uniqueness
   td->_label = node.attribute("label", td->_id);
   td->_mean = ConfigUtils::sanitizeId(node.attribute("mean")); // LATER check validity
   td->_command = node.attribute("command");
   td->_target = ConfigUtils::sanitizeId(node.attribute("target"));
   if (td->_target.isEmpty()
-      && (td->_mean == "local" || td->_mean == "donothing"))
+      && (td->_mean == "local" || td->_mean == "donothing"
+          || td->_mean == "workflow"))
     td->_target = "localhost";
   td->_info = node.stringChildrenByName("info").join(" ");
+  td->_fqtn = taskGroup.id()+"."+td->_id;
+  td->_group = taskGroup;
   td->_maxInstances = node.attribute("maxinstances", "1").toInt();
   if (td->_maxInstances <= 0) {
     td->_maxInstances = 1;
@@ -93,11 +97,19 @@ Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
   td->_minExpectedDuration = f < 0 ? 0 : (long long)(f*1000);
   f = node.doubleAttribute("maxdurationbeforeabort", -1);
   td->_maxDurationBeforeAbort = f < 0 ? LLONG_MAX : (long long)(f*1000);
+  td->_params.setParent(taskGroup.params());
   ConfigUtils::loadParamSet(node, &td->_params);
+  QString filter = td->_params.value("stderrfilter");
+  if (!filter.isEmpty())
+    d->_stderrFilters.append(QRegExp(filter));
+  td->_setenv.setParent(taskGroup.setenv());
   ConfigUtils::loadSetenv(node, &td->_setenv);
+  td->_unsetenv.setParent(taskGroup.unsetenv());
   ConfigUtils::loadUnsetenv(node, &td->_unsetenv);
   QHash<QString,CronTrigger> oldCronTriggers;
+  td->_workflow = workflow;
   // copy mutable fields from old task and build old cron triggers dictionary
+  Task oldTask = oldTasks.value(td->_fqtn);
   if (oldTask.d) {
     foreach (const CronTrigger ct, oldTask.d->_cronTriggers)
       oldCronTriggers.insert(ct.canonicalCronExpression(), ct);
@@ -116,6 +128,7 @@ Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
     foreach (PfNode grandchild, child.children()) {
       QString content = grandchild.contentAsString();
       QString triggerType = grandchild.name();
+      // FIXME what about triggers in subtasks ???
       if (triggerType == "notice") {
         if (!content.isEmpty()) {
           td->_noticeTriggers.insert(content);
@@ -198,22 +211,57 @@ Task::Task(PfNode node, Scheduler *scheduler, Task oldTask) {
         td->_requestFormField.append(field);
     }
   }
-  d = td;
+  d = td; // needed to give a non empty *this to loadEventListConfiguration() and Step()
   foreach (PfNode child, node.childrenByName("onstart"))
     scheduler->loadEventListConfiguration(child, &td->_onstart, td->_id, *this);
   foreach (PfNode child, node.childrenByName("onsuccess"))
     scheduler->loadEventListConfiguration(
-          child, &td->_onsuccess, td->_id, *this);
+          child, &d->_onsuccess, d->_id, *this);
   foreach (PfNode child, node.childrenByName("onfailure"))
     scheduler->loadEventListConfiguration(
-          child, &td->_onfailure, td->_id, *this);
+          child, &d->_onfailure, d->_id, *this);
   foreach (PfNode child, node.childrenByName("onfinish")) {
     scheduler->loadEventListConfiguration(
-          child, &td->_onsuccess, td->_id, *this);
+          child, &d->_onsuccess, d->_id, *this);
     scheduler->loadEventListConfiguration(
-          child, &td->_onfailure, td->_id, *this);
+          child, &d->_onfailure, d->_id, *this);
   }
-  d = td;
+  QList<PfNode> steps = node.childrenByName("task")+node.childrenByName("and")
+      +node.childrenByName("or");
+  if (d->_mean == "workflow") {
+    if (steps.isEmpty())
+      Log::warning() << "workflow task without step definition: "
+                     << node.toString();
+    if (!d->_workflow.isNull()) {
+      Log::error() << "ignoring workflow task as a workflow subtask: "
+                   << node.toString();
+      d = 0;
+      return;
+    }
+    foreach (PfNode child, steps) {
+      Step step(child, scheduler, *this, oldTasks);
+      if (d->_steps.contains(step.id())) {
+        Log::error() << "ignoring workflow task " << d->_fqtn
+                     << " because it has duplicate steps with id " << step.id();
+        d = 0;
+        return;
+      } else {
+        d->_steps.insert(step.id(), step);
+      }
+    }
+    d->_begin = node.attribute("begin");
+    if (!d->_steps.contains(d->_begin)) {
+      Log::error() << "ignoring workflow task " << d->_fqtn
+                   << " because it has invalid or lacking begin step: "
+                   << node.toString();
+      d = 0;
+      return;
+    }
+  } else {
+    if (!steps.isEmpty() || node.hasChild("begin"))
+      Log::warning() << "non workflow task with at less one step definition"
+                     << node.toString();
+  }
 }
 
 Task::~Task() {
@@ -253,11 +301,6 @@ QString Task::fqtn() const {
   return d ? d->_fqtn : QString();
 }
 
-void Task::setFqtn(QString fqtn) const {
-  if (d)
-    d->_fqtn = fqtn;
-}
-
 QString Task::label() const {
   return d ? d->_label : QString();
 }
@@ -280,18 +323,6 @@ QString Task::info() const {
 
 TaskGroup Task::taskGroup() const {
   return d ? d->_group : TaskGroup();
-}
-
-void Task::completeConfiguration(TaskGroup taskGroup) {
-  if (!d)
-    return;
-  d->_group = taskGroup;
-  d->_params.setParent(taskGroup.params());
-  d->_setenv.setParent(taskGroup.setenv());
-  d->_unsetenv.setParent(taskGroup.unsetenv());
-  QString filter = params().value("stderrfilter");
-  if (!filter.isEmpty())
-    d->_stderrFilters.append(QRegExp(filter));
 }
 
 QHash<QString, qint64> Task::resources() const {
@@ -578,4 +609,12 @@ void Task::appendOtherTriggers(QString text) {
 void Task::clearOtherTriggers() {
   if (d)
     d->_otherTriggers.clear();
+}
+
+QHash<QString, Step> Task::steps() const {
+  return d ? d->_steps : QHash<QString,Step>();
+}
+
+Task Task::workflow() const {
+  return d ? d->_workflow : Task();
 }
