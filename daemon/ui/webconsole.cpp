@@ -25,6 +25,7 @@
 #include "ui/htmltaskitemdelegate.h"
 #include "ui/htmltaskinstanceitemdelegate.h"
 #include "ui/htmlalertitemdelegate.h"
+#include "action/action.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -838,14 +839,14 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Maximum instances count at a time</th><td>"
                         +QString::number(task.maxInstances())+"</td></tr>"
                         "<tr><th>Onstart events</th><td>"
-                        +Event::toStringList(task.onstartEvents()).join(" ")
-                        +"</td></tr>"
+                        +EventSubscription::toStringList(task.onstartEventSubscriptions())
+                        .join("\n")+"</td></tr>"
                         "<tr><th>Onsuccess events</th><td>"
-                        +Event::toStringList(task.onsuccessEvents()).join(" ")
-                        +"</td></tr>"
+                        +EventSubscription::toStringList(task.onsuccessEventSubscriptions())
+                        .join("\n")+"</td></tr>"
                         "<tr><th>Onfailure events</th><td>"
-                        +Event::toStringList(task.onfailureEvents()).join(" ")
-                        +"</td></tr>");
+                        +EventSubscription::toStringList(task.onfailureEventSubscriptions())
+                        .join("\n")+"</td></tr>");
         params.setValue("fqtn", fqtn);
         params.setValue("customactions", task.params()
                         .evaluate(_customaction_taskdetail, &task));
@@ -1221,8 +1222,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
     disconnect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
                _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
-               _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
+               _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
     disconnect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
                _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
     disconnect(_scheduler, SIGNAL(noticePosted(QString)),
@@ -1239,6 +1240,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                this, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
                this, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
+    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
+               this, SLOT(schedulerEventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
+    disconnect(_scheduler, SIGNAL(configReloaded()), this, SLOT(configReloaded()));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
                _resourcesConsumptionModel, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
     disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
@@ -1302,8 +1306,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
     connect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
             _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
-            _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
+            _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
     connect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
             _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
     connect(_scheduler, SIGNAL(noticePosted(QString)),
@@ -1320,8 +1324,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             this, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
             this, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
-            this, SLOT(schedulerEventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
+    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
+            this, SLOT(schedulerEventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
     connect(_scheduler, SIGNAL(configReloaded()), this, SLOT(configReloaded()));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
             _resourcesConsumptionModel, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
@@ -1404,24 +1408,12 @@ void WebConsole::targetsConfigurationReset(QHash<QString,Cluster> clusters,
 }
 
 void WebConsole::schedulerEventsConfigurationReset(
-    QList<Event> onstart, QList<Event> onsuccess, QList<Event> onfailure,
-    QList<Event> onlog, QList<Event> onnotice, QList<Event> onschedulerstart,
-    QList<Event> onconfigload) {
-  _schedulerEvents.clear();
-  foreach (const Event &event, onstart)
-    _schedulerEvents.insertMulti("onstart", event);
-  foreach (const Event &event, onsuccess)
-    _schedulerEvents.insertMulti("onsuccess", event);
-  foreach (const Event &event, onfailure)
-    _schedulerEvents.insertMulti("onfailure", event);
-  foreach (const Event &event, onlog)
-    _schedulerEvents.insertMulti("onlog", event);
-  foreach (const Event &event, onnotice) // LATER onnotice should be processed apart, with a notice filter
-    _schedulerEvents.insertMulti("onnotice", event);
-  foreach (const Event &event, onschedulerstart)
-    _schedulerEvents.insertMulti("onschedulerstart", event);
-  foreach (const Event &event, onconfigload)
-    _schedulerEvents.insertMulti("onconfigload", event);
+    QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,
+    QList<EventSubscription> onfailure, QList<EventSubscription> onlog,
+    QList<EventSubscription> onnotice, QList<EventSubscription> onschedulerstart,
+    QList<EventSubscription> onconfigload) {
+  _schedulerEvents = onstart + onsuccess + onfailure + onlog + onnotice
+      + onschedulerstart + onconfigload;
 }
 
 void WebConsole::configReloaded() {
@@ -1451,18 +1443,21 @@ void WebConsole::configReloaded() {
 
 void WebConsole::recomputeDiagrams() {
   QSet<QString> displayedGroups, displayedHosts, notices, fqtns,
-      displayedGlobalEventsCause;
+      displayedGlobalEventsName;
   // search for:
-  // * displayed groups, i.e. (i) not those containing no task and (ii) also
-  //   adding virtual parent groups (e.g. a group "foo.bar" as a virtual
+  // * displayed groups, i.e. (i) actual groups containing at less one task
+  //   and (ii) virtual parent groups (e.g. a group "foo.bar" as a virtual
   //   parent "foo" which is not an actual group but which make the rendering
-  //   more readable
+  //   more readable by making  visible the dot-hierarchy tree)
   // * displayed hosts, i.e. hosts that are targets of at less one cluster
   //   or one task
-  // * notices, from notice triggers and postnotice events
-  // * fqtns
-  // * displayed global event causes, i.e. global event causes (e.g. onstartup)
-  //   with displayed events (e.g. requesttask, postnotice)
+  // * notices, deduced from notice triggers and postnotice events (since
+  //   notices are not explicitely declared in configuration objects)
+  // * fqtns, which are usefull to detect inexisting tasks and avoid drawing
+  //   edges to or from them
+  // * displayed global event names, i.e. global event names (e.g. onstartup)
+  //   with at less one displayed event subscription (e.g. requesttask,
+  //   postnotice, emitalert)
   foreach (const Task &task, _tasks.values()) {
     QString s = task.taskGroup().id();
     displayedGroups.insert(s);
@@ -1479,35 +1474,20 @@ void WebConsole::recomputeDiagrams() {
         displayedHosts.insert(host.id());
   foreach (const Task &task, _tasks.values()) {
     notices.unite(task.noticeTriggers());
-    QMultiHash<QString,Event> events;
-    events.unite(task.allEvents());
-    events.unite(task.taskGroup().allEvents());
-    foreach (const Event &event, events.values()) {
-      if (event.eventType() == "postnotice") {
-        QString notice = event.toString();
-        if (notice.size() > 1) {
-          // LATER fix this ugly assumption on human readable string
-          notice.remove(0, 1);
-          notices.insert(notice);
-        }
+    foreach (const EventSubscription &sub,
+             task.allEventsFilters() + task.taskGroup().allEventSubscriptions())
+      foreach (const Action &action, sub.actions()) {
+        if (action.actionType() == "postnotice")
+          notices.insert(action.targetName());
       }
-    }
   }
-  foreach (const Event &event, _schedulerEvents.values()) {
-    if (event.eventType() == "postnotice") {
-      QString notice = event.toString();
-      if (notice.size() > 1) {
-        // LATER fix this ugly assumption on human readable string
-        notice.remove(0, 1);
-        notices.insert(notice);
-      }
-    }
-  }
-  foreach (const QString &cause, _schedulerEvents.uniqueKeys()) {
-    foreach (const Event &event, _schedulerEvents.values(cause)) {
-      const QString eventType = event.eventType();
-      if (eventType == "postnotice" || eventType == "requesttask")
-        displayedGlobalEventsCause.insert(cause);
+  foreach (const EventSubscription &sub, _schedulerEvents) {
+    foreach (const Action &action, sub.actions()) {
+      QString actionType = action.actionType();
+      if (actionType == "postnotice")
+        notices.insert(action.targetName());
+      if (actionType == "postnotice" || actionType == "requesttask")
+        displayedGlobalEventsName.insert(sub.eventName());
     }
   }
   /***************************************************************************/
@@ -1550,6 +1530,8 @@ void WebConsole::recomputeDiagrams() {
     }
   }
   foreach (const Task &task, _tasks.values()) {
+    // FIXME filter out subtasks group edges, events and triggers
+    // FIXME handle workflow clusters
     gv.append("\"").append(task.fqtn()).append("\" [label=\"")
         .append(task.id()).append("\"," TASK_NODE "]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
@@ -1567,7 +1549,7 @@ void WebConsole::recomputeDiagrams() {
   gv.append("graph g {\n"
             "graph[" GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
-  foreach (const QString &cause, displayedGlobalEventsCause)
+  foreach (const QString &cause, displayedGlobalEventsName)
     gv.append("\"$global_").append(cause).append("\" [label=\"")
         .append(cause).append("\"," GLOBAL_EVENT_NODE "]\n");
   gv.append("}\n");
@@ -1600,6 +1582,9 @@ void WebConsole::recomputeDiagrams() {
   // tasks
   int cronid = 0;
   foreach (const Task &task, _tasks.values()) {
+    // FIXME filter out subtasks group edges, events and triggers
+    // FIXME handle workflow clusters
+    // LATER add workflow start point if it is on a subtask
     // tasks and group to task edges
     gv.append("\"").append(task.fqtn()).append("\" [label=\"")
         .append(task.id()).append("\"," TASK_NODE "]\n");
@@ -1616,11 +1601,9 @@ void WebConsole::recomputeDiagrams() {
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     }
     // notice triggers
-    foreach (QString notice, task.noticeTriggers()) {
-      notice.remove('"');
+    foreach (QString notice, task.noticeTriggers())
       gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
-          .append(notice).append("\" [" TASK_TRIGGER_EDGE "]\n");
-    }
+          .append(notice.remove('"')).append("\" [" TASK_TRIGGER_EDGE "]\n");
     // no trigger pseudo-trigger
     if (task.noticeTriggers().isEmpty() && task.cronTriggers().isEmpty()
         && task.otherTriggers().isEmpty()) {
@@ -1630,59 +1613,45 @@ void WebConsole::recomputeDiagrams() {
           .append(QString::number(cronid))
           .append("\" [" TASK_NOTRIGGER_EDGE "]\n");
     }
-    // events caused by task
-    QMultiHash<QString,Event> events;
-    events.unite(task.allEvents());
-    events.unite(task.taskGroup().allEvents());
-    foreach (const QString &cause, events.uniqueKeys()) {
-      foreach (const Event &event, events.values(cause)) {
-        const QString eventType = event.eventType();
-        if (eventType == "postnotice") {
-          QString notice = event.toString();
-          if (notice.size() > 1) {
-            // LATER fix this ugly assumption on human readable string
-            notice.remove(0, 1);
-            notice.remove('"');
-            gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
-                .append(notice).append("\" [label=\"").append(cause)
-                .append("\"," TASK_POSTNOTICE_EDGE "]\n");
-          }
-        } else if (eventType == "requesttask") {
-          QString target = event.toString();
-          if (target.size() > 1) {
-            // LATER fix this ugly assumption on human readable string
-            target.remove(0, 1);
-            if (!target.contains('.'))
-              target = task.taskGroup().id()+"."+target;
-            if (fqtns.contains(target))
-              gv.append("\"").append(task.fqtn()).append("\"--\"")
-                  .append(target).append("\" [label=\"").append(cause)
-                  .append("\"," TASK_REQUESTTASK_EDGE "]\n");
-          }
+    // events defined at task level
+    foreach (const EventSubscription &sub,
+             task.allEventsFilters() + task.taskGroup().allEventSubscriptions()) {
+      foreach (const Action &action, sub.actions()) {
+        QString actionType = action.actionType();
+        if (actionType == "postnotice") {
+          gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
+              .append(action.targetName().remove('"')).append("\" [label=\"")
+              .append(sub.humanReadableCause())
+              .append("\"," TASK_POSTNOTICE_EDGE "]\n");
+        } else if (actionType == "requesttask") {
+          QString target = action.targetName();
+          if (!target.contains('.'))
+            target = task.taskGroup().id()+"."+target;
+          if (fqtns.contains(target))
+            gv.append("\"").append(task.fqtn()).append("\"--\"")
+                .append(target).append("\" [label=\"")
+                .append(sub.humanReadableCause())
+                .append("\"," TASK_REQUESTTASK_EDGE "]\n");
         }
       }
     }
   }
-  foreach (const QString &cause, _schedulerEvents.uniqueKeys()) {
-    foreach (const Event &event, _schedulerEvents.values(cause)) {
-      const QString eventType = event.eventType();
-      if (eventType == "postnotice") {
-        QString notice = event.toString();
-        if (notice.size() > 1) {
-          // LATER fix this ugly assumption on human readable string
-          notice.remove(0, 1);
-          notice.remove('"');
-          gv.append("\"$notice_").append(notice).append("\"--\"$global_")
-              .append(cause).append("\" [" GLOBAL_POSTNOTICE_EDGE "]\n");
-        }
-      } else if (eventType == "requesttask") {
-        QString target = event.toString();
-        if (target.size() > 1) {
-          // LATER fix this ugly assumption on human readable string
-          target.remove(0, 1);
-          if (fqtns.contains(target))
-            gv.append("\"").append(target).append("\"--\"$global_")
-                .append(cause).append("\" [" GLOBAL_REQUESTTASK_EDGE "]\n");
+  // events defined globally
+  foreach (const EventSubscription &sub, _schedulerEvents) {
+    foreach (const Action &action, sub.actions()) {
+      QString actionType = action.actionType();
+      if (actionType == "postnotice") {
+        gv.append("\"$notice_").append(action.targetName().remove('"'))
+            .append("\"--\"$global_").append(sub.eventName())
+            .append("\" [" GLOBAL_POSTNOTICE_EDGE ",label=\"")
+            .append(sub.humanReadableCause().remove('"')).append("\"]\n");
+      } else if (actionType == "requesttask") {
+        QString target = action.targetName();
+        if (fqtns.contains(target)) {
+          gv.append("\"").append(target).append("\"--\"$global_")
+              .append(sub.eventName())
+              .append("\" [" GLOBAL_REQUESTTASK_EDGE ",label=\"")
+              .append(sub.humanReadableCause().remove('"')).append("\"]\n");
         }
       }
     }

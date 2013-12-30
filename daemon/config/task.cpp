@@ -19,7 +19,7 @@
 #include "crontrigger.h"
 #include "log/log.h"
 #include <QAtomicInt>
-#include "event/event.h"
+#include "config/eventsubscription.h"
 #include <QPointer>
 #include "sched/scheduler.h"
 #include "config/configutils.h"
@@ -37,13 +37,13 @@ public:
   int _maxInstances;
   QList<CronTrigger> _cronTriggers;
   QList<QRegExp> _stderrFilters;
-  QList<Event> _onstart, _onsuccess, _onfailure;
+  QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QPointer<Scheduler> _scheduler;
   long long _maxExpectedDuration, _minExpectedDuration, _maxDurationBeforeAbort;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormField;
   QStringList _otherTriggers;
-  Task _workflow;
+  Task _supertask;
   QHash<QString,Step> _steps;
   QString _begin;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
@@ -69,7 +69,7 @@ Task::Task(const Task &other) : d(other.d) {
 }
 
 Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-           QHash<QString, Task> oldTasks, Task workflow) {
+           QHash<QString, Task> oldTasks, Task supertask) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
   td->_id = ConfigUtils::sanitizeId(node.contentAsString()); // LATER check uniqueness
@@ -107,7 +107,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_unsetenv.setParent(taskGroup.unsetenv());
   ConfigUtils::loadUnsetenv(node, &td->_unsetenv);
   QHash<QString,CronTrigger> oldCronTriggers;
-  td->_workflow = workflow;
+  td->_supertask = supertask;
   // copy mutable fields from old task and build old cron triggers dictionary
   Task oldTask = oldTasks.value(td->_fqtn);
   if (oldTask.d) {
@@ -213,17 +213,17 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   }
   d = td; // needed to give a non empty *this to loadEventListConfiguration() and Step()
   foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventListConfiguration(child, &td->_onstart, td->_id, *this);
+    scheduler->loadEventSubscription(child, &td->_onstart, td->_id, *this);
   foreach (PfNode child, node.childrenByName("onsuccess"))
-    scheduler->loadEventListConfiguration(
+    scheduler->loadEventSubscription(
           child, &d->_onsuccess, d->_id, *this);
   foreach (PfNode child, node.childrenByName("onfailure"))
-    scheduler->loadEventListConfiguration(
+    scheduler->loadEventSubscription(
           child, &d->_onfailure, d->_id, *this);
   foreach (PfNode child, node.childrenByName("onfinish")) {
-    scheduler->loadEventListConfiguration(
+    scheduler->loadEventSubscription(
           child, &d->_onsuccess, d->_id, *this);
-    scheduler->loadEventListConfiguration(
+    scheduler->loadEventSubscription(
           child, &d->_onfailure, d->_id, *this);
   }
   QList<PfNode> steps = node.childrenByName("task")+node.childrenByName("and")
@@ -232,7 +232,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     if (steps.isEmpty())
       Log::warning() << "workflow task without step definition: "
                      << node.toString();
-    if (!d->_workflow.isNull()) {
+    if (!d->_supertask.isNull()) {
       Log::error() << "ignoring workflow task as a workflow subtask: "
                    << node.toString();
       d = 0;
@@ -438,49 +438,45 @@ QDebug operator<<(QDebug dbg, const Task &task) {
   return dbg.space();
 }
 
-void Task::triggerStartEvents(const ParamsProvider *context) const {
+void Task::triggerStartEvents(TaskInstance instance) const {
   if (d) {
-    d->_group.triggerStartEvents(context);
-    Scheduler::triggerEvents(d->_onstart, context);
+    d->_group.triggerStartEvents(instance);
+    foreach (EventSubscription sub, d->_onstart)
+      sub.triggerActions(instance);
   }
 }
 
-void Task::triggerSuccessEvents(const ParamsProvider *context) const {
+void Task::triggerSuccessEvents(TaskInstance instance) const {
   if (d) {
-    d->_group.triggerSuccessEvents(context);
-    Scheduler::triggerEvents(d->_onsuccess, context);
+    d->_group.triggerSuccessEvents(instance);
+    foreach (EventSubscription sub, d->_onsuccess)
+      sub.triggerActions(instance);
   }
 }
 
-void Task::triggerFailureEvents(const ParamsProvider *context) const {
+void Task::triggerFailureEvents(TaskInstance instance) const {
   if (d) {
-    d->_group.triggerFailureEvents(context);
-    Scheduler::triggerEvents(d->_onfailure, context);
+    d->_group.triggerFailureEvents(instance);
+    foreach (EventSubscription sub, d->_onfailure)
+      sub.triggerActions(instance);
   }
 }
 
-QList<Event> Task::onstartEvents() const {
-  return d ? d->_onstart : QList<Event>();
+QList<EventSubscription> Task::onstartEventSubscriptions() const {
+  return d ? d->_onstart : QList<EventSubscription>();
 }
 
-QList<Event> Task::onsuccessEvents() const {
-  return d ? d->_onsuccess : QList<Event>();
+QList<EventSubscription> Task::onsuccessEventSubscriptions() const {
+  return d ? d->_onsuccess : QList<EventSubscription>();
 }
 
-QList<Event> Task::onfailureEvents() const {
-  return d ? d->_onfailure : QList<Event>();
+QList<EventSubscription> Task::onfailureEventSubscriptions() const {
+  return d ? d->_onfailure : QList<EventSubscription>();
 }
 
-QMultiHash<QString, Event> Task::allEvents() const {
+QList<EventSubscription> Task::allEventsFilters() const {
   // LATER avoid creating the collection at every call
-  QMultiHash<QString,Event> hash;
-  foreach (const Event &event, onstartEvents())
-    hash.insertMulti("onstart", event);
-  foreach (const Event &event, onsuccessEvents())
-    hash.insertMulti("onsuccess", event);
-  foreach (const Event &event, onfailureEvents())
-    hash.insertMulti("onfailure", event);
-  return hash;
+  return d ? d->_onstart+d->_onsuccess+d->_onfailure : QList<EventSubscription>();
 }
 
 bool Task::enabled() const {
@@ -615,6 +611,6 @@ QHash<QString, Step> Task::steps() const {
   return d ? d->_steps : QHash<QString,Step>();
 }
 
-Task Task::workflow() const {
-  return d ? d->_workflow : Task();
+Task Task::supertask() const {
+  return d ? d->_supertask : Task();
 }

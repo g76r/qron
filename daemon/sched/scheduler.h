@@ -29,7 +29,7 @@
 #include <QVariant>
 #include "alert/alerter.h"
 #include <QMutex>
-#include "event/event.h"
+#include "config/eventsubscription.h"
 #include "pf/pfnode.h"
 #include "auth/inmemoryauthenticator.h"
 #include "auth/inmemoryusersdatabase.h"
@@ -44,7 +44,7 @@ class QThread;
 class Scheduler : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Scheduler)
-  class RequestTaskEventLink;
+  class RequestTaskActionLink;
   QThread *_thread;
   ParamSet _globalParams, _setenv, _unsetenv;
   QHash<QString,TaskGroup> _tasksGroups;
@@ -60,12 +60,12 @@ class Scheduler : public QObject {
   InMemoryAuthenticator *_authenticator;
   InMemoryUsersDatabase *_usersDatabase;
   bool _firstConfigurationLoad;
-  QList<Event> _onstart, _onsuccess, _onfailure;
-  QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
+  QList<EventSubscription> _onstart, _onsuccess, _onfailure;
+  QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   int _maxtotaltaskinstances, _maxqueuedrequests;
   qint64 _startdate, _configdate;
   long _execCount;
-  QList<RequestTaskEventLink> _requestTaskEventLinks;
+  QList<RequestTaskActionLink> _requestTaskActionLinks;
   QFileSystemWatcher *_accessControlFilesWatcher;
   PfNode _accessControlNode;
   QHash<QString,Calendar> _calendars;
@@ -75,9 +75,8 @@ public:
   ~Scheduler();
   /** This method is thread-safe */
   bool reloadConfiguration(QIODevice *source);
-  bool loadEventListConfiguration(PfNode listnode, QList<Event> *list, QString contextLabel,
-      Task contextTask = Task());
-  static void triggerEvents(QList<Event> list, const ParamsProvider *context);
+  void loadEventSubscription(PfNode listnode, QList<EventSubscription> *list,
+                       QString contextLabel, Task contextTask = Task());
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
   Authenticator *authenticator() { return _authenticator; }
@@ -165,11 +164,13 @@ signals:
                                QHash<QString,Task> tasks);
   void targetsConfigurationReset(QHash<QString,Cluster> clusters,
                                  QHash<QString,Host> hosts);
-  void eventsConfigurationReset(QList<Event> onstart, QList<Event> onsuccess,
-                                QList<Event> onfailure, QList<Event> onlog,
-                                QList<Event> onnotice,
-                                QList<Event> onschedulerstart,
-                                QList<Event> onconfigload);
+  void eventsConfigurationReset(QList<EventSubscription> onstart,
+                                QList<EventSubscription> onsuccess,
+                                QList<EventSubscription> onfailure,
+                                QList<EventSubscription> onlog,
+                                QList<EventSubscription> onnotice,
+                                QList<EventSubscription> onschedulerstart,
+                                QList<EventSubscription> onconfigload);
   void calendarsConfigurationReset(QHash<QString,Calendar> calendars);
   void hostResourceAllocationChanged(QString host,
                                      QHash<QString,qint64> resources);

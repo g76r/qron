@@ -13,7 +13,7 @@
  */
 #include "taskgroupsmodel.h"
 #include <QDateTime>
-#include "event/event.h"
+#include "config/eventsubscription.h"
 
 #define COLUMNS 9
 
@@ -43,11 +43,11 @@ QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
       case 2:
         return tg.params().toString(false, false);
       case 3:
-        return Event::toStringList(tg.onstartEvents()).join("\n");
+        return EventSubscription::toStringList(tg.onstartEventSubscriptions()).join("\n");
       case 4:
-        return Event::toStringList(tg.onsuccessEvents()).join("\n");
+        return EventSubscription::toStringList(tg.onsuccessEventSubscriptions()).join("\n");
       case 5:
-        return Event::toStringList(tg.onfailureEvents()).join("\n");
+        return EventSubscription::toStringList(tg.onfailureEventSubscriptions()).join("\n");
       case 6: {
         QString env;
         ParamSet setenv = tg.setenv();

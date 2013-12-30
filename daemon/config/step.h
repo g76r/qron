@@ -19,9 +19,10 @@
 
 class StepData;
 class Task;
-class Event;
+class EventSubscription;
 class PfNode;
 class Scheduler;
+class TaskInstance;
 
 /** Step of a workflow task. */
 class Step {
@@ -47,8 +48,8 @@ public:
   Task subtask() const;
   Task workflow() const;
   QSet<QString> predecessors() const;
-  void triggerReadyEvents(const ParamsProvider *context) const;
-  QList<Event> onreadyEvents() const;
+  void triggerReadyEvents(TaskInstance workflowTaskInstance) const;
+  QList<EventSubscription> onreadyEventSubscriptions() const;
 };
 
 #endif // STEP_H

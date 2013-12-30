@@ -11,14 +11,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "emitalertevent.h"
-#include "event_p.h"
+#include "emitalertaction.h"
+#include "action_p.h"
 
-class EmitAlertEventData : public EventData {
+class EmitAlertActionData : public ActionData {
 public:
   QString _alert;
-  EmitAlertEventData(Scheduler *scheduler = 0, QString alert = QString())
-    : EventData(scheduler), _alert(alert) { }
+  EmitAlertActionData(Scheduler *scheduler = 0, QString alert = QString())
+    : ActionData(scheduler), _alert(alert) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler && !_alert.isEmpty())
       _scheduler.data()->alerter()
@@ -27,17 +27,20 @@ public:
   QString toString() const {
     return "!^"+_alert;
   }
-  QString eventType() const {
+  QString actionType() const {
     return "emitalert";
+  }
+  QString targetName() const {
+    return _alert;
   }
 };
 
-EmitAlertEvent::EmitAlertEvent(Scheduler *scheduler, QString alert)
-  : Event(new EmitAlertEventData(scheduler, alert)) {
+EmitAlertAction::EmitAlertAction(Scheduler *scheduler, QString alert)
+  : Action(new EmitAlertActionData(scheduler, alert)) {
 }
 
-EmitAlertEvent::EmitAlertEvent(const EmitAlertEvent &rhs) : Event(rhs) {
+EmitAlertAction::EmitAlertAction(const EmitAlertAction &rhs) : Action(rhs) {
 }
 
-EmitAlertEvent::~EmitAlertEvent() {
+EmitAlertAction::~EmitAlertAction() {
 }

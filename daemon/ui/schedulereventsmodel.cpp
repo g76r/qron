@@ -32,19 +32,19 @@ QVariant SchedulerEventsModel::data(const QModelIndex &index, int role) const {
   if (role == Qt::DisplayRole && index.isValid())
     switch(index.column()) {
     case 0:
-      return Event::toStringList(_onschedulerstart).join("\n");
+      return EventSubscription::toStringList(_onschedulerstart).join("\n");
     case 1:
-      return Event::toStringList(_onconfigload).join("\n");
+      return EventSubscription::toStringList(_onconfigload).join("\n");
     case 2:
-      return Event::toStringList(_onnotice).join("\n");
+      return EventSubscription::toStringList(_onnotice).join("\n");
     case 3:
-      return Event::toStringList(_onlog).join("\n");
+      return EventSubscription::toStringList(_onlog).join("\n");
     case 4:
-      return Event::toStringList(_onstart).join("\n");
+      return EventSubscription::toStringList(_onstart).join("\n");
     case 5:
-      return Event::toStringList(_onsuccess).join("\n");
+      return EventSubscription::toStringList(_onsuccess).join("\n");
     case 6:
-      return Event::toStringList(_onfailure).join("\n");
+      return EventSubscription::toStringList(_onfailure).join("\n");
     }
   return QVariant();
 }
@@ -72,9 +72,10 @@ QVariant SchedulerEventsModel::headerData(
 }
 
 void SchedulerEventsModel::eventsConfigurationReset(
-    QList<Event> onstart, QList<Event> onsuccess, QList<Event> onfailure,
-    QList<Event> onlog, QList<Event> onnotice, QList<Event> onschedulerstart,
-    QList<Event> onconfigload) {
+    QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,
+    QList<EventSubscription> onfailure, QList<EventSubscription> onlog,
+    QList<EventSubscription> onnotice, QList<EventSubscription> onschedulerstart,
+    QList<EventSubscription> onconfigload) {
   _onstart = onstart;
   _onsuccess = onsuccess;
   _onfailure = onfailure;

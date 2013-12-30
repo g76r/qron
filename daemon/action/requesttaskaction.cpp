@@ -11,19 +11,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "requesttaskevent.h"
-#include "event_p.h"
+#include "requesttaskaction.h"
+#include "action_p.h"
 
-class RequestTaskEventData : public EventData {
+class RequestTaskActionData : public ActionData {
 public:
   QString _idOrFqtn;
   ParamSet _params;
   bool _force;
-  RequestTaskEventData(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
+  RequestTaskActionData(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
                        ParamSet params = ParamSet(), bool force = false)
-    : EventData(scheduler), _idOrFqtn(idOrFqtn), _params(params), _force(force) { }
+    : ActionData(scheduler), _idOrFqtn(idOrFqtn), _params(params), _force(force) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler) {
+      // LATER implement triggerWithinTaskInstance rather than guessing if we are in a TaskInstance context
       QString fqtn = context
           ? context->paramValue("!fqtn").toString() : QString();
       QString id = context
@@ -31,9 +32,10 @@ public:
       QString group = context
           ? context->paramValue("!taskgroupid").toString() : QString();
       Log::log(fqtn.isNull() ? Log::Debug : Log::Info, fqtn, id.toLongLong())
-          << "requesttask event requesting execution of task " << _idOrFqtn;
+          << "requesttask action requesting execution of task " << _idOrFqtn;
       QString idOrFqtn = _params.evaluate(_idOrFqtn, context);
       QString local = group+"."+_idOrFqtn;
+      // TODO evaluate _params in the context of triggering event before pass them to asyncRequestTask
       if (_scheduler.data()->taskExists(local))
         _scheduler.data()->asyncRequestTask(local, _params, _force);
       else
@@ -45,23 +47,21 @@ public:
   QString toString() const {
     return "*" + _idOrFqtn;
   }
-  QString eventType() const {
+  QString actionType() const {
     return "requesttask";
+  }
+  QString targetName() const {
+    return _idOrFqtn;
   }
 };
 
-RequestTaskEvent::RequestTaskEvent(Scheduler *scheduler, QString idOrFqtn,
+RequestTaskAction::RequestTaskAction(Scheduler *scheduler, QString idOrFqtn,
                                    ParamSet params, bool force)
-  : Event(new RequestTaskEventData(scheduler, idOrFqtn, params, force)) {
+  : Action(new RequestTaskActionData(scheduler, idOrFqtn, params, force)) {
 }
 
-RequestTaskEvent::RequestTaskEvent(const RequestTaskEvent &rhs) : Event(rhs) {
+RequestTaskAction::RequestTaskAction(const RequestTaskAction &rhs) : Action(rhs) {
 }
 
-RequestTaskEvent::~RequestTaskEvent() {
-}
-
-QString RequestTaskEvent::idOrFqtn() const {
-  return d ? ((const RequestTaskEventData*)d.constData())->_idOrFqtn
-           : QString();
+RequestTaskAction::~RequestTaskAction() {
 }

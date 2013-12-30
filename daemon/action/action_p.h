@@ -11,23 +11,27 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef EVENT_P_H
-#define EVENT_P_H
+#ifndef ACTION_P_H
+#define ACTION_P_H
 
-#include "event.h"
+#include "action.h"
 #include <QPointer>
 #include "sched/scheduler.h"
 
-class EventData : public QSharedData {
+class ActionData : public QSharedData {
 public:
   QPointer<Scheduler> _scheduler;
-  explicit EventData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }
-  virtual ~EventData();
-  /** Human readable description of event */
+  explicit ActionData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }
+  virtual ~ActionData();
+  /** Human readable description of action */
   virtual QString toString() const;
-  /** Type of event for programmatic test, e.g. "postnotice" */
-  virtual QString eventType() const;
+  /** Type of action for programmatic test, e.g. "postnotice" */
+  virtual QString actionType() const;
+  /** Default: do nothing */
   virtual void trigger(const ParamsProvider *context) const;
+  /** Default: call trigger() using the TaskInstance as a ParamProvider. */
+  virtual void triggerWithinTaskInstance(TaskInstance context) const;
+  virtual QString targetName() const;
 };
 
-#endif // EVENT_P_H
+#endif // ACTION_P_H

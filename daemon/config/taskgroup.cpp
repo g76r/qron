@@ -17,7 +17,7 @@
 #include "task.h"
 #include "pf/pfnode.h"
 #include <QtDebug>
-#include "event/event.h"
+#include "config/eventsubscription.h"
 #include <QPointer>
 #include "sched/scheduler.h"
 #include "config/configutils.h"
@@ -26,7 +26,7 @@ class TaskGroupData : public QSharedData {
 public:
   QString _id, _label;
   ParamSet _params, _setenv, _unsetenv;
-  QList<Event> _onstart, _onsuccess, _onfailure;
+  QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QPointer<Scheduler> _scheduler;
 };
 
@@ -50,14 +50,14 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
   ConfigUtils::loadUnsetenv(node, &tgd->_unsetenv);
   tgd->_unsetenv.setParent(parentUnsetenv);
   foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventListConfiguration(child, &tgd->_onstart, tgd->_id);
+    scheduler->loadEventSubscription(child, &tgd->_onstart, tgd->_id);
   foreach (PfNode child, node.childrenByName("onsuccess"))
-    scheduler->loadEventListConfiguration(child, &tgd->_onsuccess, tgd->_id);
+    scheduler->loadEventSubscription(child, &tgd->_onsuccess, tgd->_id);
   foreach (PfNode child, node.childrenByName("onfailure"))
-    scheduler->loadEventListConfiguration(child, &tgd->_onfailure, tgd->_id);
+    scheduler->loadEventSubscription(child, &tgd->_onfailure, tgd->_id);
   foreach (PfNode child, node.childrenByName("onfinish")) {
-    scheduler->loadEventListConfiguration(child, &tgd->_onsuccess, tgd->_id);
-    scheduler->loadEventListConfiguration(child, &tgd->_onfailure, tgd->_id);
+    scheduler->loadEventSubscription(child, &tgd->_onsuccess, tgd->_id);
+    scheduler->loadEventSubscription(child, &tgd->_onfailure, tgd->_id);
   }
   d = tgd;
 }
@@ -92,28 +92,34 @@ QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup) {
   return dbg.space();
 }
 
-void TaskGroup::triggerStartEvents(const ParamsProvider *context) const {
+void TaskGroup::triggerStartEvents(TaskInstance instance) const {
   // LATER trigger events in parent group first
-  Scheduler::triggerEvents(d->_onstart, context);
+  if (d)
+    foreach (EventSubscription sub, d->_onstart)
+      sub.triggerActions(instance);
 }
 
-void TaskGroup::triggerSuccessEvents(const ParamsProvider *context) const {
-  Scheduler::triggerEvents(d->_onsuccess, context);
+void TaskGroup::triggerSuccessEvents(TaskInstance instance) const {
+  if (d)
+    foreach (EventSubscription sub, d->_onsuccess)
+      sub.triggerActions(instance);
 }
 
-void TaskGroup::triggerFailureEvents(const ParamsProvider *context) const {
-  Scheduler::triggerEvents(d->_onfailure, context);
+void TaskGroup::triggerFailureEvents(TaskInstance instance) const {
+  if (d)
+    foreach (EventSubscription sub, d->_onfailure)
+      sub.triggerActions(instance);
 }
 
-QList<Event> TaskGroup::onstartEvents() const {
+QList<EventSubscription> TaskGroup::onstartEventSubscriptions() const {
   return d->_onstart;
 }
 
-QList<Event> TaskGroup::onsuccessEvents() const {
+QList<EventSubscription> TaskGroup::onsuccessEventSubscriptions() const {
   return d->_onsuccess;
 }
 
-QList<Event> TaskGroup::onfailureEvents() const {
+QList<EventSubscription> TaskGroup::onfailureEventSubscriptions() const {
   return d->_onfailure;
 }
 
@@ -125,14 +131,7 @@ ParamSet TaskGroup::unsetenv() const {
   return d ? d->_unsetenv : ParamSet();
 }
 
-QMultiHash<QString, Event> TaskGroup::allEvents() const {
+QList<EventSubscription> TaskGroup::allEventSubscriptions() const {
   // LATER avoid creating the collection at every call
-  QMultiHash<QString,Event> hash;
-  foreach (const Event &event, onstartEvents())
-    hash.insertMulti("onstart", event);
-  foreach (const Event &event, onsuccessEvents())
-    hash.insertMulti("onsuccess", event);
-  foreach (const Event &event, onfailureEvents())
-    hash.insertMulti("onfailure", event);
-  return hash;
+  return d ? d->_onstart+d->_onsuccess+d->_onfailure : QList<EventSubscription>();
 }

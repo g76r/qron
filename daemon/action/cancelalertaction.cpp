@@ -11,33 +11,37 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "raisealertevent.h"
-#include "event_p.h"
+#include "cancelalertaction.h"
+#include "action_p.h"
 
-class RaiseAlertEventData : public EventData {
+class CancelAlertActionData : public ActionData {
 public:
   QString _alert;
-  RaiseAlertEventData(Scheduler *scheduler = 0, QString alert = QString())
-    : EventData(scheduler), _alert(alert) { }
+  CancelAlertActionData(Scheduler *scheduler = 0,
+                       QString alert = QString())
+    : ActionData(scheduler), _alert(alert) { }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler)
       _scheduler.data()->alerter()
-          ->raiseAlert(ParamSet().evaluate(_alert, context));
+          ->cancelAlert(ParamSet().evaluate(_alert, context));
   }
   QString toString() const {
-    return "!+"+_alert;
+    return "!-"+_alert;
   }
-  QString eventType() const {
-    return "raisealert";
+  QString actionType() const {
+    return "cancelalert";
+  }
+  QString targetName() const {
+    return _alert;
   }
 };
 
-RaiseAlertEvent::RaiseAlertEvent(Scheduler *scheduler, QString alert)
-  : Event(new RaiseAlertEventData(scheduler, alert)) {
+CancelAlertAction::CancelAlertAction(Scheduler *scheduler, QString alert)
+  : Action(new CancelAlertActionData(scheduler, alert)) {
 }
 
-RaiseAlertEvent::RaiseAlertEvent(const RaiseAlertEvent &rhs) : Event(rhs) {
+CancelAlertAction::CancelAlertAction(const CancelAlertAction &rhs) : Action(rhs) {
 }
 
-RaiseAlertEvent::~RaiseAlertEvent() {
+CancelAlertAction::~CancelAlertAction() {
 }

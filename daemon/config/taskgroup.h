@@ -23,7 +23,8 @@ class Task;
 class PfNode;
 class QDebug;
 class Scheduler;
-class Event;
+class EventSubscription;
+class TaskInstance;
 
 /** A task group is a mean to tie tasks together to make them share some
  * configuration and to indicate that they are related (e.g. they belong to
@@ -42,15 +43,15 @@ public:
   QString label() const;
   ParamSet params() const;
   bool isNull() const;
-  void triggerStartEvents(const ParamsProvider *context) const;
-  void triggerSuccessEvents(const ParamsProvider *context) const;
-  void triggerFailureEvents(const ParamsProvider *context) const;
-  QList<Event> onstartEvents() const;
-  QList<Event> onsuccessEvents() const;
-  QList<Event> onfailureEvents() const;
+  void triggerStartEvents(TaskInstance instance) const;
+  void triggerSuccessEvents(TaskInstance instance) const;
+  void triggerFailureEvents(TaskInstance instance) const;
+  QList<EventSubscription> onstartEventSubscriptions() const;
+  QList<EventSubscription> onsuccessEventSubscriptions() const;
+  QList<EventSubscription> onfailureEventSubscriptions() const;
   ParamSet setenv() const;
   ParamSet unsetenv() const;
-  QMultiHash<QString,Event> allEvents() const;
+  QList<EventSubscription> allEventSubscriptions() const;
 };
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);

@@ -25,14 +25,7 @@
 #include "log/filelogger.h"
 #include <QFile>
 #include <stdio.h>
-#include "event/postnoticeevent.h"
-#include "event/logevent.h"
-#include "event/udpevent.h"
-#include "event/httpevent.h"
-#include "event/raisealertevent.h"
-#include "event/cancelalertevent.h"
-#include "event/emitalertevent.h"
-#include "event/requesttaskevent.h"
+#include "action/requesttaskaction.h"
 #include <QThread>
 #include "config/configutils.h"
 #include "config/requestformfield.h"
@@ -41,15 +34,16 @@
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 #define DEFAULT_MAXQUEUEDREQUESTS 128
 
-class Scheduler::RequestTaskEventLink {
+class Scheduler::RequestTaskActionLink {
 public:
-  RequestTaskEvent _event;
+  Action _action;
   QString _eventType;
   QString _contextLabel;
   Task _contextTask;
-  RequestTaskEventLink(RequestTaskEvent event, QString eventType,
-                       QString contextLabel, Task contextTask)
-    : _event(event), _eventType(eventType), _contextLabel(contextLabel),
+  // TODO clarify "contextLabel" and "contextTask" names
+  RequestTaskActionLink(Action action, QString eventType, QString contextLabel,
+                        Task contextTask)
+    : _action(action), _eventType(eventType), _contextLabel(contextLabel),
       _contextTask(contextTask) { }
 };
 
@@ -71,7 +65,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<LogFile>("LogFile");
   qRegisterMetaType<QPointer<Executor> >("QPointer<Executor>");
-  qRegisterMetaType<QList<Event> >("QList<Event>");
+  qRegisterMetaType<QList<EventSubscription> >("QList<EventSubscription>");
   qRegisterMetaType<QHash<QString,Task> >("QHash<QString,Task>");
   qRegisterMetaType<QHash<QString,TaskGroup> >("QHash<QString,TaskGroup>");
   qRegisterMetaType<QHash<QString,QHash<QString,qint64> > >("QHash<QString,QHash<QString,qint64> >");
@@ -345,39 +339,32 @@ ignore_task:;
   }
   _onstart.clear();
   foreach (PfNode node, root.childrenByName("onstart"))
-    if (!loadEventListConfiguration(node, &_onstart, ""))
-      return false;
+    loadEventSubscription(node, &_onstart, "");
   _onsuccess.clear();
   foreach (PfNode node, root.childrenByName("onsuccess"))
-    if (!loadEventListConfiguration(node, &_onsuccess, ""))
-      return false;
+    loadEventSubscription(node, &_onsuccess, "");
   _onfailure.clear();
   foreach (PfNode node, root.childrenByName("onfailure"))
-    if (!loadEventListConfiguration(node, &_onfailure, ""))
-      return false;
-  foreach (PfNode node, root.childrenByName("onfinish"))
-    if (!loadEventListConfiguration(node, &_onsuccess, "")
-        || !loadEventListConfiguration(node, &_onfailure, ""))
-      return false;
+    loadEventSubscription(node, &_onfailure, "");
+  foreach (PfNode node, root.childrenByName("onfinish")) {
+    loadEventSubscription(node, &_onsuccess, "");
+    loadEventSubscription(node, &_onfailure, "");
+  }
   _onlog.clear();
   foreach (PfNode node, root.childrenByName("onlog"))
-    if (!loadEventListConfiguration(node, &_onlog, ""))
-      return false;
+    loadEventSubscription(node, &_onlog, "");
   _onnotice.clear();
   foreach (PfNode node, root.childrenByName("onnotice"))
-    if (!loadEventListConfiguration(node, &_onnotice, ""))
-      return false;
+    loadEventSubscription(node, &_onnotice, "");
   _onschedulerstart.clear();
-  _onconfigload.clear();
   foreach (PfNode node, root.childrenByName("onschedulerstart"))
-    if (!loadEventListConfiguration(node, &_onschedulerstart, ""))
-      return false;
+    loadEventSubscription(node, &_onschedulerstart, "");
+  _onconfigload.clear();
   foreach (PfNode node, root.childrenByName("onconfigload"))
-    if (!loadEventListConfiguration(node, &_onconfigload, ""))
-      return false;
+    loadEventSubscription(node, &_onconfigload, "");
   // LATER onschedulershutdown
-  foreach (const RequestTaskEventLink &link, _requestTaskEventLinks) {
-    QString id = link._event.idOrFqtn();
+  foreach (const RequestTaskActionLink &link, _requestTaskActionLinks) {
+    QString id = link._action.targetName();
     QString fqtn(link._contextTask.fqtn());
     if (!link._contextTask.isNull() && !id.contains('.')) { // id to group
       id = fqtn.left(fqtn.lastIndexOf('.')+1)+id;
@@ -396,7 +383,7 @@ ignore_task:;
       Log::debug() << "cannot translate event " << link._eventType
                    << " for task '" << id << "'";
   }
-  _requestTaskEventLinks.clear();
+  _requestTaskActionLinks.clear();
   _authenticator->clearUsers();
   _usersDatabase->clearUsers();
   bool accessControlEnabled = false;
@@ -456,9 +443,11 @@ ignore_task:;
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
-    triggerEvents(_onschedulerstart, 0);
+    foreach(EventSubscription sub, _onschedulerstart)
+      sub.triggerActions(&_globalParams);
   }
-  triggerEvents(_onconfigload, 0);
+  foreach(EventSubscription sub, _onconfigload)
+    sub.triggerActions(&_globalParams);
   return true;
 }
 
@@ -559,47 +548,19 @@ void Scheduler::reloadAccessControlConfig() {
   }
 }
 
-bool Scheduler::loadEventListConfiguration(
-    PfNode listnode, QList<Event> *list, QString contextLabel,
-    Task contextTask) {
+void Scheduler::loadEventSubscription(PfNode listnode, QList<EventSubscription> *list,
+                                QString contextLabel, Task contextTask) {
   if (!list)
-    return true;
-  foreach (PfNode node, listnode.children()) {
-    if (node.name() == "postnotice") {
-      list->append(PostNoticeEvent(this, node.contentAsString()));
-    } else if (node.name() == "raisealert") {
-      list->append(RaiseAlertEvent(this, node.contentAsString()));
-    } else if (node.name() == "cancelalert") {
-      list->append(CancelAlertEvent(this, node.contentAsString()));
-    } else if (node.name() == "emitalert") {
-      list->append(EmitAlertEvent(this, node.contentAsString()));
-    } else if (node.name() == "requesttask") {
-      ParamSet params;
-      // TODO loadparams
-      RequestTaskEvent event(this, node.contentAsString(), params,
-                             node.hasChild("force"));
-      _requestTaskEventLinks.append(
-            RequestTaskEventLink(event, listnode.name(), contextLabel,
+    return;
+  EventSubscription sub(listnode, this);
+  list->append(sub);
+  foreach (Action a, sub.actions()) {
+    if (a.actionType() == "requesttask") {
+      _requestTaskActionLinks.append(
+            RequestTaskActionLink(a, listnode.name(), contextLabel,
                                  contextTask));
-      list->append(event);
-    } else if (node.name() == "udp") {
-      list->append(UdpEvent(node.attribute("address"),
-                            node.attribute("message")));
-    } else if (node.name() == "log") {
-      list->append(LogEvent(
-                     Log::severityFromString(node.attribute("severity", "info")),
-                     node.attribute("message")));
-    } else {
-      Log::warning() << "unknown event type: " << node.name();
     }
   }
-  return true;
-}
-
-void Scheduler::triggerEvents(QList<Event> list,
-                              const ParamsProvider *context) {
-  foreach (const Event e, list)
-    e.trigger(context);
 }
 
 QList<TaskInstance> Scheduler::syncRequestTask(
@@ -893,9 +854,9 @@ void Scheduler::postNotice(QString notice) {
     }
   }
   emit noticePosted(notice);
-  // LATER onnotice events are useless without a notice filter
   NoticeContext context(notice);
-  triggerEvents(_onnotice, &context);
+  foreach (EventSubscription sub, _onnotice)
+    sub.triggerActions(&context);
 }
 
 void Scheduler::reevaluateQueuedRequests() {
@@ -1018,8 +979,9 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     _alerter->cancelAlert("resource.exhausted."+target);
     instance.setTarget(h);
     instance.setStartDatetime();
-    triggerEvents(_onstart, &instance);
-    task.triggerStartEvents(&instance);
+    foreach (EventSubscription sub, _onstart)
+      sub.triggerActions(instance);
+    task.triggerStartEvents(instance);
     executor = _availableExecutors.takeFirst();
     if (!executor) {
       // this should only happen with force == true
@@ -1087,12 +1049,15 @@ void Scheduler::taskFinishing(TaskInstance instance,
   emit taskFinished(instance);
   emit taskChanged(configuredTask);
   if (instance.success()) {
-    triggerEvents(_onsuccess, &instance);
-    configuredTask.triggerSuccessEvents(&instance);
+    foreach (EventSubscription sub, _onsuccess)
+      sub.triggerActions(instance);
+    configuredTask.triggerSuccessEvents(instance);
   } else {
-    triggerEvents(_onfailure, &instance);
-    configuredTask.triggerFailureEvents(&instance);
+    foreach (EventSubscription sub, _onfailure)
+      sub.triggerActions(instance);
+    configuredTask.triggerFailureEvents(instance);
   }
+  // LATER implement onstatus events
   if (configuredTask.maxExpectedDuration() < LLONG_MAX) {
     if (configuredTask.maxExpectedDuration() < instance.totalMillis())
       _alerter->raiseAlert("task.toolong."+fqtn);

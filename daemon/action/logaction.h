@@ -11,20 +11,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef POSTNOTICEEVENT_H
-#define POSTNOTICEEVENT_H
+#ifndef LOGACTION_H
+#define LOGACTION_H
 
-#include "event.h"
-#include <QString>
+#include "action.h"
+#include "log/log.h"
 
-class PostNoticeEventData;
+class LogActionData;
 class Scheduler;
 
-class PostNoticeEvent : public Event {
+/** Action recording a log line.
+ * Intended for debuging purposes, not for real life. */
+class LogAction : public Action {
 public:
-  PostNoticeEvent(Scheduler *scheduler = 0, QString notice = QString());
-  PostNoticeEvent(const PostNoticeEvent &);
-  ~PostNoticeEvent();
+  LogAction(Log::Severity severity = Log::Info, QString message = QString());
+  LogAction(const LogAction &);
+  ~LogAction();
 };
 
-#endif // POSTNOTICEEVENT_H
+#endif // LOGACTION_H

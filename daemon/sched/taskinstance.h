@@ -32,8 +32,10 @@ public:
   enum TaskInstanceStatus { Queued, Running, Success, Failure, Canceled };
   TaskInstance();
   TaskInstance(const TaskInstance &);
-  TaskInstance(Task task, bool force = false);
-  TaskInstance(Task task, quint64 groupId, bool force = false);
+  TaskInstance(Task task, bool force = false,
+               TaskInstance supertask = TaskInstance());
+  TaskInstance(Task task, quint64 groupId, bool force = false,
+               TaskInstance supertask = TaskInstance());
   ~TaskInstance();
   TaskInstance &operator=(const TaskInstance &);
   bool operator==(const TaskInstance &) const;
@@ -95,6 +97,9 @@ public:
   void overrideSetenv(QString key, QString value);
   bool abortable() const;
   void setAbortable(bool abortable = true) const;
+  /** Return supertask instance (workflow task instance if this is a subclass
+   * instance) if any. */
+  TaskInstance supertask() const;
 };
 
 uint qHash(const TaskInstance &instance);

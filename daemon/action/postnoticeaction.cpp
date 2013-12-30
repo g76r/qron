@@ -11,34 +11,36 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "cancelalertevent.h"
-#include "event_p.h"
+#include "postnoticeaction.h"
+#include "action_p.h"
+#include "config/configutils.h"
 
-class CancelAlertEventData : public EventData {
+class PostNoticeActionData : public ActionData {
 public:
-  QString _alert;
-  CancelAlertEventData(Scheduler *scheduler = 0,
-                       QString alert = QString())
-    : EventData(scheduler), _alert(alert) { }
+  QString _notice;
+  PostNoticeActionData(Scheduler *scheduler = 0, QString notice = QString())
+    : ActionData(scheduler), _notice(notice) { }
+  QString toString() const {
+    return "^"+_notice;
+  }
+  QString actionType() const {
+    return "postnotice";
+  }
   void trigger(const ParamsProvider *context) const {
     if (_scheduler)
-      _scheduler.data()->alerter()
-          ->cancelAlert(ParamSet().evaluate(_alert, context));
+      _scheduler.data()->postNotice(ParamSet().evaluate(_notice, context));
   }
-  QString toString() const {
-    return "!-"+_alert;
-  }
-  QString eventType() const {
-    return "cancelalert";
+  QString targetName() const {
+    return _notice;
   }
 };
 
-CancelAlertEvent::CancelAlertEvent(Scheduler *scheduler, QString alert)
-  : Event(new CancelAlertEventData(scheduler, alert)) {
+PostNoticeAction::PostNoticeAction(Scheduler *scheduler, QString notice)
+  : Action(new PostNoticeActionData(scheduler, notice)) {
 }
 
-CancelAlertEvent::CancelAlertEvent(const CancelAlertEvent &rhs) : Event(rhs) {
+PostNoticeAction::PostNoticeAction(const PostNoticeAction &rhs) : Action(rhs) {
 }
 
-CancelAlertEvent::~CancelAlertEvent() {
+PostNoticeAction::~PostNoticeAction() {
 }

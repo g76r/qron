@@ -11,18 +11,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UDPEVENT_H
-#define UDPEVENT_H
+#ifndef UDPACTION_H
+#define UDPACTION_H
 
-#include "event.h"
+#include "action.h"
 
-class UdpEventData;
+class UdpActionData;
 
-class UdpEvent : public Event {
+/** Action sending an arbitrary UDP packet. */
+class UdpAction : public Action {
 public:
-  UdpEvent(QString address = QString(), QString message = QString());
-  UdpEvent(const UdpEvent &);
-  ~UdpEvent();
+  UdpAction(QString address = QString(), QString message = QString());
+  UdpAction(const UdpAction &);
+  ~UdpAction();
 };
 
-#endif // UDPEVENT_H
+#endif // UDPACTION_H

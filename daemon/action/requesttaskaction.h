@@ -11,22 +11,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef REQUESTTASKEVENT_H
-#define REQUESTTASKEVENT_H
+#ifndef REQUESTTASKACTION_H
+#define REQUESTTASKACTION_H
 
-#include "event.h"
+#include "action.h"
 #include "util/paramset.h"
 
-class RequestTaskEventData;
+class RequestTaskActionData;
 class Scheduler;
 
-class RequestTaskEvent : public Event {
+/** Action requesting for a task execution. */
+class RequestTaskAction : public Action {
 public:
-  RequestTaskEvent(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
+  RequestTaskAction(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
                    ParamSet params = ParamSet(), bool force = false);
-  RequestTaskEvent(const RequestTaskEvent &);
-  ~RequestTaskEvent();
-  QString idOrFqtn() const;
+  RequestTaskAction(const RequestTaskAction &);
+  ~RequestTaskAction();
 };
 
-#endif // REQUESTTASKEVENT_H
+#endif // REQUESTTASKACTION_H

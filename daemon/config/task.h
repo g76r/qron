@@ -25,7 +25,7 @@ class QDebug;
 class PfNode;
 class CronTrigger;
 class Scheduler;
-class Event;
+class EventSubscription;
 class Step;
 
 /** Core task definition object, being it a standalone task or workflow. */
@@ -37,7 +37,7 @@ public:
   Task();
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-       QHash<QString,Task> oldTasks, Task workflow);
+       QHash<QString,Task> oldTasks, Task supertask);
   ~Task();
   Task &operator=(const Task &other);
   bool operator==(const Task &other) const;
@@ -69,15 +69,15 @@ public:
   int fetchAndAddInstancesCount(int valueToAdd) const;
   QList<QRegExp> stderrFilters() const;
   void appendStderrFilter(QRegExp filter);
-  void triggerStartEvents(const ParamsProvider *context) const;
-  void triggerSuccessEvents(const ParamsProvider *context) const;
-  void triggerFailureEvents(const ParamsProvider *context) const;
-  QList<Event> onstartEvents() const;
-  QList<Event> onsuccessEvents() const;
-  QList<Event> onfailureEvents() const;
+  void triggerStartEvents(TaskInstance instance) const;
+  void triggerSuccessEvents(TaskInstance instance) const;
+  void triggerFailureEvents(TaskInstance instance) const;
+  QList<EventSubscription> onstartEventSubscriptions() const;
+  QList<EventSubscription> onsuccessEventSubscriptions() const;
+  QList<EventSubscription> onfailureEventSubscriptions() const;
   /** Events hash with "onsuccess", "onfailure"... key, mainly for UI purpose.
    */
-  QMultiHash<QString, Event> allEvents() const;
+  QList<EventSubscription> allEventsFilters() const;
   bool enabled() const;
   void setEnabled(bool enabled) const;
   bool lastSuccessful() const;
@@ -120,8 +120,8 @@ public:
   void clearOtherTriggers();
   /** Workflow steps. Empty list for standalone tasks. */
   QHash<QString,Step> steps() const;
-  /** Workflow task to which this task belongs, if any. */
-  Task workflow() const;
+  /** Super task (e.g. workflow task) to which this task belongs, if any. */
+  Task supertask() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

@@ -25,7 +25,7 @@ class StepInstance {
 
 public:
   StepInstance();
-  explicit StepInstance(Step step, TaskInstance taskInstance = TaskInstance());
+  StepInstance(Step step, TaskInstance workflowTaskInstance);
   StepInstance(const StepInstance &);
   StepInstance &operator=(const StepInstance &);
   ~StepInstance();
@@ -33,8 +33,10 @@ public:
   Step step() const;
   bool isReady() const;
   /** Method to be called by Executor every time a predecessor is ready */
-  void predecessorReady(QString predecessor, const ParamsProvider *context);
-  TaskInstance taskInstance() const;
+  void predecessorReady(QString predecessor);
+  TaskInstance workflowTaskInstance() const;
+  TaskInstance subtaskInstance() const;
+  void setSubtaskInstance(TaskInstance subtask);
 };
 
 #endif // STEPINSTANCE_H

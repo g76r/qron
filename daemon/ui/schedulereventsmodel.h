@@ -15,15 +15,15 @@
 #define SCHEDULEREVENTSMODEL_H
 
 #include <QAbstractTableModel>
-#include "event/event.h"
+#include "config/eventsubscription.h"
 #include <QList>
 
 /** One-line table holding all Scheduler's events lists. */
 class SchedulerEventsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(SchedulerEventsModel)
-  QList<Event> _onstart, _onsuccess, _onfailure;
-  QList<Event> _onlog, _onnotice, _onschedulerstart, _onconfigload;
+  QList<EventSubscription> _onstart, _onsuccess, _onfailure;
+  QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
 
 public:
   explicit SchedulerEventsModel(QObject *parent = 0);
@@ -33,11 +33,13 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void eventsConfigurationReset(QList<Event> onstart, QList<Event> onsuccess,
-                                QList<Event> onfailure, QList<Event> onlog,
-                                QList<Event> onnotice,
-                                QList<Event> onschedulerstart,
-                                QList<Event> onconfigload);
+  void eventsConfigurationReset(QList<EventSubscription> onstart,
+                                QList<EventSubscription> onsuccess,
+                                QList<EventSubscription> onfailure,
+                                QList<EventSubscription> onlog,
+                                QList<EventSubscription> onnotice,
+                                QList<EventSubscription> onschedulerstart,
+                                QList<EventSubscription> onconfigload);
 };
 
 #endif // SCHEDULEREVENTSMODEL_H

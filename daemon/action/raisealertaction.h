@@ -11,35 +11,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "httpevent.h"
-#include "event_p.h"
-#include <QUrl>
-#include <QNetworkAccessManager>
+#ifndef RAISEALERTACTION_H
+#define RAISEALERTACTION_H
 
-class HttpEventData : public EventData {
+#include "action.h"
+
+class RaiseAlertActionData;
+class Scheduler;
+
+/** Action raising an alert. */
+class RaiseAlertAction : public Action {
 public:
-  QString _url;
-  ParamSet _params;
-  HttpEventData(QString url = QString(), ParamSet params = ParamSet())
-    : _url(url), _params(params) { }
-  void trigger(const ParamsProvider *context) const {
-    QUrl url(_params.evaluate(_url, context));
-    // LATER implement http event
-  }
-  QString toString() const {
-    return "http{"+_url+"}";
-  }
-  QString eventType() const {
-    return "http";
-  }
+  RaiseAlertAction(Scheduler *scheduler = 0, QString alert = QString());
+  RaiseAlertAction(const RaiseAlertAction &);
+  ~RaiseAlertAction();
 };
 
-HttpEvent::HttpEvent(QString url, ParamSet params)
-  : Event(new HttpEventData(url, params)) {
-}
-
-HttpEvent::HttpEvent(const HttpEvent &rhs) : Event(rhs) {
-}
-
-HttpEvent::~HttpEvent() {
-}
+#endif // RAISEALERTACTION_H

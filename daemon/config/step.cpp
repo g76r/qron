@@ -26,7 +26,7 @@ public:
   Task _wokflow, _subtask;
   QPointer<Scheduler> _scheduler;
   QSet<QString> _predecessors;
-  QList<Event> _onready;
+  QList<EventSubscription> _onready;
   StepData() : _kind(Step::Unknown) { }
 };
 
@@ -42,13 +42,13 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
   if (node.name() == "and") {
     sd->_kind = Step::AndJoin;
     foreach (PfNode child, node.childrenByName("onready"))
-      scheduler->loadEventListConfiguration(
+      scheduler->loadEventSubscription(
             child, &sd->_onready, sd->_id, workflow);
     // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
   } else if (node.name() == "or") {
     sd->_kind = Step::OrJoin;
     foreach (PfNode child, node.childrenByName("onready"))
-      scheduler->loadEventListConfiguration(
+      scheduler->loadEventSubscription(
             child, &sd->_onready, sd->_id, workflow);
     // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
   } else if (node.name() == "task") {
@@ -109,12 +109,12 @@ QSet<QString> Step::predecessors() const {
   return d ? d->_predecessors : QSet<QString>();
 }
 
-void Step::triggerReadyEvents(const ParamsProvider *context) const {
-  if (d) {
-    Scheduler::triggerEvents(d->_onready, context);
-  }
+void Step::triggerReadyEvents(TaskInstance workflowTaskInstance) const {
+  if (d)
+    foreach (EventSubscription sub, d->_onready)
+      sub.triggerActions(workflowTaskInstance);
 }
 
-QList<Event> Step::onreadyEvents() const {
-  return d ? d->_onready : QList<Event>();
+QList<EventSubscription> Step::onreadyEventSubscriptions() const {
+  return d ? d->_onready : QList<EventSubscription>();
 }

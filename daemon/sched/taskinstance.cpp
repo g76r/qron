@@ -27,6 +27,7 @@ public:
   bool _force;
   QString _command;
   ParamSet _setenv;
+  TaskInstance _supertask;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -45,14 +46,15 @@ public:
   mutable Host _target;
   mutable bool _abortable;
 
-  TaskInstanceData(Task task, ParamSet params, bool force, quint64 groupId = 0)
+  TaskInstanceData(Task task, ParamSet params, bool force,
+                   TaskInstance supertask, quint64 groupId = 0)
     : _id(newId()), _groupId(groupId ? groupId : _id),
       _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
-      _command(task.command()), _setenv(task.setenv()),
+      _command(task.command()), _setenv(task.setenv()), _supertask(supertask),
       _start(LLONG_MIN), _end(LLONG_MIN),
       _success(false), _returnCode(0), _abortable(false) { }
-  TaskInstanceData() : _id(0), _force(false),
+  TaskInstanceData() : _id(0), _groupId(0), _force(false),
       _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
     _abortable(false) { }
 
@@ -76,12 +78,15 @@ TaskInstance::TaskInstance(const TaskInstance &other)
   : ParamsProvider(), d(other.d) {
 }
 
-TaskInstance::TaskInstance(Task task, bool force)
-  : d(new TaskInstanceData(task, task.params().createChild(), force)) {
+TaskInstance::TaskInstance(Task task, bool force, TaskInstance supertask)
+  : d(new TaskInstanceData(task, task.params().createChild(), force,
+                           supertask)) {
 }
 
-TaskInstance::TaskInstance(Task task, quint64 groupId, bool force)
-  : d(new TaskInstanceData(task, task.params().createChild(), force, groupId)) {
+TaskInstance::TaskInstance(Task task, quint64 groupId,
+                           bool force, TaskInstance supertask)
+  : d(new TaskInstanceData(task, task.params().createChild(), force, supertask,
+                           groupId)) {
 }
 
 
@@ -185,6 +190,10 @@ QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
     return task().taskGroup().id();
   } else if (key == "!taskinstanceid") {
     return QString::number(id());
+  } else if (key == "!supertaskinstanceid") {
+    return QString::number(supertask().id());
+  } else if (key == "!maintaskinstanceid") {
+    return QString::number(supertask().isNull() ? id() : supertask().id());
   } else if (key == "!taskinstancegroupid") {
     return QString::number(groupId());
   } else if (key == "!runningms") {
@@ -292,4 +301,8 @@ bool TaskInstance::abortable() const {
 void TaskInstance::setAbortable(bool abortable) const {
   if (d)
     d->_abortable = abortable;
+}
+
+TaskInstance TaskInstance::supertask() const {
+  return d ? d->_supertask : TaskInstance();
 }

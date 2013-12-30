@@ -11,33 +11,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef EVENT_H
-#define EVENT_H
+#ifndef EMITALERTACTION_H
+#define EMITALERTACTION_H
 
-#include <QSharedDataPointer>
-#include "util/paramsprovider.h"
-#include <QStringList>
+#include "action.h"
 
-class EventData;
+class EmitAlertActionData;
+class Scheduler;
 
-class Event {
-protected:
-  QSharedDataPointer<EventData> d;
-
+/** Action emitting an alert. */
+class EmitAlertAction : public Action {
 public:
-  Event();
-  Event(const Event &);
-  Event &operator=(const Event &);
-  ~Event();
-  void trigger(const ParamsProvider *context) const;
-  /** Human readable description of event */
-  QString toString() const;
-  /** Type of event for programmatic test, e.g. "postnotice" */
-  QString eventType() const;
-  static QStringList toStringList(QList<Event> list);
-
-protected:
-  explicit Event(EventData *data);
+  EmitAlertAction(Scheduler *scheduler = 0, QString alert = QString());
+  EmitAlertAction(const EmitAlertAction &);
+  ~EmitAlertAction();
 };
 
-#endif // EVENT_H
+#endif // EMITALERTACTION_H

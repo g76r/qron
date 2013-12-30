@@ -11,19 +11,20 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HTTPEVENT_H
-#define HTTPEVENT_H
+#ifndef CANCELALERTACTION_H
+#define CANCELALERTACTION_H
 
-#include "event.h"
-#include "util/paramset.h"
+#include "action.h"
 
-class HttpEventData;
+class CancelAlertActionData;
+class Scheduler;
 
-class HttpEvent : public Event{
+/** Action canceling an alert. */
+class CancelAlertAction : public Action {
 public:
-  HttpEvent(QString url = QString(), ParamSet params = ParamSet());
-  HttpEvent(const HttpEvent &);
-  ~HttpEvent();
+  CancelAlertAction(Scheduler *scheduler = 0, QString alert = QString());
+  CancelAlertAction(const CancelAlertAction &);
+  ~CancelAlertAction();
 };
 
-#endif // HTTPEVENT_H
+#endif // CANCELALERTACTION_H

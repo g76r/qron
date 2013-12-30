@@ -11,21 +11,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "logevent.h"
-#include "event_p.h"
+#include "logaction.h"
+#include "action_p.h"
 #include "util/paramset.h"
 
-class LogEventData : public EventData {
+class LogActionData : public ActionData {
 public:
   QString _message;
   Log::Severity _severity;
-  LogEventData(QString logMessage = QString(),
+  LogActionData(QString logMessage = QString(),
                Log::Severity severity = Log::Info)
     : _message(logMessage), _severity(severity) { }
   QString toString() const {
     return "log{"+Log::severityToString(_severity)+" "+_message+"}";
   }
-  QString eventType() const {
+  QString actionType() const {
     return "log";
   }
   void trigger(const ParamsProvider *context) const {
@@ -38,12 +38,12 @@ public:
   }
 };
 
-LogEvent::LogEvent(Log::Severity severity, QString message)
-  : Event(new LogEventData(message, severity)) {
+LogAction::LogAction(Log::Severity severity, QString message)
+  : Action(new LogActionData(message, severity)) {
 }
 
-LogEvent::LogEvent(const LogEvent &rhs) : Event(rhs) {
+LogAction::LogAction(const LogAction &rhs) : Action(rhs) {
 }
 
-LogEvent::~LogEvent() {
+LogAction::~LogAction() {
 }

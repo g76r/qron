@@ -11,25 +11,25 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "udpevent.h"
-#include "event_p.h"
+#include "udpaction.h"
+#include "action_p.h"
 #include <QUdpSocket>
 #include <QStringList>
 #include "log/log.h"
 
-class UdpEventData : public EventData {
+class UdpActionData : public ActionData {
 public:
   QString _message;
   QString _host;
   quint16 _port;
-  UdpEventData(QString address = QString(), QString message = QString())
+  UdpActionData(QString address = QString(), QString message = QString())
     : _message(message), _port(0) {
     // LATER support IPv6 numeric addresses (they contain colons)
     QStringList tokens(address.split(":"));
     int port;
     if (tokens.size() != 2 || (port = tokens.at(1).toInt()) <= 0
         || port > 65535) {
-      Log::warning() << "unssupported UDP address for UDP event: "
+      Log::warning() << "unssupported UDP address for UDP action: "
                      << address;
     } else {
       _host = tokens.at(0);
@@ -46,13 +46,13 @@ public:
       QString message = ParamSet().evaluate(_message, context);
       qint64 rc = socket.write(message.toUtf8());
       if (rc < 0)
-        Log::warning() << "error when emiting UDP event: " << socket.error()
+        Log::warning() << "error when emiting UDP action: " << socket.error()
                        << " " << socket.errorString();
       //else
-      //  Log::debug() << "UDP event emited on " << _host << ":" << _port
+      //  Log::debug() << "UDP action emited on " << _host << ":" << _port
       //               << " for " << rc << " bytes: " << message;
     } else {
-      Log::warning() << "error when emiting UDP event: " << socket.error()
+      Log::warning() << "error when emiting UDP action: " << socket.error()
                      << " " << socket.errorString() << _host << _port;
     }
     socket.disconnectFromHost();
@@ -63,17 +63,17 @@ public:
   QString toString() const {
     return "udp{"+_host+":"+QString::number(_port)+" "+_message+"}";
   }
-  QString eventType() const {
+  QString actionType() const {
     return "udp";
   }
 };
 
-UdpEvent::UdpEvent(QString address, QString message)
-  : Event(new UdpEventData(address, message)) {
+UdpAction::UdpAction(QString address, QString message)
+  : Action(new UdpActionData(address, message)) {
 }
 
-UdpEvent::UdpEvent(const UdpEvent &rhs) : Event(rhs) {
+UdpAction::UdpAction(const UdpAction &rhs) : Action(rhs) {
 }
 
-UdpEvent::~UdpEvent() {
+UdpAction::~UdpAction() {
 }

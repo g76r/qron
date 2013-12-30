@@ -71,15 +71,15 @@ SOURCES += \
     ui/alertrulesmodel.cpp \
     ui/taskinstancesmodel.cpp \
     ui/tasksmodel.cpp \
-    event/event.cpp \
-    event/postnoticeevent.cpp \
-    event/logevent.cpp \
-    event/udpevent.cpp \
-    event/httpevent.cpp \
-    event/raisealertevent.cpp \
-    event/cancelalertevent.cpp \
-    event/emitalertevent.cpp \
-    event/requesttaskevent.cpp \
+    action/action.cpp \
+    action/postnoticeaction.cpp \
+    action/logaction.cpp \
+    action/udpaction.cpp \
+    action/httpaction.cpp \
+    action/raisealertaction.cpp \
+    action/cancelalertaction.cpp \
+    action/emitalertaction.cpp \
+    action/requesttaskaction.cpp \
     ui/schedulereventsmodel.cpp \
     ui/lastoccuredtexteventsmodel.cpp \
     ui/taskgroupsmodel.cpp \
@@ -96,7 +96,8 @@ SOURCES += \
     ui/htmltaskinstanceitemdelegate.cpp \
     ui/htmlalertitemdelegate.cpp \
     config/step.cpp \
-    sched/stepinstance.cpp
+    sched/stepinstance.cpp \
+    config/eventsubscription.cpp
 
 HEADERS += \
     config/task.h \
@@ -124,16 +125,16 @@ HEADERS += \
     ui/alertrulesmodel.h \
     ui/taskinstancesmodel.h \
     ui/tasksmodel.h \
-    event/event.h \
-    event/postnoticeevent.h \
-    event/event_p.h \
-    event/logevent.h \
-    event/udpevent.h \
-    event/httpevent.h \
-    event/raisealertevent.h \
-    event/cancelalertevent.h \
-    event/emitalertevent.h \
-    event/requesttaskevent.h \
+    action/action.h \
+    action/postnoticeaction.h \
+    action/action_p.h \
+    action/logaction.h \
+    action/udpaction.h \
+    action/httpaction.h \
+    action/raisealertaction.h \
+    action/cancelalertaction.h \
+    action/emitalertaction.h \
+    action/requesttaskaction.h \
     ui/schedulereventsmodel.h \
     ui/lastoccuredtexteventsmodel.h \
     ui/taskgroupsmodel.h \
@@ -150,7 +151,8 @@ HEADERS += \
     ui/htmltaskinstanceitemdelegate.h \
     ui/htmlalertitemdelegate.h \
     config/step.h \
-    sched/stepinstance.h
+    sched/stepinstance.h \
+    config/eventsubscription.h
 
 RESOURCES += \
     ui/webconsole.qrc

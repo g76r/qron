@@ -13,7 +13,7 @@
  */
 #include "tasksmodel.h"
 #include <QDateTime>
-#include "event/event.h"
+#include "config/eventsubscription.h"
 #include <QUrl>
 #include <QTimer>
 
@@ -72,11 +72,11 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 13:
         return t.instancesCount();
       case 14:
-        return Event::toStringList(t.onstartEvents()).join("\n");
+        return EventSubscription::toStringList(t.onstartEventSubscriptions()).join("\n");
       case 15:
-        return Event::toStringList(t.onsuccessEvents()).join("\n");
+        return EventSubscription::toStringList(t.onsuccessEventSubscriptions()).join("\n");
       case 16:
-        return Event::toStringList(t.onfailureEvents()).join("\n");
+        return EventSubscription::toStringList(t.onfailureEventSubscriptions()).join("\n");
       case 17:
         return QString::number(t.instancesCount())+" / "
             +QString::number(t.maxInstances());
@@ -114,7 +114,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       case 30:
         return t.triggersHaveCalendar();
       case 31:
-        return t.workflow().fqtn();
+        return t.supertask().fqtn();
       }
       break;
     default:

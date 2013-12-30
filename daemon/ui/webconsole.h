@@ -102,7 +102,7 @@ class WebConsole : public HttpHandler {
   QHash<QString,Task> _tasks;
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
-  QMultiHash<QString,Event> _schedulerEvents;
+  QList<EventSubscription> _schedulerEvents;
 
 public:
   WebConsole();
@@ -128,9 +128,10 @@ private slots:
   void targetsConfigurationReset(QHash<QString,Cluster> clusters,
                                  QHash<QString,Host> hosts);
   void schedulerEventsConfigurationReset(
-      QList<Event> onstart, QList<Event> onsuccess, QList<Event> onfailure,
-      QList<Event> onlog, QList<Event> onnotice, QList<Event> onschedulerstart,
-      QList<Event> onconfigload);
+      QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,
+      QList<EventSubscription> onfailure, QList<EventSubscription> onlog,
+      QList<EventSubscription> onnotice, QList<EventSubscription> onschedulerstart,
+      QList<EventSubscription> onconfigload);
   void configReloaded();
 
 private:

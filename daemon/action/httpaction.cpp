@@ -11,33 +11,35 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "postnoticeevent.h"
-#include "event_p.h"
-#include "config/configutils.h"
+#include "httpaction.h"
+#include "action_p.h"
+#include <QUrl>
+#include <QNetworkAccessManager>
 
-class PostNoticeEventData : public EventData {
+class HttpActionData : public ActionData {
 public:
-  QString _notice;
-  PostNoticeEventData(Scheduler *scheduler = 0, QString notice = QString())
-    : EventData(scheduler), _notice(notice) { }
-  QString toString() const {
-    return "^"+_notice;
-  }
-  QString eventType() const {
-    return "postnotice";
-  }
+  QString _url;
+  ParamSet _params;
+  HttpActionData(QString url = QString(), ParamSet params = ParamSet())
+    : _url(url), _params(params) { }
   void trigger(const ParamsProvider *context) const {
-    if (_scheduler)
-      _scheduler.data()->postNotice(ParamSet().evaluate(_notice, context));
+    QUrl url(_params.evaluate(_url, context));
+    // LATER implement http action
+  }
+  QString toString() const {
+    return "http{"+_url+"}";
+  }
+  QString actionType() const {
+    return "http";
   }
 };
 
-PostNoticeEvent::PostNoticeEvent(Scheduler *scheduler, QString notice)
-  : Event(new PostNoticeEventData(scheduler, notice)) {
+HttpAction::HttpAction(QString url, ParamSet params)
+  : Action(new HttpActionData(url, params)) {
 }
 
-PostNoticeEvent::PostNoticeEvent(const PostNoticeEvent &rhs) : Event(rhs) {
+HttpAction::HttpAction(const HttpAction &rhs) : Action(rhs) {
 }
 
-PostNoticeEvent::~PostNoticeEvent() {
+HttpAction::~HttpAction() {
 }

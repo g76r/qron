@@ -19,17 +19,18 @@ public:
   Step _step;
   bool _ready;
   QSet<QString> _pendingPredecessors;
-  TaskInstance _taskInstance;
-  StepInstanceData(Step step = Step(), TaskInstance taskInstance = TaskInstance())
+  TaskInstance _workflowTaskInstance, _subtaskInstance;
+  StepInstanceData(Step step = Step(),
+                   TaskInstance workflowTaskInstance = TaskInstance())
     : _step(step), _ready(false), _pendingPredecessors(step.predecessors()),
-      _taskInstance(taskInstance) { }
+      _workflowTaskInstance(workflowTaskInstance) { }
 };
 
 StepInstance::StepInstance() {
 }
 
-StepInstance::StepInstance(Step step, TaskInstance taskInstance)
-  : d(new StepInstanceData(step, taskInstance)) {
+StepInstance::StepInstance(Step step, TaskInstance workflowTaskInstance)
+  : d(new StepInstanceData(step, workflowTaskInstance)) {
 }
 
 StepInstance::~StepInstance() {
@@ -52,8 +53,7 @@ bool StepInstance::isReady() const {
   return d ? d->_ready : false;
 }
 
-void StepInstance::predecessorReady(QString predecessor,
-                                    const ParamsProvider *context) {
+void StepInstance::predecessorReady(QString predecessor) {
   if (!d)
     return;
   d->_pendingPredecessors.remove(predecessor);
@@ -61,13 +61,13 @@ void StepInstance::predecessorReady(QString predecessor,
   case Step::AndJoin:
     if (!d->_ready && d->_pendingPredecessors.isEmpty()) {
       d->_ready = true;
-      d->_step.triggerReadyEvents(context);
+      d->_step.triggerReadyEvents(d->_workflowTaskInstance);
     }
     break;
   case Step::OrJoin:
     if (!d->_ready) {
       d->_ready = true;
-      d->_step.triggerReadyEvents(context);
+      d->_step.triggerReadyEvents(d->_workflowTaskInstance);
     }
     break;
   case Step::SubTask:
@@ -77,6 +77,15 @@ void StepInstance::predecessorReady(QString predecessor,
   }
 }
 
-TaskInstance StepInstance::taskInstance() const {
-  return d ? d->_taskInstance : TaskInstance();
+TaskInstance StepInstance::workflowTaskInstance() const {
+  return d ? d->_workflowTaskInstance : TaskInstance();
+}
+
+TaskInstance StepInstance::subtaskInstance() const {
+  return d ? d->_subtaskInstance : TaskInstance();
+}
+
+void StepInstance::setSubtaskInstance(TaskInstance subtask) {
+  if (d)
+    d->_subtaskInstance = subtask;
 }
