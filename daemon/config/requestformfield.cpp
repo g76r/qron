@@ -17,7 +17,7 @@
 #include <QPair>
 #include "pf/pfnode.h"
 #include "log/log.h"
-#include "sched/taskrequest.h"
+#include "sched/taskinstance.h"
 #include "configutils.h"
 
 class RequestFormFieldData : public QSharedData {
@@ -113,7 +113,7 @@ bool RequestFormField::validate(QString value) const {
   return d && d->_format.exactMatch(value);
 }
 
-void RequestFormField::apply(QString value, TaskRequest *request) const {
+void RequestFormField::apply(QString value, TaskInstance *request) const {
   if (request && d && !value.isNull()) {
     request->overrideParam(d->_param, value);
     QString command(request->command());

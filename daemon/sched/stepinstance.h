@@ -16,7 +16,7 @@
 
 #include <QSharedDataPointer>
 #include "config/step.h"
-#include "taskrequest.h"
+#include "taskinstance.h"
 
 class StepInstanceData;
 
@@ -25,7 +25,7 @@ class StepInstance {
 
 public:
   StepInstance();
-  explicit StepInstance(Step step, TaskRequest taskInstance = TaskRequest());
+  explicit StepInstance(Step step, TaskInstance taskInstance = TaskInstance());
   StepInstance(const StepInstance &);
   StepInstance &operator=(const StepInstance &);
   ~StepInstance();
@@ -34,7 +34,7 @@ public:
   bool isReady() const;
   /** Method to be called by Executor every time a predecessor is ready */
   void predecessorReady(QString predecessor, const ParamsProvider *context);
-  TaskRequest taskInstance() const;
+  TaskInstance taskInstance() const;
 };
 
 #endif // STEPINSTANCE_H

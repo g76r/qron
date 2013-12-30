@@ -11,14 +11,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "taskrequest.h"
+#include "taskinstance.h"
 #include <QSharedData>
 #include <QDateTime>
 #include <QAtomicInt>
 
 static QAtomicInt _sequence;
 
-class TaskRequestData : public QSharedData {
+class TaskInstanceData : public QSharedData {
 public:
   quint64 _id, _groupId;
   Task _task;
@@ -45,14 +45,14 @@ public:
   mutable Host _target;
   mutable bool _abortable;
 
-  TaskRequestData(Task task, ParamSet params, bool force, quint64 groupId = 0)
+  TaskInstanceData(Task task, ParamSet params, bool force, quint64 groupId = 0)
     : _id(newId()), _groupId(groupId ? groupId : _id),
       _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
       _command(task.command()), _setenv(task.setenv()),
       _start(LLONG_MIN), _end(LLONG_MIN),
       _success(false), _returnCode(0), _abortable(false) { }
-  TaskRequestData() : _id(0), _force(false),
+  TaskInstanceData() : _id(0), _force(false),
       _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
     _abortable(false) { }
 
@@ -69,112 +69,112 @@ private:
   }
 };
 
-TaskRequest::TaskRequest() {
+TaskInstance::TaskInstance() {
 }
 
-TaskRequest::TaskRequest(const TaskRequest &other)
+TaskInstance::TaskInstance(const TaskInstance &other)
   : ParamsProvider(), d(other.d) {
 }
 
-TaskRequest::TaskRequest(Task task, bool force)
-  : d(new TaskRequestData(task, task.params().createChild(), force)) {
+TaskInstance::TaskInstance(Task task, bool force)
+  : d(new TaskInstanceData(task, task.params().createChild(), force)) {
 }
 
-TaskRequest::TaskRequest(Task task, quint64 groupId, bool force)
-  : d(new TaskRequestData(task, task.params().createChild(), force, groupId)) {
+TaskInstance::TaskInstance(Task task, quint64 groupId, bool force)
+  : d(new TaskInstanceData(task, task.params().createChild(), force, groupId)) {
 }
 
 
-TaskRequest::~TaskRequest() {
+TaskInstance::~TaskInstance() {
 }
 
-TaskRequest &TaskRequest::operator=(const TaskRequest &other) {
+TaskInstance &TaskInstance::operator=(const TaskInstance &other) {
   if (this != &other)
     d.operator=(other.d);
   return *this;
 }
 
-bool TaskRequest::operator==(const TaskRequest &other) const {
+bool TaskInstance::operator==(const TaskInstance &other) const {
   return (!d && !other.d) || (d && other.d && d->_id == other.d->_id);
 }
 
-Task TaskRequest::task() const {
+Task TaskInstance::task() const {
   return d ? d->_task : Task();
 }
 
-ParamSet TaskRequest::params() const {
+ParamSet TaskInstance::params() const {
   return d ? d->_params : ParamSet();
 }
 
-void TaskRequest::overrideParam(QString key, QString value) {
+void TaskInstance::overrideParam(QString key, QString value) {
   if (d)
     d->_params.setValue(key, value);
 }
 
-quint64 TaskRequest::id() const {
+quint64 TaskInstance::id() const {
   return d ? d->_id : 0;
 }
 
-quint64 TaskRequest::groupId() const {
+quint64 TaskInstance::groupId() const {
   return d ? d->_groupId : 0;
 }
 
-QDateTime TaskRequest::submissionDatetime() const {
+QDateTime TaskInstance::submissionDatetime() const {
   return d ? d->_submission : QDateTime();
 }
 
 
-QDateTime TaskRequest::startDatetime() const {
+QDateTime TaskInstance::startDatetime() const {
   return d && d->_start != LLONG_MIN
       ? QDateTime::fromMSecsSinceEpoch(d->_start) : QDateTime();
 }
 
-void TaskRequest::setStartDatetime(QDateTime datetime) const {
+void TaskInstance::setStartDatetime(QDateTime datetime) const {
   if (d)
     d->_start = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
-QDateTime TaskRequest::endDatetime() const {
+QDateTime TaskInstance::endDatetime() const {
   return d && d->_end != LLONG_MIN
       ? QDateTime::fromMSecsSinceEpoch(d->_end) : QDateTime();
 }
 
-void TaskRequest::setEndDatetime(QDateTime datetime) const {
+void TaskInstance::setEndDatetime(QDateTime datetime) const {
   if (d)
     d->_end = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
-bool TaskRequest::success() const {
+bool TaskInstance::success() const {
   return d ? d->_success : false;
 }
 
-void TaskRequest::setSuccess(bool success) const {
+void TaskInstance::setSuccess(bool success) const {
   if (d)
     d->_success = success;
 }
 
-int TaskRequest::returnCode() const {
+int TaskInstance::returnCode() const {
   return d ? d->_returnCode : -1;
 }
 
-void TaskRequest::setReturnCode(int returnCode) const {
+void TaskInstance::setReturnCode(int returnCode) const {
   if (d)
     d->_returnCode = returnCode;
 }
 
-Host TaskRequest::target() const {
+Host TaskInstance::target() const {
   return d ? d->_target : Host();
 }
 
-void TaskRequest::setTarget(Host target) const {
+void TaskInstance::setTarget(Host target) const {
   if (d) {
     target.detach();
     d->_target = target;
   }
 }
 
-QVariant TaskRequest::paramValue(QString key, QVariant defaultValue) const {
-  //Log::fatal() << "TaskRequest::paramvalue " << key;
+QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
+  //Log::fatal() << "TaskInstance::paramvalue " << key;
   if (!d)
     return defaultValue;
   if (key == "!taskid") {
@@ -183,9 +183,9 @@ QVariant TaskRequest::paramValue(QString key, QVariant defaultValue) const {
     return task().fqtn();
   } else if (key == "!taskgroupid") {
     return task().taskGroup().id();
-  } else if (key == "!taskrequestid") {
+  } else if (key == "!taskinstanceid") {
     return QString::number(id());
-  } else if (key == "!taskrequestgroupid") {
+  } else if (key == "!taskinstancegroupid") {
     return QString::number(groupId());
   } else if (key == "!runningms") {
     return QString::number(runningMillis());
@@ -219,20 +219,20 @@ QVariant TaskRequest::paramValue(QString key, QVariant defaultValue) const {
   return defaultValue;
 }
 
-ParamSet TaskRequest::setenv() const {
+ParamSet TaskInstance::setenv() const {
   return d ? d->_setenv : ParamSet();
 }
 
-void TaskRequest::setTask(Task task) {
+void TaskInstance::setTask(Task task) {
   if (d)
     d->_task = task;
 }
 
-bool TaskRequest::force() const {
+bool TaskInstance::force() const {
   return d ? d->_force : false;
 }
 
-TaskRequest::TaskRequestStatus TaskRequest::status() const {
+TaskInstance::TaskInstanceStatus TaskInstance::status() const {
   if (d) {
     if (d->_end != LLONG_MIN) {
       if (d->_start == LLONG_MIN)
@@ -246,8 +246,8 @@ TaskRequest::TaskRequestStatus TaskRequest::status() const {
   return Queued;
 }
 
-QString TaskRequest::statusAsString(
-    TaskRequest::TaskRequestStatus status) {
+QString TaskInstance::statusAsString(
+    TaskInstance::TaskInstanceStatus status) {
   switch(status) {
   case Queued:
     return "queued";
@@ -263,33 +263,33 @@ QString TaskRequest::statusAsString(
   return "unknown";
 }
 
-bool TaskRequest::isNull() {
+bool TaskInstance::isNull() {
   return !d || d->_id == 0;
 }
 
-uint qHash(const TaskRequest &request) {
-  return (uint)request.id();
+uint qHash(const TaskInstance &instance) {
+  return (uint)instance.id();
 }
 
-QString TaskRequest::command() const {
+QString TaskInstance::command() const {
   return d ? d->_command : QString();
 }
 
-void TaskRequest::overrideCommand(QString command) {
+void TaskInstance::overrideCommand(QString command) {
   if (d)
     d->_command = command;
 }
 
-void TaskRequest::overrideSetenv(QString key, QString value) {
+void TaskInstance::overrideSetenv(QString key, QString value) {
   if (d)
     d->_setenv.setValue(key, value);
 }
 
-bool TaskRequest::abortable() const {
+bool TaskInstance::abortable() const {
   return d && d->_abortable;
 }
 
-void TaskRequest::setAbortable(bool abortable) const {
+void TaskInstance::setAbortable(bool abortable) const {
   if (d)
     d->_abortable = abortable;
 }

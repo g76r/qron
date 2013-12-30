@@ -77,10 +77,10 @@
       <div class="row">
         <div class="span12">
           <h2>Currently running or queued tasks</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/taskrequests/list/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/taskrequests/list/v1"><i class="fa fa-file"></i> HTML</a>
-          <a class="btn btn-info" href="tasks.html<?value:titlehref?>requests">Tasks page &raquo;</a>
-          <p><?view:taskrequests20?>
+          <p><a class="btn btn-primary" href="../rest/csv/taskinstances/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/taskinstances/list/v1"><i class="fa fa-file"></i> HTML</a>
+          <a class="btn btn-info" href="tasks.html#instances">Tasks page &raquo;</a>
+          <p><?view:taskinstances20?>
         </div>
       </div>
       <div class="row">
@@ -89,7 +89,7 @@
           <p><form class="form-inline" onSubmit="return false;">
           <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="fa fa-file"></i> HTML</a>
-          <a class="btn btn-info" href="tasks.html<?value:titlehref?>config">Tasks page &raquo;</a>
+          <a class="btn btn-info" href="tasks.html#config">Tasks page &raquo;</a>
           <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <input class="input-medium search-query" id="filter-tasksschedule" type="text" placeholder="Quick search..." />
           <span class="pull-right">

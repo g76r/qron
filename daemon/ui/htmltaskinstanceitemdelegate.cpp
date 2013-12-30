@@ -11,22 +11,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#include "htmltaskrequestitemdelegate.h"
+#include "htmltaskinstanceitemdelegate.h"
 
-HtmlTaskRequestItemDelegate::HtmlTaskRequestItemDelegate(QObject *parent)
+HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
   : HtmlItemDelegate(parent) {
-  QHash<QString,QString> requestsStatusIcons;
-  requestsStatusIcons.insert("queued", "<i class=\"fa fa-inbox\"></i> ");
-  requestsStatusIcons.insert("running", "<i class=\"fa fa-play\"></i> ");
-  requestsStatusIcons.insert("failure", "<i class=\"fa fa-minus-circle\"></i> ");
-  requestsStatusIcons.insert("canceled", "<i class=\"fa fa-times\"></i> ");
+  QHash<QString,QString> instancesStatusIcons;
+  instancesStatusIcons.insert("queued", "<i class=\"fa fa-inbox\"></i> ");
+  instancesStatusIcons.insert("running", "<i class=\"fa fa-play\"></i> ");
+  instancesStatusIcons.insert("failure", "<i class=\"fa fa-minus-circle\"></i> ");
+  instancesStatusIcons.insert("canceled", "<i class=\"fa fa-times\"></i> ");
   setPrefixForColumn(1, "<i class=\"fa fa-cog\"></i> "
                      "<a href=\"taskdoc.html?fqtn=%1\">", 1);
   setSuffixForColumn(1, "</a>");
-  setPrefixForColumn(2, "%1", 2, requestsStatusIcons);
+  setPrefixForColumn(2, "%1", 2, instancesStatusIcons);
 }
 
-QString HtmlTaskRequestItemDelegate::text(const QModelIndex &index) const {
+QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
   switch (index.column()) {
   case 8: {

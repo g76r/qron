@@ -39,65 +39,65 @@ Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   //qDebug() << "creating new task executor" << this;
 }
 
-void Executor::execute(TaskRequest request) {
-  QMetaObject::invokeMethod(this, "doExecute", Q_ARG(TaskRequest, request));
+void Executor::execute(TaskInstance instance) {
+  QMetaObject::invokeMethod(this, "doExecute", Q_ARG(TaskInstance, instance));
 }
 
-void Executor::doExecute(TaskRequest request) {
-  const QString mean = request.task().mean();
-  Log::debug(request.task().fqtn(), request.id())
-      << "starting task '" << request.task().fqtn() << "' through mean '"
-      << mean << "' after " << request.queuedMillis() << " ms in queue";
-  _request = request;
+void Executor::doExecute(TaskInstance instance) {
+  const QString mean = instance.task().mean();
+  Log::debug(instance.task().fqtn(), instance.id())
+      << "starting task '" << instance.task().fqtn() << "' through mean '"
+      << mean << "' after " << instance.queuedMillis() << " ms in queue";
+  _instance = instance;
   _stderrWasUsed = false;
-  long long maxDurationBeforeAbort = request.task().maxDurationBeforeAbort();
+  long long maxDurationBeforeAbort = instance.task().maxDurationBeforeAbort();
   if (maxDurationBeforeAbort <= INT_MAX)
     _abortTimeout->start(maxDurationBeforeAbort);
   if (mean == "local")
-    localMean(request);
+    localMean(instance);
   else if (mean == "ssh")
-    sshMean(request);
+    sshMean(instance);
   else if (mean == "http")
-    httpMean(request);
+    httpMean(instance);
   else if (mean == "donothing") {
-    emit taskStarted(request);
+    emit taskStarted(instance);
     taskFinishing(true, 0);
   } else {
-    Log::error(request.task().fqtn(), request.id())
+    Log::error(instance.task().fqtn(), instance.id())
         << "cannot execute task with unknown mean '" << mean << "'";
     taskFinishing(false, -1);
   }
 }
 
-void Executor::localMean(TaskRequest request) {
+void Executor::localMean(TaskInstance instance) {
   QStringList cmdline;
-  cmdline = request.params()
-      .splitAndEvaluate(request.command(), &request);
-  Log::info(request.task().fqtn(), request.id())
+  cmdline = instance.params()
+      .splitAndEvaluate(instance.command(), &instance);
+  Log::info(instance.task().fqtn(), instance.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   QProcessEnvironment sysenv;
-  prepareEnv(request, &sysenv);
-  request.setAbortable();
-  execProcess(request, cmdline, sysenv);
+  prepareEnv(instance, &sysenv);
+  instance.setAbortable();
+  execProcess(instance, cmdline, sysenv);
 }
 
-void Executor::sshMean(TaskRequest request) {
+void Executor::sshMean(TaskInstance instance) {
   QStringList cmdline, sshCmdline;
-  cmdline = request.params()
-      .splitAndEvaluate(request.command(), &request);
-  Log::info(request.task().fqtn(), request.id())
+  cmdline = instance.params()
+      .splitAndEvaluate(instance.command(), &instance);
+  Log::info(instance.task().fqtn(), instance.id())
       << "exact command line to be executed (through ssh on host "
-      << request.target().hostname() <<  "): " << cmdline.join(" ");
+      << instance.target().hostname() <<  "): " << cmdline.join(" ");
   QHash<QString,QString> setenv;
   QProcessEnvironment sysenv;
-  prepareEnv(request, &sysenv, &setenv);
-  QString username = request.params().value("ssh.username");
-  qlonglong port = request.params().valueAsLong("ssh.port");
-  QString ignoreknownhosts = request.params().value("ssh.ignoreknownhosts",
+  prepareEnv(instance, &sysenv, &setenv);
+  QString username = instance.params().value("ssh.username");
+  qlonglong port = instance.params().valueAsLong("ssh.port");
+  QString ignoreknownhosts = instance.params().value("ssh.ignoreknownhosts",
                                                     "true");
-  QString identity = request.params().value("ssh.identity");
-  QStringList options = request.params().valueAsStrings("ssh.options");
-  bool disablepty = request.params().value("ssh.disablepty") == "true";
+  QString identity = instance.params().value("ssh.identity");
+  QStringList options = instance.params().valueAsStrings("ssh.options");
+  bool disablepty = instance.params().value("ssh.disablepty") == "true";
   sshCmdline << "ssh" << "-oLogLevel=ERROR" << "-oEscapeChar=none"
              << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
              << "-oIdentitiesOnly=yes" << "-oKbdInteractiveAuthentication=no"
@@ -105,7 +105,7 @@ void Executor::sshMean(TaskRequest request) {
              << "-oTCPKeepAlive=yes" << "-oPasswordAuthentication=false";
   if (!disablepty) {
     sshCmdline << "-t" << "-t";
-    request.setAbortable();
+    instance.setAbortable();
   }
   if (ignoreknownhosts == "true")
     sshCmdline << "-oUserKnownHostsFile=/dev/null"
@@ -119,23 +119,23 @@ void Executor::sshMean(TaskRequest request) {
     sshCmdline << "-o" + option;
   if (!username.isEmpty())
     sshCmdline << "-oUser=" + username;
-  sshCmdline << request.target().hostname();
+  sshCmdline << instance.target().hostname();
   foreach (QString key, setenv.keys())
-    if (!request.task().unsetenv().contains(key)) {
+    if (!instance.task().unsetenv().contains(key)) {
       QString value = setenv.value(key);
       value.replace('\'', QString());
       sshCmdline << key+"='"+value+"'";
     }
   sshCmdline << cmdline;
-  execProcess(request, sshCmdline, sysenv);
+  execProcess(instance, sshCmdline, sysenv);
 }
 
-void Executor::execProcess(TaskRequest request, QStringList cmdline,
+void Executor::execProcess(TaskInstance instance, QStringList cmdline,
                            QProcessEnvironment sysenv) {
   if (cmdline.isEmpty()) {
-    Log::warning(request.task().fqtn(), request.id())
+    Log::warning(instance.task().fqtn(), instance.id())
         << "cannot execute task with empty command '"
-        << request.task().fqtn() << "'";
+        << instance.task().fqtn() << "'";
     taskFinishing(false, -1);
     return;
   }
@@ -152,45 +152,45 @@ void Executor::execProcess(TaskRequest request, QStringList cmdline,
           this, SLOT(readyReadStandardOutput()));
   _process->setProcessEnvironment(sysenv);
   QString program = cmdline.takeFirst();
-  Log::debug(_request.task().fqtn(), _request.id())
+  Log::debug(_instance.task().fqtn(), _instance.id())
       << "about to start system process '" << program << "' with args "
       << cmdline << " and environment " << sysenv.toStringList();
-  emit taskStarted(request);
+  emit taskStarted(instance);
   _process->start(program, cmdline);
 }
 
 void Executor::processError(QProcess::ProcessError error) {
-  //qDebug() << "************ processError" << _request.id() << _process;
+  //qDebug() << "************ processError" << _instance.id() << _process;
   if (!_process)
     return; // LATER add log
   readyReadStandardError();
   readyReadStandardOutput();
-  Log::warning(_request.task().fqtn(), _request.id()) // TODO info if aborting
+  Log::warning(_instance.task().fqtn(), _instance.id()) // TODO info if aborting
       << "task error #" << error << " : " << _process->errorString();
   _process->kill();
   processFinished(-1, QProcess::CrashExit);
 }
 
 void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
-  //qDebug() << "************ processFinished" << _request.id() << _process;
+  //qDebug() << "************ processFinished" << _instance.id() << _process;
   if (!_process)
     return; // LATER add log
   readyReadStandardError();
   readyReadStandardOutput();
   bool success = (exitStatus == QProcess::NormalExit && exitCode == 0);
-  success = _request.task().params()
+  success = _instance.task().params()
       .valueAsBool("return.code.default.success", success);
-  success = _request.task().params()
+  success = _instance.task().params()
       .valueAsBool("return.code."+QString::number(exitCode)+".success",success);
-  _request.setEndDatetime();
-  Log::log(success ? Log::Info : Log::Warning, _request.task().fqtn(),
-           _request.id())
-      << "task '" << _request.task().fqtn() << "' finished "
+  _instance.setEndDatetime();
+  Log::log(success ? Log::Info : Log::Warning, _instance.task().fqtn(),
+           _instance.id())
+      << "task '" << _instance.task().fqtn() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
-      << exitCode << " on host '" << _request.target().hostname() << "' in "
-      << _request.runningMillis() << " ms";
+      << exitCode << " on host '" << _instance.target().hostname() << "' in "
+      << _instance.runningMillis() << " ms";
   if (!_stderrWasUsed  && _alerter)
-    _alerter->cancelAlert("task.stderr."+_request.task().fqtn());
+    _alerter->cancelAlert("task.stderr."+_instance.task().fqtn());
   /* Qt doc is not explicit if delete should only be done when
      * QProcess::finished() is emited, but we get here too when
      * QProcess::error() is emited.
@@ -218,19 +218,19 @@ void Executor::readyProcessWarningOutput() {
       _errBuf.remove(0, i+1);
       if (!line.isEmpty()) {
         static QRegExp sshConnClosed("^Connection to [^ ]* closed\\.$");
-        QList<QRegExp> filters(_request.task().stderrFilters());
-        if (filters.isEmpty() && _request.task().mean() == "ssh")
+        QList<QRegExp> filters(_instance.task().stderrFilters());
+        if (filters.isEmpty() && _instance.task().mean() == "ssh")
           filters.append(sshConnClosed);
         foreach (QRegExp filter, filters)
           if (filter.indexIn(line) >= 0)
             goto line_filtered;
-        Log::warning(_request.task().fqtn(), _request.id())
+        Log::warning(_instance.task().fqtn(), _instance.id())
             << "task stderr: " << line;
         if (!_stderrWasUsed) {
           _stderrWasUsed = true;
-          if (_alerter && !_request.task().params()
+          if (_alerter && !_instance.task().params()
               .valueAsBool("disable.alert.stderr", false))
-            _alerter->raiseAlert("task.stderr."+_request.task().fqtn());
+            _alerter->raiseAlert("task.stderr."+_instance.task().fqtn());
         }
 line_filtered:;
       }
@@ -239,7 +239,7 @@ line_filtered:;
 }
 
 void Executor::readyReadStandardError() {
-  //qDebug() << "************ readyReadStandardError" << _request.task().fqtn() << _request.id() << _process;
+  //qDebug() << "************ readyReadStandardError" << _instance.task().fqtn() << _instance.id() << _process;
   if (!_process)
     return;
   _process->setReadChannel(QProcess::StandardError);
@@ -247,63 +247,63 @@ void Executor::readyReadStandardError() {
 }
 
 void Executor::readyReadStandardOutput() {
-  //qDebug() << "************ readyReadStandardOutput" << _request.task().fqtn() << _request.id() << _process;
+  //qDebug() << "************ readyReadStandardOutput" << _instance.task().fqtn() << _instance.id() << _process;
   if (!_process)
     return;
   _process->setReadChannel(QProcess::StandardOutput);
-  if (_request.task().mean() == "ssh"
-      && _request.params().value("ssh.disablepty") != "true")
+  if (_instance.task().mean() == "ssh"
+      && _instance.params().value("ssh.disablepty") != "true")
     readyProcessWarningOutput(); // with pty, stderr and stdout are merged
   else
     while (!_process->read(1024).isEmpty());
   // LATER make it possible to log stdout too (as debug, depending on task cfg)
 }
 
-void Executor::httpMean(TaskRequest request) {
+void Executor::httpMean(TaskInstance instance) {
   // LATER http mean should support http auth, http proxy auth and ssl
-  QString method = request.params().value("method");
+  QString method = instance.params().value("method");
   QUrl url;
-  int port = request.params().valueAsInt("port", 80);
-  QString hostname = request.params()
-      .evaluate(request.target().hostname(), &request);
-  QString command = request.params()
-      .evaluate(request.command(), &request);
+  int port = instance.params().valueAsInt("port", 80);
+  QString hostname = instance.params()
+      .evaluate(instance.target().hostname(), &instance);
+  QString command = instance.params()
+      .evaluate(instance.command(), &instance);
   if (command.size() && command.at(0) == '/')
     command = command.mid(1);
   url.setUrl(QString("http://%1:%2/%3").arg(hostname).arg(port).arg(command),
              QUrl::TolerantMode);
   QNetworkRequest networkRequest(url);
-  foreach (QString name, request.setenv().keys()) {
-    const QString expr(request.setenv().rawValue(name));
+  foreach (QString name, instance.setenv().keys()) {
+    const QString expr(instance.setenv().rawValue(name));
     if (name.endsWith(":")) // ignoring : at end of header name
       name.chop(1);
     name.replace(QRegExp("[^a-zA-Z_0-9\\-]+"), "_");
-    const QString value = request.params().evaluate(expr, &request);
-    //Log::fatal(request.task().fqtn(), request.id()) << "setheader: " << name << "=" << value << ".";
+    const QString value = instance.params().evaluate(expr, &instance);
+    //Log::fatal(instance.task().fqtn(), instance.id()) << "setheader: " << name << "=" << value << ".";
     networkRequest.setRawHeader(name.toLatin1(), value.toUtf8());
   }
   // LATER read request output, at less to avoid server being blocked and request never finish
   if (url.isValid()) {
-    request.setAbortable();
-    emit taskStarted(request);
+    instance.setAbortable();
+    emit taskStarted(instance);
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
-      Log::info(_request.task().fqtn(), _request.id())
+      Log::info(_instance.task().fqtn(), _instance.id())
           << "exact GET URL to be called: "
           << url.toString(QUrl::RemovePassword);
       _reply = _nam->get(networkRequest);
     } else if (method.compare("put", Qt::CaseInsensitive) == 0) {
-      Log::info(_request.task().fqtn(), _request.id())
+      Log::info(_instance.task().fqtn(), _instance.id())
           << "exact PUT URL to be called: "
           << url.toString(QUrl::RemovePassword);
       _reply = _nam->put(networkRequest, QByteArray());
     } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
-      Log::info(_request.task().fqtn(), _request.id())
+      Log::info(_instance.task().fqtn(), _instance.id())
           << "exact POST URL to be called: "
           << url.toString(QUrl::RemovePassword);
       networkRequest.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
       _reply = _nam->post(networkRequest, QByteArray());
     } else {
-      Log::error(_request.task().fqtn(), _request.id())
+      Log::error(_instance.task().fqtn(), _instance.id())
           << "unsupported HTTP method: " << method;
       taskFinishing(false, -1);
     }
@@ -319,7 +319,7 @@ void Executor::httpMean(TaskRequest request) {
       connect(_reply, SIGNAL(finished()), this, SLOT(replyFinished()));
     }
   } else {
-    Log::error(_request.task().fqtn(), _request.id())
+    Log::error(_instance.task().fqtn(), _instance.id())
         << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
     taskFinishing(false, -1);
   }
@@ -340,7 +340,7 @@ void Executor::replyFinished() {
 // error() is not followed by finished() and I am not sure there are such cases)
 void Executor::replyHasFinished(QNetworkReply *reply,
                                QNetworkReply::NetworkError error) {
-  QString fqtn(_request.task().fqtn());
+  QString fqtn(_instance.task().fqtn());
   if (!_reply) {
     Log::debug() << "Executor::replyFinished called as it is not responsible "
                     "of any http request";
@@ -348,12 +348,12 @@ void Executor::replyHasFinished(QNetworkReply *reply,
     return;
   }
   if (!reply) {
-    Log::error(fqtn, _request.id())
+    Log::error(fqtn, _instance.id())
         << "Executor::replyFinished receive null pointer";
     return;
   }
   if (reply != _reply) {
-    Log::error(fqtn, _request.id())
+    Log::error(fqtn, _instance.id())
         << "Executor::replyFinished receive unrelated pointer";
     return;
   }
@@ -364,18 +364,18 @@ void Executor::replyHasFinished(QNetworkReply *reply,
   bool success;
   if (error == QNetworkReply::NoError) {
     success =  status >= 200 && status <= 299;
-    success = _request.task().params()
+    success = _instance.task().params()
         .valueAsBool("return.code.default.success", success);
-    success = _request.task().params()
+    success = _instance.task().params()
         .valueAsBool("return.code."+QString::number(status)+".success",success);
   } else
     success = false;
-  _request.setEndDatetime();
-  Log::log(success ? Log::Info : Log::Warning, fqtn, _request.id())
+  _instance.setEndDatetime();
+  Log::log(success ? Log::Info : Log::Warning, fqtn, _instance.id())
       << "task '" << fqtn << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
       << status << " (" << reason << ") on host '"
-      << _request.target().hostname() << "' in " << _request.runningMillis()
+      << _instance.target().hostname() << "' in " << _instance.runningMillis()
       << " ms, with network error '" << networkErrorAsString(error)
       << "' (code " << error << ")";
   // LATER translate network error codes into human readable strings
@@ -384,14 +384,14 @@ void Executor::replyHasFinished(QNetworkReply *reply,
   taskFinishing(success, status);
 }
 
-void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
+void Executor::prepareEnv(TaskInstance instance, QProcessEnvironment *sysenv,
                           QHash<QString,QString> *setenv) {
-  if (request.task().params().valueAsBool("clearsysenv"))
+  if (instance.task().params().valueAsBool("clearsysenv"))
     *sysenv = QProcessEnvironment();
   else
     *sysenv = _baseenv;
   // first clean system base env from any unset variables
-  foreach (const QString pattern, request.task().unsetenv().keys()) {
+  foreach (const QString pattern, instance.task().unsetenv().keys()) {
     QRegExp re(pattern, Qt::CaseInsensitive, QRegExp::WildcardUnix);
     foreach (const QString key, sysenv->keys())
       if (re.exactMatch(key))
@@ -399,19 +399,19 @@ void Executor::prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
   }
   // then build setenv evaluated paramset that may be used apart from merging
   // into sysenv
-  foreach (QString key, request.setenv().keys()) {
-    const QString expr(request.setenv().rawValue(key));
-    /*Log::debug(request.task().fqtn(), request.id())
+  foreach (QString key, instance.setenv().keys()) {
+    const QString expr(instance.setenv().rawValue(key));
+    /*Log::debug(instance.task().fqtn(), instance.id())
         << "setting environment variable " << key << "="
-        << expr << " " << request.params().keys(false).size() << " "
-        << request.params().keys(true).size() << " ["
-        << request.params().evaluate("%!yyyy %!fqtn %{!fqtn}", &_request)
+        << expr << " " << instance.params().keys(false).size() << " "
+        << instance.params().keys(true).size() << " ["
+        << instance.params().evaluate("%!yyyy %!fqtn %{!fqtn}", &_instance)
         << "]";*/
     static QRegExp notIdentifier("[^a-zA-Z_0-9]+");
     key.replace(QRegExp(notIdentifier), "_");
     if (key.size() > 0 && strchr("0123456789", key[0].toLatin1()))
       key.insert(0, '_');
-    const QString value = request.params().evaluate(expr, &request);
+    const QString value = instance.params().evaluate(expr, &instance);
     if (setenv)
       setenv->insert(key, value);
     sysenv->insert(key, value);
@@ -424,36 +424,36 @@ void Executor::abort() {
 
 void Executor::doAbort() {
   // TODO should return a boolean to indicate if abort was actually done or not
-  if (_request.isNull()) {
+  if (_instance.isNull()) {
     Log::error() << "cannot abort task because this executor is not "
                     "currently responsible for any task";
-  } else if (!_request.abortable()) {
-    if (_request.task().mean() == "ssh")
-      Log::warning(_request.task().fqtn(), _request.id())
+  } else if (!_instance.abortable()) {
+    if (_instance.task().mean() == "ssh")
+      Log::warning(_instance.task().fqtn(), _instance.id())
           << "cannot abort task because ssh tasks are not abortable when "
              "ssh.disablepty is set to true";
     else
-      Log::warning(_request.task().fqtn(), _request.id())
+      Log::warning(_instance.task().fqtn(), _instance.id())
           << "cannot abort task because it is marked as not abortable";
   } else if (_process) {
-    Log::info(_request.task().fqtn(), _request.id())
+    Log::info(_instance.task().fqtn(), _instance.id())
         << "process task abort requested";
     _process->kill();
   } else if (_reply) {
-    Log::info(_request.task().fqtn(), _request.id())
+    Log::info(_instance.task().fqtn(), _instance.id())
         << "http task abort requested";
     _reply->abort();
   } else {
-    Log::warning(_request.task().fqtn(), _request.id())
+    Log::warning(_instance.task().fqtn(), _instance.id())
         << "cannot abort task because its execution mean is not abortable";
   }
 }
 
 void Executor::taskFinishing(bool success, int returnCode) {
   _abortTimeout->stop();
-  _request.setSuccess(success);
-  _request.setReturnCode(returnCode);
-  _request.setEndDatetime();
-  emit taskFinished(_request, this);
-  _request = TaskRequest();
+  _instance.setSuccess(success);
+  _instance.setReturnCode(returnCode);
+  _instance.setEndDatetime();
+  emit taskFinished(_instance, this);
+  _instance = TaskInstance();
 }

@@ -51,7 +51,7 @@ SOURCES += \
     sched/scheduler.cpp \
     config/crontrigger.cpp \
     config/host.cpp \
-    sched/taskrequest.cpp \
+    sched/taskinstance.cpp \
     sched/executor.cpp \
     ui/webconsole.cpp \
     config/cluster.cpp \
@@ -69,7 +69,7 @@ SOURCES += \
     alert/execalertchannel.cpp \
     ui/raisedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
-    ui/taskrequestsmodel.cpp \
+    ui/taskinstancesmodel.cpp \
     ui/tasksmodel.cpp \
     event/event.cpp \
     event/postnoticeevent.cpp \
@@ -93,7 +93,7 @@ SOURCES += \
     config/calendar.cpp \
     ui/calendarsmodel.cpp \
     ui/htmltaskitemdelegate.cpp \
-    ui/htmltaskrequestitemdelegate.cpp \
+    ui/htmltaskinstanceitemdelegate.cpp \
     ui/htmlalertitemdelegate.cpp \
     config/step.cpp \
     sched/stepinstance.cpp
@@ -104,7 +104,7 @@ HEADERS += \
     sched/scheduler.h \
     config/crontrigger.h \
     config/host.h \
-    sched/taskrequest.h \
+    sched/taskinstance.h \
     sched/executor.h \
     ui/webconsole.h \
     config/cluster.h \
@@ -122,7 +122,7 @@ HEADERS += \
     alert/execalertchannel.h \
     ui/raisedalertsmodel.h \
     ui/alertrulesmodel.h \
-    ui/taskrequestsmodel.h \
+    ui/taskinstancesmodel.h \
     ui/tasksmodel.h \
     event/event.h \
     event/postnoticeevent.h \
@@ -147,7 +147,7 @@ HEADERS += \
     config/calendar.h \
     ui/calendarsmodel.h \
     ui/htmltaskitemdelegate.h \
-    ui/htmltaskrequestitemdelegate.h \
+    ui/htmltaskinstanceitemdelegate.h \
     ui/htmlalertitemdelegate.h \
     config/step.h \
     sched/stepinstance.h

@@ -15,7 +15,7 @@
 #define EXECUTOR_H
 
 #include <QObject>
-#include "sched/taskrequest.h"
+#include "sched/taskinstance.h"
 #include "config/host.h"
 #include <QPointer>
 #include <QProcess>
@@ -36,7 +36,7 @@ class Executor : public QObject {
   QThread *_thread;
   QProcess *_process;
   QByteArray _errBuf;
-  TaskRequest _request;
+  TaskInstance _instance;
   QNetworkAccessManager *_nam;
   QProcessEnvironment _baseenv;
   QNetworkReply *_reply;
@@ -47,19 +47,19 @@ public:
   explicit Executor(Alerter *alerter);
   void setTemporary(bool temporary = true) { _isTemporary = temporary; }
   bool isTemporary() const { return _isTemporary; }
-  /** Execute a request now. This method is thread-safe. */
-  void execute(TaskRequest request);
-  /** Abort current request now. This method is thread-safe. */
+  /** Execute a task now. This method is thread-safe. */
+  void execute(TaskInstance instance);
+  /** Abort current task now. This method is thread-safe. */
   void abort();
 
 signals:
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
     * be emited witout previous taskStarted(). */
-  void taskStarted(TaskRequest request);
+  void taskStarted(TaskInstance instance);
   /** Signal emited whenever a task is no longer running or queued:
     * when finished on failure, finished on success, or cannot be started
     * because of a failure on start. */
-  void taskFinished(TaskRequest request, QPointer<Executor> executor);
+  void taskFinished(TaskInstance instance, QPointer<Executor> executor);
 
 private slots:
   void processError(QProcess::ProcessError error);
@@ -72,13 +72,13 @@ private slots:
   void doAbort();
 
 private:
-  Q_INVOKABLE void doExecute(TaskRequest request);
-  void localMean(TaskRequest request);
-  void sshMean(TaskRequest request);
-  void httpMean(TaskRequest request);
-  void execProcess(TaskRequest request, QStringList cmdline,
+  Q_INVOKABLE void doExecute(TaskInstance instance);
+  void localMean(TaskInstance instance);
+  void sshMean(TaskInstance instance);
+  void httpMean(TaskInstance instance);
+  void execProcess(TaskInstance instance, QStringList cmdline,
                    QProcessEnvironment sysenv);
-  inline void prepareEnv(TaskRequest request, QProcessEnvironment *sysenv,
+  inline void prepareEnv(TaskInstance instance, QProcessEnvironment *sysenv,
                          QHash<QString, QString> *setenv = 0);
   void replyHasFinished(QNetworkReply *reply,
                         QNetworkReply::NetworkError error);

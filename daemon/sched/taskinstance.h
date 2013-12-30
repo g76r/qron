@@ -11,8 +11,8 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef TASKREQUEST_H
-#define TASKREQUEST_H
+#ifndef TASKINSTANCE_H
+#define TASKINSTANCE_H
 
 #include <QSharedDataPointer>
 #include "config/task.h"
@@ -21,24 +21,22 @@
 #include "config/host.h"
 #include "util/paramsprovider.h"
 
-class TaskRequestData;
+class TaskInstanceData;
 
-// TODO rename to TaskInstance for consistency with StepInstance
-/** A task request is an instance of a task created when the execution is
- * requested (hence the name) and used to track the execution until it is
- * finished and even after. */
-class TaskRequest : public ParamsProvider {
-  QSharedDataPointer<TaskRequestData> d;
+/** Instance of a task created when the execution is requested and used to track
+ * the execution until it is finished and even after. */
+class TaskInstance : public ParamsProvider {
+  QSharedDataPointer<TaskInstanceData> d;
 
 public:
-  enum TaskRequestStatus { Queued, Running, Success, Failure, Canceled };
-  TaskRequest();
-  TaskRequest(const TaskRequest &);
-  TaskRequest(Task task, bool force = false);
-  TaskRequest(Task task, quint64 groupId, bool force = false);
-  ~TaskRequest();
-  TaskRequest &operator=(const TaskRequest &);
-  bool operator==(const TaskRequest &) const;
+  enum TaskInstanceStatus { Queued, Running, Success, Failure, Canceled };
+  TaskInstance();
+  TaskInstance(const TaskInstance &);
+  TaskInstance(Task task, bool force = false);
+  TaskInstance(Task task, quint64 groupId, bool force = false);
+  ~TaskInstance();
+  TaskInstance &operator=(const TaskInstance &);
+  bool operator==(const TaskInstance &) const;
   Task task() const;
   ParamSet params() const;
   void overrideParam(QString key, QString value);
@@ -69,7 +67,7 @@ public:
   /** Note that this is the exact target on which the task is running/has been
     * running, i.e. if the task target was a cluster, this is the host which
     * was choosen within the cluster.
-    * Most of the time, return a null Host when the task request is still
+    * Most of the time, return a null Host when the task instance is still
     * queued. */
   Host target() const;
   void setTarget(Host target) const;
@@ -77,8 +75,8 @@ public:
   ParamSet setenv() const;
   void setTask(Task task);
   bool force() const;
-  TaskRequestStatus status() const;
-  static QString statusAsString(TaskRequest::TaskRequestStatus status);
+  TaskInstanceStatus status() const;
+  static QString statusAsString(TaskInstance::TaskInstanceStatus status);
   QString statusAsString() const {
     return statusAsString(status()); }
   /** @return true iff status != Queued or Running */
@@ -99,6 +97,6 @@ public:
   void setAbortable(bool abortable = true) const;
 };
 
-uint qHash(const TaskRequest &request);
+uint qHash(const TaskInstance &instance);
 
-#endif // TASKREQUEST_H
+#endif // TASKINSTANCE_H

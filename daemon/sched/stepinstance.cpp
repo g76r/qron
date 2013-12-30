@@ -19,8 +19,8 @@ public:
   Step _step;
   bool _ready;
   QSet<QString> _pendingPredecessors;
-  TaskRequest _taskInstance;
-  StepInstanceData(Step step = Step(), TaskRequest taskInstance = TaskRequest())
+  TaskInstance _taskInstance;
+  StepInstanceData(Step step = Step(), TaskInstance taskInstance = TaskInstance())
     : _step(step), _ready(false), _pendingPredecessors(step.predecessors()),
       _taskInstance(taskInstance) { }
 };
@@ -28,7 +28,7 @@ public:
 StepInstance::StepInstance() {
 }
 
-StepInstance::StepInstance(Step step, TaskRequest taskInstance)
+StepInstance::StepInstance(Step step, TaskInstance taskInstance)
   : d(new StepInstanceData(step, taskInstance)) {
 }
 
@@ -77,6 +77,6 @@ void StepInstance::predecessorReady(QString predecessor,
   }
 }
 
-TaskRequest StepInstance::taskInstance() const {
-  return d ? d->_taskInstance : TaskRequest();
+TaskInstance StepInstance::taskInstance() const {
+  return d ? d->_taskInstance : TaskInstance();
 }

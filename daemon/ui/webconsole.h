@@ -29,7 +29,7 @@
 #include "textview/clockview.h"
 #include "alertrulesmodel.h"
 #include "log/memorylogger.h"
-#include "taskrequestsmodel.h"
+#include "taskinstancesmodel.h"
 #include "tasksmodel.h"
 #include "schedulereventsmodel.h"
 #include "taskgroupsmodel.h"
@@ -60,7 +60,7 @@ class WebConsole : public HttpHandler {
   RaisedAlertsModel *_raisedAlertsModel;
   LastOccuredTextEventsModel *_lastEmitedAlertsModel, *_lastPostedNoticesModel;
   AlertRulesModel *_alertRulesModel;
-  TaskRequestsModel *_taskRequestsHistoryModel, *_unfinishedTaskRequestModel;
+  TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
   TaskGroupsModel *_taskGroupsModel;
@@ -74,7 +74,7 @@ class WebConsole : public HttpHandler {
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView,
-  *_htmlTaskRequestsView, *_htmlTaskRequestsView20,
+  *_htmlTaskInstancesView, *_htmlTaskInstancesView20,
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
   *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
@@ -88,7 +88,7 @@ class WebConsole : public HttpHandler {
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
-  *_csvAlertRulesView, *_csvLogView, *_csvTaskRequestsView, *_csvTasksView,
+  *_csvAlertRulesView, *_csvLogView, *_csvTaskInstancesView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;

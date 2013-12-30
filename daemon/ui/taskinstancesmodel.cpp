@@ -11,28 +11,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "taskrequestsmodel.h"
+#include "taskinstancesmodel.h"
 
 #define COLUMNS 10
 
-TaskRequestsModel::TaskRequestsModel(QObject *parent, int maxrows,
+TaskInstancesModel::TaskInstancesModel(QObject *parent, int maxrows,
                                      bool keepFinished)
   : QAbstractTableModel(parent), _maxrows(maxrows), _keepFinished(keepFinished) {
 }
 
-int TaskRequestsModel::rowCount(const QModelIndex &parent) const {
+int TaskInstancesModel::rowCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
-  return parent.isValid() ? 0 : _requests.size();
+  return parent.isValid() ? 0 : _instances.size();
 }
 
-int TaskRequestsModel::columnCount(const QModelIndex &parent) const {
+int TaskInstancesModel::columnCount(const QModelIndex &parent) const {
   Q_UNUSED(parent)
   return COLUMNS;
 }
 
-QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
-  if (index.isValid() && index.row() >= 0 && index.row() < _requests.size()) {
-    const TaskRequest r(_requests.at(index.row()));
+QVariant TaskInstancesModel::data(const QModelIndex &index, int role) const {
+  if (index.isValid() && index.row() >= 0 && index.row() < _instances.size()) {
+    const TaskInstance r(_instances.at(index.row()));
     switch(role) {
     case Qt::DisplayRole: {
       switch(index.column()) {
@@ -69,13 +69,13 @@ QVariant TaskRequestsModel::data(const QModelIndex &index, int role) const {
   return QVariant();
 }
 
-QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
+QVariant TaskInstancesModel::headerData(int section, Qt::Orientation orientation,
                                     int role) const {
   if (role == Qt::DisplayRole) {
     if (orientation == Qt::Horizontal) {
       switch(section) {
       case 0:
-        return "Request Id";
+        return "Instance Id";
       case 1:
         return "Fully qualified task name";
       case 2:
@@ -102,41 +102,41 @@ QVariant TaskRequestsModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void TaskRequestsModel::taskChanged(TaskRequest request) {
+void TaskInstancesModel::taskChanged(TaskInstance instance) {
   int row;
-  //Log::fatal() << "taskChanged " << request.task().fqtn() << "/"
-  //             << request.id() << " " << request.statusAsString();
-  for (row = 0; row < _requests.size(); ++row) {
-    TaskRequest &r(_requests[row]);
-    if (r.id() == request.id()) {
-      //Log::fatal() << "TaskRequestsModel::taskChanged " << request.id()
-      //             << " found " << _keepFinished << " " << request.finished();
-      if (!request.finished() || _keepFinished) {
-        r = request;
+  //Log::fatal() << "taskChanged " << instance.task().fqtn() << "/"
+  //             << instance.id() << " " << instance.statusAsString();
+  for (row = 0; row < _instances.size(); ++row) {
+    TaskInstance &r(_instances[row]);
+    if (r.id() == instance.id()) {
+      //Log::fatal() << "TaskInstancesModel::taskChanged " << instance.id()
+      //             << " found " << _keepFinished << " " << instance.finished();
+      if (!instance.finished() || _keepFinished) {
+        r = instance;
         emit dataChanged(index(row, 2), index(row, COLUMNS-1));
       } else {
         beginRemoveRows(QModelIndex(), row, row);
-        _requests.removeAt(row);
+        _instances.removeAt(row);
         endRemoveRows();
       }
       return;
     }
-    if (r.id() < request.id())
+    if (r.id() < instance.id())
       break;
   }
-  //qDebug() << "TaskRequestsModel::taskChanged" << request.id()
-  //         << request.submissionDatetime() << request.startDatetime()
-  //         << request.endDatetime() << "new" << _keepFinished;
-  if (!request.finished() || _keepFinished) {
+  //qDebug() << "TaskInstancesModel::taskChanged" << instance.id()
+  //         << instance.submissionDatetime() << instance.startDatetime()
+  //         << instance.endDatetime() << "new" << _keepFinished;
+  if (!instance.finished() || _keepFinished) {
     // row should always be = 0 because signals from 1 thread to 1 other thread are ordered, however...
     beginInsertRows(QModelIndex(), row, row);
-    _requests.insert(row, request);
+    _instances.insert(row, instance);
     endInsertRows();
   }
-  if (_requests.size() > _maxrows) {
-    beginRemoveRows(QModelIndex(), _maxrows, _requests.size());
-    while (_requests.size() > _maxrows)
-      _requests.removeAt(_maxrows);
+  if (_instances.size() > _maxrows) {
+    beginRemoveRows(QModelIndex(), _maxrows, _instances.size());
+    while (_instances.size() > _maxrows)
+      _instances.removeAt(_maxrows);
     endRemoveRows();
   }
 }

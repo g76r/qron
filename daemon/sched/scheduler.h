@@ -23,7 +23,7 @@
 #include "config/crontrigger.h"
 #include "config/host.h"
 #include "config/cluster.h"
-#include "sched/taskrequest.h"
+#include "sched/taskinstance.h"
 #include <QHash>
 #include "executor.h"
 #include <QVariant>
@@ -53,8 +53,8 @@ class Scheduler : public QObject {
   QHash<QString,Host> _hosts;
   QHash<QString,QHash<QString,qint64> > _resources;
   mutable QMutex _configMutex;
-  QList<TaskRequest> _queuedRequests;
-  QHash<TaskRequest,Executor*> _runningRequests;
+  QList<TaskInstance> _queuedRequests;
+  QHash<TaskInstance,Executor*> _runningTasks;
   QList<Executor*> _availableExecutors;
   Alerter *_alerter;
   InMemoryAuthenticator *_authenticator;
@@ -105,7 +105,7 @@ public slots:
    * @return isEmpty() if task cannot be queued
    * @see asyncRequestTask
    * @see RequestFormField */
-  QList<TaskRequest> syncRequestTask(
+  QList<TaskInstance> syncRequestTask(
       QString fqtn, ParamSet paramsOverriding = ParamSet(), bool force = false);
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
@@ -121,9 +121,9 @@ public slots:
   /** Cancel a queued request.
    * @return TaskRequest.isNull() iff error (e.g. request not found or no longer
    * queued */
-  TaskRequest cancelRequest(quint64 id);
-  TaskRequest cancelRequest(TaskRequest request) {
-    return cancelRequest(request.id()); }
+  TaskInstance cancelRequest(quint64 id);
+  TaskInstance cancelRequest(TaskInstance instance) {
+    return cancelRequest(instance.id()); }
   /** Abort a running request.
    * For local tasks aborting means killing, for ssh tasks aborting means
    * killing ssh client hence most of time killing actual task, for http tasks
@@ -134,9 +134,9 @@ public slots:
    * same task.
    * @return TaskRequest.isNull() iff error (e.g. request not found or no longer
    * running */
-  TaskRequest abortTask(quint64 id);
-  TaskRequest abortTask(TaskRequest request) {
-    return abortTask(request.id()); }
+  TaskInstance abortTask(quint64 id);
+  TaskInstance abortTask(TaskInstance instance) {
+    return abortTask(instance.id()); }
   /** Post a notice.
     * This method is thread-safe. */
   void postNotice(QString notice);
@@ -184,21 +184,21 @@ signals:
   void configReloaded();
   /** There is no guarantee that taskQueued() is emited, taskStarted() or
     * taskFinished() can be emited witout previous taskQueued(). */
-  void taskQueued(TaskRequest request);
+  void taskQueued(TaskInstance instance);
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
     * be emited witout previous taskStarted(). */
-  void taskStarted(TaskRequest request);
-  void taskFinished(TaskRequest request);
-  /** Called whenever a task or taskrequest changes: queued, started, finished,
+  void taskStarted(TaskInstance instance);
+  void taskFinished(TaskInstance instance);
+  /** Called whenever a task or taskinstance changes: queued, started, finished,
    * disabled, enabled... */
-  void taskChanged(Task request);
+  void taskChanged(Task instance);
   void globalParamsChanged(ParamSet globalParams);
   void globalSetenvChanged(ParamSet globalSetenv);
   void globalUnsetenvChanged(ParamSet globalUnsetenv);
   void noticePosted(QString notice);
 
 private slots:
-  void taskFinishing(TaskRequest request, QPointer<Executor> executor);
+  void taskFinishing(TaskInstance instance, QPointer<Executor> executor);
   void periodicChecks();
   /** Fire expired triggers for a given task. */
   void checkTriggersForTask(QVariant fqtn);
@@ -211,20 +211,20 @@ private:
     * @see reevaluateQueuedRequests() */
   void startQueuedTasks();
   /** Check if it is permitted for a task to run now, if yes start it.
-   * If request.force() is true, start a task despite any constraint or limit,
+   * If instance.force() is true, start a task despite any constraint or limit,
    * even create a new (temporary) executor thread if needed.
    * @return true if the task was started or canceled */
-  bool startQueuedTask(TaskRequest request);
+  bool startQueuedTask(TaskInstance instance);
   /** @return true iff the triggers fires a task request */
   bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
   Q_INVOKABLE bool reloadConfiguration(PfNode root);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
-  Q_INVOKABLE QList<TaskRequest> doRequestTask(
+  Q_INVOKABLE QList<TaskInstance> doRequestTask(
       QString fqtn, ParamSet paramsOverriding, bool force);
-  TaskRequest enqueueRequest(TaskRequest request, ParamSet paramsOverriding);
-  Q_INVOKABLE TaskRequest doCancelRequest(quint64 id);
-  Q_INVOKABLE TaskRequest doAbortTask(quint64 id);
+  TaskInstance enqueueRequest(TaskInstance request, ParamSet paramsOverriding);
+  Q_INVOKABLE TaskInstance doCancelRequest(quint64 id);
+  Q_INVOKABLE TaskInstance doAbortTask(quint64 id);
 };
 
 #endif // SCHEDULER_H

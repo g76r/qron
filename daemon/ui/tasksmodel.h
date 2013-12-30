@@ -19,7 +19,7 @@
 #include <QHash>
 #include "config/task.h"
 #include "config/taskgroup.h"
-#include "sched/taskrequest.h"
+#include "sched/taskinstance.h"
 
 /** Model holding tasks along with their attributes, one task per line, in
  * fqtn alphabetical order. */

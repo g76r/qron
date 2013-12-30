@@ -246,6 +246,7 @@ void MailAlertChannel::processQueue(QVariant address) {
           html.append("<li style=\"").append(_cancelStyle).append("\">")
               .append(s);
         }
+        // LATER clarify this message
         text.append(
               "\r\n"
               "Please note that there is a delay between alert cancellation\r\n"

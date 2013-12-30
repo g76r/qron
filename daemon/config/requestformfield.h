@@ -19,13 +19,13 @@
 
 class RequestFormFieldData;
 class PfNode;
-class TaskRequest;
+class TaskInstance;
 class ParamSet;
 
 /** Request-time user-overridable task parameter.
  * Define an actual task parameter along with user interface hints and
  * other-than-actual-parameter ways to affect the task execution (e.g. a
- * RequestFormField can change the value of TaskRequest::command()). */
+ * RequestFormField can change the value of TaskInstance::command()). */
 class RequestFormField {
   QSharedDataPointer<RequestFormFieldData> d;
 
@@ -38,7 +38,7 @@ public:
   QString toHtmlFormFragment(QString inputClass = "") const;
   QString toHumanReadableDescription() const;
   bool validate(QString value) const;
-  void apply(QString value, TaskRequest *request) const;
+  void apply(QString value, TaskInstance *request) const;
   bool isNull() const;
   QString param() const;
   QString format() const;

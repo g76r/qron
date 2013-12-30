@@ -11,28 +11,28 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef TASKREQUESTSMODEL_H
-#define TASKREQUESTSMODEL_H
+#ifndef TASKINSTANCESMODEL_H
+#define TASKINSTANCESMODEL_H
 
 #include <QAbstractTableModel>
 #include <QString>
 #include <QDateTime>
-#include "sched/taskrequest.h"
+#include "sched/taskinstance.h"
 #include "config/host.h"
 #include <QList>
 
-/** Model holding tasks requests along with their attributes, one request per
+/** Model holding tasks instances along with their attributes, one instance per
  * line, in reverse request order. */
-class TaskRequestsModel : public QAbstractTableModel {
+class TaskInstancesModel : public QAbstractTableModel {
   Q_OBJECT
-  Q_DISABLE_COPY(TaskRequestsModel)
-  QList<TaskRequest> _requests;
+  Q_DISABLE_COPY(TaskInstancesModel)
+  QList<TaskInstance> _instances;
   int _maxrows;
   bool _keepFinished;
   QString _customActions;
 
 public:
-  explicit TaskRequestsModel(QObject *parent = 0, int maxrows = 100,
+  explicit TaskInstancesModel(QObject *parent = 0, int maxrows = 100,
                              bool keepFinished = true);
   int rowCount(const QModelIndex &parent) const;
   int columnCount(const QModelIndex &parent) const;
@@ -41,12 +41,12 @@ public:
   inline void setMaxrows(int maxrows) { _maxrows = maxrows; }
   inline int maxrows() const { return _maxrows; }
   /** Way to add custom html at the end of "Actions" column. Will be evaluated
-   * through TaskRequest.params(). */
+   * through TaskInstance.params(). */
   void setCustomActions(QString customActions) {
     _customActions = customActions; }
 
 public slots:
-  void taskChanged(TaskRequest request);
+  void taskChanged(TaskInstance instance);
 };
 
-#endif // TASKREQUESTSMODEL_H
+#endif // TASKINSTANCESMODEL_H

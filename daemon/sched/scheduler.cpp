@@ -66,8 +66,8 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   qRegisterMetaType<Task>("Task");
-  qRegisterMetaType<TaskRequest>("TaskRequest");
-  qRegisterMetaType<QList<TaskRequest> >("QList<TaskRequest>");
+  qRegisterMetaType<TaskInstance>("TaskInstance");
+  qRegisterMetaType<QList<TaskInstance> >("QList<TaskInstance>");
   qRegisterMetaType<Host>("Host");
   qRegisterMetaType<LogFile>("LogFile");
   qRegisterMetaType<QPointer<Executor> >("QPointer<Executor>");
@@ -140,7 +140,7 @@ bool Scheduler::reloadConfiguration(PfNode root) {
   _unsetenv.clear();
   _globalParams.clear();
   _setenv.clear();
-  _setenv.setValue("TASKREQUESTID", "%!taskrequestid");
+  _setenv.setValue("TASKINSTANCEID", "%!taskinstanceid");
   _setenv.setValue("FQTN", "%!fqtn");
   _setenv.setValue("TASKGROUPID", "%!taskgroupid");
   _setenv.setValue("TASKID", "%!taskid");
@@ -305,10 +305,10 @@ ignore_task:;
                     "maxtotaltaskinstances of " << maxtotaltaskinstances;
     for (int i = 0; i < executorsToAdd; ++i) {
       Executor *e = new Executor(_alerter);
-      connect(e, SIGNAL(taskFinished(TaskRequest,QPointer<Executor>)),
-              this, SLOT(taskFinishing(TaskRequest,QPointer<Executor>)));
-      connect(e, SIGNAL(taskStarted(TaskRequest)),
-              this, SIGNAL(taskStarted(TaskRequest)));
+      connect(e, SIGNAL(taskFinished(TaskInstance,QPointer<Executor>)),
+              this, SLOT(taskFinishing(TaskInstance,QPointer<Executor>)));
+      connect(e, SIGNAL(taskStarted(TaskInstance)),
+              this, SIGNAL(taskStarted(TaskInstance)));
       _availableExecutors.append(e);
     }
   } else {
@@ -430,7 +430,7 @@ ignore_task:;
   reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {
-    TaskRequest &r = _queuedRequests[i];
+    TaskInstance &r = _queuedRequests[i];
     QString fqtn = r.task().fqtn();
     Task t = _tasks.value(fqtn);
     if (t.isNull()) {
@@ -602,14 +602,14 @@ void Scheduler::triggerEvents(QList<Event> list,
     e.trigger(context);
 }
 
-QList<TaskRequest> Scheduler::syncRequestTask(
+QList<TaskInstance> Scheduler::syncRequestTask(
     QString fqtn, ParamSet paramsOverriding, bool force) {
   if (this->thread() == QThread::currentThread())
     return doRequestTask(fqtn, paramsOverriding, force);
-  QList<TaskRequest> requests;
+  QList<TaskInstance> requests;
   QMetaObject::invokeMethod(this, "doRequestTask",
                             Qt::BlockingQueuedConnection,
-                            Q_RETURN_ARG(QList<TaskRequest>, requests),
+                            Q_RETURN_ARG(QList<TaskInstance>, requests),
                             Q_ARG(QString, fqtn),
                             Q_ARG(ParamSet, paramsOverriding),
                             Q_ARG(bool, force));
@@ -624,7 +624,7 @@ void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
                             Q_ARG(bool, force));
 }
 
-QList<TaskRequest> Scheduler::doRequestTask(
+QList<TaskInstance> Scheduler::doRequestTask(
     QString fqtn, ParamSet paramsOverriding, bool force) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
@@ -633,11 +633,11 @@ QList<TaskRequest> Scheduler::doRequestTask(
   if (task.isNull()) {
     Log::error() << "requested task not found: " << fqtn << paramsOverriding
                  << force;
-    return QList<TaskRequest>();
+    return QList<TaskInstance>();
   }
   if (!task.enabled()) {
     Log::info(fqtn) << "ignoring request since task is disabled: " << fqtn;
-    return QList<TaskRequest>();
+    return QList<TaskInstance>();
   }
   bool fieldsValidated(true);
   foreach (RequestFormField field, task.requestFormFields()) {
@@ -654,12 +654,12 @@ QList<TaskRequest> Scheduler::doRequestTask(
     }
   }
   if (!fieldsValidated)
-    return QList<TaskRequest>();
-  QList<TaskRequest> requests;
+    return QList<TaskInstance>();
+  QList<TaskInstance> requests;
   if (cluster.balancing() == "each") {
     qint64 groupId = 0;
     foreach (Host host, cluster.hosts()) {
-      TaskRequest request(task, groupId, force);
+      TaskInstance request(task, groupId, force);
       if (!groupId)
         groupId = request.groupId();
       request.setTarget(host);
@@ -668,8 +668,8 @@ QList<TaskRequest> Scheduler::doRequestTask(
         requests.append(request);
     }
   } else {
-    TaskRequest request;
-    request = enqueueRequest(TaskRequest(task, force), paramsOverriding);
+    TaskInstance request;
+    request = enqueueRequest(TaskInstance(task, force), paramsOverriding);
     if (!request.isNull())
       requests.append(request);
   }
@@ -680,8 +680,8 @@ QList<TaskRequest> Scheduler::doRequestTask(
   return requests;
 }
 
-TaskRequest Scheduler::enqueueRequest(
-    TaskRequest request, ParamSet paramsOverriding) {
+TaskInstance Scheduler::enqueueRequest(
+    TaskInstance request, ParamSet paramsOverriding) {
   Task task(request.task());
   QString fqtn(task.fqtn());
   foreach (RequestFormField field, task.requestFormFields()) {
@@ -695,7 +695,7 @@ TaskRequest Scheduler::enqueueRequest(
       || task.discardAliasesOnStart() != Task::DiscardNone)) {
     // avoid stacking disabled task requests by canceling older ones
     for (int i = 0; i < _queuedRequests.size(); ++i) {
-      const TaskRequest &r2 = _queuedRequests[i];
+      const TaskInstance &r2 = _queuedRequests[i];
       if (fqtn == r2.task().fqtn() && request.groupId() != r2.groupId()) {
         Log::info(fqtn, r2.id())
             << "canceling task because another instance of the same task "
@@ -715,7 +715,7 @@ TaskRequest Scheduler::enqueueRequest(
         << "cannot queue task because maxqueuedrequests is already reached ("
         << _maxqueuedrequests << ")";
     _alerter->raiseAlert("scheduler.maxqueuedrequests.reached");
-    return TaskRequest();
+    return TaskInstance();
   }
   _alerter->cancelAlert("scheduler.maxqueuedrequests.reached");
   Log::debug(fqtn, request.id())
@@ -728,20 +728,20 @@ TaskRequest Scheduler::enqueueRequest(
   return request;
 }
 
-TaskRequest Scheduler::cancelRequest(quint64 id) {
+TaskInstance Scheduler::cancelRequest(quint64 id) {
   if (this->thread() == QThread::currentThread())
     return doCancelRequest(id);
-  TaskRequest request;
+  TaskInstance request;
   QMetaObject::invokeMethod(this, "doCancelRequest",
                             Qt::BlockingQueuedConnection,
-                            Q_RETURN_ARG(TaskRequest, request),
+                            Q_RETURN_ARG(TaskInstance, request),
                             Q_ARG(quint64, id));
   return request;
 }
 
-TaskRequest Scheduler::doCancelRequest(quint64 id) {
+TaskInstance Scheduler::doCancelRequest(quint64 id) {
   for (int i = 0; i < _queuedRequests.size(); ++i) {
-    TaskRequest r2 = _queuedRequests[i];
+    TaskInstance r2 = _queuedRequests[i];
     if (id == r2.id()) {
       QString fqtn(r2.task().fqtn());
       Log::info(fqtn, id) << "canceling task as requested";
@@ -755,27 +755,27 @@ TaskRequest Scheduler::doCancelRequest(quint64 id) {
   }
   Log::warning() << "cannot cancel task request because it is not (or no "
                     "longer) in requests queue";
-  return TaskRequest();
+  return TaskInstance();
 }
 
-TaskRequest Scheduler::abortTask(quint64 id) {
+TaskInstance Scheduler::abortTask(quint64 id) {
   if (this->thread() == QThread::currentThread())
     return doAbortTask(id);
-  TaskRequest request;
+  TaskInstance request;
   QMetaObject::invokeMethod(this, "doAbortTask",
                             Qt::BlockingQueuedConnection,
-                            Q_RETURN_ARG(TaskRequest, request),
+                            Q_RETURN_ARG(TaskInstance, request),
                             Q_ARG(quint64, id));
   return request;
 }
 
-TaskRequest Scheduler::doAbortTask(quint64 id) {
-  QList<TaskRequest> tasks = _runningRequests.keys();
+TaskInstance Scheduler::doAbortTask(quint64 id) {
+  QList<TaskInstance> tasks = _runningTasks.keys();
   for (int i = 0; i < tasks.size(); ++i) {
-    TaskRequest r2 = tasks[i];
+    TaskInstance r2 = tasks[i];
     if (id == r2.id()) {
       QString fqtn(r2.task().fqtn());
-      Executor *executor = _runningRequests.value(r2);
+      Executor *executor = _runningTasks.value(r2);
       if (executor) {
         Log::warning(fqtn, id) << "aborting task as requested";
         // TODO should return TaskRequest() if executor cannot actually abort
@@ -785,7 +785,7 @@ TaskRequest Scheduler::doAbortTask(quint64 id) {
     }
   }
   Log::warning() << "cannot abort task because it is not in running tasks list";
-  return TaskRequest();
+  return TaskInstance();
 }
 
 void Scheduler::checkTriggersForTask(QVariant fqtn) {
@@ -823,9 +823,9 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    QList<TaskRequest> requests = syncRequestTask(fqtn);
+    QList<TaskInstance> requests = syncRequestTask(fqtn);
     if (!requests.isEmpty())
-      foreach (TaskRequest request, requests)
+      foreach (TaskInstance request, requests)
         Log::debug(fqtn, request.id())
             << "cron trigger '" << trigger.cronExpression()
             << "' triggered task '" << fqtn << "'";
@@ -914,14 +914,14 @@ void Scheduler::customEvent(QEvent *event) {
 
 void Scheduler::startQueuedTasks() {
   for (int i = 0; i < _queuedRequests.size(); ) {
-    TaskRequest r = _queuedRequests[i];
+    TaskInstance r = _queuedRequests[i];
     if (startQueuedTask(r)) {
       _queuedRequests.removeAt(i);
       if (r.task().discardAliasesOnStart() != Task::DiscardNone) {
         // remove other requests of same task
         QString fqtn(r.task().fqtn());
         for (int j = 0; j < _queuedRequests.size(); ++j ) {
-          TaskRequest r2 = _queuedRequests[j];
+          TaskInstance r2 = _queuedRequests[j];
           if (fqtn == r2.task().fqtn() && r.groupId() != r2.groupId()) {
             Log::info(fqtn, r2.id())
                 << "canceling task because another instance of the same task "
@@ -942,21 +942,21 @@ void Scheduler::startQueuedTasks() {
   }
 }
 
-bool Scheduler::startQueuedTask(TaskRequest request) {
-  Task task(request.task());
+bool Scheduler::startQueuedTask(TaskInstance instance) {
+  Task task(instance.task());
   QString fqtn(task.fqtn());
   Executor *executor = 0;
   if (!task.enabled())
     return false; // do not start disabled tasks
-  if (_availableExecutors.isEmpty() && !request.force()) {
-    Log::info(fqtn, request.id()) << "cannot execute task '" << fqtn
+  if (_availableExecutors.isEmpty() && !instance.force()) {
+    Log::info(fqtn, instance.id()) << "cannot execute task '" << fqtn
         << "' now because there are already too many tasks running "
            "(maxtotaltaskinstances reached)";
     _alerter->raiseAlert("scheduler.maxtotaltaskinstances.reached");
     return false;
   }
   _alerter->cancelAlert("scheduler.maxtotaltaskinstances.reached");
-  if (request.force())
+  if (instance.force())
     task.fetchAndAddInstancesCount(1);
   else if (task.fetchAndAddInstancesCount(1) >= task.maxInstances()) {
     task.fetchAndAddInstancesCount(-1);
@@ -967,7 +967,7 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     return false;
   }
   _alerter->cancelAlert("task.maxinstancesreached."+fqtn);
-  QString target = request.target().id();
+  QString target = instance.target().id();
   if (target.isEmpty())
     target = task.target();
   QMutexLocker ml(&_configMutex);
@@ -978,14 +978,14 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
   else
     hosts.append(host);
   if (hosts.isEmpty()) {
-    Log::error(fqtn, request.id()) << "cannot execute task '" << fqtn
+    Log::error(fqtn, instance.id()) << "cannot execute task '" << fqtn
         << "' because its target '" << target << "' is invalid";
     _alerter->raiseAlert("task.failure."+fqtn);
-    request.setReturnCode(-1);
-    request.setSuccess(false);
-    request.setEndDatetime();
+    instance.setReturnCode(-1);
+    instance.setSuccess(false);
+    instance.setEndDatetime();
     task.fetchAndAddInstancesCount(-1);
-    emit taskFinished(request);
+    emit taskFinished(instance);
     return true;
   }
   // LATER implement other cluster balancing methods than "first"
@@ -993,17 +993,17 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
   QHash<QString,qint64> taskResources = task.resources();
   foreach (Host h, hosts) {
     QHash<QString,qint64> hostResources = _resources.value(h.id());
-    if (!request.force()) {
+    if (!instance.force()) {
       foreach (QString kind, taskResources.keys()) {
         if (hostResources.value(kind) < taskResources.value(kind)) {
-          Log::info(fqtn, request.id())
+          Log::info(fqtn, instance.id())
               << "lacks resource '" << kind << "' on host '" << h.id()
               << "' for task '" << task.id() << "' (need "
               << taskResources.value(kind) << ", have "
               << hostResources.value(kind) << ")";
           goto nexthost;
         }
-        Log::debug(fqtn, request.id())
+        Log::debug(fqtn, instance.id())
             << "resource '" << kind << "' ok on host '" << h.id()
             << "' for task '" << fqtn << "'";
       }
@@ -1016,31 +1016,31 @@ bool Scheduler::startQueuedTask(TaskRequest request) {
     ml.unlock();
     emit hostResourceAllocationChanged(h.id(), hostResources);
     _alerter->cancelAlert("resource.exhausted."+target);
-    request.setTarget(h);
-    request.setStartDatetime();
-    triggerEvents(_onstart, &request);
-    task.triggerStartEvents(&request);
+    instance.setTarget(h);
+    instance.setStartDatetime();
+    triggerEvents(_onstart, &instance);
+    task.triggerStartEvents(&instance);
     executor = _availableExecutors.takeFirst();
     if (!executor) {
       // this should only happen with force == true
       executor = new Executor(_alerter);
       executor->setTemporary();
-      connect(executor, SIGNAL(taskFinished(TaskRequest,QPointer<Executor>)),
-              this, SLOT(taskFinishing(TaskRequest,QPointer<Executor>)));
-      connect(executor, SIGNAL(taskStarted(TaskRequest)),
-              this, SIGNAL(taskStarted(TaskRequest)));
+      connect(executor, SIGNAL(taskFinished(TaskInstance,QPointer<Executor>)),
+              this, SLOT(taskFinishing(TaskInstance,QPointer<Executor>)));
+      connect(executor, SIGNAL(taskStarted(TaskInstance)),
+              this, SIGNAL(taskStarted(TaskInstance)));
     }
-    executor->execute(request);
+    executor->execute(instance);
     ++_execCount;
     reevaluateQueuedRequests();
-    _runningRequests.insert(request, executor);
+    _runningTasks.insert(instance, executor);
     return true;
 nexthost:;
   }
   // no host has enough resources to execute the task
   ml.unlock();
   task.fetchAndAddInstancesCount(-1);
-  Log::warning(fqtn, request.id())
+  Log::warning(fqtn, instance.id())
       << "cannot execute task '" << fqtn
       << "' now because there is not enough resources on target '"
       << target << "'";
@@ -1049,9 +1049,9 @@ nexthost:;
   return false;
 }
 
-void Scheduler::taskFinishing(TaskRequest request,
+void Scheduler::taskFinishing(TaskInstance instance,
                               QPointer<Executor> executor) {
-  Task requestedTask(request.task());
+  Task requestedTask(instance.task());
   QString fqtn(requestedTask.fqtn());
   QMutexLocker ml(&_configMutex);
   // configured and requested tasks are different if config reloaded meanwhile
@@ -1064,43 +1064,43 @@ void Scheduler::taskFinishing(TaskRequest request,
     else
       _availableExecutors.append(e);
   }
-  _runningRequests.remove(request);
+  _runningTasks.remove(instance);
   QHash<QString,qint64> taskResources = requestedTask.resources();
-  QHash<QString,qint64> hostResources = _resources.value(request.target().id());
+  QHash<QString,qint64> hostResources = _resources.value(instance.target().id());
   foreach (QString kind, taskResources.keys())
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
-  _resources.insert(request.target().id(), hostResources);
+  _resources.insert(instance.target().id(), hostResources);
   ml.unlock();
-  if (request.success())
+  if (instance.success())
     _alerter->cancelAlert("task.failure."+fqtn);
   else
     _alerter->raiseAlert("task.failure."+fqtn);
-  emit hostResourceAllocationChanged(request.target().id(), hostResources);
+  emit hostResourceAllocationChanged(instance.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
-  if (!request.startDatetime().isNull() && !request.endDatetime().isNull()) {
-    configuredTask.setLastExecution(request.startDatetime());
-    configuredTask.setLastSuccessful(request.success());
-    configuredTask.setLastReturnCode(request.returnCode());
-    configuredTask.setLastTotalMillis(request.totalMillis());
+  if (!instance.startDatetime().isNull() && !instance.endDatetime().isNull()) {
+    configuredTask.setLastExecution(instance.startDatetime());
+    configuredTask.setLastSuccessful(instance.success());
+    configuredTask.setLastReturnCode(instance.returnCode());
+    configuredTask.setLastTotalMillis(instance.totalMillis());
   }
-  emit taskFinished(request);
+  emit taskFinished(instance);
   emit taskChanged(configuredTask);
-  if (request.success()) {
-    triggerEvents(_onsuccess, &request);
-    configuredTask.triggerSuccessEvents(&request);
+  if (instance.success()) {
+    triggerEvents(_onsuccess, &instance);
+    configuredTask.triggerSuccessEvents(&instance);
   } else {
-    triggerEvents(_onfailure, &request);
-    configuredTask.triggerFailureEvents(&request);
+    triggerEvents(_onfailure, &instance);
+    configuredTask.triggerFailureEvents(&instance);
   }
   if (configuredTask.maxExpectedDuration() < LLONG_MAX) {
-    if (configuredTask.maxExpectedDuration() < request.totalMillis())
+    if (configuredTask.maxExpectedDuration() < instance.totalMillis())
       _alerter->raiseAlert("task.toolong."+fqtn);
     else
       _alerter->cancelAlert("task.toolong."+fqtn);
   }
   if (configuredTask.minExpectedDuration() > 0) {
-    if (configuredTask.minExpectedDuration() > request.runningMillis())
+    if (configuredTask.minExpectedDuration() > instance.runningMillis())
       _alerter->raiseAlert("task.tooshort."+fqtn);
     else
       _alerter->cancelAlert("task.tooshort."+fqtn);
@@ -1146,9 +1146,10 @@ Task Scheduler::task(QString fqtn) {
 
 void Scheduler::periodicChecks() {
   // detect queued or running tasks that exceeded their max expected duration
-  QList<TaskRequest> currentRequests(_queuedRequests);
-  currentRequests.append(_runningRequests.keys());
-  foreach (const TaskRequest r, currentRequests) {
+  QList<TaskInstance> currentInstances;
+  currentInstances.append(_queuedRequests);
+  currentInstances.append(_runningTasks.keys());
+  foreach (const TaskInstance r, currentInstances) {
     const Task t(r.task());
     if (t.maxExpectedDuration() < r.liveTotalMillis())
       _alerter->raiseAlert("task.toolong."+t.fqtn());

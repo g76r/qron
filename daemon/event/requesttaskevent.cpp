@@ -27,7 +27,7 @@ public:
       QString fqtn = context
           ? context->paramValue("!fqtn").toString() : QString();
       QString id = context
-          ? context->paramValue("!taskrequestid").toString() : QString();
+          ? context->paramValue("!taskinstanceid").toString() : QString();
       QString group = context
           ? context->paramValue("!taskgroupid").toString() : QString();
       Log::log(fqtn.isNull() ? Log::Debug : Log::Info, fqtn, id.toLongLong())
@@ -38,7 +38,7 @@ public:
         _scheduler.data()->asyncRequestTask(local, _params, _force);
       else
         _scheduler.data()->asyncRequestTask(idOrFqtn, _params, _force);
-      // LATER if requestTask returns the TaskRequest object, we can track child taskrequestid
+      // LATER if requestTask returns the TaskRequest object, we can track child taskinstanceid
       // LATER this special case should be logged to a special data model to enable drawing parent-child diagrams
     }
   }

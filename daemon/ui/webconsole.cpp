@@ -15,7 +15,7 @@
 #include "util/ioutils.h"
 #include <QFile>
 #include <QThread>
-#include "sched/taskrequest.h"
+#include "sched/taskinstance.h"
 #include "sched/qrond.h"
 #include <QCoreApplication>
 #include "util/htmlutils.h"
@@ -23,7 +23,7 @@
 #include "util/standardformats.h"
 #include "textview/htmlitemdelegate.h"
 #include "ui/htmltaskitemdelegate.h"
-#include "ui/htmltaskrequestitemdelegate.h"
+#include "ui/htmltaskinstanceitemdelegate.h"
 #include "ui/htmlalertitemdelegate.h"
 
 #define CONFIG_TABLES_MAXROWS 500
@@ -62,10 +62,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
   _alertRulesModel = new AlertRulesModel(this);
-  // memory cost: about 1.5 kB / request, e.g. 30 MB for 20000 requests
+  // memory cost: about 1.5 kB / instance, e.g. 30 MB for 20000 instances
   // (this is an empirical measurement and thus includes model + csv view
-  _taskRequestsHistoryModel = new TaskRequestsModel(this, 20000);
-  _unfinishedTaskRequestModel = new TaskRequestsModel(this, 1000, false);
+  _taskInstancesHistoryModel = new TaskInstancesModel(this, 20000);
+  _unfinishedTaskInstancetModel = new TaskInstancesModel(this, 1000, false);
   _tasksModel = new TasksModel(this);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
@@ -228,35 +228,35 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(5, "%1", 4, logIcons);
   _wuiHandler->addView(_htmlInfoLogView);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
-  _htmlTaskRequestsView20 =
-      new HtmlTableView(this, "taskrequests20",
-                        _unfinishedTaskRequestModel->maxrows(), 20);
-  _htmlTaskRequestsView20->setModel(_unfinishedTaskRequestModel);
-  QHash<QString,QString> taskRequestsTrClasses;
-  taskRequestsTrClasses.insert("failure", "error");
-  taskRequestsTrClasses.insert("queued", "warning");
-  taskRequestsTrClasses.insert("running", "info");
-  _htmlTaskRequestsView20->setTrClass("%1", 2, taskRequestsTrClasses);
-  _htmlTaskRequestsView20->setEmptyPlaceholder("(no running or queued task)");
+  _htmlTaskInstancesView20 =
+      new HtmlTableView(this, "taskinstances20",
+                        _unfinishedTaskInstancetModel->maxrows(), 20);
+  _htmlTaskInstancesView20->setModel(_unfinishedTaskInstancetModel);
+  QHash<QString,QString> taskInstancesTrClasses;
+  taskInstancesTrClasses.insert("failure", "error");
+  taskInstancesTrClasses.insert("queued", "warning");
+  taskInstancesTrClasses.insert("running", "info");
+  _htmlTaskInstancesView20->setTrClass("%1", 2, taskInstancesTrClasses);
+  _htmlTaskInstancesView20->setEmptyPlaceholder("(no running or queued task)");
   cols.clear();
   cols << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8;
-  _htmlTaskRequestsView20->setColumnIndexes(cols);
-  _htmlTaskRequestsView20
-      ->setItemDelegate(new HtmlTaskRequestItemDelegate(
-                          _htmlTaskRequestsView20));
-  _wuiHandler->addView(_htmlTaskRequestsView20);
-  _htmlTaskRequestsView =
-      new HtmlTableView(this, "taskrequests",
-                        _taskRequestsHistoryModel->maxrows(), 100);
-  _htmlTaskRequestsView->setModel(_taskRequestsHistoryModel);
-  _htmlTaskRequestsView->setTrClass("%1", 2, taskRequestsTrClasses);
-  _htmlTaskRequestsView->setEmptyPlaceholder("(no recent task)");
+  _htmlTaskInstancesView20->setColumnIndexes(cols);
+  _htmlTaskInstancesView20
+      ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
+                          _htmlTaskInstancesView20));
+  _wuiHandler->addView(_htmlTaskInstancesView20);
+  _htmlTaskInstancesView =
+      new HtmlTableView(this, "taskinstances",
+                        _taskInstancesHistoryModel->maxrows(), 100);
+  _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
+  _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
+  _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task)");
   cols.clear();
   cols << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8;
-  _htmlTaskRequestsView->setColumnIndexes(cols);
-  _htmlTaskRequestsView
-      ->setItemDelegate(new HtmlTaskRequestItemDelegate(_htmlTaskRequestsView));
-  _wuiHandler->addView(_htmlTaskRequestsView);
+  _htmlTaskInstancesView->setColumnIndexes(cols);
+  _htmlTaskInstancesView
+      ->setItemDelegate(new HtmlTaskInstanceItemDelegate(_htmlTaskInstancesView));
+  _wuiHandler->addView(_htmlTaskInstancesView);
   _htmlTasksScheduleView =
       new HtmlTableView(this, "tasksschedule", CONFIG_TABLES_MAXROWS, 100);
   _htmlTasksScheduleView->setModel(_tasksModel);
@@ -427,9 +427,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvAlertRulesView->setModel(_alertRulesModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
   _csvLogView->setModel(_memoryInfoLogger->model());
-  _csvTaskRequestsView =
-        new CsvTableView(this, _taskRequestsHistoryModel->maxrows());
-  _csvTaskRequestsView->setModel(_taskRequestsHistoryModel);
+  _csvTaskInstancesView =
+        new CsvTableView(this, _taskInstancesHistoryModel->maxrows());
+  _csvTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _csvTasksView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvTasksView->setModel(_tasksModel);
   _csvSchedulerEventsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
@@ -604,24 +604,24 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         foreach (QString key, params.keys())
           if (params.value(key).isEmpty())
             params.removeValue(key);
-        QList<TaskRequest> requests = _scheduler->syncRequestTask(fqtn, params);
-        if (!requests.isEmpty()) {
+        QList<TaskInstance> instances = _scheduler->syncRequestTask(fqtn, params);
+        if (!instances.isEmpty()) {
           message = "S:Task '"+fqtn+"' submitted for execution with id";
-          foreach (TaskRequest request, requests)
+          foreach (TaskInstance request, instances)
               message.append(' ').append(QString::number(request.id()));
           message.append('.');
         } else
           message = "E:Execution request of task '"+fqtn
               +"' failed (see logs for more information).";
       } else if (event == "cancelRequest") {
-        TaskRequest request = _scheduler->cancelRequest(id);
-        if (!request.isNull())
+        TaskInstance instance = _scheduler->cancelRequest(id);
+        if (!instance.isNull())
           message = "S:Task request "+QString::number(id)+" canceled.";
         else
           message = "E:Cannot cancel request "+QString::number(id)+".";
       } else if (event == "abortTask") {
-        TaskRequest request = _scheduler->abortTask(id);
-        if (!request.isNull())
+        TaskInstance instance = _scheduler->abortTask(id);
+        if (!instance.isNull())
           message = "S:Task "+QString::number(id)+" aborted.";
         else
           message = "E:Cannot abort task "+QString::number(id)+".";
@@ -1077,15 +1077,15 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     }
     return true;
   }
-  if (path == "/rest/csv/taskrequests/list/v1") {
+  if (path == "/rest/csv/taskinstances/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvTaskRequestsView->text().toUtf8().constData());
+    res.output()->write(_csvTaskInstancesView->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/html/taskrequests/list/v1") {
+  if (path == "/rest/html/taskinstances/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTaskRequestsView->text().toUtf8().constData());
+    res.output()->write(_htmlTaskInstancesView->text().toUtf8().constData());
     return true;
   }
   if (path == "/rest/csv/scheduler/events/v1") {
@@ -1209,18 +1209,18 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                this, SLOT(alertCancellationEmited(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
                _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
-    disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-               _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-               _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
-               _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-               _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-               _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
-               _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    disconnect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
+               _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
+    disconnect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
+               _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
+               _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
+    disconnect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
+               _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
+    disconnect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
+               _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
+    disconnect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
+               _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
     disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
                _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
     disconnect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
@@ -1290,18 +1290,18 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             this, SLOT(alertCancellationEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
             _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
-    connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-            _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-            _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
-            _taskRequestsHistoryModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskQueued(TaskRequest)),
-            _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskStarted(TaskRequest)),
-            _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskRequest)),
-            _unfinishedTaskRequestModel, SLOT(taskChanged(TaskRequest)));
+    connect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
+            _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
+    connect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
+            _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
+    connect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
+            _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
+    connect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
+            _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
+    connect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
+            _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
+    connect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
+            _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
     connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)),
             _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>,QList<Event>)));
     connect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
@@ -1365,13 +1365,13 @@ void WebConsole::globalParamsChanged(ParamSet globalParams) {
   _cssoverload = globalParams.rawValue("webconsole.cssoverload", "");
   QString customactions_taskslist =
       globalParams.rawValue("webconsole.customactions.taskslist");
-  QString customactions_requestslist =
-      globalParams.rawValue("webconsole.customactions.requestslist");
+  QString customactions_instanceslist =
+      globalParams.rawValue("webconsole.customactions.instanceslist");
   _customaction_taskdetail =
       globalParams.rawValue("webconsole.customactions.taskdetail", "");
   _tasksModel->setCustomActions(customactions_taskslist);
-  _unfinishedTaskRequestModel->setCustomActions(customactions_requestslist);
-  _taskRequestsHistoryModel->setCustomActions(customactions_requestslist);
+  _unfinishedTaskInstancetModel->setCustomActions(customactions_instanceslist);
+  _taskInstancesHistoryModel->setCustomActions(customactions_instanceslist);
 }
 
 void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,

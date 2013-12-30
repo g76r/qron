@@ -11,18 +11,18 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with libqtssu.  If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HTMLTASKREQUESTITEMDELEGATE_H
-#define HTMLTASKREQUESTITEMDELEGATE_H
+#ifndef HTMLTASKINSTANCEITEMDELEGATE_H
+#define HTMLTASKINSTANCEITEMDELEGATE_H
 
 #include "textview/htmlitemdelegate.h"
 
-/** Specific item delegate for task requests. */
-class HtmlTaskRequestItemDelegate : public HtmlItemDelegate {
+/** Specific item delegate for task instances. */
+class HtmlTaskInstanceItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
-  Q_DISABLE_COPY(HtmlTaskRequestItemDelegate)
+  Q_DISABLE_COPY(HtmlTaskInstanceItemDelegate)
 public:
-  explicit HtmlTaskRequestItemDelegate(QObject *parent = 0);
+  explicit HtmlTaskInstanceItemDelegate(QObject *parent = 0);
   QString text(const QModelIndex &index) const;
 };
 
-#endif // HTMLTASKREQUESTITEMDELEGATE_H
+#endif // HTMLTASKINSTANCEITEMDELEGATE_H
