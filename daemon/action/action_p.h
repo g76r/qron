@@ -17,6 +17,7 @@
 #include "action.h"
 #include <QPointer>
 #include "sched/scheduler.h"
+#include "config/eventsubscription.h"
 
 class ActionData : public QSharedData {
 public:
@@ -28,9 +29,11 @@ public:
   /** Type of action for programmatic test, e.g. "postnotice" */
   virtual QString actionType() const;
   /** Default: do nothing */
-  virtual void trigger(const ParamsProvider *context) const;
+  virtual void trigger(EventSubscription subscription,
+                       const ParamsProvider *context) const;
   /** Default: call trigger() using the TaskInstance as a ParamProvider. */
-  virtual void triggerWithinTaskInstance(TaskInstance context) const;
+  virtual void triggerWithinTaskInstance(EventSubscription subscription,
+                                         TaskInstance context) const;
   virtual QString targetName() const;
 };
 

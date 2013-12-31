@@ -75,8 +75,9 @@ public:
   ~Scheduler();
   /** This method is thread-safe */
   bool reloadConfiguration(QIODevice *source);
-  void loadEventSubscription(PfNode listnode, QList<EventSubscription> *list,
-                       QString contextLabel, Task contextTask = Task());
+  void loadEventSubscription(QString subscriberId, PfNode listnode,
+                             QList<EventSubscription> *list,
+                             QString contextLabel, Task contextTask = Task());
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
   Authenticator *authenticator() { return _authenticator; }
@@ -92,6 +93,14 @@ public:
   int maxtotaltaskinstances() const { return _maxtotaltaskinstances; }
   int maxqueuedrequests() const { return _maxqueuedrequests; }
   Calendar calendarByName(QString name) const;
+  ParamSet globalParams() const { return _globalParams; }
+  /** This method is threadsafe */
+  bool taskExists(QString fqtn);
+  /** This method is threadsafe */
+  Task task(QString fqtn);
+  /** This method is threadsafe */
+  void activateWorkflowTransition(TaskInstance workflowTaskInstance,
+                                  QString transitionId);
 
 public slots:
   /** Explicitely request task execution now.
@@ -105,7 +114,8 @@ public slots:
    * @see asyncRequestTask
    * @see RequestFormField */
   QList<TaskInstance> syncRequestTask(
-      QString fqtn, ParamSet paramsOverriding = ParamSet(), bool force = false);
+      QString fqtn, ParamSet paramsOverriding = ParamSet(), bool force = false,
+      TaskInstance callerTask = TaskInstance());
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
    * processing the request.
@@ -116,7 +126,8 @@ public slots:
    * @see syncRequestTask
    * @see RequestFormField */
   void asyncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
-                        bool force = false);
+                        bool force = false,
+                        TaskInstance callerTask = TaskInstance());
   /** Cancel a queued request.
    * @return TaskRequest.isNull() iff error (e.g. request not found or no longer
    * queued */
@@ -153,11 +164,6 @@ public slots:
     * This method is threadsafe */
   void enableAllTasks(bool enable);
   //LATER enableAllTasksWithinGroup
-  ParamSet globalParams() const { return _globalParams; }
-  /** This method is threadsafe */
-  bool taskExists(QString fqtn);
-  /** This method is threadsafe */
-  Task task(QString fqtn);
 
 signals:
   void tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
@@ -222,10 +228,13 @@ private:
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
   Q_INVOKABLE QList<TaskInstance> doRequestTask(
-      QString fqtn, ParamSet paramsOverriding, bool force);
+      QString fqtn, ParamSet paramsOverriding, bool force,
+      TaskInstance callerTask);
   TaskInstance enqueueRequest(TaskInstance request, ParamSet paramsOverriding);
   Q_INVOKABLE TaskInstance doCancelRequest(quint64 id);
   Q_INVOKABLE TaskInstance doAbortTask(quint64 id);
+  Q_INVOKABLE void doActivateWorkflowTransition(
+      TaskInstance workflowTaskInstance, QString transitionId);
 };
 
 #endif // SCHEDULER_H

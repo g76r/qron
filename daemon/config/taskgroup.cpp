@@ -50,14 +50,18 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
   ConfigUtils::loadUnsetenv(node, &tgd->_unsetenv);
   tgd->_unsetenv.setParent(parentUnsetenv);
   foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventSubscription(child, &tgd->_onstart, tgd->_id);
+    scheduler->loadEventSubscription(tgd->_id, child, &tgd->_onstart, tgd->_id);
   foreach (PfNode child, node.childrenByName("onsuccess"))
-    scheduler->loadEventSubscription(child, &tgd->_onsuccess, tgd->_id);
+    scheduler->loadEventSubscription(
+          tgd->_id, child, &tgd->_onsuccess, tgd->_id);
   foreach (PfNode child, node.childrenByName("onfailure"))
-    scheduler->loadEventSubscription(child, &tgd->_onfailure, tgd->_id);
+    scheduler->loadEventSubscription(
+          tgd->_id, child, &tgd->_onfailure, tgd->_id);
   foreach (PfNode child, node.childrenByName("onfinish")) {
-    scheduler->loadEventSubscription(child, &tgd->_onsuccess, tgd->_id);
-    scheduler->loadEventSubscription(child, &tgd->_onfailure, tgd->_id);
+    scheduler->loadEventSubscription(
+          tgd->_id, child, &tgd->_onsuccess, tgd->_id);
+    scheduler->loadEventSubscription(
+          tgd->_id, child, &tgd->_onfailure, tgd->_id);
   }
   d = tgd;
 }

@@ -36,7 +36,9 @@ public:
       _port = (quint16)port;
     }
   }
-  void trigger(const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription,
+               const ParamsProvider *context) const {
+    Q_UNUSED(subscription)
     // LATER run in a separate thread to avoid network/dns/etc. hangups
     if (!_port) // address is invalid
       return;

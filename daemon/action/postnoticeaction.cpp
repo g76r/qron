@@ -26,7 +26,9 @@ public:
   QString actionType() const {
     return "postnotice";
   }
-  void trigger(const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription,
+               const ParamsProvider *context) const {
+    Q_UNUSED(subscription)
     if (_scheduler)
       _scheduler.data()->postNotice(ParamSet().evaluate(_notice, context));
   }

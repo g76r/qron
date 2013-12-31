@@ -15,17 +15,18 @@
 #define EXECUTOR_H
 
 #include <QObject>
-#include "sched/taskinstance.h"
+#include "taskinstance.h"
 #include "config/host.h"
 #include <QPointer>
 #include <QProcess>
-#include "alert/alerter.h"
 #include <QNetworkReply>
 #include <QTimer>
 
 class QThread;
 class QNetworkAccessManager;
 class QNetworkReply;
+class StepInstance;
+class Alerter;
 
 /** Class handling execution of a task after its being dequeued, from start
  * to end or cancellation. */
@@ -42,15 +43,19 @@ class Executor : public QObject {
   QNetworkReply *_reply;
   Alerter *_alerter;
   QTimer *_abortTimeout;
+  QHash<QString,StepInstance> _steps;
 
 public:
   explicit Executor(Alerter *alerter);
+  ~Executor();
   void setTemporary(bool temporary = true) { _isTemporary = temporary; }
   bool isTemporary() const { return _isTemporary; }
   /** Execute a task now. This method is thread-safe. */
   void execute(TaskInstance instance);
   /** Abort current task now. This method is thread-safe. */
   void abort();
+  /** This method is thread-safe. */
+  void activateWorkflowTransition(QString transitionId);
 
 signals:
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
@@ -69,13 +74,13 @@ private slots:
   void readyReadStandardOutput();
   void replyError(QNetworkReply::NetworkError error);
   void replyFinished();
-  void doAbort();
 
 private:
   Q_INVOKABLE void doExecute(TaskInstance instance);
   void localMean(TaskInstance instance);
   void sshMean(TaskInstance instance);
   void httpMean(TaskInstance instance);
+  void workflowMean(TaskInstance workflowInstance);
   void execProcess(TaskInstance instance, QStringList cmdline,
                    QProcessEnvironment sysenv);
   inline void prepareEnv(TaskInstance instance, QProcessEnvironment *sysenv,
@@ -83,6 +88,9 @@ private:
   void replyHasFinished(QNetworkReply *reply,
                         QNetworkReply::NetworkError error);
   void taskFinishing(bool success, int returnCode);
+  Q_INVOKABLE void doAbort();
+  void workflowFinished(bool success, int returnCode);
+  Q_INVOKABLE void doActivateWorkflowTransition(QString transitionId);
 };
 
 #endif // EXECUTOR_H

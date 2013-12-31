@@ -18,6 +18,7 @@
 #include "sched/scheduler.h"
 #include "log/log.h"
 #include "configutils.h"
+#include "action/requesttaskaction.h"
 
 class StepData : public QSharedData {
 public:
@@ -37,19 +38,19 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
            QHash<QString,Task> oldTasks) {
   StepData *sd = new StepData;
   sd->_scheduler = scheduler;
-  sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false); // LATER check uniqueness
-  sd->_fqsn = workflow.fqtn()+"."+sd->_id;
+  sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false);
+  sd->_fqsn = workflow.fqtn()+":"+sd->_id;
   if (node.name() == "and") {
     sd->_kind = Step::AndJoin;
     foreach (PfNode child, node.childrenByName("onready"))
       scheduler->loadEventSubscription(
-            child, &sd->_onready, sd->_id, workflow);
+            sd->_fqsn, child, &sd->_onready, sd->_id, workflow);
     // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
   } else if (node.name() == "or") {
     sd->_kind = Step::OrJoin;
     foreach (PfNode child, node.childrenByName("onready"))
       scheduler->loadEventSubscription(
-            child, &sd->_onready, sd->_id, workflow);
+            sd->_fqsn, child, &sd->_onready, sd->_id, workflow);
     // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
   } else if (node.name() == "task") {
     sd->_kind = Step::SubTask;
@@ -58,14 +59,22 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
       Log::warning() << "ignoring inconsistent taskgroup: " << node.toString();
     sd->_subtask = Task(node, scheduler, workflow.taskGroup(), oldTasks,
                         workflow);
-    // TODO héritage des params du workflow vers la subtask ? genre if not set w/o inheritance, then override ?
-    // LATER warn if onready is defined
+    // TODO handle parameters overrinding in subtasks
+    // TODO force = true for subtask
+    if (sd->_subtask.isNull()) {
+      Log::error() << "step with invalid subtask: " << node.toString();
+      delete sd;
+      return;
+    }
+    sd->_onready.append(
+          EventSubscription(sd->_fqsn, "onready",
+                            RequestTaskAction(scheduler, sd->_subtask.fqtn())));
+    // LATER warn if onready is defined for a subtask step
   } else {
       Log::error() << "unsupported step kind: " << node.toString();
       delete sd;
       return;
   }
-  // FIXME build predecessors list
   d = sd;
 }
 
@@ -107,6 +116,11 @@ Task Step::workflow() const {
 
 QSet<QString> Step::predecessors() const {
   return d ? d->_predecessors : QSet<QString>();
+}
+
+void Step::insertPredecessor(QString predecessor) {
+  if (d)
+    d->_predecessors.insert(predecessor);
 }
 
 void Step::triggerReadyEvents(TaskInstance workflowTaskInstance) const {

@@ -19,15 +19,19 @@
 
 class EventSubscriptionData : public QSharedData {
 public:
-  QString _eventName;
+  QString _subscriberName, _eventName;
   QList<Action> _actions;
+  EventSubscriptionData(QString subscriberName = QString(),
+                        QString eventName = QString())
+    : _subscriberName(subscriberName), _eventName(eventName) { }
 };
 
 EventSubscription::EventSubscription() {
 }
 
-EventSubscription::EventSubscription(PfNode node, Scheduler *scheduler)
-  : d(new EventSubscriptionData) {
+EventSubscription::EventSubscription(
+    QString subscriberName, PfNode node, Scheduler *scheduler)
+  : d(new EventSubscriptionData(subscriberName)) {
   d->_eventName = node.name();
   // TODO load filter
   // LATER support for non-text/non-regexp filters e.g. "onstatus >=3"
@@ -37,6 +41,18 @@ EventSubscription::EventSubscription(PfNode node, Scheduler *scheduler)
     if (!a.isNull())
       d->_actions.append(a);
   }
+}
+
+EventSubscription::EventSubscription(
+    QString subscriberName, QString eventName, Action action)
+  : d(new EventSubscriptionData(subscriberName, eventName)) {
+  d->_actions.append(action);
+}
+
+EventSubscription::EventSubscription(
+    QString subscriberName, QString eventName, QList<Action> actions)
+  : d(new EventSubscriptionData(subscriberName, eventName)) {
+  d->_actions = actions;
 }
 
 EventSubscription::~EventSubscription() {
@@ -63,13 +79,13 @@ public:
 void EventSubscription::triggerActions(TaskInstance context) const {
   // TODO implement filters and EventContext
   foreach (Action a, d->_actions)
-    a.trigger(&context);
+    a.trigger(*this, context);
 }
 
 void EventSubscription::triggerActions(const ParamsProvider *context) const {
   // TODO implement filters and EventContext
   foreach (Action a, d->_actions)
-    a.trigger(context);
+    a.trigger(*this, context);
 }
 
 QStringList EventSubscription::toStringList(QList<EventSubscription> list) {
@@ -94,4 +110,8 @@ QString EventSubscription::humanReadableCause() const {
 
 QList<Action> EventSubscription::actions() const {
   return d ? d->_actions : QList<Action>();
+}
+
+QString EventSubscription::subscriberName() const {
+  return d ? d->_subscriberName : QString();
 }

@@ -33,9 +33,9 @@ public:
   TaskInstance();
   TaskInstance(const TaskInstance &);
   TaskInstance(Task task, bool force = false,
-               TaskInstance supertask = TaskInstance());
+               TaskInstance callerTask = TaskInstance());
   TaskInstance(Task task, quint64 groupId, bool force = false,
-               TaskInstance supertask = TaskInstance());
+               TaskInstance callerTask = TaskInstance());
   ~TaskInstance();
   TaskInstance &operator=(const TaskInstance &);
   bool operator==(const TaskInstance &) const;
@@ -97,9 +97,9 @@ public:
   void overrideSetenv(QString key, QString value);
   bool abortable() const;
   void setAbortable(bool abortable = true) const;
-  /** Return supertask instance (workflow task instance if this is a subclass
-   * instance) if any. */
-  TaskInstance supertask() const;
+  /** Return caller task instance (e.g. task that triggered a requesttask event
+   * action or workflow task instance if for a subclass instance), if any. */
+  TaskInstance callerTask() const;
 };
 
 uint qHash(const TaskInstance &instance);

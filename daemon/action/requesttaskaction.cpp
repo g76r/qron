@@ -20,28 +20,53 @@ public:
   ParamSet _params;
   bool _force;
   RequestTaskActionData(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
-                       ParamSet params = ParamSet(), bool force = false)
+                        ParamSet params = ParamSet(), bool force = false)
     : ActionData(scheduler), _idOrFqtn(idOrFqtn), _params(params), _force(force) { }
-  void trigger(const ParamsProvider *context) const {
+  void triggerWithinTaskInstance(EventSubscription subscription,
+                                 TaskInstance context) const {
+    Q_UNUSED(subscription)
     if (_scheduler) {
-      // LATER implement triggerWithinTaskInstance rather than guessing if we are in a TaskInstance context
-      QString fqtn = context
-          ? context->paramValue("!fqtn").toString() : QString();
-      QString id = context
-          ? context->paramValue("!taskinstanceid").toString() : QString();
-      QString group = context
-          ? context->paramValue("!taskgroupid").toString() : QString();
-      Log::log(fqtn.isNull() ? Log::Debug : Log::Info, fqtn, id.toLongLong())
-          << "requesttask action requesting execution of task " << _idOrFqtn;
-      QString idOrFqtn = _params.evaluate(_idOrFqtn, context);
+      QString fqtn = context.task().fqtn();
+      quint64 id = context.id();
+      QString group = context.task().taskGroup().id();
+      QString idOrFqtn = _params.evaluate(_idOrFqtn, &context);
       QString local = group+"."+_idOrFqtn;
-      // TODO evaluate _params in the context of triggering event before pass them to asyncRequestTask
-      if (_scheduler.data()->taskExists(local))
-        _scheduler.data()->asyncRequestTask(local, _params, _force);
+      // TODO evaluate _params in the context of triggering event before pass them to syncRequestTask
+      QList<TaskInstance> instances
+          = _scheduler.data()->syncRequestTask(
+            _scheduler.data()->taskExists(local) ? local : idOrFqtn,
+            _params, _force, context);
+      if (instances.isEmpty())
+        Log::error(fqtn, id)
+            << "requesttask action failed to request execution of task "
+            << idOrFqtn << " within event subscription context "
+            << subscription.subscriberName() << "|" << subscription.eventName();
       else
-        _scheduler.data()->asyncRequestTask(idOrFqtn, _params, _force);
-      // LATER if requestTask returns the TaskRequest object, we can track child taskinstanceid
-      // LATER this special case should be logged to a special data model to enable drawing parent-child diagrams
+        foreach (TaskInstance instance, instances)
+          Log::info(fqtn, id)
+              << "requesttask action requested execution of task "
+              << instance.task().fqtn() << "/" << instance.groupId();
+    }
+
+  }
+  void trigger(EventSubscription subscription,
+               const ParamsProvider *context) const {
+    Q_UNUSED(subscription)
+    Q_UNUSED(context)
+    if (_scheduler) {
+      // TODO evaluate _params in the context of triggering event before pass them to syncRequestTask
+      QList<TaskInstance> instances
+          = _scheduler.data()->syncRequestTask(_idOrFqtn, _params, _force);
+      if (instances.isEmpty())
+        Log::error()
+            << "requesttask action failed to request execution of task "
+            << _idOrFqtn << " within event subscription context "
+            << subscription.subscriberName() << "|" << subscription.eventName();
+      else
+        foreach (TaskInstance instance, instances)
+          Log::info()
+              << "requesttask action requested execution of task "
+              << instance.task().fqtn() << "/" << instance.groupId();
     }
   }
   QString toString() const {
@@ -56,11 +81,12 @@ public:
 };
 
 RequestTaskAction::RequestTaskAction(Scheduler *scheduler, QString idOrFqtn,
-                                   ParamSet params, bool force)
+                                     ParamSet params, bool force)
   : Action(new RequestTaskActionData(scheduler, idOrFqtn, params, force)) {
 }
 
-RequestTaskAction::RequestTaskAction(const RequestTaskAction &rhs) : Action(rhs) {
+RequestTaskAction::RequestTaskAction(const RequestTaskAction &rhs)
+  : Action(rhs) {
 }
 
 RequestTaskAction::~RequestTaskAction() {

@@ -339,29 +339,29 @@ ignore_task:;
   }
   _onstart.clear();
   foreach (PfNode node, root.childrenByName("onstart"))
-    loadEventSubscription(node, &_onstart, "");
+    loadEventSubscription("*", node, &_onstart, "");
   _onsuccess.clear();
   foreach (PfNode node, root.childrenByName("onsuccess"))
-    loadEventSubscription(node, &_onsuccess, "");
+    loadEventSubscription("*", node, &_onsuccess, "");
   _onfailure.clear();
   foreach (PfNode node, root.childrenByName("onfailure"))
-    loadEventSubscription(node, &_onfailure, "");
+    loadEventSubscription("*", node, &_onfailure, "");
   foreach (PfNode node, root.childrenByName("onfinish")) {
-    loadEventSubscription(node, &_onsuccess, "");
-    loadEventSubscription(node, &_onfailure, "");
+    loadEventSubscription("*", node, &_onsuccess, "");
+    loadEventSubscription("*", node, &_onfailure, "");
   }
   _onlog.clear();
   foreach (PfNode node, root.childrenByName("onlog"))
-    loadEventSubscription(node, &_onlog, "");
+    loadEventSubscription("*", node, &_onlog, "");
   _onnotice.clear();
   foreach (PfNode node, root.childrenByName("onnotice"))
-    loadEventSubscription(node, &_onnotice, "");
+    loadEventSubscription("*", node, &_onnotice, "");
   _onschedulerstart.clear();
   foreach (PfNode node, root.childrenByName("onschedulerstart"))
-    loadEventSubscription(node, &_onschedulerstart, "");
+    loadEventSubscription("*", node, &_onschedulerstart, "");
   _onconfigload.clear();
   foreach (PfNode node, root.childrenByName("onconfigload"))
-    loadEventSubscription(node, &_onconfigload, "");
+    loadEventSubscription("*", node, &_onconfigload, "");
   // LATER onschedulershutdown
   foreach (const RequestTaskActionLink &link, _requestTaskActionLinks) {
     QString id = link._action.targetName();
@@ -548,15 +548,16 @@ void Scheduler::reloadAccessControlConfig() {
   }
 }
 
-void Scheduler::loadEventSubscription(PfNode listnode, QList<EventSubscription> *list,
-                                QString contextLabel, Task contextTask) {
+void Scheduler::loadEventSubscription(
+    QString subscriberId, PfNode listnode, QList<EventSubscription> *list,
+    QString contextLabel, Task contextTask) {
   if (!list)
     return;
-  EventSubscription sub(listnode, this);
+  EventSubscription sub(subscriberId, listnode, this);
   list->append(sub);
   foreach (Action a, sub.actions()) {
     if (a.actionType() == "requesttask") {
-      _requestTaskActionLinks.append(
+      _requestTaskActionLinks.append( // TODO rename and merge contextLabel to subscriberId
             RequestTaskActionLink(a, listnode.name(), contextLabel,
                                  contextTask));
     }
@@ -564,29 +565,33 @@ void Scheduler::loadEventSubscription(PfNode listnode, QList<EventSubscription> 
 }
 
 QList<TaskInstance> Scheduler::syncRequestTask(
-    QString fqtn, ParamSet paramsOverriding, bool force) {
+    QString fqtn, ParamSet paramsOverriding, bool force,
+    TaskInstance callerTask) {
   if (this->thread() == QThread::currentThread())
-    return doRequestTask(fqtn, paramsOverriding, force);
+    return doRequestTask(fqtn, paramsOverriding, force, callerTask);
   QList<TaskInstance> requests;
   QMetaObject::invokeMethod(this, "doRequestTask",
                             Qt::BlockingQueuedConnection,
                             Q_RETURN_ARG(QList<TaskInstance>, requests),
                             Q_ARG(QString, fqtn),
                             Q_ARG(ParamSet, paramsOverriding),
-                            Q_ARG(bool, force));
+                            Q_ARG(bool, force),
+                            Q_ARG(TaskInstance, callerTask));
   return requests;
 }
 
 void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
-                                 bool force) {
+                                 bool force, TaskInstance callerTask) {
   QMetaObject::invokeMethod(this, "doRequestTask", Qt::QueuedConnection,
                             Q_ARG(QString, fqtn),
                             Q_ARG(ParamSet, paramsOverriding),
-                            Q_ARG(bool, force));
+                            Q_ARG(bool, force),
+                            Q_ARG(TaskInstance, callerTask));
 }
 
 QList<TaskInstance> Scheduler::doRequestTask(
-    QString fqtn, ParamSet paramsOverriding, bool force) {
+    QString fqtn, ParamSet paramsOverriding, bool force,
+    TaskInstance callerTask) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
   Cluster cluster = _clusters.value(task.target());
@@ -620,7 +625,7 @@ QList<TaskInstance> Scheduler::doRequestTask(
   if (cluster.balancing() == "each") {
     qint64 groupId = 0;
     foreach (Host host, cluster.hosts()) {
-      TaskInstance request(task, groupId, force);
+      TaskInstance request(task, groupId, force, callerTask);
       if (!groupId)
         groupId = request.groupId();
       request.setTarget(host);
@@ -630,7 +635,8 @@ QList<TaskInstance> Scheduler::doRequestTask(
     }
   } else {
     TaskInstance request;
-    request = enqueueRequest(TaskInstance(task, force), paramsOverriding);
+    request = enqueueRequest(TaskInstance(task, force, callerTask),
+                             paramsOverriding);
     if (!request.isNull())
       requests.append(request);
   }
@@ -1128,4 +1134,23 @@ void Scheduler::periodicChecks() {
 Calendar Scheduler::calendarByName(QString name) const {
   QMutexLocker ml(&_configMutex);
   return _calendars.value(name);
+}
+
+void Scheduler::activateWorkflowTransition(TaskInstance workflowTaskInstance,
+                                           QString transitionId) {
+  QMetaObject::invokeMethod(this, "doActivateWorkflowTransition",
+                            Qt::QueuedConnection,
+                            Q_ARG(TaskInstance, workflowTaskInstance),
+                            Q_ARG(QString, transitionId));
+}
+
+void Scheduler::doActivateWorkflowTransition(TaskInstance workflowTaskInstance,
+                                             QString transitionId) {
+  Executor *executor = _runningTasks.value(workflowTaskInstance);
+  if (executor)
+    executor->activateWorkflowTransition(transitionId);
+  else
+    Log::error() << "cannot activate workflow transition on non-running "
+                    "workflow " << workflowTaskInstance.task().fqtn()
+                 << "/" << workflowTaskInstance.id() << ": " << transitionId;
 }

@@ -19,24 +19,28 @@
 #include "taskinstance.h"
 
 class StepInstanceData;
+class Executor;
 
 class StepInstance {
   QSharedDataPointer<StepInstanceData> d;
 
 public:
   StepInstance();
-  StepInstance(Step step, TaskInstance workflowTaskInstance);
+  StepInstance(Step step, TaskInstance workflowTaskInstance,
+               QPointer<Executor> executor);
   StepInstance(const StepInstance &);
   StepInstance &operator=(const StepInstance &);
   ~StepInstance();
   bool isNull() const;
   Step step() const;
   bool isReady() const;
-  /** Method to be called by Executor every time a predecessor is ready */
-  void predecessorReady(QString predecessor);
+  /** Method to be called by Executor every time a predecessor is ready.
+    * The step will interpret it depending on its kind and on its current state.
+    * A subtask step will start the subtask on first call.
+    * A join step will trigger onready event when appropriate depending on the
+    * join type. */
+  void predecessorReady(QString predecessor) const;
   TaskInstance workflowTaskInstance() const;
-  TaskInstance subtaskInstance() const;
-  void setSubtaskInstance(TaskInstance subtask);
 };
 
 #endif // STEPINSTANCE_H

@@ -22,7 +22,8 @@ class Scheduler;
 /** Action canceling an alert. */
 class CancelAlertAction : public Action {
 public:
-  CancelAlertAction(Scheduler *scheduler = 0, QString alert = QString());
+  explicit CancelAlertAction(Scheduler *scheduler = 0,
+                             QString alert = QString());
   CancelAlertAction(const CancelAlertAction &);
   ~CancelAlertAction();
 };

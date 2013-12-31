@@ -21,7 +21,7 @@ class UdpActionData;
 /** Action sending an arbitrary UDP packet. */
 class UdpAction : public Action {
 public:
-  UdpAction(QString address = QString(), QString message = QString());
+  explicit UdpAction(QString address = QString(), QString message = QString());
   UdpAction(const UdpAction &);
   ~UdpAction();
 };

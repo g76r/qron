@@ -48,6 +48,7 @@ public:
   Task subtask() const;
   Task workflow() const;
   QSet<QString> predecessors() const;
+  void insertPredecessor(QString predecessor);
   void triggerReadyEvents(TaskInstance workflowTaskInstance) const;
   QList<EventSubscription> onreadyEventSubscriptions() const;
 };

@@ -22,7 +22,9 @@ public:
   ParamSet _params;
   HttpActionData(QString url = QString(), ParamSet params = ParamSet())
     : _url(url), _params(params) { }
-  void trigger(const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription,
+               const ParamsProvider *context) const {
+    Q_UNUSED(subscription)
     QUrl url(_params.evaluate(_url, context));
     // LATER implement http action
   }

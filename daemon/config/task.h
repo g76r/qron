@@ -76,8 +76,8 @@ public:
   QList<EventSubscription> onsuccessEventSubscriptions() const;
   QList<EventSubscription> onfailureEventSubscriptions() const;
   /** Events hash with "onsuccess", "onfailure"... key, mainly for UI purpose.
-   */
-  QList<EventSubscription> allEventsFilters() const;
+   * Not including group events subscriptions. */
+  QList<EventSubscription> allEventsSubscriptions() const;
   bool enabled() const;
   void setEnabled(bool enabled) const;
   bool lastSuccessful() const;
@@ -120,6 +120,7 @@ public:
   void clearOtherTriggers();
   /** Workflow steps. Empty list for standalone tasks. */
   QHash<QString,Step> steps() const;
+  QStringList startSteps() const;
   /** Super task (e.g. workflow task) to which this task belongs, if any. */
   Task supertask() const;
 };

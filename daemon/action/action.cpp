@@ -21,6 +21,8 @@
 #include "requesttaskaction.h"
 #include "udpaction.h"
 #include "logaction.h"
+#include "stepaction.h"
+#include "endaction.h"
 
 Action::Action() {
 }
@@ -43,14 +45,16 @@ Action::~Action() {
 ActionData::~ActionData() {
 }
 
-void Action::trigger(const ParamsProvider *context) const {
+void Action::trigger(EventSubscription subscription,
+                     const ParamsProvider *context) const {
   if (d)
-    d->trigger(context);
+    d->trigger(subscription, context);
 }
 
-void Action::trigger(TaskInstance context) const {
+void Action::trigger(EventSubscription subscription,
+                     TaskInstance context) const {
   if (d)
-    d->triggerWithinTaskInstance(context);
+    d->triggerWithinTaskInstance(subscription, context);
 }
 
 QString ActionData::toString() const {
@@ -61,14 +65,19 @@ QString ActionData::actionType() const {
   return "unknown";
 }
 
-void ActionData::trigger(
-    const ParamsProvider *context) const {
+void ActionData::trigger(EventSubscription subscription,
+                         const ParamsProvider *context) const {
   Q_UNUSED(context)
-  Log::error() << "ActionData::trigger() called whereas it should never";
+  Log::error() << "ActionData::trigger() called whereas it should never, "
+                  "from subscription " << subscription.subscriberName()
+                  << "|" << subscription.eventName();
 }
 
-void ActionData::triggerWithinTaskInstance(TaskInstance context) const {
-  trigger(&context);
+void ActionData::triggerWithinTaskInstance(EventSubscription subscription,
+                                           TaskInstance context) const {
+  // default behaviour for actions that do not need to be aware of task instance
+  // context
+  trigger(subscription, &context);
 }
 
 QString Action::toString() const {
@@ -116,8 +125,14 @@ Action Action::createAction(PfNode node, Scheduler *scheduler) {
     return LogAction(
           Log::severityFromString(node.attribute("severity", "info")),
           node.contentAsString());
+  } else if (node.name() == "step") {
+    return StepAction(scheduler, node.contentAsString());
+  } else if (node.name() == "end") {
+    // TODO success and returncode should be evaluatable strings
+    return EndAction(scheduler, node.boolAttribute("success", true),
+                     node.longAttribute("returncode", 0));
   } else {
-    Log::warning() << "unknown action type: " << node.name();
+    Log::error() << "unknown action type: " << node.name();
     return Action();
   }
 }

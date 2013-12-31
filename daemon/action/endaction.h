@@ -11,22 +11,22 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef POSTNOTICEACTION_H
-#define POSTNOTICEACTION_H
+#ifndef ENDACTION_H
+#define ENDACTION_H
 
 #include "action.h"
-#include <QString>
+#include "util/paramset.h"
 
-class PostNoticeActionData;
+class EndActionData;
 class Scheduler;
 
-/** Action posting a notice. */
-class PostNoticeAction : public Action {
+class EndAction : public Action {
 public:
-  explicit PostNoticeAction(Scheduler *scheduler = 0,
-                            QString notice = QString());
-  PostNoticeAction(const PostNoticeAction &);
-  ~PostNoticeAction();
+  explicit EndAction(Scheduler *scheduler = 0, bool success = true,
+                     int returnCode = 0);
+  EndAction(const EndAction &);
+  EndAction &operator=(const EndAction &);
+  ~EndAction();
 };
 
-#endif // POSTNOTICEACTION_H
+#endif // ENDACTION_H

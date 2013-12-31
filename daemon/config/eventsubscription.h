@@ -32,8 +32,11 @@ class EventSubscription {
 
 public:
   EventSubscription();
+  EventSubscription(QString subscriberName, QString eventName, Action action);
+  EventSubscription(QString subscriberName, QString eventName,
+                    QList<Action> actions);
   /** Parse configuration fragment. */
-  EventSubscription(PfNode node, Scheduler *scheduler);
+  EventSubscription(QString subscriberName, PfNode node, Scheduler *scheduler);
   EventSubscription(const EventSubscription &);
   EventSubscription &operator=(const EventSubscription &);
   ~EventSubscription();
@@ -44,6 +47,10 @@ public:
   /** Full description of event matched with applicable filter.
    * e.g. "onstart" "onnotice /foo.*bar/" "onstatus >= 3" */
   QString humanReadableCause() const;
+  /** Name identifiying the subscriber.
+   * e.g. fqtn for a task, groupid for a group, fqsn for a step, * for global
+   * subscriptions. */
+  QString subscriberName() const;
   /** Trigger actions if context complies with filter conditions.
    * Use this method if the event occured in the context of a task. */
   void triggerActions(TaskInstance context) const;

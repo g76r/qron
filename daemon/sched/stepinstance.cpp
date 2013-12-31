@@ -13,24 +13,32 @@
  */
 #include "stepinstance.h"
 #include <QSharedData>
+#include "executor.h"
 
 class StepInstanceData : public QSharedData {
 public:
   Step _step;
-  bool _ready;
-  QSet<QString> _pendingPredecessors;
-  TaskInstance _workflowTaskInstance, _subtaskInstance;
+  mutable bool _ready;
+  // note that QSet is not thread safe, however it is only modified by
+  // predecessorReady() which is only called by one thread (the executor thread
+  // handling the workflow)
+  mutable QSet<QString> _pendingPredecessors;
+  TaskInstance _workflowTaskInstance;
+  QPointer<Executor> _executor;
   StepInstanceData(Step step = Step(),
-                   TaskInstance workflowTaskInstance = TaskInstance())
+                   TaskInstance workflowTaskInstance = TaskInstance(),
+                   QPointer<Executor> executor = QPointer<Executor>())
     : _step(step), _ready(false), _pendingPredecessors(step.predecessors()),
-      _workflowTaskInstance(workflowTaskInstance) { }
+      _workflowTaskInstance(workflowTaskInstance), _executor(executor) { }
 };
 
 StepInstance::StepInstance() {
 }
 
-StepInstance::StepInstance(Step step, TaskInstance workflowTaskInstance)
-  : d(new StepInstanceData(step, workflowTaskInstance)) {
+StepInstance::StepInstance(Step step, TaskInstance workflowTaskInstance,
+                           QPointer<Executor> executor)
+  : d(new StepInstanceData(step, workflowTaskInstance, executor)) {
+  // FIXME remove reference to executor
 }
 
 StepInstance::~StepInstance() {
@@ -53,7 +61,7 @@ bool StepInstance::isReady() const {
   return d ? d->_ready : false;
 }
 
-void StepInstance::predecessorReady(QString predecessor) {
+void StepInstance::predecessorReady(QString predecessor) const {
   if (!d)
     return;
   d->_pendingPredecessors.remove(predecessor);
@@ -65,27 +73,19 @@ void StepInstance::predecessorReady(QString predecessor) {
     }
     break;
   case Step::OrJoin:
+  case Step::SubTask: // a subtask step is actually an implicit or join
     if (!d->_ready) {
       d->_ready = true;
       d->_step.triggerReadyEvents(d->_workflowTaskInstance);
     }
     break;
-  case Step::SubTask:
   case Step::Unknown:
-    // nothing to do
-    break;
+    Log::error(d->_workflowTaskInstance.task().fqtn(),
+               d->_workflowTaskInstance.id())
+        << "StepInstance::predecessorReady called on unknown step kind";
   }
 }
 
 TaskInstance StepInstance::workflowTaskInstance() const {
   return d ? d->_workflowTaskInstance : TaskInstance();
-}
-
-TaskInstance StepInstance::subtaskInstance() const {
-  return d ? d->_subtaskInstance : TaskInstance();
-}
-
-void StepInstance::setSubtaskInstance(TaskInstance subtask) {
-  if (d)
-    d->_subtaskInstance = subtask;
 }

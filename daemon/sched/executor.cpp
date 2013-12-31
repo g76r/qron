@@ -21,6 +21,8 @@
 #include <QBuffer>
 #include <QNetworkReply>
 #include "log/qterrorcodes.h"
+#include "stepinstance.h"
+#include "alert/alerter.h"
 
 Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   _stderrWasUsed(false), _thread(new QThread),
@@ -37,6 +39,9 @@ Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   _abortTimeout->setSingleShot(true);
   connect(_abortTimeout, SIGNAL(timeout()), this, SLOT(doAbort()));
   //qDebug() << "creating new task executor" << this;
+}
+
+Executor::~Executor() {
 }
 
 void Executor::execute(TaskInstance instance) {
@@ -59,6 +64,8 @@ void Executor::doExecute(TaskInstance instance) {
     sshMean(instance);
   else if (mean == "http")
     httpMean(instance);
+  else if (mean == "workflow")
+    workflowMean(instance);
   else if (mean == "donothing") {
     emit taskStarted(instance);
     taskFinishing(true, 0);
@@ -384,6 +391,66 @@ void Executor::replyHasFinished(QNetworkReply *reply,
   taskFinishing(success, status);
 }
 
+void Executor::workflowMean(TaskInstance workflowInstance) {
+  foreach (Step step, workflowInstance.task().steps()) {
+    StepInstance si(step, workflowInstance, QPointer<Executor>(this));
+    _steps.insert(step.id(), si);
+  }
+  workflowInstance.setAbortable();
+  Log::fatal(workflowInstance.task().fqtn(), workflowInstance.id())
+      << "starting workflow";
+  emit taskStarted(workflowInstance);
+  foreach (QString id, workflowInstance.task().startSteps())
+    doActivateWorkflowTransition(workflowInstance.task().fqtn()+"|start|"+id);
+  // FIXME detect hanged up workflow (e.g. if no start tasks)
+}
+
+void Executor::activateWorkflowTransition(QString transitionId) {
+  QMetaObject::invokeMethod(this, "doActivateWorkflowTransition",
+                            Qt::QueuedConnection,
+                            Q_ARG(QString, transitionId));
+}
+
+void Executor::doActivateWorkflowTransition(QString transitionId) {
+  // Please read the note about transitionId naming conventions in
+  // Task::Task() method (where the workflow predecessors transitionId are
+  // built on configuration loading)
+  QStringList parts = transitionId.split('|');
+  if (parts.size() != 3) {
+    Log::error(_instance.task().fqtn(), _instance.id())
+        << "malfored transition id: " << transitionId;
+    return;
+  }
+  if (parts[1] == "onsuccess" || parts[1] == "onfailure") {
+    parts[1] = "onfinish";
+    transitionId = parts.join('|');
+  }
+  if (parts[2] == "$end") {
+    workflowFinished(true, 0);
+    // FIXME should wait for subtasks finished, not only ready (== requested)
+    // FIXME success = false if at less one task without successor fails ? false if at less one task fails ? parametrized ?
+    // FIXME returnCode only depends on success ? number of failures ? parametrized ?
+    return;
+  }
+  if (!_steps.contains(parts[2])) {
+    Log::error(_instance.task().fqtn(), _instance.id())
+        << "unknown step id in transition id: " << transitionId;
+    return;
+  }
+  //Log::fatal(_instance.task().fqtn(), _instance.id())
+  //    << "actual transtion id: " << transitionId;
+  Log::fatal(_instance.task().fqtn(), _instance.id())
+      << "activating transition " << transitionId;
+  _steps[parts[2]].predecessorReady(transitionId);
+}
+
+void Executor::workflowFinished(bool success, int returnCode) {
+  Log::fatal(_instance.task().fqtn(), _instance.id())
+      << "ending workflow";
+  _steps.clear(); // LATER give to TaskInstance ?
+  taskFinishing(success, returnCode);
+}
+
 void Executor::prepareEnv(TaskInstance instance, QProcessEnvironment *sysenv,
                           QHash<QString,QString> *setenv) {
   if (instance.task().params().valueAsBool("clearsysenv"))
@@ -443,6 +510,9 @@ void Executor::doAbort() {
     Log::info(_instance.task().fqtn(), _instance.id())
         << "http task abort requested";
     _reply->abort();
+  } else if (_instance.task().mean() == "workflow") {
+    // FIXME should abort running subtasks ?
+    workflowFinished(false, 1);
   } else {
     Log::warning(_instance.task().fqtn(), _instance.id())
         << "cannot abort task because its execution mean is not abortable";

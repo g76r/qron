@@ -23,8 +23,9 @@ class Scheduler;
 /** Action requesting for a task execution. */
 class RequestTaskAction : public Action {
 public:
-  RequestTaskAction(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
-                   ParamSet params = ParamSet(), bool force = false);
+  explicit RequestTaskAction(Scheduler *scheduler = 0,
+                             QString idOrFqtn = QString(),
+                             ParamSet params = ParamSet(), bool force = false);
   RequestTaskAction(const RequestTaskAction &);
   ~RequestTaskAction();
 };

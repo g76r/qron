@@ -22,7 +22,7 @@ class Scheduler;
 /** Action emitting an alert. */
 class EmitAlertAction : public Action {
 public:
-  EmitAlertAction(Scheduler *scheduler = 0, QString alert = QString());
+  explicit EmitAlertAction(Scheduler *scheduler = 0, QString alert = QString());
   EmitAlertAction(const EmitAlertAction &);
   ~EmitAlertAction();
 };

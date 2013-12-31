@@ -97,7 +97,9 @@ SOURCES += \
     ui/htmlalertitemdelegate.cpp \
     config/step.cpp \
     sched/stepinstance.cpp \
-    config/eventsubscription.cpp
+    config/eventsubscription.cpp \
+    action/stepaction.cpp \
+    action/endaction.cpp
 
 HEADERS += \
     config/task.h \
@@ -152,7 +154,9 @@ HEADERS += \
     ui/htmlalertitemdelegate.h \
     config/step.h \
     sched/stepinstance.h \
-    config/eventsubscription.h
+    config/eventsubscription.h \
+    action/stepaction.h \
+    action/endaction.h
 
 RESOURCES += \
     ui/webconsole.qrc

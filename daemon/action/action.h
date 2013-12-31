@@ -23,6 +23,7 @@ class ActionData;
 class EventSubscription;
 class Scheduler;
 class TaskInstance;
+class EventSubscription;
 
 /** Action performed when an event (e.g. onsuccess) occurs. */
 class Action {
@@ -35,8 +36,9 @@ public:
   Action &operator=(const Action &);
   ~Action();
   bool isNull() const { return !d; }
-  void trigger(const ParamsProvider *context) const;
-  void trigger(TaskInstance context) const;
+  void trigger(EventSubscription subscription,
+               const ParamsProvider *context) const;
+  void trigger(EventSubscription subscription, TaskInstance context) const;
   /** Human readable description of action */
   QString toString() const;
   /** Type of action for programmatic test, e.g. "postnotice" */

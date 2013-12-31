@@ -28,7 +28,9 @@ public:
   QString actionType() const {
     return "log";
   }
-  void trigger(const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription,
+               const ParamsProvider *context) const {
+    Q_UNUSED(subscription)
     QString fqtn = context
         ? context->paramValue("!fqtn").toString() : QString();
     QString id = context

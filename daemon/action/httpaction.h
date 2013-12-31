@@ -23,7 +23,7 @@ class HttpActionData;
  * @deprecated not yet implemented */
 class HttpAction : public Action{
 public:
-  HttpAction(QString url = QString(), ParamSet params = ParamSet());
+  explicit  HttpAction(QString url = QString(), ParamSet params = ParamSet());
   HttpAction(const HttpAction &);
   ~HttpAction();
 };

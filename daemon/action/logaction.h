@@ -24,7 +24,8 @@ class Scheduler;
  * Intended for debuging purposes, not for real life. */
 class LogAction : public Action {
 public:
-  LogAction(Log::Severity severity = Log::Info, QString message = QString());
+  explicit  LogAction(Log::Severity severity = Log::Info,
+                      QString message = QString());
   LogAction(const LogAction &);
   ~LogAction();
 };

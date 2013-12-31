@@ -26,6 +26,7 @@
 #include "requestformfield.h"
 #include "util/htmlutils.h"
 #include "step.h"
+#include "action/action.h"
 
 class TaskData : public QSharedData {
 public:
@@ -45,7 +46,7 @@ public:
   QStringList _otherTriggers;
   Task _supertask;
   QHash<QString,Step> _steps;
-  QString _begin;
+  QStringList _startSteps;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -213,53 +214,119 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   }
   d = td; // needed to give a non empty *this to loadEventListConfiguration() and Step()
   foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventSubscription(child, &td->_onstart, td->_id, *this);
+    scheduler->loadEventSubscription(
+          d->_fqtn, child, &td->_onstart, td->_id, *this);
   foreach (PfNode child, node.childrenByName("onsuccess"))
     scheduler->loadEventSubscription(
-          child, &d->_onsuccess, d->_id, *this);
+          d->_fqtn, child, &d->_onsuccess, d->_id, *this);
   foreach (PfNode child, node.childrenByName("onfailure"))
     scheduler->loadEventSubscription(
-          child, &d->_onfailure, d->_id, *this);
+          d->_fqtn, child, &d->_onfailure, d->_id, *this);
   foreach (PfNode child, node.childrenByName("onfinish")) {
     scheduler->loadEventSubscription(
-          child, &d->_onsuccess, d->_id, *this);
+          d->_fqtn, child, &d->_onsuccess, d->_id, *this);
     scheduler->loadEventSubscription(
-          child, &d->_onfailure, d->_id, *this);
+          d->_fqtn, child, &d->_onfailure, d->_id, *this);
   }
   QList<PfNode> steps = node.childrenByName("task")+node.childrenByName("and")
       +node.childrenByName("or");
   if (d->_mean == "workflow") {
     if (steps.isEmpty())
-      Log::warning() << "workflow task without step definition: "
-                     << node.toString();
+      Log::warning() << "workflow task with no step: " << node.toString();
     if (!d->_supertask.isNull()) {
-      Log::error() << "ignoring workflow task as a workflow subtask: "
+      Log::error() << "workflow task not allowed as a workflow subtask: "
                    << node.toString();
       d = 0;
       return;
     }
     foreach (PfNode child, steps) {
       Step step(child, scheduler, *this, oldTasks);
-      if (d->_steps.contains(step.id())) {
-        Log::error() << "ignoring workflow task " << d->_fqtn
-                     << " because it has duplicate steps with id " << step.id();
+      if (step.isNull()) {
+        Log::error() << "workflow task " << d->_fqtn
+                     << " has at less one invalid step definition";
+        d = 0;
+        return;
+      } if (d->_steps.contains(step.id())) {
+        Log::error() << "workflow task " << d->_fqtn
+                     << " has duplicate steps with id " << step.id();
         d = 0;
         return;
       } else {
         d->_steps.insert(step.id(), step);
       }
     }
-    d->_begin = node.attribute("begin");
-    if (!d->_steps.contains(d->_begin)) {
-      Log::error() << "ignoring workflow task " << d->_fqtn
-                   << " because it has invalid or lacking begin step: "
-                   << node.toString();
-      d = 0;
-      return;
+    d->_startSteps = node.stringListAttribute("start");
+    foreach (QString id, d->_startSteps)
+      if (!d->_steps.contains(id)) {
+        Log::error() << "workflow task " << d->_fqtn
+                     << " has invalid or lacking start steps: "
+                     << node.toString();
+        d = 0;
+        return;
+      }
+    // Note about predecessors' transitionId conventions:
+    // There are several kind of coexisting non-overlaping transitionId types
+    // 1) Start transition:
+    //     format: ${workflow_fqtn}|start|${step_id}
+    //     e.g. app1.group1.workflow1|start|step1
+    // 2) Subtask to any step transition:
+    //     format: ${source_fqtn}|${event_name}|${target_step_id}
+    //     e.g. app1.group1.step1|onfinish|step2
+    //     As a special case, if event name is "onsuccess" or "onfailure" it
+    //     will be replaced with "onfinish" to implictely make more intuitive
+    //     cases where both onsucces and onfailure would have been connected
+    //     to the same and join (which is common since writing "onfinish" in
+    //     a configuration file is actually implemented as subcribing to both
+    //     onsuccess and onfailure events).
+    // 3) Join to any step transition:
+    //    format: ${source_fqsn}|${event_name}|${target_step_id}
+    //    e.g. app1.group1.workflow1:step2|onready|step3
+    //    Currently, the only event availlable in a join step is onready.
+    // 4) End transition:
+    //    format: ${source_fqtn_or_fqtn}|${event_name}|$end
+    //    e.g. app1.group1.step3|onfinish|$end
+    //         app1.group1.workflow1:step4|onready|$end
+    foreach (QString id, d->_startSteps) {
+      d->_steps[id].insertPredecessor(d->_fqtn+"|"+id);
+      Log::fatal() << "adding predecessor " << d->_fqtn+"|start|"+id
+                   << " to step " << d->_steps[id].fqsn();
     }
+    foreach (QString source, d->_steps.keys()) {
+      QList<EventSubscription> subList
+          = d->_steps[source].onreadyEventSubscriptions()
+          + d->_steps[source].subtask().allEventsSubscriptions()
+          + d->_steps[source].subtask().taskGroup().allEventSubscriptions();
+      foreach (EventSubscription es, subList) {
+        foreach (Action a, es.actions()) {
+          if (a.actionType() == "step") {
+            QString target = a.targetName();
+            QString eventName = es.eventName();
+            if (eventName == "onsuccess" || eventName == "onfailure")
+              eventName = "onfinish";
+            QString transitionId;
+            if (d->_steps[source].kind() == Step::SubTask) // fqtn
+              transitionId = taskGroup.id()+"."+source+"|"+eventName+"|"+target;
+            else // fqsn
+              transitionId = d->_fqtn+":"+source+"|"+eventName+"|"+target;
+            if (d->_steps.contains(target)) {
+              Log::fatal() << "adding predecessor " << transitionId
+                           << " to step " << d->_steps[target].fqsn();
+              d->_steps[target].insertPredecessor(transitionId);
+            } else {
+              // FIXME should reject the workflow task, step actions must never trigger inexisting steps
+              Log::fatal() << "cannot add predecessor " << transitionId
+                           << " with unknown target to workflow " << d->_fqtn;
+            }
+          }
+        }
+      }
+    }
+    // FIXME reject workflows w/ no start edge
+    // FIXME reject workflows w/ step w/o predecessors
+    // FIXME reject workflows w/ step w/o successors, at less on trivial cases (e.g. neither step nor end in onfailure)
   } else {
-    if (!steps.isEmpty() || node.hasChild("begin"))
-      Log::warning() << "non workflow task with at less one step definition"
+    if (!steps.isEmpty() || node.hasChild("start"))
+      Log::warning() << "non-workflow task with at less one step definition"
                      << node.toString();
   }
 }
@@ -474,7 +541,7 @@ QList<EventSubscription> Task::onfailureEventSubscriptions() const {
   return d ? d->_onfailure : QList<EventSubscription>();
 }
 
-QList<EventSubscription> Task::allEventsFilters() const {
+QList<EventSubscription> Task::allEventsSubscriptions() const {
   // LATER avoid creating the collection at every call
   return d ? d->_onstart+d->_onsuccess+d->_onfailure : QList<EventSubscription>();
 }
@@ -613,4 +680,8 @@ QHash<QString, Step> Task::steps() const {
 
 Task Task::supertask() const {
   return d ? d->_supertask : Task();
+}
+
+QStringList Task::startSteps() const {
+  return d ? d->_startSteps : QStringList();
 }

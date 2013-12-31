@@ -1475,7 +1475,7 @@ void WebConsole::recomputeDiagrams() {
   foreach (const Task &task, _tasks.values()) {
     notices.unite(task.noticeTriggers());
     foreach (const EventSubscription &sub,
-             task.allEventsFilters() + task.taskGroup().allEventSubscriptions())
+             task.allEventsSubscriptions() + task.taskGroup().allEventSubscriptions())
       foreach (const Action &action, sub.actions()) {
         if (action.actionType() == "postnotice")
           notices.insert(action.targetName());
@@ -1615,7 +1615,7 @@ void WebConsole::recomputeDiagrams() {
     }
     // events defined at task level
     foreach (const EventSubscription &sub,
-             task.allEventsFilters() + task.taskGroup().allEventSubscriptions()) {
+             task.allEventsSubscriptions() + task.taskGroup().allEventSubscriptions()) {
       foreach (const Action &action, sub.actions()) {
         QString actionType = action.actionType();
         if (actionType == "postnotice") {

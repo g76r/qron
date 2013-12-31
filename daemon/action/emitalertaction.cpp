@@ -19,7 +19,9 @@ public:
   QString _alert;
   EmitAlertActionData(Scheduler *scheduler = 0, QString alert = QString())
     : ActionData(scheduler), _alert(alert) { }
-  void trigger(const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription,
+               const ParamsProvider *context) const {
+    Q_UNUSED(subscription)
     if (_scheduler && !_alert.isEmpty())
       _scheduler.data()->alerter()
           ->emitAlert(ParamSet().evaluate(_alert, context));
