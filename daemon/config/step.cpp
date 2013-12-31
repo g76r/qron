@@ -57,6 +57,7 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
     QString taskgroup = node.attribute("taskgroup");
     if (!taskgroup.isEmpty() && taskgroup != workflow.taskGroup().id())
       Log::warning() << "ignoring inconsistent taskgroup: " << node.toString();
+    node.setContent(workflow.id()+"-"+node.contentAsString());
     sd->_subtask = Task(node, scheduler, workflow.taskGroup(), oldTasks,
                         workflow);
     // TODO handle parameters overrinding in subtasks

@@ -271,7 +271,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     //     e.g. app1.group1.workflow1|start|step1
     // 2) Subtask to any step transition:
     //     format: ${source_fqtn}|${event_name}|${target_step_id}
-    //     e.g. app1.group1.step1|onfinish|step2
+    //     e.g. app1.group1.workflow1-step1|onfinish|step2
     //     As a special case, if event name is "onsuccess" or "onfailure" it
     //     will be replaced with "onfinish" to implictely make more intuitive
     //     cases where both onsucces and onfailure would have been connected
@@ -284,7 +284,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     //    Currently, the only event availlable in a join step is onready.
     // 4) End transition:
     //    format: ${source_fqtn_or_fqtn}|${event_name}|$end
-    //    e.g. app1.group1.step3|onfinish|$end
+    //    e.g. app1.group1.workflow1-step3|onfinish|$end
     //         app1.group1.workflow1:step4|onready|$end
     foreach (QString id, d->_startSteps) {
       d->_steps[id].insertPredecessor(d->_fqtn+"|"+id);
@@ -305,7 +305,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
               eventName = "onfinish";
             QString transitionId;
             if (d->_steps[source].kind() == Step::SubTask) // fqtn
-              transitionId = taskGroup.id()+"."+source+"|"+eventName+"|"+target;
+              transitionId = d->_fqtn+"-"+source+"|"+eventName+"|"+target;
             else // fqsn
               transitionId = d->_fqtn+":"+source+"|"+eventName+"|"+target;
             if (d->_steps.contains(target)) {
