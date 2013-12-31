@@ -20,7 +20,6 @@
 #include "util/paramset.h"
 #include "config/taskgroup.h"
 #include "config/task.h"
-#include "config/crontrigger.h"
 #include "config/host.h"
 #include "config/cluster.h"
 #include "sched/taskinstance.h"
@@ -38,6 +37,7 @@
 #include "config/calendar.h"
 
 class QThread;
+class CronTrigger;
 
 /** Core qron scheduler class.
  * Mainly responsible for configuration, queueing and event handling. */
@@ -93,6 +93,7 @@ public:
   int maxtotaltaskinstances() const { return _maxtotaltaskinstances; }
   int maxqueuedrequests() const { return _maxqueuedrequests; }
   Calendar calendarByName(QString name) const;
+  QHash<QString,Calendar> calendars() const { return _calendars; }
   ParamSet globalParams() const { return _globalParams; }
   /** This method is threadsafe */
   bool taskExists(QString fqtn);

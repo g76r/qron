@@ -18,25 +18,18 @@
 #include <QString>
 #include <QDateTime>
 #include <QMetaType>
-#include "calendar.h"
+#include "trigger.h"
 
 class CronTriggerData;
 
 /** Time trigger defined with a cron-like expression */
-class CronTrigger {
-  QSharedDataPointer<CronTriggerData> d;
-
+class CronTrigger : public Trigger{
 public:
-  explicit CronTrigger(const QString cronExpression = QString());
+  explicit CronTrigger(const QString expression = QString());
+  CronTrigger(PfNode node, QHash<QString,Calendar> namedCalendars);
   CronTrigger(const CronTrigger &other);
   ~CronTrigger();
   CronTrigger &operator=(const CronTrigger &other);
-  /** Cron expression as it was initialy given */
-  QString cronExpression() const;
-  /** Cron expression in a canonical/unique form */
-  QString canonicalCronExpression() const;
-  /** Cron expression is valid (hence not null or empty). */
-  bool isValid() const;
   /** Return next triggering date, from cache or after computation if needed */
   QDateTime nextTriggering(QDateTime max) const;
   /** Set last triggered and compute next triggering date. */
@@ -60,8 +53,6 @@ public:
   QDateTime lastTriggered() const;
   void setLastTriggered(QDateTime lastTriggered) const;
   void clearLastTriggered() const { setLastTriggered(QDateTime()); }
-  void setCalendar(Calendar calendar);
-  Calendar calendar() const;
 };
 
 Q_DECLARE_METATYPE(CronTrigger)

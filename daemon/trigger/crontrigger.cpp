@@ -12,7 +12,7 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "crontrigger.h"
-#include "task.h"
+#include "trigger_p.h"
 #include <QRegExp>
 #include <QStringList>
 #include "log/log.h"
@@ -109,15 +109,14 @@ notstar:
     return index >= _min && index <= _max && _setValues[index-_min]; }
 };
 
-class CronTriggerData : public QSharedData {
+class CronTriggerData : public TriggerData {
 public:
   QString _cronExpression;
   CronField _seconds, _minutes, _hours, _days, _months, _daysofweek;
-  Calendar _calendar;
   bool _isValid;
   mutable qint64 _lastTriggered, _nextTriggering;
 
-  CronTriggerData(const QString cronExpression = QString())
+  explicit CronTriggerData(const QString cronExpression = QString())
     : _seconds(0, 59), _minutes(0, 59), _hours(0, 23), _days(1,31),
       _months(1, 12), _daysofweek(0, 6), _isValid(false), _lastTriggered(-1),
       _nextTriggering(-1) {
@@ -127,19 +126,25 @@ public:
     return QString("%1 %2 %3 %4 %5 %6").arg(_seconds).arg(_minutes).arg(_hours)
         .arg(_days).arg(_months).arg(_daysofweek);
   }
-  QString toString() const { return _cronExpression; }
-  operator QString() const { return _cronExpression; }
+  QString expression() const { return _cronExpression; }
+  QString humanReadableExpression() const { return "("+_cronExpression+")"; }
   QDateTime nextTriggering(QDateTime max) const;
+  bool isValid() const { return _isValid; }
 
 private:
   void parseCronExpression(QString cronExpression);
 };
 
 CronTrigger::CronTrigger(const QString cronExpression)
-  : d(cronExpression.isEmpty() ? 0 : new CronTriggerData(cronExpression)) {
+  : Trigger(new CronTriggerData(cronExpression)) {
 }
 
-CronTrigger::CronTrigger(const CronTrigger &other) : d(other.d) {
+CronTrigger::CronTrigger(PfNode node, QHash<QString,Calendar> namedCalendars)
+  : Trigger(new CronTriggerData(node.contentAsString())) {
+  loadConfig(node, namedCalendars);
+}
+
+CronTrigger::CronTrigger(const CronTrigger &other) : Trigger(other) {
 }
 
 CronTrigger::~CronTrigger() {
@@ -151,32 +156,22 @@ CronTrigger &CronTrigger::operator=(const CronTrigger &other) {
   return *this;
 }
 
-QString CronTrigger::cronExpression() const {
-  return d ? d->_cronExpression : QString();
-}
-
-QString CronTrigger::canonicalCronExpression() const {
-  return d ? d->canonicalExpression() : QString();
-}
-
-bool CronTrigger::isValid() const {
-  return d && d->_isValid;
-}
-
 QDateTime CronTrigger::nextTriggering(QDateTime max) const {
-  return d ? d->nextTriggering(max) : QDateTime();
+  return d ? ((CronTriggerData*)d.data())->nextTriggering(max) : QDateTime();
 }
 
 QDateTime CronTrigger::lastTriggered() const {
-  return d && d->_lastTriggered >= 0
-      ? QDateTime::fromMSecsSinceEpoch(d->_lastTriggered) : QDateTime();
+  return d && ((CronTriggerData*)d.data())->_lastTriggered >= 0
+      ? QDateTime::fromMSecsSinceEpoch(
+          ((CronTriggerData*)d.data())->_lastTriggered)
+      : QDateTime();
 }
 
 void CronTrigger::setLastTriggered(QDateTime lastTriggered) const {
   if (d) {
-    d->_lastTriggered = lastTriggered.isValid()
+    ((CronTriggerData*)d.data())->_lastTriggered = lastTriggered.isValid()
         ? lastTriggered.toMSecsSinceEpoch() : -1;
-    d->_nextTriggering = -1;
+    ((CronTriggerData*)d.data())->_nextTriggering = -1;
   }
 }
 
@@ -302,15 +297,6 @@ void CronTriggerData::parseCronExpression(QString cronExpression) {
   } else
     Log::warning() << "unsupported cron trigger expression: '"
                    << cronExpression << "'";
-}
-
-void CronTrigger::setCalendar(Calendar calendar) {
-  if (d)
-    d->_calendar = calendar;
-}
-
-Calendar CronTrigger::calendar() const {
-  return d ? d->_calendar : Calendar();
 }
 
 #if 0

@@ -30,6 +30,8 @@
 #include "config/configutils.h"
 #include "config/requestformfield.h"
 #include "config/step.h"
+#include "trigger/crontrigger.h"
+#include "trigger/noticetrigger.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 #define DEFAULT_MAXQUEUEDREQUESTS 128
@@ -790,15 +792,16 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    QList<TaskInstance> requests = syncRequestTask(fqtn);
+    QList<TaskInstance> requests
+        = syncRequestTask(fqtn, trigger.overridingParams());
     if (!requests.isEmpty())
       foreach (TaskInstance request, requests)
         Log::debug(fqtn, request.id())
-            << "cron trigger '" << trigger.cronExpression()
-            << "' triggered task '" << fqtn << "'";
+            << "cron trigger " << trigger.humanReadableExpression()
+            << " triggered task " << fqtn;
     else
-      Log::debug(fqtn) << "cron trigger '" << trigger.cronExpression()
-                       << "' failed to trigger task '" << fqtn << "'";
+      Log::debug(fqtn) << "cron trigger " << trigger.humanReadableExpression()
+                       << " failed to trigger task " << fqtn;
     trigger.setLastTriggered(now);
     next = trigger.nextTriggering();
     fired = true;
@@ -843,6 +846,7 @@ public:
 };
 
 void Scheduler::postNotice(QString notice) {
+  // TODO allow notice parameters set when posting
   if (notice.isNull()) {
     Log::warning() << "cannot post a null/empty notice";
     return;
@@ -852,11 +856,23 @@ void Scheduler::postNotice(QString notice) {
   ml.unlock();
   Log::debug() << "posting notice '" << notice << "'";
   foreach (Task task, tasks.values()) {
-    if (task.noticeTriggers().contains(notice)) {
-      Log::debug() << "notice '" << notice << "' triggered task '"
-                   << task.fqtn() << "'";
-      // LATER support params at trigger level
-      asyncRequestTask(task.fqtn());
+    foreach (NoticeTrigger trigger, task.noticeTriggers()) {
+      if (trigger.expression() == notice) { // LATER allow filters such as regexps
+        Log::debug() << "notice " << trigger.humanReadableExpression()
+                     << " triggered task " << task.fqtn();
+        // TODO override overridingParams with notice parameters
+        QList<TaskInstance> requests
+            = syncRequestTask(task.fqtn(), trigger.overridingParams());
+        if (!requests.isEmpty())
+          foreach (TaskInstance request, requests)
+            Log::debug(task.fqtn(), request.id())
+                << "notice " << trigger.humanReadableExpression()
+                << " triggered task " << task.fqtn();
+        else
+          Log::debug(task.fqtn())
+              << "notice " << trigger.humanReadableExpression()
+              << " failed to trigger task " << task.fqtn();
+      }
     }
   }
   emit noticePosted(notice);

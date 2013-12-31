@@ -16,7 +16,7 @@
 #include <QString>
 #include <QHash>
 #include "pf/pfnode.h"
-#include "crontrigger.h"
+#include "trigger/crontrigger.h"
 #include "log/log.h"
 #include <QAtomicInt>
 #include "config/eventsubscription.h"
@@ -27,13 +27,14 @@
 #include "util/htmlutils.h"
 #include "step.h"
 #include "action/action.h"
+#include "trigger/noticetrigger.h"
 
 class TaskData : public QSharedData {
 public:
   QString _id, _label, _mean, _command, _target, _info, _fqtn;
   TaskGroup _group;
   ParamSet _params, _setenv, _unsetenv;
-  QSet<QString> _noticeTriggers;
+  QList<NoticeTrigger> _noticeTriggers;
   QHash<QString,qint64> _resources;
   int _maxInstances;
   QList<CronTrigger> _cronTriggers;
@@ -113,7 +114,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   Task oldTask = oldTasks.value(td->_fqtn);
   if (oldTask.d) {
     foreach (const CronTrigger ct, oldTask.d->_cronTriggers)
-      oldCronTriggers.insert(ct.canonicalCronExpression(), ct);
+      oldCronTriggers.insert(ct.canonicalExpression(), ct);
     td->_lastExecution = oldTask.lastExecution().isValid()
         ? oldTask.lastExecution().toMSecsSinceEpoch() : LLONG_MIN;
     td->_nextScheduledExecution = oldTask.nextScheduledExecution().isValid()
@@ -125,62 +126,40 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     td->_enabled = td->_enabled && oldTask.enabled();
   }
   // LATER load cron triggers last exec timestamp from on-disk log
-  foreach (PfNode child, node.childrenByName("trigger")) {
-    foreach (PfNode grandchild, child.children()) {
-      QString content = grandchild.contentAsString();
-      QString triggerType = grandchild.name();
-      // FIXME what about triggers in subtasks ???
-      if (triggerType == "notice") {
-        if (!content.isEmpty()) {
-          td->_noticeTriggers.insert(content);
-          //Log::debug() << "configured notice trigger '" << content
-          //             << "' on task '" << td->_id << "'";
-        } else
-          Log::error() << "ignoring empty notice trigger on task '" << td->_id
-                       << "' in configuration";
-      } else if (triggerType == "cron") {
-          CronTrigger trigger(content);
+  if (supertask.isNull()) { // subtasks do not have triggers
+    foreach (PfNode child, node.childrenByName("trigger")) {
+      foreach (PfNode grandchild, child.children()) {
+        QString content = grandchild.contentAsString();
+        QString triggerType = grandchild.name();
+        if (triggerType == "notice") {
+          NoticeTrigger trigger(grandchild, scheduler->calendars());
+          if (trigger.isValid()) {
+            td->_noticeTriggers.append(trigger);
+            Log::fatal() << "configured notice trigger '" << content
+                         << "' on task '" << td->_id << "'";
+          } else
+            Log::fatal() << "ignoring empty notice trigger on task '" << td->_id
+                         << "' in configuration";
+        } else if (triggerType == "cron") {
+          CronTrigger trigger(grandchild, scheduler->calendars());
           if (trigger.isValid()) {
             // keep last triggered timestamp from previously defined trigger
             CronTrigger oldTrigger =
-                oldCronTriggers.value(trigger.canonicalCronExpression());
+                oldCronTriggers.value(trigger.canonicalExpression());
             if (oldTrigger.isValid())
               trigger.setLastTriggered(oldTrigger.lastTriggered());
-            // ifincalendar
-            QList<PfNode> list = grandchild.childrenByName("ifincalendar");
-            if (list.size() > 1)
-              Log::error() << "ignoring multiple calendar definition: "
-                           << grandchild.toPf();
-            else if (list.size() == 1) {
-              PfNode ggchild = list.first();
-              content = ggchild.contentAsString();
-              if (!content.isEmpty()) {
-                Calendar calendar = scheduler->calendarByName(content);
-                if (calendar.isNull())
-                  Log::error() << "ignoring undefined calendar '" << content
-                               << "': " << ggchild.toPf();
-                else
-                  trigger.setCalendar(calendar);
-              } else {
-                Calendar calendar = Calendar(ggchild);
-                if (calendar.isNull())
-                  Log::warning() << "ignoring empty calendar: "
-                                 << ggchild.toPf();
-                else
-                  trigger.setCalendar(calendar);
-              }
-            }
             td->_cronTriggers.append(trigger);
-            //Log::debug() << "configured cron trigger '" << content
-            //             << "' on task '" << td->_id << "'";
+            Log::fatal() << "configured cron trigger '" << content
+                         << "' on task '" << td->_id << "'";
           } else
-            Log::error() << "ignoring invalid cron trigger '" << content
-                         << "' parsed as '" << trigger.canonicalCronExpression()
+            Log::fatal() << "ignoring invalid cron trigger '" << content
+                         << "' parsed as '" << trigger.canonicalExpression()
                          << "' on task '" << td->_id;
           // LATER read misfire config
-      } else {
-        Log::error() << "ignoring unknown trigger type '" << triggerType
-                     << "' on task '" << td->_id << "'";
+        } else {
+          Log::fatal() << "ignoring unknown trigger type '" << triggerType
+                       << "' on task '" << td->_id << "'";
+        }
       }
     }
   }
@@ -356,8 +335,8 @@ bool Task::isNull() const {
   return !d;
 }
 
-QSet<QString> Task::noticeTriggers() const {
-  return d ? d->_noticeTriggers : QSet<QString>();
+QList<NoticeTrigger> Task::noticeTriggers() const {
+  return d ? d->_noticeTriggers : QList<NoticeTrigger>();
 }
 
 QString Task::id() const {
@@ -416,11 +395,11 @@ QString Task::triggersAsString() const {
   QString s;
   if (d) {
     foreach (CronTrigger t, d->_cronTriggers)
-      s.append("(").append(t.cronExpression()).append(") ");
-    foreach (QString t, d->_noticeTriggers)
-      s.append("^").append(t).append(" ");
+      s.append(t.humanReadableExpression()).append(' ');
+    foreach (NoticeTrigger t, d->_noticeTriggers)
+      s.append(t.humanReadableExpression()).append(' ');
     foreach (QString t, d->_otherTriggers)
-      s.append(t).append(" ");
+      s.append(t).append(' ');
   }
   if (!s.isEmpty())
     s.chop(1); // remove last space
@@ -430,14 +409,10 @@ QString Task::triggersAsString() const {
 QString Task::triggersWithCalendarsAsString() const {
   QString s;
   if (d) {
-    foreach (CronTrigger t, d->_cronTriggers) {
-      s.append("(").append(t.cronExpression());
-      if (!t.calendar().isNull())
-        s.append(" ").append(t.calendar().toPf(true));
-      s.append(") ");
-    }
-    foreach (QString t, d->_noticeTriggers)
-      s.append("^").append(t).append(" ");
+    foreach (CronTrigger t, d->_cronTriggers)
+      s.append(t.humanReadableExpressionWithCalendar()).append(' ');
+    foreach (NoticeTrigger t, d->_noticeTriggers)
+      s.append(t.humanReadableExpressionWithCalendar()).append(' ');
     foreach (QString t, d->_otherTriggers)
       s.append(t).append(" ");
   }
@@ -449,6 +424,9 @@ QString Task::triggersWithCalendarsAsString() const {
 bool Task::triggersHaveCalendar() const {
   if (d) {
     foreach (CronTrigger t, d->_cronTriggers)
+      if (!t.calendar().isNull())
+        return true;
+    foreach (NoticeTrigger t, d->_noticeTriggers)
       if (!t.calendar().isNull())
         return true;
   }

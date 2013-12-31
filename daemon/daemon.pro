@@ -49,7 +49,7 @@ SOURCES += \
     config/task.cpp \
     config/taskgroup.cpp \
     sched/scheduler.cpp \
-    config/crontrigger.cpp \
+    trigger/crontrigger.cpp \
     config/host.cpp \
     sched/taskinstance.cpp \
     sched/executor.cpp \
@@ -99,13 +99,15 @@ SOURCES += \
     sched/stepinstance.cpp \
     config/eventsubscription.cpp \
     action/stepaction.cpp \
-    action/endaction.cpp
+    action/endaction.cpp \
+    trigger/trigger.cpp \
+    trigger/noticetrigger.cpp
 
 HEADERS += \
     config/task.h \
     config/taskgroup.h \
     sched/scheduler.h \
-    config/crontrigger.h \
+    trigger/crontrigger.h \
     config/host.h \
     sched/taskinstance.h \
     sched/executor.h \
@@ -156,7 +158,10 @@ HEADERS += \
     sched/stepinstance.h \
     config/eventsubscription.h \
     action/stepaction.h \
-    action/endaction.h
+    action/endaction.h \
+    trigger/trigger.h \
+    trigger/trigger_p.h \
+    trigger/noticetrigger.h
 
 RESOURCES += \
     ui/webconsole.qrc

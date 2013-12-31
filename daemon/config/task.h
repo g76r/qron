@@ -23,7 +23,9 @@
 class TaskData;
 class QDebug;
 class PfNode;
+class Trigger;
 class CronTrigger;
+class NoticeTrigger;
 class Scheduler;
 class EventSubscription;
 class Step;
@@ -106,10 +108,10 @@ public:
   QString triggersAsString() const;
   QString triggersWithCalendarsAsString() const;
   bool triggersHaveCalendar() const;
-  /** Cron triggers list */
+  /** Cron triggers */
   QList<CronTrigger> cronTriggers() const;
-  /** Notice triggers set */
-  QSet<QString> noticeTriggers() const;
+  /** Notice triggers */
+  QList<NoticeTrigger> noticeTriggers() const;
   /** Human readable list of other triggers, i.e. indirect triggers such
    * as the one implied by (onsuccess(requesttask foo)) on task bar.
    * Note that not all indirect triggers can be listed here since some cannot

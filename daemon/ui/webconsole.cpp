@@ -26,6 +26,8 @@
 #include "ui/htmltaskinstanceitemdelegate.h"
 #include "ui/htmlalertitemdelegate.h"
 #include "action/action.h"
+#include "trigger/crontrigger.h"
+#include "trigger/noticetrigger.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -1473,7 +1475,8 @@ void WebConsole::recomputeDiagrams() {
       if (!host.isNull())
         displayedHosts.insert(host.id());
   foreach (const Task &task, _tasks.values()) {
-    notices.unite(task.noticeTriggers());
+    foreach (const NoticeTrigger &trigger, task.noticeTriggers())
+      notices.insert(trigger.expression());
     foreach (const EventSubscription &sub,
              task.allEventsSubscriptions() + task.taskGroup().allEventSubscriptions())
       foreach (const Action &action, sub.actions()) {
@@ -1594,16 +1597,17 @@ void WebConsole::recomputeDiagrams() {
     // cron triggers
     foreach (const CronTrigger &cron, task.cronTriggers()) {
       gv.append("\"$cron_").append(QString::number(++cronid))
-          .append("\" [label=\"(").append(cron.cronExpression())
+          .append("\" [label=\"(").append(cron.expression())
           .append(")\"," CRON_TRIGGER_NODE "]\n");
       gv.append("\"").append(task.fqtn()).append("\"--\"$cron_")
           .append(QString::number(cronid))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     }
     // notice triggers
-    foreach (QString notice, task.noticeTriggers())
+    foreach (const NoticeTrigger &trigger, task.noticeTriggers())
       gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
-          .append(notice.remove('"')).append("\" [" TASK_TRIGGER_EDGE "]\n");
+          .append(trigger.expression().remove('"'))
+          .append("\" [" TASK_TRIGGER_EDGE "]\n");
     // no trigger pseudo-trigger
     if (task.noticeTriggers().isEmpty() && task.cronTriggers().isEmpty()
         && task.otherTriggers().isEmpty()) {
