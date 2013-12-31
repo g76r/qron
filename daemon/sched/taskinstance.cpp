@@ -211,11 +211,7 @@ QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
   } else if (key == "!returncode") {
     return QString::number(returnCode());
   } else if (key == "!status") {
-    if (startDatetime().isNull())
-      return "queued";
-    if (endDatetime().isNull())
-      return "running";
-    return success() ? "success" : "failure";
+    return statusAsString();
   } else if (key == "!submissiondate") {
     return submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
   } else if (key == "!startdate") {
