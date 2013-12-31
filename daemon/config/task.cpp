@@ -194,7 +194,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   d = td; // needed to give a non empty *this to loadEventListConfiguration() and Step()
   foreach (PfNode child, node.childrenByName("onstart"))
     scheduler->loadEventSubscription(
-          d->_fqtn, child, &td->_onstart, td->_id, *this);
+          d->_fqtn, child, &d->_onstart, td->_id, *this);
   foreach (PfNode child, node.childrenByName("onsuccess"))
     scheduler->loadEventSubscription(
           d->_fqtn, child, &d->_onsuccess, d->_id, *this);
