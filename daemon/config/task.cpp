@@ -48,6 +48,7 @@ public:
   Task _supertask;
   QHash<QString,Step> _steps;
   QStringList _startSteps;
+  QString _workflowDiagram;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -61,7 +62,7 @@ public:
     _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true), _lastSuccessful(true), _lastReturnCode(-1),
-    _lastTotalMillis(-1) { }
+    _lastTotalMillis(-1)  { }
 };
 
 Task::Task() {
@@ -243,6 +244,35 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         d = 0;
         return;
       }
+#define SUBTASK_NODE "shape=box,style=rounded"
+#define ANDJOIN_NODE "shape=square,style=filled,label=and"
+#define ORJOIN_NODE "shape=circle,style=filled,label=or"
+#define START_NODE "shape=circle,style=\"filled,fixedsize\",width=.2,label=\"\",fillcolor=black"
+#define END_NODE "shape=doublecircle,style=\"filled,fixedsize\",width=.2,label=\"\",fillcolor=black"
+#define WORKFLOW_EDGE "dir=forward,arrowhead=vee"
+    QString gv("graph g{\n"
+               "  edge [" WORKFLOW_EDGE "]\n"
+               "  start[" START_NODE "]\n"
+               "  end[" END_NODE "]\n");
+    foreach (Step s, d->_steps.values()) {
+      switch (s.kind()) {
+      case Step::SubTask:
+        gv.append("  step_").append(s.id()).append("[label=\"").append(s.id())
+            .append("\"," SUBTASK_NODE).append("]\n");
+        break;
+      case Step::AndJoin:
+        gv.append("  step_").append(s.id())
+            .append("[label=\"and\"," ANDJOIN_NODE).append("]\n");
+        break;
+      case Step::OrJoin:
+        gv.append("  step_").append(s.id())
+            .append("[label=\"and\"," ORJOIN_NODE).append("]\n");
+        break;
+      case Step::Unknown:
+        ;
+      }
+    }
+    QSet<QString> gvedges;
     // Note about predecessors' transitionId conventions:
     // There are several kind of coexisting non-overlaping transitionId types
     // 1) Start transition:
@@ -266,9 +296,10 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     //    e.g. app1.group1.workflow1-step3|onfinish|$end
     //         app1.group1.workflow1:step4|onready|$end
     foreach (QString id, d->_startSteps) {
-      d->_steps[id].insertPredecessor(d->_fqtn+"|"+id);
+      d->_steps[id].insertPredecessor(d->_fqtn+"|start|"+id);
       Log::fatal() << "adding predecessor " << d->_fqtn+"|start|"+id
                    << " to step " << d->_steps[id].fqsn();
+      gvedges.insert("  start -- step_"+id+"\n");
     }
     foreach (QString source, d->_steps.keys()) {
       QList<EventSubscription> subList
@@ -291,19 +322,30 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
               Log::fatal() << "adding predecessor " << transitionId
                            << " to step " << d->_steps[target].fqsn();
               d->_steps[target].insertPredecessor(transitionId);
+              gvedges.insert("  step_"+source+" -- step_"+target+"[label=\""
+                             +es.eventName()+"\"]\n");
             } else {
               // FIXME should reject the workflow task, step actions must never trigger inexisting steps
               Log::fatal() << "cannot add predecessor " << transitionId
                            << " with unknown target to workflow " << d->_fqtn;
             }
+          } else if (a.actionType() == "end") {
+            gvedges.insert("  step_"+source+" -- end [label=\""+es.eventName()
+                           +"\"]\n");
           }
         }
       }
     }
+    foreach(QString s, gvedges)
+      gv.append(s);
+    gv.append("}");
+    d->_workflowDiagram = gv;
     // FIXME reject workflows w/ no start edge
     // FIXME reject workflows w/ step w/o predecessors
     // FIXME reject workflows w/ step w/o successors, at less on trivial cases (e.g. neither step nor end in onfailure)
+
   } else {
+    d->_workflowDiagram = "graph g{graph[label=\"not a workflow\"]}";
     if (!steps.isEmpty() || node.hasChild("start"))
       Log::warning() << "non-workflow task with at less one step definition"
                      << node.toString();
@@ -662,4 +704,8 @@ Task Task::supertask() const {
 
 QStringList Task::startSteps() const {
   return d ? d->_startSteps : QStringList();
+}
+
+QString Task::workflowDiagram() const {
+  return d ? d->_workflowDiagram : QString();
 }

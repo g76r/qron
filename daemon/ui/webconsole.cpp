@@ -40,8 +40,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   QList<int> cols;
 
   // HTTP handlers
-  _tasksDeploymentDiagram = new GraphvizImageHttpHandler(this);
-  _tasksTriggerDiagram = new GraphvizImageHttpHandler(this);
+  _tasksDeploymentDiagram
+      = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
+  _tasksTriggerDiagram
+      = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
   _wuiHandler = new TemplatingHttpHandler(this, "/console", ":docroot/console");
   _wuiHandler->addFilter("\\.html$");
 
@@ -1135,6 +1137,37 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/rest/dot/tasks/deploy/v1") {
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_tasksDeploymentDiagram->source(0).toUtf8());
+    return true;
+  }
+  if (path == "/rest/png/tasks/workflow/v1") {
+    // LATER this rendering should be pooled
+    if (_scheduler) {
+      Task task = _scheduler->task(req.param("fqtn"));
+      QString gv = task.workflowDiagram();
+      if (!gv.isEmpty()) {
+        GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler(this);
+        h->setSource(gv);
+        h->handleRequest(req, res, ctxt);
+        h->deleteLater();
+        return true;
+      }
+    }
+    res.setStatus(404);
+    res.output()->write("No such workflow.");
+    return true;
+  }
+  if (path == "/rest/dot/tasks/workflow/v1") {
+    if (_scheduler) {
+      Task task = _scheduler->task(req.param("fqtn"));
+      QString gv = task.workflowDiagram();
+      if (!gv.isEmpty()) {
+        res.setContentType("text/html;charset=UTF-8");
+        res.output()->write(gv.toUtf8());
+        return true;
+      }
+    }
+    res.setStatus(404);
+    res.output()->write("No such workflow.");
     return true;
   }
   if (path == "/rest/png/tasks/trigger/v1") {
