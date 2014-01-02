@@ -29,6 +29,25 @@ class NoticeTrigger;
 class Scheduler;
 class EventSubscription;
 class Step;
+class WorkflowTriggerSubscriptionData;
+
+/** Data holder for the association between a workflow trigger and actions to
+  * be performed. */
+class WorkflowTriggerSubscription {
+private:
+  QSharedDataPointer<WorkflowTriggerSubscriptionData> d;
+
+public:
+  WorkflowTriggerSubscription();
+  WorkflowTriggerSubscription(Trigger trigger,
+      EventSubscription eventSubscription);
+  WorkflowTriggerSubscription(const WorkflowTriggerSubscription &other);
+  ~WorkflowTriggerSubscription();
+  WorkflowTriggerSubscription &operator=(
+      const WorkflowTriggerSubscription &other);
+  Trigger trigger() const;
+  EventSubscription eventSubscription() const;
+};
 
 /** Core task definition object, being it a standalone task or workflow. */
 class Task : public ParamsProvider {
@@ -126,6 +145,9 @@ public:
   /** Super task (e.g. workflow task) to which this task belongs, if any. */
   Task supertask() const;
   QString workflowDiagram() const;
+  QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
+  QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;
+  QHash<QString,CronTrigger> workflowCronTriggersById() const;
 };
 
 QDebug operator<<(QDebug dbg, const Task &task);

@@ -47,9 +47,9 @@ public:
     TaskInstance workflow = instance.callerTask();
     if (workflow.isNull())
       workflow = instance;
-    Log::fatal(instance.task().fqtn(), instance.id())
-        << "EndAction::triggerWithinTaskInstance "
-        << transitionId << " " << instance.task().fqtn();
+    //Log::fatal(instance.task().fqtn(), instance.id())
+    //    << "EndAction::triggerWithinTaskInstance "
+    //    << transitionId << " " << instance.task().fqtn();
     if (workflow.task().mean() != "workflow") {
       Log::error(instance.task().fqtn(), instance.id())
           << "executing a end action in the context of a non-workflow task, "

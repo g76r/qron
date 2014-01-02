@@ -93,7 +93,7 @@ public:
   int maxtotaltaskinstances() const { return _maxtotaltaskinstances; }
   int maxqueuedrequests() const { return _maxqueuedrequests; }
   Calendar calendarByName(QString name) const;
-  QHash<QString,Calendar> calendars() const { return _calendars; }
+  QHash<QString,Calendar> namedCalendars() const { return _calendars; }
   ParamSet globalParams() const { return _globalParams; }
   /** This method is threadsafe */
   bool taskExists(QString fqtn);
@@ -150,7 +150,7 @@ public slots:
     return abortTask(instance.id()); }
   /** Post a notice.
     * This method is thread-safe. */
-  void postNotice(QString notice);
+  void postNotice(QString notice, ParamSet params);
   /** Ask for queued requests to be reevaluated during next event loop
     * iteration.
     * This method must be called every time something occurs that could make a
@@ -178,7 +178,7 @@ signals:
                                 QList<EventSubscription> onnotice,
                                 QList<EventSubscription> onschedulerstart,
                                 QList<EventSubscription> onconfigload);
-  void calendarsConfigurationReset(QHash<QString,Calendar> calendars);
+  void calendarsConfigurationReset(QHash<QString,Calendar> namedCalendars);
   void hostResourceAllocationChanged(QString host,
                                      QHash<QString,qint64> resources);
   void hostResourceConfigurationChanged(
@@ -203,7 +203,7 @@ signals:
   void globalParamsChanged(ParamSet globalParams);
   void globalSetenvChanged(ParamSet globalSetenv);
   void globalUnsetenvChanged(ParamSet globalUnsetenv);
-  void noticePosted(QString notice);
+  void noticePosted(QString notice, ParamSet params);
 
 private slots:
   void taskFinishing(TaskInstance instance, QPointer<Executor> executor);

@@ -50,9 +50,9 @@ public:
     TaskInstance workflow = instance.callerTask();
     if (workflow.isNull())
       workflow = instance;
-    Log::debug(instance.task().fqtn(), instance.id())
-        << "StepAction::triggerWithinTaskInstance "
-        << transitionId << " " << instance.task().fqtn();
+    //Log::debug(instance.task().fqtn(), instance.id())
+    //    << "StepAction::triggerWithinTaskInstance "
+    //    << transitionId << " " << instance.task().fqtn();
     if (workflow.task().mean() != "workflow") {
       Log::error(instance.task().fqtn(), instance.id())
           << "executing a step action in the context of a non-workflow task, "

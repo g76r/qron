@@ -299,6 +299,10 @@ void CronTriggerData::parseCronExpression(QString cronExpression) {
                    << cronExpression << "'";
 }
 
+void CronTrigger::detach() {
+  // nothing to do, calling a non const method is enough
+}
+
 #if 0
 CronTrigger t("/10 15 6 31 */2 2,3");
 QDateTime dt = QDateTime::currentDateTime();

@@ -16,6 +16,7 @@
 
 #include "action.h"
 #include <QString>
+#include "util/paramset.h"
 
 class PostNoticeActionData;
 class Scheduler;
@@ -24,7 +25,8 @@ class Scheduler;
 class PostNoticeAction : public Action {
 public:
   explicit PostNoticeAction(Scheduler *scheduler = 0,
-                            QString notice = QString());
+                            QString notice = QString(),
+                            ParamSet params = ParamSet());
   PostNoticeAction(const PostNoticeAction &);
   ~PostNoticeAction();
 };

@@ -19,7 +19,6 @@
 #include "trigger/crontrigger.h"
 #include "log/log.h"
 #include <QAtomicInt>
-#include "config/eventsubscription.h"
 #include <QPointer>
 #include "sched/scheduler.h"
 #include "config/configutils.h"
@@ -28,6 +27,47 @@
 #include "step.h"
 #include "action/action.h"
 #include "trigger/noticetrigger.h"
+#include "config/eventsubscription.h"
+
+class WorkflowTriggerSubscriptionData : public QSharedData {
+public:
+  Trigger _trigger;
+  EventSubscription _eventSubscription;
+  WorkflowTriggerSubscriptionData(
+      Trigger trigger = Trigger(),
+      EventSubscription eventSubscription = EventSubscription())
+    : _trigger(trigger), _eventSubscription(eventSubscription) { }
+};
+
+WorkflowTriggerSubscription::WorkflowTriggerSubscription() {
+}
+
+WorkflowTriggerSubscription::WorkflowTriggerSubscription(
+    Trigger trigger, EventSubscription eventSubscription)
+  : d(new WorkflowTriggerSubscriptionData(trigger, eventSubscription)) {
+}
+
+WorkflowTriggerSubscription::WorkflowTriggerSubscription(
+    const WorkflowTriggerSubscription &other) : d(other.d) {
+}
+
+WorkflowTriggerSubscription::~WorkflowTriggerSubscription() {
+}
+
+WorkflowTriggerSubscription &WorkflowTriggerSubscription::operator=(
+    const WorkflowTriggerSubscription &other) {
+  if (this != &other)
+    d = other.d;
+  return *this;
+}
+
+Trigger WorkflowTriggerSubscription::trigger() const {
+  return d ? d->_trigger : Trigger();
+}
+
+EventSubscription WorkflowTriggerSubscription::eventSubscription() const {
+  return d ? d->_eventSubscription : EventSubscription();
+}
 
 class TaskData : public QSharedData {
 public:
@@ -49,6 +89,9 @@ public:
   QHash<QString,Step> _steps;
   QStringList _startSteps;
   QString _workflowDiagram;
+  QHash<QString,WorkflowTriggerSubscription> _workflowTriggerSubscriptionsById;
+  QMultiHash<QString,WorkflowTriggerSubscription> _workflowTriggerSubscriptionsByNotice;
+  QHash<QString,CronTrigger> _workflowCronTriggersById;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -89,8 +132,9 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_group = taskGroup;
   td->_maxInstances = node.attribute("maxinstances", "1").toInt();
   if (td->_maxInstances <= 0) {
-    td->_maxInstances = 1;
-    Log::error() << "ignoring invalid task maxinstances " << node.toPf();
+    Log::error() << "invalid task maxinstances: " << node.toPf();
+    delete td;
+    return;
   }
   if (node.hasChild("disabled"))
     td->_enabled = false;
@@ -133,16 +177,19 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         QString content = grandchild.contentAsString();
         QString triggerType = grandchild.name();
         if (triggerType == "notice") {
-          NoticeTrigger trigger(grandchild, scheduler->calendars());
+          NoticeTrigger trigger(grandchild, scheduler->namedCalendars());
           if (trigger.isValid()) {
             td->_noticeTriggers.append(trigger);
-            Log::fatal() << "configured notice trigger '" << content
+            Log::debug() << "configured notice trigger '" << content
                          << "' on task '" << td->_id << "'";
-          } else
-            Log::fatal() << "ignoring empty notice trigger on task '" << td->_id
-                         << "' in configuration";
+          } else {
+            Log::error() << "task with invalid notice trigger: "
+                         << node.toString();
+            delete td;
+            return;
+          }
         } else if (triggerType == "cron") {
-          CronTrigger trigger(grandchild, scheduler->calendars());
+          CronTrigger trigger(grandchild, scheduler->namedCalendars());
           if (trigger.isValid()) {
             // keep last triggered timestamp from previously defined trigger
             CronTrigger oldTrigger =
@@ -150,16 +197,19 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
             if (oldTrigger.isValid())
               trigger.setLastTriggered(oldTrigger.lastTriggered());
             td->_cronTriggers.append(trigger);
-            Log::fatal() << "configured cron trigger '" << content
-                         << "' on task '" << td->_id << "'";
-          } else
-            Log::fatal() << "ignoring invalid cron trigger '" << content
-                         << "' parsed as '" << trigger.canonicalExpression()
-                         << "' on task '" << td->_id;
+            Log::debug() << "configured cron trigger "
+                         << trigger.humanReadableExpression()
+                         << " on task " << td->_id;
+          } else {
+            Log::error() << "task with invalid cron trigger: "
+                         << node.toString();
+            delete td;
+            return;
+          }
           // LATER read misfire config
         } else {
-          Log::fatal() << "ignoring unknown trigger type '" << triggerType
-                       << "' on task '" << td->_id << "'";
+          Log::warning() << "ignoring unknown trigger type '" << triggerType
+                         << "' on task " << td->_id;
         }
       }
     }
@@ -168,24 +218,29 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         node.stringLongPairChildrenByName("resource"));
   while (it.hasNext()) {
     const QPair<QString,qlonglong> &p(it.next());
-    if (p.second <= 0)
-      Log::error() << "ignoring resource of kind " << p.first
-                   << "with incorrect quantity in task " << node.toString();
-    else
+    if (p.second <= 0) {
+      Log::error() << "task with incorrect resource quantity for kind '"
+                   << p.first << "': " << node.toString();
+      delete td;
+      return;
+    } else
       td->_resources.insert(ConfigUtils::sanitizeId(p.first), p.second);
   }
   QString doas = node.attribute("discardaliasesonstart", "all");
   td->_discardAliasesOnStart = discardAliasesOnStartFromString(doas);
   if (td->_discardAliasesOnStart == Task::DiscardUnknown) {
-    td->_discardAliasesOnStart = Task::DiscardAll;
     Log::error() << "invalid discardaliasesonstart on task " << td->_id << ": '"
                  << doas << "'";
+    delete td;
+    return;
   }
   QList<PfNode> children = node.childrenByName("requestform");
   if (!children.isEmpty()) {
-    if (children.size() > 1)
-      Log::error() << "several requestform in task definition (ignoring all "
-                      "but last one): " << node.toString();
+    if (children.size() > 1) {
+      Log::error() << "task with several requestform: " << node.toString();
+      delete td;
+      return;
+    }
     foreach (PfNode child, children.last().childrenByName("field")) {
       RequestFormField field(child);
       if (!field.isNull())
@@ -244,35 +299,87 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         d = 0;
         return;
       }
+    int tsCount = 0;
+    foreach (PfNode child, node.childrenByName("ontrigger")) {
+      EventSubscription es(d->_fqtn, child, scheduler); // FIXME avoid warnings on cron and notice
+      if (es.isNull() || es.actions().isEmpty()) {
+        Log::warning() << "ignoring invalid or empty ontrigger: "
+                       << node.toString();
+        continue;
+      }
+      foreach (PfNode grandchild, child.childrenByName("cron")) {
+        QString tsId = QString::number(tsCount++);
+        CronTrigger trigger(grandchild, scheduler->namedCalendars());
+        if (trigger.isValid()) {
+          d->_workflowCronTriggersById.insert(tsId, trigger);
+          d->_workflowTriggerSubscriptionsById.insert(
+                tsId, WorkflowTriggerSubscription(trigger, es));
+        } else
+          Log::warning() << "ignoring invalid cron trigger in ontrigger: "
+                         << node.toString();
+      }
+      foreach (PfNode grandchild, child.childrenByName("notice")) {
+        QString tsId = QString::number(tsCount++);
+        NoticeTrigger trigger(grandchild, scheduler->namedCalendars());
+        if (trigger.isValid()) {
+          d->_workflowTriggerSubscriptionsByNotice
+              .insert(trigger.expression(),
+                      WorkflowTriggerSubscription(trigger, es));
+          d->_workflowTriggerSubscriptionsById.insert(
+                tsId, WorkflowTriggerSubscription(trigger, es));
+        } else
+          Log::warning() << "ignoring invalid notice trigger in ontrigger: "
+                         << node.toString();
+      }
+    }
 #define SUBTASK_NODE "shape=box,style=rounded"
 #define ANDJOIN_NODE "shape=square,style=filled,label=and"
 #define ORJOIN_NODE "shape=circle,style=filled,label=or"
-#define START_NODE "shape=circle,style=\"filled,fixedsize\",width=.2,label=\"\",fillcolor=black"
-#define END_NODE "shape=doublecircle,style=\"filled,fixedsize\",width=.2,label=\"\",fillcolor=black"
+#define START_NODE "shape=circle,style=\"filled\",width=.2,label=\"\",fillcolor=black"
+#define END_NODE "shape=doublecircle,style=\"filled\",width=.2,label=\"\",fillcolor=black"
+#define TRIGGER_NODE "shape=none"
 #define WORKFLOW_EDGE "dir=forward,arrowhead=vee"
+#define TRIGGER_EDGE "dir=forward,arrowhead=vee,style=dashed"
     QString gv("graph g{\n"
-               "  edge [" WORKFLOW_EDGE "]\n"
                "  start[" START_NODE "]\n"
                "  end[" END_NODE "]\n");
     foreach (Step s, d->_steps.values()) {
       switch (s.kind()) {
       case Step::SubTask:
-        gv.append("  step_").append(s.id()).append("[label=\"").append(s.id())
-            .append("\"," SUBTASK_NODE).append("]\n");
+        gv.append("  step_"+s.id()+"[label=\""+s.id()+"\"," SUBTASK_NODE "]\n");
         break;
       case Step::AndJoin:
-        gv.append("  step_").append(s.id())
-            .append("[label=\"and\"," ANDJOIN_NODE).append("]\n");
+        gv.append("  step_"+s.id()+"[" ANDJOIN_NODE "]\n");
         break;
       case Step::OrJoin:
-        gv.append("  step_").append(s.id())
-            .append("[label=\"and\"," ORJOIN_NODE).append("]\n");
+        gv.append("  step_"+s.id()+"[" ORJOIN_NODE "]\n");
         break;
       case Step::Unknown:
         ;
       }
     }
-    QSet<QString> gvedges;
+    QSet<QString> gvedges; // use a QSet to remove duplicate onfinish edges
+    foreach (QString tsId, d->_workflowTriggerSubscriptionsById.keys()) {
+      const WorkflowTriggerSubscription &ts
+          = d->_workflowTriggerSubscriptionsById.value(tsId);
+      gv.append("  trigger_"+tsId+"[label=\""
+                +ts.trigger().humanReadableExpression().remove('"')
+                +"\"," TRIGGER_NODE "]\n");
+      foreach (Action a, ts.eventSubscription().actions()) {
+        if (a.actionType() == "step") {
+          QString target = a.targetName();
+          if (d->_steps.contains(target)) {
+            gvedges.insert("  trigger_"+tsId+" -- step_"+target
+                           +"[label=\"\"," TRIGGER_EDGE "]\n");
+          } else {
+            // do nothing, the warning is issued in another loop
+          }
+        } else if (a.actionType() == "end") {
+          gvedges.insert("  trigger_"+tsId+" -- end [label=\"\","
+                         TRIGGER_EDGE "]\n");
+        }
+      }
+    }
     // Note about predecessors' transitionId conventions:
     // There are several kind of coexisting non-overlaping transitionId types
     // 1) Start transition:
@@ -297,7 +404,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     //         app1.group1.workflow1:step4|onready|$end
     foreach (QString id, d->_startSteps) {
       d->_steps[id].insertPredecessor(d->_fqtn+"|start|"+id);
-      Log::fatal() << "adding predecessor " << d->_fqtn+"|start|"+id
+      Log::debug() << "adding predecessor " << d->_fqtn+"|start|"+id
                    << " to step " << d->_steps[id].fqsn();
       gvedges.insert("  start -- step_"+id+"\n");
     }
@@ -319,19 +426,20 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
             else // fqsn
               transitionId = d->_fqtn+":"+source+"|"+eventName+"|"+target;
             if (d->_steps.contains(target)) {
-              Log::fatal() << "adding predecessor " << transitionId
+              Log::debug() << "adding predecessor " << transitionId
                            << " to step " << d->_steps[target].fqsn();
               d->_steps[target].insertPredecessor(transitionId);
               gvedges.insert("  step_"+source+" -- step_"+target+"[label=\""
-                             +es.eventName()+"\"]\n");
+                             +es.eventName()+"\"," WORKFLOW_EDGE "]\n");
             } else {
-              // FIXME should reject the workflow task, step actions must never trigger inexisting steps
-              Log::fatal() << "cannot add predecessor " << transitionId
+              Log::error() << "cannot add predecessor " << transitionId
                            << " with unknown target to workflow " << d->_fqtn;
+              d = 0;
+              return;
             }
           } else if (a.actionType() == "end") {
             gvedges.insert("  step_"+source+" -- end [label=\""+es.eventName()
-                           +"\"]\n");
+                           +"\"" WORKFLOW_EDGE "]\n");
           }
         }
       }
@@ -340,14 +448,17 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       gv.append(s);
     gv.append("}");
     d->_workflowDiagram = gv;
-    // FIXME reject workflows w/ no start edge
-    // FIXME reject workflows w/ step w/o predecessors
-    // FIXME reject workflows w/ step w/o successors, at less on trivial cases (e.g. neither step nor end in onfailure)
+    // TODO reject workflows w/ no start edge
+    // TODO reject workflows w/ step w/o predecessors
+    // TODO reject workflows w/ step w/o successors, at less on trivial cases (e.g. neither step nor end in onfailure)
+    if (node.hasChild("trigger"))
+      Log::warning() << "ignoring trigger in workflow task: "
+                     << node.toString();
 
   } else {
     d->_workflowDiagram = "graph g{graph[label=\"not a workflow\"]}";
     if (!steps.isEmpty() || node.hasChild("start"))
-      Log::warning() << "non-workflow task with at less one step definition"
+      Log::warning() << "ignoring step definitions in non-workflow task: "
                      << node.toString();
   }
 }
@@ -708,4 +819,18 @@ QStringList Task::startSteps() const {
 
 QString Task::workflowDiagram() const {
   return d ? d->_workflowDiagram : QString();
+}
+
+QHash<QString,WorkflowTriggerSubscription> Task::workflowTriggerSubscriptionsById() const {
+  return d ? d->_workflowTriggerSubscriptionsById
+           : QHash<QString,WorkflowTriggerSubscription>();
+}
+
+QMultiHash<QString, WorkflowTriggerSubscription> Task::workflowTriggerSubscriptionsByNotice() const {
+  return d ? d->_workflowTriggerSubscriptionsByNotice
+           : QMultiHash<QString,WorkflowTriggerSubscription>();
+}
+
+QHash<QString,CronTrigger> Task::workflowCronTriggersById() const {
+  return d ? d->_workflowCronTriggersById : QHash<QString,CronTrigger>();
 }

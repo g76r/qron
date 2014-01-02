@@ -18,8 +18,10 @@
 class PostNoticeActionData : public ActionData {
 public:
   QString _notice;
-  PostNoticeActionData(Scheduler *scheduler = 0, QString notice = QString())
-    : ActionData(scheduler), _notice(notice) { }
+  ParamSet _params;
+  PostNoticeActionData(Scheduler *scheduler = 0, QString notice = QString(),
+                       ParamSet params = ParamSet())
+    : ActionData(scheduler), _notice(notice), _params(params) { }
   QString toString() const {
     return "^"+_notice;
   }
@@ -29,16 +31,23 @@ public:
   void trigger(EventSubscription subscription,
                const ParamsProvider *context) const {
     Q_UNUSED(subscription)
-    if (_scheduler)
-      _scheduler.data()->postNotice(ParamSet().evaluate(_notice, context));
+    if (_scheduler) {
+      // LATER do not use _params but a modified _params with subscription's params as parent
+      ParamSet noticeParams;
+      foreach (QString key, _params.keys())
+        noticeParams.setValue(key, _params.value(key, true, context));
+      _scheduler.data()
+          ->postNotice(_params.evaluate(_notice, context), noticeParams);
+    }
   }
   QString targetName() const {
     return _notice;
   }
 };
 
-PostNoticeAction::PostNoticeAction(Scheduler *scheduler, QString notice)
-  : Action(new PostNoticeActionData(scheduler, notice)) {
+PostNoticeAction::PostNoticeAction(
+    Scheduler *scheduler, QString notice, ParamSet params)
+  : Action(new PostNoticeActionData(scheduler, notice, params)) {
 }
 
 PostNoticeAction::PostNoticeAction(const PostNoticeAction &rhs) : Action(rhs) {

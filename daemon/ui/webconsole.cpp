@@ -1145,7 +1145,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       Task task = _scheduler->task(req.param("fqtn"));
       QString gv = task.workflowDiagram();
       if (!gv.isEmpty()) {
-        GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler(this);
+        GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
         h->setSource(gv);
         h->handleRequest(req, res, ctxt);
         h->deleteLater();
@@ -1261,7 +1261,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
     disconnect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
                _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
-    disconnect(_scheduler, SIGNAL(noticePosted(QString)),
+    disconnect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
                _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
                _taskGroupsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
@@ -1345,7 +1345,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
     connect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
             _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
-    connect(_scheduler, SIGNAL(noticePosted(QString)),
+    connect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
             _taskGroupsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));

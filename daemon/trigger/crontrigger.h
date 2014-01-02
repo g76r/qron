@@ -53,6 +53,7 @@ public:
   QDateTime lastTriggered() const;
   void setLastTriggered(QDateTime lastTriggered) const;
   void clearLastTriggered() const { setLastTriggered(QDateTime()); }
+  void detach();
 };
 
 Q_DECLARE_METATYPE(CronTrigger)

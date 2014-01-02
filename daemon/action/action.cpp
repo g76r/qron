@@ -23,6 +23,7 @@
 #include "logaction.h"
 #include "stepaction.h"
 #include "endaction.h"
+#include "config/configutils.h"
 
 Action::Action() {
 }
@@ -106,8 +107,10 @@ QString ActionData::targetName() const {
 Action Action::createAction(PfNode node, Scheduler *scheduler) {
   // LATER implement HttpAction
   // LATER implement ExecAction
+  ParamSet params;
+  ConfigUtils::loadParamSet(node, &params);
   if (node.name() == "postnotice") {
-    return PostNoticeAction(scheduler, node.contentAsString());
+    return PostNoticeAction(scheduler, node.contentAsString(), params);
   } else if (node.name() == "raisealert") {
     return RaiseAlertAction(scheduler, node.contentAsString());
   } else if (node.name() == "cancelalert") {
@@ -115,8 +118,6 @@ Action Action::createAction(PfNode node, Scheduler *scheduler) {
   } else if (node.name() == "emitalert") {
     return EmitAlertAction(scheduler, node.contentAsString());
   } else if (node.name() == "requesttask") {
-    ParamSet params;
-    // TODO loadparams
     return RequestTaskAction(scheduler, node.contentAsString(), params,
                              node.hasChild("force"));
   } else if (node.name() == "udp") {
@@ -128,8 +129,8 @@ Action Action::createAction(PfNode node, Scheduler *scheduler) {
   } else if (node.name() == "step") {
     return StepAction(scheduler, node.contentAsString());
   } else if (node.name() == "end") {
-    // TODO success and returncode should be evaluatable strings
-    return EndAction(scheduler, node.boolAttribute("success", true),
+    // LATER success and returncode should be evaluatable strings
+    return EndAction(scheduler, !node.hasChild("failure"),
                      node.longAttribute("returncode", 0));
   } else {
     Log::error() << "unknown action type: " << node.name();

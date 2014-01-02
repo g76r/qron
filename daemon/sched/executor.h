@@ -27,6 +27,7 @@ class QNetworkAccessManager;
 class QNetworkReply;
 class StepInstance;
 class Alerter;
+class TimerWithArguments;
 
 /** Class handling execution of a task after its being dequeued, from start
  * to end or cancellation. */
@@ -44,6 +45,7 @@ class Executor : public QObject {
   Alerter *_alerter;
   QTimer *_abortTimeout;
   QHash<QString,StepInstance> _steps;
+  QList<TimerWithArguments*> _workflowTimers;
 
 public:
   explicit Executor(Alerter *alerter);
@@ -74,16 +76,17 @@ private slots:
   void readyReadStandardOutput();
   void replyError(QNetworkReply::NetworkError error);
   void replyFinished();
+  void noticePosted(QString notice, ParamSet params);
+  void cronTriggered(QVariant tsId);
 
 private:
   Q_INVOKABLE void doExecute(TaskInstance instance);
-  void localMean(TaskInstance instance);
-  void sshMean(TaskInstance instance);
-  void httpMean(TaskInstance instance);
-  void workflowMean(TaskInstance workflowInstance);
-  void execProcess(TaskInstance instance, QStringList cmdline,
-                   QProcessEnvironment sysenv);
-  inline void prepareEnv(TaskInstance instance, QProcessEnvironment *sysenv,
+  void localMean();
+  void sshMean();
+  void httpMean();
+  void workflowMean();
+  void execProcess(QStringList cmdline, QProcessEnvironment sysenv);
+  inline void prepareEnv(QProcessEnvironment *sysenv,
                          QHash<QString, QString> *setenv = 0);
   void replyHasFinished(QNetworkReply *reply,
                         QNetworkReply::NetworkError error);

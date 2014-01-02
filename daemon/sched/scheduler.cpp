@@ -305,6 +305,8 @@ ignore_task:;
               this, SLOT(taskFinishing(TaskInstance,QPointer<Executor>)));
       connect(e, SIGNAL(taskStarted(TaskInstance)),
               this, SIGNAL(taskStarted(TaskInstance)));
+      connect(this, SIGNAL(noticePosted(QString,ParamSet)),
+              e, SLOT(noticePosted(QString,ParamSet)));
       _availableExecutors.append(e);
     }
   } else {
@@ -837,16 +839,17 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
 class NoticeContext : public ParamsProvider {
 public:
   QString _notice;
-  NoticeContext(const QString notice) : _notice(notice) { }
+  ParamSet _params;
+  NoticeContext(const QString notice, ParamSet params)
+    : _notice(notice), _params(params) { }
   QVariant paramValue(const QString key, const QVariant defaultValue) const {
     if (key == "!notice")
       return _notice;
-    return defaultValue;
+    return _params.paramValue(key, defaultValue);
   }
 };
 
-void Scheduler::postNotice(QString notice) {
-  // TODO allow notice parameters set when posting
+void Scheduler::postNotice(QString notice, ParamSet params) {
   if (notice.isNull()) {
     Log::warning() << "cannot post a null/empty notice";
     return;
@@ -854,15 +857,17 @@ void Scheduler::postNotice(QString notice) {
   QMutexLocker ml(&_configMutex);
   QHash<QString,Task> tasks = _tasks;
   ml.unlock();
-  Log::debug() << "posting notice '" << notice << "'";
+  Log::debug() << "posting notice ^" << notice << " with params " << params;
   foreach (Task task, tasks.values()) {
     foreach (NoticeTrigger trigger, task.noticeTriggers()) {
       if (trigger.expression() == notice) { // LATER allow filters such as regexps
         Log::debug() << "notice " << trigger.humanReadableExpression()
                      << " triggered task " << task.fqtn();
-        // TODO override overridingParams with notice parameters
+        ParamSet overridingParams = trigger.overridingParams();
+        foreach (QString key, params.keys())
+          overridingParams.setValue(key, params.value(key));
         QList<TaskInstance> requests
-            = syncRequestTask(task.fqtn(), trigger.overridingParams());
+            = syncRequestTask(task.fqtn(), overridingParams);
         if (!requests.isEmpty())
           foreach (TaskInstance request, requests)
             Log::debug(task.fqtn(), request.id())
@@ -875,8 +880,8 @@ void Scheduler::postNotice(QString notice) {
       }
     }
   }
-  emit noticePosted(notice);
-  NoticeContext context(notice);
+  emit noticePosted(notice, params);
+  NoticeContext context(notice, params);
   foreach (EventSubscription sub, _onnotice)
     sub.triggerActions(&context);
 }
@@ -1013,6 +1018,8 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
               this, SLOT(taskFinishing(TaskInstance,QPointer<Executor>)));
       connect(executor, SIGNAL(taskStarted(TaskInstance)),
               this, SIGNAL(taskStarted(TaskInstance)));
+      connect(this, SIGNAL(noticePosted(QString,ParamSet)),
+              executor, SLOT(noticePosted(QString,ParamSet)));
     }
     executor->execute(instance);
     ++_execCount;

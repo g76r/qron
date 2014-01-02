@@ -23,6 +23,9 @@
 #include "log/qterrorcodes.h"
 #include "stepinstance.h"
 #include "alert/alerter.h"
+#include "config/eventsubscription.h"
+#include "trigger/crontrigger.h"
+#include "util/timerwitharguments.h"
 
 Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   _stderrWasUsed(false), _thread(new QThread),
@@ -49,62 +52,62 @@ void Executor::execute(TaskInstance instance) {
 }
 
 void Executor::doExecute(TaskInstance instance) {
-  const QString mean = instance.task().mean();
-  Log::debug(instance.task().fqtn(), instance.id())
-      << "starting task '" << instance.task().fqtn() << "' through mean '"
-      << mean << "' after " << instance.queuedMillis() << " ms in queue";
   _instance = instance;
+  const QString mean = _instance.task().mean();
+  Log::info(_instance.task().fqtn(), _instance.id())
+      << "starting task '" << _instance.task().fqtn() << "' through mean '"
+      << mean << "' after " << _instance.queuedMillis() << " ms in queue";
   _stderrWasUsed = false;
-  long long maxDurationBeforeAbort = instance.task().maxDurationBeforeAbort();
+  long long maxDurationBeforeAbort = _instance.task().maxDurationBeforeAbort();
   if (maxDurationBeforeAbort <= INT_MAX)
     _abortTimeout->start(maxDurationBeforeAbort);
   if (mean == "local")
-    localMean(instance);
+    localMean();
   else if (mean == "ssh")
-    sshMean(instance);
+    sshMean();
   else if (mean == "http")
-    httpMean(instance);
+    httpMean();
   else if (mean == "workflow")
-    workflowMean(instance);
+    workflowMean();
   else if (mean == "donothing") {
-    emit taskStarted(instance);
+    emit taskStarted(_instance);
     taskFinishing(true, 0);
   } else {
-    Log::error(instance.task().fqtn(), instance.id())
+    Log::error(_instance.task().fqtn(), _instance.id())
         << "cannot execute task with unknown mean '" << mean << "'";
     taskFinishing(false, -1);
   }
 }
 
-void Executor::localMean(TaskInstance instance) {
+void Executor::localMean() {
   QStringList cmdline;
-  cmdline = instance.params()
-      .splitAndEvaluate(instance.command(), &instance);
-  Log::info(instance.task().fqtn(), instance.id())
+  cmdline = _instance.params()
+      .splitAndEvaluate(_instance.command(), &_instance);
+  Log::info(_instance.task().fqtn(), _instance.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   QProcessEnvironment sysenv;
-  prepareEnv(instance, &sysenv);
-  instance.setAbortable();
-  execProcess(instance, cmdline, sysenv);
+  prepareEnv(&sysenv);
+  _instance.setAbortable();
+  execProcess(cmdline, sysenv);
 }
 
-void Executor::sshMean(TaskInstance instance) {
+void Executor::sshMean() {
   QStringList cmdline, sshCmdline;
-  cmdline = instance.params()
-      .splitAndEvaluate(instance.command(), &instance);
-  Log::info(instance.task().fqtn(), instance.id())
+  cmdline = _instance.params()
+      .splitAndEvaluate(_instance.command(), &_instance);
+  Log::info(_instance.task().fqtn(), _instance.id())
       << "exact command line to be executed (through ssh on host "
-      << instance.target().hostname() <<  "): " << cmdline.join(" ");
+      << _instance.target().hostname() <<  "): " << cmdline.join(" ");
   QHash<QString,QString> setenv;
   QProcessEnvironment sysenv;
-  prepareEnv(instance, &sysenv, &setenv);
-  QString username = instance.params().value("ssh.username");
-  qlonglong port = instance.params().valueAsLong("ssh.port");
-  QString ignoreknownhosts = instance.params().value("ssh.ignoreknownhosts",
+  prepareEnv(&sysenv, &setenv);
+  QString username = _instance.params().value("ssh.username");
+  qlonglong port = _instance.params().valueAsLong("ssh.port");
+  QString ignoreknownhosts = _instance.params().value("ssh.ignoreknownhosts",
                                                     "true");
-  QString identity = instance.params().value("ssh.identity");
-  QStringList options = instance.params().valueAsStrings("ssh.options");
-  bool disablepty = instance.params().value("ssh.disablepty") == "true";
+  QString identity = _instance.params().value("ssh.identity");
+  QStringList options = _instance.params().valueAsStrings("ssh.options");
+  bool disablepty = _instance.params().value("ssh.disablepty") == "true";
   sshCmdline << "ssh" << "-oLogLevel=ERROR" << "-oEscapeChar=none"
              << "-oServerAliveInterval=10" << "-oServerAliveCountMax=3"
              << "-oIdentitiesOnly=yes" << "-oKbdInteractiveAuthentication=no"
@@ -112,7 +115,7 @@ void Executor::sshMean(TaskInstance instance) {
              << "-oTCPKeepAlive=yes" << "-oPasswordAuthentication=false";
   if (!disablepty) {
     sshCmdline << "-t" << "-t";
-    instance.setAbortable();
+    _instance.setAbortable();
   }
   if (ignoreknownhosts == "true")
     sshCmdline << "-oUserKnownHostsFile=/dev/null"
@@ -126,23 +129,22 @@ void Executor::sshMean(TaskInstance instance) {
     sshCmdline << "-o" + option;
   if (!username.isEmpty())
     sshCmdline << "-oUser=" + username;
-  sshCmdline << instance.target().hostname();
+  sshCmdline << _instance.target().hostname();
   foreach (QString key, setenv.keys())
-    if (!instance.task().unsetenv().contains(key)) {
+    if (!_instance.task().unsetenv().contains(key)) {
       QString value = setenv.value(key);
       value.replace('\'', QString());
       sshCmdline << key+"='"+value+"'";
     }
   sshCmdline << cmdline;
-  execProcess(instance, sshCmdline, sysenv);
+  execProcess(sshCmdline, sysenv);
 }
 
-void Executor::execProcess(TaskInstance instance, QStringList cmdline,
-                           QProcessEnvironment sysenv) {
+void Executor::execProcess(QStringList cmdline, QProcessEnvironment sysenv) {
   if (cmdline.isEmpty()) {
-    Log::warning(instance.task().fqtn(), instance.id())
+    Log::warning(_instance.task().fqtn(), _instance.id())
         << "cannot execute task with empty command '"
-        << instance.task().fqtn() << "'";
+        << _instance.task().fqtn() << "'";
     taskFinishing(false, -1);
     return;
   }
@@ -162,7 +164,7 @@ void Executor::execProcess(TaskInstance instance, QStringList cmdline,
   Log::debug(_instance.task().fqtn(), _instance.id())
       << "about to start system process '" << program << "' with args "
       << cmdline << " and environment " << sysenv.toStringList();
-  emit taskStarted(instance);
+  emit taskStarted(_instance);
   _process->start(program, cmdline);
 }
 
@@ -266,33 +268,33 @@ void Executor::readyReadStandardOutput() {
   // LATER make it possible to log stdout too (as debug, depending on task cfg)
 }
 
-void Executor::httpMean(TaskInstance instance) {
+void Executor::httpMean() {
   // LATER http mean should support http auth, http proxy auth and ssl
-  QString method = instance.params().value("method");
+  QString method = _instance.params().value("method");
   QUrl url;
-  int port = instance.params().valueAsInt("port", 80);
-  QString hostname = instance.params()
-      .evaluate(instance.target().hostname(), &instance);
-  QString command = instance.params()
-      .evaluate(instance.command(), &instance);
+  int port = _instance.params().valueAsInt("port", 80);
+  QString hostname = _instance.params()
+      .evaluate(_instance.target().hostname(), &_instance);
+  QString command = _instance.params()
+      .evaluate(_instance.command(), &_instance);
   if (command.size() && command.at(0) == '/')
     command = command.mid(1);
   url.setUrl(QString("http://%1:%2/%3").arg(hostname).arg(port).arg(command),
              QUrl::TolerantMode);
   QNetworkRequest networkRequest(url);
-  foreach (QString name, instance.setenv().keys()) {
-    const QString expr(instance.setenv().rawValue(name));
+  foreach (QString name, _instance.setenv().keys()) {
+    const QString expr(_instance.setenv().rawValue(name));
     if (name.endsWith(":")) // ignoring : at end of header name
       name.chop(1);
     name.replace(QRegExp("[^a-zA-Z_0-9\\-]+"), "_");
-    const QString value = instance.params().evaluate(expr, &instance);
-    //Log::fatal(instance.task().fqtn(), instance.id()) << "setheader: " << name << "=" << value << ".";
+    const QString value = _instance.params().evaluate(expr, &_instance);
+    //Log::fatal(_instance.task().fqtn(), _instance.id()) << "setheader: " << name << "=" << value << ".";
     networkRequest.setRawHeader(name.toLatin1(), value.toUtf8());
   }
   // LATER read request output, at less to avoid server being blocked and request never finish
   if (url.isValid()) {
-    instance.setAbortable();
-    emit taskStarted(instance);
+    _instance.setAbortable();
+    emit taskStarted(_instance);
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
       Log::info(_instance.task().fqtn(), _instance.id())
           << "exact GET URL to be called: "
@@ -391,18 +393,41 @@ void Executor::replyHasFinished(QNetworkReply *reply,
   taskFinishing(success, status);
 }
 
-void Executor::workflowMean(TaskInstance workflowInstance) {
-  foreach (Step step, workflowInstance.task().steps()) {
-    StepInstance si(step, workflowInstance, QPointer<Executor>(this));
+void Executor::workflowMean() {
+  foreach (Step step, _instance.task().steps()) {
+    StepInstance si(step, _instance, QPointer<Executor>(this));
     _steps.insert(step.id(), si);
   }
-  workflowInstance.setAbortable();
-  Log::fatal(workflowInstance.task().fqtn(), workflowInstance.id())
-      << "starting workflow";
-  emit taskStarted(workflowInstance);
-  foreach (QString id, workflowInstance.task().startSteps())
-    doActivateWorkflowTransition(workflowInstance.task().fqtn()+"|start|"+id);
-  // FIXME detect hanged up workflow (e.g. if no start tasks)
+  foreach (QString id, _instance.task().workflowCronTriggersById().keys()) {
+    CronTrigger trigger = _instance.task().workflowCronTriggersById().value(id);
+    trigger.detach();
+    QDateTime now(QDateTime::currentDateTime());
+    trigger.setLastTriggered(now);
+    QDateTime next = trigger.nextTriggering();
+    if (next.isValid()) {
+      qint64 ms = now.msecsTo(next);
+      TimerWithArguments *timer = new TimerWithArguments(this);
+      timer->setSingleShot(true);
+      timer->connectWithArgs(this, "cronTriggered", id);
+      timer->setTimerType(Qt::PreciseTimer); // LATER is it really needed ?
+      timer->start(ms < INT_MAX ? ms : INT_MAX);
+      _workflowTimers.append(timer);
+      //Log::fatal(_instance.task().fqtn(), _instance.id())
+      //    << "****** configured workflow timer " << id << " " << trigger.expression()
+      //    << " to " << ms << " ms";
+    } else {
+      // this is likely to occur for timers too far in the future (> ~20 days)
+      Log::debug(_instance.task().fqtn(), _instance.id())
+          << "invalid workflow timer " << id << " " << next.toString()
+          << " " << trigger.humanReadableExpression();
+    }
+  }
+  _instance.setAbortable();
+  //Log::fatal(_instance.task().fqtn(), _instance.id())
+  //    << "starting workflow";
+  emit taskStarted(_instance);
+  foreach (QString id, _instance.task().startSteps())
+    doActivateWorkflowTransition(_instance.task().fqtn()+"|start|"+id);
 }
 
 void Executor::activateWorkflowTransition(QString transitionId) {
@@ -426,10 +451,8 @@ void Executor::doActivateWorkflowTransition(QString transitionId) {
     transitionId = parts.join('|');
   }
   if (parts[2] == "$end") {
+    // TODO support (failure) and (returnCode 42) params on end action
     workflowFinished(true, 0);
-    // FIXME should wait for subtasks finished, not only ready (== requested)
-    // FIXME success = false if at less one task without successor fails ? false if at less one task fails ? parametrized ?
-    // FIXME returnCode only depends on success ? number of failures ? parametrized ?
     return;
   }
   if (!_steps.contains(parts[2])) {
@@ -439,26 +462,51 @@ void Executor::doActivateWorkflowTransition(QString transitionId) {
   }
   //Log::fatal(_instance.task().fqtn(), _instance.id())
   //    << "actual transtion id: " << transitionId;
-  Log::fatal(_instance.task().fqtn(), _instance.id())
-      << "activating transition " << transitionId;
+  Log::debug(_instance.task().fqtn(), _instance.id())
+      << "activating workflow transition " << transitionId;
   _steps[parts[2]].predecessorReady(transitionId);
 }
 
+void Executor::noticePosted(QString notice, ParamSet params) {
+  foreach (WorkflowTriggerSubscription wts,
+           _instance.task().workflowTriggerSubscriptionsByNotice()
+           .values(notice)) {
+    Log::debug(_instance.task().fqtn(), _instance.id())
+        << "triggering ontrigger notice ^" << notice << " " << params;
+    // TODO send notice params and trigger params as trigger context
+    wts.eventSubscription().triggerActions(_instance);
+  }
+}
+
+void Executor::cronTriggered(QVariant tsId) {
+  WorkflowTriggerSubscription wts
+      = _instance.task().workflowTriggerSubscriptionsById()
+      .value(tsId.toString());
+  Log::debug(_instance.task().fqtn(), _instance.id())
+      << "triggering ontrigger cron #" << tsId << " "
+      << wts.trigger().humanReadableExpression();
+  // TODO send trigger params as trigger context
+  wts.eventSubscription().triggerActions(_instance);
+}
+
 void Executor::workflowFinished(bool success, int returnCode) {
-  Log::fatal(_instance.task().fqtn(), _instance.id())
-      << "ending workflow";
-  _steps.clear(); // LATER give to TaskInstance ?
+  Log::info(_instance.task().fqtn(), _instance.id())
+      << "ending workflow in " << (success ? "success" : "failure")
+      << " with return code " << returnCode;
+  _steps.clear(); // LATER give to TaskInstance for history ?
+  qDeleteAll(_workflowTimers);
+  _workflowTimers.clear();
   taskFinishing(success, returnCode);
 }
 
-void Executor::prepareEnv(TaskInstance instance, QProcessEnvironment *sysenv,
+void Executor::prepareEnv(QProcessEnvironment *sysenv,
                           QHash<QString,QString> *setenv) {
-  if (instance.task().params().valueAsBool("clearsysenv"))
+  if (_instance.task().params().valueAsBool("clearsysenv"))
     *sysenv = QProcessEnvironment();
   else
     *sysenv = _baseenv;
   // first clean system base env from any unset variables
-  foreach (const QString pattern, instance.task().unsetenv().keys()) {
+  foreach (const QString pattern, _instance.task().unsetenv().keys()) {
     QRegExp re(pattern, Qt::CaseInsensitive, QRegExp::WildcardUnix);
     foreach (const QString key, sysenv->keys())
       if (re.exactMatch(key))
@@ -466,19 +514,19 @@ void Executor::prepareEnv(TaskInstance instance, QProcessEnvironment *sysenv,
   }
   // then build setenv evaluated paramset that may be used apart from merging
   // into sysenv
-  foreach (QString key, instance.setenv().keys()) {
-    const QString expr(instance.setenv().rawValue(key));
-    /*Log::debug(instance.task().fqtn(), instance.id())
+  foreach (QString key, _instance.setenv().keys()) {
+    const QString expr(_instance.setenv().rawValue(key));
+    /*Log::debug(_instance.task().fqtn(), _instance.id())
         << "setting environment variable " << key << "="
-        << expr << " " << instance.params().keys(false).size() << " "
-        << instance.params().keys(true).size() << " ["
-        << instance.params().evaluate("%!yyyy %!fqtn %{!fqtn}", &_instance)
+        << expr << " " << _instance.params().keys(false).size() << " "
+        << _instance.params().keys(true).size() << " ["
+        << _instance.params().evaluate("%!yyyy %!fqtn %{!fqtn}", &_instance)
         << "]";*/
     static QRegExp notIdentifier("[^a-zA-Z_0-9]+");
     key.replace(QRegExp(notIdentifier), "_");
     if (key.size() > 0 && strchr("0123456789", key[0].toLatin1()))
       key.insert(0, '_');
-    const QString value = instance.params().evaluate(expr, &instance);
+    const QString value = _instance.params().evaluate(expr, &_instance);
     if (setenv)
       setenv->insert(key, value);
     sysenv->insert(key, value);
