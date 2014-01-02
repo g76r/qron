@@ -28,6 +28,7 @@
 #include "action/action.h"
 #include "trigger/crontrigger.h"
 #include "trigger/noticetrigger.h"
+#include "graphviz_styles.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -1455,27 +1456,6 @@ void WebConsole::configReloaded() {
   recomputeDiagrams();
 }
 
-#define GRAPH "rankdir=LR,bgcolor=transparent,splines=ortho"
-#define CLUSTER_NODE "shape=box,peripheries=2,style=filled,fillcolor=coral"
-#define HOST_NODE "shape=box,style=filled,fillcolor=coral"
-#define TASK_NODE "shape=ellipse,style=filled,fillcolor=skyblue"
-#define TASKGROUP_NODE "shape=ellipse,style=dashed"
-#define CLUSTER_HOST_EDGE "dir=forward,arrowhead=vee"
-#define TASK_TARGET_EDGE "dir=forward,arrowhead=vee"
-#define TASKGROUP_TASK_EDGE "style=dashed"
-#define TASKGROUP_EDGE "style=dashed"
-#define NOTICE_NODE "shape=note,style=filled,fillcolor=forestgreen"
-#define CRON_TRIGGER_NODE "shape=none"
-#define NO_TRIGGER_NODE "shape=none"
-#define TASK_TRIGGER_EDGE "dir=back,arrowtail=vee"
-#define TASK_NOTRIGGER_EDGE "dir=back,arrowtail=odot,style=dashed"
-#define TASK_POSTNOTICE_EDGE "dir=forward,arrowhead=vee"
-#define TASK_REQUESTTASK_EDGE TASK_POSTNOTICE_EDGE
-#define GLOBAL_EVENT_NODE "shape=none"
-//#define GLOBAL_EVENT_NODE "shape=pentagon"
-#define GLOBAL_POSTNOTICE_EDGE "dir=back,arrowtail=vee"
-#define GLOBAL_REQUESTTASK_EDGE TASK_POSTNOTICE_EDGE
-
 void WebConsole::recomputeDiagrams() {
   QSet<QString> displayedGroups, displayedHosts, notices, fqtns,
       displayedGlobalEventsName;
@@ -1493,6 +1473,7 @@ void WebConsole::recomputeDiagrams() {
   // * displayed global event names, i.e. global event names (e.g. onstartup)
   //   with at less one displayed event subscription (e.g. requesttask,
   //   postnotice, emitalert)
+  // * (workflow) subtasks tree
   foreach (const Task &task, _tasks.values()) {
     QString s = task.taskGroup().id();
     displayedGroups.insert(s);
@@ -1510,8 +1491,12 @@ void WebConsole::recomputeDiagrams() {
   foreach (const Task &task, _tasks.values()) {
     foreach (const NoticeTrigger &trigger, task.noticeTriggers())
       notices.insert(trigger.expression());
+    foreach (const QString &notice,
+             task.workflowTriggerSubscriptionsByNotice().keys())
+      notices.insert(notice);
     foreach (const EventSubscription &sub,
-             task.allEventsSubscriptions() + task.taskGroup().allEventSubscriptions())
+             task.allEventsSubscriptions()
+             + task.taskGroup().allEventSubscriptions())
       foreach (const Action &action, sub.actions()) {
         if (action.actionType() == "postnotice")
           notices.insert(action.targetName());
@@ -1526,11 +1511,18 @@ void WebConsole::recomputeDiagrams() {
         displayedGlobalEventsName.insert(sub.eventName());
     }
   }
+  QMultiHash<QString,Task> subtasks;
+  foreach (const Task &task, _tasks.values()) {
+    foreach (const Task &subtask, _tasks.values()) {
+      if (!subtask.supertask().isNull() && subtask.supertask() == task)
+        subtasks.insert(task.fqtn(), subtask);
+    }
+  }
   /***************************************************************************/
   // tasks deployment diagram
   QString gv;
   gv.append("graph g {\n"
-            "graph[" GRAPH "]\n"
+            "graph[" GLOBAL_GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
   foreach (const Host &host, _hosts.values())
     if (displayedHosts.contains(host.id()))
@@ -1566,16 +1558,27 @@ void WebConsole::recomputeDiagrams() {
     }
   }
   foreach (const Task &task, _tasks.values()) {
-    // FIXME filter out subtasks group edges, events and triggers
-    // FIXME handle workflow clusters
-    gv.append("\"").append(task.fqtn()).append("\" [label=\"")
-        .append(task.id()).append("\"," TASK_NODE "]\n");
+    // ignore subtasks
+    if (!task.supertask().isNull())
+      continue;
+    // draw task node and group--task edge
+    gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
+              +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
+              +"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
         .append("\"").append(task.fqtn())
         .append("\" [" TASKGROUP_TASK_EDGE "]\n");
-    gv.append("\"").append(task.fqtn()).append("\"--\"")
-        .append(task.target()).append("\" [label=\"").append(task.mean())
-        .append("\"," TASK_TARGET_EDGE "]\n");
+    // draw task--target edges, workflow tasks showing all edge applicable to
+    // their subtasks once and only once
+    QSet<QString> edges;
+    QList<Task> deployed = subtasks.values(task.fqtn());
+    if (deployed.isEmpty())
+      deployed.append(task);
+    foreach (const Task &subtask, deployed)
+      edges.insert("\""+task.fqtn()+"\"--\""+subtask.target()+"\" [label=\""
+                   +subtask.mean()+"\"," TASK_TARGET_EDGE "]\n");
+    foreach (QString s, edges)
+      gv.append(s);
   }
   gv.append("}");
   _tasksDeploymentDiagram->setSource(gv);
@@ -1583,7 +1586,7 @@ void WebConsole::recomputeDiagrams() {
   // tasks trigger diagram
   gv.clear();
   gv.append("graph g {\n"
-            "graph[" GRAPH "]\n"
+            "graph[" GLOBAL_GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
   foreach (const QString &cause, displayedGlobalEventsName)
     gv.append("\"$global_").append(cause).append("\" [label=\"")
@@ -1618,12 +1621,13 @@ void WebConsole::recomputeDiagrams() {
   // tasks
   int cronid = 0;
   foreach (const Task &task, _tasks.values()) {
-    // FIXME filter out subtasks group edges, events and triggers
-    // FIXME handle workflow clusters
-    // LATER add workflow start point if it is on a subtask
-    // tasks and group to task edges
-    gv.append("\"").append(task.fqtn()).append("\" [label=\"")
-        .append(task.id()).append("\"," TASK_NODE "]\n");
+    // ignore subtasks
+    if (!task.supertask().isNull())
+      continue;
+    // task nodes and group--task edges
+    gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
+              +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
+              +"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
         .append("\"").append(task.fqtn())
         .append("\" [" TASKGROUP_TASK_EDGE "]\n");
@@ -1636,11 +1640,29 @@ void WebConsole::recomputeDiagrams() {
           .append(QString::number(cronid))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     }
+    // workflow internal cron triggers
+    foreach (const CronTrigger &cron,
+             task.workflowCronTriggersById().values()) {
+      gv.append("\"$cron_").append(QString::number(++cronid))
+          .append("\" [label=\"(").append(cron.expression())
+          .append(")\"," CRON_TRIGGER_NODE "]\n");
+      gv.append("\"").append(task.fqtn()).append("\"--\"$cron_")
+          .append(QString::number(cronid))
+          .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
+
+    }
     // notice triggers
     foreach (const NoticeTrigger &trigger, task.noticeTriggers())
       gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
           .append(trigger.expression().remove('"'))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
+    // workflow internal notice triggers
+    foreach (QString notice,
+             task.workflowTriggerSubscriptionsByNotice().keys()) {
+      gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
+          .append(notice.remove('"'))
+          .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
+    }
     // no trigger pseudo-trigger
     if (task.noticeTriggers().isEmpty() && task.cronTriggers().isEmpty()
         && task.otherTriggers().isEmpty()) {

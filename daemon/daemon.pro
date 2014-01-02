@@ -161,7 +161,8 @@ HEADERS += \
     action/endaction.h \
     trigger/trigger.h \
     trigger/trigger_p.h \
-    trigger/noticetrigger.h
+    trigger/noticetrigger.h \
+    ui/graphviz_styles.h
 
 RESOURCES += \
     ui/webconsole.qrc

@@ -30,6 +30,7 @@ class Scheduler;
 class EventSubscription;
 class Step;
 class WorkflowTriggerSubscriptionData;
+class StepInstance;
 
 /** Data holder for the association between a workflow trigger and actions to
   * be performed. */
@@ -145,6 +146,7 @@ public:
   /** Super task (e.g. workflow task) to which this task belongs, if any. */
   Task supertask() const;
   QString workflowDiagram() const;
+  QString workflowInstanceDiagram(QHash<QString,StepInstance> stepInstances) const;
   QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
   QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;
   QHash<QString,CronTrigger> workflowCronTriggersById() const;

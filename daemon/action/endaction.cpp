@@ -22,7 +22,7 @@ public:
     : ActionData(scheduler), _success(success), _returnCode(returnCode) {
   }
   QString toString() const {
-    return "-x";
+    return "end";
   }
   QString actionType() const {
     return "end";
