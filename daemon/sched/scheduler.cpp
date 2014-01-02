@@ -176,6 +176,38 @@ bool Scheduler::reloadConfiguration(PfNode root) {
     else
       _calendars.insert(name, calendar);
   }
+  _hosts.clear();
+  foreach (PfNode node, root.childrenByName("host")) {
+    Host host(node);
+    if (_hosts.contains(host.id())) {
+      Log::error() << "ignoring duplicate host: " << host.id();
+    } else {
+      _hosts.insert(host.id(), host);
+      _resources.insert(host.id(), host.resources());
+    }
+  }
+  _clusters.clear();
+  foreach (PfNode node, root.childrenByName("cluster")) {
+    Cluster cluster(node);
+    foreach (PfNode child, node.childrenByName("host")) {
+      Host host = _hosts.value(child.contentAsString());
+      if (!host.isNull())
+        cluster.appendHost(host);
+      else
+        Log::error() << "host '" << child.contentAsString()
+                     << "' not found, won't add it to cluster '"
+                     << cluster.id() << "'";
+    }
+    if (cluster.hosts().isEmpty())
+      Log::warning() << "cluster '" << cluster.id() << "' has no member";
+    if (_clusters.contains(cluster.id()))
+      Log::error() << "ignoring duplicate cluster: " << cluster.id();
+    else if (_hosts.contains(cluster.id()))
+      Log::error() << "ignoring cluster which id conflicts with a host: "
+                    << cluster.id();
+    else
+      _clusters.insert(cluster.id(), cluster);
+  }
   _tasksGroups.clear();
   foreach (PfNode node, root.childrenByName("taskgroup")) {
     TaskGroup taskGroup(node, _globalParams, _setenv, _unsetenv, this);
@@ -221,6 +253,11 @@ ignore_taskgroup:;
         }
       }
     }
+    if (!_hosts.contains(task.target()) && !_clusters.contains(task.target())) {
+      Log::error() << "ignoring task " << task.fqtn()
+                   << " since its target is unknown: '"<< task.target() << "'";
+      goto ignore_task;
+    }
     _tasks.insert(task.fqtn(), task);
     foreach (Step s, task.steps()) {
       Task subtask = s.subtask();
@@ -228,38 +265,6 @@ ignore_taskgroup:;
         _tasks.insert(subtask.fqtn(), subtask);
     }
 ignore_task:;
-  }
-  _hosts.clear();
-  foreach (PfNode node, root.childrenByName("host")) {
-    Host host(node);
-    if (_hosts.contains(host.id())) {
-      Log::error() << "ignoring duplicate host: " << host.id();
-    } else {
-      _hosts.insert(host.id(), host);
-      _resources.insert(host.id(), host.resources());
-    }
-  }
-  _clusters.clear();
-  foreach (PfNode node, root.childrenByName("cluster")) {
-    Cluster cluster(node);
-    foreach (PfNode child, node.childrenByName("host")) {
-      Host host = _hosts.value(child.contentAsString());
-      if (!host.isNull())
-        cluster.appendHost(host);
-      else
-        Log::error() << "host '" << child.contentAsString()
-                     << "' not found, won't add it to cluster '"
-                     << cluster.id() << "'";
-    }
-    if (cluster.hosts().isEmpty())
-      Log::warning() << "cluster '" << cluster.id() << "' has no member";
-    if (_clusters.contains(cluster.id()))
-      Log::error() << "ignoring duplicate cluster: " << cluster.id();
-    else if (_hosts.contains(cluster.id()))
-      Log::error() << "ignoring cluster which id conflicts with a host: "
-                    << cluster.id();
-    else
-      _clusters.insert(cluster.id(), cluster);
   }
   int maxtotaltaskinstances = 0;
   foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {

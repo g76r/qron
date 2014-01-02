@@ -120,9 +120,16 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
            QHash<QString, Task> oldTasks, Task supertask) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
-  td->_id = ConfigUtils::sanitizeId(node.contentAsString()); // LATER check uniqueness
+  td->_id = ConfigUtils::sanitizeId(node.contentAsString());
   td->_label = node.attribute("label", td->_id);
-  td->_mean = ConfigUtils::sanitizeId(node.attribute("mean")); // LATER check validity
+  td->_mean = ConfigUtils::sanitizeId(node.attribute("mean"));
+  if (td->_mean != "local" && td->_mean != "ssh" && td->_mean != "http"
+      && td->_mean != "workflow" && td->_mean != "donothing") {
+    Log::error() << "task with invalid execution mean: "
+                 << node.toString();
+    delete td;
+    return;
+  }
   td->_command = node.attribute("command");
   td->_target = ConfigUtils::sanitizeId(node.attribute("target"));
   if (td->_target.isEmpty()
