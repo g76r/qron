@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -53,7 +53,8 @@ public:
       _submission(QDateTime::currentDateTime()), _force(force),
       _command(task.command()), _setenv(task.setenv()), _callerTask(callerTask),
       _start(LLONG_MIN), _end(LLONG_MIN),
-      _success(false), _returnCode(0), _abortable(false) { }
+      _success(false), _returnCode(0), _abortable(false) {
+    _params.setParent(task.params()); }
   TaskInstanceData() : _id(0), _groupId(0), _force(false),
       _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
     _abortable(false) { }
@@ -78,14 +79,15 @@ TaskInstance::TaskInstance(const TaskInstance &other)
   : ParamsProvider(), d(other.d) {
 }
 
-TaskInstance::TaskInstance(Task task, bool force, TaskInstance callerTask)
-  : d(new TaskInstanceData(task, task.params().createChild(), force,
-                           callerTask)) {
+TaskInstance::TaskInstance(Task task, bool force, TaskInstance callerTask,
+                           ParamSet overridingParams)
+  : d(new TaskInstanceData(task, overridingParams, force, callerTask)) {
 }
 
 TaskInstance::TaskInstance(Task task, quint64 groupId,
-                           bool force, TaskInstance callerTask)
-  : d(new TaskInstanceData(task, task.params().createChild(), force, callerTask,
+                           bool force, TaskInstance callerTask,
+                           ParamSet overridingParams)
+  : d(new TaskInstanceData(task, overridingParams, force, callerTask,
                            groupId)) {
 }
 

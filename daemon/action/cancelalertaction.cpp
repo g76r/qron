@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,12 +20,10 @@ public:
   CancelAlertActionData(Scheduler *scheduler = 0,
                        QString alert = QString())
     : ActionData(scheduler), _alert(alert) { }
-  void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext) const {
     Q_UNUSED(subscription)
     if (_scheduler)
-      _scheduler.data()->alerter()
-          ->cancelAlert(ParamSet().evaluate(_alert, context));
+      _scheduler.data()->alerter()->cancelAlert(eventContext.evaluate(_alert));
   }
   QString toString() const {
     return "!-"+_alert;

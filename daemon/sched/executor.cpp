@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -427,16 +427,20 @@ void Executor::workflowMean() {
   //    << "starting workflow";
   emit taskStarted(_instance);
   foreach (QString id, _instance.task().startSteps())
-    doActivateWorkflowTransition(_instance.task().fqtn()+"|start|"+id);
+    doActivateWorkflowTransition(_instance.task().fqtn()+"|start|"+id,
+                                 ParamSet());
 }
 
-void Executor::activateWorkflowTransition(QString transitionId) {
+void Executor::activateWorkflowTransition(QString transitionId,
+                                          ParamSet eventContext) {
   QMetaObject::invokeMethod(this, "doActivateWorkflowTransition",
                             Qt::QueuedConnection,
-                            Q_ARG(QString, transitionId));
+                            Q_ARG(QString, transitionId),
+                            Q_ARG(ParamSet, eventContext));
 }
 
-void Executor::doActivateWorkflowTransition(QString transitionId) {
+void Executor::doActivateWorkflowTransition(QString transitionId,
+                                            ParamSet eventContext) {
   // Please read the note about transitionId naming conventions in
   // Task::Task() method (where the workflow predecessors transitionId are
   // built on configuration loading)
@@ -451,8 +455,8 @@ void Executor::doActivateWorkflowTransition(QString transitionId) {
     transitionId = parts.join('|');
   }
   if (parts[2] == "$end") {
-    // TODO support (failure) and (returnCode 42) params on end action
-    workflowFinished(true, 0);
+    workflowFinished(eventContext.valueAsBool("!success", true),
+                     eventContext.valueAsInt("!returncode", 0));
     return;
   }
   if (!_steps.contains(parts[2])) {
@@ -463,18 +467,19 @@ void Executor::doActivateWorkflowTransition(QString transitionId) {
   //Log::fatal(_instance.task().fqtn(), _instance.id())
   //    << "actual transtion id: " << transitionId;
   Log::debug(_instance.task().fqtn(), _instance.id())
-      << "activating workflow transition " << transitionId;
-  _steps[parts[2]].predecessorReady(transitionId);
+      << "activating workflow transition " << transitionId
+      << " " << eventContext;
+  _steps[parts[2]].predecessorReady(transitionId, eventContext);
 }
 
 void Executor::noticePosted(QString notice, ParamSet params) {
+  params.setValue("!notice", notice);
   foreach (WorkflowTriggerSubscription wts,
            _instance.task().workflowTriggerSubscriptionsByNotice()
            .values(notice)) {
     Log::debug(_instance.task().fqtn(), _instance.id())
         << "triggering ontrigger notice ^" << notice << " " << params;
-    // TODO send notice params and trigger params as trigger context
-    wts.eventSubscription().triggerActions(_instance);
+    wts.eventSubscription().triggerActions(params, _instance);
   }
 }
 
@@ -485,8 +490,8 @@ void Executor::cronTriggered(QVariant tsId) {
   Log::debug(_instance.task().fqtn(), _instance.id())
       << "triggering ontrigger cron #" << tsId << " "
       << wts.trigger().humanReadableExpression();
-  // TODO send trigger params as trigger context
-  wts.eventSubscription().triggerActions(_instance);
+  wts.eventSubscription().triggerActions(
+        wts.trigger().overridingParams(), _instance);
 }
 
 void Executor::workflowFinished(bool success, int returnCode) {
@@ -560,7 +565,7 @@ void Executor::doAbort() {
     _reply->abort();
   } else if (_instance.task().mean() == "workflow") {
     // FIXME should abort running subtasks ?
-    workflowFinished(false, 1);
+    workflowFinished(false, -1);
   } else {
     Log::warning(_instance.task().fqtn(), _instance.id())
         << "cannot abort task because its execution mean is not abortable";

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,27 +18,35 @@
 class PostNoticeActionData : public ActionData {
 public:
   QString _notice;
-  ParamSet _params;
+  ParamSet _noticeParams;
   PostNoticeActionData(Scheduler *scheduler = 0, QString notice = QString(),
                        ParamSet params = ParamSet())
-    : ActionData(scheduler), _notice(notice), _params(params) { }
+    : ActionData(scheduler), _notice(notice), _noticeParams(params) { }
   QString toString() const {
     return "^"+_notice;
   }
   QString actionType() const {
     return "postnotice";
   }
-  void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext,
+               TaskInstance taskContext) const {
+    // we must implement trigger(,,TaskInstance) rather than trigger(,) because
+    // even though we do not directly use TaskInstance, we want that
+    // EventSubscription::triggerActions() use task params as eventContext
+    // grandparent
     Q_UNUSED(subscription)
+    Q_UNUSED(taskContext)
     if (_scheduler) {
-      // LATER do not use _params but a modified _params with subscription's params as parent
       ParamSet noticeParams;
-      foreach (QString key, _params.keys())
-        noticeParams.setValue(key, _params.value(key, true, context));
-      _scheduler.data()
-          ->postNotice(_params.evaluate(_notice, context), noticeParams);
+      foreach (QString key, _noticeParams.keys())
+        noticeParams.setValue(
+              key, eventContext.evaluate(_noticeParams.value(key)));
+      _scheduler.data()->postNotice(eventContext.evaluate(_notice),
+                                    noticeParams);
     }
+  }
+  void trigger(EventSubscription subscription, ParamSet eventContext) const {
+    trigger(subscription, eventContext, TaskInstance());
   }
   QString targetName() const {
     return _notice;

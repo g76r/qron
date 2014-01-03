@@ -15,7 +15,7 @@
 #define STEP_H
 
 #include <QSharedDataPointer>
-#include "util/paramsprovider.h"
+#include "util/paramset.h"
 
 class StepData;
 class Task;
@@ -49,7 +49,8 @@ public:
   Task workflow() const;
   QSet<QString> predecessors() const;
   void insertPredecessor(QString predecessor);
-  void triggerReadyEvents(TaskInstance workflowTaskInstance) const;
+  void triggerReadyEvents(TaskInstance workflowTaskInstance,
+                          ParamSet eventContext) const;
   QList<EventSubscription> onreadyEventSubscriptions() const;
 };
 

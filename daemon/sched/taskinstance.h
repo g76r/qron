@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,10 +32,10 @@ public:
   enum TaskInstanceStatus { Queued, Running, Success, Failure, Canceled };
   TaskInstance();
   TaskInstance(const TaskInstance &);
-  TaskInstance(Task task, bool force = false,
-               TaskInstance callerTask = TaskInstance());
-  TaskInstance(Task task, quint64 groupId, bool force = false,
-               TaskInstance callerTask = TaskInstance());
+  TaskInstance(Task task, bool force, TaskInstance callerTask,
+               ParamSet overridingParams);
+  TaskInstance(Task task, quint64 groupId, bool force, TaskInstance callerTask,
+               ParamSet overridingParams);
   ~TaskInstance();
   TaskInstance &operator=(const TaskInstance &);
   bool operator==(const TaskInstance &) const;

@@ -101,7 +101,7 @@ public:
   Task task(QString fqtn);
   /** This method is threadsafe */
   void activateWorkflowTransition(TaskInstance workflowTaskInstance,
-                                  QString transitionId);
+                                  QString transitionId, ParamSet eventContext);
 
 public slots:
   /** Explicitely request task execution now.
@@ -235,7 +235,7 @@ private:
   Q_INVOKABLE TaskInstance doCancelRequest(quint64 id);
   Q_INVOKABLE TaskInstance doAbortTask(quint64 id);
   Q_INVOKABLE void doActivateWorkflowTransition(
-      TaskInstance workflowTaskInstance, QString transitionId);
+      TaskInstance workflowTaskInstance, QString transitionId, ParamSet eventContext);
 };
 
 #endif // SCHEDULER_H

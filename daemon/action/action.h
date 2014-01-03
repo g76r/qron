@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,7 @@
 #define ACTION_H
 
 #include <QSharedDataPointer>
-#include "util/paramsprovider.h"
+#include "util/paramset.h"
 #include <QStringList>
 #include "pf/pfnode.h"
 
@@ -37,8 +37,9 @@ public:
   ~Action();
   bool isNull() const { return !d; }
   void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const;
-  void trigger(EventSubscription subscription, TaskInstance context) const;
+               ParamSet eventContext) const;
+  void trigger(EventSubscription subscription, ParamSet eventContext,
+               TaskInstance taskContext) const;
   /** Human readable description of action */
   QString toString() const;
   /** Type of action for programmatic test, e.g. "postnotice" */

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -61,7 +61,8 @@ bool StepInstance::isReady() const {
   return d ? d->_ready : false;
 }
 
-void StepInstance::predecessorReady(QString predecessor) const {
+void StepInstance::predecessorReady(QString predecessor,
+                                    ParamSet eventContext) const {
   if (!d)
     return;
   d->_pendingPredecessors.remove(predecessor);
@@ -69,14 +70,14 @@ void StepInstance::predecessorReady(QString predecessor) const {
   case Step::AndJoin:
     if (!d->_ready && d->_pendingPredecessors.isEmpty()) {
       d->_ready = true;
-      d->_step.triggerReadyEvents(d->_workflowTaskInstance);
+      d->_step.triggerReadyEvents(d->_workflowTaskInstance, eventContext);
     }
     break;
   case Step::OrJoin:
   case Step::SubTask: // a subtask step is actually an implicit or join
     if (!d->_ready) {
       d->_ready = true;
-      d->_step.triggerReadyEvents(d->_workflowTaskInstance);
+      d->_step.triggerReadyEvents(d->_workflowTaskInstance, eventContext);
     }
     break;
   case Step::Unknown:

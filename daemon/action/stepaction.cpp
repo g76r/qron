@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,7 +16,9 @@
 #include "config/configutils.h"
 
 class StepActionData : public ActionData {
+  // using QStringList would be nice but inconsistent with targetName()
   QString _stepId;
+
 public:
   StepActionData(Scheduler *scheduler = 0, QString stepid = QString())
     : ActionData(scheduler), _stepId(stepid) {
@@ -30,10 +32,8 @@ public:
   QString targetName() const {
     return _stepId;
   }
-  void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const {
-    Q_UNUSED(subscription)
-    Q_UNUSED(context)
+  void trigger(EventSubscription subscription, ParamSet eventContext) const {
+    Q_UNUSED(eventContext)
     // this should never happen since no one should ever configure a step
     // action in global events subscriptions
     Log::error() << "StepAction::trigger() called outside a TaskInstance "
@@ -43,16 +43,17 @@ public:
                  << " with stepId " << _stepId;
   }
   void triggerWithinTaskInstance(EventSubscription subscription,
+                                 ParamSet eventContext,
                                  TaskInstance instance) const {
-    // TODO support for stepid list rather than only one stepid
     QString transitionId = subscription.subscriberName()+"|"
         +subscription.eventName()+"|"+_stepId;
     TaskInstance workflow = instance.callerTask();
     if (workflow.isNull())
       workflow = instance;
-    //Log::debug(instance.task().fqtn(), instance.id())
+    //Log::fatal(instance.task().fqtn(), instance.id())
     //    << "StepAction::triggerWithinTaskInstance "
-    //    << transitionId << " " << instance.task().fqtn();
+    //    << transitionId << " " << instance.task().fqtn()
+    //    << " " << eventContext;
     if (workflow.task().mean() != "workflow") {
       Log::error(instance.task().fqtn(), instance.id())
           << "executing a step action in the context of a non-workflow task, "
@@ -61,7 +62,8 @@ public:
       return;
     }
     if (_scheduler)
-      _scheduler->activateWorkflowTransition(workflow, transitionId);
+      _scheduler->activateWorkflowTransition(workflow, transitionId,
+                                             eventContext);
   }
 };
 

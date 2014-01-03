@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -47,15 +47,15 @@ ActionData::~ActionData() {
 }
 
 void Action::trigger(EventSubscription subscription,
-                     const ParamsProvider *context) const {
+                     ParamSet eventContext) const {
   if (d)
-    d->trigger(subscription, context);
+    d->trigger(subscription, eventContext);
 }
 
-void Action::trigger(EventSubscription subscription,
-                     TaskInstance context) const {
+void Action::trigger(EventSubscription subscription, ParamSet eventContext,
+                     TaskInstance taskContext) const {
   if (d)
-    d->triggerWithinTaskInstance(subscription, context);
+    d->triggerWithinTaskInstance(subscription, eventContext, taskContext);
 }
 
 QString ActionData::toString() const {
@@ -67,18 +67,20 @@ QString ActionData::actionType() const {
 }
 
 void ActionData::trigger(EventSubscription subscription,
-                         const ParamsProvider *context) const {
-  Q_UNUSED(context)
+                         ParamSet eventContext) const {
+  Q_UNUSED(eventContext)
   Log::error() << "ActionData::trigger() called whereas it should never, "
                   "from subscription " << subscription.subscriberName()
                   << "|" << subscription.eventName();
 }
 
-void ActionData::triggerWithinTaskInstance(EventSubscription subscription,
-                                           TaskInstance context) const {
+void ActionData::triggerWithinTaskInstance(
+    EventSubscription subscription, ParamSet eventContext,
+    TaskInstance taskContext) const {
+  Q_UNUSED(taskContext)
   // default behaviour for actions that do not need to be aware of task instance
   // context
-  trigger(subscription, &context);
+  trigger(subscription, eventContext);
 }
 
 QString Action::toString() const {

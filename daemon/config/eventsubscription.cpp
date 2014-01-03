@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,14 +16,18 @@
 #include "task.h"
 #include "sched/taskinstance.h"
 #include "action/action.h"
+#include "configutils.h"
 
 class EventSubscriptionData : public QSharedData {
 public:
   QString _subscriberName, _eventName;
   QList<Action> _actions;
+  ParamSet _params;
   EventSubscriptionData(QString subscriberName = QString(),
-                        QString eventName = QString())
-    : _subscriberName(subscriberName), _eventName(eventName) { }
+                        QString eventName = QString(),
+                        ParamSet params = ParamSet())
+    : _subscriberName(subscriberName), _eventName(eventName),
+      _params(params) { }
 };
 
 EventSubscription::EventSubscription() {
@@ -32,11 +36,12 @@ EventSubscription::EventSubscription() {
 EventSubscription::EventSubscription(
     QString subscriberName, PfNode node, Scheduler *scheduler)
   : d(new EventSubscriptionData(subscriberName)) {
-  d->_eventName = node.name();
-  // TODO load filter
+  // LATER implement at less regexp filter
   // LATER support for non-text/non-regexp filters e.g. "onstatus >=3"
+  // LATER support for (ifincalendar) and other structured filters
+  d->_eventName = node.name();
+  ConfigUtils::loadParamSet(node, &d->_params);
   foreach (PfNode child, node.children()) {
-    // LATER support for (ifincalendar) and other structured filters
     Action a = Action::createAction(child, scheduler);
     if (!a.isNull())
       d->_actions.append(a);
@@ -76,16 +81,43 @@ public:
   }
 };
 
-void EventSubscription::triggerActions(TaskInstance context) const {
-  // TODO implement filters and EventContext
+void EventSubscription::triggerActions(
+    ParamSet eventContext, TaskInstance taskContext) const {
+  // LATER implement filters
+  // inheritage will be: eventContext > EventSubscription > taskContext
+  ParamSet subscriptionParams = d->_params;
+  subscriptionParams.setParent(taskContext.params());
+  eventContext.setParent(subscriptionParams);
+  //Log::fatal() << "EventSubscription::triggerActions " << eventContext << " "
+  //             << taskContext.id();
   foreach (Action a, d->_actions)
-    a.trigger(*this, context);
+    a.trigger(*this, eventContext, taskContext);
 }
 
-void EventSubscription::triggerActions(const ParamsProvider *context) const {
-  // TODO implement filters and EventContext
+void EventSubscription::triggerActions(TaskInstance taskContext) const {
+  // LATER implement filters
+  // inheritage will be: EventSubscription > taskContext
+  ParamSet eventContext = d->_params;
+  eventContext.setParent(taskContext.params());
+  //Log::fatal() << "EventSubscription::triggerActions " << taskContext.id();
   foreach (Action a, d->_actions)
-    a.trigger(*this, context);
+    a.trigger(*this, eventContext, taskContext);
+}
+
+void EventSubscription::triggerActions(ParamSet eventContext) const {
+  // LATER implement filters
+  // inheritage will be: eventContext > EventSubscription
+  eventContext.setParent(d->_params);
+  //Log::fatal() << "EventSubscription::triggerActions " << eventContext;
+  foreach (Action a, d->_actions)
+    a.trigger(*this, eventContext);
+}
+
+void EventSubscription::triggerActions() const {
+  // LATER implement filters
+  //Log::fatal() << "EventSubscription::triggerActions ";
+  foreach (Action a, d->_actions)
+    a.trigger(*this, d->_params);
 }
 
 QStringList EventSubscription::toStringList(QList<EventSubscription> list) {
@@ -104,7 +136,7 @@ QString EventSubscription::eventName() const {
 }
 
 QString EventSubscription::humanReadableCause() const {
-  // TODO implement filters
+  // LATER implement filters
   return d ? d->_eventName : QString();
 }
 
@@ -114,4 +146,8 @@ QList<Action> EventSubscription::actions() const {
 
 QString EventSubscription::subscriberName() const {
   return d ? d->_subscriberName : QString();
+}
+
+ParamSet EventSubscription::params() const {
+  return d ? d->_params : ParamSet();
 }

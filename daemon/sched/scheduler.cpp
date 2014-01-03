@@ -453,10 +453,10 @@ ignore_task:;
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
     foreach(EventSubscription sub, _onschedulerstart)
-      sub.triggerActions(&_globalParams);
+      sub.triggerActions();
   }
   foreach(EventSubscription sub, _onconfigload)
-    sub.triggerActions(&_globalParams);
+    sub.triggerActions();
   return true;
 }
 
@@ -599,14 +599,14 @@ void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
 }
 
 QList<TaskInstance> Scheduler::doRequestTask(
-    QString fqtn, ParamSet paramsOverriding, bool force,
+    QString fqtn, ParamSet overridingParams, bool force,
     TaskInstance callerTask) {
   QMutexLocker ml(&_configMutex);
   Task task = _tasks.value(fqtn);
   Cluster cluster = _clusters.value(task.target());
   ml.unlock();
   if (task.isNull()) {
-    Log::error() << "requested task not found: " << fqtn << paramsOverriding
+    Log::error() << "requested task not found: " << fqtn << overridingParams
                  << force;
     return QList<TaskInstance>();
   }
@@ -617,8 +617,8 @@ QList<TaskInstance> Scheduler::doRequestTask(
   bool fieldsValidated(true);
   foreach (RequestFormField field, task.requestFormFields()) {
     QString name(field.param());
-    if (paramsOverriding.contains(name)) {
-      QString value(paramsOverriding.value(name));
+    if (overridingParams.contains(name)) {
+      QString value(overridingParams.value(name));
       if (!field.validate(value)) {
         Log::error() << "task " << fqtn << " requested with an invalid "
                         "parameter override: '" << name << "'' set to '"
@@ -634,18 +634,19 @@ QList<TaskInstance> Scheduler::doRequestTask(
   if (cluster.balancing() == "each") {
     qint64 groupId = 0;
     foreach (Host host, cluster.hosts()) {
-      TaskInstance request(task, groupId, force, callerTask);
+      TaskInstance request(task, groupId, force, callerTask, overridingParams);
       if (!groupId)
         groupId = request.groupId();
       request.setTarget(host);
-      request = enqueueRequest(request, paramsOverriding);
+      request = enqueueRequest(request, overridingParams);
       if (!request.isNull())
         requests.append(request);
     }
   } else {
     TaskInstance request;
-    request = enqueueRequest(TaskInstance(task, force, callerTask),
-                             paramsOverriding);
+    request = enqueueRequest(
+          TaskInstance(task, force, callerTask, overridingParams),
+          overridingParams);
     if (!request.isNull())
       requests.append(request);
   }
@@ -695,8 +696,8 @@ TaskInstance Scheduler::enqueueRequest(
   }
   _alerter->cancelAlert("scheduler.maxqueuedrequests.reached");
   Log::debug(fqtn, request.id())
-      << "queuing task " << fqtn << "/" << request.id()
-      << " with request group id " << request.groupId();
+      << "queuing task " << fqtn << "/" << request.id() << " "
+      << paramsOverriding << " with request group id " << request.groupId();
   // note: a request must always be queued even if the task can be started
   // immediately, to avoid the new tasks being started before queued ones
   _queuedRequests.append(request);
@@ -841,19 +842,6 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   return fired;
 }
 
-class NoticeContext : public ParamsProvider {
-public:
-  QString _notice;
-  ParamSet _params;
-  NoticeContext(const QString notice, ParamSet params)
-    : _notice(notice), _params(params) { }
-  QVariant paramValue(const QString key, const QVariant defaultValue) const {
-    if (key == "!notice")
-      return _notice;
-    return _params.paramValue(key, defaultValue);
-  }
-};
-
 void Scheduler::postNotice(QString notice, ParamSet params) {
   if (notice.isNull()) {
     Log::warning() << "cannot post a null/empty notice";
@@ -886,9 +874,9 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
     }
   }
   emit noticePosted(notice, params);
-  NoticeContext context(notice, params);
+  params.setValue("!notice", notice);
   foreach (EventSubscription sub, _onnotice)
-    sub.triggerActions(&context);
+    sub.triggerActions(params);
 }
 
 void Scheduler::reevaluateQueuedRequests() {
@@ -1165,18 +1153,21 @@ Calendar Scheduler::calendarByName(QString name) const {
 }
 
 void Scheduler::activateWorkflowTransition(TaskInstance workflowTaskInstance,
-                                           QString transitionId) {
+                                           QString transitionId,
+                                           ParamSet eventContext) {
   QMetaObject::invokeMethod(this, "doActivateWorkflowTransition",
                             Qt::QueuedConnection,
                             Q_ARG(TaskInstance, workflowTaskInstance),
-                            Q_ARG(QString, transitionId));
+                            Q_ARG(QString, transitionId),
+                            Q_ARG(ParamSet, eventContext));
 }
 
 void Scheduler::doActivateWorkflowTransition(TaskInstance workflowTaskInstance,
-                                             QString transitionId) {
+                                             QString transitionId,
+                                             ParamSet eventContext) {
   Executor *executor = _runningTasks.value(workflowTaskInstance);
   if (executor)
-    executor->activateWorkflowTransition(transitionId);
+    executor->activateWorkflowTransition(transitionId, eventContext);
   else
     Log::error() << "cannot activate workflow transition on non-running "
                     "workflow " << workflowTaskInstance.task().fqtn()

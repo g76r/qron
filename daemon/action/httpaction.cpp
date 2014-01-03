@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,11 +22,12 @@ public:
   ParamSet _params;
   HttpActionData(QString url = QString(), ParamSet params = ParamSet())
     : _url(url), _params(params) { }
-  void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext) const {
     Q_UNUSED(subscription)
-    QUrl url(_params.evaluate(_url, context));
+    Q_UNUSED(eventContext)
+    //QUrl url(eventContext.evaluate(_url, &_params));
     // LATER implement http action
+    Log::error() << "HttpAction not implemented";
   }
   QString toString() const {
     return "http{"+_url+"}";

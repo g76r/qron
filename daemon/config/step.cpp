@@ -60,8 +60,6 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
     node.setContent(workflow.id()+"-"+node.contentAsString());
     sd->_subtask = Task(node, scheduler, workflow.taskGroup(), oldTasks,
                         workflow);
-    // TODO handle parameters overrinding in subtasks
-    // TODO force = true for subtask
     if (sd->_subtask.isNull()) {
       Log::error() << "step with invalid subtask: " << node.toString();
       delete sd;
@@ -124,10 +122,14 @@ void Step::insertPredecessor(QString predecessor) {
     d->_predecessors.insert(predecessor);
 }
 
-void Step::triggerReadyEvents(TaskInstance workflowTaskInstance) const {
-  if (d)
+void Step::triggerReadyEvents(TaskInstance workflowTaskInstance,
+                              ParamSet eventContext) const {
+  if (d) {
+    //eventContext.setValue("!stepid", d->_id);
+    //eventContext.setValue("!fqsn", d->_fqsn);
     foreach (EventSubscription sub, d->_onready)
-      sub.triggerActions(workflowTaskInstance);
+      sub.triggerActions(eventContext, workflowTaskInstance);
+  }
 }
 
 QList<EventSubscription> Step::onreadyEventSubscriptions() const {

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -36,8 +36,7 @@ public:
       _port = (quint16)port;
     }
   }
-  void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext) const {
     Q_UNUSED(subscription)
     // LATER run in a separate thread to avoid network/dns/etc. hangups
     if (!_port) // address is invalid
@@ -45,7 +44,7 @@ public:
     QUdpSocket socket;
     socket.connectToHost(_host, _port, QIODevice::WriteOnly);
     if (socket.waitForConnected(200/*2000*/)) {
-      QString message = ParamSet().evaluate(_message, context);
+      QString message = eventContext.evaluate(_message);
       qint64 rc = socket.write(message.toUtf8());
       if (rc < 0)
         Log::warning() << "error when emiting UDP action: " << socket.error()

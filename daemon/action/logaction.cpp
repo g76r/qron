@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -29,15 +29,15 @@ public:
     return "log";
   }
   void triggerWithinTaskInstance(EventSubscription subscription,
+                                 ParamSet eventContext,
                                  TaskInstance instance) const {
     Q_UNUSED(subscription)
     Log::log(_severity, instance.task().fqtn(), instance.id())
-        << ParamSet().evaluate(_message, &instance);
+        << eventContext.evaluate(_message, &instance);
   }
-  void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext) const {
     Q_UNUSED(subscription)
-    Log::log(_severity) << ParamSet().evaluate(_message, context);
+    Log::log(_severity) << eventContext.evaluate(_message);
   }
 };
 

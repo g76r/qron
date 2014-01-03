@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,10 +27,9 @@ public:
   QString actionType() const {
     return "end";
   }
-  void trigger(EventSubscription subscription,
-               const ParamsProvider *context) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext) const {
     Q_UNUSED(subscription)
-    Q_UNUSED(context)
+    Q_UNUSED(eventContext)
     // this should never happen since no one should ever configure a step
     // action in global events subscriptions
     Log::error() << "EndAction::trigger() called outside a TaskInstance "
@@ -39,9 +38,8 @@ public:
                  << subscription.eventName();
   }
   void triggerWithinTaskInstance(EventSubscription subscription,
+                                 ParamSet eventContext,
                                  TaskInstance instance) const {
-    // TODO success and return code should be interpretable strings
-    // TODO pass success and returncode through
     QString transitionId = subscription.subscriberName()+"|"
         +subscription.eventName()+"|$end";
     TaskInstance workflow = instance.callerTask();
@@ -57,8 +55,11 @@ public:
           << subscription.eventName();
       return;
     }
+    eventContext.setValue("!success", (_success ? "true" : "false"));
+    eventContext.setValue("!returncode", QString::number(_returnCode));
     if (_scheduler)
-      _scheduler->activateWorkflowTransition(workflow, transitionId);
+      _scheduler->activateWorkflowTransition(workflow, transitionId,
+                                             eventContext);
   }
 
 };

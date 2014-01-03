@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -57,7 +57,7 @@ public:
   /** Abort current task now. This method is thread-safe. */
   void abort();
   /** This method is thread-safe. */
-  void activateWorkflowTransition(QString transitionId);
+  void activateWorkflowTransition(QString transitionId, ParamSet eventContext);
 
 signals:
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
@@ -93,7 +93,8 @@ private:
   void taskFinishing(bool success, int returnCode);
   Q_INVOKABLE void doAbort();
   void workflowFinished(bool success, int returnCode);
-  Q_INVOKABLE void doActivateWorkflowTransition(QString transitionId);
+  Q_INVOKABLE void doActivateWorkflowTransition(
+      QString transitionId, ParamSet eventContext);
 };
 
 #endif // EXECUTOR_H

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,7 +16,7 @@
 
 #include <QSharedDataPointer>
 #include "pf/pfnode.h"
-#include "util/paramsprovider.h"
+#include "util/paramset.h"
 
 class EventSubscriptionData;
 class TaskInstance;
@@ -52,13 +52,23 @@ public:
    * subscriptions. */
   QString subscriberName() const;
   /** Trigger actions if context complies with filter conditions.
-   * Use this method if the event occured in the context of a task. */
-  void triggerActions(TaskInstance context) const;
+   * Use this method if the event occured in the context of a task.
+   * @param eventContext will get EventSubscription::params() as parent and
+   * taskContext::params() as grandparent before being passed to
+   * Action::trigger() */
+  void triggerActions(ParamSet eventContext, TaskInstance taskContext) const;
+  /** Almost syntaxic sugar for triggerActions(ParamSet(), taskContext) */
+  void triggerActions(TaskInstance taskContext) const;
   /** Trigger actions if context complies with filter conditions.
-   * Use this method if the event occured outside the context of a task. */
-  void triggerActions(const ParamsProvider *context) const;
+   * Use this method if the event occured outside the context of a task.
+   * @param eventContext will get EventSubscription::params() as parent before
+   * being passed to Action::trigger() */
+  void triggerActions(ParamSet eventContext) const;
+  /** Almost syntaxic sugar for triggerActions(ParamSet()) */
+  void triggerActions() const;
   static QStringList toStringList(QList<EventSubscription> list);
   QStringList toStringList() const;
+  ParamSet params() const;
 };
 
 #endif // EVENTSUBSCRIPTION_H

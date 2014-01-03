@@ -153,7 +153,8 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_minExpectedDuration = f < 0 ? 0 : (long long)(f*1000);
   f = node.doubleAttribute("maxdurationbeforeabort", -1);
   td->_maxDurationBeforeAbort = f < 0 ? LLONG_MAX : (long long)(f*1000);
-  td->_params.setParent(taskGroup.params());
+  td->_params.setParent(supertask.isNull() ? taskGroup.params()
+                                           : supertask.params());
   ConfigUtils::loadParamSet(node, &td->_params);
   QString filter = td->_params.value("stderrfilter");
   if (!filter.isEmpty())
