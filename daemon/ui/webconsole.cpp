@@ -73,11 +73,20 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _taskInstancesHistoryModel = new TaskInstancesModel(this, 20000);
   _unfinishedTaskInstancetModel = new TaskInstancesModel(this, 1000, false);
   _tasksModel = new TasksModel(this);
+  _mainTasksModel = new QSortFilterProxyModel(this);
+  _mainTasksModel->setFilterKeyColumn(31);
+  _mainTasksModel->setFilterRegExp("^$");
+  _mainTasksModel->setSourceModel(_tasksModel);
+  _subtasksModel = new QSortFilterProxyModel(this);
+  _subtasksModel->setFilterKeyColumn(31);
+  _subtasksModel->setFilterRegExp(".+");
+  _subtasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
   _alertChannelsModel = new AlertChannelsModel(this);
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new CalendarsModel(this);
+  _stepsModel= new StepsModel(this);
   _memoryInfoLogger = new MemoryLogger(0, Log::Info, LOG_MAXROWS);
   _memoryWarningLogger = new MemoryLogger(0, Log::Warning, LOG_MAXROWS);
 
@@ -265,7 +274,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlTaskInstancesView);
   _htmlTasksScheduleView =
       new HtmlTableView(this, "tasksschedule", CONFIG_TABLES_MAXROWS, 100);
-  _htmlTasksScheduleView->setModel(_tasksModel);
+  _htmlTasksScheduleView->setModel(_mainTasksModel);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
   cols << 11 << 2 << 5 << 6 << 19 << 10 << 17 << 18;
@@ -304,7 +313,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
         new HtmlTaskItemDelegate(_htmlTasksListView));
   _htmlTasksEventsView =
       new HtmlTableView(this, "tasksevents", CONFIG_TABLES_MAXROWS, 100);
-  _htmlTasksEventsView->setModel(_tasksModel);
+  _htmlTasksEventsView->setModel(_mainTasksModel);
   _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
   cols << 11 << 6 << 14 << 15 << 16 << 18;
@@ -400,9 +409,19 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlCalendarsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa fa-calendar\"></i> ");
   _wuiHandler->addView(_htmlCalendarsView);
+  _htmlStepsView = new HtmlTableView(this, "steps", CONFIG_TABLES_MAXROWS);
+  _htmlStepsView->setModel(_stepsModel);
+  _htmlStepsView->setEmptyPlaceholder("(no workflow step)");
+  cols.clear();
+  cols << 0 << 2 << 3 << 4 << 6 << 7 << 8 << 9;
+  _htmlStepsView->setColumnIndexes(cols);
+  _htmlStepsView->enableRowAnchor(0);
+  _htmlStepsView->setItemDelegate(new HtmlStepItemDelegate(_htmlStepsView));
+  _wuiHandler->addView(_htmlStepsView);
 
   // CSV views
   CsvTableView::setDefaultFieldQuote('"');
+  CsvTableView::setDefaultReplacementChar(' ');
   _csvHostsListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvHostsListView->setModel(_hostsListModel);
   _csvClustersListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
@@ -449,6 +468,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvLogFilesView->setModel(_logConfigurationModel);
   _csvCalendarsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvCalendarsView->setModel(_calendarsModel);
+  _csvStepsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvStepsView->setModel(_stepsModel);
 
   // other views
   _clockView = new ClockView(this);
@@ -907,6 +928,17 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlTasksListView->text().toUtf8().constData());
     return true;
   }
+  if (path == "/rest/csv/steps/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvStepsView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/steps/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlStepsView->text().toUtf8().constData());
+    return true;
+  }
   if (path == "/rest/html/tasks/events/v1") { // FIXME
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTasksEventsView->text().toUtf8().constData());
@@ -1289,6 +1321,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _resourcesConsumptionModel, SLOT(configReloaded()));
     disconnect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
                _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
+    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+               _stepsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
@@ -1373,6 +1407,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourcesConsumptionModel, SLOT(configReloaded()));
     connect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
             _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
+    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
+            _stepsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
     Log::addLogger(_memoryWarningLogger, false);
     Log::addLogger(_memoryInfoLogger, false);
   } else {

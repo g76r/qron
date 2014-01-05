@@ -101,7 +101,9 @@ SOURCES += \
     action/stepaction.cpp \
     action/endaction.cpp \
     trigger/trigger.cpp \
-    trigger/noticetrigger.cpp
+    trigger/noticetrigger.cpp \
+    ui/stepsmodel.cpp \
+    ui/htmlstepitemdelegate.cpp
 
 HEADERS += \
     config/task.h \
@@ -162,7 +164,9 @@ HEADERS += \
     trigger/trigger.h \
     trigger/trigger_p.h \
     trigger/noticetrigger.h \
-    ui/graphviz_styles.h
+    ui/graphviz_styles.h \
+    ui/stepsmodel.h \
+    ui/htmlstepitemdelegate.h
 
 RESOURCES += \
     ui/webconsole.qrc

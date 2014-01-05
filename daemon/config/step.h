@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,6 +37,8 @@ public:
   Step &operator=(const Step &);
   ~Step();
   bool operator==(const Step &other) const;
+  /** compare fqsn */
+  bool operator<(const Step &other) const;
   bool isNull() const { return !d; }
   /** Step id within the workflow, not unique across workflows.
    * @see fqtn() */
@@ -45,6 +47,9 @@ public:
    * Equal to workflow task's fqtn + '.' + id */
   QString fqsn() const;
   Kind kind() const;
+  static QString kindToString(Kind kind);
+  QString kindToString() const {
+    return kindToString(kind()); }
   Task subtask() const;
   Task workflow() const;
   QSet<QString> predecessors() const;

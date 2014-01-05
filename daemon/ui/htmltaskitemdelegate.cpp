@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -112,7 +112,6 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   return text;
 }
 
-#include<QtDebug>
 QString HtmlTaskItemDelegate::headerText(
     int section, Qt::Orientation orientation,
     const QAbstractItemModel *model) const {

@@ -76,7 +76,8 @@
         <div class="span12">
           <a name="config"></a>
           <h2>Tasks events configuration</h2>
-          <p>Note: every task inherits its taskgroup and global events configuration shown above, in addition to its own configuration shown below.
+          <p>Every task inherits its taskgroup and global events configuration shown above, in addition to its own configuration shown below.
+          <p>Only main tasks are shown (for workflows subtasks see <a href="#steps">below</a>).
           <p><form class="form-inline" onSubmit="return false;">
           <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/tasks/events/v1"><i class="fa fa-file"></i> HTML</a>
@@ -84,6 +85,19 @@
           <input class="input-medium search-query" id="filter-tasksevents" type="text" placeholder="Quick search..." />
           </form>
           <p><?view:tasksevents?>
+        </div>
+      </div>
+     <div class="row">
+        <div class="span12">
+          <a name="steps"></a>
+          <h2>Workflow steps</h2>
+          <p>This table displays every step from every workflow, click on a workflow task to see its steps as a diagram.
+          <p><form class="form-inline" onSubmit="return false;">
+          <a class="btn btn-primary" href="../rest/csv/steps/list/v1"><i class="fa fa-file"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/steps/list/v1"><i class="fa fa-file"></i> HTML</a>
+          <input class="input-medium search-query" id="filter-steps" type="text" placeholder="Quick search..." />
+          </form>
+          <p><?view:steps?>
         </div>
       </div>
       <div class="row">
@@ -104,17 +118,6 @@
           <p class="text-center"><a href="../rest/png/tasks/trigger/v1"><img src="../rest/png/tasks/trigger/v1" alt="Tasks trigger diagram"/></a>
         </div>
       </div>
-      <!--
-         TODO: caption
-         TODO: merge tasks and taskgroups into a unique tree
-         TODO: add graphical events-triggers representation (graphviz?)
-      <div class="row">
-        <div class="span12">
-          <h2>Caption</h2>
-          <p>Coming soon...
-        </div>
-      </div>
-      -->
     </div>
 
 <!-- start of footer -->
@@ -134,6 +137,20 @@ function tasksevents_filter() {
 }
 $('#filter-tasksevents').bind('input', function() {tasksevents_filter();});
 tasksevents_filter();
+
+var steps_rows = $('table#steps tbody tr');
+function steps_filter() {
+  steps_rows.each(function() {
+    var filter = $('#filter-steps').val();
+    if ($(this).text().search(filter) >= 0) {
+      $(this).show();
+    } else {
+      $(this).hide();
+    }
+  });
+}
+$('#filter-steps').bind('input', function() {steps_filter();});
+steps_filter();
   </script>
   </body>
 </html>

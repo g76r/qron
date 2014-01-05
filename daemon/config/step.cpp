@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -40,6 +40,7 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
   sd->_scheduler = scheduler;
   sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false);
   sd->_fqsn = workflow.fqtn()+":"+sd->_id;
+  sd->_wokflow = workflow;
   if (node.name() == "and") {
     sd->_kind = Step::AndJoin;
     foreach (PfNode child, node.childrenByName("onready"))
@@ -93,6 +94,10 @@ bool Step::operator==(const Step &other) const {
   return (isNull() && other.isNull()) || fqsn() == other.fqsn();
 }
 
+bool Step::operator<(const Step &other) const {
+  return fqsn() < other.fqsn();
+}
+
 QString Step::id() const {
   return d ? d->_id : QString();
 }
@@ -134,4 +139,18 @@ void Step::triggerReadyEvents(TaskInstance workflowTaskInstance,
 
 QList<EventSubscription> Step::onreadyEventSubscriptions() const {
   return d ? d->_onready : QList<EventSubscription>();
+}
+
+QString Step::kindToString(Kind kind) {
+  switch (kind) {
+  case SubTask:
+    return "task";
+  case AndJoin:
+    return "and";
+  case OrJoin:
+    return "or";
+  case Unknown:
+    ;
+  }
+  return "unknown";
 }

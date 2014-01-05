@@ -39,6 +39,9 @@
 #include "httpd/graphvizimagehttphandler.h"
 #include "logfilesmodel.h"
 #include "calendarsmodel.h"
+#include <QSortFilterProxyModel>
+#include "stepsmodel.h"
+#include "htmlstepitemdelegate.h"
 
 class QThread;
 
@@ -62,11 +65,13 @@ class WebConsole : public HttpHandler {
   AlertRulesModel *_alertRulesModel;
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
+  QSortFilterProxyModel *_mainTasksModel, *_subtasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
   TaskGroupsModel *_taskGroupsModel;
   AlertChannelsModel *_alertChannelsModel;
   LogFilesModel *_logConfigurationModel;
   CalendarsModel *_calendarsModel;
+  StepsModel *_stepsModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
@@ -81,7 +86,7 @@ class WebConsole : public HttpHandler {
   *_htmlLastPostedNoticesView20,
   *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
   *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView,
-  *_htmlLogFilesView, *_htmlCalendarsView;
+  *_htmlLogFilesView, *_htmlCalendarsView, *_htmlStepsView;
   ClockView *_clockView;
   CsvTableView *_csvHostsListView,
   *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
@@ -90,7 +95,7 @@ class WebConsole : public HttpHandler {
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
   *_csvAlertRulesView, *_csvLogView, *_csvTaskInstancesView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
-  *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView;
+  *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
   MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
