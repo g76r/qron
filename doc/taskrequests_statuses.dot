@@ -1,5 +1,5 @@
 graph g {
-node [shape=box,style="filled,rounded",color=wheat]
+node [shape=box,style="filled,rounded",color=powderblue]
 edge [dir=forward,arrowhead=vee]
 begin [style=invis]
 begin -- Queued [label="on execution request\n(manual or triggered)",arrowtail=dot,dir=both]

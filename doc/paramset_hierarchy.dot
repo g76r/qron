@@ -1,0 +1,47 @@
+graph g {
+graph [remincross=true]
+
+// configuration objects carrying params
+node [shape=box,style=filled,color=powderblue]
+global [label="Global Params"]
+supertask [label="Supertask Params\n(if within workflow)"]
+taskgroup [label="Task Group Params"]
+task [label="Task Params"]
+action [label="Action Params"]
+eventsubscription [label="Event Subscription Params"]
+noticetrigger [label="Notice Trigger Params"]
+crontrigger [label="Cron Trigger Params"]
+
+// runtime objects carrying params
+node [shape=ellipse]
+taskinstance [label="Task Instance Params\n(as overriden on request)"]
+taskcontext [label="Task Context\n(if event occurs within task)"]
+event [label="Event Params"]
+notice [label="Notice Params"]
+
+// actors
+node [shape=hexagon,style=dashed,color=""]
+restapi [label="REST API"]
+time [label="time"]
+
+// ParamSet inheritage in configuration
+edge [dir=back,arrowtail=onormal]
+global -- taskgroup -- supertask -- task -- taskinstance
+action -- taskcontext -- eventsubscription -- event
+
+// parameter injection at runtime
+edge [dir=forward,arrowhead=vee]
+crontrigger -- taskinstance
+notice -- noticetrigger
+noticetrigger -- taskinstance
+event -- notice [label="postnotice\naction"]
+restapi [label="rest api"]
+restapi -- notice [label="postnotice\ncall"]
+event -- taskinstance [label="requesttask\naction"]
+restapi -- taskinstance [label="requesttask\ncall"]
+time -- crontrigger
+
+// identity
+edge [dir=both,arrowhead=odot,arrowtail=odot,weight=0,label="="]
+taskcontext -- taskinstance
+}

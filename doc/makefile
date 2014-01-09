@@ -1,4 +1,4 @@
-TARGETS=taskrequests_statuses.png
+TARGETS=taskrequests_statuses.png paramset_hierarchy.png
 
 .PHONY: default all clean re
 
