@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -81,10 +81,6 @@ bool TriggerData::isValid() const {
 Calendar Trigger::calendar() const {
   return d ? d->_calendar : Calendar();
 }
-
-//QVariant Trigger::paramValue(QString key, QVariant defaultValue) const {
-//  return d ? d->_overridingParams.paramValue(key, defaultValue) : QVariant();
-//}
 
 ParamSet Trigger::overridingParams() const {
   return d ? d->_overridingParams : ParamSet();

@@ -36,7 +36,8 @@ public:
       _port = (quint16)port;
     }
   }
-  void trigger(EventSubscription subscription, ParamSet eventContext) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext,
+               TaskInstance taskContext) const {
     Q_UNUSED(subscription)
     // LATER run in a separate thread to avoid network/dns/etc. hangups
     if (!_port) // address is invalid
@@ -44,7 +45,7 @@ public:
     QUdpSocket socket;
     socket.connectToHost(_host, _port, QIODevice::WriteOnly);
     if (socket.waitForConnected(200/*2000*/)) {
-      QString message = eventContext.evaluate(_message);
+      QString message = eventContext.evaluate(_message, &taskContext);
       qint64 rc = socket.write(message.toUtf8());
       if (rc < 0)
         Log::warning() << "error when emiting UDP action: " << socket.error()

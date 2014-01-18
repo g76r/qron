@@ -19,10 +19,12 @@ public:
   QString _alert;
   RaiseAlertActionData(Scheduler *scheduler = 0, QString alert = QString())
     : ActionData(scheduler), _alert(alert) { }
-  void trigger(EventSubscription subscription, ParamSet eventContext) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext,
+               TaskInstance taskContext) const {
     Q_UNUSED(subscription)
     if (_scheduler)
-      _scheduler.data()->alerter()->raiseAlert(eventContext.evaluate(_alert));
+      _scheduler.data()->alerter()
+          ->raiseAlert(eventContext.evaluate(_alert, &taskContext));
   }
   QString toString() const {
     return "!+"+_alert;

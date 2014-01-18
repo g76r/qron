@@ -149,7 +149,8 @@ public slots:
   TaskInstance abortTask(TaskInstance instance) {
     return abortTask(instance.id()); }
   /** Post a notice.
-    * This method is thread-safe. */
+   * This method is thread-safe.
+   * If params has no parent it will be set global params as parent */
   void postNotice(QString notice, ParamSet params);
   /** Ask for queued requests to be reevaluated during next event loop
     * iteration.

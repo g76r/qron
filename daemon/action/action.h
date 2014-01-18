@@ -36,8 +36,6 @@ public:
   Action &operator=(const Action &);
   ~Action();
   bool isNull() const { return !d; }
-  void trigger(EventSubscription subscription,
-               ParamSet eventContext) const;
   void trigger(EventSubscription subscription, ParamSet eventContext,
                TaskInstance taskContext) const;
   /** Human readable description of action */

@@ -35,14 +35,15 @@ public:
     // EventSubscription::triggerActions() use task params as eventContext
     // grandparent
     Q_UNUSED(subscription)
-    Q_UNUSED(taskContext)
     if (_scheduler) {
       ParamSet noticeParams;
       foreach (QString key, _noticeParams.keys())
         noticeParams.setValue(
-              key, eventContext.evaluate(_noticeParams.value(key)));
-      _scheduler.data()->postNotice(eventContext.evaluate(_notice),
-                                    noticeParams);
+              key, eventContext.evaluate(_noticeParams.value(key),
+                                         &taskContext));
+      _scheduler.data()
+          ->postNotice(eventContext.evaluate(_notice, &taskContext),
+                       noticeParams);
     }
   }
   void trigger(EventSubscription subscription, ParamSet eventContext) const {

@@ -6,10 +6,12 @@ global [label="Global Params"]
 supertask [label="Supertask Params"]
 taskgroup [label="Task Group Params"]
 task [label="Task Params"]
-eventsubscription [label="Event Subscription Params"]
 noticetrigger [label="Notice Trigger\nOverriding Params"]
 crontrigger [label="Cron Trigger\nOverriding Params"]
 requesttaskaction [label="Request Task Action\nOverriding Params"]
+otheraction [label="Other Action Params\n(Udp, RaiseAlert...)"]
+alerts [label="Alerts Params"]
+//webconsole [label="Web Console Params"]
 
 // runtime objects carrying params
 node [shape=ellipse]
@@ -23,18 +25,18 @@ restapi [label="REST API"]
 //time [label="time"]
 
 // ParamSet inheritage (mostly in configuration)
-edge [dir=back,arrowtail=onormal]
+edge [dir=back,arrowtail=onormal,color=navy,fontcolor=navy]
 global -- taskgroup -- supertask
 supertask -- task [label="(if workflow subtask)"]
 taskgroup -- task [label="(otherwise)"]
 task -- taskinstance
-eventsubscription -- event
-taskinstance -- eventsubscription [label="(if event occurs\nwithin task)",weight=0]
-global -- eventsubscription [label="(otherwise)"]
+global -- event
 global -- notice
+global -- alerts
+//global -- webconsole
 
 // parameter injection at runtime
-edge [dir=forward,arrowhead=vee]
+edge [dir=forward,arrowhead=vee,color=black,fontcolor=black]
 crontrigger -- taskinstance
 noticetrigger -- taskinstance
 event -- notice [label="postnotice\naction"]
@@ -48,9 +50,11 @@ crontrigger -- event [label="ontrigger\nevent\n(in workflow)"]
 noticetrigger -- event [label="ontrigger\nevent\n(in workflow)"]
 
 // context for parameters evaluation
-edge [dir=forward,arrowhead=dot]
+edge [dir=forward,arrowhead=dot,color=orange4,fontcolor=orange4]
 notice -- noticetrigger
 global -- crontrigger
 event -- requesttaskaction [label="requesttask\naction"]
-
+taskinstance -- requesttaskaction [label="(if event occurs\nwithin task)",weight=0]
+event -- otheraction [label="other\naction"]
+taskinstance -- otheraction [label="(if event occurs\nwithin task)",weight=0]
 }

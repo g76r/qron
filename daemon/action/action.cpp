@@ -47,15 +47,10 @@ ActionData::~ActionData() {
 }
 
 void Action::trigger(EventSubscription subscription,
-                     ParamSet eventContext) const {
-  if (d)
-    d->trigger(subscription, eventContext);
-}
-
-void Action::trigger(EventSubscription subscription, ParamSet eventContext,
+                     ParamSet eventContext,
                      TaskInstance taskContext) const {
   if (d)
-    d->triggerWithinTaskInstance(subscription, eventContext, taskContext);
+    d->trigger(subscription, eventContext, taskContext);
 }
 
 QString ActionData::toString() const {
@@ -66,21 +61,14 @@ QString ActionData::actionType() const {
   return "unknown";
 }
 
-void ActionData::trigger(EventSubscription subscription,
-                         ParamSet eventContext) const {
+void ActionData::trigger(
+    EventSubscription subscription, ParamSet eventContext,
+    TaskInstance taskContext) const {
   Q_UNUSED(eventContext)
+  Q_UNUSED(taskContext)
   Log::error() << "ActionData::trigger() called whereas it should never, "
                   "from subscription " << subscription.subscriberName()
                   << "|" << subscription.eventName();
-}
-
-void ActionData::triggerWithinTaskInstance(
-    EventSubscription subscription, ParamSet eventContext,
-    TaskInstance taskContext) const {
-  Q_UNUSED(taskContext)
-  // default behaviour for actions that do not need to be aware of task instance
-  // context
-  trigger(subscription, eventContext);
 }
 
 QString Action::toString() const {

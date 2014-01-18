@@ -20,10 +20,12 @@ public:
   CancelAlertActionData(Scheduler *scheduler = 0,
                        QString alert = QString())
     : ActionData(scheduler), _alert(alert) { }
-  void trigger(EventSubscription subscription, ParamSet eventContext) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext,
+               TaskInstance instance) const {
     Q_UNUSED(subscription)
     if (_scheduler)
-      _scheduler.data()->alerter()->cancelAlert(eventContext.evaluate(_alert));
+      _scheduler.data()->alerter()
+          ->cancelAlert(eventContext.evaluate(_alert, &instance));
   }
   QString toString() const {
     return "!-"+_alert;

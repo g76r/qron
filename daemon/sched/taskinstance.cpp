@@ -75,8 +75,7 @@ private:
 TaskInstance::TaskInstance() {
 }
 
-TaskInstance::TaskInstance(const TaskInstance &other)
-  : ParamsProvider(), d(other.d) {
+TaskInstance::TaskInstance(const TaskInstance &other) : d(other.d) {
 }
 
 TaskInstance::TaskInstance(Task task, bool force, TaskInstance callerTask,
@@ -90,7 +89,6 @@ TaskInstance::TaskInstance(Task task, quint64 groupId,
   : d(new TaskInstanceData(task, overridingParams, force, callerTask,
                            groupId)) {
 }
-
 
 TaskInstance::~TaskInstance() {
 }
@@ -181,7 +179,6 @@ void TaskInstance::setTarget(Host target) const {
 }
 
 QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
-  //Log::fatal() << "TaskInstance::paramvalue " << key;
   if (!d)
     return defaultValue;
   if (key == "!taskid") {

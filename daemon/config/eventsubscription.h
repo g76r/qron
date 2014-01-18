@@ -53,22 +53,17 @@ public:
   QString subscriberName() const;
   /** Trigger actions if context complies with filter conditions.
    * Use this method if the event occured in the context of a task.
-   * @param eventContext will get EventSubscription::params() as parent and
-   * taskContext::params() as grandparent before being passed to
-   * Action::trigger() */
-  void triggerActions(ParamSet eventContext, TaskInstance taskContext) const;
-  /** Almost syntaxic sugar for triggerActions(ParamSet(), taskContext) */
+   * @param eventContext will get taskContext::params() as parent before being
+   * passed to Action::trigger() */
+  void triggerActions(ParamSet eventPrams, TaskInstance taskContext) const;
+  /** Syntaxic sugar */
   void triggerActions(TaskInstance taskContext) const;
-  /** Trigger actions if context complies with filter conditions.
-   * Use this method if the event occured outside the context of a task.
-   * @param eventContext will get EventSubscription::params() as parent before
-   * being passed to Action::trigger() */
-  void triggerActions(ParamSet eventContext) const;
-  /** Almost syntaxic sugar for triggerActions(ParamSet()) */
+  /** Syntaxic sugar */
+  void triggerActions(ParamSet eventPrams) const;
+  /** Syntaxic sugar */
   void triggerActions() const;
   static QStringList toStringList(QList<EventSubscription> list);
   QStringList toStringList() const;
-  ParamSet params() const;
 };
 
 #endif // EVENTSUBSCRIPTION_H

@@ -17,17 +17,18 @@
 #include "sched/taskinstance.h"
 #include "action/action.h"
 #include "configutils.h"
+#include "sched/scheduler.h"
 
 class EventSubscriptionData : public QSharedData {
 public:
   QString _subscriberName, _eventName;
   QList<Action> _actions;
-  ParamSet _params;
+  ParamSet _globalParams;
   EventSubscriptionData(QString subscriberName = QString(),
                         QString eventName = QString(),
-                        ParamSet params = ParamSet())
+                        ParamSet globalParams = ParamSet())
     : _subscriberName(subscriberName), _eventName(eventName),
-      _params(params) { }
+      _globalParams(globalParams) { }
 };
 
 EventSubscription::EventSubscription() {
@@ -40,7 +41,8 @@ EventSubscription::EventSubscription(
   // LATER support for non-text/non-regexp filters e.g. "onstatus >=3"
   // LATER support for (ifincalendar) and other structured filters
   d->_eventName = node.name();
-  ConfigUtils::loadParamSet(node, &d->_params);
+  if (scheduler)
+    d->_globalParams = scheduler->globalParams();
   foreach (PfNode child, node.children()) {
     Action a = Action::createAction(child, scheduler);
     if (!a.isNull())
@@ -72,52 +74,30 @@ EventSubscription &EventSubscription::operator=(const EventSubscription &rhs) {
   return *this;
 }
 
-class EventContext : public ParamsProvider {
-public:
-  EventContext() { }
-  QVariant paramValue(const QString key, const QVariant defaultValue) const {
-    Q_UNUSED(key)
-    return defaultValue;
-  }
-};
-
 void EventSubscription::triggerActions(
-    ParamSet eventContext, TaskInstance taskContext) const {
+    ParamSet eventParams, TaskInstance taskContext) const {
+  if (!d)
+    return;
+  if (eventParams.parent().isNull())
+    eventParams.setParent(d->_globalParams);
   // LATER implement filters
-  // inheritage will be: eventContext > EventSubscription > taskContext
-  ParamSet subscriptionParams = d->_params;
-  subscriptionParams.setParent(taskContext.params());
-  eventContext.setParent(subscriptionParams);
+  // inheritage will be: eventContext > taskContext > ...
   //Log::fatal() << "EventSubscription::triggerActions " << eventContext << " "
   //             << taskContext.id();
   foreach (Action a, d->_actions)
-    a.trigger(*this, eventContext, taskContext);
+    a.trigger(*this, eventParams, taskContext);
 }
 
 void EventSubscription::triggerActions(TaskInstance taskContext) const {
-  // LATER implement filters
-  // inheritage will be: EventSubscription > taskContext
-  ParamSet eventContext = d->_params;
-  eventContext.setParent(taskContext.params());
-  //Log::fatal() << "EventSubscription::triggerActions " << taskContext.id();
-  foreach (Action a, d->_actions)
-    a.trigger(*this, eventContext, taskContext);
+  triggerActions(ParamSet(), taskContext);
 }
 
-void EventSubscription::triggerActions(ParamSet eventContext) const {
-  // LATER implement filters
-  // inheritage will be: eventContext > EventSubscription
-  eventContext.setParent(d->_params);
-  //Log::fatal() << "EventSubscription::triggerActions " << eventContext;
-  foreach (Action a, d->_actions)
-    a.trigger(*this, eventContext);
+void EventSubscription::triggerActions(ParamSet eventParams) const {
+  triggerActions(eventParams, TaskInstance());
 }
 
 void EventSubscription::triggerActions() const {
-  // LATER implement filters
-  //Log::fatal() << "EventSubscription::triggerActions ";
-  foreach (Action a, d->_actions)
-    a.trigger(*this, d->_params);
+  triggerActions(ParamSet(), TaskInstance());
 }
 
 QStringList EventSubscription::toStringList(QList<EventSubscription> list) {
@@ -146,8 +126,4 @@ QList<Action> EventSubscription::actions() const {
 
 QString EventSubscription::subscriberName() const {
   return d ? d->_subscriberName : QString();
-}
-
-ParamSet EventSubscription::params() const {
-  return d ? d->_params : ParamSet();
 }

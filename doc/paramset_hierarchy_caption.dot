@@ -16,16 +16,16 @@ node [shape=hexagon,style=dashed,color="",label="actor"]
 a1
 
 // ParamSet inheritage (mostly in configuration)
-edge [dir=back,arrowtail=onormal,label="paramset inheritage\n(mostly in config)"]
+edge [dir=back,arrowtail=onormal,label="paramset inheritage\n(mostly in config)",color=navy,fontcolor=navy]
 co1 -- co2 -- ru1
 
 // parameter injection at runtime
-edge [dir=forward,arrowhead=vee,label="paramset injection\n(at runtime)"]
+edge [dir=forward,arrowhead=vee,label="paramset injection\n(at runtime)",color=black,fontcolor=black]
 a1 -- ru2
 ru1 -- ru2
 
 // context for parameters evaluation
-edge [dir=forward,arrowhead=dot,label="context of\nevaluation"]
+edge [dir=forward,arrowhead=dot,label="evaluation\ncontext",color=orange4,fontcolor=orange4]
 co3 -- ru1
 
 }

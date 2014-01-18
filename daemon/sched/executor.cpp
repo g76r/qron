@@ -467,8 +467,7 @@ void Executor::doActivateWorkflowTransition(QString transitionId,
   //Log::fatal(_instance.task().fqtn(), _instance.id())
   //    << "actual transtion id: " << transitionId;
   Log::debug(_instance.task().fqtn(), _instance.id())
-      << "activating workflow transition " << transitionId
-      << " " << eventContext;
+      << "activating workflow transition " << transitionId;
   _steps[parts[2]].predecessorReady(transitionId, eventContext);
 }
 

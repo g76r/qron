@@ -27,19 +27,18 @@ public:
   QString actionType() const {
     return "end";
   }
-  void trigger(EventSubscription subscription, ParamSet eventContext) const {
-    Q_UNUSED(subscription)
-    Q_UNUSED(eventContext)
-    // this should never happen since no one should ever configure a step
-    // action in global events subscriptions
-    Log::error() << "EndAction::trigger() called outside a TaskInstance "
-                    "context, for subscription "
-                 << subscription.subscriberName() << "|"
-                 << subscription.eventName();
-  }
-  void triggerWithinTaskInstance(EventSubscription subscription,
+  void trigger(EventSubscription subscription,
                                  ParamSet eventContext,
                                  TaskInstance instance) const {
+    if (instance.isNull()) {
+      // this should never happen since no one should ever configure a step
+      // action in global events subscriptions
+      Log::error() << "EndAction::trigger() called outside a TaskInstance "
+                      "context, for subscription "
+                   << subscription.subscriberName() << "|"
+                   << subscription.eventName();
+      return;
+    }
     QString transitionId = subscription.subscriberName()+"|"
         +subscription.eventName()+"|$end";
     TaskInstance workflow = instance.callerTask();

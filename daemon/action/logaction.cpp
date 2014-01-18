@@ -28,16 +28,14 @@ public:
   QString actionType() const {
     return "log";
   }
-  void triggerWithinTaskInstance(EventSubscription subscription,
-                                 ParamSet eventContext,
-                                 TaskInstance instance) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext,
+               TaskInstance instance) const {
     Q_UNUSED(subscription)
-    Log::log(_severity, instance.task().fqtn(), instance.id())
-        << eventContext.evaluate(_message, &instance);
-  }
-  void trigger(EventSubscription subscription, ParamSet eventContext) const {
-    Q_UNUSED(subscription)
-    Log::log(_severity) << eventContext.evaluate(_message);
+    if (instance.isNull())
+      Log::log(_severity) << eventContext.evaluate(_message);
+    else
+      Log::log(_severity, instance.task().fqtn(), instance.id())
+          << eventContext.evaluate(_message, &instance);
   }
 };
 

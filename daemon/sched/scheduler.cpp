@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -84,7 +84,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
 
 Scheduler::~Scheduler() {
   Log::clearLoggers();
-  _alerter->deleteLater();
+  _alerter->deleteLater(); // FIXME delete alerter only when last executor is deleted
 }
 
 bool Scheduler::reloadConfiguration(QIODevice *source) {
@@ -800,8 +800,12 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
   bool fired = false;
   if (next <= now) {
     // requestTask if trigger reached
-    QList<TaskInstance> requests
-        = syncRequestTask(fqtn, trigger.overridingParams());
+    ParamSet overridingParams;
+    foreach (QString key, trigger.overridingParams().keys())
+      overridingParams
+          .setValue(key, _globalParams
+                    .value(trigger.overridingParams().rawValue(key)));
+    QList<TaskInstance> requests = syncRequestTask(fqtn, overridingParams);
     if (!requests.isEmpty())
       foreach (TaskInstance request, requests)
         Log::debug(fqtn, request.id())
@@ -849,16 +853,21 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
   }
   QMutexLocker ml(&_configMutex);
   QHash<QString,Task> tasks = _tasks;
+  if (params.parent().isNull())
+    params.setParent(_globalParams);
   ml.unlock();
   Log::debug() << "posting notice ^" << notice << " with params " << params;
   foreach (Task task, tasks.values()) {
     foreach (NoticeTrigger trigger, task.noticeTriggers()) {
-      if (trigger.expression() == notice) { // LATER allow filters such as regexps
+      // LATER implement regexp patterns for notice triggers
+      if (trigger.expression() == notice) {
         Log::debug() << "notice " << trigger.humanReadableExpression()
                      << " triggered task " << task.fqtn();
-        ParamSet overridingParams = trigger.overridingParams();
-        foreach (QString key, params.keys())
-          overridingParams.setValue(key, params.value(key));
+        ParamSet overridingParams;
+        foreach (QString key, trigger.overridingParams().keys())
+          overridingParams
+              .setValue(key, params
+                        .value(trigger.overridingParams().rawValue(key)));
         QList<TaskInstance> requests
             = syncRequestTask(task.fqtn(), overridingParams);
         if (!requests.isEmpty())

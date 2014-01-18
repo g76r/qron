@@ -30,11 +30,7 @@ public:
   virtual QString actionType() const;
   /** Default: do nothing */
   virtual void trigger(EventSubscription subscription,
-                       ParamSet eventContext) const;
-  /** Default: call trigger() using the TaskInstance as a ParamProvider. */
-  virtual void triggerWithinTaskInstance(EventSubscription subscription,
-                                         ParamSet eventContext,
-                                         TaskInstance taskContext) const;
+                       ParamSet eventContext, TaskInstance taskContext) const;
   virtual QString targetName() const;
 };
 

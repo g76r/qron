@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@
 
 class TriggerData;
 
-class Trigger /*: public ParamsProvider*/ {
+class Trigger {
 protected:
   QSharedDataPointer<TriggerData> d;
 
@@ -44,7 +44,6 @@ public:
   bool isValid() const;
   //void setCalendar(Calendar calendar);
   Calendar calendar() const;
-  //QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
   ParamSet overridingParams() const;
 
 protected:

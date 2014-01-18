@@ -22,10 +22,11 @@ public:
   ParamSet _params;
   HttpActionData(QString url = QString(), ParamSet params = ParamSet())
     : _url(url), _params(params) { }
-  void trigger(EventSubscription subscription, ParamSet eventContext) const {
+  void trigger(EventSubscription subscription, ParamSet eventContext,
+               TaskInstance instance) const {
     Q_UNUSED(subscription)
     Q_UNUSED(eventContext)
-    //QUrl url(eventContext.evaluate(_url, &_params));
+    Q_UNUSED(instance)
     // LATER implement http action
     Log::error() << "HttpAction not implemented";
   }

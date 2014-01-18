@@ -19,7 +19,7 @@
 #include "util/paramset.h"
 #include <QDateTime>
 #include "config/host.h"
-#include "util/paramsprovider.h"
+#include "util/paramset.h"
 
 class TaskInstanceData;
 
