@@ -34,30 +34,31 @@ public:
     return overridingParams;
   }
   void trigger(EventSubscription subscription, ParamSet eventContext,
-               TaskInstance instance) const {
+               TaskInstance parentInstance) const {
     if (_scheduler) {
       QString fqtn;
-      if (instance.isNull()) {
+      if (parentInstance.isNull()) {
         fqtn = _idOrFqtn;
       } else {
-        fqtn = eventContext.evaluate(_idOrFqtn, &instance);
-        QString fqtnLocalToGroup = instance.task().taskGroup().id()+"."+_idOrFqtn;
+        fqtn = eventContext.evaluate(_idOrFqtn, &parentInstance);
+        QString fqtnLocalToGroup = parentInstance.task().taskGroup().id()
+            +"."+_idOrFqtn;
         if (_scheduler.data()->taskExists(fqtnLocalToGroup))
           fqtn = fqtnLocalToGroup;
       }
       QList<TaskInstance> instances = _scheduler.data()->syncRequestTask(
-          fqtn, evaluatedOverrindingParams(eventContext, instance), _force,
-          instance);
+          fqtn, evaluatedOverrindingParams(eventContext, parentInstance), _force,
+          parentInstance);
       if (instances.isEmpty())
-        Log::error(instance.task().fqtn(), instance.id())
+        Log::error(parentInstance.task().fqtn(), parentInstance.id())
             << "requesttask action failed to request execution of task "
             << fqtn << " within event subscription context "
             << subscription.subscriberName() << "|" << subscription.eventName();
       else
-        foreach (TaskInstance instance, instances)
-          Log::info(instance.task().fqtn(), instance.id())
+        foreach (TaskInstance childInstance, instances)
+          Log::info(parentInstance.task().fqtn(), parentInstance.id())
               << "requesttask action requested execution of task "
-              << instance.task().fqtn() << "/" << instance.groupId();
+              << childInstance.task().fqtn() << "/" << childInstance.groupId();
     }
 
   }
