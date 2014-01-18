@@ -778,8 +778,9 @@ QString Task::workflowInstanceDiagram(
     QHash<QString,StepInstance> stepInstances) const {
   // LATER implement instanciated workflow diagram for real
   if (!d || d->_mean != "workflow")
-    return "graph g{graph[label=\"not a workflow\"]}";
+    return "graph g{graph[" WORKFLOW_GRAPH ",label=\"not a workflow\"]}";
   QString gv("graph g{\n"
+             "  graph[" WORKFLOW_GRAPH "]\n"
              "  start[" START_NODE "]\n"
              "  end[" END_NODE "]\n");
   foreach (Step s, d->_steps.values()) {

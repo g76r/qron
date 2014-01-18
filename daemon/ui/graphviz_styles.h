@@ -35,6 +35,7 @@
 //#define GLOBAL_EVENT_NODE "shape=pentagon"
 #define GLOBAL_POSTNOTICE_EDGE "dir=back,arrowtail=vee"
 #define GLOBAL_REQUESTTASK_EDGE TASK_POSTNOTICE_EDGE
+#define WORKFLOW_GRAPH "bgcolor=transparent"
 #define ANDJOIN_NODE "shape=square,label=and"
 #define ORJOIN_NODE "shape=circle,label=or"
 #define START_NODE "shape=circle,style=\"filled\",width=.2,label=\"\",fillcolor=black"
