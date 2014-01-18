@@ -41,7 +41,7 @@
 #define START_NODE "shape=circle,style=\"filled\",width=.2,label=\"\",fillcolor=black"
 #define END_NODE "shape=doublecircle,style=\"filled\",width=.2,label=\"\",fillcolor=black"
 #define STEP_EDGE "dir=forward,arrowhead=vee"
-#define TRIGGER_STEP_EDGE "dir=forward,arrowhead=vee,style=dashed"
-#define WORKFLOW_TASK_TRIGGER_EDGE "dir=back,arrowtail=dot,style=dotted"
+#define TRIGGER_STEP_EDGE "dir=forward,arrowhead=vee,style=dotted"
+#define WORKFLOW_TASK_TRIGGER_EDGE "dir=back,arrowtail=vee,style=dotted"
 
 #endif // GRAPHVIZ_STYLES_H
