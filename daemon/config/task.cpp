@@ -158,7 +158,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   ConfigUtils::loadParamSet(node, &td->_params);
   QString filter = td->_params.value("stderrfilter");
   if (!filter.isEmpty())
-    d->_stderrFilters.append(QRegExp(filter));
+    td->_stderrFilters.append(QRegExp(filter));
   td->_setenv.setParent(taskGroup.setenv());
   ConfigUtils::loadSetenv(node, &td->_setenv);
   td->_unsetenv.setParent(taskGroup.unsetenv());
