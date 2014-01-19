@@ -94,7 +94,8 @@ QString ActionData::targetName() const {
   return QString();
 }
 
-Action Action::createAction(PfNode node, Scheduler *scheduler) {
+Action Action::createAction(PfNode node, Scheduler *scheduler,
+                            QString eventName) {
   // LATER implement HttpAction
   // LATER implement ExecAction
   ParamSet params;
@@ -123,7 +124,12 @@ Action Action::createAction(PfNode node, Scheduler *scheduler) {
     return EndAction(scheduler, !node.hasChild("failure"),
                      node.longAttribute("returncode", 0));
   } else {
-    Log::error() << "unknown action type: " << node.name();
+    if (node.name() == "param"
+        || (eventName == "ontrigger"
+            && (node.name() == "cron" || node.name() == "notice")))
+      ;
+    else
+      Log::error() << "unknown action type: " << node.name();
     return Action();
   }
 }

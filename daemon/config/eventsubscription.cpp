@@ -44,7 +44,7 @@ EventSubscription::EventSubscription(
   if (scheduler)
     d->_globalParams = scheduler->globalParams();
   foreach (PfNode child, node.children()) {
-    Action a = Action::createAction(child, scheduler);
+    Action a = Action::createAction(child, scheduler, d->_eventName);
     if (!a.isNull())
       d->_actions.append(a);
   }

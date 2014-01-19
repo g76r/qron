@@ -48,7 +48,8 @@ public:
   QString targetName() const;
   /** Create the appropriate Action subclass according to configuration
    *  fragment. */
-  static Action createAction(PfNode node, Scheduler *scheduler);
+  static Action createAction(PfNode node, Scheduler *scheduler,
+                             QString eventName);
 
 protected:
   explicit Action(ActionData *data);
