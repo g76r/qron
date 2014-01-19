@@ -223,6 +223,10 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         }
       }
     }
+  } else {
+    if (node.hasChild("trigger"))
+      Log::warning() << "ignoring trigger in workflow subtask: "
+                     << node.toString();
   }
   QListIterator<QPair<QString,qlonglong> > it(
         node.stringLongPairChildrenByName("resource"));
@@ -387,11 +391,11 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
             else // fqsn
               transitionId = d->_fqtn+":"+source+"|"+eventName+"|"+target;
             if (d->_steps.contains(target)) {
-              Log::debug() << "adding predecessor " << transitionId
+              Log::debug() << "registring predecessor " << transitionId
                            << " to step " << d->_steps[target].fqsn();
               d->_steps[target].insertPredecessor(transitionId);
             } else {
-              Log::error() << "cannot add predecessor " << transitionId
+              Log::error() << "cannot register predecessor " << transitionId
                            << " with unknown target to workflow " << d->_fqtn;
               d = 0;
               return;
@@ -403,10 +407,6 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     // TODO reject workflows w/ no start edge
     // TODO reject workflows w/ step w/o predecessors
     // TODO reject workflows w/ step w/o successors, at less on trivial cases (e.g. neither step nor end in onfailure)
-    if (node.hasChild("trigger"))
-      Log::warning() << "ignoring trigger in workflow task: "
-                     << node.toString();
-
   } else {
     if (!steps.isEmpty() || node.hasChild("start"))
       Log::warning() << "ignoring step definitions in non-workflow task: "
