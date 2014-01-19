@@ -185,8 +185,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
   QHash<QString,QString> alertsIcons;
-  alertsIcons.insert("0", "<i class=\"fa fa-bell\"></i> ");
-  alertsIcons.insert("1", "<i class=\"fa fa-check\"></i> ");
+  alertsIcons.insert("0", "<i class=\"fa fa-fw fa-bell\"></i> ");
+  alertsIcons.insert("1", "<i class=\"fa fa-fw fa-check\"></i> ");
   _htmlLastEmitedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlLastEmitedAlertsView, 1, 3, false));
   ((HtmlAlertItemDelegate*)_htmlLastEmitedAlertsView->itemDelegate())

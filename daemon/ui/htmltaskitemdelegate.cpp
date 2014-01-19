@@ -80,23 +80,23 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     text.prepend(/* requestTask */ QString() +
                  "<span class=\"label label-important\" "
                  "title=\"Request execution\"><a href=\"requestform?"
-                 "fqtn="+fqtn+"\"><i class=\"fa fa-play\"></i></a></span> "
+                 "fqtn="+fqtn+"\"><i class=\"fa fa-fw fa-play\"></i></a>"
+                 "</span> "
                  /* {enable,disable}Task */
                  "<span class=\"label label-"+(enabled?"important":"warning")
                  +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
                  "<a href=\"do?event=enableTask&fqtn="+fqtn+"&enable="
-                 +(enabled?"false":"true")+"\"><i class=\"fa fa-ban\"></i>"
-                 "</a></span> "
+                 +(enabled?"false":"true")+"\"><i class=\"fa fa-fw fa-ban\">"
+                 "</i></a></span> "
                  /* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
-                 "filter= "+fqtn+"/\"><i class=\"fa fa-align-left\"></i></a>"
-                 "</span> "
+                 "filter= "+fqtn+"/\"><i class=\"fa fa-fw fa-align-left\">"
+                 "</i></a></span> "
                  /* taskdoc */
                  "<span class=\"label label-info\" "
                  "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-                 +fqtn+"\"><i class=\"fa fa-cog\">"
-                 "</i></a></span> ");
+                 +fqtn+"\"><i class=\"fa fa-fw fa-cog\"></i></a></span> ");
     break;
   }
   case 19:

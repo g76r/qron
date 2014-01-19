@@ -30,18 +30,18 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
       text.prepend(/* cancel immediate */
                    "<span class=\"label label-important\">"
                    "<a title=\"Cancel alert\"href=\"do?event=cancelAlert&alert="
-                   +alert+"&immediately=true\"><i class=\"fa fa-check\">"
+                   +alert+"&immediately=true\"><i class=\"fa fa-fw fa-check\">"
                    "</i></a></span> ");
     if (re.exactMatch(alert)) {
       text.append(
             /* related task log */
             " <span class=\"label label-info\" title=\"Related tasks log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter= "
-            +re.cap(1)+"/\"><i class=\"fa fa-align-left\"></i></a></span>"
+            +re.cap(1)+"/\"><i class=\"fa fa-fw fa-align-left\"></i></a></span>"
             /* related task taskdoc */
             " <span class=\"label label-info\" title=\"Detailed task info\">"
             "<a href=\"taskdoc.html?fqtn="+re.cap(1)+"\">"
-            "<i class=\"fa fa-cog\"></i></a></span>");
+            "<i class=\"fa fa-fw fa-cog\"></i></a></span>");
     }
   }
   return text;

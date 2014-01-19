@@ -26,19 +26,19 @@ QString HtmlStepItemDelegate::text(const QModelIndex &index) const {
     QString kind = index.model()->index(index.row(), 2, index.parent()).data()
         .toString();
     if (kind == "task")
-      text.prepend("<i class=\"fa fa-puzzle-piece\"></i> ");
+      text.prepend("<i class=\"fa fa-fw fa-puzzle-piece\"></i> ");
     else if (kind == "and")
-      text.prepend("<i class=\"fa fa-chevron-up\"></i> ");
+      text.prepend("<i class=\"fa fa-fw fa-chevron-up\"></i> ");
       //text.prepend("<span class=\"fa-stack\"><i class=\"fa fa-square fa-stack\"></i><i class=\"fa fa-chevron-up fa-stack fa-inverse\"></i></span> ");
     else if (kind == "or")
-      text.prepend("<i class=\"fa fa-chevron-down\"></i> ");
+      text.prepend("<i class=\"fa fa-fw fa-chevron-down\"></i> ");
       //text.prepend("<span class=\"fa-stack\"><i class=\"fa fa-circle fa-stack\"></i><i class=\"fa fa-chevron-down fa-stack fa-inverse\"></i></span> ");
     else if (kind == "start")
-      text.prepend("<i class=\"fa fa-circle\"></i> ");
+      text.prepend("<i class=\"fa fa-fw fa-circle\"></i> ");
     else if (kind == "end")
-      text.prepend("<i class=\"fa fa-dot-circle-o\"></i> ");
+      text.prepend("<i class=\"fa fa-fw fa-dot-circle-o\"></i> ");
     else
-      text.prepend("<i class=\"fa fa-question\"></i> ");
+      text.prepend("<i class=\"fa fa-fw fa-question\"></i> ");
     break;
   }
   case 3:
