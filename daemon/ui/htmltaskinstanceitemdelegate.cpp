@@ -41,7 +41,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     text.prepend(/* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
-                 "filter=/"+id+"\"><i class=\"fa fa-list\"></i></a>"
+                 "filter=/"+id+"\"><i class=\"fa fa-align-left\"></i></a>"
                  "</span> "
                  /* taskdoc */
                  "<span class=\"label label-info\" title=\""
