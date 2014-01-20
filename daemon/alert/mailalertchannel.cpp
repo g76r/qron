@@ -54,17 +54,7 @@ void MailAlertChannel::setParams(ParamSet params) {
   if (_mailSender)
     delete _mailSender;
   _mailSender = new MailSender(relay);
-  _senderAddress = params.value("mail.senderaddress",
-                                "please-do-not-reply@localhost");
-  _webConsoleUrl = params.value("webconsoleurl");
-  _alertSubject = params.value("mail.alertsubject", "NEW QRON ALERT");
-  _reminderSubject = params.value("mail.remindersubject",
-                                  "QRON ALERT REMINDER");
-  _cancelSubject = params.value("mail.cancelsubject", "canceling qron alert");
-  _alertStyle = params.value("mail.alertstyle",
-                             "background:#ff0000;color:#ffffff;");
-  _reminderStyle = params.value("mail.reminderstyle", "background:#ffff80");
-  _cancelStyle = params.value("mail.cancelstyle", "background:#8080ff");
+  _params = params;
   _enableHtmlBody = params.value("mail.enablehtml", "true") == "true";
   _remindFrequency =
       params.valueAsInt("remindfrequency",
@@ -72,7 +62,7 @@ void MailAlertChannel::setParams(ParamSet params) {
   //_asyncProcessingTimer->start(_remindFrequency);
   asyncProcessing();
   Log::debug() << "MailAlertChannel configured " << relay << " "
-               << _senderAddress << " " << params.toString();
+               << params.toString();
 }
 
 MailAlertChannel::~MailAlertChannel() {
@@ -168,11 +158,17 @@ void MailAlertChannel::processQueue(QVariant address) {
       QHash<QString,QString> headers;
       // headers
       if (queue->_alerts.size())
-        subject = _alertSubject;
+        subject = _params.value("mail.alertsubject."+queue->_address,
+                                _params.value("mail.alertsubject",
+                                              "NEW QRON ALERT"));
       else if (reminders.size())
-        subject = _reminderSubject;
+        subject = _params.value("mail.remindersubject."+queue->_address,
+                                _params.value("mail.remindersubject",
+                                              "QRON ALERT REMINDER"));
       else
-        subject = _cancelSubject;
+        subject = _params.value("mail.cancelsubject."+queue->_address,
+                                _params.value("mail.cancelsubject",
+                                              "canceling qron alert"));
       headers.insert("Subject", subject);
       headers.insert("To", addr);
       headers.insert("User-Agent", "qron free scheduler (www.qron.eu)");
@@ -186,11 +182,13 @@ void MailAlertChannel::processQueue(QVariant address) {
                      QString::number(reminders.size()));
       // body
       html = "<html><head><title>"+subject+"</title></head><body>";
-      if (!_webConsoleUrl.isEmpty()) {
+      QString webConsoleUrl = _params.value("webconsoleurl."+queue->_address,
+                                            _params.value("webconsoleurl"));
+      if (!webConsoleUrl.isEmpty()) {
         text.append("Alerts can also be viewed here:\r\n")
-            .append(_webConsoleUrl).append("\r\n\r\n");
+            .append(webConsoleUrl).append("\r\n\r\n");
         html.append("<p>Alerts can also be viewed here: <a href=\"")
-            .append(_webConsoleUrl).append("\">").append(_webConsoleUrl)
+            .append(webConsoleUrl).append("\">").append(webConsoleUrl)
             .append("</a>.\n");
       }
       s = "This message contains ";
@@ -213,7 +211,11 @@ void MailAlertChannel::processQueue(QVariant address) {
           s.append(" ").append(alert.rule().emitMessage(alert))
               .append("\r\n");
           text.append(s);
-          html.append("<li style=\"").append(_alertStyle).append("\">")
+          QString style =
+              _params.value("mail.alertstyle."+queue->_address,
+                            _params.value("mail.alertstyle",
+                                          "background:#ff0000;color:#ffffff;"));
+          html.append("<li style=\"").append(style).append("\">")
               .append(s);
         }
       }
@@ -228,7 +230,11 @@ void MailAlertChannel::processQueue(QVariant address) {
           s.append(" ").append(alert.rule().reminderMessage(alert))
               .append("\r\n");
           text.append(s);
-          html.append("<li style=\"").append(_reminderStyle).append("\">")
+          QString style =
+              _params.value("mail.reminderstyle."+queue->_address,
+                            _params.value("mail.reminderstyle",
+                                          "background:#ffff80"));
+          html.append("<li style=\"").append(style).append("\">")
               .append(s);
         }
       }
@@ -243,7 +249,11 @@ void MailAlertChannel::processQueue(QVariant address) {
           s.append(" ").append(alert.rule().cancelMessage(alert))
               .append("\r\n");
           text.append(s);
-          html.append("<li style=\"").append(_cancelStyle).append("\">")
+          QString style =
+              _params.value("mail.cancelstyle."+queue->_address,
+                            _params.value("mail.cancelstyle",
+                                          "background:#8080ff"));
+          html.append("<li style=\"").append(style).append("\">")
               .append(s);
         }
         // LATER clarify this message
@@ -277,7 +287,11 @@ void MailAlertChannel::processQueue(QVariant address) {
       } else
         body = text;
       // queuing
-      bool queued = _mailSender->send(_senderAddress, recipients, body,
+      QString senderAddress =
+          _params.value("mail.senderaddress."+queue->_address,
+                        _params.value("mail.senderaddress",
+                                      "please-do-not-reply@localhost"));
+      bool queued = _mailSender->send(senderAddress, recipients, body,
                                       headers, QList<QVariant>(), errorString);
       if (queued) {
         Log::info() << "successfuly sent an alert mail to " << addr;

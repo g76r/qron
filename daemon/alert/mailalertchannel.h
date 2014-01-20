@@ -31,8 +31,7 @@ class MailAlertChannel : public AlertChannel {
   Q_DISABLE_COPY(MailAlertChannel)
   QHash<QString,MailAlertQueue*> _queues;
   MailSender *_mailSender;
-  QString _senderAddress, _webConsoleUrl, _alertSubject, _reminderSubject,
-  _cancelSubject, _alertStyle, _reminderStyle, _cancelStyle;
+  ParamSet _params;
   bool _enableHtmlBody;
   int _remindFrequency;
   QTimer *_asyncProcessingTimer;
