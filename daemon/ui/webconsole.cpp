@@ -1676,6 +1676,7 @@ QHash<QString,QString> WebConsole::computeDiagrams(SchedulerConfig config) {
           .append("\" [" TASK_NOTRIGGER_EDGE "]\n");
     }
     // events defined at task level
+    QSet<QString> edges;
     foreach (const EventSubscription &sub,
              task.allEventsSubscriptions() + task.taskGroup().allEventSubscriptions()) {
       foreach (const Action &action, sub.actions()) {
@@ -1690,13 +1691,14 @@ QHash<QString,QString> WebConsole::computeDiagrams(SchedulerConfig config) {
           if (!target.contains('.'))
             target = task.taskGroup().id()+"."+target;
           if (fqtns.contains(target))
-            gv.append("\"").append(task.fqtn()).append("\"--\"")
-                .append(target).append("\" [label=\"")
-                .append(sub.humanReadableCause())
-                .append("\"," TASK_REQUESTTASK_EDGE "]\n");
+            edges.insert("\""+task.fqtn()+"\"--\""+target+"\" [label=\""
+                         +sub.humanReadableCause()
+                         +"\"," TASK_REQUESTTASK_EDGE "]\n");
         }
       }
     }
+    foreach (const QString &edge, edges)
+      gv.append(edge);
   }
   // events defined globally
   foreach (const EventSubscription &sub, schedulerEventsSubscriptions) {
