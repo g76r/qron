@@ -36,7 +36,6 @@
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
-  _configMutex(QMutex::Recursive),
   _alerter(new Alerter), _authenticator(new InMemoryAuthenticator(this)),
   _usersDatabase(new InMemoryUsersDatabase(this)),
   _firstConfigurationLoad(true),
@@ -117,7 +116,6 @@ bool Scheduler::loadConfig(QIODevice *source) {
 }
 
 bool Scheduler::loadConfig(PfNode root) {
-  QMutexLocker ml(&_configMutex);
   SchedulerConfig config(root, this, true);
   emit logConfigurationChanged(config.logfiles());
   int executorsToAdd = config.maxtotaltaskinstances()
@@ -217,7 +215,6 @@ bool Scheduler::loadConfig(PfNode root) {
       r.setTask(t);
     }
   }
-  ml.unlock();
   _configdate = QDateTime::currentDateTime().toMSecsSinceEpoch();
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
@@ -355,10 +352,8 @@ void Scheduler::asyncRequestTask(const QString fqtn, ParamSet paramsOverriding,
 QList<TaskInstance> Scheduler::doRequestTask(
     QString fqtn, ParamSet overridingParams, bool force,
     TaskInstance callerTask) {
-  QMutexLocker ml(&_configMutex);
   Task task = _config.tasks().value(fqtn);
   Cluster cluster = _config.clusters().value(task.target());
-  ml.unlock();
   if (task.isNull()) {
     Log::error() << "requested task not found: " << fqtn << overridingParams
                  << force;
@@ -521,7 +516,6 @@ TaskInstance Scheduler::doAbortTask(quint64 id) {
 
 void Scheduler::checkTriggersForTask(QVariant fqtn) {
   //Log::debug() << "Scheduler::checkTriggersForTask " << fqtn;
-  QMutexLocker ml(&_configMutex);
   Task task = _config.tasks().value(fqtn.toString());
   foreach (const CronTrigger trigger, task.cronTriggers())
     checkTrigger(trigger, task, fqtn.toString());
@@ -529,7 +523,6 @@ void Scheduler::checkTriggersForTask(QVariant fqtn) {
 
 void Scheduler::checkTriggersForAllTasks() {
   //Log::debug() << "Scheduler::checkTriggersForAllTasks ";
-  QMutexLocker ml(&_configMutex);
   QList<Task> tasksWithoutTimeTrigger;
   foreach (Task task, _config.tasks().values()) {
     QString fqtn = task.fqtn();
@@ -540,7 +533,6 @@ void Scheduler::checkTriggersForAllTasks() {
       tasksWithoutTimeTrigger.append(task);
     }
   }
-  ml.unlock();
   // LATER if this is usefull only to remove next exec time when reloading config w/o time trigger, this should be called in reloadConfig
   foreach (const Task task, tasksWithoutTimeTrigger)
     emit taskChanged(task);
@@ -605,11 +597,9 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
     Log::warning() << "cannot post a null/empty notice";
     return;
   }
-  QMutexLocker ml(&_configMutex);
   QHash<QString,Task> tasks = _config.tasks();
   if (params.parent().isNull())
     params.setParent(_config.globalParams());
-  ml.unlock();
   Log::debug() << "posting notice ^" << notice << " with params " << params;
   foreach (Task task, tasks.values()) {
     foreach (NoticeTrigger trigger, task.noticeTriggers()) {
@@ -714,7 +704,6 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
   QString target = instance.target().id();
   if (target.isEmpty())
     target = task.target();
-  QMutexLocker ml(&_configMutex);
   QList<Host> hosts;
   Host host = _config.hosts().value(target);
   if (host.isNull())
@@ -757,7 +746,6 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
       hostResources.insert(kind, hostResources.value(kind)
                             -taskResources.value(kind));
     _config.hostResources().insert(h.id(), hostResources);
-    ml.unlock();
     emit hostsResourcesAvailabilityChanged(h.id(), hostResources);
     _alerter->cancelAlert("resource.exhausted."+target);
     instance.setTarget(h);
@@ -785,7 +773,6 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
 nexthost:;
   }
   // no host has enough resources to execute the task
-  ml.unlock();
   task.fetchAndAddInstancesCount(-1);
   Log::warning(fqtn, instance.id())
       << "cannot execute task '" << fqtn
@@ -800,7 +787,6 @@ void Scheduler::taskFinishing(TaskInstance instance,
                               QPointer<Executor> executor) {
   Task requestedTask(instance.task());
   QString fqtn(requestedTask.fqtn());
-  QMutexLocker ml(&_configMutex);
   // configured and requested tasks are different if config reloaded meanwhile
   Task configuredTask(_config.tasks().value(fqtn));
   configuredTask.fetchAndAddInstancesCount(-1);
@@ -819,7 +805,6 @@ void Scheduler::taskFinishing(TaskInstance instance,
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
   _config.hostResources().insert(instance.target().id(), hostResources);
-  ml.unlock();
   if (instance.success())
     _alerter->cancelAlert("task.failure."+fqtn);
   else
@@ -860,13 +845,11 @@ void Scheduler::taskFinishing(TaskInstance instance,
 }
 
 bool Scheduler::enableTask(QString fqtn, bool enable) {
-  QMutexLocker ml(&_configMutex);
   Task t = _config.tasks().value(fqtn);
   //Log::fatal() << "enableTask " << fqtn << " " << enable << " " << t.id();
   if (t.isNull())
     return false;
   t.setEnabled(enable);
-  ml.unlock();
   if (enable)
     reevaluateQueuedRequests();
   emit taskChanged(t);
@@ -874,9 +857,7 @@ bool Scheduler::enableTask(QString fqtn, bool enable) {
 }
 
 void Scheduler::enableAllTasks(bool enable) {
-  QMutexLocker ml(&_configMutex);
   QList<Task> tasks(_config.tasks().values());
-  ml.unlock();
   foreach (Task t, tasks) {
     t.setEnabled(enable);
     emit taskChanged(t);
@@ -886,12 +867,10 @@ void Scheduler::enableAllTasks(bool enable) {
 }
 
 bool Scheduler::taskExists(QString fqtn) {
-  QMutexLocker ml(&_configMutex);
   return _config.tasks().contains(fqtn);
 }
 
 Task Scheduler::task(QString fqtn) {
-  QMutexLocker ml(&_configMutex);
   return _config.tasks().value(fqtn);
 }
 
@@ -912,7 +891,6 @@ void Scheduler::periodicChecks() {
 }
 
 Calendar Scheduler::calendarByName(QString name) const {
-  QMutexLocker ml(&_configMutex);
   return _config.namedCalendars().value(name);
 }
 

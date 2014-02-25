@@ -27,7 +27,6 @@
 #include "executor.h"
 #include <QVariant>
 #include "alert/alerter.h"
-#include <QMutex>
 #include "config/eventsubscription.h"
 #include "pf/pfnode.h"
 #include "auth/inmemoryauthenticator.h"
@@ -46,7 +45,6 @@ class Scheduler : public QObject {
   Q_DISABLE_COPY(Scheduler)
   QThread *_thread;
   SchedulerConfig _config;
-  mutable QMutex _configMutex; // FIXME: should no longer be needed
   QList<TaskInstance> _queuedRequests;
   QHash<TaskInstance,Executor*> _runningTasks;
   QList<Executor*> _availableExecutors;
