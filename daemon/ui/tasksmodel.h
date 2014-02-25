@@ -20,6 +20,7 @@
 #include "config/task.h"
 #include "config/taskgroup.h"
 #include "sched/taskinstance.h"
+#include "config/schedulerconfig.h"
 
 /** Model holding tasks along with their attributes, one task per line, in
  * fqtn alphabetical order. */
@@ -49,8 +50,7 @@ public:
   static QString taskMaxDurationBeforeAbort(Task task);
 
 public slots:
-  void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
-                            QHash<QString, Task> tasks);
+  void configChanged(SchedulerConfig config);
   void taskChanged(Task task);
 
 private slots:

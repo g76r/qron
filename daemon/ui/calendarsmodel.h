@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include <QAbstractTableModel>
 #include <QHash>
 #include "config/calendar.h"
+#include "config/schedulerconfig.h"
 
 /** Model holding named calendars list, one per line. */
 class CalendarsModel : public QAbstractTableModel {
@@ -32,7 +33,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllCalendars(QHash<QString,Calendar> calendars);
+  void configChanged(SchedulerConfig config);
 };
 
 #endif // CALENDARSMODEL_H

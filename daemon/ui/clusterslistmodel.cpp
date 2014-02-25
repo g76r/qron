@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -70,16 +70,14 @@ QVariant ClustersListModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void ClustersListModel::setAllHostsAndClusters(QHash<QString, Cluster> clusters,
-                                               QHash<QString, Host> hosts) {
-  Q_UNUSED(hosts)
+void ClustersListModel::configChanged(SchedulerConfig config) {
   beginResetModel();
   QStringList names;
-  foreach(QString id, clusters.keys())
+  foreach(QString id, config.clusters().keys())
     names << id;
   names.sort(); // get a sorted clusters id list
   _clusters.clear();
   foreach(QString id, names)
-    _clusters.append(clusters.value(id));
+    _clusters.append(config.clusters().value(id));
   endResetModel();
 }

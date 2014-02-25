@@ -145,12 +145,10 @@ QVariant StepsModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void StepsModel::setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
-                                      QHash<QString, Task> tasks) {
-  Q_UNUSED(groups)
+void StepsModel::configChanged(SchedulerConfig config) {
   beginResetModel();
   _steps.clear();
-  foreach (const Task task, tasks.values()) {
+  foreach (const Task task, config.tasks().values()) {
     if (!task.steps().isEmpty()) {
       int row;
       for (row = 0; row < _steps.size(); ++row) {

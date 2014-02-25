@@ -1,4 +1,4 @@
-/* Copyright 2012 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include <QAbstractTableModel>
 #include "config/cluster.h"
 #include "config/host.h"
+#include "config/schedulerconfig.h"
 
 // TODO rename to HostsModel
 /** Model holding list of configured hosts, one per line, along with its
@@ -34,8 +35,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllHostsAndClusters(QHash<QString, Cluster> clusters,
-                              QHash<QString, Host> hosts);
+  void configChanged(SchedulerConfig config);
 };
 
 #endif // HOSTSLISTMODEL_H

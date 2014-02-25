@@ -322,7 +322,7 @@ void Executor::httpMean() {
       // QNetworkReply lies in the same thread than QNAM and Executor, and
       // therefore no QNetworkReply slot can executed meanwhile hence no
       // QNetworkReply::finished() cannot be emitted before connection
-      // FIXME is connection to error() usefull ? can error() be emited w/o finished() ?
+      // TODO is connection to error() usefull ? can error() be emited w/o finished() ?
       connect(_reply, SIGNAL(error(QNetworkReply::NetworkError)),
               this, SLOT(replyError(QNetworkReply::NetworkError)));
       connect(_reply, SIGNAL(finished()), this, SLOT(replyFinished()));

@@ -18,6 +18,7 @@
 #include "config/task.h"
 #include "config/taskgroup.h"
 #include "config/step.h"
+#include "config/schedulerconfig.h"
 
 /** Model holding steps along with their attributes, one step per line, in
  * fqsn alphabetical order. */
@@ -36,8 +37,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
-                            QHash<QString, Task> tasks);
+  void configChanged(SchedulerConfig config);
 };
 
 #endif // STEPSMODEL_H

@@ -84,7 +84,7 @@ void Qrond::startup(QStringList args) {
                  << ": " << _httpd->errorString();
   QFile *config = new QFile(_configPath);
   // LATER have a config directory rather only one file
-  int rc = _scheduler->reloadConfiguration(config) ? 0 : 1;
+  int rc = _scheduler->loadConfig(config) ? 0 : 1;
   delete config;
   if (rc) {
     Log::fatal() << "cannot load configuration";
@@ -98,7 +98,7 @@ bool Qrond::reload() {
   QFile *config = new QFile(_configPath);
   // LATER have a config directory rather only one file
   Log::info() << "reloading configuration";
-  int rc = _scheduler->reloadConfiguration(config) ? 0 : 1;
+  int rc = _scheduler->loadConfig(config) ? 0 : 1;
   delete config;
   if (rc)
     Log::error() << "cannot reload configuration";

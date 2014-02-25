@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,14 +11,21 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "alertchannelsmodel.h"
+#ifndef ACCESSCONTROLCONFIG_H
+#define ACCESSCONTROLCONFIG_H
 
-AlertChannelsModel::AlertChannelsModel(QObject *parent)
-  : TextMatrixModel(parent) {
-}
+#include <QSharedDataPointer>
 
-void AlertChannelsModel::configChanged(AlerterConfig config) {
-  clear();
-  foreach (const QString channel, config.channelsNames())
-    setCellValue(channel, "enabled", "true");
-}
+class AccessControlConfigData;
+
+class AccessControlConfig {
+  QSharedDataPointer<AccessControlConfigData> d;
+
+public:
+  AccessControlConfig();
+  AccessControlConfig(const AccessControlConfig &);
+  AccessControlConfig &operator=(const AccessControlConfig &);
+  ~AccessControlConfig();
+};
+
+#endif // ACCESSCONTROLCONFIG_H

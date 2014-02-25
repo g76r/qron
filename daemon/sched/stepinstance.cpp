@@ -38,7 +38,7 @@ StepInstance::StepInstance() {
 StepInstance::StepInstance(Step step, TaskInstance workflowTaskInstance,
                            QPointer<Executor> executor)
   : d(new StepInstanceData(step, workflowTaskInstance, executor)) {
-  // FIXME remove reference to executor
+  // TODO remove useless reference to executor
 }
 
 StepInstance::~StepInstance() {

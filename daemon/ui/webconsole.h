@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@
 #include "textview/htmltableview.h"
 #include "textview/csvtableview.h"
 #include "sched/scheduler.h"
-#include "resourcesallocationmodel.h"
+#include "hostsresourcesavailabilitymodel.h"
 #include "resourcesconsumptionmodel.h"
 #include "hostslistmodel.h"
 #include "clusterslistmodel.h"
@@ -56,7 +56,7 @@ class WebConsole : public HttpHandler {
   Scheduler *_scheduler;
   HostsListModel *_hostsListModel;
   ClustersListModel *_clustersListModel;
-  ResourcesAllocationModel *_freeResourcesModel, *_resourcesLwmModel;
+  HostsResourcesAvailabilityModel *_freeResourcesModel, *_resourcesLwmModel;
   ResourcesConsumptionModel *_resourcesConsumptionModel;
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
   *_alertParamsModel;
@@ -102,12 +102,7 @@ class WebConsole : public HttpHandler {
   QString _title, _navtitle, _titlehref, _cssoverload, _customaction_taskdetail;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
-  bool _ownUsersDatabase, _accessControlEnabled;
-  QHash<QString,TaskGroup> _tasksGroups;
-  QHash<QString,Task> _tasks;
-  QHash<QString,Cluster> _clusters;
-  QHash<QString,Host> _hosts;
-  QList<EventSubscription> _schedulerEvents;
+  bool _ownUsersDatabase, _accessControlEnabled, _loggersAdded;
 
 public:
   WebConsole();
@@ -128,16 +123,7 @@ private slots:
   void alertEmited(QString alert);
   void alertCancellationEmited(QString alert);
   void globalParamsChanged(ParamSet globalParams);
-  void tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
-                               QHash<QString,Task> tasks);
-  void targetsConfigurationReset(QHash<QString,Cluster> clusters,
-                                 QHash<QString,Host> hosts);
-  void schedulerEventsConfigurationReset(
-      QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,
-      QList<EventSubscription> onfailure, QList<EventSubscription> onlog,
-      QList<EventSubscription> onnotice, QList<EventSubscription> onschedulerstart,
-      QList<EventSubscription> onconfigload);
-  void configReloaded();
+  void configChanged(SchedulerConfig config);
 
 private:
   static void copyFilteredFiles(QStringList paths, QIODevice *output,
@@ -147,7 +133,12 @@ private:
     QStringList paths;
     paths.append(path);
     copyFilteredFiles(paths, output, pattern, useRegexp); }
-  void recomputeDiagrams();
+  // TODO move graphviz generation function outside of WebConsole class
+  /** Produce graphviz source for several configuration diagrams, each one
+   * being associated in the returned QHash with one of the following keys:
+   * - tasksDeploymentDiagram
+   * - tasksTriggerDiagram */
+  static QHash<QString, QString> computeDiagrams(SchedulerConfig config);
 };
 
 #endif // WEBCONSOLE_H

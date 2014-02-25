@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -262,21 +262,16 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     }
   }
   d = td; // needed to give a non empty *this to loadEventListConfiguration() and Step()
-  foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventSubscription(
-          d->_fqtn, child, &d->_onstart, td->_id, *this);
-  foreach (PfNode child, node.childrenByName("onsuccess"))
-    scheduler->loadEventSubscription(
-          d->_fqtn, child, &d->_onsuccess, d->_id, *this);
-  foreach (PfNode child, node.childrenByName("onfailure"))
-    scheduler->loadEventSubscription(
-          d->_fqtn, child, &d->_onfailure, d->_id, *this);
-  foreach (PfNode child, node.childrenByName("onfinish")) {
-    scheduler->loadEventSubscription(
-          d->_fqtn, child, &d->_onsuccess, d->_id, *this);
-    scheduler->loadEventSubscription(
-          d->_fqtn, child, &d->_onfailure, d->_id, *this);
-  }
+  ConfigUtils::loadEventSubscription(node, "onstart", d->_fqtn, &d->_onstart,
+                                     scheduler);
+  ConfigUtils::loadEventSubscription(node, "onsuccess", d->_fqtn,
+                                     &d->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", d->_fqtn,
+                                     &d->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfailure", d->_fqtn,
+                                     &d->_onfailure, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", d->_fqtn,
+                                     &d->_onfailure, scheduler);
   QList<PfNode> steps = node.childrenByName("task")+node.childrenByName("and")
       +node.childrenByName("or");
   if (d->_mean == "workflow") {
@@ -314,8 +309,10 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         return;
       }
     int tsCount = 0;
+    QStringList ignoredChildren;
+    ignoredChildren << "cron" << "notice";
     foreach (PfNode child, node.childrenByName("ontrigger")) {
-      EventSubscription es(d->_fqtn, child, scheduler); // FIXME avoid warnings on cron and notice
+      EventSubscription es(d->_fqtn, child, scheduler, ignoredChildren);
       if (es.isNull() || es.actions().isEmpty()) {
         Log::warning() << "ignoring invalid or empty ontrigger: "
                        << node.toString();

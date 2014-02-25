@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,28 +22,19 @@
 #include "config/task.h"
 #include "config/host.h"
 #include "config/cluster.h"
+#include "config/schedulerconfig.h"
 
 /** Model holding maximum possible resources consumption per host, one host per
  * column and one task per line, plus total line on first line. */
 class ResourcesConsumptionModel : public TextMatrixModel {
   Q_OBJECT
   Q_DISABLE_COPY(ResourcesConsumptionModel)
-  QList<Task> _tasks;
-  QHash<QString,Cluster> _clusters;
-  QList<Host> _hosts;
-  QHash<QString,QHash<QString,qint64> > _resources;
 
 public:
   ResourcesConsumptionModel(QObject *parent = 0);
 
 public slots:
-  void tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
-                               QHash<QString,Task> tasks);
-  void targetsConfigurationReset(QHash<QString,Cluster> clusters,
-                                 QHash<QString,Host> hosts);
-  void hostResourceConfigurationChanged(
-      QHash<QString,QHash<QString,qint64> > resources);
-  void configReloaded();
+  void configChanged(SchedulerConfig config);
 };
 
 #endif // RESOURCESCONSUMPTIONMODEL_H

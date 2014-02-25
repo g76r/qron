@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -112,12 +112,10 @@ QVariant TaskGroupsModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void TaskGroupsModel::setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
-                                           QHash<QString, Task> tasks) {
-  Q_UNUSED(tasks)
+void TaskGroupsModel::configChanged(SchedulerConfig config) {
   beginResetModel();
   _groups.clear();
-  foreach (const TaskGroup group, groups.values()) {
+  foreach (const TaskGroup group, config.tasksGroups().values()) {
     int row;
     for (row = 0; row < _groups.size(); ++row) {
       TaskGroup g2 = _groups.at(row);

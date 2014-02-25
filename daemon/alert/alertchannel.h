@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include <QObject>
 #include <QPointer>
 #include "alert.h"
+#include "config/alerterconfig.h"
 
 class QThread;
 class Alerter;
@@ -40,6 +41,9 @@ public:
    * thread.
    * This method is thread-safe. */
   void sendMessage(Alert alert, MessageType type);
+
+public slots:
+  virtual void configChanged(AlerterConfig config);
 
 protected:
   Q_INVOKABLE virtual void doSendMessage(Alert alert,

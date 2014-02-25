@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -28,9 +28,7 @@
 // LATER replace this 10" ugly batch with predictive timer (min(timestamps))
 #define ASYNC_PROCESSING_INTERVAL 10000
 
-Alerter::Alerter() : QObject(0), _thread(new QThread),
-  _cancelDelay(ALERTER_DEFAULT_CANCEL_DELAY),
-  _minDelayBetweenSend(ALERTER_DEFAULT_MIN_DELAY_BETWEEN_SEND){
+Alerter::Alerter() : QObject(0), _thread(new QThread) {
   _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -39,8 +37,9 @@ Alerter::Alerter() : QObject(0), _thread(new QThread),
   _channels.insert("udp", new UdpAlertChannel(0, this));
   MailAlertChannel *mailChannel = new MailAlertChannel(0, this);
   _channels.insert("mail", mailChannel);
-  connect(this, SIGNAL(paramsChanged(ParamSet)),
-          mailChannel, SLOT(setParams(ParamSet)));
+  foreach (AlertChannel *channel, _channels)
+    connect(this, SIGNAL(configChanged(AlerterConfig)),
+            channel, SLOT(configChanged(AlerterConfig)));
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(asyncProcessing()));
   timer->start(ASYNC_PROCESSING_INTERVAL);
@@ -59,60 +58,11 @@ Alerter::~Alerter() {
     channel->deleteLater(); // cant be a child cause it lives it its own thread
 }
 
-bool Alerter::loadConfiguration(PfNode root) {
-  _params.clear();
-  _rules.clear();
-  ConfigUtils::loadParamSet(root, &_params);
-  foreach (PfNode node, root.childrenByName("rule")) {
-    QString pattern = node.attribute("match", "**");
-    bool notifyCancel = !node.hasChild("nocancelnotify");
-    bool notifyReminder = !node.hasChild("noremindernotify");
-    //Log::debug() << "found alert rule section " << pattern << " " << stop;
-    foreach (PfNode node, node.children()) {
-      if (node.name() == "match" || node.name() == "stop"
-          || node.name() == "nocancelnotify"
-          || node.name() == "noremindernotify") {
-        // ignore
-      } else {
-        QString name = node.name();
-        AlertChannel *channel = _channels.value(name);
-        if (channel) {
-          AlertRule rule(node, pattern, channel, name, false, notifyCancel,
-                         notifyReminder);
-          _rules.append(rule);
-          Log::debug() << "configured alert rule " << name << " " << pattern
-                       << " " << rule.patternRegExp().pattern();
-        } else {
-          Log::warning() << "alert channel '" << name << "' unknown in alert "
-                            "rule with matching pattern " << pattern;
-        }
-      }
-    }
-    if (node.hasChild("stop")) {
-      Log::debug() << "configured alert rule stop " << pattern;
-      _rules.append(AlertRule(PfNode(), pattern, 0,
-                              "stop", true, true, true));
-    }
-  }
-  _cancelDelay =
-      _params.valueAsInt("canceldelay", ALERTER_DEFAULT_CANCEL_DELAY/1000)*1000;
-  if (_cancelDelay < 1000) // hard coded 1 second minmimum
-    _cancelDelay = ALERTER_DEFAULT_CANCEL_DELAY;
-  _minDelayBetweenSend =
-      _params.valueAsInt("mindelaybetweensend",
-                         ALERTER_DEFAULT_MIN_DELAY_BETWEEN_SEND/1000)*1000;
-  if (_minDelayBetweenSend < 60000) // hard coded 1 minute minimum
-    _minDelayBetweenSend = 60000;
-  _gracePeriodBeforeFirstSend =
-      _params.valueAsInt("graceperiodbeforefirstsend",
-                         ALERTER_DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND/1000)
-      *1000;
-  emit paramsChanged(_params);
-  emit rulesChanged(_rules);
-  QStringList channels;
-  channels << "mail" << "udp" << "log";
-  emit channelsChanged(channels);
-  return true;
+void Alerter::loadConfig(PfNode root) {
+  AlerterConfig config(root);
+  _config = config;
+  emit paramsChanged(_config.params());
+  emit configChanged(_config);
 }
 
 void Alerter::emitAlert(QString alert) {
@@ -125,12 +75,13 @@ void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type,
                           QDateTime date) {
   Log::debug() << "emiting alert " << alert << " " << type;
   int n = 0;
-  foreach (AlertRule rule, _rules) {
+  foreach (AlertRule rule, _config.rules()) {
     if (rule.patternRegExp().exactMatch(alert)) {
+      QString channelName = rule.channelName();
       //Log::debug() << "alert matching rule #" << n;
-      if (rule.stop())
+      if (channelName == "stop")
         break;
-      QPointer<AlertChannel> channel = rule.channel();
+      QPointer<AlertChannel> channel = _channels.value(channelName);
       if (channel) {
         channel.data()->sendMessage(Alert(alert, rule, date), type);
       }
@@ -187,10 +138,11 @@ void Alerter::doCancelAlert(QString alert, bool immediately) {
   } else {
     if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
       _raisedAlerts.remove(alert);
-      QDateTime dt(QDateTime::currentDateTime().addMSecs(_cancelDelay));
+      QDateTime dt(QDateTime::currentDateTime()
+                   .addMSecs(_config.cancelDelay()));
       _soonCanceledAlerts.insert(alert, dt);
       Log::debug() << "will cancel alert " << alert << " in "
-                   << _cancelDelay*.001 << " s";
+                   << _config.cancelDelay()*.001 << " s";
       emit alertCancellationScheduled(alert, dt);
       //} else {
       //  Log::debug() << "would have canceled alert " << alert
@@ -206,6 +158,6 @@ void Alerter::asyncProcessing() {
     QDateTime scheduledDate = _soonCanceledAlerts.value(alert);
     if (scheduledDate <= now)
       doEmitAlert(alert, AlertChannel::Cancel,
-                  scheduledDate.addMSecs(-_cancelDelay));
+                  scheduledDate.addMSecs(-_config.cancelDelay()));
   }
 }

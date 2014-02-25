@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,14 +11,14 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "resourcesallocationmodel.h"
+#include "hostsresourcesavailabilitymodel.h"
 
-ResourcesAllocationModel::ResourcesAllocationModel(
-    QObject *parent, ResourcesAllocationModel::Mode mode)
+HostsResourcesAvailabilityModel::HostsResourcesAvailabilityModel(
+    QObject *parent, HostsResourcesAvailabilityModel::Mode mode)
   : TextMatrixModel(parent), _mode(mode) {
 }
 
-void ResourcesAllocationModel::setResourceAllocationForHost(
+void HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged(
     QString host, QHash<QString, qint64> resources) {
   if (_mode != Configured) {
     QHash<QString,qint64> hostConfigured = _configured.value(host);
@@ -62,12 +62,11 @@ void ResourcesAllocationModel::setResourceAllocationForHost(
   }
 }
 
-void ResourcesAllocationModel::setResourceConfiguration(
-    QHash<QString, QHash<QString, qint64> > resources) {
-  _configured = resources;
-  _lwm = resources;
-  foreach (QString host, resources.keys()) {
-    QHash<QString,qint64> hostResources = resources.value(host);
+void HostsResourcesAvailabilityModel::configChanged(SchedulerConfig config) {
+  _configured = config.hostResources();
+  _lwm = config.hostResources();
+  foreach (QString host, config.hostResources().keys()) {
+    QHash<QString,qint64> hostResources = config.hostResources().value(host);
     foreach (QString kind, hostResources.keys()) {
       QString configured = QString::number(hostResources.value(kind));
       switch (_mode) {

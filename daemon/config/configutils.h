@@ -18,6 +18,9 @@
 #include "util/paramset.h"
 #include <QRegExp>
 
+class EventSubscription;
+class Scheduler;
+
 /** Miscellaneous tools for handling configuration */
 class ConfigUtils {
 public:
@@ -36,6 +39,9 @@ public:
    * dot-hierarchical globing with * meaning [^.]* and ** meaning .* */
   static QRegExp readDotHierarchicalFilter(
       QString s, Qt::CaseSensitivity cs = Qt::CaseSensitive);
+  static void loadEventSubscription(
+      PfNode parentNode, QString childName, QString subscriberId,
+      QList<EventSubscription> *list, Scheduler *scheduler);
 
 private:
   static void loadGenericParamSet(PfNode parentnode, ParamSet *params,

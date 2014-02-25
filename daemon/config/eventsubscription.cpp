@@ -35,7 +35,8 @@ EventSubscription::EventSubscription() {
 }
 
 EventSubscription::EventSubscription(
-    QString subscriberName, PfNode node, Scheduler *scheduler)
+    QString subscriberName, PfNode node, Scheduler *scheduler,
+    QStringList ignoredChildren)
   : d(new EventSubscriptionData(subscriberName)) {
   // LATER implement at less regexp filter
   // LATER support for non-text/non-regexp filters e.g. "onstatus >=3"
@@ -44,6 +45,8 @@ EventSubscription::EventSubscription(
   if (scheduler)
     d->_globalParams = scheduler->globalParams();
   foreach (PfNode child, node.children()) {
+    if (ignoredChildren.contains(child.name()))
+      continue;
     Action a = Action::createAction(child, scheduler, d->_eventName);
     if (!a.isNull())
       d->_actions.append(a);

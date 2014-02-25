@@ -17,6 +17,7 @@
 #include <QSharedDataPointer>
 #include "pf/pfnode.h"
 #include "util/paramset.h"
+#include <QStringList>
 
 class EventSubscriptionData;
 class TaskInstance;
@@ -36,7 +37,8 @@ public:
   EventSubscription(QString subscriberName, QString eventName,
                     QList<Action> actions);
   /** Parse configuration fragment. */
-  EventSubscription(QString subscriberName, PfNode node, Scheduler *scheduler);
+  EventSubscription(QString subscriberName, PfNode node, Scheduler *scheduler,
+                    QStringList ignoredChildren = QStringList());
   EventSubscription(const EventSubscription &);
   EventSubscription &operator=(const EventSubscription &);
   ~EventSubscription();

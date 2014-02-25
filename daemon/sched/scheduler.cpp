@@ -34,27 +34,12 @@
 #include "trigger/noticetrigger.h"
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
-#define DEFAULT_MAXQUEUEDREQUESTS 128
-
-class Scheduler::RequestTaskActionLink {
-public:
-  Action _action;
-  QString _eventType;
-  QString _contextLabel;
-  Task _contextTask;
-  // TODO clarify "contextLabel" and "contextTask" names
-  RequestTaskActionLink(Action action, QString eventType, QString contextLabel,
-                        Task contextTask)
-    : _action(action), _eventType(eventType), _contextLabel(contextLabel),
-      _contextTask(contextTask) { }
-};
 
 Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _configMutex(QMutex::Recursive),
   _alerter(new Alerter), _authenticator(new InMemoryAuthenticator(this)),
   _usersDatabase(new InMemoryUsersDatabase(this)),
   _firstConfigurationLoad(true),
-  _maxtotaltaskinstances(0),
   _startdate(QDateTime::currentDateTime().toMSecsSinceEpoch()),
   _configdate(LLONG_MIN), _execCount(0), _accessControlFilesWatcher(0) {
   _thread->setObjectName("SchedulerThread");
@@ -76,6 +61,9 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   qRegisterMetaType<QHash<QString,qint64> >("QHash<QString,qint64>");
   qRegisterMetaType<QList<LogFile> >("QList<LogFile>");
   qRegisterMetaType<QHash<QString,Calendar> >("QHash<QString,Calendar>");
+  qRegisterMetaType<SchedulerConfig>("SchedulerConfig");
+  qRegisterMetaType<AlerterConfig>("AlerterConfig");
+  qRegisterMetaType<AccessControlConfig>("AccessControlConfig");
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
@@ -87,7 +75,7 @@ Scheduler::~Scheduler() {
   _alerter->deleteLater(); // FIXME delete alerter only when last executor is deleted
 }
 
-bool Scheduler::reloadConfiguration(QIODevice *source) {
+bool Scheduler::loadConfig(QIODevice *source) {
   if (!source->isOpen())
     if (!source->open(QIODevice::ReadOnly)) {
       QString errorString = source->errorString();
@@ -112,9 +100,9 @@ bool Scheduler::reloadConfiguration(QIODevice *source) {
     if (root.name() == "qrontab") {
       bool ok = false;
       if (QThread::currentThread() == thread())
-        ok = reloadConfiguration(root);
+        ok = loadConfig(root);
       else
-        QMetaObject::invokeMethod(this, "reloadConfiguration",
+        QMetaObject::invokeMethod(this, "loadConfig",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(bool, ok),
                                   Q_ARG(PfNode, root));
@@ -128,182 +116,34 @@ bool Scheduler::reloadConfiguration(QIODevice *source) {
   return false;
 }
 
-bool Scheduler::reloadConfiguration(PfNode root) {
+bool Scheduler::loadConfig(PfNode root) {
   QMutexLocker ml(&_configMutex);
-  // LATER make sanity checks before loading the config and return false, to
-  // have a chance to avoid loading a totally stupid configuration
-  _resources.clear();
-  _unsetenv.clear();
-  _globalParams.clear();
-  _setenv.clear();
-  _setenv.setValue("TASKINSTANCEID", "%!taskinstanceid");
-  _setenv.setValue("FQTN", "%!fqtn");
-  _setenv.setValue("TASKGROUPID", "%!taskgroupid");
-  _setenv.setValue("TASKID", "%!taskid");
-  QList<Logger*> loggers;
-  QList<LogFile> logfiles;
-  foreach (PfNode node, root.childrenByName("log")) {
-    QString level = node.attribute("level");
-    QString filename = node.attribute("file");
-    bool buffered = !node.hasChild("unbuffered");
-    if (level.isEmpty()) {
-      Log::warning() << "invalid log level in configuration: "
-                     << node.toPf();
-    } else if (filename.isEmpty()) {
-      Log::warning() << "invalid log filename in configuration: "
-                     << node.toPf();
-    } else {
-      Log::debug() << "adding logger " << node.toPf();
-      Log::Severity minimumSeverity = Log::severityFromString(level);
-      loggers.append(new FileLogger(filename, minimumSeverity, buffered));
-      logfiles.append(LogFile(filename, minimumSeverity, buffered));
-    }
-  }
-  emit logConfigurationChanged(logfiles);
-  //Log::debug() << "replacing loggers " << loggers.size();
-  Log::replaceLoggersPlusConsole(Log::Fatal, loggers);
-  ConfigUtils::loadParamSet(root, &_globalParams);
-  ConfigUtils::loadSetenv(root, &_setenv);
-  ConfigUtils::loadUnsetenv(root, &_unsetenv);
-  _calendars.clear();
-  foreach (PfNode node, root.childrenByName("calendar")) {
-    QString name = node.contentAsString();
-    Calendar calendar(node);
-    if (name.isEmpty())
-      Log::error() << "ignoring anonymous calendar: " << node.toPf();
-    else if (calendar.isNull())
-      Log::error() << "ignoring empty calendar: " << node.toPf();
-    else
-      _calendars.insert(name, calendar);
-  }
-  _hosts.clear();
-  foreach (PfNode node, root.childrenByName("host")) {
-    Host host(node);
-    if (_hosts.contains(host.id())) {
-      Log::error() << "ignoring duplicate host: " << host.id();
-    } else {
-      _hosts.insert(host.id(), host);
-      _resources.insert(host.id(), host.resources());
-    }
-  }
-  _clusters.clear();
-  foreach (PfNode node, root.childrenByName("cluster")) {
-    Cluster cluster(node);
-    foreach (PfNode child, node.childrenByName("host")) {
-      Host host = _hosts.value(child.contentAsString());
-      if (!host.isNull())
-        cluster.appendHost(host);
-      else
-        Log::error() << "host '" << child.contentAsString()
-                     << "' not found, won't add it to cluster '"
-                     << cluster.id() << "'";
-    }
-    if (cluster.hosts().isEmpty())
-      Log::warning() << "cluster '" << cluster.id() << "' has no member";
-    if (_clusters.contains(cluster.id()))
-      Log::error() << "ignoring duplicate cluster: " << cluster.id();
-    else if (_hosts.contains(cluster.id()))
-      Log::error() << "ignoring cluster which id conflicts with a host: "
-                    << cluster.id();
-    else
-      _clusters.insert(cluster.id(), cluster);
-  }
-  _tasksGroups.clear();
-  foreach (PfNode node, root.childrenByName("taskgroup")) {
-    TaskGroup taskGroup(node, _globalParams, _setenv, _unsetenv, this);
-    QString id = taskGroup.id();
-    if (taskGroup.isNull() || id.isEmpty()) {
-      Log::error() << "ignoring invalid taskgroup: " << node.toPf();
-      goto ignore_taskgroup;
-    }
-    if (_tasksGroups.contains(id)) {
-      Log::error() << "ignoring duplicate taskgroup " << id;
-      goto ignore_taskgroup;
-    }
-    _tasksGroups.insert(taskGroup.id(), taskGroup);
-ignore_taskgroup:;
-  }
-  QHash<QString,Task> oldTasks = _tasks;
-  _tasks.clear();
-  foreach (PfNode node, root.childrenByName("task")) {
-    QString taskGroupId = node.attribute("taskgroup");
-    TaskGroup taskGroup = _tasksGroups.value(taskGroupId);
-    Task task(node, this, taskGroup, oldTasks, Task());
-    if (taskGroupId.isEmpty() || taskGroup.isNull()) {
-      Log::error() << "ignoring task with invalid taskgroup: " << node.toPf();
-      goto ignore_task;
-    }
-    if (task.isNull()) { // Task cstr detected an error
-      Log::error() << "ignoring invalid task: " << node.toString();
-      goto ignore_task;
-    }
-    if (_tasks.contains(task.fqtn())) {
-      Log::error() << "ignoring duplicate task " << task.fqtn();
-      goto ignore_task;
-    }
-    foreach (Step s, task.steps()) { // check for uniqueness of subtasks ids
-      Task subtask = s.subtask();
-      if (!subtask.isNull()) {
-        QString subFqtn = subtask.fqtn();
-        if (_tasks.contains(subFqtn)) {
-          Log::error() << "ignoring task " << task.fqtn()
-                       << " since its subtask " << subFqtn
-                       << " has a duplicate id";
-          goto ignore_task;
-        }
-      }
-    }
-    if (!_hosts.contains(task.target()) && !_clusters.contains(task.target())) {
-      Log::error() << "ignoring task " << task.fqtn()
-                   << " since its target is unknown: '"<< task.target() << "'";
-      goto ignore_task;
-    }
-    _tasks.insert(task.fqtn(), task);
-    foreach (Step s, task.steps()) {
-      Task subtask = s.subtask();
-      if (!subtask.isNull())
-        _tasks.insert(subtask.fqtn(), subtask);
-    }
-ignore_task:;
-  }
-  int maxtotaltaskinstances = 0;
-  foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {
-    int n = node.contentAsString().toInt(0, 0);
-    if (n > 0) {
-      if (maxtotaltaskinstances > 0) {
-        Log::warning() << "overriding maxtotaltaskinstances "
-                       << maxtotaltaskinstances << " with " << n;
-      }
-      maxtotaltaskinstances = n;
-    } else {
-      Log::warning() << "ignoring maxtotaltaskinstances with incorrect "
-                        "value: " << node.toPf();
-    }
-  }
-  if (maxtotaltaskinstances <= 0) {
-    Log::debug() << "configured 16 task executors (default "
-                    "maxtotaltaskinstances value)";
-    maxtotaltaskinstances = 16;
-  }
-  int executorsToAdd = maxtotaltaskinstances - _maxtotaltaskinstances;
+  SchedulerConfig config(root, this, true);
+  emit logConfigurationChanged(config.logfiles());
+  int executorsToAdd = config.maxtotaltaskinstances()
+      - _config.maxtotaltaskinstances();
   if (executorsToAdd < 0) {
     if (-executorsToAdd > _availableExecutors.size()) {
       Log::warning() << "cannot set maxtotaltaskinstances down to "
-                     << maxtotaltaskinstances << " because there are too "
+                     << config.maxtotaltaskinstances()
+                     << " because there are too "
                         "currently many busy executors, setting it to "
-                     << maxtotaltaskinstances
+                     << config.maxtotaltaskinstances()
                         - (executorsToAdd - _availableExecutors.size())
                      << " instead";
-      maxtotaltaskinstances -= executorsToAdd - _availableExecutors.size();
+      // TODO mark some executors as temporary to make them disapear later
+      //maxtotaltaskinstances -= executorsToAdd - _availableExecutors.size();
       executorsToAdd = -_availableExecutors.size();
     }
     Log::debug() << "removing " << -executorsToAdd << " executors to reach "
-                    "maxtotaltaskinstances of " << maxtotaltaskinstances;
+                    "maxtotaltaskinstances of "
+                 << config.maxtotaltaskinstances();
     for (int i = 0; i < -executorsToAdd; ++i)
       _availableExecutors.takeFirst()->deleteLater();
   } else if (executorsToAdd > 0) {
     Log::debug() << "adding " << executorsToAdd << " executors to reach "
-                    "maxtotaltaskinstances of " << maxtotaltaskinstances;
+                    "maxtotaltaskinstances of "
+                 << config.maxtotaltaskinstances();
     for (int i = 0; i < executorsToAdd; ++i) {
       Executor *e = new Executor(_alerter);
       connect(e, SIGNAL(taskFinished(TaskInstance,QPointer<Executor>)),
@@ -315,84 +155,19 @@ ignore_task:;
       _availableExecutors.append(e);
     }
   } else {
-    Log::debug() << "keep maxtotaltaskinstances of " << maxtotaltaskinstances;
+    Log::debug() << "keep maxtotaltaskinstances of "
+                 << config.maxtotaltaskinstances();
   }
-  _maxtotaltaskinstances = maxtotaltaskinstances;
-  int maxqueuedrequests = 0;
-  foreach (PfNode node, root.childrenByName("maxqueuedrequests")) {
-    int n = node.contentAsString().toInt(0, 0);
-    if (n > 0) {
-      if (maxqueuedrequests > 0) {
-        Log::warning() << "overriding maxqueuedrequests "
-                       << maxqueuedrequests << " with " << n;
-      }
-      maxqueuedrequests = n;
-    } else {
-      Log::warning() << "ignoring maxqueuedrequests with incorrect "
-                        "value: " << node.toPf();
-    }
+  QList<PfNode> alertsChildren = root.childrenByName("alerts");
+  if (alertsChildren.size() == 0)
+    _alerter->loadConfig(PfNode());
+  else {
+    if (alertsChildren.size() > 1)
+      Log::error() << "multiple 'alerts' configuration: ignoring all but first "
+                      "one";
+    _alerter->loadConfig(alertsChildren.first());
   }
-  if (maxqueuedrequests <= 0)
-    maxqueuedrequests = DEFAULT_MAXQUEUEDREQUESTS;
-  _maxqueuedrequests = maxqueuedrequests;
-  Log::debug() << "setting maxqueuedrequests to " << maxqueuedrequests;
-  QList<PfNode> alerts = root.childrenByName("alerts");
-  if (alerts.size() > 1)
-    Log::warning() << "ignoring all but last duplicated alerts configuration";
-  if (alerts.size()) {
-    if (!_alerter->loadConfiguration(alerts.last()))
-      return false;
-  } else {
-    if (!_alerter->loadConfiguration(PfNode("alerts")))
-      return false;
-  }
-  _onstart.clear();
-  foreach (PfNode node, root.childrenByName("onstart"))
-    loadEventSubscription("*", node, &_onstart, "");
-  _onsuccess.clear();
-  foreach (PfNode node, root.childrenByName("onsuccess"))
-    loadEventSubscription("*", node, &_onsuccess, "");
-  _onfailure.clear();
-  foreach (PfNode node, root.childrenByName("onfailure"))
-    loadEventSubscription("*", node, &_onfailure, "");
-  foreach (PfNode node, root.childrenByName("onfinish")) {
-    loadEventSubscription("*", node, &_onsuccess, "");
-    loadEventSubscription("*", node, &_onfailure, "");
-  }
-  _onlog.clear();
-  foreach (PfNode node, root.childrenByName("onlog"))
-    loadEventSubscription("*", node, &_onlog, "");
-  _onnotice.clear();
-  foreach (PfNode node, root.childrenByName("onnotice"))
-    loadEventSubscription("*", node, &_onnotice, "");
-  _onschedulerstart.clear();
-  foreach (PfNode node, root.childrenByName("onschedulerstart"))
-    loadEventSubscription("*", node, &_onschedulerstart, "");
-  _onconfigload.clear();
-  foreach (PfNode node, root.childrenByName("onconfigload"))
-    loadEventSubscription("*", node, &_onconfigload, "");
-  // LATER onschedulershutdown
-  foreach (const RequestTaskActionLink &link, _requestTaskActionLinks) {
-    QString id = link._action.targetName();
-    QString fqtn(link._contextTask.fqtn());
-    if (!link._contextTask.isNull() && !id.contains('.')) { // id to group
-      id = fqtn.left(fqtn.lastIndexOf('.')+1)+id;
-    }
-    Task t(_tasks.value(id));
-    if (!t.isNull()) {
-      QString context(link._contextLabel);
-      if (!link._contextTask.isNull())
-        context = fqtn;
-      if (context.isEmpty())
-        context = "*";
-      t.appendOtherTriggers("*"+link._eventType+"("+context+")");
-      //Log::fatal() << "*** " << t.otherTriggers() << " *** " << link._contextLabel << " *** " << fqtn;
-      _tasks.insert(id, t);
-    } else
-      Log::debug() << "cannot translate event " << link._eventType
-                   << " for task '" << id << "'";
-  }
-  _requestTaskActionLinks.clear();
+  // TODO use AccessControlConfig instead
   _authenticator->clearUsers();
   _usersDatabase->clearUsers();
   bool accessControlEnabled = false;
@@ -412,23 +187,18 @@ ignore_task:;
   }
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
-  emit tasksConfigurationReset(_tasksGroups, _tasks);
-  emit targetsConfigurationReset(_clusters, _hosts);
-  emit hostResourceConfigurationChanged(_resources);
-  emit globalParamsChanged(_globalParams);
-  emit globalSetenvChanged(_setenv);
-  emit globalUnsetenvChanged(_unsetenv);
-  emit eventsConfigurationReset(_onstart, _onsuccess, _onfailure, _onlog,
-                                _onnotice, _onschedulerstart, _onconfigload);
-  emit calendarsConfigurationReset(_calendars);
+  _config = config;
+  emit globalParamsChanged(_config.globalParams());
+  emit globalSetenvChanged(_config.setenv());
+  emit globalUnsetenvChanged(_config.unsetenv());
   emit accessControlConfigurationChanged(accessControlEnabled);
-  emit configReloaded(); // must be last signal
+  emit configChanged(_config); // must be last signal
   reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {
     TaskInstance &r = _queuedRequests[i];
     QString fqtn = r.task().fqtn();
-    Task t = _tasks.value(fqtn);
+    Task t = _config.tasks().value(fqtn);
     if (t.isNull()) {
       Log::warning(fqtn, r.id())
           << "canceling queued task while reloading configuration because this "
@@ -452,10 +222,10 @@ ignore_task:;
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
-    foreach(EventSubscription sub, _onschedulerstart)
+    foreach(EventSubscription sub, _config.onschedulerstart())
       sub.triggerActions();
   }
-  foreach(EventSubscription sub, _onconfigload)
+  foreach(EventSubscription sub, _config.onconfigload())
     sub.triggerActions();
   return true;
 }
@@ -557,22 +327,6 @@ void Scheduler::reloadAccessControlConfig() {
   }
 }
 
-void Scheduler::loadEventSubscription(
-    QString subscriberId, PfNode listnode, QList<EventSubscription> *list,
-    QString contextLabel, Task contextTask) {
-  if (!list)
-    return;
-  EventSubscription sub(subscriberId, listnode, this);
-  list->append(sub);
-  foreach (Action a, sub.actions()) {
-    if (a.actionType() == "requesttask") {
-      _requestTaskActionLinks.append( // TODO rename and merge contextLabel to subscriberId
-            RequestTaskActionLink(a, listnode.name(), contextLabel,
-                                 contextTask));
-    }
-  }
-}
-
 QList<TaskInstance> Scheduler::syncRequestTask(
     QString fqtn, ParamSet paramsOverriding, bool force,
     TaskInstance callerTask) {
@@ -602,8 +356,8 @@ QList<TaskInstance> Scheduler::doRequestTask(
     QString fqtn, ParamSet overridingParams, bool force,
     TaskInstance callerTask) {
   QMutexLocker ml(&_configMutex);
-  Task task = _tasks.value(fqtn);
-  Cluster cluster = _clusters.value(task.target());
+  Task task = _config.tasks().value(fqtn);
+  Cluster cluster = _config.clusters().value(task.target());
   ml.unlock();
   if (task.isNull()) {
     Log::error() << "requested task not found: " << fqtn << overridingParams
@@ -687,10 +441,10 @@ TaskInstance Scheduler::enqueueRequest(
       }
     }
   }
-  if (_queuedRequests.size() >= _maxqueuedrequests) {
+  if (_queuedRequests.size() >= _config.maxqueuedrequests()) {
     Log::error(fqtn, request.id())
         << "cannot queue task because maxqueuedrequests is already reached ("
-        << _maxqueuedrequests << ")";
+        << _config.maxqueuedrequests() << ")";
     _alerter->raiseAlert("scheduler.maxqueuedrequests.reached");
     return TaskInstance();
   }
@@ -768,7 +522,7 @@ TaskInstance Scheduler::doAbortTask(quint64 id) {
 void Scheduler::checkTriggersForTask(QVariant fqtn) {
   //Log::debug() << "Scheduler::checkTriggersForTask " << fqtn;
   QMutexLocker ml(&_configMutex);
-  Task task = _tasks.value(fqtn.toString());
+  Task task = _config.tasks().value(fqtn.toString());
   foreach (const CronTrigger trigger, task.cronTriggers())
     checkTrigger(trigger, task, fqtn.toString());
 }
@@ -777,7 +531,7 @@ void Scheduler::checkTriggersForAllTasks() {
   //Log::debug() << "Scheduler::checkTriggersForAllTasks ";
   QMutexLocker ml(&_configMutex);
   QList<Task> tasksWithoutTimeTrigger;
-  foreach (Task task, _tasks.values()) {
+  foreach (Task task, _config.tasks().values()) {
     QString fqtn = task.fqtn();
     foreach (const CronTrigger trigger, task.cronTriggers())
       checkTrigger(trigger, task, fqtn);
@@ -803,7 +557,7 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString fqtn) {
     ParamSet overridingParams;
     foreach (QString key, trigger.overridingParams().keys())
       overridingParams
-          .setValue(key, _globalParams
+          .setValue(key, _config.globalParams()
                     .value(trigger.overridingParams().rawValue(key)));
     QList<TaskInstance> requests = syncRequestTask(fqtn, overridingParams);
     if (!requests.isEmpty())
@@ -852,9 +606,9 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
     return;
   }
   QMutexLocker ml(&_configMutex);
-  QHash<QString,Task> tasks = _tasks;
+  QHash<QString,Task> tasks = _config.tasks();
   if (params.parent().isNull())
-    params.setParent(_globalParams);
+    params.setParent(_config.globalParams());
   ml.unlock();
   Log::debug() << "posting notice ^" << notice << " with params " << params;
   foreach (Task task, tasks.values()) {
@@ -884,7 +638,7 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
   }
   emit noticePosted(notice, params);
   params.setValue("!notice", notice);
-  foreach (EventSubscription sub, _onnotice)
+  foreach (EventSubscription sub, _config.onnotice())
     sub.triggerActions(params);
 }
 
@@ -962,9 +716,9 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     target = task.target();
   QMutexLocker ml(&_configMutex);
   QList<Host> hosts;
-  Host host = _hosts.value(target);
+  Host host = _config.hosts().value(target);
   if (host.isNull())
-    hosts.append(_clusters.value(target).hosts());
+    hosts.append(_config.clusters().value(target).hosts());
   else
     hosts.append(host);
   if (hosts.isEmpty()) {
@@ -982,7 +736,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
   // LATER implement best effort resource check for forced requests
   QHash<QString,qint64> taskResources = task.resources();
   foreach (Host h, hosts) {
-    QHash<QString,qint64> hostResources = _resources.value(h.id());
+    QHash<QString,qint64> hostResources = _config.hostResources().value(h.id());
     if (!instance.force()) {
       foreach (QString kind, taskResources.keys()) {
         if (hostResources.value(kind) < taskResources.value(kind)) {
@@ -1002,13 +756,13 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     foreach (QString kind, taskResources.keys())
       hostResources.insert(kind, hostResources.value(kind)
                             -taskResources.value(kind));
-    _resources.insert(h.id(), hostResources);
+    _config.hostResources().insert(h.id(), hostResources);
     ml.unlock();
-    emit hostResourceAllocationChanged(h.id(), hostResources);
+    emit hostsResourcesAvailabilityChanged(h.id(), hostResources);
     _alerter->cancelAlert("resource.exhausted."+target);
     instance.setTarget(h);
     instance.setStartDatetime();
-    foreach (EventSubscription sub, _onstart)
+    foreach (EventSubscription sub, _config.onstart())
       sub.triggerActions(instance);
     task.triggerStartEvents(instance);
     executor = _availableExecutors.takeFirst();
@@ -1048,7 +802,7 @@ void Scheduler::taskFinishing(TaskInstance instance,
   QString fqtn(requestedTask.fqtn());
   QMutexLocker ml(&_configMutex);
   // configured and requested tasks are different if config reloaded meanwhile
-  Task configuredTask(_tasks.value(fqtn));
+  Task configuredTask(_config.tasks().value(fqtn));
   configuredTask.fetchAndAddInstancesCount(-1);
   if (executor) {
     Executor *e = executor.data();
@@ -1059,17 +813,18 @@ void Scheduler::taskFinishing(TaskInstance instance,
   }
   _runningTasks.remove(instance);
   QHash<QString,qint64> taskResources = requestedTask.resources();
-  QHash<QString,qint64> hostResources = _resources.value(instance.target().id());
+  QHash<QString,qint64> hostResources =
+      _config.hostResources().value(instance.target().id());
   foreach (QString kind, taskResources.keys())
     hostResources.insert(kind, hostResources.value(kind)
                           +taskResources.value(kind));
-  _resources.insert(instance.target().id(), hostResources);
+  _config.hostResources().insert(instance.target().id(), hostResources);
   ml.unlock();
   if (instance.success())
     _alerter->cancelAlert("task.failure."+fqtn);
   else
     _alerter->raiseAlert("task.failure."+fqtn);
-  emit hostResourceAllocationChanged(instance.target().id(), hostResources);
+  emit hostsResourcesAvailabilityChanged(instance.target().id(), hostResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   if (!instance.startDatetime().isNull() && !instance.endDatetime().isNull()) {
     configuredTask.setLastExecution(instance.startDatetime());
@@ -1080,11 +835,11 @@ void Scheduler::taskFinishing(TaskInstance instance,
   emit taskFinished(instance);
   emit taskChanged(configuredTask);
   if (instance.success()) {
-    foreach (EventSubscription sub, _onsuccess)
+    foreach (EventSubscription sub, _config.onsuccess())
       sub.triggerActions(instance);
     configuredTask.triggerSuccessEvents(instance);
   } else {
-    foreach (EventSubscription sub, _onfailure)
+    foreach (EventSubscription sub, _config.onfailure())
       sub.triggerActions(instance);
     configuredTask.triggerFailureEvents(instance);
   }
@@ -1106,7 +861,7 @@ void Scheduler::taskFinishing(TaskInstance instance,
 
 bool Scheduler::enableTask(QString fqtn, bool enable) {
   QMutexLocker ml(&_configMutex);
-  Task t = _tasks.value(fqtn);
+  Task t = _config.tasks().value(fqtn);
   //Log::fatal() << "enableTask " << fqtn << " " << enable << " " << t.id();
   if (t.isNull())
     return false;
@@ -1120,7 +875,7 @@ bool Scheduler::enableTask(QString fqtn, bool enable) {
 
 void Scheduler::enableAllTasks(bool enable) {
   QMutexLocker ml(&_configMutex);
-  QList<Task> tasks(_tasks.values());
+  QList<Task> tasks(_config.tasks().values());
   ml.unlock();
   foreach (Task t, tasks) {
     t.setEnabled(enable);
@@ -1132,12 +887,12 @@ void Scheduler::enableAllTasks(bool enable) {
 
 bool Scheduler::taskExists(QString fqtn) {
   QMutexLocker ml(&_configMutex);
-  return _tasks.contains(fqtn);
+  return _config.tasks().contains(fqtn);
 }
 
 Task Scheduler::task(QString fqtn) {
   QMutexLocker ml(&_configMutex);
-  return _tasks.value(fqtn);
+  return _config.tasks().value(fqtn);
 }
 
 void Scheduler::periodicChecks() {
@@ -1158,7 +913,7 @@ void Scheduler::periodicChecks() {
 
 Calendar Scheduler::calendarByName(QString name) const {
   QMutexLocker ml(&_configMutex);
-  return _calendars.value(name);
+  return _config.namedCalendars().value(name);
 }
 
 void Scheduler::activateWorkflowTransition(TaskInstance workflowTaskInstance,

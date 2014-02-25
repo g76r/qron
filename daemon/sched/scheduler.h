@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,7 +34,7 @@
 #include "auth/inmemoryusersdatabase.h"
 #include <QFileSystemWatcher>
 #include "config/logfile.h"
-#include "config/calendar.h"
+#include "config/schedulerconfig.h"
 
 class QThread;
 class CronTrigger;
@@ -44,15 +44,9 @@ class CronTrigger;
 class Scheduler : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Scheduler)
-  class RequestTaskActionLink;
   QThread *_thread;
-  ParamSet _globalParams, _setenv, _unsetenv;
-  QHash<QString,TaskGroup> _tasksGroups;
-  QHash<QString,Task> _tasks;
-  QHash<QString,Cluster> _clusters;
-  QHash<QString,Host> _hosts;
-  QHash<QString,QHash<QString,qint64> > _resources;
-  mutable QMutex _configMutex;
+  SchedulerConfig _config;
+  mutable QMutex _configMutex; // FIXME: should no longer be needed
   QList<TaskInstance> _queuedRequests;
   QHash<TaskInstance,Executor*> _runningTasks;
   QList<Executor*> _availableExecutors;
@@ -60,24 +54,16 @@ class Scheduler : public QObject {
   InMemoryAuthenticator *_authenticator;
   InMemoryUsersDatabase *_usersDatabase;
   bool _firstConfigurationLoad;
-  QList<EventSubscription> _onstart, _onsuccess, _onfailure;
-  QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
-  int _maxtotaltaskinstances, _maxqueuedrequests;
   qint64 _startdate, _configdate;
   long _execCount;
-  QList<RequestTaskActionLink> _requestTaskActionLinks;
   QFileSystemWatcher *_accessControlFilesWatcher;
   PfNode _accessControlNode;
-  QHash<QString,Calendar> _calendars;
 
 public:
   Scheduler();
   ~Scheduler();
   /** This method is thread-safe */
-  bool reloadConfiguration(QIODevice *source);
-  void loadEventSubscription(QString subscriberId, PfNode listnode,
-                             QList<EventSubscription> *list,
-                             QString contextLabel, Task contextTask = Task());
+  bool loadConfig(QIODevice *source);
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
   Authenticator *authenticator() { return _authenticator; }
@@ -88,13 +74,14 @@ public:
     return _configdate == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_configdate); }
   long execCount() const { return _execCount; }
-  int tasksCount() const { return _tasks.count(); }
-  int tasksGroupsCount() const { return _tasksGroups.count(); }
-  int maxtotaltaskinstances() const { return _maxtotaltaskinstances; }
-  int maxqueuedrequests() const { return _maxqueuedrequests; }
+  int tasksCount() const { return _config.tasks().count(); }
+  int tasksGroupsCount() const { return _config.tasksGroups().count(); }
+  int maxtotaltaskinstances() const { return _config.maxtotaltaskinstances(); }
+  int maxqueuedrequests() const { return _config.maxqueuedrequests(); }
   Calendar calendarByName(QString name) const;
-  QHash<QString,Calendar> namedCalendars() const { return _calendars; }
-  ParamSet globalParams() const { return _globalParams; }
+  QHash<QString,Calendar> namedCalendars() const {
+    return _config.namedCalendars(); }
+  ParamSet globalParams() const { return _config.globalParams(); }
   /** This method is threadsafe */
   bool taskExists(QString fqtn);
   /** This method is threadsafe */
@@ -168,29 +155,17 @@ public slots:
   //LATER enableAllTasksWithinGroup
 
 signals:
-  void tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
-                               QHash<QString,Task> tasks);
-  void targetsConfigurationReset(QHash<QString,Cluster> clusters,
-                                 QHash<QString,Host> hosts);
-  void eventsConfigurationReset(QList<EventSubscription> onstart,
-                                QList<EventSubscription> onsuccess,
-                                QList<EventSubscription> onfailure,
-                                QList<EventSubscription> onlog,
-                                QList<EventSubscription> onnotice,
-                                QList<EventSubscription> onschedulerstart,
-                                QList<EventSubscription> onconfigload);
-  void calendarsConfigurationReset(QHash<QString,Calendar> namedCalendars);
-  void hostResourceAllocationChanged(QString host,
-                                     QHash<QString,qint64> resources);
-  void hostResourceConfigurationChanged(
-      QHash<QString,QHash<QString,qint64> > resources);
-  void accessControlConfigurationChanged(bool enabled);
   void logConfigurationChanged(QList<LogFile> logfiles);
+  void globalParamsChanged(ParamSet globalParams);
+  void globalSetenvChanged(ParamSet globalSetenv);
+  void globalUnsetenvChanged(ParamSet globalUnsetenv);
+  void hostsResourcesAvailabilityChanged(QString host,
+                                         QHash<QString,qint64> resources);
+  void accessControlConfigurationChanged(bool enabled);
   /** Emitted when config (re)load is complete, after all other config reload
-   * signals: tasksConfigurationReset() targetsConfigurationReset()
-   * eventsConfigurationReset() hostResourceAllocationChanged()
-   * hostResourceConfigurationChanged() accessControlConfigurationChanged() */
-  void configReloaded();
+   * signals: globalXxxChanged(), accessControlConfigurationChanged(),
+   * hostResourceAllocationChanged, etc. */
+  void configChanged(SchedulerConfig);
   /** There is no guarantee that taskQueued() is emited, taskStarted() or
     * taskFinished() can be emited witout previous taskQueued(). */
   void taskQueued(TaskInstance instance);
@@ -201,9 +176,6 @@ signals:
   /** Called whenever a task or taskinstance changes: queued, started, finished,
    * disabled, enabled... */
   void taskChanged(Task instance);
-  void globalParamsChanged(ParamSet globalParams);
-  void globalSetenvChanged(ParamSet globalSetenv);
-  void globalUnsetenvChanged(ParamSet globalUnsetenv);
   void noticePosted(QString notice, ParamSet params);
 
 private slots:
@@ -226,7 +198,7 @@ private:
   bool startQueuedTask(TaskInstance instance);
   /** @return true iff the triggers fires a task request */
   bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
-  Q_INVOKABLE bool reloadConfiguration(PfNode root);
+  Q_INVOKABLE bool loadConfig(PfNode root);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
   Q_INVOKABLE QList<TaskInstance> doRequestTask(

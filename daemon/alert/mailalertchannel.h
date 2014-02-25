@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,19 +30,15 @@ class MailAlertChannel : public AlertChannel {
   Q_OBJECT
   Q_DISABLE_COPY(MailAlertChannel)
   QHash<QString,MailAlertQueue*> _queues;
+  AlerterConfig _config;
   MailSender *_mailSender;
-  ParamSet _params;
-  bool _enableHtmlBody;
-  int _remindFrequency;
   QTimer *_asyncProcessingTimer;
 
 public:
   explicit MailAlertChannel(QObject *parent, QPointer<Alerter> alerter);
   ~MailAlertChannel();
   void doSendMessage(Alert alert, MessageType type);
-
-public slots:
-  void setParams(ParamSet params);
+  void configChanged(AlerterConfig config);
 
 private slots:
   void asyncProcessing();

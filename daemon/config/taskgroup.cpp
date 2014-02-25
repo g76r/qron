@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,15 +19,14 @@
 #include <QtDebug>
 #include "config/eventsubscription.h"
 #include <QPointer>
-#include "sched/scheduler.h"
 #include "config/configutils.h"
+#include "sched/taskinstance.h"
 
 class TaskGroupData : public QSharedData {
 public:
   QString _id, _label;
   ParamSet _params, _setenv, _unsetenv;
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
-  QPointer<Scheduler> _scheduler;
 };
 
 TaskGroup::TaskGroup() : d(new TaskGroupData) {
@@ -40,7 +39,6 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                      ParamSet parentSetenv, ParamSet parentUnsetenv,
                      Scheduler *scheduler) {
   TaskGroupData *tgd = new TaskGroupData;
-  tgd->_scheduler = scheduler;
   tgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
   tgd->_label = node.attribute("label", tgd->_id);
   tgd->_params.setParent(parentParamSet);
@@ -49,20 +47,16 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
   ConfigUtils::loadSetenv(node, &tgd->_setenv);
   ConfigUtils::loadUnsetenv(node, &tgd->_unsetenv);
   tgd->_unsetenv.setParent(parentUnsetenv);
-  foreach (PfNode child, node.childrenByName("onstart"))
-    scheduler->loadEventSubscription(tgd->_id, child, &tgd->_onstart, tgd->_id);
-  foreach (PfNode child, node.childrenByName("onsuccess"))
-    scheduler->loadEventSubscription(
-          tgd->_id, child, &tgd->_onsuccess, tgd->_id);
-  foreach (PfNode child, node.childrenByName("onfailure"))
-    scheduler->loadEventSubscription(
-          tgd->_id, child, &tgd->_onfailure, tgd->_id);
-  foreach (PfNode child, node.childrenByName("onfinish")) {
-    scheduler->loadEventSubscription(
-          tgd->_id, child, &tgd->_onsuccess, tgd->_id);
-    scheduler->loadEventSubscription(
-          tgd->_id, child, &tgd->_onfailure, tgd->_id);
-  }
+  ConfigUtils::loadEventSubscription(node, "onstart", tgd->_id,
+                                     &tgd->_onstart, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onsuccess", tgd->_id,
+                                     &tgd->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", tgd->_id,
+                                     &tgd->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfailure", tgd->_id,
+                                     &tgd->_onfailure, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", tgd->_id,
+                                     &tgd->_onfailure, scheduler);
   d = tgd;
 }
 

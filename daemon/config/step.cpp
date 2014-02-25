@@ -43,15 +43,13 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
   sd->_wokflow = workflow;
   if (node.name() == "and") {
     sd->_kind = Step::AndJoin;
-    foreach (PfNode child, node.childrenByName("onready"))
-      scheduler->loadEventSubscription(
-            sd->_fqsn, child, &sd->_onready, sd->_id, workflow);
+    ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
+                                       &sd->_onready, scheduler);
     // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
   } else if (node.name() == "or") {
     sd->_kind = Step::OrJoin;
-    foreach (PfNode child, node.childrenByName("onready"))
-      scheduler->loadEventSubscription(
-            sd->_fqsn, child, &sd->_onready, sd->_id, workflow);
+    ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
+                                       &sd->_onready, scheduler);
     // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
   } else if (node.name() == "task") {
     sd->_kind = Step::SubTask;

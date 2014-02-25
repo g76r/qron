@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,6 @@
 #include <QRegExp>
 
 class AlertRuleData;
-class AlertChannel;
 class PfNode;
 class Alert;
 
@@ -33,15 +32,12 @@ class AlertRule {
 public:
   AlertRule();
   AlertRule(const AlertRule &);
-  AlertRule(PfNode node, QString pattern, AlertChannel *channel,
-            QString channelName, bool stop, bool notifyCancel,
-            bool notifyReminder);
+  AlertRule(PfNode node, QString pattern, QString channelName,
+            bool notifyCancel, bool notifyReminder);
   AlertRule &operator=(const AlertRule &);
   ~AlertRule();
   QString pattern() const;
   QRegExp patternRegExp() const;
-  /** Null if stop rule or being shuting down and channel already destroyed. */
-  QPointer<AlertChannel> channel() const;
   QString channelName() const;
   QString address() const;
   QString emitMessage(Alert alert) const;
@@ -49,7 +45,6 @@ public:
   QString reminderMessage(Alert alert) const;
   QString rawMessage() const;
   QString rawCancelMessage() const;
-  bool stop() const;
   bool notifyCancel() const;
   bool notifyReminder() const;
   bool isNull() const;

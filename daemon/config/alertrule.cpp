@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,10 +23,9 @@ class AlertRuleData : public QSharedData {
 public:
   QString _pattern;
   QRegExp _patterRegExp;
-  QPointer<AlertChannel> _channel;
   QString _address, _emitMessage, _cancelMessage, _reminderMessage,
   _channelName;
-  bool _stop, _notifyCancel, _notifyReminder;
+  bool _notifyCancel, _notifyReminder;
 };
 
 AlertRule::AlertRule() {
@@ -44,19 +43,16 @@ AlertRule &AlertRule::operator=(const AlertRule &rhs) {
 AlertRule::~AlertRule() {
 }
 
-AlertRule::AlertRule(PfNode node, QString pattern,
-                     AlertChannel *channel, QString channelName,
-                     bool stop, bool notifyCancel, bool notifyReminder)
+AlertRule::AlertRule(PfNode node, QString pattern, QString channelName,
+                     bool notifyCancel, bool notifyReminder)
   : d(new AlertRuleData) {
   d->_pattern = pattern;
   d->_patterRegExp = ConfigUtils::readDotHierarchicalFilter(pattern);
-  d->_channel = channel;
   d->_channelName = channelName;
   d->_address = node.attribute("address"); // LATER check uniqueness
   d->_emitMessage = node.attribute("emitmessage"); // LATER check uniqueness
   d->_cancelMessage = node.attribute("cancelmessage"); // LATER check uniqueness
   d->_reminderMessage = node.attribute("remindermessage"); // LATER check uniqueness
-  d->_stop = stop;
   d->_notifyCancel = notifyCancel;
   d->_notifyReminder = notifyReminder;
 }
@@ -67,10 +63,6 @@ QString AlertRule::pattern() const {
 
 QRegExp AlertRule::patternRegExp() const {
   return d ? d->_patterRegExp : QRegExp();
-}
-
-QPointer<AlertChannel> AlertRule::channel() const {
-  return d ? d->_channel : QPointer<AlertChannel>();
 }
 
 QString AlertRule::channelName() const {
@@ -109,10 +101,6 @@ QString AlertRule::rawMessage() const {
 
 QString AlertRule::rawCancelMessage() const {
   return d ? d->_cancelMessage : QString();
-}
-
-bool AlertRule::stop() const {
-  return d ? d->_stop : false;
 }
 
 bool AlertRule::notifyCancel() const {

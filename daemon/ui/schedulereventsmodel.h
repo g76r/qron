@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include <QAbstractTableModel>
 #include "config/eventsubscription.h"
 #include <QList>
+#include "config/schedulerconfig.h"
 
 /** One-line table holding all Scheduler's events lists. */
 class SchedulerEventsModel : public QAbstractTableModel {
@@ -33,13 +34,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void eventsConfigurationReset(QList<EventSubscription> onstart,
-                                QList<EventSubscription> onsuccess,
-                                QList<EventSubscription> onfailure,
-                                QList<EventSubscription> onlog,
-                                QList<EventSubscription> onnotice,
-                                QList<EventSubscription> onschedulerstart,
-                                QList<EventSubscription> onconfigload);
+  void configChanged(SchedulerConfig config);
 };
 
 #endif // SCHEDULEREVENTSMODEL_H

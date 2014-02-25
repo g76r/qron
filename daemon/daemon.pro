@@ -57,7 +57,7 @@ SOURCES += \
     config/cluster.cpp \
     ui/hostslistmodel.cpp \
     ui/clusterslistmodel.cpp \
-    ui/resourcesallocationmodel.cpp \
+    ui/hostsresourcesavailabilitymodel.cpp \
     alert/alerter.cpp \
     alert/alert.cpp \
     config/alertrule.cpp \
@@ -103,7 +103,10 @@ SOURCES += \
     trigger/trigger.cpp \
     trigger/noticetrigger.cpp \
     ui/stepsmodel.cpp \
-    ui/htmlstepitemdelegate.cpp
+    ui/htmlstepitemdelegate.cpp \
+    config/schedulerconfig.cpp \
+    config/alerterconfig.cpp \
+    config/accesscontrolconfig.cpp
 
 HEADERS += \
     config/task.h \
@@ -117,7 +120,7 @@ HEADERS += \
     config/cluster.h \
     ui/hostslistmodel.h \
     ui/clusterslistmodel.h \
-    ui/resourcesallocationmodel.h \
+    ui/hostsresourcesavailabilitymodel.h \
     alert/alerter.h \
     alert/alert.h \
     config/alertrule.h \
@@ -166,7 +169,10 @@ HEADERS += \
     trigger/noticetrigger.h \
     ui/graphviz_styles.h \
     ui/stepsmodel.h \
-    ui/htmlstepitemdelegate.h
+    ui/htmlstepitemdelegate.h \
+    config/schedulerconfig.h \
+    config/alerterconfig.h \
+    config/accesscontrolconfig.h
 
 RESOURCES += \
     ui/webconsole.qrc

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -59,13 +59,13 @@ QVariant CalendarsModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void CalendarsModel::setAllCalendars(QHash<QString, Calendar> calendars) {
+void CalendarsModel::configChanged(SchedulerConfig config) {
   beginResetModel();
   _calendars.clear();
-  QStringList names = calendars.keys();
+  QStringList names = config.namedCalendars().keys();
   names.sort();
   foreach (QString name, names) {
-    _calendars.append(calendars.value(name));
+    _calendars.append(config.namedCalendars().value(name));
   }
   endResetModel();
 }

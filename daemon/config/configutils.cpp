@@ -12,6 +12,7 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "configutils.h"
+#include "eventsubscription.h"
 
 ConfigUtils::ConfigUtils() {
 }
@@ -110,4 +111,13 @@ QRegExp ConfigUtils::convertDotHierarchicalFilterToRegexp(
     }
   }
   return QRegExp(re, cs);
+}
+
+void ConfigUtils::loadEventSubscription(
+    PfNode parentNode, QString childName, QString subscriberId,
+    QList<EventSubscription> *list, Scheduler *scheduler) {
+  if (!list)
+    return;
+  foreach (PfNode listnode, parentNode.childrenByName(childName))
+    list->append(EventSubscription(subscriberId, listnode, scheduler));
 }

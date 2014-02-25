@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include <QAbstractTableModel>
 #include "config/taskgroup.h"
 #include "config/task.h"
+#include "config/schedulerconfig.h"
 
 /** Model holding tasks groups along with their attributes, one group per line,
  * in id alphabetical order. */
@@ -33,8 +34,7 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
-                            QHash<QString, Task> tasks);
+  void configChanged(SchedulerConfig config);
 };
 
 #endif // TASKGROUPSMODEL_H

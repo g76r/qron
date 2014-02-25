@@ -263,12 +263,10 @@ QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
   return QVariant();
 }
 
-void TasksModel::setAllTasksAndGroups(QHash<QString, TaskGroup> groups,
-                                      QHash<QString, Task> tasks) {
-  Q_UNUSED(groups)
+void TasksModel::configChanged(SchedulerConfig config) {
   beginResetModel();
   _tasks.clear();
-  foreach (const Task task, tasks.values()) {
+  foreach (const Task task, config.tasks().values()) {
     int row;
     for (row = 0; row < _tasks.size(); ++row) {
       Task t2 = _tasks.at(row);

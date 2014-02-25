@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,18 +21,10 @@
 #include <QHash>
 #include <QString>
 #include <QDateTime>
+#include "config/alerterconfig.h"
 
 class QThread;
 class PfNode;
-
-#define ALERTER_DEFAULT_CANCEL_DELAY 900000
-// 900" = 15'
-#define ALERTER_DEFAULT_REMIND_FREQUENCY 3600000
-// 3600" = 1h
-#define ALERTER_DEFAULT_MIN_DELAY_BETWEEN_SEND 600000
-// 600" = 10'
-#define ALERTER_DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND 30000
-// 30"
 
 /** Main class for the alert system.
  * Mainly responsible for configuration, alerts dispatching among channels and
@@ -41,19 +33,16 @@ class Alerter : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Alerter)
   QThread *_thread;
-  ParamSet _params;
+  AlerterConfig _config;
   QHash<QString,AlertChannel*> _channels;
-  QList<AlertRule> _rules;
   QHash<QString,QDateTime> _raisedAlerts; // alert + raise time
   QHash<QString,QDateTime> _soonCanceledAlerts; // alert + scheduled cancel time
-  int _cancelDelay;
-  int _minDelayBetweenSend;
-  int _gracePeriodBeforeFirstSend;
 
 public:
   explicit Alerter();
   ~Alerter();
-  bool loadConfiguration(PfNode root);
+  void loadConfig(PfNode root);
+  AlerterConfig config() const;
   /** Immediatly emit an alert, regardless of raised alert, even if the same
    * alert has just been emited.
    * In most cases it is strongly recommanded to call raiseAlert() instead.
@@ -89,15 +78,6 @@ public:
    * This method is threadsafe.
    * @see cancelAlert() */
   void cancelAlertImmediately(QString alert);
-  /** Give access to alerts parameters.
-   * This method is threadsafe. */
-  ParamSet params() const { return _params; }
-  /** In ms. */
-  int cancelDelay() const { return _cancelDelay; }
-  /** In ms. */
-  int minDelayBetweenSend() const { return _minDelayBetweenSend; }
-  /** In ms. */
-  int gracePeriodBeforeFirstSend() const { return _gracePeriodBeforeFirstSend; }
 
 signals:
   /** An alert has just been raised.
@@ -121,12 +101,11 @@ signals:
   /** An alert has been actually canceled and emited through alert channels.
    * This signal is only emited after the 'canceldelay' grace period. */
   void alertCanceled(QString alert);
-  /** Alert parameters (hence configuration) has changed. */
+  /** Config parameters changed.
+   * Convenience signals emited just before configChanged(). */
   void paramsChanged(ParamSet params);
-  /** Alert rules (hence configuration) has changed. */
-  void rulesChanged(QList<AlertRule> rules);
-  /** Alert channels list changed. */
-  void channelsChanged(QStringList channels);
+  /** Configuration has changed. */
+  void configChanged(AlerterConfig config);
 
 private slots:
   void asyncProcessing();

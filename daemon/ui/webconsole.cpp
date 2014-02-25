@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,7 +37,8 @@
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
-  _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false) {
+  _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false),
+  _loggersAdded(false) {
   QList<int> cols;
 
   // HTTP handlers
@@ -51,9 +52,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // models
   _hostsListModel = new HostsListModel(this);
   _clustersListModel = new ClustersListModel(this);
-  _freeResourcesModel = new ResourcesAllocationModel(this);
-  _resourcesLwmModel = new ResourcesAllocationModel(
-        this, ResourcesAllocationModel::LwmOverConfigured);
+  _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
+  _resourcesLwmModel = new HostsResourcesAvailabilityModel(
+        this, HostsResourcesAvailabilityModel::LwmOverConfigured);
   _resourcesConsumptionModel = new ResourcesConsumptionModel(this);
   _globalParamsModel = new ParamSetModel(this);
   _globalSetenvModel = new ParamSetModel(this);
@@ -1241,20 +1242,20 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
 
 void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
-    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-               _tasksModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-               _hostsListModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
-    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-               _clustersListModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
-    disconnect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
-               _freeResourcesModel, SLOT(setResourceConfiguration(QHash<QString,QHash<QString,qint64> >)));
-    disconnect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QHash<QString,qint64>)),
-               _freeResourcesModel, SLOT(setResourceAllocationForHost(QString,QHash<QString,qint64>)));
-    disconnect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
-               _resourcesLwmModel, SLOT(setResourceConfiguration(QHash<QString,QHash<QString,qint64> >)));
-    disconnect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QHash<QString,qint64>)),
-               _resourcesLwmModel, SLOT(setResourceAllocationForHost(QString,QHash<QString,qint64>)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _tasksModel, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _hostsListModel, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _clustersListModel, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _freeResourcesModel, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
+               _freeResourcesModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _resourcesLwmModel, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
+               _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
     disconnect(_scheduler, SIGNAL(taskChanged(Task)),
                _tasksModel, SLOT(taskChanged(Task)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
@@ -1277,8 +1278,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                this, SLOT(alertEmited(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
                this, SLOT(alertCancellationEmited(QString)));
-    disconnect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
-               _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
+    disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
+               _alertRulesModel, SLOT(configChanged(AlerterConfig)));
     disconnect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
                _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
     disconnect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
@@ -1291,56 +1292,43 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
     disconnect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
                _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
-               _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
-    disconnect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
-               _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _schedulerEventsModel, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _calendarsModel, SLOT(configChanged(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
                _lastPostedNoticesModel, SLOT(eventOccured(QString)));
-    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-               _taskGroupsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
-               this, SLOT(globalParamsChanged(ParamSet)));
-    disconnect(_scheduler->alerter(), SIGNAL(channelsChanged(QStringList)),
-               _alertChannelsModel, SLOT(channelsChanged(QStringList)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _taskGroupsModel, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               this, SLOT(configChanged(SchedulerConfig)));
+    disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
+               _alertChannelsModel, SLOT(configChanged(AlerterConfig)));
     disconnect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
                this, SLOT(enableAccessControl(bool)));
-    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-               this, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
-    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-               this, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    disconnect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
-               this, SLOT(schedulerEventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
-    disconnect(_scheduler, SIGNAL(configReloaded()), this, SLOT(configReloaded()));
-    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-               _resourcesConsumptionModel, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    disconnect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-               _resourcesConsumptionModel, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
-    disconnect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
-               _resourcesConsumptionModel, SLOT(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)));
-    disconnect(_scheduler, SIGNAL(configReloaded()),
-               _resourcesConsumptionModel, SLOT(configReloaded()));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _resourcesConsumptionModel, SLOT(configChanged(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
                _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
-    disconnect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-               _stepsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
+    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+               _stepsModel, SLOT(configChanged(SchedulerConfig)));
   }
   _scheduler = scheduler;
   if (_scheduler) {
-    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-            _tasksModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-            _hostsListModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
-    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-            _clustersListModel, SLOT(setAllHostsAndClusters(QHash<QString,Cluster>,QHash<QString,Host>)));
-    connect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
-            _freeResourcesModel, SLOT(setResourceConfiguration(QHash<QString,QHash<QString,qint64> >)));
-    connect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QHash<QString,qint64>)),
-            _freeResourcesModel, SLOT(setResourceAllocationForHost(QString,QHash<QString,qint64>)));
-    connect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
-            _resourcesLwmModel, SLOT(setResourceConfiguration(QHash<QString,QHash<QString,qint64> >)));
-    connect(_scheduler, SIGNAL(hostResourceAllocationChanged(QString,QHash<QString,qint64>)),
-            _resourcesLwmModel, SLOT(setResourceAllocationForHost(QString,QHash<QString,qint64>)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _tasksModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _hostsListModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _clustersListModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _freeResourcesModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
+            _freeResourcesModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _resourcesLwmModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
+            _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
     connect(_scheduler, SIGNAL(taskChanged(Task)),
             _tasksModel, SLOT(taskChanged(Task)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
@@ -1363,8 +1351,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             this, SLOT(alertEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
             this, SLOT(alertCancellationEmited(QString)));
-    connect(_scheduler->alerter(), SIGNAL(rulesChanged(QList<AlertRule>)),
-            _alertRulesModel, SLOT(rulesChanged(QList<AlertRule>)));
+    connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
+            _alertRulesModel, SLOT(configChanged(AlerterConfig)));
     connect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
             _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
     connect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
@@ -1377,43 +1365,33 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
     connect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
             _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
-            _schedulerEventsModel, SLOT(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
-    connect(_scheduler, SIGNAL(calendarsConfigurationReset(QHash<QString,Calendar>)),
-            _calendarsModel, SLOT(setAllCalendars(QHash<QString,Calendar>)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _schedulerEventsModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _calendarsModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
-    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-            _taskGroupsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
-            this, SLOT(globalParamsChanged(ParamSet)));
-    connect(_scheduler->alerter(), SIGNAL(channelsChanged(QStringList)),
-            _alertChannelsModel, SLOT(channelsChanged(QStringList)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _taskGroupsModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            this, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
+            _alertChannelsModel, SLOT(configChanged(AlerterConfig)));
     connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
             this, SLOT(enableAccessControl(bool)));
-    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-            this, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
-    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-            this, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    connect(_scheduler, SIGNAL(eventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)),
-            this, SLOT(schedulerEventsConfigurationReset(QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>,QList<EventSubscription>)));
-    connect(_scheduler, SIGNAL(configReloaded()), this, SLOT(configReloaded()));
-    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-            _resourcesConsumptionModel, SLOT(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    connect(_scheduler, SIGNAL(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)),
-            _resourcesConsumptionModel, SLOT(targetsConfigurationReset(QHash<QString,Cluster>,QHash<QString,Host>)));
-    connect(_scheduler, SIGNAL(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)),
-            _resourcesConsumptionModel, SLOT(hostResourceConfigurationChanged(QHash<QString,QHash<QString,qint64> >)));
-    connect(_scheduler, SIGNAL(configReloaded()),
-            _resourcesConsumptionModel, SLOT(configReloaded()));
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _resourcesConsumptionModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
             _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
-    connect(_scheduler, SIGNAL(tasksConfigurationReset(QHash<QString,TaskGroup>,QHash<QString,Task>)),
-            _stepsModel, SLOT(setAllTasksAndGroups(QHash<QString,TaskGroup>,QHash<QString,Task>)));
-    Log::addLogger(_memoryWarningLogger, false);
-    Log::addLogger(_memoryInfoLogger, false);
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            _stepsModel, SLOT(configChanged(SchedulerConfig)));
   } else {
     _title = "Qron Web Console";
+  }
+  if (!_loggersAdded) {
+    _loggersAdded = true;
+    Log::addLogger(_memoryWarningLogger, false);
+    Log::addLogger(_memoryInfoLogger, false);
   }
 }
 
@@ -1468,34 +1446,22 @@ void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
   }
 }
 
-void WebConsole::tasksConfigurationReset(QHash<QString,TaskGroup> tasksGroups,
-                                         QHash<QString,Task> tasks) {
-  _tasksGroups = tasksGroups;
-  _tasks = tasks;
+void WebConsole::configChanged(SchedulerConfig config) {
+  globalParamsChanged(config.globalParams());
+  QHash<QString,QString> diagrams = computeDiagrams(config);
+  _tasksDeploymentDiagram->setSource(diagrams.value("tasksDeploymentDiagram"));
+  _tasksTriggerDiagram->setSource(diagrams.value("tasksTriggerDiagram"));
 }
 
-void WebConsole::targetsConfigurationReset(QHash<QString,Cluster> clusters,
-                                           QHash<QString,Host> hosts) {
-  _clusters = clusters;
-  _hosts = hosts;
-}
-
-void WebConsole::schedulerEventsConfigurationReset(
-    QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,
-    QList<EventSubscription> onfailure, QList<EventSubscription> onlog,
-    QList<EventSubscription> onnotice, QList<EventSubscription> onschedulerstart,
-    QList<EventSubscription> onconfigload) {
-  _schedulerEvents = onstart + onsuccess + onfailure + onlog + onnotice
-      + onschedulerstart + onconfigload;
-}
-
-void WebConsole::configReloaded() {
-  recomputeDiagrams();
-}
-
-void WebConsole::recomputeDiagrams() {
+QHash<QString,QString> WebConsole::computeDiagrams(SchedulerConfig config) {
+  QHash<QString,Task> tasks = config.tasks();
+  QHash<QString,Cluster> clusters = config.clusters();
+  QHash<QString,Host> hosts = config.hosts();
+  QList<EventSubscription> schedulerEventsSubscriptions
+      = config.allEventsSubscriptions();
   QSet<QString> displayedGroups, displayedHosts, notices, fqtns,
       displayedGlobalEventsName;
+  QHash<QString,QString> diagrams;
   // search for:
   // * displayed groups, i.e. (i) actual groups containing at less one task
   //   and (ii) virtual parent groups (e.g. a group "foo.bar" as a virtual
@@ -1511,7 +1477,7 @@ void WebConsole::recomputeDiagrams() {
   //   with at less one displayed event subscription (e.g. requesttask,
   //   postnotice, emitalert)
   // * (workflow) subtasks tree
-  foreach (const Task &task, _tasks.values()) {
+  foreach (const Task &task, tasks.values()) {
     QString s = task.taskGroup().id();
     displayedGroups.insert(s);
     for (int i = 0; (i = s.indexOf('.', i+1)) > 0; )
@@ -1521,11 +1487,11 @@ void WebConsole::recomputeDiagrams() {
       displayedHosts.insert(s);
     fqtns.insert(task.fqtn());
   }
-  foreach (const Cluster &cluster, _clusters.values())
+  foreach (const Cluster &cluster, clusters.values())
     foreach (const Host &host, cluster.hosts())
       if (!host.isNull())
         displayedHosts.insert(host.id());
-  foreach (const Task &task, _tasks.values()) {
+  foreach (const Task &task, tasks.values()) {
     foreach (const NoticeTrigger &trigger, task.noticeTriggers())
       notices.insert(trigger.expression());
     foreach (const QString &notice,
@@ -1539,7 +1505,7 @@ void WebConsole::recomputeDiagrams() {
           notices.insert(action.targetName());
       }
   }
-  foreach (const EventSubscription &sub, _schedulerEvents) {
+  foreach (const EventSubscription &sub, schedulerEventsSubscriptions) {
     foreach (const Action &action, sub.actions()) {
       QString actionType = action.actionType();
       if (actionType == "postnotice")
@@ -1549,8 +1515,8 @@ void WebConsole::recomputeDiagrams() {
     }
   }
   QMultiHash<QString,Task> subtasks;
-  foreach (const Task &task, _tasks.values()) {
-    foreach (const Task &subtask, _tasks.values()) {
+  foreach (const Task &task, tasks.values()) {
+    foreach (const Task &subtask, tasks.values()) {
       if (!subtask.supertask().isNull() && subtask.supertask() == task)
         subtasks.insert(task.fqtn(), subtask);
     }
@@ -1561,13 +1527,13 @@ void WebConsole::recomputeDiagrams() {
   gv.append("graph g {\n"
             "graph[" GLOBAL_GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
-  foreach (const Host &host, _hosts.values())
+  foreach (const Host &host, hosts.values())
     if (displayedHosts.contains(host.id()))
       gv.append("\"").append(host.id()).append("\"").append("[label=\"")
           .append(host.id()).append(" (")
           .append(host.hostname()).append(")\"," HOST_NODE "]\n");
   gv.append("}\n");
-  foreach (const Cluster &cluster, _clusters.values())
+  foreach (const Cluster &cluster, clusters.values())
     if (!cluster.isNull()) {
       gv.append("\"").append(cluster.id()).append("\"")
           .append("[label=\"").append(cluster.id()).append("\\n(")
@@ -1594,7 +1560,7 @@ void WebConsole::recomputeDiagrams() {
             .append(child).append("\" [" TASKGROUP_EDGE "]\n");
     }
   }
-  foreach (const Task &task, _tasks.values()) {
+  foreach (const Task &task, tasks.values()) {
     // ignore subtasks
     if (!task.supertask().isNull())
       continue;
@@ -1618,7 +1584,7 @@ void WebConsole::recomputeDiagrams() {
       gv.append(s);
   }
   gv.append("}");
-  _tasksDeploymentDiagram->setSource(gv);
+  diagrams.insert("tasksDeploymentDiagram", gv);
   /***************************************************************************/
   // tasks trigger diagram
   gv.clear();
@@ -1657,7 +1623,7 @@ void WebConsole::recomputeDiagrams() {
   }
   // tasks
   int cronid = 0;
-  foreach (const Task &task, _tasks.values()) {
+  foreach (const Task &task, tasks.values()) {
     // ignore subtasks
     if (!task.supertask().isNull())
       continue;
@@ -1733,7 +1699,7 @@ void WebConsole::recomputeDiagrams() {
     }
   }
   // events defined globally
-  foreach (const EventSubscription &sub, _schedulerEvents) {
+  foreach (const EventSubscription &sub, schedulerEventsSubscriptions) {
     foreach (const Action &action, sub.actions()) {
       QString actionType = action.actionType();
       if (actionType == "postnotice") {
@@ -1753,6 +1719,7 @@ void WebConsole::recomputeDiagrams() {
     }
   }
   gv.append("}");
-  _tasksTriggerDiagram->setSource(gv);
+  diagrams.insert("tasksTriggerDiagram", gv);
+  return diagrams;
   // LATER add a full events diagram with log, udp, etc. events
 }
