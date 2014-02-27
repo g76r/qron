@@ -80,7 +80,9 @@
           <p><a class="btn btn-primary" href="../rest/svg/tasks/deploy/v1"><i class="fa fa-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/deploy/v1"><i class="fa fa-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <p class="text-center"><a href="../rest/svg/tasks/deploy/v1"><img src="../rest/svg/tasks/deploy/v1" alt="Tasks deployment diagram"/></a>
+          <div id="tasksDeploymentDiagram" style="display: table; margin: 0 auto;">
+            <noscript><img src="../rest/svg/tasks/deploy/v1" alt="Tasks deployment diagram"/></noscript>
+          </div>
         </div>
       </div>
     </div>
@@ -88,6 +90,15 @@
 <!-- start of footer -->
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+$(document).ready(function(){
+  $('#tasksDeploymentDiagram').load('../rest/svg/tasks/deploy/v1', function() {
+    $("a").not("[xlink\\:title='']").each(function() {
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?fqtn='+$(this).attr('xlink:title'));
+    });
+  });
+});
+    </script>
   </body>
 </html>
 

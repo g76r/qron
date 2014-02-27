@@ -115,7 +115,9 @@
           <p><a class="btn btn-primary" href="../rest/svg/tasks/trigger/v1"><i class="fa fa-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/trigger/v1"><i class="fa fa-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <p class="text-center"><a href="../rest/svg/tasks/trigger/v1"><img src="../rest/svg/tasks/trigger/v1" alt="Tasks trigger diagram"/></a>
+          <div id="tasksTriggerDiagram" style="display: table; margin: 0 auto;">
+            <noscript><img src="../rest/svg/tasks/trigger/v1" alt="Tasks trigger diagram"/></noscript>
+          </div>
         </div>
       </div>
     </div>
@@ -151,6 +153,15 @@ function steps_filter() {
 }
 $('#filter-steps').bind('input', function() {steps_filter();});
 steps_filter();
+  </script>
+  <script>
+$(document).ready(function(){
+  $('#tasksTriggerDiagram').load('../rest/svg/tasks/trigger/v1', function() {
+    $("a").not("[xlink\\:title='']").each(function() {
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?fqtn='+$(this).attr('xlink:title'));
+    });
+  });
+});
   </script>
   </body>
 </html>

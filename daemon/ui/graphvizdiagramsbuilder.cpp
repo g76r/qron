@@ -95,7 +95,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   /***************************************************************************/
   // tasks deployment diagram
   QString gv;
-  gv.append("graph g {\n"
+  gv.append("graph \"tasks deployment diagram\" {\n"
             "graph[" GLOBAL_GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
   foreach (const Host &host, hosts.values())
@@ -138,7 +138,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     // draw task node and group--task edge
     gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
               +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
-              +"]\n");
+              +",tooltip=\""+task.fqtn()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
         .append("\"").append(task.fqtn())
         .append("\" [" TASKGROUP_TASK_EDGE "]\n");
@@ -159,7 +159,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   /***************************************************************************/
   // tasks trigger diagram
   gv.clear();
-  gv.append("graph g {\n"
+  gv.append("graph \"tasks trigger diagram\" {\n"
             "graph[" GLOBAL_GRAPH "]\n"
             "subgraph{graph[rank=max]\n");
   foreach (const QString &cause, displayedGlobalEventsName)
@@ -201,7 +201,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     // task nodes and group--task edges
     gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
               +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
-              +"]\n");
+              +",tooltip=\""+task.fqtn()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
         .append("\"").append(task.fqtn())
         .append("\" [" TASKGROUP_TASK_EDGE "]\n");
@@ -305,8 +305,8 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     Task task, QHash<QString,StepInstance> stepInstances) {
   // LATER implement instanciated workflow diagram for real
   if (task.mean() != "workflow")
-    return QString(); //"graph g{graph[" WORKFLOW_GRAPH ",label=\"not a workflow\"]}";
-  QString gv("graph \""+task.fqtn()+"\"{\n"
+    return QString();
+  QString gv("graph \""+task.fqtn()+" workflow\"{\n"
              "  graph[" WORKFLOW_GRAPH " ]\n"
              "  start[" START_NODE "]\n"
              "  end[" END_NODE "]\n");

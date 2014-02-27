@@ -94,7 +94,7 @@
           <p><a class="btn btn-primary" href="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>"><i class="fa fa-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/workflow/v1?fqtn=<?value:fqtn?>"><i class="fa fa-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <div id="workflowdiagram" style="display: table; margin: 0 auto;">
+          <div id="workflowDiagram" style="display: table; margin: 0 auto;">
             <noscript><img src="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>" alt="Task Workflow Diagram"/></noscript>
           </div>
       </div>
@@ -105,7 +105,7 @@
     <script src="js/bootstrap.min.js"></script>
     <script type="text/javascript">
 $(document).ready(function(){
-  $('#workflowdiagram').load('../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>', function() {
+  $('#workflowDiagram').load('../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>', function() {
     $("a").not("[xlink\\:title='']").each(function() {
       this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?fqtn='+$(this).attr('xlink:title'));
     });
