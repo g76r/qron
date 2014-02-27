@@ -133,12 +133,6 @@ private:
     QStringList paths;
     paths.append(path);
     copyFilteredFiles(paths, output, pattern, useRegexp); }
-  // TODO move graphviz generation function outside of WebConsole class
-  /** Produce graphviz source for several configuration diagrams, each one
-   * being associated in the returned QHash with one of the following keys:
-   * - tasksDeploymentDiagram
-   * - tasksTriggerDiagram */
-  static QHash<QString, QString> computeDiagrams(SchedulerConfig config);
 };
 
 #endif // WEBCONSOLE_H

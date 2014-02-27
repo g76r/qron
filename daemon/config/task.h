@@ -146,7 +146,6 @@ public:
   /** Super task (e.g. workflow task) to which this task belongs, if any. */
   Task supertask() const;
   QString workflowDiagram() const;
-  QString workflowInstanceDiagram(QHash<QString,StepInstance> stepInstances) const;
   QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
   QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;
   QHash<QString,CronTrigger> workflowCronTriggersById() const;

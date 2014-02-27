@@ -106,7 +106,8 @@ SOURCES += \
     ui/htmlstepitemdelegate.cpp \
     config/schedulerconfig.cpp \
     config/alerterconfig.cpp \
-    config/accesscontrolconfig.cpp
+    config/accesscontrolconfig.cpp \
+    ui/graphvizdiagramsbuilder.cpp
 
 HEADERS += \
     config/task.h \
@@ -172,7 +173,8 @@ HEADERS += \
     ui/htmlstepitemdelegate.h \
     config/schedulerconfig.h \
     config/alerterconfig.h \
-    config/accesscontrolconfig.h
+    config/accesscontrolconfig.h \
+    ui/graphvizdiagramsbuilder.h
 
 RESOURCES += \
     ui/webconsole.qrc

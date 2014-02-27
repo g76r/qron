@@ -25,10 +25,7 @@
 #include "ui/htmltaskitemdelegate.h"
 #include "ui/htmltaskinstanceitemdelegate.h"
 #include "ui/htmlalertitemdelegate.h"
-#include "action/action.h"
-#include "trigger/crontrigger.h"
-#include "trigger/noticetrigger.h"
-#include "graphviz_styles.h"
+#include "graphvizdiagramsbuilder.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -44,8 +41,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // HTTP handlers
   _tasksDeploymentDiagram
       = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
+  _tasksDeploymentDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
   _tasksTriggerDiagram
       = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
+  _tasksTriggerDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
   _wuiHandler = new TemplatingHttpHandler(this, "/console", ":docroot/console");
   _wuiHandler->addFilter("\\.html$");
 
@@ -1166,7 +1165,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlTaskGroupsEventsView->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/png/tasks/deploy/v1") {
+  if (path == "/rest/svg/tasks/deploy/v1") {
     return _tasksDeploymentDiagram->handleRequest(req, res, ctxt);
   }
   if (path == "/rest/dot/tasks/deploy/v1") {
@@ -1174,13 +1173,14 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_tasksDeploymentDiagram->source(0).toUtf8());
     return true;
   }
-  if (path == "/rest/png/tasks/workflow/v1") {
+  if (path == "/rest/svg/tasks/workflow/v1") {
     // LATER this rendering should be pooled
     if (_scheduler) {
       Task task = _scheduler->task(req.param("fqtn"));
       QString gv = task.workflowDiagram();
       if (!gv.isEmpty()) {
         GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
+        h->setImageFormat(GraphvizImageHttpHandler::Svg);
         h->setSource(gv);
         h->handleRequest(req, res, ctxt);
         h->deleteLater();
@@ -1205,7 +1205,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write("No such workflow.");
     return true;
   }
-  if (path == "/rest/png/tasks/trigger/v1") {
+  if (path == "/rest/svg/tasks/trigger/v1") {
     return _tasksTriggerDiagram->handleRequest(req, res, ctxt);
   }
   if (path == "/rest/dot/tasks/trigger/v1") {
@@ -1448,280 +1448,8 @@ void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
 
 void WebConsole::configChanged(SchedulerConfig config) {
   globalParamsChanged(config.globalParams());
-  QHash<QString,QString> diagrams = computeDiagrams(config);
+  QHash<QString,QString> diagrams
+      = GraphvizDiagramsBuilder::configDiagrams(config);
   _tasksDeploymentDiagram->setSource(diagrams.value("tasksDeploymentDiagram"));
   _tasksTriggerDiagram->setSource(diagrams.value("tasksTriggerDiagram"));
-}
-
-QHash<QString,QString> WebConsole::computeDiagrams(SchedulerConfig config) {
-  QHash<QString,Task> tasks = config.tasks();
-  QHash<QString,Cluster> clusters = config.clusters();
-  QHash<QString,Host> hosts = config.hosts();
-  QList<EventSubscription> schedulerEventsSubscriptions
-      = config.allEventsSubscriptions();
-  QSet<QString> displayedGroups, displayedHosts, notices, fqtns,
-      displayedGlobalEventsName;
-  QHash<QString,QString> diagrams;
-  // search for:
-  // * displayed groups, i.e. (i) actual groups containing at less one task
-  //   and (ii) virtual parent groups (e.g. a group "foo.bar" as a virtual
-  //   parent "foo" which is not an actual group but which make the rendering
-  //   more readable by making  visible the dot-hierarchy tree)
-  // * displayed hosts, i.e. hosts that are targets of at less one cluster
-  //   or one task
-  // * notices, deduced from notice triggers and postnotice events (since
-  //   notices are not explicitely declared in configuration objects)
-  // * fqtns, which are usefull to detect inexisting tasks and avoid drawing
-  //   edges to or from them
-  // * displayed global event names, i.e. global event names (e.g. onstartup)
-  //   with at less one displayed event subscription (e.g. requesttask,
-  //   postnotice, emitalert)
-  // * (workflow) subtasks tree
-  foreach (const Task &task, tasks.values()) {
-    QString s = task.taskGroup().id();
-    displayedGroups.insert(s);
-    for (int i = 0; (i = s.indexOf('.', i+1)) > 0; )
-      displayedGroups.insert(s.mid(0, i));
-    s = task.target();
-    if (!s.isEmpty())
-      displayedHosts.insert(s);
-    fqtns.insert(task.fqtn());
-  }
-  foreach (const Cluster &cluster, clusters.values())
-    foreach (const Host &host, cluster.hosts())
-      if (!host.isNull())
-        displayedHosts.insert(host.id());
-  foreach (const Task &task, tasks.values()) {
-    foreach (const NoticeTrigger &trigger, task.noticeTriggers())
-      notices.insert(trigger.expression());
-    foreach (const QString &notice,
-             task.workflowTriggerSubscriptionsByNotice().keys())
-      notices.insert(notice);
-    foreach (const EventSubscription &sub,
-             task.allEventsSubscriptions()
-             + task.taskGroup().allEventSubscriptions())
-      foreach (const Action &action, sub.actions()) {
-        if (action.actionType() == "postnotice")
-          notices.insert(action.targetName());
-      }
-  }
-  foreach (const EventSubscription &sub, schedulerEventsSubscriptions) {
-    foreach (const Action &action, sub.actions()) {
-      QString actionType = action.actionType();
-      if (actionType == "postnotice")
-        notices.insert(action.targetName());
-      if (actionType == "postnotice" || actionType == "requesttask")
-        displayedGlobalEventsName.insert(sub.eventName());
-    }
-  }
-  QMultiHash<QString,Task> subtasks;
-  foreach (const Task &task, tasks.values()) {
-    foreach (const Task &subtask, tasks.values()) {
-      if (!subtask.supertask().isNull() && subtask.supertask() == task)
-        subtasks.insert(task.fqtn(), subtask);
-    }
-  }
-  /***************************************************************************/
-  // tasks deployment diagram
-  QString gv;
-  gv.append("graph g {\n"
-            "graph[" GLOBAL_GRAPH "]\n"
-            "subgraph{graph[rank=max]\n");
-  foreach (const Host &host, hosts.values())
-    if (displayedHosts.contains(host.id()))
-      gv.append("\"").append(host.id()).append("\"").append("[label=\"")
-          .append(host.id()).append(" (")
-          .append(host.hostname()).append(")\"," HOST_NODE "]\n");
-  gv.append("}\n");
-  foreach (const Cluster &cluster, clusters.values())
-    if (!cluster.isNull()) {
-      gv.append("\"").append(cluster.id()).append("\"")
-          .append("[label=\"").append(cluster.id()).append("\\n(")
-          .append(cluster.balancing()).append(")\"," CLUSTER_NODE "]\n");
-      foreach (const Host &host, cluster.hosts())
-        gv.append("\"").append(cluster.id()).append("\"--\"").append(host.id())
-            .append("\"[" CLUSTER_HOST_EDGE "]\n");
-    }
-  gv.append("subgraph{graph[rank=min]\n");
-  foreach (const QString &id, displayedGroups) {
-    if (!id.contains('.')) // root groups
-      gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
-  }
-  gv.append("}\n");
-  foreach (const QString &id, displayedGroups) {
-    if (id.contains('.')) // non root groups
-      gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
-  }
-  foreach (const QString &parent, displayedGroups) {
-    QString prefix = parent + ".";
-    foreach (const QString &child, displayedGroups) {
-      if (child.startsWith(prefix))
-        gv.append("\"").append(parent).append("\" -- \"")
-            .append(child).append("\" [" TASKGROUP_EDGE "]\n");
-    }
-  }
-  foreach (const Task &task, tasks.values()) {
-    // ignore subtasks
-    if (!task.supertask().isNull())
-      continue;
-    // draw task node and group--task edge
-    gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
-              +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
-              +"]\n");
-    gv.append("\"").append(task.taskGroup().id()).append("\"--")
-        .append("\"").append(task.fqtn())
-        .append("\" [" TASKGROUP_TASK_EDGE "]\n");
-    // draw task--target edges, workflow tasks showing all edge applicable to
-    // their subtasks once and only once
-    QSet<QString> edges;
-    QList<Task> deployed = subtasks.values(task.fqtn());
-    if (deployed.isEmpty())
-      deployed.append(task);
-    foreach (const Task &subtask, deployed)
-      edges.insert("\""+task.fqtn()+"\"--\""+subtask.target()+"\" [label=\""
-                   +subtask.mean()+"\"," TASK_TARGET_EDGE "]\n");
-    foreach (QString s, edges)
-      gv.append(s);
-  }
-  gv.append("}");
-  diagrams.insert("tasksDeploymentDiagram", gv);
-  /***************************************************************************/
-  // tasks trigger diagram
-  gv.clear();
-  gv.append("graph g {\n"
-            "graph[" GLOBAL_GRAPH "]\n"
-            "subgraph{graph[rank=max]\n");
-  foreach (const QString &cause, displayedGlobalEventsName)
-    gv.append("\"$global_").append(cause).append("\" [label=\"")
-        .append(cause).append("\"," GLOBAL_EVENT_NODE "]\n");
-  gv.append("}\n");
-  foreach (QString notice, notices) {
-    notice.remove('"');
-    gv.append("\"$notice_").append(notice).append("\"")
-        .append("[label=\"^").append(notice).append("\"," NOTICE_NODE "]\n");
-  }
-  // root groups
-  gv.append("subgraph{graph[rank=min]\n");
-  foreach (const QString &id, displayedGroups) {
-    if (!id.contains('.')) // root groups
-      gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
-  }
-  gv.append("}\n");
-  // other groups
-  foreach (const QString &id, displayedGroups) {
-    if (id.contains('.')) // non root groups
-      gv.append("\"").append(id).append("\" [" TASKGROUP_NODE "]\n");
-  }
-  // groups edges
-  foreach (const QString &parent, displayedGroups) {
-    QString prefix = parent + ".";
-    foreach (const QString &child, displayedGroups) {
-      if (child.startsWith(prefix))
-        gv.append("\"").append(parent).append("\" -- \"")
-            .append(child).append("\" [" TASKGROUP_EDGE "]\n");
-    }
-  }
-  // tasks
-  int cronid = 0;
-  foreach (const Task &task, tasks.values()) {
-    // ignore subtasks
-    if (!task.supertask().isNull())
-      continue;
-    // task nodes and group--task edges
-    gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
-              +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
-              +"]\n");
-    gv.append("\"").append(task.taskGroup().id()).append("\"--")
-        .append("\"").append(task.fqtn())
-        .append("\" [" TASKGROUP_TASK_EDGE "]\n");
-    // cron triggers
-    foreach (const CronTrigger &cron, task.cronTriggers()) {
-      gv.append("\"$cron_").append(QString::number(++cronid))
-          .append("\" [label=\"(").append(cron.expression())
-          .append(")\"," CRON_TRIGGER_NODE "]\n");
-      gv.append("\"").append(task.fqtn()).append("\"--\"$cron_")
-          .append(QString::number(cronid))
-          .append("\" [" TASK_TRIGGER_EDGE "]\n");
-    }
-    // workflow internal cron triggers
-    foreach (const CronTrigger &cron,
-             task.workflowCronTriggersById().values()) {
-      gv.append("\"$cron_").append(QString::number(++cronid))
-          .append("\" [label=\"(").append(cron.expression())
-          .append(")\"," CRON_TRIGGER_NODE "]\n");
-      gv.append("\"").append(task.fqtn()).append("\"--\"$cron_")
-          .append(QString::number(cronid))
-          .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
-
-    }
-    // notice triggers
-    foreach (const NoticeTrigger &trigger, task.noticeTriggers())
-      gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
-          .append(trigger.expression().remove('"'))
-          .append("\" [" TASK_TRIGGER_EDGE "]\n");
-    // workflow internal notice triggers
-    foreach (QString notice,
-             task.workflowTriggerSubscriptionsByNotice().keys()) {
-      gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
-          .append(notice.remove('"'))
-          .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
-    }
-    // no trigger pseudo-trigger
-    if (task.noticeTriggers().isEmpty() && task.cronTriggers().isEmpty()
-        && task.otherTriggers().isEmpty()) {
-      gv.append("\"$notrigger_").append(QString::number(++cronid))
-          .append("\" [label=\"no trigger\"," NO_TRIGGER_NODE "]\n");
-      gv.append("\"").append(task.fqtn()).append("\"--\"$notrigger_")
-          .append(QString::number(cronid))
-          .append("\" [" TASK_NOTRIGGER_EDGE "]\n");
-    }
-    // events defined at task level
-    QSet<QString> edges;
-    foreach (const EventSubscription &sub,
-             task.allEventsSubscriptions() + task.taskGroup().allEventSubscriptions()) {
-      foreach (const Action &action, sub.actions()) {
-        QString actionType = action.actionType();
-        if (actionType == "postnotice") {
-          gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
-              .append(action.targetName().remove('"')).append("\" [label=\"")
-              .append(sub.humanReadableCause())
-              .append("\"," TASK_POSTNOTICE_EDGE "]\n");
-        } else if (actionType == "requesttask") {
-          QString target = action.targetName();
-          if (!target.contains('.'))
-            target = task.taskGroup().id()+"."+target;
-          if (fqtns.contains(target))
-            edges.insert("\""+task.fqtn()+"\"--\""+target+"\" [label=\""
-                         +sub.humanReadableCause()
-                         +"\"," TASK_REQUESTTASK_EDGE "]\n");
-        }
-      }
-    }
-    foreach (const QString &edge, edges)
-      gv.append(edge);
-  }
-  // events defined globally
-  foreach (const EventSubscription &sub, schedulerEventsSubscriptions) {
-    foreach (const Action &action, sub.actions()) {
-      QString actionType = action.actionType();
-      if (actionType == "postnotice") {
-        gv.append("\"$notice_").append(action.targetName().remove('"'))
-            .append("\"--\"$global_").append(sub.eventName())
-            .append("\" [" GLOBAL_POSTNOTICE_EDGE ",label=\"")
-            .append(sub.humanReadableCause().remove('"')).append("\"]\n");
-      } else if (actionType == "requesttask") {
-        QString target = action.targetName();
-        if (fqtns.contains(target)) {
-          gv.append("\"").append(target).append("\"--\"$global_")
-              .append(sub.eventName())
-              .append("\" [" GLOBAL_REQUESTTASK_EDGE ",label=\"")
-              .append(sub.humanReadableCause().remove('"')).append("\"]\n");
-        }
-      }
-    }
-  }
-  gv.append("}");
-  diagrams.insert("tasksTriggerDiagram", gv);
-  return diagrams;
-  // LATER add a full events diagram with log, udp, etc. events
 }

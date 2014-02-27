@@ -28,8 +28,8 @@
 #include "action/action.h"
 #include "trigger/noticetrigger.h"
 #include "config/eventsubscription.h"
-#include "ui/graphviz_styles.h"
 #include "sched/stepinstance.h"
+#include "ui/graphvizdiagramsbuilder.h"
 
 class WorkflowTriggerSubscriptionData : public QSharedData {
 public:
@@ -409,8 +409,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       Log::warning() << "ignoring step definitions in non-workflow task: "
                      << node.toString();
   }
-  d->_workflowDiagram
-      = workflowInstanceDiagram(QHash<QString,StepInstance>());
+  d->_workflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
 }
 
 Task::~Task() {
@@ -769,86 +768,6 @@ QStringList Task::startSteps() const {
 
 QString Task::workflowDiagram() const {
   return d ? d->_workflowDiagram : QString();
-}
-
-QString Task::workflowInstanceDiagram(
-    QHash<QString,StepInstance> stepInstances) const {
-  // LATER implement instanciated workflow diagram for real
-  if (!d || d->_mean != "workflow")
-    return "graph g{graph[" WORKFLOW_GRAPH ",label=\"not a workflow\"]}";
-  QString gv("graph g{\n"
-             "  graph[" WORKFLOW_GRAPH "]\n"
-             "  start[" START_NODE "]\n"
-             "  end[" END_NODE "]\n");
-  foreach (Step s, d->_steps.values()) {
-    StepInstance si = stepInstances.value(s.id());
-    switch (s.kind()) {
-    case Step::SubTask:
-      gv.append("  step_"+s.id()+"[label=\""+s.id()+"\"," TASK_NODE
-                +(si.isReady() ? ",color=orange" : "")+"]\n"); // LATER red if failure, green if ok
-      break;
-    case Step::AndJoin:
-      gv.append("  step_"+s.id()+"[" ANDJOIN_NODE
-                +(si.isReady() ? ",color=greenforest" : "")+"]\n");
-      break;
-    case Step::OrJoin:
-      gv.append("  step_"+s.id()+"[" ORJOIN_NODE
-                +(si.isReady() ? ",color=greenforest" : "")+"]\n");
-      break;
-    case Step::Unknown:
-      ;
-    }
-  }
-  QSet<QString> gvedges; // use a QSet to remove duplicate onfinish edges
-  foreach (QString tsId, d->_workflowTriggerSubscriptionsById.keys()) {
-    const WorkflowTriggerSubscription &ts
-        = d->_workflowTriggerSubscriptionsById.value(tsId);
-    QString expr = ts.trigger().humanReadableExpression().remove('"');
-    // LATER do not rely on human readable expr to determine trigger style
-    gv.append("  trigger_"+tsId+"[label=\""+expr+"\","
-              +(expr.startsWith('^')?NOTICE_NODE:CRON_TRIGGER_NODE)+"]\n");
-    foreach (Action a, ts.eventSubscription().actions()) {
-      if (a.actionType() == "step") {
-        QString target = a.targetName();
-        if (d->_steps.contains(target)) {
-          gvedges.insert("  trigger_"+tsId+" -- step_"+target
-                         +"[label=\"\"," TRIGGER_STEP_EDGE  "]\n");
-        } else {
-          // do nothing, the warning is issued in another loop
-        }
-      } else if (a.actionType() == "end") {
-        gvedges.insert("  trigger_"+tsId+" -- end [label=\"\","
-                TRIGGER_STEP_EDGE "]\n");
-      }
-    }
-  }
-  foreach (QString id, d->_startSteps) {
-    gvedges.insert("  start -- step_"+id+"\n");
-  }
-  foreach (QString source, d->_steps.keys()) {
-    QList<EventSubscription> subList
-        = d->_steps[source].onreadyEventSubscriptions()
-        + d->_steps[source].subtask().allEventsSubscriptions()
-        + d->_steps[source].subtask().taskGroup().allEventSubscriptions();
-    foreach (EventSubscription es, subList) {
-      foreach (Action a, es.actions()) {
-        if (a.actionType() == "step") {
-          QString target = a.targetName();
-          if (d->_steps.contains(target)) {
-            gvedges.insert("  step_"+source+" -- step_"+target+"[label=\""
-                           +es.eventName()+"\"" STEP_EDGE "]\n");
-          }
-        } else if (a.actionType() == "end") {
-          gvedges.insert("  step_"+source+" -- end [label=\""+es.eventName()
-                         +"\"" STEP_EDGE "]\n");
-        }
-      }
-    }
-  }
-  foreach(QString s, gvedges)
-    gv.append(s);
-  gv.append("}");
-  return gv;
 }
 
 QHash<QString,WorkflowTriggerSubscription> Task::workflowTriggerSubscriptionsById() const {
