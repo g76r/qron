@@ -90,29 +90,28 @@
       </div>
       <div class="row">
         <div class="span12">
-          <h3>Task Workflow Steps</h3>
-          <p><a class="btn btn-primary" href="../rest/csv/steps/list/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/steps/list/v1"><i class="fa fa-file"></i> HTML</a>
-          <a class="btn btn-info" href="events.html#steps">Steps on Events page &raquo;</a>
-          <p><table class="table table-condensed table-hover">
-          TODO: filtered version of <a href="events.html#steps">this table</a>.
-          </table>
-        </div>
-      </div>
-      <div class="row">
-        <div class="span12">
           <h3>Task Workflow Diagram</h3>
           <p><a class="btn btn-primary" href="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>"><i class="fa fa-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/workflow/v1?fqtn=<?value:fqtn?>"><i class="fa fa-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <p class="text-center"><a href="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>"><img src="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>" alt="Task Workflow Diagram"/></a>
-        </div>
+          <div id="workflowdiagram" style="display: table; margin: 0 auto;">
+            <noscript><img src="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>" alt="Task Workflow Diagram"/></noscript>
+          </div>
       </div>
     </div>
 
 <!-- start of footer -->
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script type="text/javascript">
+$(document).ready(function(){
+  $('#workflowdiagram').load('../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>', function() {
+    $("a").not("[xlink\\:title='']").each(function() {
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?fqtn='+$(this).attr('xlink:title'));
+    });
+  });
+});
+    </script>
   </body>
 </html>
 

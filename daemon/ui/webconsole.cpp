@@ -1187,8 +1187,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         return true;
       }
     }
-    res.setStatus(404);
-    res.output()->write("No such workflow.");
+    res.setContentType("image/svg+xml");
+    res.output()->write("<svg height=\"30\" width=\"200\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">No workflow</text></svg>");
     return true;
   }
   if (path == "/rest/dot/tasks/workflow/v1") {

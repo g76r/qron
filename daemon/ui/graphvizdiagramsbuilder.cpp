@@ -306,8 +306,8 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
   // LATER implement instanciated workflow diagram for real
   if (task.mean() != "workflow")
     return QString(); //"graph g{graph[" WORKFLOW_GRAPH ",label=\"not a workflow\"]}";
-  QString gv("graph g{\n"
-             "  graph[" WORKFLOW_GRAPH "]\n"
+  QString gv("graph \""+task.fqtn()+"\"{\n"
+             "  graph[" WORKFLOW_GRAPH " ]\n"
              "  start[" START_NODE "]\n"
              "  end[" END_NODE "]\n");
   foreach (Step s, task.steps().values()) {
@@ -315,7 +315,9 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     switch (s.kind()) {
     case Step::SubTask:
       gv.append("  step_"+s.id()+"[label=\""+s.id()+"\"," TASK_NODE
-                +(si.isReady() ? ",color=orange" : "")+"]\n"); // LATER red if failure, green if ok
+                +(si.isReady() ? ",color=orange" : "")
+                +",tooltip=\""+s.subtask().fqtn()+"\"]\n");
+      // LATER red if failure, green if ok
       break;
     case Step::AndJoin:
       gv.append("  step_"+s.id()+"[" ANDJOIN_NODE
