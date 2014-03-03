@@ -1,4 +1,4 @@
-# Copyright 2012-2013 Hallowyn and others.
+# Copyright 2012-2014 Hallowyn and others.
 # This file is part of qron, see <http://qron.hallowyn.com/>.
 # Qron is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -18,163 +18,43 @@ TARGET = qrond
 CONFIG += console largefile
 CONFIG -= app_bundle
 
-INCLUDEPATH += ../libqtpf ../libqtssu
-win32:debug:LIBS += -L../libqtpf/pf-build-windows/debug \
-  -L../libqtpf/pfsql-build-windows/debug \
-  -L../libqtssu-build-windows/debug
-win32:release:LIBS += -L../libqtpf/pf-build-windows/release \
-  -L../libqtpf/pfsql-build-windows/release \
-  -L../libqtssu-build-windows/release
-unix:LIBS += -L../libqtpf/pf -L../libqtpf/pfsql -L../libqtssu
-LIBS += -lqtpf -lqtssu
+INCLUDEPATH += ../libqtpf ../libqtssu ../libqron
+win32:debug:LIBS += -L../libqtpf/build-libqtpf-windows/debug \
+  -L../libqtpf/build-libqtpfsql-windows/debug \
+  -L../build-libqtssu-windows/debug
+win32:release:LIBS += -L../libqtpf/build-libqtpf-windows/release \
+  -L../libqtpf/build-libqtpfsql-windows/release \
+  -L../build-libqtssu-windows/release
+unix:LIBS += -L../libqtpf/libqtpf -L../libqtpf/libqtpfsql -L../libqtssu \
+  -L../libqron
+LIBS += -lqtpf -lqtssu -lqron
+
 
 QMAKE_CXXFLAGS += -Wextra
 #QMAKE_CXXFLAGS += -fno-elide-constructors
 unix:debug:QMAKE_CXXFLAGS += -ggdb
 
 unix {
-  OBJECTS_DIR = ../daemon-build-unix/obj
-  RCC_DIR = ../daemon-build-unix/rcc
-  MOC_DIR = ../daemon-build-unix/moc
+  OBJECTS_DIR = ../build-daemon-unix/obj
+  RCC_DIR = ../build-daemon-unix/rcc
+  MOC_DIR = ../build-daemon-unix/moc
 }
 
-contains(QT_VERSION, ^4\\.[0-6]\\..*) {
-  message("Cannot build Qt Creator with Qt version $${QT_VERSION}.")
-  error("Use at least Qt 4.7.")
+contains(QT_VERSION, ^4\\..*) {
+  message("Cannot build with Qt version $${QT_VERSION}.")
+  error("Use Qt 5.")
 }
 
 TEMPLATE = app
 
 SOURCES += \
-    config/task.cpp \
-    config/taskgroup.cpp \
-    sched/scheduler.cpp \
-    trigger/crontrigger.cpp \
-    config/host.cpp \
-    sched/taskinstance.cpp \
-    sched/executor.cpp \
-    ui/webconsole.cpp \
-    config/cluster.cpp \
-    ui/hostslistmodel.cpp \
-    ui/clusterslistmodel.cpp \
-    ui/hostsresourcesavailabilitymodel.cpp \
-    alert/alerter.cpp \
-    alert/alert.cpp \
-    config/alertrule.cpp \
-    alert/alertchannel.cpp \
-    alert/udpalertchannel.cpp \
-    alert/mailalertchannel.cpp \
-    alert/logalertchannel.cpp \
-    alert/httpalertchannel.cpp \
-    alert/execalertchannel.cpp \
-    ui/raisedalertsmodel.cpp \
-    ui/alertrulesmodel.cpp \
-    ui/taskinstancesmodel.cpp \
-    ui/tasksmodel.cpp \
-    action/action.cpp \
-    action/postnoticeaction.cpp \
-    action/logaction.cpp \
-    action/udpaction.cpp \
-    action/httpaction.cpp \
-    action/raisealertaction.cpp \
-    action/cancelalertaction.cpp \
-    action/emitalertaction.cpp \
-    action/requesttaskaction.cpp \
-    ui/schedulereventsmodel.cpp \
-    ui/lastoccuredtexteventsmodel.cpp \
-    ui/taskgroupsmodel.cpp \
     sched/qrond.cpp \
-    config/configutils.cpp \
-    ui/alertchannelsmodel.cpp \
-    config/requestformfield.cpp \
-    ui/resourcesconsumptionmodel.cpp \
-    config/logfile.cpp \
-    ui/logfilesmodel.cpp \
-    config/calendar.cpp \
-    ui/calendarsmodel.cpp \
-    ui/htmltaskitemdelegate.cpp \
-    ui/htmltaskinstanceitemdelegate.cpp \
-    ui/htmlalertitemdelegate.cpp \
-    config/step.cpp \
-    sched/stepinstance.cpp \
-    config/eventsubscription.cpp \
-    action/stepaction.cpp \
-    action/endaction.cpp \
-    trigger/trigger.cpp \
-    trigger/noticetrigger.cpp \
-    ui/stepsmodel.cpp \
-    ui/htmlstepitemdelegate.cpp \
-    config/schedulerconfig.cpp \
-    config/alerterconfig.cpp \
-    config/accesscontrolconfig.cpp \
-    ui/graphvizdiagramsbuilder.cpp
+    wui/webconsole.cpp
 
 HEADERS += \
-    config/task.h \
-    config/taskgroup.h \
-    sched/scheduler.h \
-    trigger/crontrigger.h \
-    config/host.h \
-    sched/taskinstance.h \
-    sched/executor.h \
-    ui/webconsole.h \
-    config/cluster.h \
-    ui/hostslistmodel.h \
-    ui/clusterslistmodel.h \
-    ui/hostsresourcesavailabilitymodel.h \
-    alert/alerter.h \
-    alert/alert.h \
-    config/alertrule.h \
-    alert/alertchannel.h \
-    alert/udpalertchannel.h \
-    alert/mailalertchannel.h \
-    alert/logalertchannel.h \
-    alert/httpalertchannel.h \
-    alert/execalertchannel.h \
-    ui/raisedalertsmodel.h \
-    ui/alertrulesmodel.h \
-    ui/taskinstancesmodel.h \
-    ui/tasksmodel.h \
-    action/action.h \
-    action/postnoticeaction.h \
-    action/action_p.h \
-    action/logaction.h \
-    action/udpaction.h \
-    action/httpaction.h \
-    action/raisealertaction.h \
-    action/cancelalertaction.h \
-    action/emitalertaction.h \
-    action/requesttaskaction.h \
-    ui/schedulereventsmodel.h \
-    ui/lastoccuredtexteventsmodel.h \
-    ui/taskgroupsmodel.h \
     sched/qrond.h \
-    config/configutils.h \
-    ui/alertchannelsmodel.h \
-    config/requestformfield.h \
-    ui/resourcesconsumptionmodel.h \
-    config/logfile.h \
-    ui/logfilesmodel.h \
-    config/calendar.h \
-    ui/calendarsmodel.h \
-    ui/htmltaskitemdelegate.h \
-    ui/htmltaskinstanceitemdelegate.h \
-    ui/htmlalertitemdelegate.h \
-    config/step.h \
-    sched/stepinstance.h \
-    config/eventsubscription.h \
-    action/stepaction.h \
-    action/endaction.h \
-    trigger/trigger.h \
-    trigger/trigger_p.h \
-    trigger/noticetrigger.h \
-    ui/graphviz_styles.h \
-    ui/stepsmodel.h \
-    ui/htmlstepitemdelegate.h \
-    config/schedulerconfig.h \
-    config/alerterconfig.h \
-    config/accesscontrolconfig.h \
-    ui/graphvizdiagramsbuilder.h
+    wui/webconsole.h
 
 RESOURCES += \
-    ui/webconsole.qrc
+    wui/webconsole.qrc
+

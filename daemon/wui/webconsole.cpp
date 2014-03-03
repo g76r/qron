@@ -25,7 +25,7 @@
 #include "ui/htmltaskitemdelegate.h"
 #include "ui/htmltaskinstanceitemdelegate.h"
 #include "ui/htmlalertitemdelegate.h"
-#include "graphvizdiagramsbuilder.h"
+#include "ui/graphvizdiagramsbuilder.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500

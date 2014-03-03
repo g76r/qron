@@ -1,5 +1,5 @@
 *.pro.user
-*-build-*
+build-*
 *.o
 moc_*.cpp
 /web
