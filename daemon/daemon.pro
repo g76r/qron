@@ -21,11 +21,11 @@ CONFIG -= app_bundle
 INCLUDEPATH += ../libqtpf ../libqtssu ../libqron
 win32:debug:LIBS += -L../libqtpf/build-libqtpf-windows/debug \
   -L../libqtpf/build-libqtpfsql-windows/debug \
-  -L../libqtpf/build-libqron-windows/debug \
+  -L../build-libqron-windows/debug \
   -L../build-libqtssu-windows/debug
 win32:release:LIBS += -L../libqtpf/build-libqtpf-windows/release \
   -L../libqtpf/build-libqtpfsql-windows/release \
-  -L../libqtpf/build-libqron-windows/release \
+  -L../build-libqron-windows/release \
   -L../build-libqtssu-windows/release
 unix:LIBS += -L../libqtpf/libqtpf -L../libqtpf/libqtpfsql -L../libqtssu \
   -L../libqron
