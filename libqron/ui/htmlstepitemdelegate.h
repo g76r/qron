@@ -14,9 +14,10 @@
 #ifndef HTMLSTEPITEMDELEGATE_H
 #define HTMLSTEPITEMDELEGATE_H
 
+#include "libqron_global.h"
 #include "textview/htmlitemdelegate.h"
 
-class HtmlStepItemDelegate : public HtmlItemDelegate {
+class LIBQRONSHARED_EXPORT HtmlStepItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlStepItemDelegate)
 public:

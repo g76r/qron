@@ -20,7 +20,7 @@
 
 /** Model holding alert channels list, one per line. Currently almost
  * useless. */
-class AlertChannelsModel : public TextMatrixModel {
+class LIBQRONSHARED_EXPORT AlertChannelsModel : public TextMatrixModel {
   Q_OBJECT
   Q_DISABLE_COPY(AlertChannelsModel)
 

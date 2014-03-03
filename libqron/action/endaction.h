@@ -20,7 +20,7 @@
 class EndActionData;
 class Scheduler;
 
-class EndAction : public Action {
+class LIBQRONSHARED_EXPORT EndAction : public Action {
 public:
   explicit EndAction(Scheduler *scheduler = 0, bool success = true,
                      int returnCode = 0);

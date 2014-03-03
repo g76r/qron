@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,13 +14,14 @@
 #ifndef LOGFILE_H
 #define LOGFILE_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include "log/log.h"
 
 class LogFileData;
 
 /** Log file definition. */
-class LogFile {
+class LIBQRONSHARED_EXPORT LogFile {
   QSharedDataPointer<LogFileData> d;
 
 public:

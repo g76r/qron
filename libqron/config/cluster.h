@@ -14,6 +14,7 @@
 #ifndef CLUSTER_H
 #define CLUSTER_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include <QList>
 #include "host.h"
@@ -25,7 +26,7 @@ class PfNode;
  * It consist of a set of hosts grouped together as a target for load balancing,
  * failover or dispatching purposes.
  * @see Host */
-class Cluster {
+class LIBQRONSHARED_EXPORT Cluster {
   QSharedDataPointer<ClusterData> d;
 
 public:

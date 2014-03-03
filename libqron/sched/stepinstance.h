@@ -21,7 +21,7 @@
 class StepInstanceData;
 class Executor;
 
-class StepInstance {
+class LIBQRONSHARED_EXPORT StepInstance {
   QSharedDataPointer<StepInstanceData> d;
 
 public:

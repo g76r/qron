@@ -14,6 +14,7 @@
 #ifndef SCHEDULERCONFIG_H
 #define SCHEDULERCONFIG_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include <QHash>
 #include <QString>
@@ -28,7 +29,7 @@
 class SchedulerConfigData;
 
 /** Whole scheduler configuration */
-class SchedulerConfig {
+class LIBQRONSHARED_EXPORT SchedulerConfig {
   QSharedDataPointer<SchedulerConfigData> d;
 public:
   SchedulerConfig();

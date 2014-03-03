@@ -171,4 +171,5 @@ HEADERS += \
     config/schedulerconfig.h \
     config/alerterconfig.h \
     config/accesscontrolconfig.h \
-    ui/graphvizdiagramsbuilder.h
+    ui/graphvizdiagramsbuilder.h \
+    libqron_global.h

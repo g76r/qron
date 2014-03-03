@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,21 +11,13 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef LOGALERTCHANNEL_H
-#define LOGALERTCHANNEL_H
+#ifndef LIBQRON_GLOBAL_H
+#define LIBQRON_GLOBAL_H
 
-#include "alertchannel.h"
+#if defined(LIBQRON_LIBRARY)
+#  define LIBQRONSHARED_EXPORT Q_DECL_EXPORT
+#else
+#  define LIBQRONSHARED_EXPORT Q_DECL_IMPORT
+#endif
 
-/** This is a mock alert channel that write the alert into log.
- * This channel is not intended for real life but only for test cases.
- */
-class LIBQRONSHARED_EXPORT LogAlertChannel : public AlertChannel {
-  Q_OBJECT
-  Q_DISABLE_COPY(LogAlertChannel)
-
-public:
-  LogAlertChannel(QObject *parent, QPointer<Alerter> alerter);
-  void doSendMessage(Alert alert, MessageType type);
-};
-
-#endif // LOGALERTCHANNEL_H
+#endif // LIBQRON_GLOBAL_H

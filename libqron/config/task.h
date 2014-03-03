@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,6 +14,7 @@
 #ifndef TASK_H
 #define TASK_H
 
+#include "libqron_global.h"
 #include <QSharedData>
 #include "util/paramset.h"
 #include <QSet>
@@ -34,7 +35,7 @@ class StepInstance;
 
 /** Data holder for the association between a workflow trigger and actions to
   * be performed. */
-class WorkflowTriggerSubscription {
+class LIBQRONSHARED_EXPORT WorkflowTriggerSubscription {
 private:
   QSharedDataPointer<WorkflowTriggerSubscriptionData> d;
 

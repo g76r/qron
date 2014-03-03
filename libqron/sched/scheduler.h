@@ -40,7 +40,7 @@ class CronTrigger;
 
 /** Core qron scheduler class.
  * Mainly responsible for configuration, queueing and event handling. */
-class Scheduler : public QObject {
+class LIBQRONSHARED_EXPORT Scheduler : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Scheduler)
   QThread *_thread;

@@ -22,7 +22,7 @@
  * being associated in the returned QHash with one of the following keys:
  * - tasksDeploymentDiagram
  * - tasksTriggerDiagram */
-class GraphvizDiagramsBuilder {
+class LIBQRONSHARED_EXPORT GraphvizDiagramsBuilder {
   GraphvizDiagramsBuilder();
 
 public:

@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,6 +14,7 @@
 #ifndef HOST_H
 #define HOST_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include <QHash>
 
@@ -22,7 +23,7 @@ class PfNode;
 
 /** A host is a single execution target.
  * @see Cluster */
-class Host {
+class LIBQRONSHARED_EXPORT Host {
   QSharedDataPointer<HostData> d;
 
 public:

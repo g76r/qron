@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,7 +24,7 @@
 
 /** Model holding tasks along with their attributes, one task per line, in
  * fqtn alphabetical order. */
-class TasksModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT TasksModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TasksModel)
   QList<Task> _tasks;

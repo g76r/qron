@@ -27,7 +27,7 @@ class Alerter;
  * @see LogAlertChannel
  * @see UdpAlertChannel
  * @see Alerter */
-class AlertChannel : public QObject {
+class LIBQRONSHARED_EXPORT AlertChannel : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(AlertChannel)
 protected:

@@ -14,6 +14,7 @@
 #ifndef EVENTSUBSCRIPTION_H
 #define EVENTSUBSCRIPTION_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include "pf/pfnode.h"
 #include "util/paramset.h"
@@ -28,7 +29,7 @@ class Scheduler;
 /** Subscription to a given event (e.g. onsuccess) for one or several actions
  * (e.g. emitalert) with an optionnal filter and optionnal event subscription
  * parameters. */
-class EventSubscription {
+class LIBQRONSHARED_EXPORT EventSubscription {
   QSharedDataPointer<EventSubscriptionData> d;
 
 public:

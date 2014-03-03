@@ -22,7 +22,7 @@
 // TODO rename to HostsModel
 /** Model holding list of configured hosts, one per line, along with its
  * configuration attributes. */
-class HostsListModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT HostsListModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(HostsListModel)
   QList<Host> _hosts;

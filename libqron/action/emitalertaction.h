@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,7 +20,7 @@ class EmitAlertActionData;
 class Scheduler;
 
 /** Action emitting an alert. */
-class EmitAlertAction : public Action {
+class LIBQRONSHARED_EXPORT EmitAlertAction : public Action {
 public:
   explicit EmitAlertAction(Scheduler *scheduler = 0, QString alert = QString());
   EmitAlertAction(const EmitAlertAction &);

@@ -14,6 +14,7 @@
 #ifndef ALERTERCONFIG_H
 #define ALERTERCONFIG_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include "pf/pfnode.h"
 #include "util/paramset.h"
@@ -21,7 +22,7 @@
 
 class AlerterConfigData;
 
-class AlerterConfig {
+class LIBQRONSHARED_EXPORT AlerterConfig {
   QSharedDataPointer<AlerterConfigData> d;
 
 public:

@@ -14,6 +14,7 @@
 #ifndef STEP_H
 #define STEP_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include "util/paramset.h"
 
@@ -25,7 +26,7 @@ class Scheduler;
 class TaskInstance;
 
 /** Step of a workflow task. */
-class Step {
+class LIBQRONSHARED_EXPORT Step {
   QSharedDataPointer<StepData> d;
 public:
   enum Kind { Unknown, SubTask, AndJoin, OrJoin };

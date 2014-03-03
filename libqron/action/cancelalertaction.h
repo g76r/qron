@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,13 +14,14 @@
 #ifndef CANCELALERTACTION_H
 #define CANCELALERTACTION_H
 
+#include "libqron_global.h"
 #include "action.h"
 
 class CancelAlertActionData;
 class Scheduler;
 
 /** Action canceling an alert. */
-class CancelAlertAction : public Action {
+class LIBQRONSHARED_EXPORT CancelAlertAction : public Action {
 public:
   explicit CancelAlertAction(Scheduler *scheduler = 0,
                              QString alert = QString());

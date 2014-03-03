@@ -20,7 +20,7 @@
 #include "config/schedulerconfig.h"
 
 /** One-line table holding all Scheduler's events lists. */
-class SchedulerEventsModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT SchedulerEventsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(SchedulerEventsModel)
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;

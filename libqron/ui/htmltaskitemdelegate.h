@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,10 +14,11 @@
 #ifndef HTMLTASKITEMDELEGATE_H
 #define HTMLTASKITEMDELEGATE_H
 
+#include "libqron_global.h"
 #include "textview/htmlitemdelegate.h"
 
 /** Specific item delegate for tasks. */
-class HtmlTaskItemDelegate : public HtmlItemDelegate {
+class LIBQRONSHARED_EXPORT HtmlTaskItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlTaskItemDelegate)
 public:

@@ -26,7 +26,7 @@ class QTimer;
 /** Log channel that send alerts as mails.
  * It performs alerts (including cancellations and reminders) aggregation within
  * at most one mail every %mindelaybetweensend seconds (default: 600" = 10'). */
-class MailAlertChannel : public AlertChannel {
+class LIBQRONSHARED_EXPORT MailAlertChannel : public AlertChannel {
   Q_OBJECT
   Q_DISABLE_COPY(MailAlertChannel)
   QHash<QString,MailAlertQueue*> _queues;

@@ -22,7 +22,7 @@
 /** Model holding list of configured clusters, one per line, along with its
  * configuration attributes. */
 // TODO rename to ClustersModel
-class ClustersListModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT ClustersListModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(ClustersListModel)
   QList<Cluster> _clusters;

@@ -14,6 +14,7 @@
 #ifndef ALERTRULE_H
 #define ALERTRULE_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include <QPointer>
 #include <QString>
@@ -26,7 +27,7 @@ class Alert;
 /** Alert rule is the configuration object defining the matching between an
  * alert id pattern and a alert channel, with optional additional parameters.
  * @see Alerter */
-class AlertRule {
+class LIBQRONSHARED_EXPORT AlertRule {
   QSharedDataPointer<AlertRuleData> d;
 
 public:

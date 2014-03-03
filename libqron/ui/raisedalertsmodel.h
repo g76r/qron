@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,13 +14,14 @@
 #ifndef RAISEDALERTSMODEL_H
 #define RAISEDALERTSMODEL_H
 
+#include "libqron_global.h"
 #include <QAbstractTableModel>
 #include <QString>
 #include <QDateTime>
 
 /** Model holding raised alerts along with their raise and scheduled
  * cancellation dates, one alert per line, in reverse order of raising. */
-class RaisedAlertsModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT RaisedAlertsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(RaisedAlertsModel)
   class RaisedAlert {

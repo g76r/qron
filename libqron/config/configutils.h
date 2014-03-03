@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,6 +14,7 @@
 #ifndef CONFIGUTILS_H
 #define CONFIGUTILS_H
 
+#include "libqron_global.h"
 #include "pf/pfnode.h"
 #include "util/paramset.h"
 #include <QRegExp>
@@ -22,7 +23,7 @@ class EventSubscription;
 class Scheduler;
 
 /** Miscellaneous tools for handling configuration */
-class ConfigUtils {
+class LIBQRONSHARED_EXPORT ConfigUtils {
 public:
   static inline void loadParamSet(PfNode parentnode, ParamSet *params) {
     return loadGenericParamSet(parentnode, params, "param"); }

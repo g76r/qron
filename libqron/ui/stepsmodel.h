@@ -22,7 +22,7 @@
 
 /** Model holding steps along with their attributes, one step per line, in
  * fqsn alphabetical order. */
-class StepsModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT StepsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(StepsModel)
   class StepWrapper;

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@
 #include <QSharedData>
 #include "util/paramset.h"
 
-class TriggerData : public QSharedData {
+class LIBQRONSHARED_EXPORT TriggerData : public QSharedData {
 public:
   ParamSet _overridingParams;
   Calendar _calendar;

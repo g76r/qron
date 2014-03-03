@@ -14,6 +14,7 @@
 #ifndef ACTION_H
 #define ACTION_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include "util/paramset.h"
 #include <QStringList>
@@ -26,7 +27,7 @@ class TaskInstance;
 class EventSubscription;
 
 /** Action performed when an event (e.g. onsuccess) occurs. */
-class Action {
+class LIBQRONSHARED_EXPORT Action {
 protected:
   QSharedDataPointer<ActionData> d;
 

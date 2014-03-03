@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,10 +14,11 @@
 #ifndef HTMLALERTITEMDELEGATE_H
 #define HTMLALERTITEMDELEGATE_H
 
+#include "libqron_global.h"
 #include "textview/htmlitemdelegate.h"
 
 /** Specific item delegate for alerts (both raised alerts and emited alerts). */
-class HtmlAlertItemDelegate : public HtmlItemDelegate {
+class LIBQRONSHARED_EXPORT HtmlAlertItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlAlertItemDelegate)
   int _alertColumn, _actionsColumn;

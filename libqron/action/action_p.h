@@ -19,7 +19,7 @@
 #include "sched/scheduler.h"
 #include "config/eventsubscription.h"
 
-class ActionData : public QSharedData {
+class LIBQRONSHARED_EXPORT ActionData : public QSharedData {
 public:
   QPointer<Scheduler> _scheduler;
   explicit ActionData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }

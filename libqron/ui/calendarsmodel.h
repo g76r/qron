@@ -20,7 +20,7 @@
 #include "config/schedulerconfig.h"
 
 /** Model holding named calendars list, one per line. */
-class CalendarsModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT CalendarsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(CalendarsModel)
   QList<Calendar> _calendars;

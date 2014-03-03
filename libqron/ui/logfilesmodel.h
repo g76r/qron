@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,7 +19,7 @@
 #include "config/logfile.h"
 
 /** Model holding log files configuration, one file per line. */
-class LogFilesModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT LogFilesModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(LogFilesModel)
   QList<LogFile> _logfiles;

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,7 +22,7 @@ class PostNoticeActionData;
 class Scheduler;
 
 /** Action posting a notice. */
-class PostNoticeAction : public Action {
+class LIBQRONSHARED_EXPORT PostNoticeAction : public Action {
 public:
   explicit PostNoticeAction(Scheduler *scheduler = 0,
                             QString notice = QString(),

@@ -21,7 +21,7 @@
 
 /** Model holding alert rules configuration, one rule per line, in their
  * evaluation order. */
-class AlertRulesModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT AlertRulesModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(AlertRulesModel)
   QList<AlertRule> _rules;

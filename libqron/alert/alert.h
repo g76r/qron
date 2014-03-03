@@ -14,6 +14,7 @@
 #ifndef ALERT_H
 #define ALERT_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 #include "config/alertrule.h"
 #include <QDateTime>
@@ -23,7 +24,7 @@ class AlertData;
 
 /** Class used to represent alert data during emission, in or between Alerter
  * and AlertChannel classes. */
-class Alert : public ParamsProvider {
+class LIBQRONSHARED_EXPORT Alert : public ParamsProvider {
   QSharedDataPointer<AlertData> d;
 
 public:

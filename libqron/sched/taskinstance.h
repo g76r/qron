@@ -25,7 +25,7 @@ class TaskInstanceData;
 
 /** Instance of a task created when the execution is requested and used to track
  * the execution until it is finished and even after. */
-class TaskInstance : public ParamsProvider {
+class LIBQRONSHARED_EXPORT TaskInstance : public ParamsProvider {
   QSharedDataPointer<TaskInstanceData> d;
 
 public:

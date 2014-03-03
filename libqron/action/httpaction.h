@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ class HttpActionData;
 
 /** Action sending an arbitrary HTTP request.
  * @deprecated not yet implemented */
-class HttpAction : public Action{
+class LIBQRONSHARED_EXPORT HttpAction : public Action{
 public:
   explicit  HttpAction(QString url = QString(), ParamSet params = ParamSet());
   HttpAction(const HttpAction &);

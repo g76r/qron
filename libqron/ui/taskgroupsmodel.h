@@ -21,7 +21,7 @@
 
 /** Model holding tasks groups along with their attributes, one group per line,
  * in id alphabetical order. */
-class TaskGroupsModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT TaskGroupsModel : public QAbstractTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TaskGroupsModel)
   QList<TaskGroup> _groups;

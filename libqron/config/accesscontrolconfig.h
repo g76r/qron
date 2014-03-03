@@ -14,11 +14,12 @@
 #ifndef ACCESSCONTROLCONFIG_H
 #define ACCESSCONTROLCONFIG_H
 
+#include "libqron_global.h"
 #include <QSharedDataPointer>
 
 class AccessControlConfigData;
 
-class AccessControlConfig {
+class LIBQRONSHARED_EXPORT AccessControlConfig {
   QSharedDataPointer<AccessControlConfigData> d;
 
 public:
