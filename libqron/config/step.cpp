@@ -35,7 +35,8 @@ Step::Step() {
 }
 
 Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
-           QHash<QString,Task> oldTasks) {
+           QHash<QString,Task> oldTasks,
+           QHash<QString, Calendar> namedCalendars) {
   StepData *sd = new StepData;
   sd->_scheduler = scheduler;
   sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false);
@@ -58,7 +59,7 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
       Log::warning() << "ignoring inconsistent taskgroup: " << node.toString();
     node.setContent(workflow.id()+"-"+node.contentAsString());
     sd->_subtask = Task(node, scheduler, workflow.taskGroup(), oldTasks,
-                        workflow);
+                        workflow, namedCalendars);
     if (sd->_subtask.isNull()) {
       Log::error() << "step with invalid subtask: " << node.toString();
       delete sd;

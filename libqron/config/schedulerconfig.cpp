@@ -190,7 +190,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   foreach (PfNode node, root.childrenByName("task")) {
     QString taskGroupId = node.attribute("taskgroup");
     TaskGroup taskGroup = _tasksGroups.value(taskGroupId);
-    Task task(node, scheduler, taskGroup, oldTasks, Task());
+    Task task(node, scheduler, taskGroup, oldTasks, Task(), _namedCalendars);
     if (taskGroupId.isEmpty() || taskGroup.isNull()) {
       Log::error() << "ignoring task with invalid taskgroup: " << node.toPf();
       goto ignore_task;

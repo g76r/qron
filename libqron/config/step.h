@@ -24,6 +24,7 @@ class EventSubscription;
 class PfNode;
 class Scheduler;
 class TaskInstance;
+class Calendar;
 
 /** Step of a workflow task. */
 class LIBQRONSHARED_EXPORT Step {
@@ -34,7 +35,7 @@ public:
   Step();
   Step(const Step &);
   Step(PfNode node, Scheduler *scheduler, Task workflow,
-       QHash<QString, Task> oldTasks);
+       QHash<QString, Task> oldTasks, QHash<QString, Calendar> namedCalendars);
   Step &operator=(const Step &);
   ~Step();
   bool operator==(const Step &other) const;

@@ -32,6 +32,7 @@ class EventSubscription;
 class Step;
 class WorkflowTriggerSubscriptionData;
 class StepInstance;
+class Calendar;
 
 /** Data holder for the association between a workflow trigger and actions to
   * be performed. */
@@ -60,7 +61,8 @@ public:
   Task();
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-       QHash<QString,Task> oldTasks, Task supertask);
+       QHash<QString,Task> oldTasks, Task supertask,
+       QHash<QString, Calendar> namedCalendars);
   ~Task();
   Task &operator=(const Task &other);
   bool operator==(const Task &other) const;

@@ -117,7 +117,8 @@ Task::Task(const Task &other) : d(other.d) {
 }
 
 Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-           QHash<QString, Task> oldTasks, Task supertask) {
+           QHash<QString, Task> oldTasks, Task supertask,
+           QHash<QString,Calendar> namedCalendars) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
   td->_id = ConfigUtils::sanitizeId(node.contentAsString());
@@ -187,7 +188,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         QString content = grandchild.contentAsString();
         QString triggerType = grandchild.name();
         if (triggerType == "notice") {
-          NoticeTrigger trigger(grandchild, scheduler->namedCalendars());
+          NoticeTrigger trigger(grandchild, namedCalendars);
           if (trigger.isValid()) {
             td->_noticeTriggers.append(trigger);
             Log::debug() << "configured notice trigger '" << content
@@ -199,7 +200,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
             return;
           }
         } else if (triggerType == "cron") {
-          CronTrigger trigger(grandchild, scheduler->namedCalendars());
+          CronTrigger trigger(grandchild, namedCalendars);
           if (trigger.isValid()) {
             // keep last triggered timestamp from previously defined trigger
             CronTrigger oldTrigger =
@@ -284,7 +285,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       return;
     }
     foreach (PfNode child, steps) {
-      Step step(child, scheduler, *this, oldTasks);
+      Step step(child, scheduler, *this, oldTasks, namedCalendars);
       if (step.isNull()) {
         Log::error() << "workflow task " << d->_fqtn
                      << " has at less one invalid step definition";
@@ -320,7 +321,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       }
       foreach (PfNode grandchild, child.childrenByName("cron")) {
         QString tsId = QString::number(tsCount++);
-        CronTrigger trigger(grandchild, scheduler->namedCalendars());
+        CronTrigger trigger(grandchild, namedCalendars);
         if (trigger.isValid()) {
           d->_workflowCronTriggersById.insert(tsId, trigger);
           d->_workflowTriggerSubscriptionsById.insert(
@@ -331,7 +332,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       }
       foreach (PfNode grandchild, child.childrenByName("notice")) {
         QString tsId = QString::number(tsCount++);
-        NoticeTrigger trigger(grandchild, scheduler->namedCalendars());
+        NoticeTrigger trigger(grandchild, namedCalendars);
         if (trigger.isValid()) {
           d->_workflowTriggerSubscriptionsByNotice
               .insert(trigger.expression(),
