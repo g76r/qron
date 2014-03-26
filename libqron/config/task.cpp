@@ -466,6 +466,11 @@ QString Task::target() const {
   return d ? d->_target : QString();
 }
 
+void Task::setTarget(QString target) {
+  if (d)
+    d->_target = target;
+}
+
 QString Task::info() const {
   return d ? d->_info : QString();
 }

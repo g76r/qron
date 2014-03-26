@@ -65,6 +65,10 @@ public:
 //  void loadEventSubscription(
 //      QString subscriberId, PfNode listnode, QList<EventSubscription> *list,
 //      QString contextLabel, Scheduler *scheduler, Task contextTask = Task());
+  /** Rename cluster, do not perform any sanity check before or after. */
+  Cluster renameCluster(QString oldName, QString newName);
+  /** Update task, do not perform any sanity check before or after. */
+  Task updateTask(Task task);
 };
 
 #endif // SCHEDULERCONFIG_H

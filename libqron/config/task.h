@@ -53,7 +53,7 @@ public:
 };
 
 /** Core task definition object, being it a standalone task or workflow. */
-class Task : public ParamsProvider {
+class LIBQRONSHARED_EXPORT Task : public ParamsProvider {
   QSharedDataPointer<TaskData> d;
 
 public:
@@ -76,6 +76,7 @@ public:
   QString mean() const;
   QString command() const;
   QString target() const;
+  void setTarget(QString target);
   QString info() const;
   TaskGroup taskGroup() const;
   /** Resources consumed. */
@@ -154,6 +155,6 @@ public:
   QHash<QString,CronTrigger> workflowCronTriggersById() const;
 };
 
-QDebug operator<<(QDebug dbg, const Task &task);
+QDebug LIBQRONSHARED_EXPORT operator<<(QDebug dbg, const Task &task);
 
 #endif // TASK_H

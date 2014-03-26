@@ -455,3 +455,22 @@ QList<LogFile> SchedulerConfig::logfiles() const {
 QList<Logger*> SchedulerConfig::loggers() const {
   return d ? d ->_loggers : QList<Logger*>();
 }
+
+Cluster SchedulerConfig::renameCluster(QString oldName, QString newName) {
+  if (d && d->_clusters.contains(oldName)) {
+    Cluster cluster = d->_clusters[oldName];
+    cluster.setId(newName);
+    d->_clusters.remove(oldName);
+    d->_clusters.insert(newName, cluster);
+    return cluster;
+  }
+  return Cluster();
+}
+
+Task SchedulerConfig::updateTask(Task task) {
+  if (d && d->_tasks.contains(task.fqtn())) {
+    d->_tasks.insert(task.fqtn(), task);
+    return task;
+  }
+  return Task();
+}

@@ -41,6 +41,7 @@ public:
   void appendHost(Host host);
   QList<Host> hosts() const;
   QString id() const;
+  void setId(QString id);
   QString balancing() const;
 };
 

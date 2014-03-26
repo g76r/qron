@@ -80,6 +80,11 @@ QString Cluster::id() const {
   return d ? d->_id : QString();
 }
 
+void Cluster::setId(QString id) {
+  if (d)
+    d->_id = id;
+}
+
 QString Cluster::balancing() const {
   return d ? d->_balancing : QString();
 }
