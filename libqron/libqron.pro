@@ -106,7 +106,8 @@ SOURCES += \
     config/schedulerconfig.cpp \
     config/alerterconfig.cpp \
     config/accesscontrolconfig.cpp \
-    ui/graphvizdiagramsbuilder.cpp
+    ui/graphvizdiagramsbuilder.cpp \
+    ui/qronuiutils.cpp
 
 HEADERS += \
     config/task.h \
@@ -172,4 +173,5 @@ HEADERS += \
     config/alerterconfig.h \
     config/accesscontrolconfig.h \
     ui/graphvizdiagramsbuilder.h \
-    libqron_global.h
+    libqron_global.h \
+    ui/qronuiutils.h

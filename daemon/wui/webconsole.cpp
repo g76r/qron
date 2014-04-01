@@ -819,24 +819,20 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Triggers (scheduling)</th><td>"
                         +task.triggersWithCalendarsAsString()+"</td></tr>"
                         "<tr><th>Minimum expected duration (seconds)</th><td>"
-                        +TasksModel::taskMinExpectedDuration(task)+"</td></tr>"
+                        +task.uiString(23)+"</td></tr>"
                         "<tr><th>Maximum expected duration (seconds)</th><td>"
-                        +TasksModel::taskMaxExpectedDuration(task)+"</td></tr>"
+                        +task.uiString(24)+"</td></tr>"
                         "<tr><th>Maximum duration before abort "
-                        "(seconds)</th><td>"
-                        +TasksModel::taskMaxDurationBeforeAbort(task)
-                        +"</td></tr>");
+                        "(seconds)</th><td>"+task.uiString(27)+"</td></tr>");
         params.setValue("status",
                         "<tr><th>Enabled</th><td>"
                         +QString(task.enabled()
                                  ? "true"
                                  : "<i class=\"fa fa-ban\"></i> false")
                         +"</td></tr><tr><th>Last execution status</th><td>"
-                        +HtmlUtils::htmlEncode(
-                          TasksModel::taskLastExecStatus(task))+"</td></tr>"
+                        +HtmlUtils::htmlEncode(task.uiString(19))+"</td></tr>"
                         "<tr><th>Last execution duration (seconds)</th><td>"
-                        +HtmlUtils::htmlEncode(
-                          TasksModel::taskLastExecDuration(task))+"</td></tr>"
+                        +HtmlUtils::htmlEncode(task.uiString(26))+"</td></tr>"
                         "<tr><th>Next execution</th><td>"
                         +task.nextScheduledExecution()
                         .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"
@@ -858,9 +854,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Request-time overridable parameters</th><td>"
                         +task.requestFormFieldsAsHtmlDescription()+"</td></tr>"
                         "<tr><th>System environment variables set (setenv)</th>"
-                        "<td>"+TasksModel::taskSetenv(task)+"</td></tr>"
+                        "<td>"+task.uiString(21)+"</td></tr>"
                         "<tr><th>System environment variables unset (unsetenv)"
-                        "</th><td>"+TasksModel::taskUnsetenv(task)+"</td></tr>"
+                        "</th><td>"+task.uiString(22)+"</td></tr>"
                         "<tr><th>Consumed resources</th><td>"
                         +task.resourcesAsString()+"</td></tr>"
                         "<tr><th>Maximum instances count at a time</th><td>"

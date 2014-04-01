@@ -22,9 +22,9 @@
 
 class StepData : public QSharedData {
 public:
-  QString _id, _fqsn;
+  QString _id, _fqsn, _workflowFqtn;
   Step::Kind _kind;
-  Task _wokflow, _subtask;
+  Task _subtask;
   QPointer<Scheduler> _scheduler;
   QSet<QString> _predecessors;
   QList<EventSubscription> _onready;
@@ -34,13 +34,13 @@ public:
 Step::Step() {
 }
 
-Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
-           QHash<QString,Task> oldTasks) {
+Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
+           QString workflowTaskId, QHash<QString,Task> oldTasks) {
   StepData *sd = new StepData;
   sd->_scheduler = scheduler;
   sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false);
-  sd->_fqsn = workflow.fqtn()+":"+sd->_id;
-  sd->_wokflow = workflow;
+  sd->_fqsn = taskGroup.id()+"."+workflowTaskId+":"+sd->_id;
+  sd->_workflowFqtn = taskGroup.id()+"."+workflowTaskId;
   if (node.name() == "and") {
     sd->_kind = Step::AndJoin;
     ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
@@ -54,11 +54,11 @@ Step::Step(PfNode node, Scheduler *scheduler, Task workflow,
   } else if (node.name() == "task") {
     sd->_kind = Step::SubTask;
     QString taskgroup = node.attribute("taskgroup");
-    if (!taskgroup.isEmpty() && taskgroup != workflow.taskGroup().id())
-      Log::warning() << "ignoring inconsistent taskgroup: " << node.toString();
-    node.setContent(workflow.id()+"-"+node.contentAsString());
-    sd->_subtask = Task(node, scheduler, workflow.taskGroup(), oldTasks,
-                        workflow);
+    if (!taskgroup.isEmpty())
+      Log::warning() << "ignoring subtask taskgroup: " << node.toString();
+    node.setContent(workflowTaskId+"-"+node.contentAsString());
+    sd->_subtask = Task(node, scheduler, taskGroup, oldTasks,
+                        sd->_workflowFqtn);
     if (sd->_subtask.isNull()) {
       Log::error() << "step with invalid subtask: " << node.toString();
       delete sd;
@@ -112,8 +112,8 @@ Task Step::subtask() const {
   return d ? d->_subtask : Task();
 }
 
-Task Step::workflow() const {
-  return d ? d->_wokflow : Task();
+QString Step::workflowFqtn() const {
+  return d ? d->_workflowFqtn : QString();
 }
 
 QSet<QString> Step::predecessors() const {

@@ -30,6 +30,42 @@
 #include "config/eventsubscription.h"
 #include "sched/stepinstance.h"
 #include "ui/graphvizdiagramsbuilder.h"
+#include "ui/qronuiutils.h"
+
+static QString _uiHeaderNames[] = {
+  "Id", // 0
+  "TaskGroup Id",
+  "Label",
+  "Mean",
+  "Command",
+  "Target", // 5
+  "Trigger",
+  "Parameters",
+  "Resources",
+  "Lat execution",
+  "Next execution", // 10
+  "Fully qualified task name",
+  "Max intances",
+  "Instances count",
+  "On start",
+  "On success", // 15
+  "On failure",
+  "Instances / max",
+  "Actions",
+  "Last execution status",
+  "System environment", // 20
+  "Setenv",
+  "Unsetenv",
+  "Min expected duration",
+  "Max expected duration",
+  "Request-time overridable params", // 25
+  "Last execution duration",
+  "Max duration before abort",
+  "Triggers with calendars",
+  "Enabled",
+  "Has triggers with calendars", // 30
+  "Workflow"
+};
 
 class WorkflowTriggerSubscriptionData : public QSharedData {
 public:
@@ -71,7 +107,7 @@ EventSubscription WorkflowTriggerSubscription::eventSubscription() const {
   return d ? d->_eventSubscription : EventSubscription();
 }
 
-class TaskData : public QSharedData {
+class TaskData : public SharedUiItemData {
 public:
   QString _id, _label, _mean, _command, _target, _info, _fqtn;
   TaskGroup _group;
@@ -85,9 +121,9 @@ public:
   QPointer<Scheduler> _scheduler;
   long long _maxExpectedDuration, _minExpectedDuration, _maxDurationBeforeAbort;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
-  QList<RequestFormField> _requestFormField;
+  QList<RequestFormField> _requestFormFields;
   QStringList _otherTriggers;
-  Task _supertask;
+  QString _supertaskFqtn;
   QHash<QString,Step> _steps;
   QStringList _startSteps;
   QString _workflowDiagram;
@@ -108,16 +144,26 @@ public:
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true), _lastSuccessful(true), _lastReturnCode(-1),
     _lastTotalMillis(-1)  { }
+  QDateTime lastExecution() const;
+  QDateTime nextScheduledExecution() const;
+  QString resourcesAsString() const;
+  QString triggersAsString() const;
+  QString triggersWithCalendarsAsString() const;
+  bool triggersHaveCalendar() const;
+  QVariant uiData(int section, int role) const;
 };
 
 Task::Task() {
+  //Log::fatal() << "Task::Task " << (sizeof(Task)) << " " << (sizeof(TaskData));
 }
 
-Task::Task(const Task &other) : d(other.d) {
+Task::Task(const Task &other) : SharedUiItem(other) {
+  //Log::fatal() << "Task::Task copying " << other.fqtn() << " " << other.td()
+  //             << " " << ((const Task*)this)->td();
 }
 
 Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-           QHash<QString, Task> oldTasks, Task supertask) {
+           QHash<QString, Task> oldTasks, QString supertaskFqtn) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
   td->_id = ConfigUtils::sanitizeId(node.contentAsString());
@@ -153,8 +199,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_minExpectedDuration = f < 0 ? 0 : (long long)(f*1000);
   f = node.doubleAttribute("maxdurationbeforeabort", -1);
   td->_maxDurationBeforeAbort = f < 0 ? LLONG_MAX : (long long)(f*1000);
-  td->_params.setParent(supertask.isNull() ? taskGroup.params()
-                                           : supertask.params());
+  td->_params.setParent(taskGroup.params());
   ConfigUtils::loadParamSet(node, &td->_params);
   QString filter = td->_params.value("stderrfilter");
   if (!filter.isEmpty())
@@ -164,11 +209,11 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_unsetenv.setParent(taskGroup.unsetenv());
   ConfigUtils::loadUnsetenv(node, &td->_unsetenv);
   QHash<QString,CronTrigger> oldCronTriggers;
-  td->_supertask = supertask;
+  td->_supertaskFqtn = supertaskFqtn;
   // copy mutable fields from old task and build old cron triggers dictionary
   Task oldTask = oldTasks.value(td->_fqtn);
-  if (oldTask.d) {
-    foreach (const CronTrigger ct, oldTask.d->_cronTriggers)
+  if (!oldTask.isNull()) {
+    foreach (const CronTrigger ct, oldTask.td()->_cronTriggers)
       oldCronTriggers.insert(ct.canonicalExpression(), ct);
     td->_lastExecution = oldTask.lastExecution().isValid()
         ? oldTask.lastExecution().toMSecsSinceEpoch() : LLONG_MIN;
@@ -181,7 +226,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     td->_enabled = td->_enabled && oldTask.enabled();
   }
   // LATER load cron triggers last exec timestamp from on-disk log
-  if (supertask.isNull()) { // subtasks do not have triggers
+  if (supertaskFqtn.isEmpty()) { // subtasks do not have triggers
     foreach (PfNode child, node.childrenByName("trigger")) {
       foreach (PfNode grandchild, child.children()) {
         QString content = grandchild.contentAsString();
@@ -258,61 +303,60 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     foreach (PfNode child, children.last().childrenByName("field")) {
       RequestFormField field(child);
       if (!field.isNull())
-        td->_requestFormField.append(field);
+        td->_requestFormFields.append(field);
     }
   }
-  d = td; // needed to give a non empty *this to loadEventListConfiguration() and Step()
-  ConfigUtils::loadEventSubscription(node, "onstart", d->_fqtn, &d->_onstart,
+  ConfigUtils::loadEventSubscription(node, "onstart", td->_fqtn, &td->_onstart,
                                      scheduler);
-  ConfigUtils::loadEventSubscription(node, "onsuccess", d->_fqtn,
-                                     &d->_onsuccess, scheduler);
-  ConfigUtils::loadEventSubscription(node, "onfinish", d->_fqtn,
-                                     &d->_onsuccess, scheduler);
-  ConfigUtils::loadEventSubscription(node, "onfailure", d->_fqtn,
-                                     &d->_onfailure, scheduler);
-  ConfigUtils::loadEventSubscription(node, "onfinish", d->_fqtn,
-                                     &d->_onfailure, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onsuccess", td->_fqtn,
+                                     &td->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", td->_fqtn,
+                                     &td->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfailure", td->_fqtn,
+                                     &td->_onfailure, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", td->_fqtn,
+                                     &td->_onfailure, scheduler);
   QList<PfNode> steps = node.childrenByName("task")+node.childrenByName("and")
       +node.childrenByName("or");
-  if (d->_mean == "workflow") {
+  if (td->_mean == "workflow") {
     if (steps.isEmpty())
       Log::warning() << "workflow task with no step: " << node.toString();
-    if (!d->_supertask.isNull()) {
+    if (!supertaskFqtn.isNull()) {
       Log::error() << "workflow task not allowed as a workflow subtask: "
                    << node.toString();
-      d = 0;
+      delete td;
       return;
     }
     foreach (PfNode child, steps) {
-      Step step(child, scheduler, *this, oldTasks);
+      Step step(child, scheduler, taskGroup, td->_id, oldTasks);
       if (step.isNull()) {
-        Log::error() << "workflow task " << d->_fqtn
+        Log::error() << "workflow task " << td->_fqtn
                      << " has at less one invalid step definition";
-        d = 0;
+        delete td;
         return;
-      } if (d->_steps.contains(step.id())) {
-        Log::error() << "workflow task " << d->_fqtn
+      } if (td->_steps.contains(step.id())) {
+        Log::error() << "workflow task " << td->_fqtn
                      << " has duplicate steps with id " << step.id();
-        d = 0;
+        delete td;
         return;
       } else {
-        d->_steps.insert(step.id(), step);
+        td->_steps.insert(step.id(), step);
       }
     }
-    d->_startSteps = node.stringListAttribute("start");
-    foreach (QString id, d->_startSteps)
-      if (!d->_steps.contains(id)) {
-        Log::error() << "workflow task " << d->_fqtn
+    td->_startSteps = node.stringListAttribute("start");
+    foreach (QString id, td->_startSteps)
+      if (!td->_steps.contains(id)) {
+        Log::error() << "workflow task " << td->_fqtn
                      << " has invalid or lacking start steps: "
                      << node.toString();
-        d = 0;
+        delete td;
         return;
       }
     int tsCount = 0;
     QStringList ignoredChildren;
     ignoredChildren << "cron" << "notice";
     foreach (PfNode child, node.childrenByName("ontrigger")) {
-      EventSubscription es(d->_fqtn, child, scheduler, ignoredChildren);
+      EventSubscription es(td->_fqtn, child, scheduler, ignoredChildren);
       if (es.isNull() || es.actions().isEmpty()) {
         Log::warning() << "ignoring invalid or empty ontrigger: "
                        << node.toString();
@@ -322,8 +366,8 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         QString tsId = QString::number(tsCount++);
         CronTrigger trigger(grandchild, scheduler->namedCalendars());
         if (trigger.isValid()) {
-          d->_workflowCronTriggersById.insert(tsId, trigger);
-          d->_workflowTriggerSubscriptionsById.insert(
+          td->_workflowCronTriggersById.insert(tsId, trigger);
+          td->_workflowTriggerSubscriptionsById.insert(
                 tsId, WorkflowTriggerSubscription(trigger, es));
         } else
           Log::warning() << "ignoring invalid cron trigger in ontrigger: "
@@ -333,10 +377,10 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         QString tsId = QString::number(tsCount++);
         NoticeTrigger trigger(grandchild, scheduler->namedCalendars());
         if (trigger.isValid()) {
-          d->_workflowTriggerSubscriptionsByNotice
+          td->_workflowTriggerSubscriptionsByNotice
               .insert(trigger.expression(),
                       WorkflowTriggerSubscription(trigger, es));
-          d->_workflowTriggerSubscriptionsById.insert(
+          td->_workflowTriggerSubscriptionsById.insert(
                 tsId, WorkflowTriggerSubscription(trigger, es));
         } else
           Log::warning() << "ignoring invalid notice trigger in ontrigger: "
@@ -365,16 +409,16 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     //    format: ${source_fqtn_or_fqtn}|${event_name}|$end
     //    e.g. app1.group1.workflow1-step3|onfinish|$end
     //         app1.group1.workflow1:step4|onready|$end
-    foreach (QString id, d->_startSteps) {
-      d->_steps[id].insertPredecessor(d->_fqtn+"|start|"+id);
-      Log::debug() << "adding predecessor " << d->_fqtn+"|start|"+id
-                   << " to step " << d->_steps[id].fqsn();
+    foreach (QString id, td->_startSteps) {
+      td->_steps[id].insertPredecessor(td->_fqtn+"|start|"+id);
+      Log::debug() << "adding predecessor " << td->_fqtn+"|start|"+id
+                   << " to step " << td->_steps[id].fqsn();
     }
-    foreach (QString source, d->_steps.keys()) {
+    foreach (QString source, td->_steps.keys()) {
       QList<EventSubscription> subList
-          = d->_steps[source].onreadyEventSubscriptions()
-          + d->_steps[source].subtask().allEventsSubscriptions()
-          + d->_steps[source].subtask().taskGroup().allEventSubscriptions();
+          = td->_steps[source].onreadyEventSubscriptions()
+          + td->_steps[source].subtask().allEventsSubscriptions()
+          + td->_steps[source].subtask().taskGroup().allEventSubscriptions();
       foreach (EventSubscription es, subList) {
         foreach (Action a, es.actions()) {
           if (a.actionType() == "step") {
@@ -383,18 +427,18 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
             if (eventName == "onsuccess" || eventName == "onfailure")
               eventName = "onfinish";
             QString transitionId;
-            if (d->_steps[source].kind() == Step::SubTask) // fqtn
-              transitionId = d->_fqtn+"-"+source+"|"+eventName+"|"+target;
+            if (td->_steps[source].kind() == Step::SubTask) // fqtn
+              transitionId = td->_fqtn+"-"+source+"|"+eventName+"|"+target;
             else // fqsn
-              transitionId = d->_fqtn+":"+source+"|"+eventName+"|"+target;
-            if (d->_steps.contains(target)) {
+              transitionId = td->_fqtn+":"+source+"|"+eventName+"|"+target;
+            if (td->_steps.contains(target)) {
               Log::debug() << "registring predecessor " << transitionId
-                           << " to step " << d->_steps[target].fqsn();
-              d->_steps[target].insertPredecessor(transitionId);
+                           << " to step " << td->_steps[target].fqsn();
+              td->_steps[target].insertPredecessor(transitionId);
             } else {
               Log::error() << "cannot register predecessor " << transitionId
-                           << " with unknown target to workflow " << d->_fqtn;
-              d = 0;
+                           << " with unknown target to workflow " << td->_fqtn;
+              delete td;
               return;
             }
           }
@@ -409,16 +453,11 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       Log::warning() << "ignoring step definitions in non-workflow task: "
                      << node.toString();
   }
-  d->_workflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
+  setData(td);
+  td->_workflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
 }
 
 Task::~Task() {
-}
-
-Task &Task::operator=(const Task &other) {
-  if (this != &other)
-    d.operator=(other.d);
-  return *this;
 }
 
 bool Task::operator==(const Task &other) const {
@@ -430,154 +469,152 @@ bool Task::operator<(const Task &other) const {
 }
 
 ParamSet Task::params() const {
-  return d ? d->_params : ParamSet();
-}
-
-bool Task::isNull() const {
-  return !d;
+  return !isNull() ? td()->_params : ParamSet();
 }
 
 QList<NoticeTrigger> Task::noticeTriggers() const {
-  return d ? d->_noticeTriggers : QList<NoticeTrigger>();
+  return !isNull() ? td()->_noticeTriggers : QList<NoticeTrigger>();
 }
 
 QString Task::id() const {
-  return d ? d->_id : QString();
+  return !isNull() ? td()->_id : QString();
 }
 
 QString Task::fqtn() const {
-  return d ? d->_fqtn : QString();
+  return !isNull() ? td()->_fqtn : QString();
 }
 
 QString Task::label() const {
-  return d ? d->_label : QString();
+  return !isNull() ? td()->_label : QString();
 }
 
 QString Task::mean() const {
-  return d ? d->_mean : QString();
+  return !isNull() ? td()->_mean : QString();
 }
 
 QString Task::command() const {
-  return d ? d->_command : QString();
+  return !isNull() ? td()->_command : QString();
 }
 
 QString Task::target() const {
-  return d ? d->_target : QString();
+  return !isNull() ? td()->_target : QString();
 }
 
 QString Task::info() const {
-  return d ? d->_info : QString();
+  return !isNull() ? td()->_info : QString();
 }
 
 TaskGroup Task::taskGroup() const {
-  return d ? d->_group : TaskGroup();
+  return !isNull() ? td()->_group : TaskGroup();
 }
 
 QHash<QString, qint64> Task::resources() const {
-  return d ? d->_resources : QHash<QString,qint64>();
+  return !isNull() ? td()->_resources : QHash<QString,qint64>();
 }
 
 QString Task::resourcesAsString() const {
-  QString s;
-  if (d) {
-    bool first = true;
-    foreach(QString key, d->_resources.keys()) {
-      if (first)
-        first = false;
-      else
-        s.append(' ');
-      s.append(key).append('=')
-          .append(QString::number(d->_resources.value(key)));
-    }
-  }
-  return s;
+  return !isNull() ? td()->resourcesAsString() : QString();
+}
+
+QString TaskData::resourcesAsString() const {
+  return QronUiUtils::resourcesAsString(_resources);
 }
 
 QString Task::triggersAsString() const {
+  return !isNull() ? td()->triggersAsString() : QString();
+}
+
+QString TaskData::triggersAsString() const {
   QString s;
-  if (d) {
-    foreach (CronTrigger t, d->_cronTriggers)
-      s.append(t.humanReadableExpression()).append(' ');
-    foreach (NoticeTrigger t, d->_noticeTriggers)
-      s.append(t.humanReadableExpression()).append(' ');
-    foreach (QString t, d->_otherTriggers)
-      s.append(t).append(' ');
-  }
-  if (!s.isEmpty())
-    s.chop(1); // remove last space
+  foreach (CronTrigger t, _cronTriggers)
+    s.append(t.humanReadableExpression()).append(' ');
+  foreach (NoticeTrigger t, _noticeTriggers)
+    s.append(t.humanReadableExpression()).append(' ');
+  foreach (QString t, _otherTriggers)
+    s.append(t).append(' ');
+  s.chop(1); // remove last space
   return s;
 }
 
 QString Task::triggersWithCalendarsAsString() const {
+  return !isNull() ? td()->triggersWithCalendarsAsString() : QString();
+}
+
+QString TaskData::triggersWithCalendarsAsString() const {
   QString s;
-  if (d) {
-    foreach (CronTrigger t, d->_cronTriggers)
-      s.append(t.humanReadableExpressionWithCalendar()).append(' ');
-    foreach (NoticeTrigger t, d->_noticeTriggers)
-      s.append(t.humanReadableExpressionWithCalendar()).append(' ');
-    foreach (QString t, d->_otherTriggers)
-      s.append(t).append(" ");
-  }
-  if (!s.isEmpty())
-    s.chop(1); // remove last space
+  foreach (CronTrigger t, _cronTriggers)
+    s.append(t.humanReadableExpressionWithCalendar()).append(' ');
+  foreach (NoticeTrigger t, _noticeTriggers)
+    s.append(t.humanReadableExpressionWithCalendar()).append(' ');
+  foreach (QString t, _otherTriggers)
+    s.append(t).append(" ");
+  s.chop(1); // remove last space
   return s;
 }
 
 bool Task::triggersHaveCalendar() const {
-  if (d) {
-    foreach (CronTrigger t, d->_cronTriggers)
-      if (!t.calendar().isNull())
-        return true;
-    foreach (NoticeTrigger t, d->_noticeTriggers)
-      if (!t.calendar().isNull())
-        return true;
-  }
+  return !isNull() ? td()->triggersHaveCalendar() : false;
+}
+
+bool TaskData::triggersHaveCalendar() const {
+  foreach (CronTrigger t, _cronTriggers)
+    if (!t.calendar().isNull())
+      return true;
+  foreach (NoticeTrigger t, _noticeTriggers)
+    if (!t.calendar().isNull())
+      return true;
   return false;
 }
 
 QDateTime Task::lastExecution() const {
-  return d && d->_lastExecution != LLONG_MIN
-      ? QDateTime::fromMSecsSinceEpoch(d->_lastExecution) : QDateTime();
+  return !isNull() ? td()->lastExecution() : QDateTime();
+}
+
+QDateTime TaskData::lastExecution() const {
+  return _lastExecution != LLONG_MIN
+      ? QDateTime::fromMSecsSinceEpoch(_lastExecution) : QDateTime();
 }
 
 QDateTime Task::nextScheduledExecution() const {
-  return d && d->_nextScheduledExecution != LLONG_MIN
-      ? QDateTime::fromMSecsSinceEpoch(d->_nextScheduledExecution)
-      : QDateTime();
+  return !isNull() ? td()->nextScheduledExecution() : QDateTime();
+}
+
+QDateTime TaskData::nextScheduledExecution() const {
+  return _nextScheduledExecution != LLONG_MIN
+      ? QDateTime::fromMSecsSinceEpoch(_nextScheduledExecution) : QDateTime();
 }
 
 void Task::setLastExecution(QDateTime timestamp) const {
-  if (d)
-    d->_lastExecution = timestamp.isValid()
+  if (!isNull())
+    td()->_lastExecution = timestamp.isValid()
         ? timestamp.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
 void Task::setNextScheduledExecution(QDateTime timestamp) const {
-  if (d)
-    d->_nextScheduledExecution = timestamp.isValid()
+  if (!isNull())
+    td()->_nextScheduledExecution = timestamp.isValid()
         ? timestamp.toMSecsSinceEpoch() : LLONG_MIN;
 }
 
 int Task::maxInstances() const {
-  return d ? d->_maxInstances : 0;
+  return !isNull() ? td()->_maxInstances : 0;
 }
 
 int Task::instancesCount() const {
-  // LATER what did happen to operator int() in Qt5 ?
-  return d ? d->_instancesCount.fetchAndAddRelaxed(0) : 0;
+  return !isNull() ? td()->_instancesCount.load() : 0;
 }
 
 int Task::fetchAndAddInstancesCount(int valueToAdd) const {
-  return d ? d->_instancesCount.fetchAndAddOrdered(valueToAdd) : 0;
+  return !isNull() ? td()->_instancesCount.fetchAndAddOrdered(valueToAdd) : 0;
 }
 
 QList<QRegExp> Task::stderrFilters() const {
-  return d ? d->_stderrFilters : QList<QRegExp>();
+  return !isNull() ? td()->_stderrFilters : QList<QRegExp>();
 }
 
 void Task::appendStderrFilter(QRegExp filter) {
-  if (d)
-    d->_stderrFilters.append(filter);
+  if (!isNull())
+    td()->_stderrFilters.append(filter);
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {
@@ -586,102 +623,103 @@ QDebug operator<<(QDebug dbg, const Task &task) {
 }
 
 void Task::triggerStartEvents(TaskInstance instance) const {
-  if (d) {
-    d->_group.triggerStartEvents(instance);
-    foreach (EventSubscription sub, d->_onstart)
+  if (!isNull()) {
+    td()->_group.triggerStartEvents(instance);
+    foreach (EventSubscription sub, td()->_onstart)
       sub.triggerActions(instance);
   }
 }
 
 void Task::triggerSuccessEvents(TaskInstance instance) const {
-  if (d) {
-    d->_group.triggerSuccessEvents(instance);
-    foreach (EventSubscription sub, d->_onsuccess)
+  if (!isNull()) {
+    td()->_group.triggerSuccessEvents(instance);
+    foreach (EventSubscription sub, td()->_onsuccess)
       sub.triggerActions(instance);
   }
 }
 
 void Task::triggerFailureEvents(TaskInstance instance) const {
-  if (d) {
-    d->_group.triggerFailureEvents(instance);
-    foreach (EventSubscription sub, d->_onfailure)
+  if (!isNull()) {
+    td()->_group.triggerFailureEvents(instance);
+    foreach (EventSubscription sub, td()->_onfailure)
       sub.triggerActions(instance);
   }
 }
 
 QList<EventSubscription> Task::onstartEventSubscriptions() const {
-  return d ? d->_onstart : QList<EventSubscription>();
+  return !isNull() ? td()->_onstart : QList<EventSubscription>();
 }
 
 QList<EventSubscription> Task::onsuccessEventSubscriptions() const {
-  return d ? d->_onsuccess : QList<EventSubscription>();
+  return !isNull() ? td()->_onsuccess : QList<EventSubscription>();
 }
 
 QList<EventSubscription> Task::onfailureEventSubscriptions() const {
-  return d ? d->_onfailure : QList<EventSubscription>();
+  return !isNull() ? td()->_onfailure : QList<EventSubscription>();
 }
 
 QList<EventSubscription> Task::allEventsSubscriptions() const {
   // LATER avoid creating the collection at every call
-  return d ? d->_onstart+d->_onsuccess+d->_onfailure : QList<EventSubscription>();
+  return !isNull() ? td()->_onstart + td()->_onsuccess + td()->_onfailure
+                   : QList<EventSubscription>();
 }
 
 bool Task::enabled() const {
-  return d ? d->_enabled : false;
+  return !isNull() ? td()->_enabled : false;
 }
 void Task::setEnabled(bool enabled) const {
-  if (d)
-    d->_enabled = enabled;
+  if (!isNull())
+    td()->_enabled = enabled;
 }
 
 bool Task::lastSuccessful() const {
-  return d ? d->_lastSuccessful : false;
+  return !isNull() ? td()->_lastSuccessful : false;
 }
 
 void Task::setLastSuccessful(bool successful) const {
-  if (d)
-    d->_lastSuccessful = successful;
+  if (!isNull())
+    td()->_lastSuccessful = successful;
 }
 
 int Task::lastReturnCode() const {
-  return d ? d->_lastReturnCode : -1;
+  return !isNull() ? td()->_lastReturnCode : -1;
 }
 
 void Task::setLastReturnCode(int code) const {
-  if (d)
-    d->_lastReturnCode = code;
+  if (!isNull())
+    td()->_lastReturnCode = code;
 }
 
 int Task::lastTotalMillis() const {
-  return d ? d->_lastTotalMillis : -1;
+  return !isNull() ? td()->_lastTotalMillis : -1;
 }
 
 void Task::setLastTotalMillis(int lastTotalMillis) const {
-  if (d)
-    d->_lastTotalMillis = lastTotalMillis;
+  if (!isNull())
+    td()->_lastTotalMillis = lastTotalMillis;
 }
 
 long long Task::maxExpectedDuration() const {
-  return d ? d->_maxExpectedDuration : LLONG_MAX;
+  return !isNull() ? td()->_maxExpectedDuration : LLONG_MAX;
 }
 long long Task::minExpectedDuration() const {
-  return d ? d->_minExpectedDuration : 0;
+  return !isNull() ? td()->_minExpectedDuration : 0;
 }
 
 long long Task::maxDurationBeforeAbort() const {
-  return d ? d->_maxDurationBeforeAbort : LLONG_MAX;
+  return !isNull() ? td()->_maxDurationBeforeAbort : LLONG_MAX;
 }
 
 ParamSet Task::setenv() const {
-  return d ? d->_setenv : ParamSet();
+  return !isNull() ? td()->_setenv : ParamSet();
 }
 
 ParamSet Task::unsetenv() const {
-  return d ? d->_unsetenv : ParamSet();
+  return !isNull() ? td()->_unsetenv : ParamSet();
 }
 
 Task::DiscardAliasesOnStart Task::discardAliasesOnStart() const {
-  return d ? d->_discardAliasesOnStart : Task::DiscardNone;
+  return !isNull() ? td()->_discardAliasesOnStart : Task::DiscardNone;
 }
 
 QString Task::discardAliasesOnStartAsString(Task::DiscardAliasesOnStart v) {
@@ -705,7 +743,7 @@ Task::DiscardAliasesOnStart Task::discardAliasesOnStartFromString(QString v) {
 }
 
 QList<RequestFormField> Task::requestFormFields() const {
-  return d ? d->_requestFormField : QList<RequestFormField>();
+  return !isNull() ? td()->_requestFormFields : QList<RequestFormField>();
 }
 
 QString Task::requestFormFieldsAsHtmlDescription() const {
@@ -722,64 +760,202 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
 
 QVariant Task::paramValue(QString key, QVariant defaultValue) const {
   //Log::fatal() << "Task::paramvalue " << key;
-  if (d) {
-    if (key == "!taskid") {
-      return id();
-    } else if (key == "!fqtn") {
-      return fqtn();
-    } else if (key == "!taskgroupid") {
-      return taskGroup().id();
-    } else if (key == "!target") {
-      return target();
-    }
+  if (key == "!taskid") {
+    return id();
+  } else if (key == "!fqtn") {
+    return fqtn();
+  } else if (key == "!taskgroupid") {
+    return taskGroup().id();
+  } else if (key == "!target") {
+    return target();
   }
   return defaultValue;
 }
 
 QList<CronTrigger> Task::cronTriggers() const {
-  return d ? d->_cronTriggers : QList<CronTrigger>();
+  return !isNull() ? td()->_cronTriggers : QList<CronTrigger>();
 }
 
 QStringList Task::otherTriggers() const {
-  return d ? d->_otherTriggers : QStringList();
+  return !isNull() ? td()->_otherTriggers : QStringList();
 }
 
 void Task::appendOtherTriggers(QString text) {
-  if (d)
-    d->_otherTriggers.append(text);
+  if (!isNull())
+    td()->_otherTriggers.append(text);
 }
 
 void Task::clearOtherTriggers() {
-  if (d)
-    d->_otherTriggers.clear();
+  if (!isNull())
+    td()->_otherTriggers.clear();
 }
 
 QHash<QString, Step> Task::steps() const {
-  return d ? d->_steps : QHash<QString,Step>();
+  return !isNull() ? td()->_steps : QHash<QString,Step>();
 }
 
-Task Task::supertask() const {
-  return d ? d->_supertask : Task();
+QString Task::supertaskFqtn() const {
+  return !isNull() ? td()->_supertaskFqtn : QString();
 }
 
 QStringList Task::startSteps() const {
-  return d ? d->_startSteps : QStringList();
+  return !isNull() ? td()->_startSteps : QStringList();
 }
 
 QString Task::workflowDiagram() const {
-  return d ? d->_workflowDiagram : QString();
+  return !isNull() ? td()->_workflowDiagram : QString();
 }
 
-QHash<QString,WorkflowTriggerSubscription> Task::workflowTriggerSubscriptionsById() const {
-  return d ? d->_workflowTriggerSubscriptionsById
-           : QHash<QString,WorkflowTriggerSubscription>();
+QHash<QString,WorkflowTriggerSubscription>
+Task::workflowTriggerSubscriptionsById() const {
+  return !isNull() ? td()->_workflowTriggerSubscriptionsById
+                   : QHash<QString,WorkflowTriggerSubscription>();
 }
 
-QMultiHash<QString, WorkflowTriggerSubscription> Task::workflowTriggerSubscriptionsByNotice() const {
-  return d ? d->_workflowTriggerSubscriptionsByNotice
-           : QMultiHash<QString,WorkflowTriggerSubscription>();
+QMultiHash<QString, WorkflowTriggerSubscription>
+Task::workflowTriggerSubscriptionsByNotice() const {
+  return !isNull() ? td()->_workflowTriggerSubscriptionsByNotice
+                   : QMultiHash<QString,WorkflowTriggerSubscription>();
 }
 
 QHash<QString,CronTrigger> Task::workflowCronTriggersById() const {
-  return d ? d->_workflowCronTriggersById : QHash<QString,CronTrigger>();
+  return !isNull() ? td()->_workflowCronTriggersById
+                   : QHash<QString,CronTrigger>();
+}
+
+QVariant Task::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int Task::uiDataCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
+}
+
+QVariant TaskData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+    switch(section) {
+    case 0:
+      return _id;
+    case 1:
+      return _group.id();
+    case 2:
+      return _label;
+    case 3:
+      return _mean;
+    case 4:
+      return _command;
+    case 5:
+      return _target;
+    case 6:
+      return triggersAsString();
+    case 7:
+      return _params.toString(false, false);
+    case 8:
+      return resourcesAsString();
+    case 9:
+      return lastExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    case 10:
+      return nextScheduledExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    case 11:
+      return _fqtn;
+    case 12:
+      return _maxInstances;
+    case 13:
+      return _instancesCount.load();
+    case 14:
+      return EventSubscription::toStringList(_onstart).join("\n");
+    case 15:
+      return EventSubscription::toStringList(_onsuccess).join("\n");
+    case 16:
+      return EventSubscription::toStringList(_onfailure).join("\n");
+    case 17:
+      return QString::number(_instancesCount.load())+" / "
+          +QString::number(_maxInstances);
+    case 18:
+      return QVariant(); // custom actions, handled by the model, if needed
+    case 19: {
+      QDateTime dt = lastExecution();
+      if (dt.isNull())
+        return QVariant();
+      QString returnCode = QString::number(_lastReturnCode);
+      QString returnCodeLabel =
+          _params.value("return.code."+returnCode+".label");
+      QString s = dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
+          .append(_lastSuccessful ? " success" : " failure")
+          .append(" (code ").append(returnCode);
+      if (!returnCodeLabel.isEmpty())
+        s.append(" : ").append(returnCodeLabel);
+      return s.append(')');
+    }
+    case 20: {
+      QString env;
+      foreach(const QString key, _setenv.keys(false))
+        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
+      foreach(const QString key, _unsetenv.keys(false))
+        env.append('-').append(key).append(' ');
+      env.chop(1);
+      return env;
+    }
+    case 21: {
+      QString env;
+      foreach(const QString key, _setenv.keys(false))
+        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
+      env.chop(1);
+      return env;
+    }
+    case 22: {
+      QString env;
+      foreach(const QString key, _unsetenv.keys(false))
+        env.append(key).append(' ');
+      env.chop(1);
+      return env;
+    }
+    case 23:
+      return (_minExpectedDuration > 0)
+          ? QString::number(_minExpectedDuration*.001) : QString();
+    case 24:
+      return (_maxExpectedDuration < LLONG_MAX)
+          ? QString::number(_maxExpectedDuration*.001) : QString();
+    case 25: {
+      QString s;
+      foreach (const RequestFormField rff, _requestFormFields)
+        s.append(rff.param()).append(' ');
+      s.chop(1);
+      return s;
+    }
+    case 26:
+      return _lastTotalMillis >= 0
+          ? QString::number(_lastTotalMillis/1000.0) : QString();
+    case 27:
+      return (_maxDurationBeforeAbort < LLONG_MAX)
+          ? QString::number(_maxDurationBeforeAbort*.001) : QString();
+    case 28:
+      return triggersWithCalendarsAsString();
+    case 29:
+      return _enabled;
+    case 30:
+      return triggersHaveCalendar();
+    case 31:
+      return _supertaskFqtn;
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
+}
+
+void Task::setParentParams(ParamSet parentParams) {
+  if (!isNull())
+    td()->_params.setParent(parentParams);
+}
+
+TaskData *Task::td() {
+  //Log::fatal() << "Task::td() detach " << constData() << " " << fqtn();
+  detach<TaskData>();
+  //Log::fatal() << "Task::td() detached " << constData() << " " << fqtn();
+  return (TaskData*)constData();
 }
