@@ -40,14 +40,6 @@ public:
    * through Task.params(). */
   void setCustomActions(QString customActions) {
     _customActions = customActions; }
-  static QString taskLastExecStatus(Task task);
-  static QString taskLastExecDuration(Task task);
-  static QString taskSystemEnvironnement(Task task);
-  static QString taskSetenv(Task task);
-  static QString taskUnsetenv(Task task);
-  static QString taskMinExpectedDuration(Task task);
-  static QString taskMaxExpectedDuration(Task task);
-  static QString taskMaxDurationBeforeAbort(Task task);
 
 public slots:
   void configChanged(SchedulerConfig config);

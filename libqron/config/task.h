@@ -20,6 +20,8 @@
 #include <QSet>
 #include "taskgroup.h"
 #include "requestformfield.h"
+#include <QList>
+#include "modelview/shareduiitem.h"
 
 class TaskData;
 class QDebug;
@@ -53,22 +55,22 @@ public:
 };
 
 /** Core task definition object, being it a standalone task or workflow. */
-class LIBQRONSHARED_EXPORT Task : public ParamsProvider {
-  QSharedDataPointer<TaskData> d;
-
+class LIBQRONSHARED_EXPORT Task
+    : public SharedUiItem, public ParamsProvider {
 public:
   enum DiscardAliasesOnStart { DiscardNone, DiscardAll, DiscardUnknown };
   Task();
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-       QHash<QString,Task> oldTasks, Task supertask,
+       QHash<QString,Task> oldTasks, QString supertaskFqtn,
        QHash<QString, Calendar> namedCalendars);
   ~Task();
-  Task &operator=(const Task &other);
+  Task &operator=(const Task &other) {
+    SharedUiItem::operator=(other); return *this; }
   bool operator==(const Task &other) const;
   bool operator<(const Task &other) const;
   ParamSet params() const;
-  bool isNull() const;
+  void setParentParams(ParamSet parentParams);
   /** Fully qualified task name (i.e. "taskGroupId.taskId") */
   QString id() const;
   QString fqtn() const;
@@ -148,11 +150,17 @@ public:
   QHash<QString,Step> steps() const;
   QStringList startSteps() const;
   /** Super task (e.g. workflow task) to which this task belongs, if any. */
-  Task supertask() const;
+  QString supertaskFqtn() const;
   QString workflowDiagram() const;
   QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
   QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;
   QHash<QString,CronTrigger> workflowCronTriggersById() const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
+
+private:
+  TaskData *td();
+  const TaskData *td() const { return (const TaskData*)constData(); }
 };
 
 QDebug LIBQRONSHARED_EXPORT operator<<(QDebug dbg, const Task &task);

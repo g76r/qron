@@ -17,8 +17,7 @@
 #define COLUMNS 10
 
 class StepsModel::StepWrapper {
-  QString _fqsn, _id, _kindToString;
-  Task _workflow;
+  QString _fqsn, _id, _kindToString, _workflowFqtn;
   Step _source;
   QString _onReadyToString, _predecessors;
 
@@ -26,7 +25,7 @@ public:
   StepWrapper(Step source) // real step
     : _fqsn(source.fqsn()), _id(source.id()),
       _kindToString(source.kindToString()),
-      _workflow(source.workflow()), _source(source) {
+      _workflowFqtn(source.workflowFqtn()), _source(source) {
     if (_source.kind() != Step::SubTask)
       _onReadyToString
           = EventSubscription::toStringList(
@@ -43,16 +42,16 @@ public:
   StepWrapper(Task workflow, bool isStart) // pseudo steps
     : _fqsn(workflow.fqtn()+(isStart ? ":$start" : ":$end")),
       _id(isStart ? "$start" : "$end"),
-      _kindToString(isStart ? "start" : "end"), _workflow(workflow) {
+      _kindToString(isStart ? "start" : "end"), _workflowFqtn(workflow.fqtn()) {
     if (isStart)
-      foreach (QString s, _workflow.startSteps())
+      foreach (QString s, workflow.startSteps())
         _onReadyToString.append(" ->").append(s);
     // LATER compute $end predecessors
   }
   QString fqsn() const { return _fqsn; }
   QString id() const { return _id; }
   QString kindToString() const { return _kindToString; }
-  Task workflow() const { return _workflow; }
+  QString workflowFqtn() const { return _workflowFqtn; }
   Task subtask() const { return _source.subtask(); }
   QString onReadyToString() const { return _onReadyToString; }
   QString predecessors() const { return _predecessors; }
@@ -90,7 +89,7 @@ QVariant StepsModel::data(const QModelIndex &index, int role) const {
       case 2:
         return step.kindToString();
       case 3:
-        return step.workflow().fqtn();
+        return step.workflowFqtn();
       case 4:
         return step.subtask().fqtn();
       case 5:
@@ -153,7 +152,7 @@ void StepsModel::configChanged(SchedulerConfig config) {
       int row;
       for (row = 0; row < _steps.size(); ++row) {
         const StepWrapper &step2 = _steps.at(row);
-        if (task.fqtn() < step2.workflow().fqtn())
+        if (task.fqtn() < step2.workflowFqtn())
           break;
       }
       _steps.insert(row++, StepWrapper(task, true));

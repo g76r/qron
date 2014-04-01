@@ -25,6 +25,7 @@ class PfNode;
 class Scheduler;
 class TaskInstance;
 class Calendar;
+class TaskGroup;
 
 /** Step of a workflow task. */
 class LIBQRONSHARED_EXPORT Step {
@@ -34,8 +35,9 @@ public:
 
   Step();
   Step(const Step &);
-  Step(PfNode node, Scheduler *scheduler, Task workflow,
-       QHash<QString, Task> oldTasks, QHash<QString, Calendar> namedCalendars);
+  Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
+       QString workflowTaskId, QHash<QString, Task> oldTasks,
+       QHash<QString, Calendar> namedCalendars);
   Step &operator=(const Step &);
   ~Step();
   bool operator==(const Step &other) const;
@@ -53,7 +55,7 @@ public:
   QString kindToString() const {
     return kindToString(kind()); }
   Task subtask() const;
-  Task workflow() const;
+  QString workflowFqtn() const;
   QSet<QString> predecessors() const;
   void insertPredecessor(QString predecessor);
   void triggerReadyEvents(TaskInstance workflowTaskInstance,

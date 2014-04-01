@@ -78,6 +78,7 @@ TaskInstance::TaskInstance() {
 TaskInstance::TaskInstance(const TaskInstance &other) : d(other.d) {
 }
 
+// TODO ensure that overridingParams is null when empty, since there are plenty of TaskInstances in memory
 TaskInstance::TaskInstance(Task task, bool force, TaskInstance callerTask,
                            ParamSet overridingParams)
   : d(new TaskInstanceData(task, overridingParams, force, callerTask)) {
@@ -181,6 +182,7 @@ void TaskInstance::setTarget(Host target) const {
 QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
   if (!d)
     return defaultValue;
+  // LATER optimize
   if (key == "!taskid") {
     return task().id();
   } else if (key == "!fqtn") {

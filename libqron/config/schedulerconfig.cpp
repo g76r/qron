@@ -190,7 +190,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   foreach (PfNode node, root.childrenByName("task")) {
     QString taskGroupId = node.attribute("taskgroup");
     TaskGroup taskGroup = _tasksGroups.value(taskGroupId);
-    Task task(node, scheduler, taskGroup, oldTasks, Task(), _namedCalendars);
+    Task task(node, scheduler, taskGroup, oldTasks, QString(), _namedCalendars);
     if (taskGroupId.isEmpty() || taskGroup.isNull()) {
       Log::error() << "ignoring task with invalid taskgroup: " << node.toPf();
       goto ignore_task;
@@ -253,6 +253,12 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
         _tasks.insert(subtask.fqtn(), subtask);
     }
 ignore_task:;
+  }
+  foreach (QString fqtn, _tasks.keys()) {
+    Task &task = _tasks[fqtn];
+    QString supertaskFqtn = task.supertaskFqtn();
+    if (_tasks.contains(supertaskFqtn))
+      task.setParentParams(_tasks[supertaskFqtn].params());
   }
   int maxtotaltaskinstances = 0;
   foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {
@@ -333,16 +339,14 @@ ignore_task:;
     if (!link._contextTask.isNull() && !id.contains('.')) { // id to group
       id = fqtn.left(fqtn.lastIndexOf('.')+1)+id;
     }
-    Task t(_tasks.value(id));
-    if (!t.isNull()) {
+    if (_tasks.contains(id)) {
       QString context(link._contextLabel);
       if (!link._contextTask.isNull())
         context = fqtn;
       if (context.isEmpty())
         context = "*";
-      t.appendOtherTriggers("*"+link._eventType+"("+context+")");
-      //Log::fatal() << "*** " << t.otherTriggers() << " *** " << link._contextLabel << " *** " << fqtn;
-      _tasks.insert(id, t);
+      _tasks[id].appendOtherTriggers("*"+link._eventType+"("+context+")");
+      //Log::fatal() << "*** " << _tasks[id].otherTriggers() << " *** " << link._contextLabel << " *** " << fqtn;
     } else {
       Log::debug() << "cannot translate event " << link._eventType
                    << " for task '" << id << "'";

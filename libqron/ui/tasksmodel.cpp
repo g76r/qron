@@ -17,6 +17,8 @@
 #include <QUrl>
 #include <QTimer>
 
+// FIXME use SharedUiItemsTableModel
+
 #define COLUMNS 32
 // 60,000 ms = 1'
 // should stay below HtmlTaskItemDelegate's SOON_EXECUTION_MILLIS
@@ -43,224 +45,24 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
     switch(role) {
     case Qt::DisplayRole:
       switch(index.column()) {
-      case 0:
-        return t.id();
-      case 1:
-        return t.taskGroup().id();
-      case 2:
-        return t.label();
-      case 3:
-        return t.mean();
-      case 4:
-        return t.command();
-      case 5:
-        return t.target();
-      case 6:
-        return t.triggersAsString();
-      case 7:
-        return t.params().toString(false, false);
-      case 8:
-        return t.resourcesAsString();
-      case 9:
-        return t.lastExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
-      case 10:
-        return t.nextScheduledExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
-      case 11:
-        return t.fqtn();
-      case 12:
-        return t.maxInstances();
-      case 13:
-        return t.instancesCount();
-      case 14:
-        return EventSubscription::toStringList(t.onstartEventSubscriptions()).join("\n");
-      case 15:
-        return EventSubscription::toStringList(t.onsuccessEventSubscriptions()).join("\n");
-      case 16:
-        return EventSubscription::toStringList(t.onfailureEventSubscriptions()).join("\n");
-      case 17:
-        return QString::number(t.instancesCount())+" / "
-            +QString::number(t.maxInstances());
       case 18:
         return _customActions.isEmpty()
             ? QVariant() : t.params().evaluate(_customActions, &t);
-      case 19:
-        return taskLastExecStatus(t);
-      case 20:
-        return taskSystemEnvironnement(t);
-      case 21:
-        return taskSetenv(t);
-      case 22:
-        return taskUnsetenv(t);
-      case 23:
-        return taskMinExpectedDuration(t);
-      case 24:
-        return taskMaxExpectedDuration(t);
-      case 25: {
-        QString s;
-        foreach (const RequestFormField rff, t.requestFormFields())
-          s.append(rff.param()).append(" ");
-        if (!t.requestFormFields().isEmpty())
-          s.chop(1);
-        return s;
-      }
-      case 26:
-        return taskLastExecDuration(t);
-      case 27:
-        return taskMaxDurationBeforeAbort(t);
-      case 28:
-        return t.triggersWithCalendarsAsString();
-      case 29:
-        return t.enabled();
-      case 30:
-        return t.triggersHaveCalendar();
-      case 31:
-        return t.supertask().fqtn();
       }
       break;
     default:
       ;
     }
+    return t.uiData(index.column(), role);
   }
   return QVariant();
-}
-
-QString TasksModel::taskLastExecStatus(Task task) {
-  QDateTime dt = task.lastExecution();
-  if (dt.isNull())
-    return QString();
-  QString returnCode = QString::number(task.lastReturnCode());
-  QString returnCodeLabel =
-      task.params().value("return.code."+returnCode+".label");
-  QString s = dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
-      .append(task.lastSuccessful() ? " success" : " failure")
-      .append(" (code ").append(returnCode);
-  if (!returnCodeLabel.isEmpty())
-    s.append(" : ").append(returnCodeLabel);
-  return s.append(')');
-}
-
-QString TasksModel::taskLastExecDuration(Task task) {
-  int millis = task.lastTotalMillis();
-  return millis >= 0 ? QString::number(millis/1000.0) : QString();
-}
-
-QString TasksModel::taskSystemEnvironnement(Task task) {
-  QString env;
-  ParamSet setenv = task.setenv();
-  foreach(const QString key, setenv.keys(false))
-    env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
-  foreach(const QString key, task.unsetenv().keys(false))
-    env.append('-').append(key).append(' ');
-  if (!env.isEmpty())
-    env.chop(1);
-  return env;
-}
-
-QString TasksModel::taskSetenv(Task task){
-  QString env;
-  ParamSet setenv = task.setenv();
-  foreach(const QString key, setenv.keys(false))
-    env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
-  if (!env.isEmpty())
-    env.chop(1);
-  return env;
-}
-
-QString TasksModel::taskUnsetenv(Task task)     {
-  QString env;
-  foreach(const QString key, task.unsetenv().keys(false))
-    env.append(key).append(' ');
-  if (!env.isEmpty())
-    env.chop(1);
-  return env;
-}
-
-QString TasksModel::taskMinExpectedDuration(Task task) {
-  long long l = task.minExpectedDuration();
-  return (l > 0) ? QString::number(l*.001) : QString();
-}
-
-QString TasksModel::taskMaxExpectedDuration(Task task) {
-  long long l = task.maxExpectedDuration();
-  return (l < LLONG_MAX) ? QString::number(l*.001) : QString();
-}
-
-QString TasksModel::taskMaxDurationBeforeAbort(Task task) {
-  long long l = task.maxDurationBeforeAbort();
-  return (l < LLONG_MAX) ? QString::number(l*.001) : QString();
 }
 
 QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
                                 int role) const {
-  if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
-    switch(section) {
-    case 0:
-      return "Id";
-    case 1:
-      return "TaskGroup Id";
-    case 2:
-      return "Label";
-    case 3:
-      return "Mean";
-    case 4:
-      return "Command";
-    case 5:
-      return "Target";
-    case 6:
-      return "Triggers";
-    case 7:
-      return "Parameters";
-    case 8:
-      return "Resources";
-    case 9:
-      return "Last execution";
-    case 10:
-      return "Next execution";
-    case 11:
-      return "Fully qualified task name";
-    case 12:
-      return "Max instances";
-    case 13:
-      return "Instances count";
-    case 14:
-      return "On start";
-    case 15:
-      return "On success";
-    case 16:
-      return "On failure";
-    case 17:
-      return "Instances / max";
-    case 18:
-      return "Actions";
-    case 19:
-      return "Last execution status";
-    case 20:
-      return "System environment";
-    case 21:
-      return "Setenv";
-    case 22:
-      return "Unsetenv";
-    case 23:
-      return "Min expected duration";
-    case 24:
-      return "Max expected duration";
-    case 25:
-      return "Request-time overridable params";
-    case 26:
-      return "Last execution duration";
-    case 27:
-      return "Max duration before abort";
-    case 28:
-      return "Triggers with calendars";
-    case 29:
-      return "Enabled";
-    case 30:
-      return "Has triggers with calendars";
-    case 31:
-      return "Workflow";
-    }
-  }
-  return QVariant();
+  static Task t;
+  return orientation == Qt::Horizontal ? t.uiHeaderData(section, role)
+                                       : QVariant();
 }
 
 void TasksModel::configChanged(SchedulerConfig config) {
