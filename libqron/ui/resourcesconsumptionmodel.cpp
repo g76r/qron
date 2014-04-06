@@ -60,7 +60,7 @@ void ResourcesConsumptionModel::configChanged(SchedulerConfig config) {
         }
         if (s.size() > 0)
           s.chop(1);
-        setCellValue(task.fqtn(), host.id(), s);
+        setCellValue(task.id(), host.id(), s);
       }
     }
   }

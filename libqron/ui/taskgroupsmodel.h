@@ -18,23 +18,19 @@
 #include "config/taskgroup.h"
 #include "config/task.h"
 #include "config/schedulerconfig.h"
+#include "modelview/shareduiitemstablemodel.h"
 
 /** Model holding tasks groups along with their attributes, one group per line,
  * in id alphabetical order. */
-class LIBQRONSHARED_EXPORT TaskGroupsModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT TaskGroupsModel : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TaskGroupsModel)
-  QList<TaskGroup> _groups;
 
 public:
   explicit TaskGroupsModel(QObject *parent = 0);
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void configChanged(SchedulerConfig config);
+  void configReset(SchedulerConfig config);
 };
 
 #endif // TASKGROUPSMODEL_H

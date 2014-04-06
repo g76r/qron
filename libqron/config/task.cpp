@@ -33,7 +33,7 @@
 #include "ui/qronuiutils.h"
 
 static QString _uiHeaderNames[] = {
-  "Id", // 0
+  "Short id", // 0
   "TaskGroup Id",
   "Label",
   "Mean",
@@ -42,9 +42,9 @@ static QString _uiHeaderNames[] = {
   "Trigger",
   "Parameters",
   "Resources",
-  "Lat execution",
+  "Last execution",
   "Next execution", // 10
-  "Fully qualified task name",
+  "Id",
   "Max intances",
   "Instances count",
   "On start",
@@ -109,7 +109,7 @@ EventSubscription WorkflowTriggerSubscription::eventSubscription() const {
 
 class TaskData : public SharedUiItemData {
 public:
-  QString _id, _label, _mean, _command, _target, _info, _fqtn;
+  QString _fqtn, _shortId, _label, _mean, _command, _target, _info; // FIXME rename fqtn to id everywhere
   TaskGroup _group;
   ParamSet _params, _setenv, _unsetenv;
   QList<NoticeTrigger> _noticeTriggers;
@@ -151,6 +151,7 @@ public:
   QString triggersWithCalendarsAsString() const;
   bool triggersHaveCalendar() const;
   QVariant uiData(int section, int role) const;
+  QString id() const { return _fqtn; }
 };
 
 Task::Task() {
@@ -167,8 +168,8 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
            QHash<QString,Calendar> namedCalendars) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
-  td->_id = ConfigUtils::sanitizeId(node.contentAsString());
-  td->_label = node.attribute("label", td->_id);
+  td->_shortId = ConfigUtils::sanitizeId(node.contentAsString());
+  td->_label = node.attribute("label", td->_shortId);
   td->_mean = ConfigUtils::sanitizeId(node.attribute("mean"));
   if (td->_mean != "local" && td->_mean != "ssh" && td->_mean != "http"
       && td->_mean != "workflow" && td->_mean != "donothing") {
@@ -184,7 +185,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
           || td->_mean == "workflow"))
     td->_target = "localhost";
   td->_info = node.stringChildrenByName("info").join(" ");
-  td->_fqtn = taskGroup.id()+"."+td->_id;
+  td->_fqtn = taskGroup.id()+"."+td->_shortId;
   td->_group = taskGroup;
   td->_maxInstances = node.attribute("maxinstances", "1").toInt();
   if (td->_maxInstances <= 0) {
@@ -237,7 +238,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
           if (trigger.isValid()) {
             td->_noticeTriggers.append(trigger);
             Log::debug() << "configured notice trigger '" << content
-                         << "' on task '" << td->_id << "'";
+                         << "' on task '" << td->_shortId << "'";
           } else {
             Log::error() << "task with invalid notice trigger: "
                          << node.toString();
@@ -255,7 +256,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
             td->_cronTriggers.append(trigger);
             Log::debug() << "configured cron trigger "
                          << trigger.humanReadableExpression()
-                         << " on task " << td->_id;
+                         << " on task " << td->_shortId;
           } else {
             Log::error() << "task with invalid cron trigger: "
                          << node.toString();
@@ -265,7 +266,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
           // LATER read misfire config
         } else {
           Log::warning() << "ignoring unknown trigger type '" << triggerType
-                         << "' on task " << td->_id;
+                         << "' on task " << td->_shortId;
         }
       }
     }
@@ -289,7 +290,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   QString doas = node.attribute("discardaliasesonstart", "all");
   td->_discardAliasesOnStart = discardAliasesOnStartFromString(doas);
   if (td->_discardAliasesOnStart == Task::DiscardUnknown) {
-    Log::error() << "invalid discardaliasesonstart on task " << td->_id << ": '"
+    Log::error() << "invalid discardaliasesonstart on task " << td->_shortId << ": '"
                  << doas << "'";
     delete td;
     return;
@@ -329,7 +330,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       return;
     }
     foreach (PfNode child, steps) {
-      Step step(child, scheduler, taskGroup, td->_id, oldTasks, namedCalendars);
+      Step step(child, scheduler, taskGroup, td->_shortId, oldTasks, namedCalendars);
       if (step.isNull()) {
         Log::error() << "workflow task " << td->_fqtn
                      << " has at less one invalid step definition";
@@ -461,14 +462,6 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
 Task::~Task() {
 }
 
-bool Task::operator==(const Task &other) const {
-  return fqtn() == other.fqtn();
-}
-
-bool Task::operator<(const Task &other) const {
-  return fqtn() < other.fqtn();
-}
-
 ParamSet Task::params() const {
   return !isNull() ? td()->_params : ParamSet();
 }
@@ -477,12 +470,8 @@ QList<NoticeTrigger> Task::noticeTriggers() const {
   return !isNull() ? td()->_noticeTriggers : QList<NoticeTrigger>();
 }
 
-QString Task::id() const {
-  return !isNull() ? td()->_id : QString();
-}
-
-QString Task::fqtn() const {
-  return !isNull() ? td()->_fqtn : QString();
+QString Task::shortId() const {
+  return !isNull() ? td()->_shortId : QString();
 }
 
 QString Task::label() const {
@@ -624,7 +613,7 @@ void Task::appendStderrFilter(QRegExp filter) {
 }
 
 QDebug operator<<(QDebug dbg, const Task &task) {
-  dbg.nospace() << task.fqtn();
+  dbg.nospace() << task.shortId(); // FIXME id()
   return dbg.space();
 }
 
@@ -766,10 +755,10 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
 
 QVariant Task::paramValue(QString key, QVariant defaultValue) const {
   //Log::fatal() << "Task::paramvalue " << key;
-  if (key == "!taskid") {
-    return id();
+  if (key == "!taskshortid") {
+    return shortId();
   } else if (key == "!fqtn") {
-    return fqtn();
+    return id();
   } else if (key == "!taskgroupid") {
     return taskGroup().id();
   } else if (key == "!target") {
@@ -844,7 +833,7 @@ QVariant TaskData::uiData(int section, int role) const {
   case Qt::DisplayRole:
     switch(section) {
     case 0:
-      return _id;
+      return _shortId;
     case 1:
       return _group.id();
     case 2:

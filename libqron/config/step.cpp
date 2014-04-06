@@ -67,7 +67,7 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     }
     sd->_onready.append(
           EventSubscription(sd->_fqsn, "onready",
-                            RequestTaskAction(scheduler, sd->_subtask.fqtn())));
+                            RequestTaskAction(scheduler, sd->_subtask.id())));
     // LATER warn if onready is defined for a subtask step
   } else {
       Log::error() << "unsupported step kind: " << node.toString();

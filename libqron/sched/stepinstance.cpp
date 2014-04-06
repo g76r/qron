@@ -81,7 +81,7 @@ void StepInstance::predecessorReady(QString predecessor,
     }
     break;
   case Step::Unknown:
-    Log::error(d->_workflowTaskInstance.task().fqtn(),
+    Log::error(d->_workflowTaskInstance.task().id(),
                d->_workflowTaskInstance.id())
         << "StepInstance::predecessorReady called on unknown step kind";
   }

@@ -22,17 +22,60 @@
 #include "config/configutils.h"
 #include "sched/taskinstance.h"
 
-class TaskGroupData : public QSharedData {
+static int _uiTaskGroupColumnToTask[] =
+{
+  0, 2, 7, 14, 15,
+  16, 20, 21, 22
+};
+
+static int _uiTaskColumnToTaskGroup[] =
+{
+  0, -1, 1, -1, -1,
+  -1, 2, -1, -1, -1,
+  -1, -1, -1, 3, 4,
+  5, -1, -1, -1, -1,
+  6, 7, 8
+};
+
+int TaskGroup::uiTaskGroupColumnToTask(int taskGroupColumn) {
+  if (taskGroupColumn >= 0
+      && taskGroupColumn < (int)sizeof(_uiTaskGroupColumnToTask))
+    return _uiTaskGroupColumnToTask[taskGroupColumn];
+  return -1;
+}
+
+int TaskGroup::uiTaskColumnToTaskGroup(int taskColumn) {
+  if (taskColumn >= 0
+      && taskColumn < (int)sizeof(_uiTaskColumnToTaskGroup))
+    return _uiTaskColumnToTaskGroup[taskColumn];
+  return -1;
+}
+
+static QString _uiHeaderNames[] = {
+  "Id", // 0
+  "Label",
+  "Parameters",
+  "On start",
+  "On success",
+  "On failure", // 5
+  "System environment",
+  "Setenv",
+  "Unsetenv"
+};
+
+class TaskGroupData : public SharedUiItemData {
 public:
   QString _id, _label;
   ParamSet _params, _setenv, _unsetenv;
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
+  QVariant uiData(int section, int role) const;
+  QString id() const { return _id; }
 };
 
-TaskGroup::TaskGroup() : d(new TaskGroupData) {
+TaskGroup::TaskGroup() {
 }
 
-TaskGroup::TaskGroup(const TaskGroup &other) : d(other.d) {
+TaskGroup::TaskGroup(const TaskGroup &other) : SharedUiItem(other) {
 }
 
 TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
@@ -57,32 +100,29 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                                      &tgd->_onfailure, scheduler);
   ConfigUtils::loadEventSubscription(node, "onfinish", tgd->_id,
                                      &tgd->_onfailure, scheduler);
-  d = tgd;
+  setData(tgd);
+}
+
+TaskGroup::TaskGroup(QString id) {
+  TaskGroupData *tgd = new TaskGroupData;
+  tgd->_id = ConfigUtils::sanitizeId(id, true);
+  setData(tgd);
 }
 
 TaskGroup::~TaskGroup() {
 }
 
-TaskGroup &TaskGroup::operator=(const TaskGroup &other) {
-  if (this != &other)
-    d.operator=(other.d);
-  return *this;
-}
-
-QString TaskGroup::id() const {
-  return d->_id;
+QString TaskGroup::parentGroupId(QString groupId) {
+  int i = groupId.lastIndexOf('.');
+  return (i >= 0) ? groupId.left(i) : QString();
 }
 
 QString TaskGroup::label() const {
-  return d->_label;
+  return !isNull() ? tgd()->_label : QString();
 }
 
 ParamSet TaskGroup::params() const {
-  return d->_params;
-}
-
-bool TaskGroup::isNull() const {
-  return d->_id.isNull();
+  return !isNull() ? tgd()->_params : ParamSet();
 }
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup) {
@@ -92,44 +132,107 @@ QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup) {
 
 void TaskGroup::triggerStartEvents(TaskInstance instance) const {
   // LATER trigger events in parent group first
-  if (d)
-    foreach (EventSubscription sub, d->_onstart)
+  if (!isNull())
+    foreach (EventSubscription sub, tgd()->_onstart)
       sub.triggerActions(instance);
 }
 
 void TaskGroup::triggerSuccessEvents(TaskInstance instance) const {
-  if (d)
-    foreach (EventSubscription sub, d->_onsuccess)
+  if (!isNull())
+    foreach (EventSubscription sub, tgd()->_onsuccess)
       sub.triggerActions(instance);
 }
 
 void TaskGroup::triggerFailureEvents(TaskInstance instance) const {
-  if (d)
-    foreach (EventSubscription sub, d->_onfailure)
+  if (!isNull())
+    foreach (EventSubscription sub, tgd()->_onfailure)
       sub.triggerActions(instance);
 }
 
 QList<EventSubscription> TaskGroup::onstartEventSubscriptions() const {
-  return d->_onstart;
+  return !isNull() ? tgd()->_onstart : QList<EventSubscription>();
 }
 
 QList<EventSubscription> TaskGroup::onsuccessEventSubscriptions() const {
-  return d->_onsuccess;
+  return !isNull() ? tgd()->_onsuccess : QList<EventSubscription>();
 }
 
 QList<EventSubscription> TaskGroup::onfailureEventSubscriptions() const {
-  return d->_onfailure;
+  return !isNull() ? tgd()->_onfailure : QList<EventSubscription>();
 }
 
 ParamSet TaskGroup::setenv() const {
-  return d ? d->_setenv : ParamSet();
+  return !isNull() ? tgd()->_setenv : ParamSet();
 }
 
 ParamSet TaskGroup::unsetenv() const {
-  return d ? d->_unsetenv : ParamSet();
+  return !isNull() ? tgd()->_unsetenv : ParamSet();
 }
 
 QList<EventSubscription> TaskGroup::allEventSubscriptions() const {
   // LATER avoid creating the collection at every call
-  return d ? d->_onstart+d->_onsuccess+d->_onfailure : QList<EventSubscription>();
+  return !isNull() ? tgd()->_onstart + tgd()->_onsuccess + tgd()->_onfailure
+                   : QList<EventSubscription>();
+}
+
+QVariant TaskGroupData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+    switch(section) {
+    case 0:
+      return _id;
+    case 1:
+      return _label;
+    case 2:
+      return _params.toString(false, false);
+    case 3:
+      return EventSubscription::toStringList(_onstart).join("\n");
+    case 4:
+      return EventSubscription::toStringList(_onsuccess).join("\n");
+    case 5:
+      return EventSubscription::toStringList(_onfailure).join("\n");
+    case 6: { // LATER factorize code for cols 6,7,8 with Task's 20,21,22
+      QString env;
+      foreach(const QString key, _setenv.keys(false))
+        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
+      foreach(const QString key, _unsetenv.keys(false))
+        env.append('-').append(key).append(' ');
+      env.chop(1);
+      return env;
+    }
+    case 7: {
+      QString env;
+      foreach(const QString key, _setenv.keys(false))
+        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
+      env.chop(1);
+      return env;
+    }
+    case 8: {
+      QString env;
+      foreach(const QString key, _unsetenv.keys(false))
+        env.append(key).append(' ');
+      env.chop(1);
+      return env;
+    }
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
+}
+
+QVariant TaskGroup::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int TaskGroup::uiDataCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
+}
+
+TaskGroupData *TaskGroup::tgd() {
+  detach<TaskGroupData>();
+  return (TaskGroupData*)constData();
 }

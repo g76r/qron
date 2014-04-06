@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,83 +17,40 @@
 #include <QUrl>
 #include <QTimer>
 
-// FIXME use SharedUiItemsTableModel
-
-#define COLUMNS 32
 // 60,000 ms = 1'
 // should stay below HtmlTaskItemDelegate's SOON_EXECUTION_MILLIS
-#define FULL_REFRESH_INTERVAL 60000
+#define PERIODIC_REFRESH_INTERVAL 60000
 
-TasksModel::TasksModel(QObject *parent) : QAbstractTableModel(parent) {
+TasksModel::TasksModel(QObject *parent)
+  : SharedUiItemsTableModel(Task(), parent) {
   QTimer *timer = new QTimer(this);
-  connect(timer, SIGNAL(timeout()), this, SLOT(forceTimeRelatedDataRefresh()));
-  timer->start(FULL_REFRESH_INTERVAL);
-}
-
-int TasksModel::rowCount(const QModelIndex &parent) const {
-  return parent.isValid() ? 0 : _tasks.size();
-}
-
-int TasksModel::columnCount(const QModelIndex &parent) const {
-  Q_UNUSED(parent)
-  return COLUMNS;
+  connect(timer, SIGNAL(timeout()), this, SLOT(periodicDataRefresh()));
+  timer->start(PERIODIC_REFRESH_INTERVAL);
 }
 
 QVariant TasksModel::data(const QModelIndex &index, int role) const {
-  if (index.isValid() && index.row() >= 0 && index.row() < _tasks.size()) {
-    const Task t(_tasks.at(index.row()));
-    switch(role) {
-    case Qt::DisplayRole:
-      switch(index.column()) {
-      case 18:
-        return _customActions.isEmpty()
-            ? QVariant() : t.params().evaluate(_customActions, &t);
+  switch(role) {
+  case Qt::DisplayRole:
+    switch(index.column()) {
+    case 18:
+      if (!_customActions.isEmpty()) {
+        Task t = _tasks.value(index.row());
+        return t.params().evaluate(_customActions, &t);
       }
       break;
-    default:
-      ;
     }
-    return t.uiData(index.column(), role);
   }
-  return QVariant();
+  return SharedUiItemsTableModel::data(index, role);
 }
 
-QVariant TasksModel::headerData(int section, Qt::Orientation orientation,
-                                int role) const {
-  static Task t;
-  return orientation == Qt::Horizontal ? t.uiHeaderData(section, role)
-                                       : QVariant();
+void TasksModel::configReset(SchedulerConfig config) {
+  _tasks = config.tasks().values();
+  qSort(_tasks);
+  resetItems(_tasks);
 }
 
-void TasksModel::configChanged(SchedulerConfig config) {
-  beginResetModel();
-  _tasks.clear();
-  foreach (const Task task, config.tasks().values()) {
-    int row;
-    for (row = 0; row < _tasks.size(); ++row) {
-      Task t2 = _tasks.at(row);
-      // sort by taskgroupid then taskid
-      if (task.taskGroup().id() < t2.taskGroup().id())
-        break;
-      if (task.taskGroup().id() == t2.taskGroup().id()
-          && task.id() < t2.id())
-        break;
-    }
-    _tasks.insert(row, task);
-  }
-  endResetModel();
-}
-
-void TasksModel::taskChanged(Task task) {
-  for (int row = 0; row < _tasks.size(); ++row)
-    if (_tasks.at(row).id() == task.id()) {
-      emit dataChanged(createIndex(row, 0), createIndex(row, COLUMNS-1));
-      return;
-    }
-}
-
-void TasksModel::forceTimeRelatedDataRefresh() {
+void TasksModel::periodicDataRefresh() {
   int size = _tasks.size();
   if (size)
-    emit dataChanged(createIndex(0, 10), createIndex(size-1, 10));
+    emit dataChanged(index(0, 10), index(size-1, 10));
 }

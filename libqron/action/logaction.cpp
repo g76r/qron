@@ -34,7 +34,7 @@ public:
     if (instance.isNull())
       Log::log(_severity) << eventContext.evaluate(_message);
     else
-      Log::log(_severity, instance.task().fqtn(), instance.id())
+      Log::log(_severity, instance.task().id(), instance.id())
           << eventContext.evaluate(_message, &instance);
   }
 };

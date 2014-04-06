@@ -18,6 +18,7 @@
 #include <QSharedData>
 #include <QList>
 #include "util/paramset.h"
+#include "modelview/shareduiitem.h"
 
 class TaskGroupData;
 class Task;
@@ -30,20 +31,22 @@ class TaskInstance;
 /** A task group is a mean to tie tasks together to make them share some
  * configuration and to indicate that they are related (e.g. they belong to
  * the same application or have the same criticity). */
-class LIBQRONSHARED_EXPORT TaskGroup {
-  QSharedDataPointer<TaskGroupData> d;
-
+class LIBQRONSHARED_EXPORT TaskGroup : public SharedUiItem {
 public:
   TaskGroup();
   TaskGroup(const TaskGroup &other);
   TaskGroup(PfNode node, ParamSet parentParamSet, ParamSet parentSetenv,
             ParamSet parentUnsetenv, Scheduler *scheduler);
+  TaskGroup(QString id);
   ~TaskGroup();
-  TaskGroup &operator=(const TaskGroup &other);
-  QString id() const;
+  TaskGroup &operator=(const TaskGroup &other) {
+    SharedUiItem::operator=(other); return *this; }
+  /** return "foo.bar" for group "foo.bar.baz" and QString() for group "foo". */
+  QString parentGroupId() const { return parentGroupId(id()); }
+  /** return "foo.bar" for group "foo.bar.baz" and QString() for group "foo". */
+  static QString parentGroupId(QString groupId);
   QString label() const;
   ParamSet params() const;
-  bool isNull() const;
   void triggerStartEvents(TaskInstance instance) const;
   void triggerSuccessEvents(TaskInstance instance) const;
   void triggerFailureEvents(TaskInstance instance) const;
@@ -53,6 +56,14 @@ public:
   ParamSet setenv() const;
   ParamSet unsetenv() const;
   QList<EventSubscription> allEventSubscriptions() const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
+  static int uiTaskGroupColumnToTask(int taskGroupColumn);
+  static int uiTaskColumnToTaskGroup(int taskColumn);
+
+private:
+  TaskGroupData *tgd();
+  const TaskGroupData *tgd() const { return (const TaskGroupData*)constData(); }
 };
 
 QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);

@@ -15,7 +15,7 @@
 #include <QDateTime>
 
 // 300,000 ms = 5'
-// should stay above TasksModel's FULL_REFRESH_INTERVAL
+// should stay above TasksModel's PERIODIC_REFRESH_INTERVAL
 #define SOON_EXECUTION_MILLIS 300000
 
 HtmlTaskItemDelegate::HtmlTaskItemDelegate(QObject *parent)

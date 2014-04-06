@@ -21,10 +21,11 @@
 #include "config/taskgroup.h"
 #include "sched/taskinstance.h"
 #include "config/schedulerconfig.h"
+#include "modelview/shareduiitemstablemodel.h"
 
 /** Model holding tasks along with their attributes, one task per line, in
  * fqtn alphabetical order. */
-class LIBQRONSHARED_EXPORT TasksModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT TasksModel : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TasksModel)
   QList<Task> _tasks;
@@ -32,21 +33,17 @@ class LIBQRONSHARED_EXPORT TasksModel : public QAbstractTableModel {
 
 public:
   explicit TasksModel(QObject *parent = 0);
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
   QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
   /** Way to add custom html at the end of "Actions" column. Will be evaluated
    * through Task.params(). */
   void setCustomActions(QString customActions) {
     _customActions = customActions; }
 
 public slots:
-  void configChanged(SchedulerConfig config);
-  void taskChanged(Task task);
+  void configReset(SchedulerConfig config);
 
 private slots:
-  void forceTimeRelatedDataRefresh();
+  void periodicDataRefresh();
 };
 
 #endif // TASKSMODEL_H

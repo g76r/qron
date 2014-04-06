@@ -15,115 +15,14 @@
 #include <QDateTime>
 #include "config/eventsubscription.h"
 
-#define COLUMNS 9
-
 TaskGroupsModel::TaskGroupsModel(QObject *parent)
-  : QAbstractTableModel(parent) {
+  : SharedUiItemsTableModel(parent) {
 }
 
-int TaskGroupsModel::rowCount(const QModelIndex &parent) const {
-  return parent.isValid() ? 0 : _groups.size();
-}
-
-int TaskGroupsModel::columnCount(const QModelIndex &parent) const {
-  Q_UNUSED(parent)
-  return COLUMNS;
-}
-
-QVariant TaskGroupsModel::data(const QModelIndex &index, int role) const {
-  if (index.isValid() && index.row() >= 0 && index.row() < _groups.size()) {
-    const TaskGroup tg(_groups.at(index.row()));
-    switch(role) {
-    case Qt::DisplayRole:
-      switch(index.column()) {
-      case 0:
-        return tg.id();
-      case 1:
-        return tg.label();
-      case 2:
-        return tg.params().toString(false, false);
-      case 3:
-        return EventSubscription::toStringList(tg.onstartEventSubscriptions()).join("\n");
-      case 4:
-        return EventSubscription::toStringList(tg.onsuccessEventSubscriptions()).join("\n");
-      case 5:
-        return EventSubscription::toStringList(tg.onfailureEventSubscriptions()).join("\n");
-      case 6: {
-        QString env;
-        ParamSet setenv = tg.setenv();
-        foreach(const QString key, setenv.keys(false))
-          env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
-        foreach(const QString key, tg.unsetenv().keys(false))
-          env.append('-').append(key).append(' ');
-        if (!env.isEmpty())
-          env.chop(1);
-        return env;
-      }
-      case 7: {
-        QString env;
-        ParamSet setenv = tg.setenv();
-        foreach(const QString key, setenv.keys(false))
-          env.append(key).append('=').append(setenv.rawValue(key)).append(' ');
-        if (!env.isEmpty())
-          env.chop(1);
-        return env;
-      }
-      case 8: {
-        QString env;
-        foreach(const QString key, tg.unsetenv().keys(false))
-          env.append(key).append(' ');
-        if (!env.isEmpty())
-          env.chop(1);
-        return env;
-      }
-      }
-      break;
-    default:
-      ;
-    }
-  }
-  return QVariant();
-}
-
-QVariant TaskGroupsModel::headerData(int section, Qt::Orientation orientation,
-                                int role) const {
-  if (role == Qt::DisplayRole && orientation == Qt::Horizontal) {
-    switch(section) {
-    case 0:
-      return "Id";
-    case 1:
-      return "Label";
-    case 2:
-      return "Parameters";
-    case 3:
-      return "On start";
-    case 4:
-      return "On success";
-    case 5:
-      return "On failure";
-    case 6:
-      return "System environment";
-    case 7:
-      return "Setenv";
-    case 8:
-      return "Unsetenv";
-    }
-  }
-  return QVariant();
-}
-
-void TaskGroupsModel::configChanged(SchedulerConfig config) {
-  beginResetModel();
-  _groups.clear();
-  foreach (const TaskGroup group, config.tasksGroups().values()) {
-    int row;
-    for (row = 0; row < _groups.size(); ++row) {
-      TaskGroup g2 = _groups.at(row);
-      // sort by taskgroupid
-      if (group.id() < g2.id())
-        break;
-    }
-    _groups.insert(row, group);
-  }
-  endResetModel();
+void TaskGroupsModel::configReset(SchedulerConfig config) {
+  QList<SharedUiItem> items;
+  foreach (SharedUiItem item, config.tasksGroups().values())
+    items.append(item);
+  qSort(items);
+  resetItems(items);
 }

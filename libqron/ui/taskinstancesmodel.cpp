@@ -39,7 +39,7 @@ QVariant TaskInstancesModel::data(const QModelIndex &index, int role) const {
       case 0:
         return r.id();
       case 1:
-        return r.task().fqtn();
+        return r.task().id();
       case 2:
         return r.statusAsString();
       case 3:

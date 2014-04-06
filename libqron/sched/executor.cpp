@@ -54,8 +54,8 @@ void Executor::execute(TaskInstance instance) {
 void Executor::doExecute(TaskInstance instance) {
   _instance = instance;
   const QString mean = _instance.task().mean();
-  Log::info(_instance.task().fqtn(), _instance.id())
-      << "starting task '" << _instance.task().fqtn() << "' through mean '"
+  Log::info(_instance.task().id(), _instance.id())
+      << "starting task '" << _instance.task().id() << "' through mean '"
       << mean << "' after " << _instance.queuedMillis() << " ms in queue";
   _stderrWasUsed = false;
   long long maxDurationBeforeAbort = _instance.task().maxDurationBeforeAbort();
@@ -73,7 +73,7 @@ void Executor::doExecute(TaskInstance instance) {
     emit taskStarted(_instance);
     taskFinishing(true, 0);
   } else {
-    Log::error(_instance.task().fqtn(), _instance.id())
+    Log::error(_instance.task().id(), _instance.id())
         << "cannot execute task with unknown mean '" << mean << "'";
     taskFinishing(false, -1);
   }
@@ -83,7 +83,7 @@ void Executor::localMean() {
   QStringList cmdline;
   cmdline = _instance.params()
       .splitAndEvaluate(_instance.command(), &_instance);
-  Log::info(_instance.task().fqtn(), _instance.id())
+  Log::info(_instance.task().id(), _instance.id())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   QProcessEnvironment sysenv;
   prepareEnv(&sysenv);
@@ -95,7 +95,7 @@ void Executor::sshMean() {
   QStringList cmdline, sshCmdline;
   cmdline = _instance.params()
       .splitAndEvaluate(_instance.command(), &_instance);
-  Log::info(_instance.task().fqtn(), _instance.id())
+  Log::info(_instance.task().id(), _instance.id())
       << "exact command line to be executed (through ssh on host "
       << _instance.target().hostname() <<  "): " << cmdline.join(" ");
   QHash<QString,QString> setenv;
@@ -142,9 +142,9 @@ void Executor::sshMean() {
 
 void Executor::execProcess(QStringList cmdline, QProcessEnvironment sysenv) {
   if (cmdline.isEmpty()) {
-    Log::warning(_instance.task().fqtn(), _instance.id())
+    Log::warning(_instance.task().id(), _instance.id())
         << "cannot execute task with empty command '"
-        << _instance.task().fqtn() << "'";
+        << _instance.task().id() << "'";
     taskFinishing(false, -1);
     return;
   }
@@ -161,7 +161,7 @@ void Executor::execProcess(QStringList cmdline, QProcessEnvironment sysenv) {
           this, SLOT(readyReadStandardOutput()));
   _process->setProcessEnvironment(sysenv);
   QString program = cmdline.takeFirst();
-  Log::debug(_instance.task().fqtn(), _instance.id())
+  Log::debug(_instance.task().id(), _instance.id())
       << "about to start system process '" << program << "' with args "
       << cmdline << " and environment " << sysenv.toStringList();
   emit taskStarted(_instance);
@@ -174,7 +174,7 @@ void Executor::processError(QProcess::ProcessError error) {
     return; // LATER add log
   readyReadStandardError();
   readyReadStandardOutput();
-  Log::warning(_instance.task().fqtn(), _instance.id()) // TODO info if aborting
+  Log::warning(_instance.task().id(), _instance.id()) // TODO info if aborting
       << "task error #" << error << " : " << _process->errorString();
   _process->kill();
   processFinished(-1, QProcess::CrashExit);
@@ -192,14 +192,14 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   success = _instance.task().params()
       .valueAsBool("return.code."+QString::number(exitCode)+".success",success);
   _instance.setEndDatetime();
-  Log::log(success ? Log::Info : Log::Warning, _instance.task().fqtn(),
+  Log::log(success ? Log::Info : Log::Warning, _instance.task().id(),
            _instance.id())
-      << "task '" << _instance.task().fqtn() << "' finished "
+      << "task '" << _instance.task().id() << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
       << exitCode << " on host '" << _instance.target().hostname() << "' in "
       << _instance.runningMillis() << " ms";
   if (!_stderrWasUsed  && _alerter)
-    _alerter->cancelAlert("task.stderr."+_instance.task().fqtn());
+    _alerter->cancelAlert("task.stderr."+_instance.task().id());
   /* Qt doc is not explicit if delete should only be done when
      * QProcess::finished() is emited, but we get here too when
      * QProcess::error() is emited.
@@ -233,13 +233,13 @@ void Executor::readyProcessWarningOutput() {
         foreach (QRegExp filter, filters)
           if (filter.indexIn(line) >= 0)
             goto line_filtered;
-        Log::warning(_instance.task().fqtn(), _instance.id())
+        Log::warning(_instance.task().id(), _instance.id())
             << "task stderr: " << line;
         if (!_stderrWasUsed) {
           _stderrWasUsed = true;
           if (_alerter && !_instance.task().params()
               .valueAsBool("disable.alert.stderr", false))
-            _alerter->raiseAlert("task.stderr."+_instance.task().fqtn());
+            _alerter->raiseAlert("task.stderr."+_instance.task().id());
         }
 line_filtered:;
       }
@@ -296,23 +296,23 @@ void Executor::httpMean() {
     _instance.setAbortable();
     emit taskStarted(_instance);
     if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
-      Log::info(_instance.task().fqtn(), _instance.id())
+      Log::info(_instance.task().id(), _instance.id())
           << "exact GET URL to be called: "
           << url.toString(QUrl::RemovePassword);
       _reply = _nam->get(networkRequest);
     } else if (method.compare("put", Qt::CaseInsensitive) == 0) {
-      Log::info(_instance.task().fqtn(), _instance.id())
+      Log::info(_instance.task().id(), _instance.id())
           << "exact PUT URL to be called: "
           << url.toString(QUrl::RemovePassword);
       _reply = _nam->put(networkRequest, QByteArray());
     } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
-      Log::info(_instance.task().fqtn(), _instance.id())
+      Log::info(_instance.task().id(), _instance.id())
           << "exact POST URL to be called: "
           << url.toString(QUrl::RemovePassword);
       networkRequest.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
       _reply = _nam->post(networkRequest, QByteArray());
     } else {
-      Log::error(_instance.task().fqtn(), _instance.id())
+      Log::error(_instance.task().id(), _instance.id())
           << "unsupported HTTP method: " << method;
       taskFinishing(false, -1);
     }
@@ -328,7 +328,7 @@ void Executor::httpMean() {
       connect(_reply, SIGNAL(finished()), this, SLOT(replyFinished()));
     }
   } else {
-    Log::error(_instance.task().fqtn(), _instance.id())
+    Log::error(_instance.task().id(), _instance.id())
         << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
     taskFinishing(false, -1);
   }
@@ -349,7 +349,7 @@ void Executor::replyFinished() {
 // error() is not followed by finished() and I am not sure there are such cases)
 void Executor::replyHasFinished(QNetworkReply *reply,
                                QNetworkReply::NetworkError error) {
-  QString fqtn(_instance.task().fqtn());
+  QString fqtn(_instance.task().id());
   if (!_reply) {
     Log::debug() << "Executor::replyFinished called as it is not responsible "
                     "of any http request";
@@ -417,7 +417,7 @@ void Executor::workflowMean() {
       //    << " to " << ms << " ms";
     } else {
       // this is likely to occur for timers too far in the future (> ~20 days)
-      Log::debug(_instance.task().fqtn(), _instance.id())
+      Log::debug(_instance.task().id(), _instance.id())
           << "invalid workflow timer " << id << " " << next.toString()
           << " " << trigger.humanReadableExpression();
     }
@@ -427,7 +427,7 @@ void Executor::workflowMean() {
   //    << "starting workflow";
   emit taskStarted(_instance);
   foreach (QString id, _instance.task().startSteps())
-    doActivateWorkflowTransition(_instance.task().fqtn()+"|start|"+id,
+    doActivateWorkflowTransition(_instance.task().id()+"|start|"+id,
                                  ParamSet());
 }
 
@@ -446,7 +446,7 @@ void Executor::doActivateWorkflowTransition(QString transitionId,
   // built on configuration loading)
   QStringList parts = transitionId.split('|');
   if (parts.size() != 3) {
-    Log::error(_instance.task().fqtn(), _instance.id())
+    Log::error(_instance.task().id(), _instance.id())
         << "malfored transition id: " << transitionId;
     return;
   }
@@ -460,13 +460,13 @@ void Executor::doActivateWorkflowTransition(QString transitionId,
     return;
   }
   if (!_steps.contains(parts[2])) {
-    Log::error(_instance.task().fqtn(), _instance.id())
+    Log::error(_instance.task().id(), _instance.id())
         << "unknown step id in transition id: " << transitionId;
     return;
   }
   //Log::fatal(_instance.task().fqtn(), _instance.id())
   //    << "actual transtion id: " << transitionId;
-  Log::debug(_instance.task().fqtn(), _instance.id())
+  Log::debug(_instance.task().id(), _instance.id())
       << "activating workflow transition " << transitionId;
   _steps[parts[2]].predecessorReady(transitionId, eventContext);
 }
@@ -476,7 +476,7 @@ void Executor::noticePosted(QString notice, ParamSet params) {
   foreach (WorkflowTriggerSubscription wts,
            _instance.task().workflowTriggerSubscriptionsByNotice()
            .values(notice)) {
-    Log::debug(_instance.task().fqtn(), _instance.id())
+    Log::debug(_instance.task().id(), _instance.id())
         << "triggering ontrigger notice ^" << notice << " " << params;
     wts.eventSubscription().triggerActions(params, _instance);
   }
@@ -486,7 +486,7 @@ void Executor::cronTriggered(QVariant tsId) {
   WorkflowTriggerSubscription wts
       = _instance.task().workflowTriggerSubscriptionsById()
       .value(tsId.toString());
-  Log::debug(_instance.task().fqtn(), _instance.id())
+  Log::debug(_instance.task().id(), _instance.id())
       << "triggering ontrigger cron #" << tsId << " "
       << wts.trigger().humanReadableExpression();
   wts.eventSubscription().triggerActions(
@@ -494,7 +494,7 @@ void Executor::cronTriggered(QVariant tsId) {
 }
 
 void Executor::workflowFinished(bool success, int returnCode) {
-  Log::info(_instance.task().fqtn(), _instance.id())
+  Log::info(_instance.task().id(), _instance.id())
       << "ending workflow in " << (success ? "success" : "failure")
       << " with return code " << returnCode;
   _steps.clear(); // LATER give to TaskInstance for history ?
@@ -548,25 +548,25 @@ void Executor::doAbort() {
                     "currently responsible for any task";
   } else if (!_instance.abortable()) {
     if (_instance.task().mean() == "ssh")
-      Log::warning(_instance.task().fqtn(), _instance.id())
+      Log::warning(_instance.task().id(), _instance.id())
           << "cannot abort task because ssh tasks are not abortable when "
              "ssh.disablepty is set to true";
     else
-      Log::warning(_instance.task().fqtn(), _instance.id())
+      Log::warning(_instance.task().id(), _instance.id())
           << "cannot abort task because it is marked as not abortable";
   } else if (_process) {
-    Log::info(_instance.task().fqtn(), _instance.id())
+    Log::info(_instance.task().id(), _instance.id())
         << "process task abort requested";
     _process->kill();
   } else if (_reply) {
-    Log::info(_instance.task().fqtn(), _instance.id())
+    Log::info(_instance.task().id(), _instance.id())
         << "http task abort requested";
     _reply->abort();
   } else if (_instance.task().mean() == "workflow") {
     // FIXME should abort running subtasks ?
     workflowFinished(false, -1);
   } else {
-    Log::warning(_instance.task().fqtn(), _instance.id())
+    Log::warning(_instance.task().id(), _instance.id())
         << "cannot abort task because its execution mean is not abortable";
   }
 }

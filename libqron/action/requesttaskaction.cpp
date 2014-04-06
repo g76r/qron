@@ -50,15 +50,15 @@ public:
           fqtn, evaluatedOverrindingParams(eventContext, parentInstance), _force,
           parentInstance);
       if (instances.isEmpty())
-        Log::error(parentInstance.task().fqtn(), parentInstance.id())
+        Log::error(parentInstance.task().id(), parentInstance.id())
             << "requesttask action failed to request execution of task "
             << fqtn << " within event subscription context "
             << subscription.subscriberName() << "|" << subscription.eventName();
       else
         foreach (TaskInstance childInstance, instances)
-          Log::info(parentInstance.task().fqtn(), parentInstance.id())
+          Log::info(parentInstance.task().id(), parentInstance.id())
               << "requesttask action requested execution of task "
-              << childInstance.task().fqtn() << "/" << childInstance.groupId();
+              << childInstance.task().id() << "/" << childInstance.groupId();
     }
 
   }

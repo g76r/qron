@@ -40,9 +40,9 @@ public:
     }
   }
   StepWrapper(Task workflow, bool isStart) // pseudo steps
-    : _fqsn(workflow.fqtn()+(isStart ? ":$start" : ":$end")),
+    : _fqsn(workflow.id()+(isStart ? ":$start" : ":$end")),
       _id(isStart ? "$start" : "$end"),
-      _kindToString(isStart ? "start" : "end"), _workflowFqtn(workflow.fqtn()) {
+      _kindToString(isStart ? "start" : "end"), _workflowFqtn(workflow.id()) {
     if (isStart)
       foreach (QString s, workflow.startSteps())
         _onReadyToString.append(" ->").append(s);
@@ -91,7 +91,7 @@ QVariant StepsModel::data(const QModelIndex &index, int role) const {
       case 3:
         return step.workflowFqtn();
       case 4:
-        return step.subtask().fqtn();
+        return step.subtask().id();
       case 5:
         return step.predecessors();
       case 6:
@@ -152,7 +152,7 @@ void StepsModel::configChanged(SchedulerConfig config) {
       int row;
       for (row = 0; row < _steps.size(); ++row) {
         const StepWrapper &step2 = _steps.at(row);
-        if (task.fqtn() < step2.workflowFqtn())
+        if (task.id() < step2.workflowFqtn())
           break;
       }
       _steps.insert(row++, StepWrapper(task, true));

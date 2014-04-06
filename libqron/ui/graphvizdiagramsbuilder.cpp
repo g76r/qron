@@ -56,7 +56,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     s = task.target();
     if (!s.isEmpty())
       displayedHosts.insert(s);
-    fqtns.insert(task.fqtn());
+    fqtns.insert(task.id());
   }
   foreach (const Cluster &cluster, clusters.values())
     foreach (const Host &host, cluster.hosts())
@@ -89,8 +89,8 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   foreach (const Task &task, tasks.values()) {
     foreach (const Task &subtask, tasks.values()) {
       if (!subtask.supertaskFqtn().isNull()
-          && subtask.supertaskFqtn() == task.fqtn())
-        subtasks.insert(task.fqtn(), subtask);
+          && subtask.supertaskFqtn() == task.id())
+        subtasks.insert(task.id(), subtask);
     }
   }
   /***************************************************************************/
@@ -137,20 +137,20 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     if (!task.supertaskFqtn().isNull())
       continue;
     // draw task node and group--task edge
-    gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
+    gv.append("\""+task.id()+"\" [label=\""+task.shortId()+"\","
               +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
-              +",tooltip=\""+task.fqtn()+"\"]\n");
+              +",tooltip=\""+task.id()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
-        .append("\"").append(task.fqtn())
+        .append("\"").append(task.id())
         .append("\" [" TASKGROUP_TASK_EDGE "]\n");
     // draw task--target edges, workflow tasks showing all edge applicable to
     // their subtasks once and only once
     QSet<QString> edges;
-    QList<Task> deployed = subtasks.values(task.fqtn());
+    QList<Task> deployed = subtasks.values(task.id());
     if (deployed.isEmpty())
       deployed.append(task);
     foreach (const Task &subtask, deployed)
-      edges.insert("\""+task.fqtn()+"\"--\""+subtask.target()+"\" [label=\""
+      edges.insert("\""+task.id()+"\"--\""+subtask.target()+"\" [label=\""
                    +subtask.mean()+"\"," TASK_TARGET_EDGE "]\n");
     foreach (QString s, edges)
       gv.append(s);
@@ -200,18 +200,18 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     if (!task.supertaskFqtn().isNull())
       continue;
     // task nodes and group--task edges
-    gv.append("\""+task.fqtn()+"\" [label=\""+task.id()+"\","
+    gv.append("\""+task.id()+"\" [label=\""+task.shortId()+"\","
               +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
-              +",tooltip=\""+task.fqtn()+"\"]\n");
+              +",tooltip=\""+task.id()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
-        .append("\"").append(task.fqtn())
+        .append("\"").append(task.id())
         .append("\" [" TASKGROUP_TASK_EDGE "]\n");
     // cron triggers
     foreach (const CronTrigger &cron, task.cronTriggers()) {
       gv.append("\"$cron_").append(QString::number(++cronid))
           .append("\" [label=\"(").append(cron.expression())
           .append(")\"," CRON_TRIGGER_NODE "]\n");
-      gv.append("\"").append(task.fqtn()).append("\"--\"$cron_")
+      gv.append("\"").append(task.id()).append("\"--\"$cron_")
           .append(QString::number(cronid))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     }
@@ -221,20 +221,20 @@ QHash<QString,QString> GraphvizDiagramsBuilder
       gv.append("\"$cron_").append(QString::number(++cronid))
           .append("\" [label=\"(").append(cron.expression())
           .append(")\"," CRON_TRIGGER_NODE "]\n");
-      gv.append("\"").append(task.fqtn()).append("\"--\"$cron_")
+      gv.append("\"").append(task.id()).append("\"--\"$cron_")
           .append(QString::number(cronid))
           .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
 
     }
     // notice triggers
     foreach (const NoticeTrigger &trigger, task.noticeTriggers())
-      gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
+      gv.append("\"").append(task.id()).append("\"--\"$notice_")
           .append(trigger.expression().remove('"'))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     // workflow internal notice triggers
     foreach (QString notice,
              task.workflowTriggerSubscriptionsByNotice().keys()) {
-      gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
+      gv.append("\"").append(task.id()).append("\"--\"$notice_")
           .append(notice.remove('"'))
           .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
     }
@@ -243,7 +243,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
         && task.otherTriggers().isEmpty()) {
       gv.append("\"$notrigger_").append(QString::number(++cronid))
           .append("\" [label=\"no trigger\"," NO_TRIGGER_NODE "]\n");
-      gv.append("\"").append(task.fqtn()).append("\"--\"$notrigger_")
+      gv.append("\"").append(task.id()).append("\"--\"$notrigger_")
           .append(QString::number(cronid))
           .append("\" [" TASK_NOTRIGGER_EDGE "]\n");
     }
@@ -254,7 +254,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
       foreach (const Action &action, sub.actions()) {
         QString actionType = action.actionType();
         if (actionType == "postnotice") {
-          gv.append("\"").append(task.fqtn()).append("\"--\"$notice_")
+          gv.append("\"").append(task.id()).append("\"--\"$notice_")
               .append(action.targetName().remove('"')).append("\" [label=\"")
               .append(sub.humanReadableCause())
               .append("\"," TASK_POSTNOTICE_EDGE "]\n");
@@ -263,7 +263,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
           if (!target.contains('.'))
             target = task.taskGroup().id()+"."+target;
           if (fqtns.contains(target))
-            edges.insert("\""+task.fqtn()+"\"--\""+target+"\" [label=\""
+            edges.insert("\""+task.id()+"\"--\""+target+"\" [label=\""
                          +sub.humanReadableCause()
                          +"\"," TASK_REQUESTTASK_EDGE "]\n");
         }
@@ -307,7 +307,7 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
   // LATER implement instanciated workflow diagram for real
   if (task.mean() != "workflow")
     return QString();
-  QString gv("graph \""+task.fqtn()+" workflow\"{\n"
+  QString gv("graph \""+task.id()+" workflow\"{\n"
              "  graph[" WORKFLOW_GRAPH " ]\n"
              "  start[" START_NODE "]\n"
              "  end[" END_NODE "]\n");
@@ -317,7 +317,7 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     case Step::SubTask:
       gv.append("  step_"+s.id()+"[label=\""+s.id()+"\"," TASK_NODE
                 +(si.isReady() ? ",color=orange" : "")
-                +",tooltip=\""+s.subtask().fqtn()+"\"]\n");
+                +",tooltip=\""+s.subtask().id()+"\"]\n");
       // LATER red if failure, green if ok
       break;
     case Step::AndJoin:

@@ -195,7 +195,7 @@ bool Scheduler::loadConfig(PfNode root) {
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {
     TaskInstance &r = _queuedRequests[i];
-    QString fqtn = r.task().fqtn();
+    QString fqtn = r.task().id();
     Task t = _config.tasks().value(fqtn);
     if (t.isNull()) {
       Log::warning(fqtn, r.id())
@@ -409,7 +409,7 @@ QList<TaskInstance> Scheduler::doRequestTask(
 TaskInstance Scheduler::enqueueRequest(
     TaskInstance request, ParamSet paramsOverriding) {
   Task task(request.task());
-  QString fqtn(task.fqtn());
+  QString fqtn(task.id());
   foreach (RequestFormField field, task.requestFormFields()) {
     QString name(field.param());
     if (paramsOverriding.contains(name)) {
@@ -422,7 +422,7 @@ TaskInstance Scheduler::enqueueRequest(
     // avoid stacking disabled task requests by canceling older ones
     for (int i = 0; i < _queuedRequests.size(); ++i) {
       const TaskInstance &r2 = _queuedRequests[i];
-      if (fqtn == r2.task().fqtn() && request.groupId() != r2.groupId()) {
+      if (fqtn == r2.task().id() && request.groupId() != r2.groupId()) {
         Log::info(fqtn, r2.id())
             << "canceling task because another instance of the same task "
                "is queued"
@@ -469,7 +469,7 @@ TaskInstance Scheduler::doCancelRequest(quint64 id) {
   for (int i = 0; i < _queuedRequests.size(); ++i) {
     TaskInstance r2 = _queuedRequests[i];
     if (id == r2.id()) {
-      QString fqtn(r2.task().fqtn());
+      QString fqtn(r2.task().id());
       Log::info(fqtn, id) << "canceling task as requested";
       r2.setReturnCode(-1);
       r2.setSuccess(false);
@@ -500,7 +500,7 @@ TaskInstance Scheduler::doAbortTask(quint64 id) {
   for (int i = 0; i < tasks.size(); ++i) {
     TaskInstance r2 = tasks[i];
     if (id == r2.id()) {
-      QString fqtn(r2.task().fqtn());
+      QString fqtn(r2.task().id());
       Executor *executor = _runningTasks.value(r2);
       if (executor) {
         Log::warning(fqtn, id) << "aborting task as requested";
@@ -525,7 +525,7 @@ void Scheduler::checkTriggersForAllTasks() {
   //Log::debug() << "Scheduler::checkTriggersForAllTasks ";
   QList<Task> tasksWithoutTimeTrigger;
   foreach (Task task, _config.tasks().values()) {
-    QString fqtn = task.fqtn();
+    QString fqtn = task.id();
     foreach (const CronTrigger trigger, task.cronTriggers())
       checkTrigger(trigger, task, fqtn);
     if (task.cronTriggers().isEmpty()) {
@@ -606,23 +606,23 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
       // LATER implement regexp patterns for notice triggers
       if (trigger.expression() == notice) {
         Log::debug() << "notice " << trigger.humanReadableExpression()
-                     << " triggered task " << task.fqtn();
+                     << " triggered task " << task.id();
         ParamSet overridingParams;
         foreach (QString key, trigger.overridingParams().keys())
           overridingParams
               .setValue(key, params
                         .value(trigger.overridingParams().rawValue(key)));
         QList<TaskInstance> requests
-            = syncRequestTask(task.fqtn(), overridingParams);
+            = syncRequestTask(task.id(), overridingParams);
         if (!requests.isEmpty())
           foreach (TaskInstance request, requests)
-            Log::debug(task.fqtn(), request.id())
+            Log::debug(task.id(), request.id())
                 << "notice " << trigger.humanReadableExpression()
-                << " triggered task " << task.fqtn();
+                << " triggered task " << task.id();
         else
-          Log::debug(task.fqtn())
+          Log::debug(task.id())
               << "notice " << trigger.humanReadableExpression()
-              << " failed to trigger task " << task.fqtn();
+              << " failed to trigger task " << task.id();
       }
     }
   }
@@ -653,10 +653,10 @@ void Scheduler::startQueuedTasks() {
       _queuedRequests.removeAt(i);
       if (r.task().discardAliasesOnStart() != Task::DiscardNone) {
         // remove other requests of same task
-        QString fqtn(r.task().fqtn());
+        QString fqtn(r.task().id());
         for (int j = 0; j < _queuedRequests.size(); ++j ) {
           TaskInstance r2 = _queuedRequests[j];
-          if (fqtn == r2.task().fqtn() && r.groupId() != r2.groupId()) {
+          if (fqtn == r2.task().id() && r.groupId() != r2.groupId()) {
             Log::info(fqtn, r2.id())
                 << "canceling task because another instance of the same task "
                    "is starting: " << fqtn << "/" << r.id();
@@ -678,7 +678,7 @@ void Scheduler::startQueuedTasks() {
 
 bool Scheduler::startQueuedTask(TaskInstance instance) {
   Task task(instance.task());
-  QString fqtn(task.fqtn());
+  QString fqtn(task.id());
   Executor *executor = 0;
   if (!task.enabled())
     return false; // do not start disabled tasks
@@ -786,7 +786,7 @@ nexthost:;
 void Scheduler::taskFinishing(TaskInstance instance,
                               QPointer<Executor> executor) {
   Task requestedTask(instance.task());
-  QString fqtn(requestedTask.fqtn());
+  QString fqtn(requestedTask.id());
   // configured and requested tasks are different if config reloaded meanwhile
   Task configuredTask(_config.tasks().value(fqtn));
   configuredTask.fetchAndAddInstancesCount(-1);
@@ -882,7 +882,7 @@ void Scheduler::periodicChecks() {
   foreach (const TaskInstance r, currentInstances) {
     const Task t(r.task());
     if (t.maxExpectedDuration() < r.liveTotalMillis())
-      _alerter->raiseAlert("task.toolong."+t.fqtn());
+      _alerter->raiseAlert("task.toolong."+t.id());
   }
   // restart timer for triggers if any was lost, this is never usefull apart
   // if current system time goes back (which btw should never occur on well
@@ -912,6 +912,6 @@ void Scheduler::doActivateWorkflowTransition(TaskInstance workflowTaskInstance,
     executor->activateWorkflowTransition(transitionId, eventContext);
   else
     Log::error() << "cannot activate workflow transition on non-running "
-                    "workflow " << workflowTaskInstance.task().fqtn()
+                    "workflow " << workflowTaskInstance.task().id()
                  << "/" << workflowTaskInstance.id() << ": " << transitionId;
 }

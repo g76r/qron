@@ -183,10 +183,10 @@ QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
   if (!d)
     return defaultValue;
   // LATER optimize
-  if (key == "!taskid") {
-    return task().id();
+  if (key == "!taskshortid") {
+    return task().shortId();
   } else if (key == "!fqtn") {
-    return task().fqtn();
+    return task().id();
   } else if (key == "!taskgroupid") {
     return task().taskGroup().id();
   } else if (key == "!taskinstanceid") {

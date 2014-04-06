@@ -116,8 +116,6 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   _setenv.clear();
   _setenv.setValue("TASKINSTANCEID", "%!taskinstanceid");
   _setenv.setValue("FQTN", "%!fqtn");
-  _setenv.setValue("TASKGROUPID", "%!taskgroupid");
-  _setenv.setValue("TASKID", "%!taskid");
   ConfigUtils::loadParamSet(root, &_globalParams);
   ConfigUtils::loadSetenv(root, &_setenv);
   ConfigUtils::loadUnsetenv(root, &_unsetenv);
@@ -199,16 +197,16 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
       Log::error() << "ignoring invalid task: " << node.toString();
       goto ignore_task;
     }
-    if (_tasks.contains(task.fqtn())) {
-      Log::error() << "ignoring duplicate task " << task.fqtn();
+    if (_tasks.contains(task.id())) {
+      Log::error() << "ignoring duplicate task " << task.id();
       goto ignore_task;
     }
     foreach (Step s, task.steps()) { // check for uniqueness of subtasks ids
       Task subtask = s.subtask();
       if (!subtask.isNull()) {
-        QString subFqtn = subtask.fqtn();
+        QString subFqtn = subtask.id();
         if (_tasks.contains(subFqtn)) {
-          Log::error() << "ignoring task " << task.fqtn()
+          Log::error() << "ignoring task " << task.id()
                        << " since its subtask " << subFqtn
                        << " has a duplicate id";
           goto ignore_task;
@@ -216,41 +214,41 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
       }
     }
     if (!_hosts.contains(task.target()) && !_clusters.contains(task.target())) {
-      Log::error() << "ignoring task " << task.fqtn()
+      Log::error() << "ignoring task " << task.id()
                    << " since its target is unknown: '"<< task.target() << "'";
       goto ignore_task;
     }
-    _tasks.insert(task.fqtn(), task);
-    recordTaskActionLinks(node, "onstart", &requestTaskActionLinks, task.fqtn(),
+    _tasks.insert(task.id(), task);
+    recordTaskActionLinks(node, "onstart", &requestTaskActionLinks, task.id(),
                           task);
     recordTaskActionLinks(node, "onsuccess", &requestTaskActionLinks,
-                          task.fqtn(), task);
+                          task.id(), task);
     recordTaskActionLinks(node, "onfailure", &requestTaskActionLinks,
-                          task.fqtn(), task);
+                          task.id(), task);
     recordTaskActionLinks(node, "onfinish", &requestTaskActionLinks,
-                          task.fqtn(), task); // FIXME rather use a QStringList than a QString for childname
+                          task.id(), task); // FIXME rather use a QStringList than a QString for childname
     if (task.mean() == "workflow") {
       recordTaskActionLinks(node, "ontrigger", &requestTaskActionLinks,
-                            task.fqtn(), task); // FIXME check that this is consistent
+                            task.id(), task); // FIXME check that this is consistent
       foreach(PfNode child, node.childrenByName("task")) {
         recordTaskActionLinks(node, "onstart", &requestTaskActionLinks,
-                              task.fqtn()+":"+child.contentAsString(),
+                              task.id()+":"+child.contentAsString(),
                               task);
         recordTaskActionLinks(node, "onsuccess", &requestTaskActionLinks,
-                              task.fqtn()+":"+child.contentAsString(),
+                              task.id()+":"+child.contentAsString(),
                               task);
         recordTaskActionLinks(node, "onfailure", &requestTaskActionLinks,
-                              task.fqtn()+":"+child.contentAsString(),
+                              task.id()+":"+child.contentAsString(),
                               task);
         recordTaskActionLinks(node, "onfinish", &requestTaskActionLinks,
-                              task.fqtn()+":"+child.contentAsString(),
+                              task.id()+":"+child.contentAsString(),
                               task);
       }
     }
     foreach (Step s, task.steps()) {
       Task subtask = s.subtask();
       if (!subtask.isNull())
-        _tasks.insert(subtask.fqtn(), subtask);
+        _tasks.insert(subtask.id(), subtask);
     }
 ignore_task:;
   }
@@ -335,7 +333,7 @@ ignore_task:;
   // LATER onschedulershutdown
   foreach (const RequestTaskActionLink &link, requestTaskActionLinks) {
     QString id = link._action.targetName();
-    QString fqtn(link._contextTask.fqtn());
+    QString fqtn(link._contextTask.id());
     if (!link._contextTask.isNull() && !id.contains('.')) { // id to group
       id = fqtn.left(fqtn.lastIndexOf('.')+1)+id;
     }
@@ -472,8 +470,8 @@ Cluster SchedulerConfig::renameCluster(QString oldName, QString newName) {
 }
 
 Task SchedulerConfig::updateTask(Task task) {
-  if (d && d->_tasks.contains(task.fqtn())) {
-    d->_tasks.insert(task.fqtn(), task);
+  if (d && d->_tasks.contains(task.id())) {
+    d->_tasks.insert(task.id(), task);
     return task;
   }
   return Task();

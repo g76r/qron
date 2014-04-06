@@ -67,13 +67,10 @@ public:
   ~Task();
   Task &operator=(const Task &other) {
     SharedUiItem::operator=(other); return *this; }
-  bool operator==(const Task &other) const;
-  bool operator<(const Task &other) const;
   ParamSet params() const;
   void setParentParams(ParamSet parentParams);
-  /** Fully qualified task name (i.e. "taskGroupId.taskId") */
-  QString id() const;
-  QString fqtn() const;
+  /** localId within group */
+  QString shortId() const;
   QString label() const;
   QString mean() const;
   QString command() const;
