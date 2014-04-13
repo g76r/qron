@@ -172,6 +172,8 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_shortId = ConfigUtils::sanitizeId(node.contentAsString());
   td->_label = node.attribute("label", td->_shortId);
   td->_mean = ConfigUtils::sanitizeId(node.attribute("mean"));
+  if (td->_mean.isEmpty())
+    td->_mean = "local";
   if (td->_mean != "local" && td->_mean != "ssh" && td->_mean != "http"
       && td->_mean != "workflow" && td->_mean != "donothing") {
     Log::error() << "task with invalid execution mean: "
