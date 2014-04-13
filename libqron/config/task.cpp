@@ -34,7 +34,7 @@
 
 static QString _uiHeaderNames[] = {
   "Short Id", // 0
-  "TaskGroup Id",
+  "Parent Group",
   "Label",
   "Mean",
   "Command",
@@ -64,7 +64,7 @@ static QString _uiHeaderNames[] = {
   "Triggers with calendars",
   "Enabled",
   "Has triggers with calendars", // 30
-  "Workflow"
+  "Parent task"
 };
 
 class WorkflowTriggerSubscriptionData : public QSharedData {
@@ -792,7 +792,7 @@ QHash<QString, Step> Task::steps() const {
   return !isNull() ? td()->_steps : QHash<QString,Step>();
 }
 
-QString Task::supertaskFqtn() const {
+QString Task::parentTaskId() const {
   return !isNull() ? td()->_supertaskFqtn : QString();
 }
 

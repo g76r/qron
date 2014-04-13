@@ -62,7 +62,7 @@ public:
   Task();
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-       QHash<QString,Task> oldTasks, QString supertaskFqtn,
+       QHash<QString,Task> oldTasks, QString parentTaskId,
        QHash<QString, Calendar> namedCalendars);
   ~Task();
   Task &operator=(const Task &other) {
@@ -146,8 +146,8 @@ public:
   /** Workflow steps. Empty list for standalone tasks. */
   QHash<QString,Step> steps() const;
   QStringList startSteps() const;
-  /** Super task (e.g. workflow task) to which this task belongs, if any. */
-  QString supertaskFqtn() const;
+  /** Parent task (e.g. workflow task) to which this task belongs, if any. */
+  QString parentTaskId() const;
   QString workflowDiagram() const;
   QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
   QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;

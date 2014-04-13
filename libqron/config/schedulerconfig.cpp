@@ -254,7 +254,7 @@ ignore_task:;
   }
   foreach (QString fqtn, _tasks.keys()) {
     Task &task = _tasks[fqtn];
-    QString supertaskFqtn = task.supertaskFqtn();
+    QString supertaskFqtn = task.parentTaskId();
     if (_tasks.contains(supertaskFqtn))
       task.setParentParams(_tasks[supertaskFqtn].params());
   }
