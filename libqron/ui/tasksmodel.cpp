@@ -22,7 +22,8 @@
 #define PERIODIC_REFRESH_INTERVAL 60000
 
 TasksModel::TasksModel(QObject *parent)
-  : SharedUiItemsTableModel(Task(), parent) {
+  : SharedUiItemsTableModel(parent) {
+  setHeaderDataFromTemplate(Task());
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicDataRefresh()));
   timer->start(PERIODIC_REFRESH_INTERVAL);
@@ -40,7 +41,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
       break;
     }
   }
-  return SharedUiItemsTableModel::data(index, role);
+  return SharedUiItemsModel::data(index, role);
 }
 
 void TasksModel::configReset(SchedulerConfig config) {
