@@ -174,4 +174,5 @@ HEADERS += \
     config/accesscontrolconfig.h \
     ui/graphvizdiagramsbuilder.h \
     libqron_global.h \
-    ui/qronuiutils.h
+    ui/qronuiutils.h \
+    config/task_p.h

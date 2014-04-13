@@ -26,3 +26,29 @@ QString QronUiUtils::resourcesAsString(QHash<QString,qint64> resources) {
   }
   return s;
 }
+
+QString QronUiUtils::sysenvAsString(ParamSet setenv, ParamSet unsetenv) {
+  QString s;
+  foreach(const QString key, setenv.keys(false))
+    s.append(key).append('=').append(setenv.rawValue(key)).append(' ');
+  foreach(const QString key, unsetenv.keys(false))
+    s.append('-').append(key).append(' ');
+  s.chop(1);
+  return s;
+}
+
+QString QronUiUtils::paramsAsString(ParamSet params, bool inherit) {
+  QString s;
+  foreach(const QString key, params.keys(inherit))
+    s.append(key).append('=').append(params.rawValue(key)).append(' ');
+  s.chop(1);
+  return s;
+}
+
+QString QronUiUtils::paramsKeysAsString(ParamSet params, bool inherit) {
+  QString s;
+  foreach(const QString key, params.keys(inherit))
+    s.append(key).append(' ');
+  s.chop(1);
+  return s;
+}

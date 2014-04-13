@@ -31,41 +31,7 @@
 #include "sched/stepinstance.h"
 #include "ui/graphvizdiagramsbuilder.h"
 #include "ui/qronuiutils.h"
-
-static QString _uiHeaderNames[] = {
-  "Short Id", // 0
-  "Parent Group",
-  "Label",
-  "Mean",
-  "Command",
-  "Target", // 5
-  "Trigger",
-  "Parameters",
-  "Resources",
-  "Last execution",
-  "Next execution", // 10
-  "Id",
-  "Max intances",
-  "Instances count",
-  "On start",
-  "On success", // 15
-  "On failure",
-  "Instances / max",
-  "Actions",
-  "Last execution status",
-  "System environment", // 20
-  "Setenv",
-  "Unsetenv",
-  "Min expected duration",
-  "Max expected duration",
-  "Request-time overridable params", // 25
-  "Last execution duration",
-  "Max duration before abort",
-  "Triggers with calendars",
-  "Enabled",
-  "Has triggers with calendars", // 30
-  "Parent task"
-};
+#include "task_p.h"
 
 class WorkflowTriggerSubscriptionData : public QSharedData {
 public:
@@ -888,29 +854,12 @@ QVariant TaskData::uiData(int section, int role) const {
         s.append(" : ").append(returnCodeLabel);
       return s.append(')');
     }
-    case 20: {
-      QString env;
-      foreach(const QString key, _setenv.keys(false))
-        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
-      foreach(const QString key, _unsetenv.keys(false))
-        env.append('-').append(key).append(' ');
-      env.chop(1);
-      return env;
-    }
-    case 21: {
-      QString env;
-      foreach(const QString key, _setenv.keys(false))
-        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
-      env.chop(1);
-      return env;
-    }
-    case 22: {
-      QString env;
-      foreach(const QString key, _unsetenv.keys(false))
-        env.append(key).append(' ');
-      env.chop(1);
-      return env;
-    }
+    case 20:
+      return QronUiUtils::sysenvAsString(_setenv, _unsetenv);
+    case 21:
+      return QronUiUtils::paramsAsString(_setenv);
+    case 22:
+      return QronUiUtils::paramsKeysAsString(_unsetenv);
     case 23:
       return (_minExpectedDuration > 0)
           ? QString::number(_minExpectedDuration*.001) : QString();

@@ -16,12 +16,18 @@
 
 #include <QString>
 #include <QHash>
+#include "util/paramset.h"
+#include "libqron_global.h"
 
-class QronUiUtils {
+class LIBQRONSHARED_EXPORT QronUiUtils {
+  Q_DISABLE_COPY(QronUiUtils)
   QronUiUtils() { }
 
 public:
   static QString resourcesAsString(QHash<QString,qint64> resources);
+  static QString sysenvAsString(ParamSet setenv, ParamSet unsetenv);
+  static QString paramsAsString(ParamSet params, bool inherit = false);
+  static QString paramsKeysAsString(ParamSet params, bool inherit = false);
 };
 
 #endif // QRONUIUTILS_H

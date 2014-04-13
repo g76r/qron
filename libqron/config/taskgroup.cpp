@@ -21,47 +21,8 @@
 #include <QPointer>
 #include "config/configutils.h"
 #include "sched/taskinstance.h"
-
-static int _uiTaskGroupColumnToTask[] =
-{
-  0, 2, 7, 14, 15,
-  16, 20, 21, 22
-};
-
-static int _uiTaskColumnToTaskGroup[] =
-{
-  0, -1, 1, -1, -1,
-  -1, 2, -1, -1, -1,
-  0, -1, -1, 3, 4,
-  5, -1, -1, -1, -1,
-  6, 7, 8
-};
-
-int TaskGroup::uiTaskGroupColumnToTask(int taskGroupColumn) {
-  if (taskGroupColumn >= 0
-      && taskGroupColumn < (int)sizeof(_uiTaskGroupColumnToTask))
-    return _uiTaskGroupColumnToTask[taskGroupColumn];
-  return -1;
-}
-
-int TaskGroup::uiTaskColumnToTaskGroup(int taskColumn) {
-  if (taskColumn >= 0
-      && taskColumn < (int)sizeof(_uiTaskColumnToTaskGroup))
-    return _uiTaskColumnToTaskGroup[taskColumn];
-  return -1;
-}
-
-static QString _uiHeaderNames[] = {
-  "Id", // 0
-  "Label",
-  "Parameters",
-  "On start",
-  "On success",
-  "On failure", // 5
-  "System environment",
-  "Setenv",
-  "Unsetenv"
-};
+#include "task_p.h"
+#include "ui/qronuiutils.h"
 
 class TaskGroupData : public SharedUiItemData {
 public:
@@ -181,40 +142,26 @@ QVariant TaskGroupData::uiData(int section, int role) const {
   case Qt::DisplayRole:
     switch(section) {
     case 0:
+    case 11:
       return _id;
     case 1:
-      return _label;
+      return TaskGroup::parentGroupId(_id);
     case 2:
+      return _label;
+    case 7:
       return _params.toString(false, false);
-    case 3:
+    case 14:
       return EventSubscription::toStringList(_onstart).join("\n");
-    case 4:
+    case 15:
       return EventSubscription::toStringList(_onsuccess).join("\n");
-    case 5:
+    case 16:
       return EventSubscription::toStringList(_onfailure).join("\n");
-    case 6: { // LATER factorize code for cols 6,7,8 with Task's 20,21,22
-      QString env;
-      foreach(const QString key, _setenv.keys(false))
-        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
-      foreach(const QString key, _unsetenv.keys(false))
-        env.append('-').append(key).append(' ');
-      env.chop(1);
-      return env;
-    }
-    case 7: {
-      QString env;
-      foreach(const QString key, _setenv.keys(false))
-        env.append(key).append('=').append(_setenv.rawValue(key)).append(' ');
-      env.chop(1);
-      return env;
-    }
-    case 8: {
-      QString env;
-      foreach(const QString key, _unsetenv.keys(false))
-        env.append(key).append(' ');
-      env.chop(1);
-      return env;
-    }
+    case 20:
+      return QronUiUtils::sysenvAsString(_setenv, _unsetenv);
+    case 21:
+      return QronUiUtils::paramsAsString(_setenv);
+    case 22:
+      return QronUiUtils::paramsKeysAsString(_unsetenv);
     }
     break;
   default:
