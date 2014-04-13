@@ -33,7 +33,7 @@
 #include "ui/qronuiutils.h"
 
 static QString _uiHeaderNames[] = {
-  "Id", // 0
+  "Short Id", // 0
   "TaskGroup Id",
   "Label",
   "Mean",
@@ -44,7 +44,7 @@ static QString _uiHeaderNames[] = {
   "Resources",
   "Last execution",
   "Next execution", // 10
-  "Short id",
+  "Id",
   "Max intances",
   "Instances count",
   "On start",
@@ -836,7 +836,7 @@ QVariant TaskData::uiData(int section, int role) const {
   case Qt::DisplayRole:
     switch(section) {
     case 0:
-      return _fqtn;
+      return _shortId;
     case 1:
       return _group.id();
     case 2:
@@ -858,7 +858,7 @@ QVariant TaskData::uiData(int section, int role) const {
     case 10:
       return nextScheduledExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
     case 11:
-      return _shortId;
+      return _fqtn;
     case 12:
       return _maxInstances;
     case 13:
