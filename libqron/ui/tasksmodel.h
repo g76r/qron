@@ -41,6 +41,8 @@ public:
 
 public slots:
   void configReset(SchedulerConfig config);
+  void updateTask(Task task);
+  void renameTask(Task task, QString oldName);
 
 private slots:
   void periodicDataRefresh();

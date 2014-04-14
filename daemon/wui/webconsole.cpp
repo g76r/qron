@@ -350,7 +350,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskGroupsView->setModel(_taskGroupsModel);
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
   cols.clear();
-  cols << 0 << 1 << 2 << 7 << 8;
+  cols << 0 << 2 << 7 << 20 << 21;
   _htmlTaskGroupsView->setColumnIndexes(cols);
   ((HtmlItemDelegate*)_htmlTaskGroupsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa fa-cogs\"></i> ");
@@ -360,7 +360,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskGroupsEventsView->setModel(_taskGroupsModel);
   _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
   cols.clear();
-  cols << 0 << 3 << 4 << 5;
+  cols << 0 << 14 << 15 << 16;
   _htmlTaskGroupsEventsView->setColumnIndexes(cols);
   ((HtmlItemDelegate*)_htmlTaskGroupsEventsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa fa-cogs\"></i> ")
@@ -1239,7 +1239,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
 void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _tasksModel, SLOT(configChanged(SchedulerConfig)));
+               _tasksModel, SLOT(configReset(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                _hostsListModel, SLOT(configChanged(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
@@ -1253,7 +1253,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
                _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
     disconnect(_scheduler, SIGNAL(taskChanged(Task)),
-               _tasksModel, SLOT(taskChanged(Task)));
+               _tasksModel, SLOT(updateTask(Task)));
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
@@ -1295,7 +1295,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
                _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _taskGroupsModel, SLOT(configChanged(SchedulerConfig)));
+               _taskGroupsModel, SLOT(configReset(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                this, SLOT(configChanged(SchedulerConfig)));
     disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
@@ -1312,7 +1312,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   _scheduler = scheduler;
   if (_scheduler) {
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _tasksModel, SLOT(configChanged(SchedulerConfig)));
+            _tasksModel, SLOT(configReset(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             _hostsListModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
@@ -1326,7 +1326,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
             _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
     connect(_scheduler, SIGNAL(taskChanged(Task)),
-            _tasksModel, SLOT(taskChanged(Task)));
+            _tasksModel, SLOT(updateTask(Task)));
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
@@ -1368,7 +1368,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _taskGroupsModel, SLOT(configChanged(SchedulerConfig)));
+            _taskGroupsModel, SLOT(configReset(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             this, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),

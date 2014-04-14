@@ -44,6 +44,14 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
   return SharedUiItemsModel::data(index, role);
 }
 
+void TasksModel::updateTask(Task task) {
+  updateItem(task);
+}
+
+void TasksModel::renameTask(Task task, QString oldName) {
+  renameItem(task, oldName);
+}
+
 void TasksModel::configReset(SchedulerConfig config) {
   _tasks = config.tasks().values();
   qSort(_tasks);
