@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,15 +11,15 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#include "taskgroupsmodel.h"
-#include <QDateTime>
-#include "config/eventsubscription.h"
+#include "hostsmodel.h"
+#include <QtDebug>
+#include <QStringList>
 
-TaskGroupsModel::TaskGroupsModel(QObject *parent)
+HostsModel::HostsModel(QObject *parent)
   : SharedUiItemsTableModel(parent) {
-  setHeaderDataFromTemplate(TaskGroup());
+  setHeaderDataFromTemplate(Host());
 }
 
-void TaskGroupsModel::configReset(SchedulerConfig config) {
-  sortAndResetItems(config.tasksGroups().values());
+void HostsModel::configReset(SchedulerConfig config) {
+  sortAndResetItems(config.hosts().values());
 }

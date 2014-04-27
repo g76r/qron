@@ -11,31 +11,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HOSTSLISTMODEL_H
-#define HOSTSLISTMODEL_H
+#ifndef CLUSTERSMODEL_H
+#define CLUSTERSMODEL_H
 
 #include <QAbstractTableModel>
 #include "config/cluster.h"
 #include "config/host.h"
 #include "config/schedulerconfig.h"
+#include "modelview/shareduiitemstablemodel.h"
 
-// TODO rename to HostsModel
-/** Model holding list of configured hosts, one per line, along with its
+/** Model holding list of configured clusters, one per line, along with its
  * configuration attributes. */
-class LIBQRONSHARED_EXPORT HostsListModel : public QAbstractTableModel {
+class LIBQRONSHARED_EXPORT ClustersModel : public SharedUiItemsTableModel {
   Q_OBJECT
-  Q_DISABLE_COPY(HostsListModel)
-  QList<Host> _hosts;
+  Q_DISABLE_COPY(ClustersModel)
 
 public:
-  explicit HostsListModel(QObject *parent = 0);
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
+  explicit ClustersModel(QObject *parent = 0);
 
 public slots:
-  void configChanged(SchedulerConfig config);
+  void configReset(SchedulerConfig config);
 };
 
-#endif // HOSTSLISTMODEL_H
+#endif // CLUSTERSMODEL_H

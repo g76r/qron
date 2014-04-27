@@ -20,16 +20,26 @@
 #include "log/log.h"
 #include "configutils.h"
 
-class ClusterData : public QSharedData {
+static QString _uiHeaderNames[] = {
+  "Id", // 0
+  "Hosts",
+  "Balancing method",
+  "Label",
+};
+
+class ClusterData : public SharedUiItemData {
 public:
   QString _id, _label, _balancing;
   QList<Host> _hosts;
+  QVariant uiData(int section, int role) const;
+  QString id() const { return _id; }
+  QString idQualifier() const { return "cluster"; }
 };
 
-Cluster::Cluster() : d(new ClusterData) {
+Cluster::Cluster() {
 }
 
-Cluster::Cluster(const Cluster &other) : d(other.d) {
+Cluster::Cluster(const Cluster &other) : SharedUiItem(other) {
 }
 
 Cluster::Cluster(PfNode node) {
@@ -38,7 +48,7 @@ Cluster::Cluster(PfNode node) {
   hgd->_label = node.attribute("label", hgd->_id);
   hgd->_balancing = node.attribute("balancing", "first");
   if (hgd->_balancing == "first" || hgd->_balancing == "each")
-    d = hgd;
+    setData(hgd);
   else {
     Log::error() << "invalid cluster balancing method '" << hgd->_balancing
                  << "': " << node.toString();
@@ -49,42 +59,63 @@ Cluster::Cluster(PfNode node) {
 Cluster::~Cluster() {
 }
 
-Cluster &Cluster::operator=(const Cluster &other) {
-  if (this != &other)
-    d.operator=(other.d);
-  return *this;
-}
-
-bool Cluster::isNull() const {
-  return !d;
-}
-
-bool Cluster::operator==(const Cluster &other) const {
-  return id() == other.id();
-}
-
-bool Cluster::operator<(const Cluster &other) const {
-  return id() < other.id();
-}
-
 void Cluster::appendHost(Host host) {
-  if (d)
-    d->_hosts.append(host);
+  if (!isNull())
+    cd()->_hosts.append(host);
 }
 
 QList<Host> Cluster::hosts() const {
-  return d ? d->_hosts : QList<Host>();
-}
-
-QString Cluster::id() const {
-  return d ? d->_id : QString();
-}
-
-void Cluster::setId(QString id) {
-  if (d)
-    d->_id = id;
+  return !isNull() ? cd()->_hosts : QList<Host>();
 }
 
 QString Cluster::balancing() const {
-  return d ? d->_balancing : QString();
+  return !isNull() ? cd()->_balancing : QString();
+}
+
+QString Cluster::label() const {
+  return !isNull() ? cd()->_label : QString();
+}
+
+void Cluster::setId(QString id) {
+  if (!isNull())
+    cd()->_id = id;
+}
+
+QVariant ClusterData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+    switch(section) {
+    case 0:
+      return _id;
+    case 1: {
+      QStringList hosts;
+      foreach (Host h, _hosts)
+        hosts.append(h.id());
+      return hosts.join(" ");
+    }
+    case 2:
+      return _balancing;
+    case 3:
+      return _label;
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
+}
+
+QVariant Cluster::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int Cluster::uiDataCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
+}
+
+ClusterData *Cluster::cd() {
+  detach<ClusterData>();
+  return (ClusterData*)constData();
 }

@@ -31,6 +31,7 @@ public:
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QVariant uiData(int section, int role) const;
   QString id() const { return _id; }
+  void setId(QString id) { _id = id; }
   QString idQualifier() const { return "taskgroup"; }
 };
 

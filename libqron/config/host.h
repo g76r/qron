@@ -17,30 +17,33 @@
 #include "libqron_global.h"
 #include <QSharedDataPointer>
 #include <QHash>
+#include "modelview/shareduiitem.h"
 
 class HostData;
 class PfNode;
 
 /** A host is a single execution target.
  * @see Cluster */
-class LIBQRONSHARED_EXPORT Host {
-  QSharedDataPointer<HostData> d;
-
+class LIBQRONSHARED_EXPORT Host : public SharedUiItem {
 public:
   Host();
   Host(PfNode node);
   Host(const Host &other);
   ~Host();
-  Host &operator=(const Host &other);
-  bool operator==(const Host &other) const;
-  bool operator<(const Host &other) const;
-  QString id() const;
+  Host &operator=(const Host &other) {
+    SharedUiItem::operator=(other); return *this; }
   QString hostname() const;
-  bool isNull() const;
   /** Resources available. */
   QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;
+  QString label() const;
   void detach();
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
+
+private:
+  HostData *hd();
+  const HostData *hd() const { return (const HostData*)constData(); }
 };
 
 #endif // HOST_H

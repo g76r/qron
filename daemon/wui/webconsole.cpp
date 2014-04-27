@@ -49,8 +49,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addFilter("\\.html$");
 
   // models
-  _hostsListModel = new HostsListModel(this);
-  _clustersListModel = new ClustersListModel(this);
+  _hostsModel = new HostsModel(this);
+  _clustersModel = new ClustersModel(this);
   _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
   _resourcesLwmModel = new HostsResourcesAvailabilityModel(
         this, HostsResourcesAvailabilityModel::LwmOverConfigured);
@@ -94,7 +94,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
   _htmlHostsListView =
       new HtmlTableView(this, "hostslist", CONFIG_TABLES_MAXROWS);
-  _htmlHostsListView->setModel(_hostsListModel);
+  _htmlHostsListView->setModel(_hostsModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   ((HtmlItemDelegate*)_htmlHostsListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa fa-hdd-o\"></i> ")
@@ -102,7 +102,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView =
     new HtmlTableView(this, "clusterslist", CONFIG_TABLES_MAXROWS);
-  _htmlClustersListView->setModel(_clustersListModel);
+  _htmlClustersListView->setModel(_clustersModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
   ((HtmlItemDelegate*)_htmlClustersListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa fa-random\"></i> ")
@@ -423,9 +423,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   CsvTableView::setDefaultFieldQuote('"');
   CsvTableView::setDefaultReplacementChar(' ');
   _csvHostsListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
-  _csvHostsListView->setModel(_hostsListModel);
+  _csvHostsListView->setModel(_hostsModel);
   _csvClustersListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
-  _csvClustersListView->setModel(_clustersListModel);
+  _csvClustersListView->setModel(_clustersModel);
   _csvFreeResourcesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvFreeResourcesView->setModel(_freeResourcesModel);
   _csvFreeResourcesView->setRowHeaders();
@@ -1241,9 +1241,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                _tasksModel, SLOT(configReset(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _hostsListModel, SLOT(configChanged(SchedulerConfig)));
+               _hostsModel, SLOT(configReset(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _clustersListModel, SLOT(configChanged(SchedulerConfig)));
+               _clustersModel, SLOT(configReset(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                _freeResourcesModel, SLOT(configChanged(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
@@ -1314,9 +1314,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             _tasksModel, SLOT(configReset(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _hostsListModel, SLOT(configChanged(SchedulerConfig)));
+            _hostsModel, SLOT(configReset(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _clustersListModel, SLOT(configChanged(SchedulerConfig)));
+            _clustersModel, SLOT(configReset(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             _freeResourcesModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),

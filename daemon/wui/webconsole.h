@@ -21,8 +21,8 @@
 #include "sched/scheduler.h"
 #include "ui/hostsresourcesavailabilitymodel.h"
 #include "ui/resourcesconsumptionmodel.h"
-#include "ui/hostslistmodel.h"
-#include "ui/clusterslistmodel.h"
+#include "ui/hostsmodel.h"
+#include "ui/clustersmodel.h"
 #include "util/paramsetmodel.h"
 #include "ui/raisedalertsmodel.h"
 #include "ui/lastoccuredtexteventsmodel.h"
@@ -54,8 +54,8 @@ class WebConsole : public HttpHandler {
   Q_DISABLE_COPY(WebConsole)
   QThread *_thread;
   Scheduler *_scheduler;
-  HostsListModel *_hostsListModel;
-  ClustersListModel *_clustersListModel;
+  HostsModel *_hostsModel;
+  ClustersModel *_clustersModel;
   HostsResourcesAvailabilityModel *_freeResourcesModel, *_resourcesLwmModel;
   ResourcesConsumptionModel *_resourcesConsumptionModel;
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,

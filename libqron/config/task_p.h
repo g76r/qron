@@ -14,49 +14,6 @@
 #ifndef TASK_P_H
 #define TASK_P_H
 
-/*
-static int _uiTaskGroupColumnToTask[] =
-{
-  0, 2, 7, 14, 15,
-  16, 20, 21, 22
-};
-
-static int _uiTaskColumnToTaskGroup[] =
-{
-  0, -1, 1, -1, -1,
-  -1, 2, -1, -1, -1,
-  0, -1, -1, 3, 4,
-  5, -1, -1, -1, -1,
-  6, 7, 8
-};
-
-int TaskGroup::uiTaskGroupColumnToTask(int taskGroupColumn) {
-  if (taskGroupColumn >= 0
-      && taskGroupColumn < (int)sizeof(_uiTaskGroupColumnToTask))
-    return _uiTaskGroupColumnToTask[taskGroupColumn];
-  return -1;
-}
-
-int TaskGroup::uiTaskColumnToTaskGroup(int taskColumn) {
-  if (taskColumn >= 0
-      && taskColumn < (int)sizeof(_uiTaskColumnToTaskGroup))
-    return _uiTaskColumnToTaskGroup[taskColumn];
-  return -1;
-}
-
-static QString _uiHeaderNames[] = {
-  "Id", // 0
-  "Label",
-  "Parameters",
-  "On start",
-  "On success",
-  "On failure", // 5
-  "System environment",
-  "Setenv",
-  "Unsetenv"
-};
-*/ // FIXME remove that stuff
-
 static QString _uiHeaderNames[] = {
   "Short Id", // 0
   "Parent Group",

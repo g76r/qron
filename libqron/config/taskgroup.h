@@ -58,8 +58,6 @@ public:
   QList<EventSubscription> allEventSubscriptions() const;
   QVariant uiHeaderData(int section, int role) const;
   int uiDataCount() const;
-  static int uiTaskGroupColumnToTask(int taskGroupColumn);
-  static int uiTaskColumnToTaskGroup(int taskColumn);
 
 private:
   TaskGroupData *tgd();

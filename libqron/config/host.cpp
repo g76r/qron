@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,17 +18,29 @@
 #include "pf/pfnode.h"
 #include "log/log.h"
 #include "configutils.h"
+#include "ui/qronuiutils.h"
 
-class HostData : public QSharedData {
+static QString _uiHeaderNames[] = {
+  "Id", // 0
+  "Hostname",
+  "Resources",
+  "Label",
+};
+
+class HostData : public SharedUiItemData {
 public:
   QString _id, _label, _hostname;
   QHash<QString,qint64> _resources;
+  QVariant uiData(int section, int role) const;
+  QString id() const { return _id; }
+  void setId(QString id) { _id = id; }
+  QString idQualifier() const { return "host"; }
 };
 
-Host::Host() : d(new HostData) {
+Host::Host() {
 }
 
-Host::Host(const Host &other) : d(other.d) {
+Host::Host(const Host &other) : SharedUiItem(other) {
 }
 
 Host::Host(PfNode node) {
@@ -47,58 +59,64 @@ Host::Host(PfNode node) {
     else
       hd->_resources.insert(ConfigUtils::sanitizeId(p.first), p.second);
   }
-  d = hd;
+  setData(hd);
 }
 
 Host::~Host() {
 }
 
-Host &Host::operator=(const Host &other) {
-  if (this != &other)
-    d.operator=(other.d);
-  return *this;
-}
-
-bool Host::operator==(const Host &other) const {
-  return id() == other.id();
-}
-
-bool Host::operator<(const Host &other) const {
-  return id() < other.id();
-}
-
-QString Host::id() const {
-  return d->_id;
-}
-
 QString Host::hostname() const {
-  return d->_hostname;
+  return !isNull() ? hd()->_hostname : QString();
 }
 
-bool Host::isNull() const {
-  return d->_id.isNull();
-}
-
-QHash<QString, qint64> Host::resources() const {
-  return d->_resources;
+QHash<QString,qint64> Host::resources() const {
+  return !isNull() ? hd()->_resources : QHash<QString,qint64>();
 }
 
 QString Host::resourcesAsString() const {
-  QString s;
-  if (!isNull()) {
-    bool first = true;
-    foreach(QString key, d->_resources.keys()) {
-      if (first)
-        first = false;
-      else
-        s.append(' ');
-      s.append(key).append('=')
-          .append(QString::number(d->_resources.value(key)));
+  return !isNull() ? QronUiUtils::resourcesAsString(hd()->_resources)
+                   : QString();
+}
+
+QString Host::label() const {
+  return !isNull() ? hd()->_label : QString();
+}
+
+QVariant HostData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+    switch(section) {
+    case 0:
+      return _id;
+    case 1:
+      return _hostname;
+    case 2:
+      return QronUiUtils::resourcesAsString(_resources);
+    case 3:
+      return _label;
     }
+    break;
+  default:
+    ;
   }
-  return s;
+  return QVariant();
+}
+
+QVariant Host::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int Host::uiDataCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
+}
+
+HostData *Host::hd() {
+  SharedUiItem::detach<HostData>();
+  return (HostData*)constData();
 }
 
 void Host::detach() {
-  d.detach();
+  SharedUiItem::detach<HostData>();
 }

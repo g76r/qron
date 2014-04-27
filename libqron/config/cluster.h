@@ -26,23 +26,25 @@ class PfNode;
  * It consist of a set of hosts grouped together as a target for load balancing,
  * failover or dispatching purposes.
  * @see Host */
-class LIBQRONSHARED_EXPORT Cluster {
-  QSharedDataPointer<ClusterData> d;
-
+class LIBQRONSHARED_EXPORT Cluster : public SharedUiItem {
 public:
   Cluster();
   Cluster(const Cluster &other);
   Cluster(PfNode node);
   ~Cluster();
-  Cluster &operator=(const Cluster &other);
-  bool isNull() const;
-  bool operator==(const Cluster &other) const;
-  bool operator<(const Cluster &other) const;
+  Cluster &operator=(const Cluster &other) {
+    SharedUiItem::operator=(other); return *this; }
   void appendHost(Host host);
   QList<Host> hosts() const;
-  QString id() const;
-  void setId(QString id);
   QString balancing() const;
+  QString label() const;
+  void setId(QString id);
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
+
+private:
+  ClusterData *cd();
+  const ClusterData *cd() const { return (const ClusterData*)constData(); }
 };
 
 #endif // CLUSTER_H

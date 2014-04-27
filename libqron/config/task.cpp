@@ -118,6 +118,7 @@ public:
   bool triggersHaveCalendar() const;
   QVariant uiData(int section, int role) const;
   QString id() const { return _fqtn; }
+  void setId(QString id) { _fqtn = id; }
   QString idQualifier() const { return "task"; }
 };
 
