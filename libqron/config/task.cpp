@@ -582,11 +582,6 @@ void Task::appendStderrFilter(QRegExp filter) {
     td()->_stderrFilters.append(filter);
 }
 
-QDebug operator<<(QDebug dbg, const Task &task) {
-  dbg.nospace() << task.shortId(); // FIXME id()
-  return dbg.space();
-}
-
 void Task::triggerStartEvents(TaskInstance instance) const {
   if (!isNull()) {
     td()->_group.triggerStartEvents(instance);

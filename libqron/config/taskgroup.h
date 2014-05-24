@@ -64,6 +64,4 @@ private:
   const TaskGroupData *tgd() const { return (const TaskGroupData*)constData(); }
 };
 
-QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup);
-
 #endif // TASKGROUP_H

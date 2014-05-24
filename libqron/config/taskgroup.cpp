@@ -88,11 +88,6 @@ ParamSet TaskGroup::params() const {
   return !isNull() ? tgd()->_params : ParamSet();
 }
 
-QDebug operator<<(QDebug dbg, const TaskGroup &taskGroup) {
-  dbg.nospace() << taskGroup.id();
-  return dbg.space();
-}
-
 void TaskGroup::triggerStartEvents(TaskInstance instance) const {
   // LATER trigger events in parent group first
   if (!isNull())

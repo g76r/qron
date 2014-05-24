@@ -160,6 +160,4 @@ private:
   const TaskData *td() const { return (const TaskData*)constData(); }
 };
 
-QDebug LIBQRONSHARED_EXPORT operator<<(QDebug dbg, const Task &task);
-
 #endif // TASK_H
