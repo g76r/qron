@@ -150,10 +150,6 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   }
   td->_command = node.attribute("command");
   td->_target = ConfigUtils::sanitizeId(node.attribute("target"));
-  if (td->_target.isEmpty()
-      && (td->_mean == "local" || td->_mean == "donothing"
-          || td->_mean == "workflow"))
-    td->_target = "localhost";
   td->_info = node.stringChildrenByName("info").join(" ");
   td->_fqtn = taskGroup.id()+"."+td->_shortId;
   td->_group = taskGroup;
@@ -754,7 +750,7 @@ QHash<QString, Step> Task::steps() const {
   return !isNull() ? td()->_steps : QHash<QString,Step>();
 }
 
-QString Task::parentTaskId() const {
+QString Task::supertaskId() const {
   return !isNull() ? td()->_supertaskFqtn : QString();
 }
 

@@ -213,11 +213,11 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
         }
       }
     }
-    if (!_hosts.contains(task.target()) && !_clusters.contains(task.target())) {
+    /*if (!_hosts.contains(task.target()) && !_clusters.contains(task.target())) {
       Log::error() << "ignoring task " << task.id()
                    << " since its target is unknown: '"<< task.target() << "'";
       goto ignore_task;
-    }
+    }*/
     _tasks.insert(task.id(), task);
     recordTaskActionLinks(node, "onstart", &requestTaskActionLinks, task.id(),
                           task);
@@ -254,7 +254,7 @@ ignore_task:;
   }
   foreach (QString fqtn, _tasks.keys()) {
     Task &task = _tasks[fqtn];
-    QString supertaskFqtn = task.parentTaskId();
+    QString supertaskFqtn = task.supertaskId();
     if (_tasks.contains(supertaskFqtn))
       task.setParentParams(_tasks[supertaskFqtn].params());
   }

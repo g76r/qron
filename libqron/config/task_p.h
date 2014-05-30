@@ -21,7 +21,7 @@ static QString _uiHeaderNames[] = {
   "Mean",
   "Command",
   "Target", // 5
-  "Trigger",
+  "Triggers",
   "Parameters",
   "Resources",
   "Last execution",

@@ -392,10 +392,8 @@ QList<TaskInstance> Scheduler::doRequestTask(
         requests.append(request);
     }
   } else {
-    TaskInstance request;
-    request = enqueueRequest(
-          TaskInstance(task, force, callerTask, overridingParams),
-          overridingParams);
+    TaskInstance request(task, force, callerTask, overridingParams);
+    request = enqueueRequest(request, overridingParams);
     if (!request.isNull())
       requests.append(request);
   }
@@ -702,8 +700,21 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
   }
   _alerter->cancelAlert("task.maxinstancesreached."+fqtn);
   QString target = instance.target().id();
-  if (target.isEmpty())
+  if (target.isEmpty()) {
+    // use task target if not overiden at intance level
     target = task.target();
+    if (target.isEmpty()) {
+      // inherit target from supertask if any
+      Task supertask = _config.tasks().value(task.supertaskId());
+      target = supertask.target();
+      // silently use "localhost" as target for means not needing a real target
+      if (target.isEmpty()) {
+        QString mean = task.mean();
+        if (mean == "local" || mean == "donothing" || mean == "workflow")
+          target = "localhost";
+      }
+    }
+  }
   QList<Host> hosts;
   Host host = _config.hosts().value(target);
   if (host.isNull())
