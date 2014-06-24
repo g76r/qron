@@ -60,12 +60,17 @@ QVariant CalendarsModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void CalendarsModel::configChanged(SchedulerConfig config) {
-  beginResetModel();
-  _calendars.clear();
+  if (!_calendars.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _calendars.size()-1);
+    _calendars.clear();
+    endRemoveRows();
+  }
   QStringList names = config.namedCalendars().keys();
   names.sort();
-  foreach (QString name, names) {
-    _calendars.append(config.namedCalendars().value(name));
+  if (!names.isEmpty()) {
+    beginInsertRows(QModelIndex(), 0, names.size()-1);
+    foreach (QString name, names)
+      _calendars.append(config.namedCalendars().value(name));
+    endInsertRows();
   }
-  endResetModel();
 }

@@ -66,7 +66,14 @@ QVariant LogFilesModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void LogFilesModel::logConfigurationChanged(QList<LogFile> logfiles) {
-  beginResetModel();
-  _logfiles = logfiles;
-  endResetModel();
+  if (!_logfiles.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _logfiles.size()-1);
+    _logfiles.clear();
+    endRemoveRows();
+  }
+  if (!logfiles.isEmpty()) {
+    beginInsertRows(QModelIndex(), 0, logfiles.size()-1);
+    _logfiles = logfiles;
+    endInsertRows();
+  }
 }

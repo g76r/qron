@@ -21,5 +21,5 @@ HostsModel::HostsModel(QObject *parent)
 }
 
 void HostsModel::configReset(SchedulerConfig config) {
-  sortAndResetItems(config.hosts().values());
+  sortAndSetItems(config.hosts().values());
 }

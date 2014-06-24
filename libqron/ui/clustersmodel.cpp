@@ -21,5 +21,5 @@ ClustersModel::ClustersModel(QObject *parent)
 }
 
 void ClustersModel::configReset(SchedulerConfig config) {
-  sortAndResetItems(config.clusters().values());
+  sortAndSetItems(config.clusters().values());
 }

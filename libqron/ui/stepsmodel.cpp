@@ -145,8 +145,12 @@ QVariant StepsModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void StepsModel::configChanged(SchedulerConfig config) {
-  beginResetModel();
-  _steps.clear();
+  if (!_steps.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _steps.size()-1);
+    _steps.clear();
+    endRemoveRows();
+  }
+  QList<StepWrapper> steps;
   foreach (const Task task, config.tasks().values()) {
     if (!task.steps().isEmpty()) {
       int row;
@@ -155,13 +159,17 @@ void StepsModel::configChanged(SchedulerConfig config) {
         if (task.id() < step2.workflowFqtn())
           break;
       }
-      _steps.insert(row++, StepWrapper(task, true));
+      steps.insert(row++, StepWrapper(task, true));
       foreach (const Step step, task.steps())
-        _steps.insert(row++, step);
-      _steps.insert(row, StepWrapper(task, false));
+        steps.insert(row++, step);
+      steps.insert(row, StepWrapper(task, false));
     }
   }
   //std::sort(_steps.begin(), _steps.end());
   //qSort(_steps);
-  endResetModel();
+  if (!steps.isEmpty()) {
+    beginInsertRows(QModelIndex(), 0, steps.size()-1);
+    _steps = steps;
+    endInsertRows();
+  }
 }

@@ -84,7 +84,14 @@ QVariant AlertRulesModel::headerData(int section, Qt::Orientation orientation,
 }
 
 void AlertRulesModel::configChanged(AlerterConfig config) {
-  beginResetModel();
-  _rules = config.rules();
-  endResetModel();
+  if (!_rules.isEmpty()) {
+    beginRemoveRows(QModelIndex(), 0, _rules.size()-1);
+    _rules.clear();
+    endRemoveRows();
+  }
+  if (!config.rules().isEmpty()) {
+    beginInsertRows(QModelIndex(), 0, config.rules().size()-1);
+    _rules = config.rules();
+    endInsertRows();
+  }
 }

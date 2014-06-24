@@ -21,5 +21,5 @@ TaskGroupsModel::TaskGroupsModel(QObject *parent)
 }
 
 void TaskGroupsModel::configReset(SchedulerConfig config) {
-  sortAndResetItems(config.tasksGroups().values());
+  sortAndSetItems(config.tasksGroups().values());
 }
