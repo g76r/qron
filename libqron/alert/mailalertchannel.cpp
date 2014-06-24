@@ -157,7 +157,7 @@ void MailAlertChannel::processQueue(QVariant address) {
         subject = _config.params()
             .value("mail.remindersubject."+queue->_address,
                    _config.params().value("mail.remindersubject",
-                                          "QRON ALERT REMINDER"));
+                                          "qron alert reminder"));
       else
         subject = _config.params()
             .value("mail.cancelsubject."+queue->_address,
