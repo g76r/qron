@@ -20,7 +20,7 @@
 #include <QCoreApplication>
 #include "util/htmlutils.h"
 #include <QUrlQuery>
-#include "util/standardformats.h"
+#include "util/timeformats.h"
 #include "textview/htmlitemdelegate.h"
 #include "ui/htmltaskitemdelegate.h"
 #include "ui/htmltaskinstanceitemdelegate.h"
@@ -569,7 +569,7 @@ public:
     if (key == "startdate")
       return _console->_scheduler->startdate().toString("yyyy-MM-dd hh:mm:ss");
     if (key == "uptime")
-      return StandardFormats::toCoarseHumanReadableTimeInterval(
+      return TimeFormats::toCoarseHumanReadableTimeInterval(
             _console->_scheduler->startdate()
             .msecsTo(QDateTime::currentDateTime()));
     if (key == "configdate")
