@@ -18,9 +18,9 @@
     <title><?value:title?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/qron.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/font-awesome.min.css" rel="stylesheet">
+    <link href="css/qicons.css" rel="stylesheet">
+    <link href="css/qron.css" rel="stylesheet">
     <style type="text/css"><?value:cssoverload?></style>
   </head>
   <body>
@@ -28,7 +28,7 @@
       <div class="navbar-inner">
         <div class="container">
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="fa fa-bars"></span>
+            <span class="icon-menu"></span>
           </a>
           <a class="brand" href="<?value:titlehref?>"><?value:navtitle?></a>
           <div class="nav-collapse collapse">
@@ -55,8 +55,8 @@
         <div class="span12">
           <h2>Currently availlable resources</h2>
           <p>The table below shows resources currently availlable for every host depending on tasks currently running.
-          <p><a class="btn btn-primary" href="../rest/csv/resources/free/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/resources/free/v1"><i class="fa fa-file"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/resources/free/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/resources/free/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:freeresources?>
         </div>
@@ -65,8 +65,8 @@
         <div class="span12">
           <h2>Least availlable resources since startup</h2>
           <p>The table below shows least level (low water mark) of availlable resources for every host since qron startup.
-          <p><a class="btn btn-primary" href="../rest/csv/resources/lwm/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/resources/lwm/v1"><i class="fa fa-file"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/resources/lwm/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/resources/lwm/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:resourceslwm?>
         </div>
@@ -78,8 +78,8 @@
           to current configuration of tasks and hosts. First line displays
           the minimal possible availability per host if all tasks were running
           at the same time, in most cases this is not likely to be reached.
-          <p><a class="btn btn-primary" href="../rest/csv/resources/consumption/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/resources/consumption/v1"><i class="fa fa-file"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/resources/consumption/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/resources/consumption/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:resourcesconsumption?>
@@ -90,20 +90,20 @@
           <a name="config"></a>
           <h2>Tasks resources configuration</h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="fa fa-file"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <p><?view:tasksresources?>
         </div>
         <div class="span6">
           <h2>Hosts resources configuration</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/hosts/list/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/hosts/list/v1"><i class="fa fa-file"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/hosts/list/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/hosts/list/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:hostslist?>
           <h2>Clusters</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/clusters/list/v1"><i class="fa fa-file"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/clusters/list/v1"><i class="fa fa-file"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/csv/clusters/list/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/clusters/list/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
           <p><?view:clusterslist?>
         </div>

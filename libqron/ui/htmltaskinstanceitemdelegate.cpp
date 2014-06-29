@@ -16,11 +16,11 @@
 HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
   : HtmlItemDelegate(parent) {
   QHash<QString,QString> instancesStatusIcons;
-  instancesStatusIcons.insert("queued", "<i class=\"fa fa-inbox\"></i> ");
-  instancesStatusIcons.insert("running", "<i class=\"fa fa-play\"></i> ");
-  instancesStatusIcons.insert("failure", "<i class=\"fa fa-minus-circle\"></i> ");
-  instancesStatusIcons.insert("canceled", "<i class=\"fa fa-times\"></i> ");
-  setPrefixForColumn(1, "<i class=\"fa fa-cog\"></i> "
+  instancesStatusIcons.insert("queued", "<i class=\"icon-inbox\"></i> ");
+  instancesStatusIcons.insert("running", "<i class=\"icon-play\"></i> ");
+  instancesStatusIcons.insert("failure", "<i class=\"icon-minus-circled\"></i> ");
+  instancesStatusIcons.insert("canceled", "<i class=\"icon-cancel\"></i> ");
+  setPrefixForColumn(1, "<i class=\"icon-cog\"></i> "
                      "<a href=\"taskdoc.html?fqtn=%1\">", 1);
   setSuffixForColumn(1, "</a>");
   setPrefixForColumn(2, "%1", 2, instancesStatusIcons);
@@ -41,33 +41,33 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     text.prepend(/* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
-                 "filter=/"+id+"\"><i class=\"fa fa-fw fa-align-left\"></i></a>"
+                 "filter=/"+id+"\"><i class=\"icon-file-text\"></i></a>"
                  "</span> "
                  /* taskdoc */
                  "<span class=\"label label-info\" title=\""
                  "Detailed task info\"><a href=\"taskdoc.html?fqtn="
-                 +fqtn+"\"><i class=\"fa fa-fw fa-cog\"></i></a></span> ");
+                 +fqtn+"\"><i class=\"icon-cog\"></i></a></span> ");
     if (status == "queued")
       text.prepend(/* cancel */
                    "<span class=\"label label-important\" title=\"Cancel "
                    "request\"><a href=\"confirm?event=cancelRequest&id="
-                   +id+"\"><i class=\"fa fa-fw fa-times\"></i></a></span> ");
+                   +id+"\"><i class=\"icon-cancel\"></i></a></span> ");
     else if (status == "running") {
       if (abortable)
         text.prepend(/* abort */
                      "<span class=\"label label-important\" title=\"Abort "
                      "task\"><a href=\"confirm?event=abortTask&id="+id+"\">"
-                     "<i class=\"fa fa-fw fa-fire\"></i></a></span> ");
+                     "<i class=\"icon-fire\"></i></a></span> ");
       else
         text.prepend(/* cannot abort */
                      "<span class=\"label\" title=\"Cannot abort task\">"
-                     "<i class=\"fa fa-fw fa-fire\"></i></span> ");
+                     "<i class=\"icon-fire\"></i></span> ");
     } else
       text.prepend(/* reexec */
                    "<span class=\"label label-important\" "
                    "title=\"Request execution of same task\"><a href=\""
                    "requestform?fqtn="+fqtn+"\">"
-                   "<i class=\"fa fa-fw fa-repeat\"></i></a></span> ");
+                   "<i class=\"icon-repeat\"></i></a></span> ");
     break;
   }
   }

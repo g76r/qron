@@ -18,11 +18,15 @@
         <file>docroot/console/taskdoc.html</file>
         <file>docroot/console/img/work_eu.png</file>
         <file>docroot/console/img/work_na.png</file>
-        <file>docroot/console/css/font-awesome.min.css</file>
-        <file>docroot/console/fonts/FontAwesome.otf</file>
-        <file>docroot/console/fonts/fontawesome-webfont.eot</file>
-        <file>docroot/console/fonts/fontawesome-webfont.svg</file>
-        <file>docroot/console/fonts/fontawesome-webfont.ttf</file>
-        <file>docroot/console/fonts/fontawesome-webfont.woff</file>
+        <file>docroot/console/css/animation.css</file>
+        <file>docroot/console/css/qicons-codes.css</file>
+        <file>docroot/console/css/qicons.css</file>
+        <file>docroot/console/css/qicons-embedded.css</file>
+        <file>docroot/console/css/qicons-ie7-codes.css</file>
+        <file>docroot/console/css/qicons-ie7.css</file>
+        <file>docroot/console/font/qicons.eot</file>
+        <file>docroot/console/font/qicons.svg</file>
+        <file>docroot/console/font/qicons.ttf</file>
+        <file>docroot/console/font/qicons.woff</file>
     </qresource>
 </RCC>

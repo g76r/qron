@@ -36,26 +36,26 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
                  .toString()+
                  "\">");
     if (mean == "workflow")
-      text.prepend("<i class=\"fa fa-sitemap\"></i> ");
+      text.prepend("<i class=\"icon-workflow\"></i> ");
     else if (isSubtask)
-      text.prepend("<i class=\"fa fa-puzzle-piece\"></i> ");
+      text.prepend("<i class=\"icon-cog\"></i> "); // was: icon-puzzle-piece
     else
-      text.prepend("<i class=\"fa fa-cog\"></i> ");
+      text.prepend("<i class=\"icon-cog\"></i> ");
     text.append("</a>");
     break;
   }
   case 1:
-    text.prepend("<i class=\"fa fa-cogs\"></i> ");
+    text.prepend("<i class=\"icon-cogs\"></i> ");
     break;
   case 6:
   case 28: {
     bool noTrigger = text.isEmpty();
     if (index.model()->index(index.row(), 30, index.parent()).data().toBool())
-      text.prepend("<i class=\"fa fa-calendar\"></i> ");
+      text.prepend("<i class=\"icon-calendar\"></i> ");
     if (noTrigger && !isSubtask)
-      text.prepend("<i class=\"fa fa-circle-o\"></i> no trigger ");
+      text.prepend("<i class=\"icon-circle-empty\"></i> no trigger ");
     if (!index.model()->index(index.row(), 29, index.parent()).data().toBool())
-      text.prepend("<i class=\"fa fa-ban\"></i> disabled ");
+      text.prepend("<i class=\"icon-block\"></i> disabled ");
     break;
   }
   case 10: {
@@ -63,13 +63,13 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     if (!dt.isNull()
         && dt.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()
         < SOON_EXECUTION_MILLIS)
-      text.prepend("<i class=\"fa fa-clock-o\"></i> ");
+      text.prepend("<i class=\"icon-clock\"></i> ");
     break;
   }
   case 13:
   case 17:
     if (index.model()->index(index.row(), 13, index.parent()).data() > 0)
-      text.prepend("<i class=\"fa fa-play\"></i> ");
+      text.prepend("<i class=\"icon-play\"></i> ");
     break;
   case 18: {
     bool enabled = index.model()->index(index.row(), 29, index.parent()).data()
@@ -80,32 +80,32 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     text.prepend(/* requestTask */ QString() +
                  "<span class=\"label label-important\" "
                  "title=\"Request execution\"><a href=\"requestform?"
-                 "fqtn="+fqtn+"\"><i class=\"fa fa-fw fa-play\"></i></a>"
+                 "fqtn="+fqtn+"\"><i class=\"icon-play\"></i></a>"
                  "</span> "
                  /* {enable,disable}Task */
                  "<span class=\"label label-"+(enabled?"important":"warning")
                  +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
                  "<a href=\"do?event=enableTask&fqtn="+fqtn+"&enable="
-                 +(enabled?"false":"true")+"\"><i class=\"fa fa-fw fa-ban\">"
+                 +(enabled?"false":"true")+"\"><i class=\"icon-block\">"
                  "</i></a></span> "
                  /* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
-                 "filter= "+fqtn+"/\"><i class=\"fa fa-fw fa-align-left\">"
+                 "filter= "+fqtn+"/\"><i class=\"icon-file-text\">"
                  "</i></a></span> "
                  /* taskdoc */
                  "<span class=\"label label-info\" "
                  "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-                 +fqtn+"\"><i class=\"fa fa-fw fa-cog\"></i></a></span> ");
+                 +fqtn+"\"><i class=\"icon-cog\"></i></a></span> ");
     break;
   }
   case 19:
     if (index.data().toString().contains("failure"))
-      text.prepend("<i class=\"fa fa-minus-circle\"></i> ");
+      text.prepend("<i class=\"icon-minus-circled\"></i> ");
     break;
   case 27: {
     if (!text.isEmpty())
-      text.prepend("<i class=\"fa fa-fire\"></i> ");
+      text.prepend("<i class=\"icon-fire\"></i> ");
     break;
   }
   }
@@ -120,23 +120,23 @@ QString HtmlTaskItemDelegate::headerText(
   if (orientation == Qt::Horizontal) {
     switch (section) {
     case 5:
-      text.prepend("<i class=\"fa fa-crosshairs\"></i> ");
+      text.prepend("<i class=\"icon-target\"></i> ");
       break;
     case 6:
     case 28:
-      text.prepend("<i class=\"fa fa-bolt\"></i> ");
+      text.prepend("<i class=\"icon-bolt\"></i> ");
       break;
     case 8:
-      text.prepend("<i class=\"fa fa-beer\"></i> ");
+      text.prepend("<i class=\"icon-food\"></i> ");
       break;
     case 14:
-      text.prepend("<i class=\"fa fa-rocket\"></i> ");
+      text.prepend("<i class=\"icon-play\"></i> ");
       break;
     case 15:
-      text.prepend("<i class=\"fa fa-flag-checkered\"></i> ");
+      text.prepend("<i class=\"icon-check\"></i> ");
       break;
     case 16:
-      text.prepend("<i class=\"fa fa-minus-circle\"></i> ");
+      text.prepend("<i class=\"icon-minus-circled\"></i> ");
       break;
     }
   }
