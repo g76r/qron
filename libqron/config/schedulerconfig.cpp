@@ -27,7 +27,7 @@ public:
   QString _eventType;
   QString _contextLabel;
   Task _contextTask;
-  // FIXME clarify "contextLabel" and "contextTask" names, contextTask is useless since only its fqtn is used (and contextLabel=fqtn)
+  // FIXME clarify "contextLabel" and "contextTask" names, contextTask is useless since only its id is used (and contextLabel=id)
   RequestTaskActionLink(Action action, QString eventType, QString contextLabel,
                         Task contextTask)
     : _action(action), _eventType(eventType), _contextLabel(contextLabel),
@@ -115,7 +115,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   _globalParams.clear();
   _setenv.clear();
   _setenv.setValue("TASKINSTANCEID", "%!taskinstanceid");
-  _setenv.setValue("FQTN", "%!fqtn");
+  _setenv.setValue("TASKID", "%!taskid");
   ConfigUtils::loadParamSet(root, &_globalParams);
   ConfigUtils::loadSetenv(root, &_setenv);
   ConfigUtils::loadUnsetenv(root, &_unsetenv);
@@ -204,11 +204,10 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
     foreach (Step s, task.steps()) { // check for uniqueness of subtasks ids
       Task subtask = s.subtask();
       if (!subtask.isNull()) {
-        QString subFqtn = subtask.id();
-        if (_tasks.contains(subFqtn)) {
-          Log::error() << "ignoring task " << task.id()
-                       << " since its subtask " << subFqtn
-                       << " has a duplicate id";
+        QString subtaskId = subtask.id();
+        if (_tasks.contains(subtaskId)) {
+          Log::error() << "ignoring task " << task.id() << " since its subtask "
+                       << subtaskId << " has a duplicate id";
           goto ignore_task;
         }
       }
@@ -252,11 +251,11 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
     }
 ignore_task:;
   }
-  foreach (QString fqtn, _tasks.keys()) {
-    Task &task = _tasks[fqtn];
-    QString supertaskFqtn = task.supertaskId();
-    if (_tasks.contains(supertaskFqtn))
-      task.setParentParams(_tasks[supertaskFqtn].params());
+  foreach (QString taskId, _tasks.keys()) {
+    Task &task = _tasks[taskId];
+    QString supertaskId = task.supertaskId();
+    if (_tasks.contains(supertaskId))
+      task.setParentParams(_tasks[supertaskId].params());
   }
   int maxtotaltaskinstances = 0;
   foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {
@@ -332,22 +331,22 @@ ignore_task:;
   recordTaskActionLinks(root, "onconfigload", &requestTaskActionLinks, "*");
   // LATER onschedulershutdown
   foreach (const RequestTaskActionLink &link, requestTaskActionLinks) {
-    QString id = link._action.targetName();
-    QString fqtn(link._contextTask.id());
-    if (!link._contextTask.isNull() && !id.contains('.')) { // id to group
-      id = fqtn.left(fqtn.lastIndexOf('.')+1)+id;
+    QString targetName = link._action.targetName();
+    QString taskId = link._contextTask.id();
+    if (!link._contextTask.isNull() && !targetName.contains('.')) { // id to group
+      targetName = taskId.left(taskId.lastIndexOf('.')+1)+targetName;
     }
-    if (_tasks.contains(id)) {
+    if (_tasks.contains(targetName)) {
       QString context(link._contextLabel);
       if (!link._contextTask.isNull())
-        context = fqtn;
+        context = taskId;
       if (context.isEmpty())
         context = "*";
-      _tasks[id].appendOtherTriggers("*"+link._eventType+"("+context+")");
-      //Log::fatal() << "*** " << _tasks[id].otherTriggers() << " *** " << link._contextLabel << " *** " << fqtn;
+      _tasks[targetName].appendOtherTriggers("*"+link._eventType+"("+context+")");
+      //Log::fatal() << "*** " << _tasks[targetName].otherTriggers() << " *** " << link._contextLabel << " *** " << taskId;
     } else {
       Log::debug() << "cannot translate event " << link._eventType
-                   << " for task '" << id << "'";
+                   << " for task '" << targetName << "'";
     }
   }
 }

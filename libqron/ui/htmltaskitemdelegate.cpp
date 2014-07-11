@@ -31,7 +31,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   case 11: {
     QString mean = index.model()->index(index.row(), 3, index.parent()).data()
         .toString();
-    text.prepend("<a href=\"taskdoc.html?fqtn="
+    text.prepend("<a href=\"taskdoc.html?taskid="
                  +index.model()->index(index.row(), 11, index.parent()).data()
                  .toString()+
                  "\">");
@@ -74,29 +74,29 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   case 18: {
     bool enabled = index.model()->index(index.row(), 29, index.parent()).data()
         .toBool();
-    QString fqtn = index.model()->index(index.row(), 11, index.parent()).data()
-        .toString();
+    QString taskId = index.model()->index(index.row(), 11, index.parent())
+        .data().toString();
     text = index.data().toString(); // disable truncating and HTML encoding
     text.prepend(/* requestTask */ QString() +
                  "<span class=\"label label-important\" "
                  "title=\"Request execution\"><a href=\"requestform?"
-                 "fqtn="+fqtn+"\"><i class=\"icon-play\"></i></a>"
+                 "taskid="+taskId+"\"><i class=\"icon-play\"></i></a>"
                  "</span> "
                  /* {enable,disable}Task */
                  "<span class=\"label label-"+(enabled?"important":"warning")
                  +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
-                 "<a href=\"do?event=enableTask&fqtn="+fqtn+"&enable="
+                 "<a href=\"do?event=enableTask&taskid="+taskId+"&enable="
                  +(enabled?"false":"true")+"\"><i class=\"icon-block\">"
                  "</i></a></span> "
                  /* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
-                 "filter= "+fqtn+"/\"><i class=\"icon-file-text\">"
+                 "filter= "+taskId+"/\"><i class=\"icon-file-text\">"
                  "</i></a></span> "
                  /* taskdoc */
                  "<span class=\"label label-info\" "
-                 "title=\"Detailed task info\"><a href=\"taskdoc.html?fqtn="
-                 +fqtn+"\"><i class=\"icon-cog\"></i></a></span> ");
+                 "title=\"Detailed task info\"><a href=\"taskdoc.html?taskid="
+                 +taskId+"\"><i class=\"icon-cog\"></i></a></span> ");
     break;
   }
   case 19:

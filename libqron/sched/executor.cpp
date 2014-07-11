@@ -248,7 +248,7 @@ line_filtered:;
 }
 
 void Executor::readyReadStandardError() {
-  //qDebug() << "************ readyReadStandardError" << _instance.task().fqtn() << _instance.id() << _process;
+  //qDebug() << "************ readyReadStandardError" << _instance.task().id() << _instance.id() << _process;
   if (!_process)
     return;
   _process->setReadChannel(QProcess::StandardError);
@@ -256,7 +256,7 @@ void Executor::readyReadStandardError() {
 }
 
 void Executor::readyReadStandardOutput() {
-  //qDebug() << "************ readyReadStandardOutput" << _instance.task().fqtn() << _instance.id() << _process;
+  //qDebug() << "************ readyReadStandardOutput" << _instance.task().id() << _instance.id() << _process;
   if (!_process)
     return;
   _process->setReadChannel(QProcess::StandardOutput);
@@ -288,7 +288,7 @@ void Executor::httpMean() {
       name.chop(1);
     name.replace(QRegExp("[^a-zA-Z_0-9\\-]+"), "_");
     const QString value = _instance.params().evaluate(expr, &_instance);
-    //Log::fatal(_instance.task().fqtn(), _instance.id()) << "setheader: " << name << "=" << value << ".";
+    //Log::fatal(_instance.task().id(), _instance.id()) << "setheader: " << name << "=" << value << ".";
     networkRequest.setRawHeader(name.toLatin1(), value.toUtf8());
   }
   // LATER read request output, at less to avoid server being blocked and request never finish
@@ -349,7 +349,7 @@ void Executor::replyFinished() {
 // error() is not followed by finished() and I am not sure there are such cases)
 void Executor::replyHasFinished(QNetworkReply *reply,
                                QNetworkReply::NetworkError error) {
-  QString fqtn(_instance.task().id());
+  QString taskId = _instance.task().id();
   if (!_reply) {
     Log::debug() << "Executor::replyFinished called as it is not responsible "
                     "of any http request";
@@ -357,12 +357,12 @@ void Executor::replyHasFinished(QNetworkReply *reply,
     return;
   }
   if (!reply) {
-    Log::error(fqtn, _instance.id())
+    Log::error(taskId, _instance.id())
         << "Executor::replyFinished receive null pointer";
     return;
   }
   if (reply != _reply) {
-    Log::error(fqtn, _instance.id())
+    Log::error(taskId, _instance.id())
         << "Executor::replyFinished receive unrelated pointer";
     return;
   }
@@ -380,8 +380,8 @@ void Executor::replyHasFinished(QNetworkReply *reply,
   } else
     success = false;
   _instance.setEndDatetime();
-  Log::log(success ? Log::Info : Log::Warning, fqtn, _instance.id())
-      << "task '" << fqtn << "' finished "
+  Log::log(success ? Log::Info : Log::Warning, taskId, _instance.id())
+      << "task '" << taskId << "' finished "
       << (success ? "successfully" : "in failure") << " with return code "
       << status << " (" << reason << ") on host '"
       << _instance.target().hostname() << "' in " << _instance.runningMillis()
@@ -412,7 +412,7 @@ void Executor::workflowMean() {
       timer->setTimerType(Qt::PreciseTimer); // LATER is it really needed ?
       timer->start(ms < INT_MAX ? ms : INT_MAX);
       _workflowTimers.append(timer);
-      //Log::fatal(_instance.task().fqtn(), _instance.id())
+      //Log::fatal(_instance.task().id(), _instance.id())
       //    << "****** configured workflow timer " << id << " " << trigger.expression()
       //    << " to " << ms << " ms";
     } else {
@@ -423,7 +423,7 @@ void Executor::workflowMean() {
     }
   }
   _instance.setAbortable();
-  //Log::fatal(_instance.task().fqtn(), _instance.id())
+  //Log::fatal(_instance.task().id(), _instance.id())
   //    << "starting workflow";
   emit taskStarted(_instance);
   foreach (QString id, _instance.task().startSteps())
@@ -464,7 +464,7 @@ void Executor::doActivateWorkflowTransition(QString transitionId,
         << "unknown step id in transition id: " << transitionId;
     return;
   }
-  //Log::fatal(_instance.task().fqtn(), _instance.id())
+  //Log::fatal(_instance.task().id(), _instance.id())
   //    << "actual transtion id: " << transitionId;
   Log::debug(_instance.task().id(), _instance.id())
       << "activating workflow transition " << transitionId;
@@ -520,11 +520,11 @@ void Executor::prepareEnv(QProcessEnvironment *sysenv,
   // into sysenv
   foreach (QString key, _instance.setenv().keys()) {
     const QString expr(_instance.setenv().rawValue(key));
-    /*Log::debug(_instance.task().fqtn(), _instance.id())
+    /*Log::debug(_instance.task().id(), _instance.id())
         << "setting environment variable " << key << "="
         << expr << " " << _instance.params().keys(false).size() << " "
         << _instance.params().keys(true).size() << " ["
-        << _instance.params().evaluate("%!yyyy %!fqtn %{!fqtn}", &_instance)
+        << _instance.params().evaluate("%!yyyy %!taskid %{!taskid}", &_instance)
         << "]";*/
     static QRegExp notIdentifier("[^a-zA-Z_0-9]+");
     key.replace(QRegExp(notIdentifier), "_");

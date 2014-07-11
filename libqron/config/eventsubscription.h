@@ -51,7 +51,7 @@ public:
    * e.g. "onstart" "onnotice /foo.*bar/" "onstatus >= 3" */
   QString humanReadableCause() const;
   /** Name identifiying the subscriber.
-   * e.g. fqtn for a task, groupid for a group, fqsn for a step, * for global
+   * e.g. taskid for a task, groupid for a group, fqsn for a step, * for global
    * subscriptions. */
   QString subscriberName() const;
   /** Trigger actions if context complies with filter conditions.

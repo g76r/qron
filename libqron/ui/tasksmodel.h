@@ -24,7 +24,7 @@
 #include "modelview/shareduiitemstablemodel.h"
 
 /** Model holding tasks along with their attributes, one task per line, in
- * fqtn alphabetical order. */
+ * task id alphabetical order. */
 class LIBQRONSHARED_EXPORT TasksModel : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(TasksModel)

@@ -22,7 +22,7 @@
 
 class StepData : public QSharedData {
 public:
-  QString _id, _fqsn, _workflowFqtn;
+  QString _id, _fqsn, _workflowId;
   Step::Kind _kind;
   Task _subtask;
   QPointer<Scheduler> _scheduler;
@@ -41,7 +41,7 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   sd->_scheduler = scheduler;
   sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false);
   sd->_fqsn = taskGroup.id()+"."+workflowTaskId+":"+sd->_id;
-  sd->_workflowFqtn = taskGroup.id()+"."+workflowTaskId;
+  sd->_workflowId = taskGroup.id()+"."+workflowTaskId;
   if (node.name() == "and") {
     sd->_kind = Step::AndJoin;
     ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
@@ -59,7 +59,7 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       Log::warning() << "ignoring subtask taskgroup: " << node.toString();
     node.setContent(workflowTaskId+"-"+node.contentAsString());
     sd->_subtask = Task(node, scheduler, taskGroup, oldTasks,
-                        sd->_workflowFqtn, namedCalendars);
+                        sd->_workflowId, namedCalendars);
     if (sd->_subtask.isNull()) {
       Log::error() << "step with invalid subtask: " << node.toString();
       delete sd;
@@ -113,8 +113,8 @@ Task Step::subtask() const {
   return d ? d->_subtask : Task();
 }
 
-QString Step::workflowFqtn() const {
-  return d ? d->_workflowFqtn : QString();
+QString Step::workflowId() const {
+  return d ? d->_workflowId : QString();
 }
 
 QSet<QString> Step::predecessors() const {

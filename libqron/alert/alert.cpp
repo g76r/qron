@@ -60,10 +60,13 @@ QDateTime Alert::datetime() const {
 }
 
 QVariant Alert::paramValue(QString key, QVariant defaultValue) const {
-  if (key == "!alertid") {
-    return id();
-  } else if (key == "!alertdate") {
-    return datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+  if (key.at(0) == '!') {
+    if (key == "!alertid") {
+      return id();
+    } else if (key == "!alertdate") {
+      // LATER make this support !date formating
+      return datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    }
   }
   return defaultValue;
 }

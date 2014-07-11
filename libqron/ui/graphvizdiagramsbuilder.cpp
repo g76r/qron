@@ -30,7 +30,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   QHash<QString,Host> hosts = config.hosts();
   QList<EventSubscription> schedulerEventsSubscriptions
       = config.allEventsSubscriptions();
-  QSet<QString> displayedGroups, displayedHosts, notices, fqtns,
+  QSet<QString> displayedGroups, displayedHosts, notices, taskIds,
       displayedGlobalEventsName;
   QHash<QString,QString> diagrams;
   // search for:
@@ -42,7 +42,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   //   or one task
   // * notices, deduced from notice triggers and postnotice events (since
   //   notices are not explicitely declared in configuration objects)
-  // * fqtns, which are usefull to detect inexisting tasks and avoid drawing
+  // * task ids, which are usefull to detect inexisting tasks and avoid drawing
   //   edges to or from them
   // * displayed global event names, i.e. global event names (e.g. onstartup)
   //   with at less one displayed event subscription (e.g. requesttask,
@@ -56,7 +56,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     s = task.target();
     if (!s.isEmpty())
       displayedHosts.insert(s);
-    fqtns.insert(task.id());
+    taskIds.insert(task.id());
   }
   foreach (const Cluster &cluster, clusters.values())
     foreach (const Host &host, cluster.hosts())
@@ -262,7 +262,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
           QString target = action.targetName();
           if (!target.contains('.'))
             target = task.taskGroup().id()+"."+target;
-          if (fqtns.contains(target))
+          if (taskIds.contains(target))
             edges.insert("\""+task.id()+"\"--\""+target+"\" [label=\""
                          +sub.humanReadableCause()
                          +"\"," TASK_REQUESTTASK_EDGE "]\n");
@@ -283,7 +283,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
             .append(sub.humanReadableCause().remove('"')).append("\"]\n");
       } else if (actionType == "requesttask") {
         QString target = action.targetName();
-        if (fqtns.contains(target)) {
+        if (taskIds.contains(target)) {
           gv.append("\"").append(target).append("\"--\"$global_")
               .append(sub.eventName())
               .append("\" [" GLOBAL_REQUESTTASK_EDGE ",label=\"")

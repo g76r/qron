@@ -53,10 +53,10 @@
       <?value:message?>
       <div class="row">
         <div class="span12">
-          <h2>Task <?value:fqtn?></h2>
-          <p><a class="btn btn-danger" href="requestform?fqtn=<?value:fqtn?>"><i class="icon-play"></i> Request task execution</a>
-          <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;fqtn=<?value:fqtn?>"><i class="icon-block"></i> Disable task</a>
-          <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;fqtn=<?value:fqtn?>"><i class="icon-block"></i> Enable task</a>
+          <h2>Task <?value:taskid?></h2>
+          <p><a class="btn btn-danger" href="requestform?taskid=<?value:taskid?>"><i class="icon-play"></i> Request task execution</a>
+          <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;taskid=<?value:taskid?>"><i class="icon-block"></i> Disable task</a>
+          <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;taskid=<?value:taskid?>"><i class="icon-block"></i> Enable task</a>
           <?value:customactions?>
         </div>
       </div>
@@ -71,7 +71,7 @@
         </div>
         <div class="span4">
           <h3>Task Status</h3>
-          <p><a class="btn btn-primary" href="../rest/txt/log/all/v1?filter=%20<?value:fqtn?>/" target="_blank"><i class="icon-file"></i> Task log</a>
+          <p><a class="btn btn-primary" href="../rest/txt/log/all/v1?filter=%20<?value:taskid?>/" target="_blank"><i class="icon-file"></i> Task log</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
 <p><table class="table table-condensed table-hover">
           <?value:status?>
@@ -91,11 +91,11 @@
       <div class="row">
         <div class="span12">
           <h3>Task Workflow Diagram</h3>
-          <p><a class="btn btn-primary" href="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>"><i class="icon-file"></i> SVG</a>
-          <a class="btn btn-primary" href="../rest/dot/tasks/workflow/v1?fqtn=<?value:fqtn?>"><i class="icon-file"></i> DOT</a>
+          <p><a class="btn btn-primary" href="../rest/svg/tasks/workflow/v1?taskid=<?value:taskid?>"><i class="icon-file"></i> SVG</a>
+          <a class="btn btn-primary" href="../rest/dot/tasks/workflow/v1?taskid=<?value:taskid?>"><i class="icon-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <div id="workflowDiagram" style="display: table; margin: 0 auto;">
-            <noscript><img src="../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>" alt="Task Workflow Diagram"/></noscript>
+            <noscript><img src="../rest/svg/tasks/workflow/v1?taskid=<?value:taskid?>" alt="Task Workflow Diagram"/></noscript>
           </div>
       </div>
     </div>
@@ -105,9 +105,9 @@
     <script src="js/bootstrap.min.js"></script>
     <script type="text/javascript">
 $(document).ready(function(){
-  $('#workflowDiagram').load('../rest/svg/tasks/workflow/v1?fqtn=<?value:fqtn?>', function() {
+  $('#workflowDiagram').load('../rest/svg/tasks/workflow/v1?taskid=<?value:taskid?>', function() {
     $("a").not("[xlink\\:title='']").each(function() {
-      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?fqtn='+$(this).attr('xlink:title'));
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?taskid='+$(this).attr('xlink:title'));
     });
   });
 });

@@ -182,45 +182,50 @@ void TaskInstance::setTarget(Host target) const {
 QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
   if (!d)
     return defaultValue;
-  // LATER optimize
-  if (key == "!taskshortid") {
-    return task().shortId();
-  } else if (key == "!fqtn") {
-    return task().id();
-  } else if (key == "!taskgroupid") {
-    return task().taskGroup().id();
-  } else if (key == "!taskinstanceid") {
-    return QString::number(id());
-  } else if (key == "!callertaskinstanceid") {
-    return QString::number(callerTask().id());
-  } else if (key == "!maintaskinstanceid") {
-    return QString::number(callerTask().isNull() ? id() : callerTask().id());
-  } else if (key == "!taskinstancegroupid") {
-    return QString::number(groupId());
-  } else if (key == "!runningms") {
-    return QString::number(runningMillis());
-  } else if (key == "!runnings") {
-    return QString::number(runningMillis()/1000);
-  } else if (key == "!queuedms") {
-    return QString::number(queuedMillis());
-  } else if (key == "!queueds") {
-    return QString::number(queuedMillis()/1000);
-  } else if (key == "!totalms") {
-    return QString::number(queuedMillis()+runningMillis());
-  } else if (key == "!totals") {
-    return QString::number((queuedMillis()+runningMillis())/1000);
-  } else if (key == "!returncode") {
-    return QString::number(returnCode());
-  } else if (key == "!status") {
-    return statusAsString();
-  } else if (key == "!submissiondate") {
-    return submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
-  } else if (key == "!startdate") {
-    return startDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
-  } else if (key == "!enddate") {
-    return endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
-  } else if (key == "!target") {
-    return target().hostname();
+  if (key.at(0) == '!') {
+    // LATER optimize
+    if (key == "!taskshortid") {
+      return task().shortId();
+    } else if (key == "!taskid") {
+      return task().id();
+    } else if (key == "!taskgroupid") {
+      return task().taskGroup().id();
+    } else if (key == "!taskinstanceid") {
+      return QString::number(id());
+    } else if (key == "!callertaskinstanceid") {
+      return QString::number(callerTask().id());
+    } else if (key == "!maintaskinstanceid") {
+      return QString::number(callerTask().isNull() ? id() : callerTask().id());
+    } else if (key == "!taskinstancegroupid") {
+      return QString::number(groupId());
+    } else if (key == "!runningms") {
+      return QString::number(runningMillis());
+    } else if (key == "!runnings") {
+      return QString::number(runningMillis()/1000);
+    } else if (key == "!queuedms") {
+      return QString::number(queuedMillis());
+    } else if (key == "!queueds") {
+      return QString::number(queuedMillis()/1000);
+    } else if (key == "!totalms") {
+      return QString::number(queuedMillis()+runningMillis());
+    } else if (key == "!totals") {
+      return QString::number((queuedMillis()+runningMillis())/1000);
+    } else if (key == "!returncode") {
+      return QString::number(returnCode());
+    } else if (key == "!status") {
+      return statusAsString();
+    } else if (key == "!submissiondate") {
+      // LATER make this support !date formating
+      return submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    } else if (key == "!startdate") {
+      // LATER make this support !date formating
+      return startDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    } else if (key == "!enddate") {
+      // LATER make this support !date formating
+      return endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    } else if (key == "!target") {
+      return target().hostname();
+    }
   }
   return defaultValue;
 }

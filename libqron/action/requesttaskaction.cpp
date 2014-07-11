@@ -16,12 +16,12 @@
 
 class RequestTaskActionData : public ActionData {
 public:
-  QString _idOrFqtn;
+  QString _id;
   ParamSet _overridingParams;
   bool _force;
-  RequestTaskActionData(Scheduler *scheduler = 0, QString idOrFqtn = QString(),
+  RequestTaskActionData(Scheduler *scheduler = 0, QString id = QString(),
                         ParamSet params = ParamSet(), bool force = false)
-    : ActionData(scheduler), _idOrFqtn(idOrFqtn), _overridingParams(params),
+    : ActionData(scheduler), _id(id), _overridingParams(params),
       _force(force) { }
   inline ParamSet evaluatedOverrindingParams(ParamSet eventContext,
                                              TaskInstance instance) const {
@@ -36,23 +36,23 @@ public:
   void trigger(EventSubscription subscription, ParamSet eventContext,
                TaskInstance parentInstance) const {
     if (_scheduler) {
-      QString fqtn;
+      QString id;
       if (parentInstance.isNull()) {
-        fqtn = _idOrFqtn;
+        id = _id;
       } else {
-        fqtn = eventContext.evaluate(_idOrFqtn, &parentInstance);
-        QString fqtnLocalToGroup = parentInstance.task().taskGroup().id()
-            +"."+_idOrFqtn;
-        if (_scheduler.data()->taskExists(fqtnLocalToGroup))
-          fqtn = fqtnLocalToGroup;
+        id = eventContext.evaluate(_id, &parentInstance);
+        QString idIfLocalToGroup = parentInstance.task().taskGroup().id()
+            +"."+_id;
+        if (_scheduler.data()->taskExists(idIfLocalToGroup))
+          id = idIfLocalToGroup;
       }
       QList<TaskInstance> instances = _scheduler.data()->syncRequestTask(
-          fqtn, evaluatedOverrindingParams(eventContext, parentInstance), _force,
+          id, evaluatedOverrindingParams(eventContext, parentInstance), _force,
           parentInstance);
       if (instances.isEmpty())
         Log::error(parentInstance.task().id(), parentInstance.id())
             << "requesttask action failed to request execution of task "
-            << fqtn << " within event subscription context "
+            << id << " within event subscription context "
             << subscription.subscriberName() << "|" << subscription.eventName();
       else
         foreach (TaskInstance childInstance, instances)
@@ -63,19 +63,19 @@ public:
 
   }
   QString toString() const {
-    return "*" + _idOrFqtn;
+    return "*" + _id;
   }
   QString actionType() const {
     return "requesttask";
   }
   QString targetName() const {
-    return _idOrFqtn;
+    return _id;
   }
 };
 
-RequestTaskAction::RequestTaskAction(Scheduler *scheduler, QString idOrFqtn,
+RequestTaskAction::RequestTaskAction(Scheduler *scheduler, QString id,
                                      ParamSet params, bool force)
-  : Action(new RequestTaskActionData(scheduler, idOrFqtn, params, force)) {
+  : Action(new RequestTaskActionData(scheduler, id, params, force)) {
 }
 
 RequestTaskAction::RequestTaskAction(const RequestTaskAction &rhs)

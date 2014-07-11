@@ -45,17 +45,20 @@ public:
   bool operator<(const Step &other) const;
   bool isNull() const { return !d; }
   /** Step id within the workflow, not unique across workflows.
-   * @see fqtn() */
+   * @see fqsn() */
   QString id() const;
   /** Fully qualified step name.
-   * Equal to workflow task's fqtn + '.' + id */
+   * Equal to workflow task id + ':' + step id, e.g. "group1.task1:step1"
+   * Every step has a fqsn whereas only subtask steps have a task id
+   * @see workflowId()
+   * @see id() */
   QString fqsn() const;
   Kind kind() const;
   static QString kindToString(Kind kind);
   QString kindToString() const {
     return kindToString(kind()); }
   Task subtask() const;
-  QString workflowFqtn() const;
+  QString workflowId() const;
   QSet<QString> predecessors() const;
   void insertPredecessor(QString predecessor);
   void triggerReadyEvents(TaskInstance workflowTaskInstance,

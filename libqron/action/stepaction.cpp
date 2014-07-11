@@ -50,9 +50,9 @@ public:
     TaskInstance workflow = instance.callerTask();
     if (workflow.isNull())
       workflow = instance;
-    //Log::fatal(instance.task().fqtn(), instance.id())
+    //Log::fatal(instance.task().id(), instance.id())
     //    << "StepAction::triggerWithinTaskInstance "
-    //    << transitionId << " " << instance.task().fqtn()
+    //    << transitionId << " " << instance.task().id()
     //    << " " << eventContext;
     if (workflow.task().mean() != "workflow") {
       Log::error(instance.task().id(), instance.id())

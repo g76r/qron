@@ -81,9 +81,9 @@ public:
     return _config.namedCalendars(); }
   ParamSet globalParams() const { return _config.globalParams(); }
   /** This method is threadsafe */
-  bool taskExists(QString fqtn);
+  bool taskExists(QString taskId);
   /** This method is threadsafe */
-  Task task(QString fqtn);
+  Task task(QString taskId);
   /** This method is threadsafe */
   void activateWorkflowTransition(TaskInstance workflowTaskInstance,
                                   QString transitionId, ParamSet eventContext);
@@ -93,25 +93,25 @@ public slots:
    * This method will block current thread until the request is either
    * queued either denied by Scheduler thread.
    * If current thread is the Scheduler thread, the method is a direct call.
-   * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
+   * @param taskId fully qualified task name, on the form "taskGroupId.taskId"
    * @param paramsOverriding override params, using RequestFormField semantics
    * @param force if true, any constraints or ressources are ignored
    * @return isEmpty() if task cannot be queued
    * @see asyncRequestTask
    * @see RequestFormField */
   QList<TaskInstance> syncRequestTask(
-      QString fqtn, ParamSet paramsOverriding = ParamSet(), bool force = false,
-      TaskInstance callerTask = TaskInstance());
+      QString taskId, ParamSet paramsOverriding = ParamSet(),
+      bool force = false, TaskInstance callerTask = TaskInstance());
   /** Explicitely request task execution now, but do not wait for validity
    * check of the request, therefore do not wait for Scheduler thread
    * processing the request.
    * If current thread is the Scheduler thread, the call is queued anyway.
-   * @param fqtn fully qualified task name, on the form "taskGroupId.taskId"
+   * @param taskId fully qualified task name, on the form "taskGroupId.taskId"
    * @param paramsOverriding override params, using RequestFormField semantics
    * @param force if true, any constraints or ressources are ignored
    * @see syncRequestTask
    * @see RequestFormField */
-  void asyncRequestTask(const QString fqtn, ParamSet params = ParamSet(),
+  void asyncRequestTask(const QString taskId, ParamSet params = ParamSet(),
                         bool force = false,
                         TaskInstance callerTask = TaskInstance());
   /** Cancel a queued request.
@@ -146,7 +146,7 @@ public slots:
   void reevaluateQueuedRequests();
   /** Enable or disable a task.
     * This method is threadsafe */
-  bool enableTask(QString fqtn, bool enable);
+  bool enableTask(QString taskId, bool enable);
   /** Enable or disable all tasks at once.
     * This method is threadsafe */
   void enableAllTasks(bool enable);
@@ -180,7 +180,7 @@ private slots:
   void taskFinishing(TaskInstance instance, QPointer<Executor> executor);
   void periodicChecks();
   /** Fire expired triggers for a given task. */
-  void checkTriggersForTask(QVariant fqtn);
+  void checkTriggersForTask(QVariant taskId);
   /** Fire expired triggers for all tasks. */
   void checkTriggersForAllTasks();
   void reloadAccessControlConfig();
@@ -195,18 +195,19 @@ private:
    * @return true if the task was started or canceled */
   bool startQueuedTask(TaskInstance instance);
   /** @return true iff the triggers fires a task request */
-  bool checkTrigger(CronTrigger trigger, Task task, QString fqtn);
+  bool checkTrigger(CronTrigger trigger, Task task, QString taskId);
   Q_INVOKABLE bool loadConfig(PfNode root);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
   Q_INVOKABLE QList<TaskInstance> doRequestTask(
-      QString fqtn, ParamSet paramsOverriding, bool force,
+      QString taskId, ParamSet paramsOverriding, bool force,
       TaskInstance callerTask);
   TaskInstance enqueueRequest(TaskInstance request, ParamSet paramsOverriding);
   Q_INVOKABLE TaskInstance doCancelRequest(quint64 id);
   Q_INVOKABLE TaskInstance doAbortTask(quint64 id);
   Q_INVOKABLE void doActivateWorkflowTransition(
-      TaskInstance workflowTaskInstance, QString transitionId, ParamSet eventContext);
+      TaskInstance workflowTaskInstance, QString transitionId,
+      ParamSet eventContext);
 };
 
 #endif // SCHEDULER_H

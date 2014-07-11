@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
   instancesStatusIcons.insert("failure", "<i class=\"icon-minus-circled\"></i> ");
   instancesStatusIcons.insert("canceled", "<i class=\"icon-cancel\"></i> ");
   setPrefixForColumn(1, "<i class=\"icon-cog\"></i> "
-                     "<a href=\"taskdoc.html?fqtn=%1\">", 1);
+                     "<a href=\"taskdoc.html?taskid=%1\">", 1);
   setSuffixForColumn(1, "</a>");
   setPrefixForColumn(2, "%1", 2, instancesStatusIcons);
 }
@@ -30,9 +30,9 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
   switch (index.column()) {
   case 8: {
-    QString id = index.model()->index(index.row(), 0, index.parent()).data()
-        .toString();
-    QString fqtn = index.model()->index(index.row(), 1, index.parent()).data()
+    QString taskInstanceId = index.model()->index(
+          index.row(), 0, index.parent()).data().toString();
+    QString taskId = index.model()->index(index.row(), 1, index.parent()).data()
         .toString();
     QString status = index.model()->index(index.row(), 2, index.parent()).data()
         .toString();
@@ -41,23 +41,25 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     text.prepend(/* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
-                 "filter=/"+id+"\"><i class=\"icon-file-text\"></i></a>"
-                 "</span> "
+                 "filter=/"+taskInstanceId+"\">"
+                 "<i class=\"icon-file-text\"></i></a></span> "
                  /* taskdoc */
                  "<span class=\"label label-info\" title=\""
-                 "Detailed task info\"><a href=\"taskdoc.html?fqtn="
-                 +fqtn+"\"><i class=\"icon-cog\"></i></a></span> ");
+                 "Detailed task info\"><a href=\"taskdoc.html?taskid="
+                 +taskId+"\"><i class=\"icon-cog\"></i></a></span> ");
     if (status == "queued")
       text.prepend(/* cancel */
                    "<span class=\"label label-important\" title=\"Cancel "
-                   "request\"><a href=\"confirm?event=cancelRequest&id="
-                   +id+"\"><i class=\"icon-cancel\"></i></a></span> ");
+                   "request\"><a href=\"confirm?event=cancelRequest&"
+                   "taskinstanceid="+taskInstanceId+"\">"
+                   "<i class=\"icon-cancel\"></i></a></span> ");
     else if (status == "running") {
       if (abortable)
         text.prepend(/* abort */
                      "<span class=\"label label-important\" title=\"Abort "
-                     "task\"><a href=\"confirm?event=abortTask&id="+id+"\">"
-                     "<i class=\"icon-fire\"></i></a></span> ");
+                     "task\"><a href=\"confirm?event=abortTask&taskinstanceid="
+                     +taskInstanceId+"\"><i class=\"icon-fire\"></i>"
+                     "</a></span> ");
       else
         text.prepend(/* cannot abort */
                      "<span class=\"label\" title=\"Cannot abort task\">"
@@ -66,7 +68,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
       text.prepend(/* reexec */
                    "<span class=\"label label-important\" "
                    "title=\"Request execution of same task\"><a href=\""
-                   "requestform?fqtn="+fqtn+"\">"
+                   "requestform?taskid="+taskId+"\">"
                    "<i class=\"icon-repeat\"></i></a></span> ");
     break;
   }

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -104,7 +104,7 @@ QVariant TaskInstancesModel::headerData(int section, Qt::Orientation orientation
 
 void TaskInstancesModel::taskChanged(TaskInstance instance) {
   int row;
-  //Log::fatal() << "taskChanged " << instance.task().fqtn() << "/"
+  //Log::fatal() << "taskChanged " << instance.task().id() << "/"
   //             << instance.id() << " " << instance.statusAsString();
   for (row = 0; row < _instances.size(); ++row) {
     TaskInstance &r(_instances[row]);

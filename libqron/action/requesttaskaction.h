@@ -20,11 +20,15 @@
 class RequestTaskActionData;
 class Scheduler;
 
-/** Action requesting for a task execution. */
+/** Action requesting for a task execution.
+ * Id parameter can be either fully qualified ("group.shortid") or short and
+ * local to caller task group if any, which is usefull if this action has been
+ * triggered by a task onsuccess/onfailure/onfinish event.
+ * In addition id parameter is evaluated within event context.
+ */
 class LIBQRONSHARED_EXPORT RequestTaskAction : public Action {
 public:
-  explicit RequestTaskAction(Scheduler *scheduler = 0,
-                             QString idOrFqtn = QString(),
+  explicit RequestTaskAction(Scheduler *scheduler = 0, QString id = QString(),
                              ParamSet params = ParamSet(), bool force = false);
   RequestTaskAction(const RequestTaskAction &);
   ~RequestTaskAction();

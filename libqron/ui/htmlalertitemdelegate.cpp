@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of libqtssu, see <https://github.com/g76r/libqtssu>.
  * Libqtssu is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,8 +22,8 @@ HtmlAlertItemDelegate::HtmlAlertItemDelegate(QObject *parent, int alertColumn,
 QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
   if (index.column() == _actionsColumn) {
-    static QRegExp fqtnInTaskAlert("task\\.[^\\.]+\\.(.*)");
-    QRegExp re(fqtnInTaskAlert);
+    static QRegExp taskIdInAlert("task\\.[^\\.]+\\.(.*)");
+    QRegExp re = taskIdInAlert;
     QString alert = index.model()
         ->index(index.row(), _alertColumn, index.parent()).data().toString();
     if (_canCancel)
@@ -40,7 +40,7 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
             +re.cap(1)+"/\"><i class=\"icon-file-text\"></i></a></span>"
             /* related task taskdoc */
             " <span class=\"label label-info\" title=\"Detailed task info\">"
-            "<a href=\"taskdoc.html?fqtn="+re.cap(1)+"\">"
+            "<a href=\"taskdoc.html?taskid="+re.cap(1)+"\">"
             "<i class=\"icon-cog\"></i></a></span>");
     }
   }
