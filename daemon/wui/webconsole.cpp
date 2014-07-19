@@ -168,7 +168,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView, 0, 3, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-bell-empty\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i> ");
   _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlRaisedAlertsView10 =
     new HtmlTableView(this, "raisedalerts10", RAISED_ALERTS_MAXROWS, 10);
@@ -177,7 +177,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView10->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView10, 0, 3, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView10->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-bell-empty\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i> ");
   _wuiHandler->addView(_htmlRaisedAlertsView10);
   _htmlLastEmitedAlertsView =
       new HtmlTableView(this, "lastemitedalerts",
@@ -185,7 +185,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
   QHash<QString,QString> alertsIcons;
-  alertsIcons.insert("0", "<i class=\"icon-bell-empty\"></i> ");
+  alertsIcons.insert("0", "<i class=\"icon-bell\"></i> ");
   alertsIcons.insert("1", "<i class=\"icon-check\"></i> ");
   _htmlLastEmitedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlLastEmitedAlertsView, 1, 3, false));
@@ -326,7 +326,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlSchedulerEventsView->itemDelegate())
       ->setPrefixForColumnHeader(0, "<i class=\"icon-play\"></i> ")
       ->setPrefixForColumnHeader(1, "<i class=\"icon-refresh\"></i> ")
-      ->setPrefixForColumnHeader(2, "<i class=\"icon-comment-empty\"></i> ")
+      ->setPrefixForColumnHeader(2, "<i class=\"icon-comment\"></i> ")
       ->setPrefixForColumnHeader(3, "<i class=\"icon-file-text\"></i> ")
       ->setPrefixForColumnHeader(4, "<i class=\"icon-play\"></i> ")
       ->setPrefixForColumnHeader(5, "<i class=\"icon-check\"></i> ")
@@ -343,7 +343,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 0 << 1;
   _htmlLastPostedNoticesView20->setColumnIndexes(cols);
   ((HtmlItemDelegate*)_htmlLastPostedNoticesView20->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-comment-empty\"></i> ");
+      ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i> ");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
   _htmlTaskGroupsView =
       new HtmlTableView(this, "taskgroups", CONFIG_TABLES_MAXROWS);
