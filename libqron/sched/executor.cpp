@@ -370,15 +370,14 @@ void Executor::replyHasFinished(QNetworkReply *reply,
       ->attribute(QNetworkRequest::HttpStatusCodeAttribute).toInt();
   QString reason = reply
       ->attribute(QNetworkRequest::HttpReasonPhraseAttribute).toString();
-  bool success;
-  if (error == QNetworkReply::NoError) {
+  bool success = false;
+  if (status > 0) {
     success =  status >= 200 && status <= 299;
     success = _instance.task().params()
         .valueAsBool("return.code.default.success", success);
     success = _instance.task().params()
         .valueAsBool("return.code."+QString::number(status)+".success",success);
-  } else
-    success = false;
+  }
   _instance.setEndDatetime();
   Log::log(success ? Log::Info : Log::Warning, taskId, _instance.id())
       << "task '" << taskId << "' finished "
