@@ -43,7 +43,7 @@ public:
   void sendMessage(Alert alert, MessageType type);
 
 public slots:
-  virtual void configChanged(AlerterConfig config);
+  virtual void setConfig(AlerterConfig config);
 
 protected:
   Q_INVOKABLE virtual void doSendMessage(Alert alert,

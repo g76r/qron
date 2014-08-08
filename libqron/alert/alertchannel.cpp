@@ -32,6 +32,6 @@ void AlertChannel::sendMessage(Alert alert, AlertChannel::MessageType type) {
                             Q_ARG(AlertChannel::MessageType, type));
 }
 
-void AlertChannel::configChanged(AlerterConfig config) {
+void AlertChannel::setConfig(AlerterConfig config) {
   Q_UNUSED(config)
 }

@@ -47,7 +47,7 @@ MailAlertChannel::MailAlertChannel(QObject *parent,
   _asyncProcessingTimer->start(ASYNC_PROCESSING_INTERVAL);
 }
 
-void MailAlertChannel::configChanged(AlerterConfig config) {
+void MailAlertChannel::setConfig(AlerterConfig config) {
   _config = config;
   // LATER make server specification more user friendly, e.g. "localhost:25" or "localhost"
   QString relay = _config.params().value("mail.relay", "smtp://127.0.0.1");

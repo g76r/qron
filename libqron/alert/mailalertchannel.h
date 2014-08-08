@@ -38,7 +38,7 @@ public:
   explicit MailAlertChannel(QObject *parent, QPointer<Alerter> alerter);
   ~MailAlertChannel();
   void doSendMessage(Alert alert, MessageType type);
-  void configChanged(AlerterConfig config);
+  void setConfig(AlerterConfig config);
 
 private slots:
   void asyncProcessing();

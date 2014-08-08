@@ -129,7 +129,7 @@ bool Scheduler::loadConfig(PfNode root) {
                      << config.maxtotaltaskinstances()
                         - (executorsToAdd - _availableExecutors.size())
                      << " instead";
-      // TODO mark some executors as temporary to make them disapear later
+      // TODO mark some executors as temporary to make them disappear later
       //maxtotaltaskinstances -= executorsToAdd - _availableExecutors.size();
       executorsToAdd = -_availableExecutors.size();
     }
@@ -156,15 +156,10 @@ bool Scheduler::loadConfig(PfNode root) {
     Log::debug() << "keep maxtotaltaskinstances of "
                  << config.maxtotaltaskinstances();
   }
-  QList<PfNode> alertsChildren = root.childrenByName("alerts");
-  if (alertsChildren.size() == 0)
-    _alerter->loadConfig(PfNode());
-  else {
-    if (alertsChildren.size() > 1)
-      Log::error() << "multiple 'alerts' configuration: ignoring all but first "
-                      "one";
-    _alerter->loadConfig(alertsChildren.first());
-  }
+  _config = config;
+  _alerter->setConfig(_config.alerterConfig());
+  QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
+                            Qt::QueuedConnection);
   // TODO use AccessControlConfig instead
   _authenticator->clearUsers();
   _usersDatabase->clearUsers();
@@ -183,9 +178,6 @@ bool Scheduler::loadConfig(PfNode root) {
     _accessControlNode = node;
     reloadAccessControlConfig();
   }
-  QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
-                            Qt::QueuedConnection);
-  _config = config;
   emit globalParamsChanged(_config.globalParams());
   emit globalSetenvChanged(_config.setenv());
   emit globalUnsetenvChanged(_config.unsetenv());

@@ -41,7 +41,8 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
 public:
   explicit Alerter();
   ~Alerter();
-  void loadConfig(PfNode root);
+  /** This method is threadsafe. */
+  void setConfig(AlerterConfig config);
   AlerterConfig config() const;
   /** Immediatly emit an alert, regardless of raised alert, even if the same
    * alert has just been emited.
@@ -111,6 +112,7 @@ private slots:
   void asyncProcessing();
 
 private:
+  Q_INVOKABLE void doSetConfig(AlerterConfig config);
   Q_INVOKABLE void doEmitAlert(QString alert, AlertChannel::MessageType type,
                                QDateTime date = QDateTime::currentDateTime());
   Q_INVOKABLE void doRaiseAlert(QString alert);

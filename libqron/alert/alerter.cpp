@@ -39,7 +39,8 @@ Alerter::Alerter() : QObject(0), _thread(new QThread) {
   _channels.insert("mail", mailChannel);
   foreach (AlertChannel *channel, _channels)
     connect(this, SIGNAL(configChanged(AlerterConfig)),
-            channel, SLOT(configChanged(AlerterConfig)));
+            channel, SLOT(setConfig(AlerterConfig)),
+            Qt::BlockingQueuedConnection);
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(asyncProcessing()));
   timer->start(ASYNC_PROCESSING_INTERVAL);
@@ -58,8 +59,15 @@ Alerter::~Alerter() {
     channel->deleteLater(); // cant be a child cause it lives it its own thread
 }
 
-void Alerter::loadConfig(PfNode root) {
-  AlerterConfig config(root);
+void Alerter::setConfig(AlerterConfig config) {
+  if (this->thread() == QThread::currentThread())
+    doSetConfig(config);
+  else
+    QMetaObject::invokeMethod(this, "doSetConfig", Qt::BlockingQueuedConnection,
+                              Q_ARG(AlerterConfig, config));
+}
+
+void Alerter::doSetConfig(AlerterConfig config) {
   _config = config;
   emit paramsChanged(_config.params());
   emit configChanged(_config);
