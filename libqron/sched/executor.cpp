@@ -387,6 +387,23 @@ void Executor::replyHasFinished(QNetworkReply *reply,
       << " ms, with network error '" << networkErrorAsString(error)
       << "' (code " << error << ")";
   // LATER translate network error codes into human readable strings
+  if (status < 200 || status > 299) {
+    int maxsize = _instance.task().params()
+        .valueAsInt("log.error.reply.maxsize", 4096);
+    int maxwait = _instance.task().params()
+        .valueAsDouble("log.error.reply.maxwait", 5.0)*1000;
+    long now = QDateTime::currentMSecsSinceEpoch();
+    long deadline = now+maxwait;
+    while (reply->bytesAvailable() < maxsize && now < deadline) {
+      if (!reply->waitForReadyRead(deadline-now))
+        break;
+      now = QDateTime::currentMSecsSinceEpoch();
+    }
+    static QRegExp re("[\\0-\\x1f]+");
+    Log::info(taskId, _instance.id())
+        << "HTTP reply began with: "
+        << QString::fromUtf8(reply->read(maxsize)).replace(re, " ");
+  }
   reply->deleteLater();
   _reply = 0;
   taskFinishing(success, status);
