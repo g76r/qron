@@ -21,6 +21,8 @@
 
 // LATER replace this 60" ugly batch with _remindFrequency and make reminding no longer drift
 #define ASYNC_PROCESSING_INTERVAL 60000
+// LATER parametrize retry delay, set a maximum data retention, etc.
+#define RETRY_INTERVAL 60000
 
 class MailAlertQueue {
 public:
@@ -28,10 +30,13 @@ public:
   QList<Alert> _alerts, _cancellations;
   QHash<QString,QDateTime> _lastReminded;
   QMap<QString,Alert> _reminders;
-  QDateTime _lastMail;
-  bool _processingScheduled;
-  MailAlertQueue(const QString address = QString()) : _address(address),
-    _processingScheduled(false) { }
+  QDateTime _lastMail, _nextProcessing;
+  MailAlertQueue(const QString address = QString()) : _address(address) { }
+  void scheduleNext(MailAlertChannel *channel, qint64 ms) {
+    QDateTime scheduling = QDateTime::currentDateTime().addMSecs(ms);
+    _nextProcessing = scheduling;
+    TimerWithArguments::singleShot(ms, channel, "processQueue", _address);
+  }
 };
 
 MailAlertChannel::MailAlertChannel(QObject *parent,
@@ -54,7 +59,15 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
   if (_mailSender)
     delete _mailSender;
   _mailSender = new MailSender(relay);
-  asyncProcessing();
+  foreach(const MailAlertQueue *queue, _queues.values()) {
+    if (queue->_alerts.size() + queue->_cancellations.size()
+        + queue->_reminders.size() == 0) {
+      _queues.remove(queue->_address);
+      delete queue;
+    }
+  }
+  // LATER: also delete queues to address that are no longer referenced by any rule since they are likely to be only a spam source
+  QMetaObject::invokeMethod(this, "asyncProcessing", Qt::QueuedConnection);
   Log::debug() << "MailAlertChannel configured " << relay << " "
                << config.params().toString();
 }
@@ -91,12 +104,10 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
       queue->_reminders.remove(alert.id());
       queue->_lastReminded.remove(alert.id());
     };
-    if (!queue->_processingScheduled) {
+    if (queue->_nextProcessing.isNull()) {
       // wait for a while before sending a mail with only 1 alert, in case some
       // related alerts are coming soon after this one
-      int period = _config.gracePeriodBeforeFirstSend();
-      queue->_processingScheduled = true;
-      TimerWithArguments::singleShot(period, this, "processQueue", address);
+      queue->scheduleNext(this, _config.gracePeriodBeforeFirstSend());
     }
   }
 }
@@ -110,7 +121,7 @@ void MailAlertChannel::processQueue(QVariant address) {
     return;
   }
   QDateTime now = QDateTime::currentDateTime();
-  queue->_processingScheduled = false;
+  queue->_nextProcessing = QDateTime();
   bool haveJob = false;
   if (queue->_alerts.size() || queue->_cancellations.size())
     haveJob = true;
@@ -138,11 +149,11 @@ void MailAlertChannel::processQueue(QVariant address) {
     //Log::fatal() << "minDelayBetweenSend: " << minDelayBetweenSend << " / "
     //             << ms;
     if (queue->_lastMail.isNull() || ms >= minDelayBetweenSend) {
-      Log::debug() << "MailAlertChannel::processQueue trying to send alerts "
-                      "mail to " << addr << ": " << queue->_alerts.size()
-                   << " new alerts + " << queue->_cancellations.size()
-                   << " cancellations + " << reminders.size()
-                   << " reminders";
+      //Log::debug() << "MailAlertChannel::processQueue trying to send alerts "
+      //                "mail to " << addr << ": " << queue->_alerts.size()
+      //             << " new alerts + " << queue->_cancellations.size()
+      //             << " cancellations + " << reminders.size()
+      //             << " reminders";
       QStringList recipients(addr);
       QString text, subject, boundary("THISISTHEMIMEBOUNDARY"), s;
       QString html;
@@ -294,22 +305,21 @@ void MailAlertChannel::processQueue(QVariant address) {
       bool queued = _mailSender->send(senderAddress, recipients, body,
                                       headers, QList<QVariant>(), errorString);
       if (queued) {
-        Log::info() << "successfuly sent an alert mail to " << addr;
-        queue->_alerts.clear();
+        Log::info() << "successfuly sent an alert mail to " << addr
+                    << " with " << queue->_alerts.size()
+                    << " new alerts + " << queue->_cancellations.size()
+                    << " cancellations + " << reminders.size()
+                    << " reminders";      queue->_alerts.clear();
         queue->_cancellations.clear();
         queue->_lastMail = QDateTime::currentDateTime();
       } else {
         Log::warning() << "cannot send mail alert to " << addr
                        << " error in SMTP communication: " << errorString;
-        // LATER parametrize retry delay, set a maximum data retention, etc.
-        TimerWithArguments::singleShot(60000, this, "processQueue", addr);
-        queue->_processingScheduled = true;
+        queue->scheduleNext(this, RETRY_INTERVAL);
       }
     } else {
       Log::debug() << "MailAlertChannel::processQueue postponing send";
-      TimerWithArguments::singleShot(std::max(minDelayBetweenSend-ms,1),
-                                     this, "processQueue", addr);
-      queue->_processingScheduled = true;
+      queue->scheduleNext(this, std::max(minDelayBetweenSend-ms,1));
     }
   } else {
     Log::debug() << "MailAlertChannel::processQueue called for nothing";
@@ -317,8 +327,19 @@ void MailAlertChannel::processQueue(QVariant address) {
 }
 
 void MailAlertChannel::asyncProcessing() {
-  // trigger queue processing for every queue with reminders, to check their age
-  foreach(const MailAlertQueue *queue, _queues.values())
-    if (!queue->_processingScheduled && !queue->_reminders.isEmpty())
+  QDateTime now = QDateTime::currentDateTime();
+  QDateTime tenSecondsAgo = now.addSecs(-10);
+  QDateTime remindFrequencyAgo = now.addMSecs(-_config.remindFrequency());
+  foreach(const MailAlertQueue *queue, _queues.values()) {
+    // check for queues with processing scheduled in the past
+    // this should not happen but if time is not monotonic and some timers
+    // cannot fire
+    if (!queue->_nextProcessing.isNull()
+        && queue->_nextProcessing < tenSecondsAgo)
       processQueue(queue->_address);
+    // check for queues with pending reminders and no scheduled processing
+    else if (!queue->_reminders.isEmpty()
+             && queue->_lastMail < remindFrequencyAgo)
+      processQueue(queue->_address);
+  }
 }
