@@ -38,6 +38,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
         .toString();
     bool abortable = index.model()->index(index.row(), 9, index.parent()).data()
         .toBool();
+    text = index.data().toString(); // disable truncating and HTML encoding
     text.prepend(/* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
