@@ -225,6 +225,34 @@ QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
       return endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
     } else if (key == "!target") {
       return target().hostname();
+    } else if (key == "!minexpectedms") {
+      return task().minExpectedDuration();
+    } else if (key == "!minexpecteds") {
+      return task().minExpectedDuration()/1000.0;
+    } else if (key == "!maxexpectedms") {
+      long long ms = task().maxExpectedDuration();
+      return (ms == LLONG_MAX) ? defaultValue : ms;
+    } else if (key == "!maxexpecteds") {
+      long long ms = task().maxExpectedDuration();
+      return (ms == LLONG_MAX) ? defaultValue : ms/1000.0;
+    } else if (key == "!maxbeforeabortms") {
+      long long ms = task().maxDurationBeforeAbort();
+      return (ms == LLONG_MAX) ? defaultValue : ms;
+    } else if (key == "!maxbeforeaborts") {
+      long long ms = task().maxDurationBeforeAbort();
+      return (ms == LLONG_MAX) ? defaultValue : ms/1000.0;
+    } else if (key == "!maxexpectedms0") {
+      long long ms = task().maxExpectedDuration();
+      return (ms == LLONG_MAX) ? 0 : ms;
+    } else if (key == "!maxexpecteds0") {
+      long long ms = task().maxExpectedDuration();
+      return (ms == LLONG_MAX) ? 0.0 : ms/1000.0;
+    } else if (key == "!maxbeforeabortms0") {
+      long long ms = task().maxDurationBeforeAbort();
+      return (ms == LLONG_MAX) ? 0 : ms;
+    } else if (key == "!maxbeforeaborts0") {
+      long long ms = task().maxDurationBeforeAbort();
+      return (ms == LLONG_MAX) ? 0.0 : ms/1000.0;
     }
   }
   return defaultValue;
