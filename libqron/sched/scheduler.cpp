@@ -70,7 +70,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
 }
 
 Scheduler::~Scheduler() {
-  Log::clearLoggers();
+  //Log::removeLoggers();
   //_alerter->deleteLater(); // FIXME delete alerter only when last executor is deleted
 }
 

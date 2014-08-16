@@ -171,7 +171,8 @@ int main(int argc, char *argv[]) {
 #endif
   // TODO may we turn log synchronous rather than call usleep ?
   ::usleep(100000); // give a chance for last asynchronous log writing
-  // LATER clearLoggers should not be called but rather managed as a singleton in libqtssu
-  Log::clearLoggers(); // this deletes logger and console
+  // LATER removeLoggers should not be called but rather managed as a singleton in libqtssu
+  // anyway some loggers are not deleted by removeLoggers
+  //Log::removeLoggers();
   return rc;
 }

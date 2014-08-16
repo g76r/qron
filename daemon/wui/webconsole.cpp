@@ -34,8 +34,7 @@
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
-  _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false),
-  _loggersAdded(false) {
+  _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false) {
   QList<int> cols;
 
   // HTTP handlers
@@ -87,8 +86,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new CalendarsModel(this);
   _stepsModel= new StepsModel(this);
-  _memoryInfoLogger = new MemoryLogger(0, Log::Info, LOG_MAXROWS);
-  _memoryWarningLogger = new MemoryLogger(0, Log::Warning, LOG_MAXROWS);
+  _warningLogModel = new LogModel(this, Log::Warning, LOG_MAXROWS);
+  _infoLogModel = new LogModel(this, Log::Info, LOG_MAXROWS);
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
@@ -216,7 +215,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(1, "%1", 1, alertRulesIcons);
   _wuiHandler->addView(_htmlAlertRulesView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
-  _htmlWarningLogView->setModel(_memoryWarningLogger->model());
+  _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   QHash<QString,QString> logTrClasses, logIcons;
   logTrClasses.insert("WARNING", "warning");
@@ -229,7 +228,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlWarningLogView);
   _htmlWarningLogView10 =
       new HtmlTableView(this, "warninglog10", SHORT_LOG_MAXROWS, 10);
-  _htmlWarningLogView10->setModel(_memoryWarningLogger->model());
+  _htmlWarningLogView10->setModel(_warningLogModel);
   _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
   _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
   _htmlWarningLogView10->setTrClass("%1", 4, logTrClasses);
@@ -237,7 +236,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(5, "%1", 4, logIcons);
   _wuiHandler->addView(_htmlWarningLogView10);
   _htmlInfoLogView = new HtmlTableView(this, "infolog", LOG_MAXROWS, 100);
-  _htmlInfoLogView->setModel(_memoryInfoLogger->model());
+  _htmlInfoLogView->setModel(_infoLogModel);
   _htmlInfoLogView->setTrClass("%1", 4, logTrClasses);
   ((HtmlItemDelegate*)_htmlInfoLogView->itemDelegate())
       ->setPrefixForColumn(5, "%1", 4, logIcons);
@@ -451,7 +450,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvAlertRulesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvAlertRulesView->setModel(_alertRulesModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
-  _csvLogView->setModel(_memoryInfoLogger->model());
+  _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =
         new CsvTableView(this, _taskInstancesHistoryModel->maxrows());
   _csvTaskInstancesView->setModel(_taskInstancesHistoryModel);
@@ -489,13 +488,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
-  _memoryInfoLogger->moveToThread(_thread); // TODO won't be deleted whereas they should
-  _memoryWarningLogger->moveToThread(_thread);
 }
 
 WebConsole::~WebConsole() {
-  _memoryInfoLogger->moveToThread(QCoreApplication::instance()->thread());
-  _memoryWarningLogger->moveToThread(QCoreApplication::instance()->thread());
 }
 
 bool WebConsole::acceptRequest(HttpRequest req) {
@@ -1383,11 +1378,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _stepsModel, SLOT(configChanged(SchedulerConfig)));
   } else {
     _title = "Qron Web Console";
-  }
-  if (!_loggersAdded) {
-    _loggersAdded = true;
-    Log::addLogger(_memoryWarningLogger, false);
-    Log::addLogger(_memoryInfoLogger, false);
   }
 }
 

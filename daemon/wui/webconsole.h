@@ -28,7 +28,7 @@
 #include "ui/lastoccuredtexteventsmodel.h"
 #include "textview/clockview.h"
 #include "ui/alertrulesmodel.h"
-#include "log/memorylogger.h"
+#include "log/logmodel.h"
 #include "ui/taskinstancesmodel.h"
 #include "ui/tasksmodel.h"
 #include "ui/schedulereventsmodel.h"
@@ -72,6 +72,7 @@ class WebConsole : public HttpHandler {
   LogFilesModel *_logConfigurationModel;
   CalendarsModel *_calendarsModel;
   StepsModel *_stepsModel;
+  LogModel *_warningLogModel, *_infoLogModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
@@ -98,11 +99,10 @@ class WebConsole : public HttpHandler {
   *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
-  MemoryLogger *_memoryInfoLogger, *_memoryWarningLogger;
   QString _title, _navtitle, _titlehref, _cssoverload, _customaction_taskdetail;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
-  bool _ownUsersDatabase, _accessControlEnabled, _loggersAdded;
+  bool _ownUsersDatabase, _accessControlEnabled;
 
 public:
   WebConsole();
