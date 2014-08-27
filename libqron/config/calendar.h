@@ -42,7 +42,7 @@ public:
   bool isIncluded(QDate date) const;
   bool isNull() const;
   void clear();
-  QString toPf(bool useNameIfAvaillable = false) const;
+  QString toPf(bool useNameIfAvailable = false) const;
   /** Enumerate rules in a human readable fashion */
   QString rulesAsString() const;
   /** Can return QString("") if anonymous */

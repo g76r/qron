@@ -372,7 +372,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     // 3) Join to any step transition:
     //    format: ${source_fqsn}|${event_name}|${target_step_id}
     //    e.g. app1.group1.workflow1:step2|onready|step3
-    //    Currently, the only event availlable in a join step is onready.
+    //    Currently, the only event available in a join step is onready.
     // 4) End transition:
     //    format: ${source_id_or_id}|${event_name}|$end
     //    e.g. app1.group1.workflow1-step3|onfinish|$end

@@ -127,9 +127,9 @@ void Calendar::clear() {
   d->_rules.clear();
 }
 
-QString Calendar::toPf(bool useNameIfAvaillable) const {
+QString Calendar::toPf(bool useNameIfAvailable) const {
   QString s("(calendar"), name(this->name());
-  if (!name.isEmpty() && useNameIfAvaillable)
+  if (!name.isEmpty() && useNameIfAvailable)
     s.append(" ").append(name);
   else
     foreach (const CalendarData::Rule &r, d->_rules) {

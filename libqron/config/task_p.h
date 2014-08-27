@@ -43,7 +43,7 @@ static QString _uiHeaderNames[] = {
   "Request-time overridable params", // 25
   "Last execution duration",
   "Max duration before abort",
-  "Triggers with calendars",
+  "Triggers incl. calendars",
   "Enabled",
   "Has triggers with calendars", // 30
   "Parent task"
