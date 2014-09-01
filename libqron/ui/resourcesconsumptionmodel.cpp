@@ -40,7 +40,7 @@ void ResourcesConsumptionModel::configChanged(SchedulerConfig config) {
       if (targets.contains(host.id()) && !task.resources().isEmpty()) {
         QString s;
         foreach (const QString &kind, task.resources().keys()) {
-          qint64 consumed = task.resources().value(kind);
+          qint64 consumed = task.resources().value(kind)*task.maxInstances();
           qint64 available = resources.value(host.id()).value(kind);
           s.append(kind).append(": ").append(QString::number(consumed))
               .append(' ');
