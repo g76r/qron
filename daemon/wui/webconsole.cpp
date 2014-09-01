@@ -96,28 +96,27 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHostsListView->setModel(_hostsModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   ((HtmlItemDelegate*)_htmlHostsListView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-hdd\"></i> ")
-      ->setPrefixForColumnHeader(2, "<i class=\"icon-fast-food\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-hdd\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(2, "<i class=\"icon-fast-food\"></i>&nbsp;");
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView =
     new HtmlTableView(this, "clusterslist", CONFIG_TABLES_MAXROWS);
   _htmlClustersListView->setModel(_clustersModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
   ((HtmlItemDelegate*)_htmlClustersListView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-shuffle\"></i> ")
-      ->setPrefixForColumnHeader(1, "<i class=\"icon-hdd\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-shuffle\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(1, "<i class=\"icon-hdd\"></i>&nbsp;");
   _wuiHandler->addView(_htmlClustersListView);
   _htmlFreeResourcesView =
     new HtmlTableView(this, "freeresources", CONFIG_TABLES_MAXROWS);
   _htmlFreeResourcesView->setModel(_freeResourcesModel);
   _htmlFreeResourcesView->setRowHeaders();
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
-  // glyphicon-celebration glyphicon-fast-food icon-glass glyphicon-fast-food
   ((HtmlItemDelegate*)_htmlFreeResourcesView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"icon-fast-food\"></i> ")
+                                 "<i class=\"icon-fast-food\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
-                              "<i class=\"icon-hdd\"></i> ");
+                              "<i class=\"icon-hdd\"></i>&nbsp;");
   _wuiHandler->addView(_htmlFreeResourcesView);
   _htmlResourcesLwmView =
     new HtmlTableView(this, "resourceslwm", CONFIG_TABLES_MAXROWS);
@@ -126,9 +125,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
   ((HtmlItemDelegate*)_htmlResourcesLwmView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"icon-fast-food\"></i> ")
+                                 "<i class=\"icon-fast-food\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
-                              "<i class=\"icon-hdd\"></i> ");
+                              "<i class=\"icon-hdd\"></i>&nbsp;");
   _wuiHandler->addView(_htmlResourcesLwmView);
   _htmlResourcesConsumptionView =
     new HtmlTableView(this, "resourcesconsumption", CONFIG_TABLES_MAXROWS);
@@ -138,9 +137,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setEmptyPlaceholder("(no resource definition)");
   ((HtmlItemDelegate*)_htmlResourcesConsumptionView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"icon-hdd\"></i> ")
+                                 "<i class=\"icon-hdd\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
-                              "<i class=\"icon-cog\"></i> ")
+                              "<i class=\"icon-cog\"></i>&nbsp;")
       ->setPrefixForRowHeader(0, "")
       ->setPrefixForRow(0, "<strong>")
       ->setSuffixForRow(0, "</strong>");
@@ -167,7 +166,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView, 0, 3, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlRaisedAlertsView10 =
     new HtmlTableView(this, "raisedalerts10", RAISED_ALERTS_MAXROWS, 10);
@@ -176,7 +175,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView10->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView10, 0, 3, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView10->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsView10);
   _htmlLastEmitedAlertsView =
       new HtmlTableView(this, "lastemitedalerts",
@@ -184,8 +183,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
   QHash<QString,QString> alertsIcons;
-  alertsIcons.insert("0", "<i class=\"icon-bell\"></i> ");
-  alertsIcons.insert("1", "<i class=\"icon-check\"></i> ");
+  alertsIcons.insert("0", "<i class=\"icon-bell\"></i>&nbsp;");
+  alertsIcons.insert("1", "<i class=\"icon-check\"></i>&nbsp;");
   _htmlLastEmitedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlLastEmitedAlertsView, 1, 3, false));
   ((HtmlAlertItemDelegate*)_htmlLastEmitedAlertsView->itemDelegate())
@@ -209,9 +208,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       new HtmlTableView(this, "alertrules", CONFIG_TABLES_MAXROWS);
   _htmlAlertRulesView->setModel(_alertRulesModel);
   QHash<QString,QString> alertRulesIcons;
-  alertRulesIcons.insert("stop", "<i class=\"icon-stop\"></i> ");
+  alertRulesIcons.insert("stop", "<i class=\"icon-stop\"></i>&nbsp;");
   ((HtmlItemDelegate*)_htmlAlertRulesView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-filter\"></i> ")
+      ->setPrefixForColumn(0, "<i class=\"icon-filter\"></i>&nbsp;")
       ->setPrefixForColumn(1, "%1", 1, alertRulesIcons);
   _wuiHandler->addView(_htmlAlertRulesView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
@@ -220,8 +219,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   QHash<QString,QString> logTrClasses, logIcons;
   logTrClasses.insert("WARNING", "warning");
   logTrClasses.insert("ERROR", "error");
-  logIcons.insert("WARNING", "<i class=\"icon-warning\"></i> ");
-  logIcons.insert("ERROR", "<i class=\"icon-minus-circled\"></i> ");
+  logIcons.insert("WARNING", "<i class=\"icon-warning\"></i>&nbsp;");
+  logIcons.insert("ERROR", "<i class=\"icon-minus-circled\"></i>&nbsp;");
   _htmlWarningLogView->setTrClass("%1", 4, logTrClasses);
   ((HtmlItemDelegate*)_htmlWarningLogView->itemDelegate())
       ->setPrefixForColumn(5, "%1", 4, logIcons);
@@ -323,13 +322,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlSchedulerEventsView =
       new HtmlTableView(this, "schedulerevents", CONFIG_TABLES_MAXROWS, 100);
   ((HtmlItemDelegate*)_htmlSchedulerEventsView->itemDelegate())
-      ->setPrefixForColumnHeader(0, "<i class=\"icon-play\"></i> ")
-      ->setPrefixForColumnHeader(1, "<i class=\"icon-refresh\"></i> ")
-      ->setPrefixForColumnHeader(2, "<i class=\"icon-comment\"></i> ")
-      ->setPrefixForColumnHeader(3, "<i class=\"icon-file-text\"></i> ")
-      ->setPrefixForColumnHeader(4, "<i class=\"icon-play\"></i> ")
-      ->setPrefixForColumnHeader(5, "<i class=\"icon-check\"></i> ")
-      ->setPrefixForColumnHeader(6, "<i class=\"icon-minus-circled\"></i> ")
+      ->setPrefixForColumnHeader(0, "<i class=\"icon-play\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(1, "<i class=\"icon-refresh\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(2, "<i class=\"icon-comment\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(3, "<i class=\"icon-file-text\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(4, "<i class=\"icon-play\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(5, "<i class=\"icon-check\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(6, "<i class=\"icon-minus-circled\"></i>&nbsp;")
       ->setMaxCellContentLength(2000);
   _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
   _wuiHandler->addView(_htmlSchedulerEventsView);
@@ -342,7 +341,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 0 << 1;
   _htmlLastPostedNoticesView20->setColumnIndexes(cols);
   ((HtmlItemDelegate*)_htmlLastPostedNoticesView20->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i> ");
+      ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i>&nbsp;");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
   _htmlTaskGroupsView =
       new HtmlTableView(this, "taskgroups", CONFIG_TABLES_MAXROWS);
@@ -352,7 +351,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 0 << 2 << 7 << 20 << 21;
   _htmlTaskGroupsView->setColumnIndexes(cols);
   ((HtmlItemDelegate*)_htmlTaskGroupsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsView);
   _htmlTaskGroupsEventsView =
       new HtmlTableView(this, "taskgroupsevents", CONFIG_TABLES_MAXROWS);
@@ -362,10 +361,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 0 << 14 << 15 << 16;
   _htmlTaskGroupsEventsView->setColumnIndexes(cols);
   ((HtmlItemDelegate*)_htmlTaskGroupsEventsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i> ")
-      ->setPrefixForColumnHeader(14, "<i class=\"icon-play\"></i> ")
-      ->setPrefixForColumnHeader(15, "<i class=\"icon-check\"></i> ")
-      ->setPrefixForColumnHeader(16, "<i class=\"icon-minus-circled\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(14, "<i class=\"icon-play\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(15, "<i class=\"icon-check\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(16, "<i class=\"icon-minus-circled\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsEventsView);
   _htmlAlertChannelsView = new HtmlTableView(this, "alertchannels");
   _htmlAlertChannelsView->setModel(_alertChannelsModel);
@@ -396,9 +395,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLogFilesView->setModel(_logConfigurationModel);
   _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
   QHash<QString,QString> bufferLogFileIcons;
-  bufferLogFileIcons.insert("true", "<i class=\"icon-download\"></i> ");
+  bufferLogFileIcons.insert("true", "<i class=\"icon-download\"></i>&nbsp;");
   ((HtmlItemDelegate*)_htmlLogFilesView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-file-text\"></i> ")
+      ->setPrefixForColumn(0, "<i class=\"icon-file-text\"></i>&nbsp;")
       ->setPrefixForColumn(2, "%1", 2, bufferLogFileIcons);
   _wuiHandler->addView(_htmlLogFilesView);
   _htmlCalendarsView =
@@ -406,7 +405,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlCalendarsView->setModel(_calendarsModel);
   _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
   ((HtmlItemDelegate*)_htmlCalendarsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-calendar\"></i> ");
+      ->setPrefixForColumn(0, "<i class=\"icon-calendar\"></i>&nbsp;");
   _wuiHandler->addView(_htmlCalendarsView);
   _htmlStepsView = new HtmlTableView(this, "steps", CONFIG_TABLES_MAXROWS);
   _htmlStepsView->setModel(_stepsModel);
@@ -823,7 +822,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Enabled</th><td>"
                         +QString(task.enabled()
                                  ? "true"
-                                 : "<i class=\"icon-block\"></i> false")
+                                 : "<i class=\"icon-block\"></i>&nbsp;false")
                         +"</td></tr><tr><th>Last execution status</th><td>"
                         +HtmlUtils::htmlEncode(task.uiString(19))+"</td></tr>"
                         "<tr><th>Last execution duration (seconds)</th><td>"
@@ -832,7 +831,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +task.nextScheduledExecution()
                         .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"
                         "<tr><th>Currently running instances</th><td>"
-                        +(instancesCount ? "<i class=\"icon-play\"></i> " : "")
+                        +(instancesCount ? "<i class=\"icon-play\"></i>&nbsp;"
+                                         : "")
                         +QString::number(instancesCount)+" / "
                         +QString::number(task.maxInstances())+"</td></tr>");
         params.setValue("params",

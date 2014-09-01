@@ -16,11 +16,11 @@
 HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
   : HtmlItemDelegate(parent) {
   QHash<QString,QString> instancesStatusIcons;
-  instancesStatusIcons.insert("queued", "<i class=\"icon-inbox\"></i> ");
-  instancesStatusIcons.insert("running", "<i class=\"icon-play\"></i> ");
-  instancesStatusIcons.insert("failure", "<i class=\"icon-minus-circled\"></i> ");
-  instancesStatusIcons.insert("canceled", "<i class=\"icon-cancel\"></i> ");
-  setPrefixForColumn(1, "<i class=\"icon-cog\"></i> "
+  instancesStatusIcons.insert("queued", "<i class=\"icon-inbox\"></i>&nbsp;");
+  instancesStatusIcons.insert("running", "<i class=\"icon-play\"></i>&nbsp;");
+  instancesStatusIcons.insert("failure", "<i class=\"icon-minus-circled\"></i>&nbsp;");
+  instancesStatusIcons.insert("canceled", "<i class=\"icon-cancel\"></i>&nbsp;");
+  setPrefixForColumn(1, "<i class=\"icon-cog\"></i>&nbsp;"
                      "<a href=\"taskdoc.html?taskid=%1\">", 1);
   setSuffixForColumn(1, "</a>");
   setPrefixForColumn(2, "%1", 2, instancesStatusIcons);

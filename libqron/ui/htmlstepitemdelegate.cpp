@@ -26,19 +26,17 @@ QString HtmlStepItemDelegate::text(const QModelIndex &index) const {
     QString kind = index.model()->index(index.row(), 2, index.parent()).data()
         .toString();
     if (kind == "task")
-      text.prepend("<i class=\"icon-cog\"></i> "); // was: icon-puzzle-piece
+      text.prepend("<i class=\"icon-cog\"></i>&nbsp;"); // was: icon-puzzle-piece
     else if (kind == "and")
-      text.prepend("<i class=\"icon-chevron-up\"></i> ");
-      //text.prepend("<span class=\"fa-stack\"><i class=\"fa fa-square fa-stack\"></i><i class=\"fa fa-chevron-up fa-stack fa-inverse\"></i></span> ");
+      text.prepend("<i class=\"icon-chevron-up\"></i>&nbsp;");
     else if (kind == "or")
-      text.prepend("<i class=\"icon-chevron-down\"></i> ");
-      //text.prepend("<span class=\"fa-stack\"><i class=\"fa fa-circle fa-stack\"></i><i class=\"fa fa-chevron-down fa-stack fa-inverse\"></i></span> ");
+      text.prepend("<i class=\"icon-chevron-down\"></i>&nbsp;");
     else if (kind == "start")
-      text.prepend("<i class=\"icon-circle\"></i> ");
+      text.prepend("<i class=\"icon-circle\"></i>&nbsp;");
     else if (kind == "end")
-      text.prepend("<i class=\"icon-dot-circled\"></i> ");
+      text.prepend("<i class=\"icon-dot-circled\"></i>&nbsp;");
     else
-      text.prepend("<i class=\"icon-help-circled\"></i> ");
+      text.prepend("<i class=\"icon-help-circled\"></i>&nbsp;");
     break;
   }
   case 3:
@@ -62,16 +60,16 @@ QString HtmlStepItemDelegate::headerText(
   if (orientation == Qt::Horizontal) {
     switch (section) {
     case 6:
-      text.prepend("<i class=\"icon-check\"></i> ");
+      text.prepend("<i class=\"icon-check\"></i>&nbsp;");
       break;
     case 7:
-      text.prepend("<i class=\"icon-play\"></i> ");
+      text.prepend("<i class=\"icon-play\"></i>&nbsp;");
       break;
     case 8:
-      text.prepend("<i class=\"icon-check\"></i> ");
+      text.prepend("<i class=\"icon-check\"></i>&nbsp;");
       break;
     case 9:
-      text.prepend("<i class=\"icon-minus-circled\"></i> ");
+      text.prepend("<i class=\"icon-minus-circled\"></i>&nbsp;");
       break;
     }
   }

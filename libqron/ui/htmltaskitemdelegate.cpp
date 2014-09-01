@@ -36,26 +36,26 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
                  .toString()+
                  "\">");
     if (mean == "workflow")
-      text.prepend("<i class=\"icon-workflow\"></i> ");
+      text.prepend("<i class=\"icon-workflow\"></i>&nbsp;");
     else if (isSubtask)
-      text.prepend("<i class=\"icon-cog\"></i> "); // was: icon-puzzle-piece
+      text.prepend("<i class=\"icon-cog\"></i>&nbsp;"); // was: icon-puzzle-piece
     else
-      text.prepend("<i class=\"icon-cog\"></i> ");
+      text.prepend("<i class=\"icon-cog\"></i>&nbsp;");
     text.append("</a>");
     break;
   }
   case 1:
-    text.prepend("<i class=\"icon-cogs\"></i> ");
+    text.prepend("<i class=\"icon-cogs\"></i>&nbsp;");
     break;
   case 6:
   case 28: {
     bool noTrigger = text.isEmpty();
     if (index.model()->index(index.row(), 30, index.parent()).data().toBool())
-      text.prepend("<i class=\"icon-calendar\"></i> ");
+      text.prepend("<i class=\"icon-calendar\"></i>&nbsp;");
     if (noTrigger && !isSubtask)
-      text.prepend("<i class=\"icon-circle-empty\"></i> no trigger ");
+      text.prepend("<i class=\"icon-circle-empty\"></i>&nbsp;no trigger ");
     if (!index.model()->index(index.row(), 29, index.parent()).data().toBool())
-      text.prepend("<i class=\"icon-block\"></i> disabled ");
+      text.prepend("<i class=\"icon-block\"></i>&nbsp;disabled ");
     break;
   }
   case 10: {
@@ -63,13 +63,13 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     if (!dt.isNull()
         && dt.toMSecsSinceEpoch()-QDateTime::currentMSecsSinceEpoch()
         < SOON_EXECUTION_MILLIS)
-      text.prepend("<i class=\"icon-clock\"></i> ");
+      text.prepend("<i class=\"icon-clock\"></i>&nbsp;");
     break;
   }
   case 13:
   case 17:
     if (index.model()->index(index.row(), 13, index.parent()).data() > 0)
-      text.prepend("<i class=\"icon-play\"></i> ");
+      text.prepend("<i class=\"icon-play\"></i>&nbsp;");
     break;
   case 18: {
     bool enabled = index.model()->index(index.row(), 29, index.parent()).data()
@@ -101,11 +101,11 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   }
   case 19:
     if (index.data().toString().contains("failure"))
-      text.prepend("<i class=\"icon-minus-circled\"></i> ");
+      text.prepend("<i class=\"icon-minus-circled\"></i>&nbsp;");
     break;
   case 27: {
     if (!text.isEmpty())
-      text.prepend("<i class=\"icon-fire\"></i> ");
+      text.prepend("<i class=\"icon-fire\"></i>&nbsp;");
     break;
   }
   }
@@ -120,23 +120,23 @@ QString HtmlTaskItemDelegate::headerText(
   if (orientation == Qt::Horizontal) {
     switch (section) {
     case 5:
-      text.prepend("<i class=\"icon-target\"></i> ");
+      text.prepend("<i class=\"icon-target\"></i>&nbsp;");
       break;
     case 6:
     case 28:
-      text.prepend("<i class=\"icon-bolt\"></i> ");
+      text.prepend("<i class=\"icon-bolt\"></i>&nbsp;");
       break;
     case 8:
-      text.prepend("<i class=\"icon-food\"></i> ");
+      text.prepend("<i class=\"icon-food\"></i>&nbsp;");
       break;
     case 14:
-      text.prepend("<i class=\"icon-play\"></i> ");
+      text.prepend("<i class=\"icon-play\"></i>&nbsp;");
       break;
     case 15:
-      text.prepend("<i class=\"icon-check\"></i> ");
+      text.prepend("<i class=\"icon-check\"></i>&nbsp;");
       break;
     case 16:
-      text.prepend("<i class=\"icon-minus-circled\"></i> ");
+      text.prepend("<i class=\"icon-minus-circled\"></i>&nbsp;");
       break;
     }
   }

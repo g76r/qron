@@ -2,13 +2,12 @@
   margin-bottom: 10px;
 }
 span[class^="label"],span[class*=" label"] a {
-  color: white;
+  color: white; /* have white icons in label spans, which are used as buttons */
 }
 [class^="icon-"], [class*=" icon-"] {
-  width:auto;
+  width:auto; /* disable fixed width icon */
+  display:inline; /* enable &nbsp; before and after icon */
 }
-/*.fa-fw{width:1.2857142857142858em;text-align:center}*/
-/*[class^="fa-fw"],[class*=" fa-fw"] {
-  width:1.2857142857142858em;
-  text-align:center;
-}*/
+[class^="icon-"]:before, [class*=" icon-"]:before {
+  display:inline; /* enable &nbsp; before and after icon */
+}
