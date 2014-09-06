@@ -138,6 +138,8 @@ QString HtmlTaskItemDelegate::headerText(
     case 16:
       text.prepend("<i class=\"icon-minus-circled\"></i>&nbsp;");
       break;
+    case 27:
+      text.prepend("<i class=\"icon-fire\"></i>&nbsp;");
     }
   }
   return text;
