@@ -60,8 +60,6 @@ class LIBQRONSHARED_EXPORT Scheduler : public QObject {
 public:
   Scheduler();
   ~Scheduler();
-  /** This method is thread-safe */
-  bool loadConfig(QIODevice *source);
   void customEvent(QEvent *event);
   Alerter *alerter() { return _alerter; }
   Authenticator *authenticator() { return _authenticator; }
@@ -184,6 +182,7 @@ private slots:
   /** Fire expired triggers for all tasks. */
   void checkTriggersForAllTasks();
   void reloadAccessControlConfig();
+  void configChanged(QString configId, SchedulerConfig config);
 
 private:
   /** Reevaluate queued requests and start any task that can be started.
@@ -196,7 +195,6 @@ private:
   bool startQueuedTask(TaskInstance instance);
   /** @return true iff the triggers fires a task request */
   bool checkTrigger(CronTrigger trigger, Task task, QString taskId);
-  Q_INVOKABLE bool loadConfig(PfNode root);
   void setTimerForCronTrigger(CronTrigger trigger, QDateTime previous
                               = QDateTime::currentDateTime());
   Q_INVOKABLE QList<TaskInstance> doRequestTask(

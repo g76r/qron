@@ -56,7 +56,7 @@ AlerterConfigData::AlerterConfigData(PfNode root)
     _gracePeriodBeforeFirstSend(DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND),
     _remindFrequency(DEFAULT_REMIND_FREQUENCY) {
   _channelNames << "mail" << "udp" << "log";
-  ConfigUtils::loadParamSet(root, &_params);
+  ConfigUtils::loadParamSet(root, &_params, "param");
   foreach (PfNode node, root.childrenByName("rule")) {
     QString pattern = node.attribute("match", "**");
     bool notifyCancel = !node.hasChild("nocancelnotify");

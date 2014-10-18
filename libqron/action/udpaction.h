@@ -21,7 +21,7 @@ class UdpActionData;
 /** Action sending an arbitrary UDP packet. */
 class LIBQRONSHARED_EXPORT UdpAction : public Action {
 public:
-  explicit UdpAction(QString address = QString(), QString message = QString());
+  explicit UdpAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   UdpAction(const UdpAction &);
   ~UdpAction();
 };

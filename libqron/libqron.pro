@@ -107,7 +107,10 @@ SOURCES += \
     config/alerterconfig.cpp \
     config/accesscontrolconfig.cpp \
     ui/graphvizdiagramsbuilder.cpp \
-    ui/qronuiutils.cpp
+    ui/qronuiutils.cpp \
+    configmgt/configrepository.cpp \
+    configmgt/localconfigrepository.cpp \
+    configmgt/confighistoryentry.cpp
 
 HEADERS += \
     config/task.h \
@@ -175,4 +178,7 @@ HEADERS += \
     ui/graphvizdiagramsbuilder.h \
     libqron_global.h \
     ui/qronuiutils.h \
-    config/task_p.h
+    config/task_p.h \
+    configmgt/configrepository.h \
+    configmgt/localconfigrepository.h \
+    configmgt/confighistoryentry.h

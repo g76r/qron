@@ -30,6 +30,8 @@ public:
   ParamSet _params, _setenv, _unsetenv;
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "taskgroup"; }
@@ -46,12 +48,12 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                      Scheduler *scheduler) {
   TaskGroupData *tgd = new TaskGroupData;
   tgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
-  tgd->_label = node.attribute("label", tgd->_id);
+  tgd->_label = node.attribute("label");
   tgd->_params.setParent(parentParamSet);
-  ConfigUtils::loadParamSet(node, &tgd->_params);
+  ConfigUtils::loadParamSet(node, &tgd->_params, "param");
   tgd->_setenv.setParent(parentSetenv);
-  ConfigUtils::loadSetenv(node, &tgd->_setenv);
-  ConfigUtils::loadUnsetenv(node, &tgd->_unsetenv);
+  ConfigUtils::loadParamSet(node, &tgd->_setenv, "setenv");
+  ConfigUtils::loadFlagSet(node, &tgd->_unsetenv, "unsetenv");
   tgd->_unsetenv.setParent(parentUnsetenv);
   ConfigUtils::loadEventSubscription(node, "onstart", tgd->_id,
                                      &tgd->_onstart, scheduler);
@@ -72,16 +74,14 @@ TaskGroup::TaskGroup(QString id) {
   setData(tgd);
 }
 
-TaskGroup::~TaskGroup() {
-}
-
 QString TaskGroup::parentGroupId(QString groupId) {
   int i = groupId.lastIndexOf('.');
   return (i >= 0) ? groupId.left(i) : QString();
 }
 
 QString TaskGroup::label() const {
-  return !isNull() ? tgd()->_label : QString();
+  return !isNull() ? (tgd()->_label.isNull() ? tgd()->_id : tgd()->_label)
+                   : QString();
 }
 
 ParamSet TaskGroup::params() const {
@@ -143,7 +143,7 @@ QVariant TaskGroupData::uiData(int section, int role) const {
     case 1:
       return TaskGroup::parentGroupId(_id);
     case 2:
-      return _label;
+      return _label.isNull() ? _id : _label;
     case 7:
       return _params.toString(false, false);
     case 14:
@@ -166,17 +166,33 @@ QVariant TaskGroupData::uiData(int section, int role) const {
   return QVariant();
 }
 
-QVariant TaskGroup::uiHeaderData(int section, int role) const {
+QVariant TaskGroupData::uiHeaderData(int section, int role) const {
   return role == Qt::DisplayRole && section >= 0
       && (unsigned)section < sizeof _uiHeaderNames
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int TaskGroup::uiDataCount() const {
+int TaskGroupData::uiDataCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
 TaskGroupData *TaskGroup::tgd() {
   detach<TaskGroupData>();
   return (TaskGroupData*)constData();
+}
+
+PfNode TaskGroup::toPfNode() const {
+  if (!tgd())
+    return PfNode();
+  PfNode node("taskgroup", tgd()->id());
+  if (!tgd()->_label.isNull())
+    node.setAttribute("label", tgd()->_label);
+  ConfigUtils::writeParamSet(&node, tgd()->_params, "param");
+  ConfigUtils::writeParamSet(&node, tgd()->_setenv, "setenv");
+  ConfigUtils::writeFlagSet(&node, tgd()->_unsetenv, "unsetenv");
+  ConfigUtils::writeEventSubscriptions(&node, tgd()->_onstart);
+  ConfigUtils::writeEventSubscriptions(&node, tgd()->_onsuccess);
+  ConfigUtils::writeEventSubscriptions(&node, tgd()->_onfailure,
+                                       QStringList("onfinish"));
+  return node;
 }

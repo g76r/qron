@@ -17,7 +17,7 @@
 
 ClustersModel::ClustersModel(QObject *parent)
   : SharedUiItemsTableModel(parent) {
-  setHeaderDataFromTemplate(Cluster());
+  setHeaderDataFromTemplate(Cluster(PfNode("template")));
 }
 
 void ClustersModel::configReset(SchedulerConfig config) {

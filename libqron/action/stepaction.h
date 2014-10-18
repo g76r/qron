@@ -22,7 +22,7 @@ class Scheduler;
 
 class LIBQRONSHARED_EXPORT StepAction : public Action {
 public:
-  explicit StepAction(Scheduler *scheduler = 0, QString stepId = QString());
+  explicit StepAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   StepAction(const StepAction &);
   StepAction &operator=(const StepAction &);
   ~StepAction();

@@ -22,7 +22,7 @@
 class CalendarData;
 
 /** Definition of days when a event can occur or not.
- * Used with CronTrigger to handle special arbitrary daus such as public
+ * Used with CronTrigger to handle special arbitrary days such as public
  * holidays.
  * @see CronTrigger */
 class LIBQRONSHARED_EXPORT Calendar {
@@ -42,10 +42,12 @@ public:
   bool isIncluded(QDate date) const;
   bool isNull() const;
   void clear();
-  QString toPf(bool useNameIfAvailable = false) const;
-  /** Enumerate rules in a human readable fashion */
-  QString rulesAsString() const;
-  /** Can return QString("") if anonymous */
+  /** e.g. (calendar name) or (calendar(include 2014-01-01..2018-12-31)) */
+  PfNode toPfNode(bool useNameIfAvailable = false) const;
+  /** Enumerate rules in a human readable fashion
+    * e.g. "include 2014-01-01..2018-12-31, exclude 2014-04-01" */
+  QString toCommaSeparatedRulesString() const;
+  /** @return QString() iff anonymous */
   QString name() const;
 };
 

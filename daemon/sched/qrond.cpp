@@ -30,18 +30,22 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _webconsoleAddress(QHostAddress::Any), _webconsolePort(8086),
   _scheduler(new Scheduler),
   _httpd(new HttpServer(8, 32)), // LATER should be configurable
-  _configPath("/etc/qron.conf"), _httpAuthRealm("qron") {
+  _configDir(), _configFile(), _httpAuthRealm("qron"),
+  _configRepository(new LocalConfigRepository(_scheduler)) {
   WebConsole *webconsole = new WebConsole;
   webconsole->setScheduler(_scheduler);
   PipelineHttpHandler *pipeline = new PipelineHttpHandler;
   _httpAuthHandler = new BasicAuthHttpHandler;
   _httpAuthHandler->setAuthenticator(_scheduler->authenticator(), false);
+  _httpAuthHandler->setAuthIsMandatory(false);
   connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
           _httpAuthHandler, SLOT(setAuthIsMandatory(bool)));
   webconsole->setUsersDatabase(_scheduler->usersDatabase(), false);
   pipeline->appendHandler(_httpAuthHandler);
   pipeline->appendHandler(webconsole);
   _httpd->appendHandler(pipeline);
+  connect(_configRepository, SIGNAL(currentConfigChanged(QString,SchedulerConfig)),
+          _scheduler, SLOT(configChanged(QString,SchedulerConfig)));
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
   //        _httpd, SLOT(deleteLater()));
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
@@ -59,17 +63,19 @@ void Qrond::startup(QStringList args) {
   int n = args.size();
   for (int i =0; i < n; ++i) {
     const QString &arg = args[i];
-    if (i < n-1 && (arg == "-l" || arg == "--http-address")) {
+    if (i < n-1 && (arg == "--http-address")) {
       _webconsoleAddress.setAddress(args[++i]);
-    } else if (i < n-1 && (arg == "-p" || arg == "--http-port")) {
+    } else if (i < n-1 && (arg == "--http-port")) {
       int p = QString(args[++i]).toInt();
       if (p >= 1 && p <= 65535)
         _webconsolePort = p;
       else
         Log::error() << "bad port number: " << arg
                      << " using default instead (8086)";
-    } else if (i < n-1 && (arg == "-c" || arg == "--config-path")) {
-       _configPath = args[++i];
+    } else if (i < n-1 && (arg == "--config-file")) {
+       _configFile = args[++i];
+    } else if (i < n-1 && (arg == "--config-repository")) {
+       _configDir = args[++i];
     } else if (i < n-1 && arg == "--http-auth-realm") {
        _httpAuthRealm = args[++i];
        _httpAuthRealm.replace("\"", "'");
@@ -82,27 +88,32 @@ void Qrond::startup(QStringList args) {
     Log::error() << "cannot start webconsole on "
                  << _webconsoleAddress.toString() << ":" << _webconsolePort
                  << ": " << _httpd->errorString();
-  QFile *config = new QFile(_configPath);
-  // LATER have a config directory rather only one file
-  int rc = _scheduler->loadConfig(config) ? 0 : 1;
-  delete config;
-  if (rc) {
+  if (!_configDir.isEmpty())
+    _configRepository->openRepository(_configDir);
+  reload();
+  if (_configRepository->currentConfigId().isNull()) {
     Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
+    return; // FIXME remove
     QMetaObject::invokeMethod(qrondInstance(), "shutdown",
-                              Qt::QueuedConnection, Q_ARG(int, rc));
+                              Qt::QueuedConnection, Q_ARG(int, 1));
   }
 }
 
 bool Qrond::reload() {
-  QFile *config = new QFile(_configPath);
-  // LATER have a config directory rather only one file
-  Log::info() << "reloading configuration";
-  int rc = _scheduler->loadConfig(config) ? 0 : 1;
-  delete config;
-  if (rc)
-    Log::error() << "cannot reload configuration";
-  return !rc;
+  if (!_configFile.isEmpty()) {
+    Log::info() << "loading configuration from file: " << _configFile;
+    // LATER support a config directory like /etc/qron.d rather only one file
+    QFile file(_configFile);
+    SchedulerConfig config = _configRepository->parseConfig(&file);
+    if (config.isNull()) {
+      Log::error() << "cannot load configuration from file: " << _configFile;
+    } else {
+      _configRepository->addCurrent(config);
+      return true;
+    }
+  }
+  return false;
 }
 
 void Qrond::shutdown(int returnCode) {

@@ -23,8 +23,7 @@ class Scheduler;
 /** Action canceling an alert. */
 class LIBQRONSHARED_EXPORT CancelAlertAction : public Action {
 public:
-  explicit CancelAlertAction(Scheduler *scheduler = 0,
-                             QString alert = QString());
+  explicit CancelAlertAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   CancelAlertAction(const CancelAlertAction &);
   ~CancelAlertAction();
 };

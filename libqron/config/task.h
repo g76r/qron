@@ -64,6 +64,9 @@ public:
   Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
        QHash<QString,Task> oldTasks, QString supertaskId,
        QHash<QString, Calendar> namedCalendars);
+  /** Should only be used by SharedUiItemsModels to get size and headers from
+   * a non-null item. */
+  static Task templateTask();
   ~Task();
   Task &operator=(const Task &other) {
     SharedUiItem::operator=(other); return *this; }
@@ -152,8 +155,7 @@ public:
   QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
   QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;
   QHash<QString,CronTrigger> workflowCronTriggersById() const;
-  QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
+  PfNode toPfNode() const;
 
 private:
   TaskData *td();

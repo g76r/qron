@@ -67,6 +67,7 @@ public:
   void triggerActions() const;
   static QStringList toStringList(QList<EventSubscription> list);
   QStringList toStringList() const;
+  PfNode toPfNode() const;
 };
 
 #endif // EVENTSUBSCRIPTION_H

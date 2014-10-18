@@ -23,7 +23,10 @@
 
 TasksModel::TasksModel(QObject *parent)
   : SharedUiItemsTableModel(parent) {
-  setHeaderDataFromTemplate(Task());
+//  Task templateTask(PfNode("template").appendChild();, 0, TaskGroup("template"),
+//                    QHash<QString,Task>(), QString(),
+//                    QHash<QString,Calendar>());
+  setHeaderDataFromTemplate(Task::templateTask()); // FIXME
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicDataRefresh()));
   timer->start(PERIODIC_REFRESH_INTERVAL);

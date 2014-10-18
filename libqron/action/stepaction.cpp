@@ -65,11 +65,15 @@ public:
       _scheduler->activateWorkflowTransition(workflow, transitionId,
                                              eventContext);
   }
+  PfNode toPfNode() const{
+    return PfNode(actionType(), _stepId);
+  }
 };
 
-StepAction::StepAction(Scheduler *scheduler, QString stepId)
-  : Action(new StepActionData(scheduler,
-                              ConfigUtils::sanitizeId(stepId, false))) {
+StepAction::StepAction(Scheduler *scheduler, PfNode node)
+  : Action(new StepActionData(
+             scheduler,
+             ConfigUtils::sanitizeId(node.contentAsString(), false))) {
   //Log::fatal() << "StepAction() " << stepId;
 }
 

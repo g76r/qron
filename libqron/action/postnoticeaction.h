@@ -24,9 +24,7 @@ class Scheduler;
 /** Action posting a notice. */
 class LIBQRONSHARED_EXPORT PostNoticeAction : public Action {
 public:
-  explicit PostNoticeAction(Scheduler *scheduler = 0,
-                            QString notice = QString(),
-                            ParamSet params = ParamSet());
+  explicit PostNoticeAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   PostNoticeAction(const PostNoticeAction &);
   ~PostNoticeAction();
 };

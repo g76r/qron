@@ -30,6 +30,9 @@ public:
   virtual QString humanReadableExpression() const;
   virtual bool isValid() const;
   virtual ~TriggerData();
+  /** Type of trigger for programmatic test, e.g. "cron" */
+  virtual QString triggerType() const;
+  PfNode toPfNode() const;
 };
 
 #endif // TRIGGER_P_H

@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,37 +11,32 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HOST_H
-#define HOST_H
+#ifndef CONFIGHISTORYENTRY_H
+#define CONFIGHISTORYENTRY_H
 
-#include "libqron_global.h"
-#include <QSharedDataPointer>
-#include <QHash>
 #include "modelview/shareduiitem.h"
+#include "config/schedulerconfig.h"
 
-class HostData;
-class PfNode;
+class ConfigHistoryEntryData;
 
-/** A host is a single execution target.
- * @see Cluster */
-class LIBQRONSHARED_EXPORT Host : public SharedUiItem {
+class LIBQRONSHARED_EXPORT ConfigHistoryEntry : public SharedUiItem {
 public:
-  Host();
-  Host(PfNode node);
-  Host(const Host &other);
-  ~Host();
-  Host &operator=(const Host &other) {
+  ConfigHistoryEntry();
+  ConfigHistoryEntry(const ConfigHistoryEntry &other);
+  ConfigHistoryEntry(
+      QString id, SchedulerConfig config, QDateTime activationDate,
+      QString reason, QString actor);
+  ConfigHistoryEntry &operator=(const ConfigHistoryEntry &other) {
     SharedUiItem::operator=(other); return *this; }
-  QString hostname() const;
-  /** Resources available. */
-  QHash<QString, qint64> resources() const;
-  QString resourcesAsString() const;
-  QString label() const;
-  void detach();
+  SchedulerConfig config() const;
+  QDateTime activationDate() const;
+  QString reason() const;
+  QString actor() const;
 
 private:
-  HostData *hd();
-  const HostData *hd() const { return (const HostData*)constData(); }
+  ConfigHistoryEntryData *che();
+  const ConfigHistoryEntryData *che() const {
+    return (const ConfigHistoryEntryData*)constData(); }
 };
 
-#endif // HOST_H
+#endif // CONFIGHISTORYENTRY_H

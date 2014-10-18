@@ -130,6 +130,7 @@ public:
   QString humanReadableExpression() const { return "("+_cronExpression+")"; }
   QDateTime nextTriggering(QDateTime max) const;
   bool isValid() const { return _isValid; }
+  QString triggerType() const { return "cron"; }
 
 private:
   void parseCronExpression(QString cronExpression);

@@ -130,3 +130,12 @@ QList<Action> EventSubscription::actions() const {
 QString EventSubscription::subscriberName() const {
   return d ? d->_subscriberName : QString();
 }
+
+PfNode EventSubscription::toPfNode() const {
+  if (!d)
+    return PfNode();
+  PfNode node(d->_eventName);
+  foreach(const Action &action, d->_actions)
+    node.appendChild(action.toPfNode());
+  return node;
+}

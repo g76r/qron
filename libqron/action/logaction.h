@@ -24,8 +24,7 @@ class Scheduler;
  * Intended for debuging purposes, not for real life. */
 class LIBQRONSHARED_EXPORT LogAction : public Action {
 public:
-  explicit  LogAction(Log::Severity severity = Log::Info,
-                      QString message = QString());
+  explicit LogAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   LogAction(const LogAction &);
   ~LogAction();
 };

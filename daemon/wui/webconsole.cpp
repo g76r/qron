@@ -671,6 +671,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         message = QString("S:Asked for ")+(enable?"enabling":"disabling")
             +" all tasks at once.";
       } else if (event=="reloadConfig") {
+        // TODO should not display reload button when no config file is defined
         bool ok = Qrond::instance()->reload();
         message = ok ? "S:Configuration reloaded."
                      : "E:Cannot reload configuration.";

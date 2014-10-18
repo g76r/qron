@@ -74,49 +74,8 @@ Scheduler::~Scheduler() {
   //_alerter->deleteLater(); // FIXME delete alerter only when last executor is deleted
 }
 
-bool Scheduler::loadConfig(QIODevice *source) {
-  if (!source->isOpen())
-    if (!source->open(QIODevice::ReadOnly)) {
-      QString errorString = source->errorString();
-      Log::error() << "cannot read configuration: " << errorString;
-      return false;
-    }
-  PfDomHandler pdh;
-  PfParser pp(&pdh);
-  pp.parse(source);
-  if (pdh.errorOccured()) {
-    QString errorString = pdh.errorString()+" at line "
-        +QString::number(pdh.errorLine())
-        +" column "+QString::number(pdh.errorColumn());
-    Log::error() << "empty or invalid configuration: " << errorString;
-    return false;
-  }
-  QList<PfNode> roots = pdh.roots();
-  if (roots.size() == 0) {
-    Log::error() << "configuration lacking root node";
-  } else if (roots.size() == 1) {
-    PfNode &root(roots.first());
-    if (root.name() == "qrontab") {
-      bool ok = false;
-      if (QThread::currentThread() == thread())
-        ok = loadConfig(root);
-      else
-        QMetaObject::invokeMethod(this, "loadConfig",
-                                  Qt::BlockingQueuedConnection,
-                                  Q_RETURN_ARG(bool, ok),
-                                  Q_ARG(PfNode, root));
-      return ok;
-    } else {
-      Log::error() << "configuration root node is not \"qrontab\"";
-    }
-  } else {
-    Log::error() << "configuration with more than one root node";
-  }
-  return false;
-}
-
-bool Scheduler::loadConfig(PfNode root) {
-  SchedulerConfig config(root, this, true);
+void Scheduler::configChanged(QString configId, SchedulerConfig config) {
+  Q_UNUSED(configId)
   emit logConfigurationChanged(config.logfiles());
   int executorsToAdd = config.maxtotaltaskinstances()
       - _config.maxtotaltaskinstances();
@@ -169,7 +128,8 @@ bool Scheduler::loadConfig(PfNode root) {
   _accessControlFilesWatcher = new QFileSystemWatcher(this);
   connect(_accessControlFilesWatcher, SIGNAL(fileChanged(QString)),
           this, SLOT(reloadAccessControlConfig()));
-  foreach (PfNode node, root.childrenByName("access-control")) {
+  // FIXME re-enable access-control in config
+  /*foreach (PfNode node, root.childrenByName("access-control")) {
     if (accessControlEnabled) {
       Log::error() << "ignoring multiple 'access-control' in configuration";
       break;
@@ -177,7 +137,7 @@ bool Scheduler::loadConfig(PfNode root) {
     accessControlEnabled = true;
     _accessControlNode = node;
     reloadAccessControlConfig();
-  }
+  }*/
   emit globalParamsChanged(_config.globalParams());
   emit globalSetenvChanged(_config.setenv());
   emit globalUnsetenvChanged(_config.unsetenv());
@@ -216,7 +176,6 @@ bool Scheduler::loadConfig(PfNode root) {
   }
   foreach(EventSubscription sub, _config.onconfigload())
     sub.triggerActions();
-  return true;
 }
 
 void Scheduler::reloadAccessControlConfig() {

@@ -36,7 +36,7 @@ QVariant CalendarsModel::data(const QModelIndex &index, int role) const {
       case 0:
         return c.name();
       case 1:
-        return c.rulesAsString();
+        return c.toCommaSeparatedRulesString();
       }
       break;
     default:

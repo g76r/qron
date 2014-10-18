@@ -32,6 +32,7 @@ public:
   virtual void trigger(EventSubscription subscription,
                        ParamSet eventContext, TaskInstance taskContext) const;
   virtual QString targetName() const;
+  virtual PfNode toPfNode() const = 0;
 };
 
 #endif // ACTION_P_H

@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -30,7 +30,8 @@ public:
   };
   QList<Rule> _rules;
   QString _name;
-  CalendarData(QString name = QString()) : _name(name) { }
+  CalendarData(QString name = QString())
+    : _name(name.isEmpty() ? QString() : name) { }
   inline CalendarData &append(QDate begin, QDate end, bool include);
 };
 
@@ -127,26 +128,23 @@ void Calendar::clear() {
   d->_rules.clear();
 }
 
-QString Calendar::toPf(bool useNameIfAvailable) const {
-  QString s("(calendar"), name(this->name());
+PfNode Calendar::toPfNode(bool useNameIfAvailable) const {
+  QString name(this->name());
   if (!name.isEmpty() && useNameIfAvailable)
-    s.append(" ").append(name);
-  else
-    foreach (const CalendarData::Rule &r, d->_rules) {
-      s.append("(").append(r._include ? "include" : "exclude");
-      if (!r._begin.isNull() || !r._end.isNull())
-        s.append(" ");
-      s.append(r._begin.isNull() ? "" : r._begin.toString("yyyy-MM-dd"));
-      if (r._begin != r._end)
-        s.append("..")
-            .append(r._end.isNull() ? "" : r._end.toString("yyyy-MM-dd"));
-      s.append(")");
-    }
-  s.append(")");
-  return s;
+    return PfNode("calendar", name);
+  PfNode node("calendar");
+  foreach (const CalendarData::Rule &r, d->_rules) {
+    QString s;
+    s.append(r._begin.isNull() ? "" : r._begin.toString("yyyy-MM-dd"));
+    if (r._begin != r._end)
+      s.append("..")
+          .append(r._end.isNull() ? "" : r._end.toString("yyyy-MM-dd"));
+    node.appendChild(PfNode(r._include ? "include" : "exclude", s));
+  }
+  return node;
 }
 
-QString Calendar::rulesAsString() const {
+QString Calendar::toCommaSeparatedRulesString() const {
   QString s;
   foreach (const CalendarData::Rule &r, d->_rules) {
     s.append(r._include ? "include" : "exclude");

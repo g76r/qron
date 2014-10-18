@@ -37,10 +37,18 @@ public:
       Log::log(_severity, instance.task().id(), instance.id())
           << eventContext.evaluate(_message, &instance);
   }
+  PfNode toPfNode() const{
+    PfNode node(actionType(), _message);
+    node.appendChild(PfNode("severity", Log::severityToString(_severity)));
+    return node;
+  }
 };
 
-LogAction::LogAction(Log::Severity severity, QString message)
-  : Action(new LogActionData(message, severity)) {
+LogAction::LogAction(Scheduler *scheduler, PfNode node)
+  : Action(new LogActionData(
+             node.contentAsString(),
+             Log::severityFromString(node.attribute("severity", "info")))) {
+  Q_UNUSED(scheduler)
 }
 
 LogAction::LogAction(const LogAction &rhs) : Action(rhs) {

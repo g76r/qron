@@ -17,7 +17,7 @@
 
 HostsModel::HostsModel(QObject *parent)
   : SharedUiItemsTableModel(parent) {
-  setHeaderDataFromTemplate(Host());
+  setHeaderDataFromTemplate(Host(PfNode("template")));
 }
 
 void HostsModel::configReset(SchedulerConfig config) {

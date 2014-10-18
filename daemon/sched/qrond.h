@@ -19,6 +19,7 @@
 #include "httpd/httpserver.h"
 #include "wui/webconsole.h"
 #include "httpd/basicauthhttphandler.h"
+#include "configmgt/localconfigrepository.h"
 
 /** Operating system interface class.
   Mainly responsible for starting, shutting down and reloading the scheduler. */
@@ -29,8 +30,9 @@ class Qrond : public QObject {
   quint16 _webconsolePort;
   Scheduler *_scheduler;
   HttpServer *_httpd;
-  QString _configPath, _httpAuthRealm;
+  QString _configDir, _configFile, _httpAuthRealm;
   BasicAuthHttpHandler *_httpAuthHandler;
+  LocalConfigRepository *_configRepository;
 
 public:
   explicit Qrond(QObject *parent = 0);

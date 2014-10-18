@@ -46,6 +46,7 @@ public:
   //void setCalendar(Calendar calendar);
   Calendar calendar() const;
   ParamSet overridingParams() const;
+  PfNode toPfNode() const;
 
 protected:
   Trigger(TriggerData *data);

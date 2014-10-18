@@ -21,6 +21,7 @@ public:
   QString expression() const { return _notice; }
   QString humanReadableExpression() const { return "^"+_notice; }
   bool isValid() const { return !_notice.isEmpty(); }
+  QString triggerType() const { return "notice"; }
 };
 
 NoticeTrigger::NoticeTrigger() {

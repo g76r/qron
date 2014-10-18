@@ -32,6 +32,8 @@ public:
   QString _id, _label, _hostname;
   QHash<QString,qint64> _resources;
   QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "host"; }
@@ -102,13 +104,13 @@ QVariant HostData::uiData(int section, int role) const {
   return QVariant();
 }
 
-QVariant Host::uiHeaderData(int section, int role) const {
+QVariant HostData::uiHeaderData(int section, int role) const {
   return role == Qt::DisplayRole && section >= 0
       && (unsigned)section < sizeof _uiHeaderNames
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int Host::uiDataCount() const {
+int HostData::uiDataCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 

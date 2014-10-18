@@ -28,8 +28,8 @@ class Scheduler;
  */
 class LIBQRONSHARED_EXPORT RequestTaskAction : public Action {
 public:
-  explicit RequestTaskAction(Scheduler *scheduler = 0, QString id = QString(),
-                             ParamSet params = ParamSet(), bool force = false);
+  explicit RequestTaskAction(Scheduler *scheduler = 0, PfNode node = PfNode());
+  RequestTaskAction(Scheduler *scheduler, QString taskId);
   RequestTaskAction(const RequestTaskAction &);
   ~RequestTaskAction();
 };

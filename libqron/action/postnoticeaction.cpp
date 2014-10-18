@@ -52,11 +52,16 @@ public:
   QString targetName() const {
     return _notice;
   }
+  PfNode toPfNode() const{
+    PfNode node(actionType(), _notice);
+    ConfigUtils::writeParamSet(&node, _noticeParams, "param");
+    return node;
+  }
 };
 
-PostNoticeAction::PostNoticeAction(
-    Scheduler *scheduler, QString notice, ParamSet params)
-  : Action(new PostNoticeActionData(scheduler, notice, params)) {
+PostNoticeAction::PostNoticeAction(Scheduler *scheduler, PfNode node)
+  : Action(new PostNoticeActionData(scheduler, node.contentAsString(),
+                                    ConfigUtils::loadParamSet(node, "param"))) {
 }
 
 PostNoticeAction::PostNoticeAction(const PostNoticeAction &rhs) : Action(rhs) {

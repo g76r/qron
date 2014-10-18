@@ -39,8 +39,6 @@ public:
   QString balancing() const;
   QString label() const;
   void setId(QString id);
-  QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
 
 private:
   ClusterData *cd();

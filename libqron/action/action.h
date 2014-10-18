@@ -47,6 +47,7 @@ public:
   /** Name of the target, for actions where it makes sense. Null otherwise.
    * e.g. task id for requesttask, notice for postnotice, etc. */
   QString targetName() const;
+  PfNode toPfNode() const;
   /** Create the appropriate Action subclass according to configuration
    *  fragment. */
   static Action createAction(PfNode node, Scheduler *scheduler,

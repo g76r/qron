@@ -68,10 +68,18 @@ public:
   QString actionType() const {
     return "udp";
   }
+  PfNode toPfNode() const{
+    PfNode node(actionType());
+    node.appendChild(PfNode("message", _message));
+    node.appendChild(PfNode("address", _host+":"+QString::number(_port)));
+    return node;
+  }
 };
 
-UdpAction::UdpAction(QString address, QString message)
-  : Action(new UdpActionData(address, message)) {
+UdpAction::UdpAction(Scheduler *scheduler, PfNode node)
+  : Action(new UdpActionData(node.attribute("address"),
+                             node.attribute("message"))) {
+  Q_UNUSED(scheduler)
 }
 
 UdpAction::UdpAction(const UdpAction &rhs) : Action(rhs) {

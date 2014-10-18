@@ -38,7 +38,6 @@ public:
   TaskGroup(PfNode node, ParamSet parentParamSet, ParamSet parentSetenv,
             ParamSet parentUnsetenv, Scheduler *scheduler);
   TaskGroup(QString id);
-  ~TaskGroup();
   TaskGroup &operator=(const TaskGroup &other) {
     SharedUiItem::operator=(other); return *this; }
   /** return "foo.bar" for group "foo.bar.baz" and QString() for group "foo". */
@@ -56,8 +55,7 @@ public:
   ParamSet setenv() const;
   ParamSet unsetenv() const;
   QList<EventSubscription> allEventSubscriptions() const;
-  QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
+  PfNode toPfNode() const;
 
 private:
   TaskGroupData *tgd();

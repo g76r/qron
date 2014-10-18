@@ -36,10 +36,13 @@ public:
   QString targetName() const {
     return _alert;
   }
+  PfNode toPfNode() const{
+    return PfNode(actionType(), _alert);
+  }
 };
 
-CancelAlertAction::CancelAlertAction(Scheduler *scheduler, QString alert)
-  : Action(new CancelAlertActionData(scheduler, alert)) {
+CancelAlertAction::CancelAlertAction(Scheduler *scheduler, PfNode node)
+  : Action(new CancelAlertActionData(scheduler, node.contentAsString())) {
 }
 
 CancelAlertAction::CancelAlertAction(const CancelAlertAction &rhs) : Action(rhs) {

@@ -46,7 +46,8 @@ QString Trigger::humanReadableExpression() const {
 
 QString Trigger::humanReadableExpressionWithCalendar() const {
   return (!calendar().isNull())
-      ? '['+calendar().toPf(true)+']'+humanReadableExpression()
+      ? '['+QString::fromUtf8(calendar().toPfNode(true).toPf())+']'
+        +humanReadableExpression()
       : humanReadableExpression();
 }
 
@@ -100,8 +101,9 @@ bool Trigger::loadConfig(PfNode node, QHash<QString,Calendar> namedCalendars) {
       if (calendar.isNull())
         Log::error() << "ignoring undefined calendar '" << content
                      << "': " << child.toPf();
-      else
+      else {
         d->_calendar = calendar;
+      }
     } else {
       Calendar calendar = Calendar(child);
       if (calendar.isNull())
@@ -111,6 +113,22 @@ bool Trigger::loadConfig(PfNode node, QHash<QString,Calendar> namedCalendars) {
         d->_calendar = calendar;
     }
   }
-  ConfigUtils::loadParamSet(node, &d->_overridingParams);
+  ConfigUtils::loadParamSet(node, &d->_overridingParams, "param");
   return true;
+}
+
+QString TriggerData::triggerType() const {
+  return "unknown";
+}
+
+PfNode TriggerData::toPfNode() const {
+  PfNode node(triggerType(), expression());
+  ConfigUtils::writeParamSet(&node, _overridingParams, "param");
+  if (!_calendar.isNull())
+    node.appendChild(_calendar.toPfNode(true));
+  return node;
+}
+
+PfNode Trigger::toPfNode() const {
+  return d ? d->toPfNode() : PfNode();
 }

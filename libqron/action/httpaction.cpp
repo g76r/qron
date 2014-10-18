@@ -15,6 +15,7 @@
 #include "action_p.h"
 #include <QUrl>
 #include <QNetworkAccessManager>
+#include "config/configutils.h"
 
 class HttpActionData : public ActionData {
 public:
@@ -36,10 +37,17 @@ public:
   QString actionType() const {
     return "http";
   }
+  PfNode toPfNode() const{
+    PfNode node(actionType(), _url);
+    ConfigUtils::writeParamSet(&node, _params, "param");
+    return node;
+  }
 };
 
-HttpAction::HttpAction(QString url, ParamSet params)
-  : Action(new HttpActionData(url, params)) {
+HttpAction::HttpAction(Scheduler *scheduler, PfNode node)
+  : Action(new HttpActionData(node.contentAsString(),
+                              ConfigUtils::loadParamSet(node, "param"))) {
+  Q_UNUSED(scheduler)
 }
 
 HttpAction::HttpAction(const HttpAction &rhs) : Action(rhs) {

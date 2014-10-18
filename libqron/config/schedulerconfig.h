@@ -34,8 +34,8 @@ class LIBQRONSHARED_EXPORT SchedulerConfig {
 public:
   SchedulerConfig();
   SchedulerConfig(const SchedulerConfig &other);
-  explicit SchedulerConfig(PfNode root, Scheduler *scheduler = 0,
-                           bool applyLogConfig = false);
+  explicit SchedulerConfig(PfNode root, Scheduler *scheduler,
+                           bool applyLogConfig);
   ~SchedulerConfig();
   SchedulerConfig &operator=(const SchedulerConfig &other);
   bool isNull() const;
@@ -62,13 +62,20 @@ public:
   AccessControlConfig accessControlConfig() const;
   QList<LogFile> logfiles() const;
   QList<Logger*> loggers() const;
-//  void loadEventSubscription(
-//      QString subscriberId, PfNode listnode, QList<EventSubscription> *list,
-//      QString contextLabel, Scheduler *scheduler, Task contextTask = Task());
+  inline bool operator==(const SchedulerConfig &other) const {
+    return hash() == other.hash(); }
+  inline bool operator<(const SchedulerConfig &other) const {
+    return hash() < other.hash(); }
+  QString hash() const;
+  /** @return number of bytes written or -1 if an error occured */
+  qint64 writeAsPf(QIODevice *device) const;
+  PfNode toPfNode() const;
   /** Rename cluster, do not perform any sanity check before or after. */
   Cluster renameCluster(QString oldName, QString newName);
   /** Update task, do not perform any sanity check before or after. */
   Task updateTask(Task task);
 };
+
+inline uint qHash(SchedulerConfig config) { return qHash(config.hash()); }
 
 #endif // SCHEDULERCONFIG_H

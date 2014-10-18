@@ -32,6 +32,8 @@ public:
   QString _id, _label, _balancing;
   QList<Host> _hosts;
   QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
   QString id() const { return _id; }
   QString idQualifier() const { return "cluster"; }
 };
@@ -105,13 +107,13 @@ QVariant ClusterData::uiData(int section, int role) const {
   return QVariant();
 }
 
-QVariant Cluster::uiHeaderData(int section, int role) const {
+QVariant ClusterData::uiHeaderData(int section, int role) const {
   return role == Qt::DisplayRole && section >= 0
       && (unsigned)section < sizeof _uiHeaderNames
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int Cluster::uiDataCount() const {
+int ClusterData::uiDataCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 

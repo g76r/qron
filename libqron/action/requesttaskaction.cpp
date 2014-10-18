@@ -13,6 +13,7 @@
  */
 #include "requesttaskaction.h"
 #include "action_p.h"
+#include "config/configutils.h"
 
 class RequestTaskActionData : public ActionData {
 public:
@@ -71,11 +72,23 @@ public:
   QString targetName() const {
     return _id;
   }
+  PfNode toPfNode() const{
+    PfNode node(actionType(), _id);
+    ConfigUtils::writeParamSet(&node, _overridingParams, "param");
+    if (_force)
+      node.appendChild(PfNode("force"));
+    return node;
+  }
 };
 
-RequestTaskAction::RequestTaskAction(Scheduler *scheduler, QString id,
-                                     ParamSet params, bool force)
-  : Action(new RequestTaskActionData(scheduler, id, params, force)) {
+RequestTaskAction::RequestTaskAction(Scheduler *scheduler, PfNode node)
+  : Action(new RequestTaskActionData(scheduler, node.contentAsString(),
+                                     ConfigUtils::loadParamSet(node, "param"),
+                                     node.hasChild("force"))) {
+}
+
+RequestTaskAction::RequestTaskAction(Scheduler *scheduler, QString taskId)
+  : Action(new RequestTaskActionData(scheduler, taskId)) {
 }
 
 RequestTaskAction::RequestTaskAction(const RequestTaskAction &rhs)

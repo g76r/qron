@@ -23,7 +23,7 @@ class HttpActionData;
  * @deprecated not yet implemented */
 class LIBQRONSHARED_EXPORT HttpAction : public Action{
 public:
-  explicit  HttpAction(QString url = QString(), ParamSet params = ParamSet());
+  explicit HttpAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   HttpAction(const HttpAction &);
   ~HttpAction();
 };

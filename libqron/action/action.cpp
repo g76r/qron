@@ -94,35 +94,32 @@ QString ActionData::targetName() const {
   return QString();
 }
 
+PfNode Action::toPfNode() const {
+  return d ? d->toPfNode() : PfNode();
+}
+
 Action Action::createAction(PfNode node, Scheduler *scheduler,
                             QString eventName) {
   // LATER implement HttpAction
   // LATER implement ExecAction
-  ParamSet params;
-  ConfigUtils::loadParamSet(node, &params);
   if (node.name() == "postnotice") {
-    return PostNoticeAction(scheduler, node.contentAsString(), params);
+    return PostNoticeAction(scheduler, node);
   } else if (node.name() == "raisealert") {
-    return RaiseAlertAction(scheduler, node.contentAsString());
+    return RaiseAlertAction(scheduler, node);
   } else if (node.name() == "cancelalert") {
-    return CancelAlertAction(scheduler, node.contentAsString());
+    return CancelAlertAction(scheduler, node);
   } else if (node.name() == "emitalert") {
-    return EmitAlertAction(scheduler, node.contentAsString());
+    return EmitAlertAction(scheduler, node);
   } else if (node.name() == "requesttask") {
-    return RequestTaskAction(scheduler, node.contentAsString(), params,
-                             node.hasChild("force"));
+    return RequestTaskAction(scheduler, node);
   } else if (node.name() == "udp") {
-    return UdpAction(node.attribute("address"), node.attribute("message"));
+    return UdpAction(scheduler, node);
   } else if (node.name() == "log") {
-    return LogAction(
-          Log::severityFromString(node.attribute("severity", "info")),
-          node.contentAsString());
+    return LogAction(scheduler, node);
   } else if (node.name() == "step") {
-    return StepAction(scheduler, node.contentAsString());
+    return StepAction(scheduler, node);
   } else if (node.name() == "end") {
-    // LATER success and returncode should be evaluatable strings
-    return EndAction(scheduler, !node.hasChild("failure"),
-                     node.longAttribute("returncode", 0));
+    return EndAction(scheduler, node);
   } else {
     if (node.name() == "param"
         || (eventName == "ontrigger"

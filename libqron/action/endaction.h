@@ -22,8 +22,7 @@ class Scheduler;
 
 class LIBQRONSHARED_EXPORT EndAction : public Action {
 public:
-  explicit EndAction(Scheduler *scheduler = 0, bool success = true,
-                     int returnCode = 0);
+  explicit EndAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   EndAction(const EndAction &);
   EndAction &operator=(const EndAction &);
   ~EndAction();

@@ -35,10 +35,13 @@ public:
   QString targetName() const {
     return _alert;
   }
+  PfNode toPfNode() const{
+    return PfNode(actionType(), _alert);
+  }
 };
 
-RaiseAlertAction::RaiseAlertAction(Scheduler *scheduler, QString alert)
-  : Action(new RaiseAlertActionData(scheduler, alert)) {
+RaiseAlertAction::RaiseAlertAction(Scheduler *scheduler, PfNode node)
+  : Action(new RaiseAlertActionData(scheduler, node.contentAsString())) {
 }
 
 RaiseAlertAction::RaiseAlertAction(const RaiseAlertAction &rhs) : Action(rhs) {

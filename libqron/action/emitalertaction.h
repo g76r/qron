@@ -22,7 +22,7 @@ class Scheduler;
 /** Action emitting an alert. */
 class LIBQRONSHARED_EXPORT EmitAlertAction : public Action {
 public:
-  explicit EmitAlertAction(Scheduler *scheduler = 0, QString alert = QString());
+  explicit EmitAlertAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   EmitAlertAction(const EmitAlertAction &);
   ~EmitAlertAction();
 };

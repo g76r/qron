@@ -25,11 +25,14 @@ class Scheduler;
 /** Miscellaneous tools for handling configuration */
 class LIBQRONSHARED_EXPORT ConfigUtils {
 public:
-  static inline void loadParamSet(PfNode parentnode, ParamSet *params) {
-    return loadGenericParamSet(parentnode, params, "param"); }
-  static inline void loadSetenv(PfNode parentnode, ParamSet *params) {
-    return loadGenericParamSet(parentnode, params, "setenv"); }
-  static void loadUnsetenv(PfNode parentnode, ParamSet *unsetenv);
+  static void loadParamSet(PfNode parentnode, ParamSet *params,
+                           QString attrname);
+  inline static ParamSet loadParamSet(PfNode parentnode, QString attrname) {
+    ParamSet params;
+    loadParamSet(parentnode, &params, attrname);
+    return params; }
+  static void loadFlagSet(PfNode parentnode, ParamSet *unsetenv,
+                          QString attrname);
   /** For identifier, with or without dot. Cannot contain ParamSet interpreted
    * expressions such as %!yyyy. */
   static QString sanitizeId(QString string, bool allowDot = false);
@@ -43,10 +46,21 @@ public:
   static void loadEventSubscription(
       PfNode parentNode, QString childName, QString subscriberId,
       QList<EventSubscription> *list, Scheduler *scheduler);
+  static void writeParamSet(PfNode *parentnode, ParamSet params,
+                            QString attrname, bool inherit = false);
+  static void writeFlagSet(PfNode *parentnode, QSet<QString> set,
+                           QString attrname);
+  static void writeFlagSet(PfNode *parentnode, ParamSet params,
+                           QString attrname, bool inherit = false) {
+    writeFlagSet(parentnode, params.keys(inherit), attrname);
+  }
+  /** @param exclusionList may be used e.g. to avoid double "onfinish" which
+   * are both in onsuccess and onfailure event subscriptions */
+  static void writeEventSubscriptions(
+      PfNode *parentnode, QList<EventSubscription> list,
+      QStringList exclusionList = QStringList());
 
 private:
-  static void loadGenericParamSet(PfNode parentnode, ParamSet *params,
-                                  QString attrname);
   ConfigUtils();
   /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
    * "some.path.with.\*.star.and.\\.backslash" into regular expressions. */

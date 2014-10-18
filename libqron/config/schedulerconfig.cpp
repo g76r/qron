@@ -18,6 +18,8 @@
 #include "log/filelogger.h"
 #include "configutils.h"
 #include "step.h"
+#include <QCryptographicHash>
+#include <QMutex>
 
 #define DEFAULT_MAXQUEUEDREQUESTS 128
 
@@ -41,7 +43,7 @@ public:
   QHash<QString,Task> _tasks;
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
-  QHash<QString,QHash<QString,qint64> > _hostResources;
+  QHash<QString,QHash<QString,qint64> > _hostResources; // FIXME remove (replace with Host._resources)
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   qint32 _maxtotaltaskinstances, _maxqueuedrequests;
@@ -51,8 +53,28 @@ public:
   AccessControlConfig _accessControlConfig;
   QList<LogFile> _logfiles;
   QList<Logger*> _loggers;
+  mutable QMutex _mutex;
+  mutable QString _hash;
   SchedulerConfigData() : _maxtotaltaskinstances(0), _maxqueuedrequests(0) { }
   SchedulerConfigData(PfNode root, Scheduler *scheduler, bool applyLogConfig);
+  SchedulerConfigData(const SchedulerConfigData &other)
+    : QSharedData(other),
+      _globalParams(other._globalParams), _setenv(other._setenv),
+      _unsetenv(other._unsetenv),
+      _tasks(other._tasks), _clusters(other._clusters), _hosts(other._hosts),
+      _hostResources(other._hostResources),
+      _onstart(other._onstart), _onsuccess(other._onsuccess),
+      _onfailure(other._onfailure), _onlog(other._onlog),
+      _onnotice(other._onnotice), _onschedulerstart(other._onschedulerstart),
+      _onconfigload(other._onconfigload),
+      _maxtotaltaskinstances(other._maxtotaltaskinstances),
+      _maxqueuedrequests(other._maxqueuedrequests),
+      _accessControlNode(other._accessControlNode),
+      _namedCalendars(other._namedCalendars),
+      _alerterConfig(other._alerterConfig),
+      _accessControlConfig(other._accessControlConfig),
+      _logfiles(other._logfiles), _loggers(other._loggers) {
+  }
 };
 
 SchedulerConfig::SchedulerConfig() {
@@ -116,9 +138,9 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   _setenv.clear();
   _setenv.setValue("TASKINSTANCEID", "%!taskinstanceid");
   _setenv.setValue("TASKID", "%!taskid");
-  ConfigUtils::loadParamSet(root, &_globalParams);
-  ConfigUtils::loadSetenv(root, &_setenv);
-  ConfigUtils::loadUnsetenv(root, &_unsetenv);
+  ConfigUtils::loadParamSet(root, &_globalParams, "param");
+  ConfigUtils::loadParamSet(root, &_setenv, "setenv");
+  ConfigUtils::loadFlagSet(root, &_unsetenv, "unsetenv");
   _namedCalendars.clear();
   foreach (PfNode node, root.childrenByName("calendar")) {
     QString name = node.contentAsString();
@@ -475,3 +497,80 @@ Task SchedulerConfig::updateTask(Task task) {
   }
   return Task();
 }
+
+QString SchedulerConfig::hash() const {
+  if (!d)
+    return QString();
+  QMutexLocker locker(&d->_mutex);
+  if (d->_hash.isNull()) {
+    QCryptographicHash hash(QCryptographicHash::Sha1);
+    QBuffer buf;
+    buf.open(QIODevice::ReadWrite);
+    writeAsPf(&buf);
+    buf.seek(0);
+    hash.addData(&buf);
+    d->_hash = hash.result().toHex();
+  }
+  return d->_hash;
+}
+
+qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {
+  PfNode node = toPfNode();
+  if (node.isNull() || !device)
+    return -1;
+  QString s;
+  s.append("#(pf (version 1.0))\n");
+  s.append(QString::fromUtf8(
+             node.toPf(PfOptions().setShouldIndent()
+                       .setShouldWriteContentBeforeSubnodes())));
+  qDebug() << "**** SchedulerConfig::writeAsPf" << s;
+  return device->write(s.toUtf8());
+}
+
+PfNode SchedulerConfig::toPfNode() const {
+  if (!d)
+    return PfNode();
+  PfNode node("qrontab");
+  ParamSet configuredSetenv = d->_setenv;
+  configuredSetenv.removeValue("TASKID");
+  configuredSetenv.removeValue("TASKINSTANCEID");
+  ConfigUtils::writeParamSet(&node, d->_globalParams, "param");
+  ConfigUtils::writeParamSet(&node, configuredSetenv, "setenv");
+  ConfigUtils::writeFlagSet(&node, d->_unsetenv, "unsetenv");
+  ConfigUtils::writeEventSubscriptions(&node, d->_onstart);
+  ConfigUtils::writeEventSubscriptions(&node, d->_onsuccess);
+  ConfigUtils::writeEventSubscriptions(&node, d->_onfailure,
+                                       QStringList("onfinish"));
+  ConfigUtils::writeEventSubscriptions(&node, d->_onlog);
+  ConfigUtils::writeEventSubscriptions(&node, d->_onnotice);
+  ConfigUtils::writeEventSubscriptions(&node, d->_onschedulerstart);
+  ConfigUtils::writeEventSubscriptions(&node, d->_onconfigload);
+  QList<TaskGroup> taskGroups = d->_tasksGroups.values();
+  qSort(taskGroups);
+  foreach(const TaskGroup &taskGroup, taskGroups)
+    node.appendChild(taskGroup.toPfNode());
+  QList<Task> tasks = d->_tasks.values();
+  qSort(tasks);
+  foreach(const Task &task, tasks)
+    node.appendChild(task.toPfNode());
+  // FIXME hosts, clusters, incl. host resources
+  return node;
+}
+
+/*
+
+  QHash<QString,Cluster> _clusters;
+  QHash<QString,Host> _hosts;
+  QHash<QString,QHash<QString,qint64> > _hostResources;
+  QList<EventSubscription> _onstart, _onsuccess, _onfailure;
+  QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
+  qint32 _maxtotaltaskinstances, _maxqueuedrequests;
+  PfNode _accessControlNode;
+  QHash<QString,Calendar> _namedCalendars;
+  AlerterConfig _alerterConfig;
+  AccessControlConfig _accessControlConfig;
+  QList<LogFile> _logfiles;
+  QList<Logger*> _loggers;
+
+
+*/

@@ -60,11 +60,20 @@ public:
       _scheduler->activateWorkflowTransition(workflow, transitionId,
                                              eventContext);
   }
-
+  PfNode toPfNode() const{
+    PfNode node(actionType());
+    if (!_success)
+      node.appendChild(PfNode("failure"));
+    if (_returnCode)
+      node.appendChild(PfNode("returncode", QString::number(_returnCode)));
+    return node;
+  }
 };
 
-EndAction::EndAction(Scheduler *scheduler, bool success, int returnCode)
-  : Action(new EndActionData(scheduler, success, returnCode)) {
+EndAction::EndAction(Scheduler *scheduler, PfNode node)
+  : Action(new EndActionData(scheduler, !node.hasChild("failure"),
+                             node.longAttribute("returncode", 0))) {
+  // LATER success and returncode should be evaluatable strings
 }
 
 EndAction::EndAction(const EndAction &rhs) : Action(rhs) {

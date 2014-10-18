@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,12 +13,13 @@
  */
 #include "configutils.h"
 #include "eventsubscription.h"
+#include "action/action.h"
 
 ConfigUtils::ConfigUtils() {
 }
 
-void ConfigUtils::loadGenericParamSet(PfNode parentnode, ParamSet *params,
-                                      QString attrname) {
+void ConfigUtils::loadParamSet(PfNode parentnode, ParamSet *params,
+                               QString attrname) {
   if (!params)
     return;
   QListIterator<QPair<QString,QString> > it(
@@ -34,14 +35,47 @@ void ConfigUtils::loadGenericParamSet(PfNode parentnode, ParamSet *params,
   }
 }
 
-void ConfigUtils::loadUnsetenv(PfNode parentnode, ParamSet *unsetenv) {
+void ConfigUtils::loadFlagSet(PfNode parentnode, ParamSet *unsetenv,
+                              QString attrname) {
   if (!unsetenv)
     return;
-  foreach (QString content, parentnode.stringChildrenByName("unsetenv")) {
+  foreach (QString content, parentnode.stringChildrenByName(attrname)) {
     QStringList names = content.split(QRegExp("\\s"));
     foreach (const QString name, names)
       unsetenv->setValue(name, QString());
   }
+}
+
+void ConfigUtils::writeParamSet(PfNode *parentnode, ParamSet params,
+                                QString attrname, bool inherit) {
+  if (!parentnode)
+    return;
+  QStringList list = params.keys(inherit).values();
+  qSort(list);
+  foreach (const QString &key, list)
+    parentnode->appendChild(PfNode(attrname, key+" "+params.rawValue(key)));
+}
+
+void ConfigUtils::writeFlagSet(PfNode *parentnode, QSet<QString> set,
+                               QString attrname) {
+  if (!parentnode || set.isEmpty())
+    return;
+  QString s;
+  QStringList list = set.values();
+  qSort(list);
+  foreach (const QString &flag, list)
+    s.append(flag).append(' ');
+  s.chop(1);
+  parentnode->appendChild(PfNode(attrname, s));
+}
+
+void ConfigUtils::writeEventSubscriptions(PfNode *parentnode,
+                                          QList<EventSubscription> list,
+                                          QStringList exclusionList) {
+  foreach (EventSubscription es, list)
+    if (!exclusionList.contains(es.eventName())
+        && !es.actions().isEmpty())
+      parentnode->appendChild(es.toPfNode());
 }
 
 QString ConfigUtils::sanitizeId(QString string, bool allowDot) {

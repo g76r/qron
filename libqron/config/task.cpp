@@ -88,7 +88,7 @@ public:
   long long _maxExpectedDuration, _minExpectedDuration, _maxDurationBeforeAbort;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormFields;
-  QStringList _otherTriggers;
+  QStringList _otherTriggers; // guessed indirect triggers, resulting from events
   QString _supertaskId;
   QHash<QString,Step> _steps;
   QStringList _startSteps;
@@ -117,6 +117,8 @@ public:
   QString triggersWithCalendarsAsString() const;
   bool triggersHaveCalendar() const;
   QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "task"; }
@@ -137,7 +139,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
   td->_shortId = ConfigUtils::sanitizeId(node.contentAsString());
-  td->_label = node.attribute("label", td->_shortId);
+  td->_label = node.attribute("label");
   td->_mean = ConfigUtils::sanitizeId(node.attribute("mean"));
   if (td->_mean.isEmpty())
     td->_mean = "local";
@@ -168,14 +170,14 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   f = node.doubleAttribute("maxdurationbeforeabort", -1);
   td->_maxDurationBeforeAbort = f < 0 ? LLONG_MAX : (long long)(f*1000);
   td->_params.setParent(taskGroup.params());
-  ConfigUtils::loadParamSet(node, &td->_params);
+  ConfigUtils::loadParamSet(node, &td->_params, "param");
   QString filter = td->_params.value("stderrfilter");
   if (!filter.isEmpty())
     td->_stderrFilters.append(QRegExp(filter));
   td->_setenv.setParent(taskGroup.setenv());
-  ConfigUtils::loadSetenv(node, &td->_setenv);
+  ConfigUtils::loadParamSet(node, &td->_setenv, "setenv");
   td->_unsetenv.setParent(taskGroup.unsetenv());
-  ConfigUtils::loadUnsetenv(node, &td->_unsetenv);
+  ConfigUtils::loadFlagSet(node, &td->_unsetenv, "unsetenv");
   QHash<QString,CronTrigger> oldCronTriggers;
   td->_supertaskId = supertaskId;
   // copy mutable fields from old task and build old cron triggers dictionary
@@ -425,6 +427,12 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_workflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
 }
 
+Task Task::templateTask() {
+  Task t;
+  t.setData(new TaskData);
+  return t;
+}
+
 Task::~Task() {
 }
 
@@ -441,7 +449,8 @@ QString Task::shortId() const {
 }
 
 QString Task::label() const {
-  return !isNull() ? td()->_label : QString();
+  return !isNull() ? (td()->_label.isNull() ? td()->_shortId : td()->_label)
+                   : QString();
 }
 
 QString Task::mean() const {
@@ -809,13 +818,13 @@ QHash<QString,CronTrigger> Task::workflowCronTriggersById() const {
                    : QHash<QString,CronTrigger>();
 }
 
-QVariant Task::uiHeaderData(int section, int role) const {
+QVariant TaskData::uiHeaderData(int section, int role) const {
   return role == Qt::DisplayRole && section >= 0
       && (unsigned)section < sizeof _uiHeaderNames
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int Task::uiDataCount() const {
+int TaskData::uiDataCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
@@ -828,7 +837,7 @@ QVariant TaskData::uiData(int section, int role) const {
     case 1:
       return _group.id();
     case 2:
-      return _label;
+      return _label.isNull() ? _shortId : _label;
     case 3:
       return _mean;
     case 4:
@@ -928,3 +937,71 @@ TaskData *Task::td() {
   //Log::fatal() << "Task::td() detached " << constData() << " " << id();
   return (TaskData*)constData();
 }
+
+PfNode Task::toPfNode() const {
+  if (!td())
+    return PfNode();
+  PfNode node("task", td()->_shortId);
+  node.setAttribute("taskgroup", td()->_group.id());
+  if (!td()->_label.isNull())
+    node.setAttribute("label", td()->_label);
+  if (!td()->_info.isNull())
+    node.setAttribute("info", td()->_info);
+  if (!td()->_mean.isNull())
+    node.setAttribute("mean", td()->_mean);
+  if (!td()->_target.isNull())
+    node.setAttribute("target", td()->_target);
+  if (!td()->_command.isNull())
+    node.setAttribute("command", td()->_command);
+  PfNode triggers("trigger");
+  foreach (const CronTrigger &ct, td()->_cronTriggers)
+    triggers.appendChild(ct.toPfNode());
+  foreach (const NoticeTrigger &nt, td()->_noticeTriggers)
+    triggers.appendChild(nt.toPfNode());
+  node.appendChild(triggers);
+  // FIXME triggers: noticeTriggers, cronTriggers, disabled-in-config, _discardAliasesOnStart
+  if (td()->_maxInstances != 1)
+    node.appendChild(PfNode("maxinstances",
+                            QString::number(td()->_maxInstances)));
+  // FIXME _resources
+  if (!td()->_workflowTriggerSubscriptionsById.isEmpty()) {
+    foreach (const WorkflowTriggerSubscription &wts,
+             td()->_workflowTriggerSubscriptionsById.values()) {
+      PfNode ontrigger = wts.eventSubscription().toPfNode();
+      ontrigger.prependChild(wts.trigger().toPfNode());
+      node.appendChild(ontrigger);
+    }
+  }
+  // FIXME other workflow data
+  ConfigUtils::writeParamSet(&node, td()->_params, "param");
+  ConfigUtils::writeParamSet(&node, td()->_setenv, "setenv");
+  ConfigUtils::writeFlagSet(&node, td()->_unsetenv, "unsetenv");
+  // FIXME minmax: _maxExpectedDuration, _minExpectedDuration, _maxDurationBeforeAbort
+  ConfigUtils::writeEventSubscriptions(&node, td()->_onstart);
+  ConfigUtils::writeEventSubscriptions(&node, td()->_onsuccess);
+  ConfigUtils::writeEventSubscriptions(&node, td()->_onfailure,
+                                       QStringList("onfinish"));
+  // FIXME _requestFormFields
+  return node;
+}
+
+
+/*
+
+  QList<NoticeTrigger> _noticeTriggers;
+  QHash<QString,qint64> _resources;
+  int _maxInstances;
+  QList<CronTrigger> _cronTriggers;
+  QPointer<Scheduler> _scheduler;
+  Task::DiscardAliasesOnStart _discardAliasesOnStart;
+  QList<RequestFormField> _requestFormFields;
+
+  QString _supertaskId;
+  QHash<QString,Step> _steps;
+  QStringList _startSteps;
+  QString _workflowDiagram;
+  QHash<QString,WorkflowTriggerSubscription> _workflowTriggerSubscriptionsById;
+  QMultiHash<QString,WorkflowTriggerSubscription> _workflowTriggerSubscriptionsByNotice;
+  QHash<QString,CronTrigger> _workflowCronTriggersById;
+
+ */

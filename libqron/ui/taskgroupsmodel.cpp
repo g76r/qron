@@ -17,7 +17,7 @@
 
 TaskGroupsModel::TaskGroupsModel(QObject *parent)
   : SharedUiItemsTableModel(parent) {
-  setHeaderDataFromTemplate(TaskGroup());
+  setHeaderDataFromTemplate(TaskGroup("template"));
 }
 
 void TaskGroupsModel::configReset(SchedulerConfig config) {
