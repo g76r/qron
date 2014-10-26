@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,19 +11,26 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef UDPACTION_H
-#define UDPACTION_H
+#ifndef URLALERTCHANNEL_H
+#define URLALERTCHANNEL_H
 
-#include "action.h"
+#include "alertchannel.h"
 
-class UdpActionData;
+class QNetworkAccessManager;
+class QNetworkReply;
 
-/** Action sending an arbitrary UDP packet. */
-class LIBQRONSHARED_EXPORT UdpAction : public Action {
+/** Alert channel that send alerts through URL requests. */
+class LIBQRONSHARED_EXPORT UrlAlertChannel : public AlertChannel {
+  Q_OBJECT
+  Q_DISABLE_COPY(UrlAlertChannel)
+  QNetworkAccessManager *_nam;
+
 public:
-  explicit UdpAction(Scheduler *scheduler = 0, PfNode node = PfNode());
-  UdpAction(const UdpAction &);
-  ~UdpAction();
+  explicit UrlAlertChannel(QObject *parent, QPointer<Alerter> alerter);
+  void doSendMessage(Alert alert, MessageType type);
+
+private slots:
+  void replyFinished(QNetworkReply *reply);
 };
 
-#endif // UDPACTION_H
+#endif // URLALERTCHANNEL_H

@@ -23,7 +23,7 @@ public:
                Log::Severity severity = Log::Info)
     : _message(logMessage), _severity(severity) { }
   QString toString() const {
-    return "log{"+Log::severityToString(_severity)+" "+_message+"}";
+    return "log{ "+Log::severityToString(_severity)+" "+_message+" }";
   }
   QString actionType() const {
     return "log";

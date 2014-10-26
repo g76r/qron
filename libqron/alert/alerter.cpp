@@ -18,7 +18,7 @@
 #include "log/log.h"
 #include "pf/pfnode.h"
 #include "logalertchannel.h"
-#include "udpalertchannel.h"
+#include "urlalertchannel.h"
 #include "mailalertchannel.h"
 #include <QTimer>
 #include <QCoreApplication>
@@ -34,9 +34,8 @@ Alerter::Alerter() : QObject(0), _thread(new QThread) {
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   _channels.insert("log", new LogAlertChannel(0, this));
-  _channels.insert("udp", new UdpAlertChannel(0, this));
-  MailAlertChannel *mailChannel = new MailAlertChannel(0, this);
-  _channels.insert("mail", mailChannel);
+  _channels.insert("url", new UrlAlertChannel(0, this));
+  _channels.insert("mail", new MailAlertChannel(0, this));
   foreach (AlertChannel *channel, _channels)
     connect(this, SIGNAL(configChanged(AlerterConfig)),
             channel, SLOT(setConfig(AlerterConfig)),

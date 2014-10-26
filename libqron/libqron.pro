@@ -32,6 +32,7 @@ unix:LIBS += -L../libqtpf/libqtpf -L../libqtpf/libqtpfsql -L../libqtssu
 LIBS += -lqtpf -lqtssu
 
 QMAKE_CXXFLAGS += -Wextra
+#QMAKE_CXXFLAGS += -std=gnu++11
 #QMAKE_CXXFLAGS += -fno-elide-constructors
 unix:debug:QMAKE_CXXFLAGS += -ggdb
 
@@ -62,10 +63,8 @@ SOURCES += \
     alert/alert.cpp \
     config/alertrule.cpp \
     alert/alertchannel.cpp \
-    alert/udpalertchannel.cpp \
     alert/mailalertchannel.cpp \
     alert/logalertchannel.cpp \
-    alert/httpalertchannel.cpp \
     alert/execalertchannel.cpp \
     ui/raisedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
@@ -74,8 +73,6 @@ SOURCES += \
     action/action.cpp \
     action/postnoticeaction.cpp \
     action/logaction.cpp \
-    action/udpaction.cpp \
-    action/httpaction.cpp \
     action/raisealertaction.cpp \
     action/cancelalertaction.cpp \
     action/emitalertaction.cpp \
@@ -110,7 +107,11 @@ SOURCES += \
     ui/qronuiutils.cpp \
     configmgt/configrepository.cpp \
     configmgt/localconfigrepository.cpp \
-    configmgt/confighistoryentry.cpp
+    configmgt/confighistoryentry.cpp \
+    sysutil/parametrizedudpsender.cpp \
+    action/requesturlaction.cpp \
+    sysutil/parametrizednetworkrequest.cpp \
+    alert/urlalertchannel.cpp
 
 HEADERS += \
     config/task.h \
@@ -128,10 +129,8 @@ HEADERS += \
     alert/alert.h \
     config/alertrule.h \
     alert/alertchannel.h \
-    alert/udpalertchannel.h \
     alert/mailalertchannel.h \
     alert/logalertchannel.h \
-    alert/httpalertchannel.h \
     alert/execalertchannel.h \
     ui/raisedalertsmodel.h \
     ui/alertrulesmodel.h \
@@ -141,8 +140,6 @@ HEADERS += \
     action/postnoticeaction.h \
     action/action_p.h \
     action/logaction.h \
-    action/udpaction.h \
-    action/httpaction.h \
     action/raisealertaction.h \
     action/cancelalertaction.h \
     action/emitalertaction.h \
@@ -181,4 +178,8 @@ HEADERS += \
     config/task_p.h \
     configmgt/configrepository.h \
     configmgt/localconfigrepository.h \
-    configmgt/confighistoryentry.h
+    configmgt/confighistoryentry.h \
+    sysutil/parametrizedudpsender.h \
+    action/requesturlaction.h \
+    sysutil/parametrizednetworkrequest.h \
+    alert/urlalertchannel.h

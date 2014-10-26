@@ -67,6 +67,7 @@ QVariant Alert::paramValue(QString key, QVariant defaultValue) const {
       // LATER make this support !date formating
       return datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
     }
+    // MAYDO guess !taskid from "task.{failure,toolong...}.%!taskid" alerts
   }
   return defaultValue;
 }

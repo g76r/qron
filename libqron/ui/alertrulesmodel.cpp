@@ -40,19 +40,21 @@ QVariant AlertRulesModel::data(const QModelIndex &index, int role) const {
       case 1:
         return rule.channelName();
       case 2:
-        return rule.address();
+        return rule.rawAddress();
       case 3:
-        return rule.rawMessage();
-      case 4:
-        return rule.rawCancelMessage();
-      case 5: {
+        return rule.messagesDescriptions();
+      case 4: {
         QString s;
+        if (!rule.notifyEmit())
+          s.append("nonotifyemit");
         if (!rule.notifyCancel())
           s.append("nonotifycancel ");
         if (!rule.notifyReminder())
           s.append("nonotifyreminder");
         return s;
       }
+      case 5:
+        return rule.params().toString(false, false);
       }
       break;
     default:
@@ -75,7 +77,7 @@ QVariant AlertRulesModel::headerData(int section, Qt::Orientation orientation,
     case 3:
       return "Message";
     case 4:
-      return "Cancel message";
+      return "Options";
     case 5:
       return "Parameters";
     }

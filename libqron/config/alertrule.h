@@ -19,6 +19,7 @@
 #include <QPointer>
 #include <QString>
 #include <QRegExp>
+#include "util/paramset.h"
 
 class AlertRuleData;
 class PfNode;
@@ -33,22 +34,41 @@ class LIBQRONSHARED_EXPORT AlertRule {
 public:
   AlertRule();
   AlertRule(const AlertRule &);
-  AlertRule(PfNode node, QString pattern, QString channelName,
-            bool notifyCancel, bool notifyReminder);
+  /** parses this form in Pf:
+   * (rule
+   *  (param foo bar)
+   *  (match **)
+   *  (log
+   *   (param baz baz)
+   *   (address debug)
+   *   (emitmessage foo)
+   *  )
+   * )
+   * Where rulenode is "rule" node and rulechannelnode is "log" node.
+   * This is needed because input config format accepts several rulechannelnode
+   * per rulenode, in this case config reader will create several AlertRule
+   * objects.
+   */
+  AlertRule(PfNode rulenode, PfNode rulechannelnode, ParamSet parentParams);
   AlertRule &operator=(const AlertRule &);
   ~AlertRule();
   QString pattern() const;
   QRegExp patternRegExp() const;
   QString channelName() const;
-  QString address() const;
+  QString rawAddress() const;
+  QString address(Alert alert) const;
   QString emitMessage(Alert alert) const;
   QString cancelMessage(Alert alert) const;
   QString reminderMessage(Alert alert) const;
-  QString rawMessage() const;
-  QString rawCancelMessage() const;
+  /** human readable description such as "emitmessage=foo remindermessage=bar"
+   * or "" or "cancelmessage=baz" */
+  QString messagesDescriptions() const;
+  bool notifyEmit() const;
   bool notifyCancel() const;
   bool notifyReminder() const;
   bool isNull() const;
+  ParamSet params() const;
+  PfNode toPfNode() const;
 };
 
 #endif // ALERTRULE_H

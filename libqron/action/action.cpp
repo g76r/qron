@@ -19,11 +19,11 @@
 #include "cancelalertaction.h"
 #include "emitalertaction.h"
 #include "requesttaskaction.h"
-#include "udpaction.h"
 #include "logaction.h"
 #include "stepaction.h"
 #include "endaction.h"
 #include "config/configutils.h"
+#include "requesturlaction.h"
 
 Action::Action() {
 }
@@ -100,7 +100,6 @@ PfNode Action::toPfNode() const {
 
 Action Action::createAction(PfNode node, Scheduler *scheduler,
                             QString eventName) {
-  // LATER implement HttpAction
   // LATER implement ExecAction
   if (node.name() == "postnotice") {
     return PostNoticeAction(scheduler, node);
@@ -112,8 +111,8 @@ Action Action::createAction(PfNode node, Scheduler *scheduler,
     return EmitAlertAction(scheduler, node);
   } else if (node.name() == "requesttask") {
     return RequestTaskAction(scheduler, node);
-  } else if (node.name() == "udp") {
-    return UdpAction(scheduler, node);
+  } else if (node.name() == "requesturl") {
+    return RequestUrlAction(scheduler, node);
   } else if (node.name() == "log") {
     return LogAction(scheduler, node);
   } else if (node.name() == "step") {

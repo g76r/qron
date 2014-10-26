@@ -26,6 +26,7 @@
 #include "config/eventsubscription.h"
 #include "trigger/crontrigger.h"
 #include "util/timerwitharguments.h"
+#include "sysutil/parametrizednetworkrequest.h"
 
 Executor::Executor(Alerter *alerter) : QObject(0), _isTemporary(false),
   _stderrWasUsed(false), _thread(new QThread),
@@ -269,19 +270,13 @@ void Executor::readyReadStandardOutput() {
 }
 
 void Executor::httpMean() {
-  // LATER http mean should support http auth, http proxy auth and ssl
-  QString method = _instance.params().value("method");
-  QUrl url;
-  int port = _instance.params().valueAsInt("port", 80);
-  QString hostname = _instance.params()
-      .evaluate(_instance.target().hostname(), &_instance);
-  QString command = _instance.params()
-      .evaluate(_instance.command(), &_instance);
+  QString command = _instance.command();
   if (command.size() && command.at(0) == '/')
     command = command.mid(1);
-  url.setUrl(QString("http://%1:%2/%3").arg(hostname).arg(port).arg(command),
-             QUrl::TolerantMode);
-  QNetworkRequest networkRequest(url);
+  QString url = "http://"+_instance.target().hostname()+"/"+command;
+  ParametrizedNetworkRequest networkRequest(
+        url, _instance.params(), &_instance, _instance.task().id(),
+        _instance.id());
   foreach (QString name, _instance.setenv().keys()) {
     const QString expr(_instance.setenv().rawValue(name));
     if (name.endsWith(":")) // ignoring : at end of header name
@@ -292,30 +287,10 @@ void Executor::httpMean() {
     networkRequest.setRawHeader(name.toLatin1(), value.toUtf8());
   }
   // LATER read request output, at less to avoid server being blocked and request never finish
-  if (url.isValid()) {
+  if (networkRequest.url().isValid()) {
     _instance.setAbortable();
     emit taskStarted(_instance);
-    if (method.isEmpty() || method.compare("get", Qt::CaseInsensitive) == 0) {
-      Log::info(_instance.task().id(), _instance.id())
-          << "exact GET URL to be called: "
-          << url.toString(QUrl::RemovePassword);
-      _reply = _nam->get(networkRequest);
-    } else if (method.compare("put", Qt::CaseInsensitive) == 0) {
-      Log::info(_instance.task().id(), _instance.id())
-          << "exact PUT URL to be called: "
-          << url.toString(QUrl::RemovePassword);
-      _reply = _nam->put(networkRequest, QByteArray());
-    } else if (method.compare("post", Qt::CaseInsensitive) == 0) {
-      Log::info(_instance.task().id(), _instance.id())
-          << "exact POST URL to be called: "
-          << url.toString(QUrl::RemovePassword);
-      networkRequest.setHeader(QNetworkRequest::ContentTypeHeader, "text/plain");
-      _reply = _nam->post(networkRequest, QByteArray());
-    } else {
-      Log::error(_instance.task().id(), _instance.id())
-          << "unsupported HTTP method: " << method;
-      taskFinishing(false, -1);
-    }
+    _reply = networkRequest.performRequest(_nam);
     if (_reply) {
       // note that the apparent critical window between QNAM::get/put/post()
       // and connection to reply signals is not actually critical since
@@ -329,7 +304,8 @@ void Executor::httpMean() {
     }
   } else {
     Log::error(_instance.task().id(), _instance.id())
-        << "unsupported HTTP URL: " << url.toString(QUrl::RemovePassword);
+        << "unsupported HTTP URL: "
+        << networkRequest.url().toString(QUrl::RemovePassword);
     taskFinishing(false, -1);
   }
 }

@@ -80,7 +80,7 @@ MailAlertChannel::~MailAlertChannel() {
 
 void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
   // LATER support more complex mail addresses with quotes and so on
-  QStringList addresses = alert.rule().address().split(',');
+  QStringList addresses = alert.rule().address(alert).split(',');
   foreach (QString address, addresses) {
     address = address.trimmed();
     MailAlertQueue *queue = _queues.value(address);
@@ -96,13 +96,16 @@ void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {
       }
       // fall into next case
     case Emit:
+      if (!alert.rule().notifyEmit())
+        return;
       queue->_alerts.append(alert);
       break;
     case Cancel:
-      if (alert.rule().notifyCancel())
-        queue->_cancellations.append(alert);
       queue->_reminders.remove(alert.id());
       queue->_lastReminded.remove(alert.id());
+      if (!alert.rule().notifyCancel())
+        return;
+      queue->_cancellations.append(alert);
     };
     if (queue->_nextProcessing.isNull()) {
       // wait for a while before sending a mail with only 1 alert, in case some

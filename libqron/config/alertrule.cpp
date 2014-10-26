@@ -21,11 +21,11 @@
 
 class AlertRuleData : public QSharedData {
 public:
-  QString _pattern;
+  QString _channelName, _pattern;
   QRegExp _patterRegExp;
-  QString _address, _emitMessage, _cancelMessage, _reminderMessage,
-  _channelName;
-  bool _notifyCancel, _notifyReminder;
+  QString _address, _emitMessage, _cancelMessage, _reminderMessage;
+  bool _notifyEmit, _notifyCancel, _notifyReminder;
+  ParamSet _params;
 };
 
 AlertRule::AlertRule() {
@@ -43,18 +43,50 @@ AlertRule &AlertRule::operator=(const AlertRule &rhs) {
 AlertRule::~AlertRule() {
 }
 
-AlertRule::AlertRule(PfNode node, QString pattern, QString channelName,
-                     bool notifyCancel, bool notifyReminder)
+AlertRule::AlertRule(PfNode rulenode, PfNode rulechannelnode,
+                     ParamSet parentParams)
   : d(new AlertRuleData) {
-  d->_pattern = pattern;
-  d->_patterRegExp = ConfigUtils::readDotHierarchicalFilter(pattern);
-  d->_channelName = channelName;
-  d->_address = node.attribute("address"); // LATER check uniqueness
-  d->_emitMessage = node.attribute("emitmessage"); // LATER check uniqueness
-  d->_cancelMessage = node.attribute("cancelmessage"); // LATER check uniqueness
-  d->_reminderMessage = node.attribute("remindermessage"); // LATER check uniqueness
-  d->_notifyCancel = notifyCancel;
-  d->_notifyReminder = notifyReminder;
+  d->_channelName = rulechannelnode.name();
+  d->_pattern = rulenode.attribute("match", "**");
+  d->_patterRegExp = ConfigUtils::readDotHierarchicalFilter(d->_pattern);
+  if (d->_pattern.isEmpty() || !d->_patterRegExp.isValid())
+    Log::warning() << "unsupported alert rule match pattern '" << d->_pattern
+                   << "': " << rulenode.toString();
+  d->_address = rulechannelnode.attribute("address"); // LATER check uniqueness
+  d->_emitMessage = rulechannelnode.attribute("emitmessage"); // LATER check uniqueness
+  d->_cancelMessage = rulechannelnode.attribute("cancelmessage"); // LATER check uniqueness
+  d->_reminderMessage = rulechannelnode.attribute("remindermessage"); // LATER check uniqueness
+  d->_notifyEmit = !rulechannelnode.hasChild("noemitnotify");
+  d->_notifyCancel = !rulechannelnode.hasChild("nocancelnotify");
+  d->_notifyReminder = d->_notifyEmit && !rulechannelnode.hasChild("noremindernotify");
+  ConfigUtils::loadParamSet(rulenode, &d->_params, "param");
+  ConfigUtils::loadParamSet(rulechannelnode, &d->_params, "param");
+  d->_params.setParent(parentParams);
+}
+
+PfNode AlertRule::toPfNode() const {
+  if (!d)
+    return PfNode();
+  PfNode rulenode("rule");
+  rulenode.appendChild(PfNode("match", d->_pattern));
+  PfNode node(d->_channelName);
+  if (!d->_address.isEmpty())
+  node.appendChild(PfNode("address", d->_address));
+  if (!d->_emitMessage.isEmpty())
+    node.appendChild(PfNode("emitmessage", d->_emitMessage));
+  if (!d->_cancelMessage.isEmpty())
+    node.appendChild(PfNode("cancelmessage", d->_cancelMessage));
+  if (!d->_reminderMessage.isEmpty())
+    node.appendChild(PfNode("remindermessage", d->_reminderMessage));
+  if (!d->_notifyEmit)
+    node.appendChild(PfNode("noemitnotify"));
+  if (!d->_notifyCancel)
+    node.appendChild(PfNode("nocancelnotify"));
+  if (!d->_notifyReminder)
+    node.appendChild(PfNode("noremindernotify"));
+  ConfigUtils::writeParamSet(&node, d->_params, "param");
+  rulenode.appendChild(node);
+  return rulenode;
 }
 
 QString AlertRule::pattern() const {
@@ -69,38 +101,56 @@ QString AlertRule::channelName() const {
   return d ? d->_channelName : QString();
 }
 
-QString AlertRule::address() const {
+QString AlertRule::rawAddress() const {
   return d ? d->_address : QString();
+}
 
+QString AlertRule::address(Alert alert) const {
+  QString rawAddress = d ? d->_address : QString();
+  return d->_params.evaluate(rawAddress, &alert);
 }
 
 QString AlertRule::emitMessage(Alert alert) const {
   QString rawMessage = d ? d->_emitMessage : QString();
   if (rawMessage.isEmpty())
     rawMessage = "alert emited: "+alert.id();
-  return ParamSet().evaluate(rawMessage, &alert);
+  return d->_params.evaluate(rawMessage, &alert);
 }
 
 QString AlertRule::cancelMessage(Alert alert) const {
   QString rawMessage = d ? d->_cancelMessage : QString();
   if (rawMessage.isEmpty())
     rawMessage = "alert canceled: "+alert.id();
-  return ParamSet().evaluate(rawMessage, &alert);
+  return d->_params.evaluate(rawMessage, &alert);
 }
 
 QString AlertRule::reminderMessage(Alert alert) const {
   QString rawMessage = d ? d->_reminderMessage : QString();
   if (rawMessage.isEmpty())
     rawMessage = "alert still raised: "+alert.id();
-  return ParamSet().evaluate(rawMessage, &alert);
+  return d->_params.evaluate(rawMessage, &alert);
 }
 
-QString AlertRule::rawMessage() const {
-  return d ? d->_emitMessage : QString();
+QString AlertRule::messagesDescriptions() const {
+  if (!d)
+    return QString();
+  QString desc, msg;
+  msg = d->_emitMessage;
+  if (!msg.isEmpty())
+    desc.append("emitmessage=").append(msg).append(' ');
+  msg = d->_cancelMessage;
+  if (!msg.isEmpty())
+    desc.append("cancelmessage=").append(msg).append(' ');
+  msg = d->_reminderMessage;
+  if (!msg.isEmpty())
+    desc.append("remindermessage=").append(msg).append(' ');
+  if (desc.size())
+    desc.chop(1);
+  return desc;
 }
 
-QString AlertRule::rawCancelMessage() const {
-  return d ? d->_cancelMessage : QString();
+bool AlertRule::notifyEmit() const {
+  return d ? d->_notifyEmit : false;
 }
 
 bool AlertRule::notifyCancel() const {
@@ -113,4 +163,8 @@ bool AlertRule::notifyReminder() const {
 
 bool AlertRule::isNull() const {
   return !d;
+}
+
+ParamSet AlertRule::params() const {
+  return d ? d->_params : ParamSet();
 }

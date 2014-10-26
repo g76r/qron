@@ -24,12 +24,16 @@ void LogAlertChannel::doSendMessage(Alert alert, MessageType type) {
   switch(type) {
   case Emit:
   case Raise:
+    if (!alert.rule().notifyEmit())
+      return;
     Log::log(alert.rule().emitMessage(alert),
-             Log::severityFromString(alert.rule().address()));
+             Log::severityFromString(alert.rule().address(alert)));
     break;
   case Cancel:
+    if (!alert.rule().notifyCancel())
+      return;
     Log::log(alert.rule().cancelMessage(alert),
-             Log::severityFromString(alert.rule().address()));
+             Log::severityFromString(alert.rule().address(alert)));
   }
 
 }

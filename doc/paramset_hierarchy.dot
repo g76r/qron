@@ -8,8 +8,8 @@ taskgroup [label="Task Group Params"]
 task [label="Task Params"]
 noticetrigger [label="Notice Trigger\nOverriding Params"]
 crontrigger [label="Cron Trigger\nOverriding Params"]
-requesttaskaction [label="Request Task Action\nOverriding Params"]
-otheraction [label="Other Action Params\n(Udp, RaiseAlert...)"]
+requesttaskaction [label="RequestTask Action\nOverriding Params"]
+otheraction [label="Other Action Params\n(RequestUrl, RaiseAlert...)"]
 alerts [label="Alerts Params"]
 //webconsole [label="Web Console Params"]
 
@@ -54,7 +54,7 @@ edge [dir=forward,arrowhead=dot,color=orange4,fontcolor=orange4]
 notice -- noticetrigger
 global -- crontrigger
 event -- requesttaskaction [label="requesttask\naction"]
-taskinstance -- requesttaskaction [label="(if event occurs\nwithin task)",weight=0]
+taskinstance -- requesttaskaction [label="(if event occurs\nwithin task)",weight=0,taillabel="only %!\nparams"]
 event -- otheraction [label="other\naction"]
-taskinstance -- otheraction [label="(if event occurs\nwithin task)",weight=0]
+taskinstance -- otheraction [label="(if event occurs\nwithin task)",weight=0,taillabel="only %!\nparams"]
 }

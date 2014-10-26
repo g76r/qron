@@ -55,34 +55,26 @@ AlerterConfigData::AlerterConfigData(PfNode root)
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
     _gracePeriodBeforeFirstSend(DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND),
     _remindFrequency(DEFAULT_REMIND_FREQUENCY) {
-  _channelNames << "mail" << "udp" << "log";
+  _channelNames << "mail" << "url" << "log" << "stop";
   ConfigUtils::loadParamSet(root, &_params, "param");
-  foreach (PfNode node, root.childrenByName("rule")) {
-    QString pattern = node.attribute("match", "**");
-    bool notifyCancel = !node.hasChild("nocancelnotify");
-    bool notifyReminder = !node.hasChild("noremindernotify");
+  foreach (PfNode rulenode, root.childrenByName("rule")) {
     //Log::debug() << "found alert rule section " << pattern << " " << stop;
-    foreach (PfNode node, node.children()) {
-      if (node.name() == "match" || node.name() == "stop"
-          || node.name() == "nocancelnotify"
-          || node.name() == "noremindernotify") {
+    foreach (PfNode rulechannelnode, rulenode.children()) {
+      if (rulechannelnode.name() == "match"
+          || rulechannelnode.name() == "param") {
         // ignore
       } else {
-        QString name = node.name();
-        if (_channelNames.contains(name)) {
-          AlertRule rule(node, pattern, name, notifyCancel, notifyReminder);
+        if (_channelNames.contains(rulechannelnode.name())) {
+          AlertRule rule(rulenode, rulechannelnode, _params);
           _rules.append(rule);
-          Log::debug() << "configured alert rule " << name << " " << pattern
-                       << " " << rule.patternRegExp().pattern();
+          Log::debug() << "configured alert rule " << rulechannelnode.name()
+                       << " " << rule.pattern() << " "
+                       << rule.patternRegExp().pattern();
         } else {
-          Log::warning() << "alert channel '" << name << "' unknown in alert "
-                            "rule with matching pattern " << pattern;
+          Log::warning() << "alert channel '" << rulechannelnode.name()
+                         << "' unknown in alert rule";
         }
       }
-    }
-    if (node.hasChild("stop")) {
-      Log::debug() << "configured alert rule stop " << pattern;
-      _rules.append(AlertRule(PfNode(), pattern, "stop", true, true));
     }
   }
   _cancelDelay =
