@@ -763,7 +763,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
             "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
             +"\">Request task execution</a> <a class=\"btn\" href=\""
             +referer+"\">Cancel</a>\n"*/
-        form += "<input type=\"hidden\" name=\"task\" value=\""+taskId+"\">\n"
+        form += "<input type=\"hidden\" name=\"taskid\" value=\""+taskId+"\">\n"
             "<input type=\"hidden\" name=\"event\" value=\"requestTask\">\n"
             "<p class=\"text-center\">"
             //"<div class=\"control-group\"><div class=\"controls\">"
