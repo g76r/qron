@@ -18,10 +18,7 @@
 #include <QHash>
 #include "config/schedulerconfig.h"
 
-/** Produce graphviz source for several configuration diagrams, each one
- * being associated in the returned QHash with one of the following keys:
- * - tasksDeploymentDiagram
- * - tasksTriggerDiagram */
+/** Produce graphviz source for several diagrams. */
 class LIBQRONSHARED_EXPORT GraphvizDiagramsBuilder {
   GraphvizDiagramsBuilder();
 

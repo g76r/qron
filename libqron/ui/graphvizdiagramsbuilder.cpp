@@ -315,17 +315,17 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     StepInstance si = stepInstances.value(s.id());
     switch (s.kind()) {
     case Step::SubTask:
-      gv.append("  step_"+s.id()+"[label=\""+s.id()+"\"," TASK_NODE
+      gv.append("  \"step_"+s.id()+"\"[label=\""+s.id()+"\"," TASK_NODE
                 +(si.isReady() ? ",color=orange" : "")
                 +",tooltip=\""+s.subtask().id()+"\"]\n");
       // LATER red if failure, green if ok
       break;
     case Step::AndJoin:
-      gv.append("  step_"+s.id()+"[" ANDJOIN_NODE
+      gv.append("  \"step_"+s.id()+"\"[" ANDJOIN_NODE
                 +(si.isReady() ? ",color=greenforest" : "")+"]\n");
       break;
     case Step::OrJoin:
-      gv.append("  step_"+s.id()+"[" ORJOIN_NODE
+      gv.append("  \"step_"+s.id()+"\"[" ORJOIN_NODE
                 +(si.isReady() ? ",color=greenforest" : "")+"]\n");
       break;
     case Step::Unknown:
@@ -338,25 +338,25 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
         = task.workflowTriggerSubscriptionsById().value(tsId);
     QString expr = ts.trigger().humanReadableExpression().remove('"');
     // LATER do not rely on human readable expr to determine trigger style
-    gv.append("  trigger_"+tsId+"[label=\""+expr+"\","
+    gv.append("  \"trigger_"+tsId+"\"[label=\""+expr+"\","
               +(expr.startsWith('^')?NOTICE_NODE:CRON_TRIGGER_NODE)+"]\n");
     foreach (Action a, ts.eventSubscription().actions()) {
       if (a.actionType() == "step") {
         QString target = a.targetName();
         if (task.steps().contains(target)) {
-          gvedges.insert("  trigger_"+tsId+" -- step_"+target
-                         +"[label=\"\"," TRIGGER_STEP_EDGE  "]\n");
+          gvedges.insert("  \"trigger_"+tsId+"\" -- \"step_"+target
+                         +"\"[label=\"\"," TRIGGER_STEP_EDGE  "]\n");
         } else {
           // do nothing, the warning is issued in another loop
         }
       } else if (a.actionType() == "end") {
-        gvedges.insert("  trigger_"+tsId+" -- end [label=\"\","
+        gvedges.insert("  \"trigger_"+tsId+"\" -- end [label=\"\","
                 TRIGGER_STEP_EDGE "]\n");
       }
     }
   }
   foreach (QString id, task.startSteps()) {
-    gvedges.insert("  start -- step_"+id+"\n");
+    gvedges.insert("  start -- \"step_"+id+"\"\n");
   }
   foreach (QString source, task.steps().keys()) {
     QList<EventSubscription> subList
@@ -368,11 +368,11 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
         if (a.actionType() == "step") {
           QString target = a.targetName();
           if (task.steps().contains(target)) {
-            gvedges.insert("  step_"+source+" -- step_"+target+"[label=\""
-                           +es.eventName()+"\"" STEP_EDGE "]\n");
+            gvedges.insert("  \"step_"+source+"\" -- \"step_"+target
+                           +"\"[label=\""+es.eventName()+"\"" STEP_EDGE "]\n");
           }
         } else if (a.actionType() == "end") {
-          gvedges.insert("  step_"+source+" -- end [label=\""+es.eventName()
+          gvedges.insert("  \"step_"+source+"\" -- end [label=\""+es.eventName()
                          +"\"" STEP_EDGE "]\n");
         }
       }
