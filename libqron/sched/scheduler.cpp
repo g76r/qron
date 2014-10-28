@@ -40,7 +40,8 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _usersDatabase(new InMemoryUsersDatabase(this)),
   _firstConfigurationLoad(true),
   _startdate(QDateTime::currentDateTime().toMSecsSinceEpoch()),
-  _configdate(LLONG_MIN), _execCount(0), _accessControlFilesWatcher(0) {
+  _configdate(LLONG_MIN), _execCount(0),
+  _accessControlFilesWatcher(new QFileSystemWatcher(this)) {
   _thread->setObjectName("SchedulerThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -66,6 +67,8 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
   timer->start(60000);
+  connect(_accessControlFilesWatcher, SIGNAL(fileChanged(QString)),
+          this, SLOT(reloadAccessControlConfig()));
   moveToThread(_thread);
 }
 
@@ -119,29 +122,12 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
   _alerter->setConfig(_config.alerterConfig());
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
-  // TODO use AccessControlConfig instead
-  _authenticator->clearUsers();
-  _usersDatabase->clearUsers();
-  bool accessControlEnabled = false;
-  if (_accessControlFilesWatcher)
-    _accessControlFilesWatcher->deleteLater();
-  _accessControlFilesWatcher = new QFileSystemWatcher(this);
-  connect(_accessControlFilesWatcher, SIGNAL(fileChanged(QString)),
-          this, SLOT(reloadAccessControlConfig()));
-  // FIXME re-enable access-control in config
-  /*foreach (PfNode node, root.childrenByName("access-control")) {
-    if (accessControlEnabled) {
-      Log::error() << "ignoring multiple 'access-control' in configuration";
-      break;
-    }
-    accessControlEnabled = true;
-    _accessControlNode = node;
-    reloadAccessControlConfig();
-  }*/
+  reloadAccessControlConfig();
   emit globalParamsChanged(_config.globalParams());
   emit globalSetenvChanged(_config.setenv());
   emit globalUnsetenvChanged(_config.unsetenv());
-  emit accessControlConfigurationChanged(accessControlEnabled);
+  emit accessControlConfigurationChanged(
+        !_config.accessControlConfig().isEmpty());
   emit configChanged(_config); // must be last signal
   reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
@@ -179,100 +165,8 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
 }
 
 void Scheduler::reloadAccessControlConfig() {
-  //qDebug() << "reloadAccessControlConfig";
-  foreach (PfNode node, _accessControlNode.childrenByName("user-file")) {
-    QString path = node.contentAsString().trimmed();
-    QString cipher = node.attribute("cipher", "password").trimmed().toLower();
-    // implicitly, format is: login:crypted_password:role1,role2,rolen
-    // later, other formats may be supported
-    QFile file(path);
-    if (!file.open(QIODevice::ReadOnly)) {
-      Log::error() << "cannot open access control user file '" << path
-                   << "': " << file.errorString();
-      continue;
-    }
-    _accessControlFilesWatcher->addPath(path);
-    QByteArray row;
-    while (row = file.readLine(65535), !row.isNull()) {
-      QString line = QString::fromUtf8(row).trimmed();
-      if (line.size() == 0 || line.startsWith('#'))
-        continue; // ignore empty lines and support # as a comment mark
-      QStringList fields = line.split(':');
-      if (fields.size() < 3) {
-        Log::error() << "access control user file '" << path
-                     << "' contains invalid line: " << line;
-        continue;
-      }
-      QString id = fields[0].trimmed();
-      QString password = fields[1].trimmed();
-      QSet<QString> roles;
-      foreach (const QString role,
-               fields[2].trimmed().split(',', QString::SkipEmptyParts))
-        roles.insert(role.trimmed());
-      if (id.isEmpty() || password.isEmpty() || roles.isEmpty()) {
-        Log::error() << "access control user file '" << path
-                     << "' contains a line with empty mandatory fields: "
-                     << line;
-        continue;
-      }
-      InMemoryAuthenticator::Encoding encoding;
-      if (cipher == "password" || cipher == "plain") {
-        encoding = InMemoryAuthenticator::Plain;
-      } else if (cipher == "md5hex") {
-        encoding = InMemoryAuthenticator::Md5Hex;
-      } else if (cipher == "md5" || cipher == "md5b64") {
-        encoding = InMemoryAuthenticator::Md5Base64;
-      } else if (cipher == "sha1" || cipher == "sha1hex") {
-        encoding = InMemoryAuthenticator::Sha1Hex;
-      } else if (cipher == "sha1b64") {
-        encoding = InMemoryAuthenticator::Sha1Base64;
-      } else if (cipher == "ldap") {
-        encoding = InMemoryAuthenticator::OpenLdapStyle;
-      } else {
-        Log::error() << "access control user file '" << path
-                     << "' with unsupported cipher type: '" << cipher << "'";
-        break;
-      }
-      _authenticator->insertUser(id, password, encoding);
-      _usersDatabase->insertUser(id, roles);
-    }
-    if (file.error() != QFileDevice::NoError)
-      Log::error() << "error reading access control user file '" << path
-                   << "': " << file.errorString();
-  }
-  foreach (PfNode node, _accessControlNode.childrenByName("user")) {
-    QString id = node.attribute("id");
-    QString password = node.attribute("password");
-    QString md5 = node.attribute("md5");
-    QString sha1 = node.attribute("sha1");
-    QString ldap = node.attribute("ldap");
-    int passwordCount = (password.isEmpty() ? 0 : 1)
-        + (md5.isEmpty() ? 0 : 1)
-        + (sha1.isEmpty() ? 0 : 1)
-        + (ldap.isEmpty() ? 0 : 1);
-    QStringList roles = node.stringListAttribute("roles");
-    if (id.isEmpty())
-      Log::error() << "found user with no id";
-    if (passwordCount == 0)
-      Log::error() << "user '" << id << "' with no password specification";
-    if (passwordCount > 1)
-      Log::error() << "user '" << id
-                   << "' with severalpassword specifications";
-    else {
-      if (!password.isEmpty())
-        _authenticator
-            ->insertUser(id, password, InMemoryAuthenticator::Plain);
-      else if (!md5.isEmpty())
-        _authenticator->insertUser(id, md5, InMemoryAuthenticator::Md5Hex);
-      else if (!sha1.isEmpty())
-        _authenticator->insertUser(id, sha1, InMemoryAuthenticator::Sha1Hex);
-      else if (!ldap.isEmpty())
-        _authenticator
-            ->insertUser(id, ldap, InMemoryAuthenticator::OpenLdapStyle);
-      _usersDatabase->insertUser(id, roles.toSet());
-      //Log::fatal() << "user: " << id << " : " << roles.toSet();
-    }
-  }
+  _config.accessControlConfig().applyConfiguration(
+        _authenticator, _usersDatabase, _accessControlFilesWatcher);
 }
 
 QList<TaskInstance> Scheduler::syncRequestTask(

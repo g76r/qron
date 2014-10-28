@@ -47,7 +47,6 @@ public:
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   qint32 _maxtotaltaskinstances, _maxqueuedrequests;
-  PfNode _accessControlNode;
   QHash<QString,Calendar> _namedCalendars;
   AlerterConfig _alerterConfig;
   AccessControlConfig _accessControlConfig;
@@ -69,7 +68,6 @@ public:
       _onconfigload(other._onconfigload),
       _maxtotaltaskinstances(other._maxtotaltaskinstances),
       _maxqueuedrequests(other._maxqueuedrequests),
-      _accessControlNode(other._accessControlNode),
       _namedCalendars(other._namedCalendars),
       _alerterConfig(other._alerterConfig),
       _accessControlConfig(other._accessControlConfig),
@@ -371,6 +369,13 @@ ignore_task:;
                    << " for task '" << targetName << "'";
     }
   }
+  QList<PfNode> accessControl = root.childrenByName("access-control");
+  if (accessControl.size() > 0) {
+    _accessControlConfig = AccessControlConfig(accessControl.first());
+    if (accessControl.size() > 1) {
+      Log::error() << "ignoring multiple 'access-control' in configuration";
+    }
+  }
 }
 
 SchedulerConfig::~SchedulerConfig() {
@@ -554,6 +559,7 @@ PfNode SchedulerConfig::toPfNode() const {
   foreach(const Task &task, tasks)
     node.appendChild(task.toPfNode());
   // FIXME hosts, clusters, incl. host resources
+  node.appendChild(d->_accessControlConfig.toPfNode());
   return node;
 }
 

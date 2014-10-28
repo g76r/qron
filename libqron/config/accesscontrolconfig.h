@@ -16,8 +16,12 @@
 
 #include "libqron_global.h"
 #include <QSharedDataPointer>
+#include "pf/pfnode.h"
 
 class AccessControlConfigData;
+class InMemoryAuthenticator;
+class InMemoryUsersDatabase;
+class QFileSystemWatcher;
 
 class LIBQRONSHARED_EXPORT AccessControlConfig {
   QSharedDataPointer<AccessControlConfigData> d;
@@ -25,8 +29,14 @@ class LIBQRONSHARED_EXPORT AccessControlConfig {
 public:
   AccessControlConfig();
   AccessControlConfig(const AccessControlConfig &);
+  explicit AccessControlConfig(PfNode node);
   AccessControlConfig &operator=(const AccessControlConfig &);
   ~AccessControlConfig();
+  PfNode toPfNode() const;
+  void applyConfiguration(InMemoryAuthenticator *authenticator,
+                          InMemoryUsersDatabase *usersDatabase,
+                          QFileSystemWatcher *accessControlFilesWatcher) const;
+  bool isEmpty() const;
 };
 
 #endif // ACCESSCONTROLCONFIG_H
