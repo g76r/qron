@@ -673,6 +673,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       } else if (event=="reloadConfig") {
         // TODO should not display reload button when no config file is defined
         bool ok = Qrond::instance()->reload();
+        // wait 1" to make it less probable that the page displays before reload
+        QThread::usleep(1000000);
         message = ok ? "S:Configuration reloaded."
                      : "E:Cannot reload configuration.";
       } else
