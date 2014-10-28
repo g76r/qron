@@ -1424,7 +1424,12 @@ void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
       if (pattern.isEmpty())
         IOUtils::copy(output, &file);
       else
-        IOUtils::grep(output, &file, pattern, useRegexp);
+        IOUtils::grepWithContinuation(
+              output, &file,
+              QRegExp(pattern, Qt::CaseSensitive,
+                      useRegexp ? QRegExp::RegExp2
+                                : QRegExp::FixedString),
+              "  ");
     } else {
       Log::warning() << "web console cannot open log file " << path
                      << " : error #" << file.error() << " : "
