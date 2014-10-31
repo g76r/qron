@@ -40,7 +40,8 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _usersDatabase(new InMemoryUsersDatabase(this)),
   _firstConfigurationLoad(true),
   _startdate(QDateTime::currentDateTime().toMSecsSinceEpoch()),
-  _configdate(LLONG_MIN), _execCount(0),
+  _configdate(LLONG_MIN), _execCount(0), _runningTasksHwm(0),
+  _queuedTasksHwm(0),
   _accessControlFilesWatcher(new QFileSystemWatcher(this)) {
   _thread->setObjectName("SchedulerThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
@@ -294,6 +295,8 @@ TaskInstance Scheduler::enqueueRequest(
   // note: a request must always be queued even if the task can be started
   // immediately, to avoid the new tasks being started before queued ones
   _queuedRequests.append(request);
+  if (_queuedRequests.size() > _queuedTasksHwm)
+    _queuedTasksHwm = _queuedRequests.size();
   emit taskQueued(request);
   return request;
 }
@@ -527,9 +530,18 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
   if (!task.enabled())
     return false; // do not start disabled tasks
   if (_availableExecutors.isEmpty() && !instance.force()) {
+    QString s;
+    QDateTime now = QDateTime::currentDateTime();
+    foreach (const TaskInstance &ti, _runningTasks.keys())
+      s.append(QString::number(ti.id())).append(' ')
+          .append(ti.task().id()).append(" since ")
+          .append(QString::number(ti.startDatetime().msecsTo(now)))
+          .append(" ms; ");
+    if (s.size() >= 2)
+      s.chop(2);
     Log::info(taskId, instance.id()) << "cannot execute task '" << taskId
         << "' now because there are already too many tasks running "
-           "(maxtotaltaskinstances reached)";
+           "(maxtotaltaskinstances reached) currently running tasks: " << s;
     _alerter->raiseAlert("scheduler.maxtotaltaskinstances.reached");
     return false;
   }
@@ -626,6 +638,8 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     ++_execCount;
     reevaluateQueuedRequests();
     _runningTasks.insert(instance, executor);
+    if (_runningTasks.size() > _runningTasksHwm)
+      _runningTasksHwm = _runningTasks.size();
     return true;
 nexthost:;
   }

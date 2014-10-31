@@ -570,6 +570,10 @@ public:
       return _console->_scheduler->configdate().toString("yyyy-MM-dd hh:mm:ss");
     if (key == "execcount")
       return QString::number(_console->_scheduler->execCount());
+    if (key == "runningtaskshwm")
+      return QString::number(_console->_scheduler->runningTasksHwm());
+    if (key == "queuedtaskshwm")
+      return QString::number(_console->_scheduler->queuedTasksHwm());
     if (key == "taskscount")
       return QString::number(_console->_scheduler->tasksCount());
     if (key == "tasksgroupscount")
