@@ -1,3 +1,5 @@
+SHELL=bash
+
 .PHONY: default all targz
 
 default: all
