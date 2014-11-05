@@ -136,8 +136,11 @@ void AccessControlConfig::applyConfiguration(
     authenticator->clearUsers();
   if (usersDatabase)
     usersDatabase->clearUsers();
-  if (accessControlFilesWatcher)
-    accessControlFilesWatcher->removePaths(accessControlFilesWatcher->files());
+  if (accessControlFilesWatcher) {
+    QStringList files = accessControlFilesWatcher->files();
+    if (!files.isEmpty())
+      accessControlFilesWatcher->removePaths(files);
+  }
   if (!d)
     return;
   foreach (const AccessControlConfigData::UserFile &userFile, d->_userFiles) {
