@@ -7,6 +7,6 @@ default: all
 all: targz
 
 targz:
-	rm -f qrond-linux-i386.tar.gz
+	rm -f qrond-linux-amd64.tar.bz2
 	strip qrond/{bin,lib}/*
-	tar zchf qrond-linux-i386.tar.gz qrond
+	tar jchf qrond-linux-amd64.tar.bz2 qrond
