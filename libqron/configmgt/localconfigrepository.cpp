@@ -3,9 +3,9 @@
 #include "log/log.h"
 #include <QSaveFile>
 
-LocalConfigRepository::LocalConfigRepository(Scheduler *scheduler,
-                                             QString basePath)
-  : ConfigRepository(scheduler) {
+LocalConfigRepository::LocalConfigRepository(
+    QObject *parent, Scheduler *scheduler, QString basePath)
+  : ConfigRepository(parent, scheduler) {
   if (!basePath.isEmpty())
     openRepository(basePath);
 }

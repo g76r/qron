@@ -16,8 +16,8 @@ class LIBQRONSHARED_EXPORT LocalConfigRepository : public ConfigRepository {
   QHash<QString,SchedulerConfig> _configs;
 
 public:
-  explicit LocalConfigRepository(Scheduler *scheduler,
-                                 QString basePath = QString());
+  LocalConfigRepository(QObject *parent, Scheduler *scheduler,
+                        QString basePath = QString());
   QStringList availlableConfigIds();
   QString currentConfigId();
   SchedulerConfig config(QString id);

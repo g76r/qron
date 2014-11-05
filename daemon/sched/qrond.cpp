@@ -31,7 +31,7 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _scheduler(new Scheduler),
   _httpd(new HttpServer(8, 32)), // LATER should be configurable
   _configDir(), _configFile(), _httpAuthRealm("qron"),
-  _configRepository(new LocalConfigRepository(_scheduler)) {
+  _configRepository(new LocalConfigRepository(this, _scheduler)) {
   WebConsole *webconsole = new WebConsole;
   webconsole->setScheduler(_scheduler);
   PipelineHttpHandler *pipeline = new PipelineHttpHandler;

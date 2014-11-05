@@ -13,7 +13,7 @@ class LIBQRONSHARED_EXPORT ConfigRepository : public QObject {
   QList<ConfigHistoryEntry> _history;
 
 public:
-  explicit ConfigRepository(Scheduler *scheduler);
+  ConfigRepository(QObject *parent, Scheduler *scheduler);
   virtual QStringList availlableConfigIds() = 0;
   /** Return id of current config according to repository, which is not
    * always the same currently than active config. */

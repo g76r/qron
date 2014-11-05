@@ -2,8 +2,8 @@
 #include "pf/pfdomhandler.h"
 #include <QThread>
 
-ConfigRepository::ConfigRepository(Scheduler *scheduler)
-  : QObject(scheduler), _scheduler(scheduler) {
+ConfigRepository::ConfigRepository(QObject *parent, Scheduler *scheduler)
+  : QObject(parent), _scheduler(scheduler) {
 }
 
 SchedulerConfig ConfigRepository::parseConfig(QIODevice *source) {
