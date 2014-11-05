@@ -55,7 +55,7 @@ public:
     //    << transitionId << " " << instance.task().id()
     //    << " " << eventContext;
     if (workflow.task().mean() != "workflow") {
-      Log::error(instance.task().id(), instance.id())
+      Log::warning(instance.task().id(), instance.id())
           << "executing a step action in the context of a non-workflow task, "
              "for subscription " << subscription.subscriberName() << "|"
           << subscription.eventName();
