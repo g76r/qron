@@ -65,10 +65,10 @@ bool ParametrizedUdpSender::performRequest(
       Log::warning(_logTask, _logExecId)
           << "error when emiting UDP alert: " << error() << " "
           << errorString();
-    else
-      Log::debug(_logTask, _logExecId)
-          << "UDP alert emited on " << _host << ":" << _port << " for "
-          << rc << " bytes: " << payload.size();
+    //else
+    //  Log::debug(_logTask, _logExecId)
+    //      << "UDP packet sent on " << _host << ":" << _port << " for "
+    //      << rc << " bytes: " << payload.size();
   } else {
     Log::warning(_logTask, _logExecId)
         << "timeout when emiting UDP alert: " << error() << " "
