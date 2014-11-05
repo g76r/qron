@@ -528,7 +528,7 @@ qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {
   s.append(QString::fromUtf8(
              node.toPf(PfOptions().setShouldIndent()
                        .setShouldWriteContentBeforeSubnodes())));
-  qDebug() << "**** SchedulerConfig::writeAsPf" << s;
+  //qDebug() << "**** SchedulerConfig::writeAsPf" << s;
   return device->write(s.toUtf8());
 }
 
