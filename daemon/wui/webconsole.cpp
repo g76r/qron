@@ -31,6 +31,8 @@
 #define RAISED_ALERTS_MAXROWS 500
 #define LOG_MAXROWS 500
 #define SHORT_LOG_MAXROWS 100
+#define SVG_BELONG_TO_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><a xlink:title=\"%1\"><text x=\"0\" y=\"15\">This task belongs to workflow \"%1\".</text></a></svg>"
+#define SVG_NOT_A_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">This task is not a workflow.</text></svg>"
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
@@ -803,6 +805,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       if (!task.isNull()) {
         WebConsoleParamsProvider params(this, req, res, ctxt);
         int instancesCount = task.instancesCount();
+        QString supertaskLink;
+        if (!task.supertaskId().isEmpty())
+          supertaskLink = "<a href=\"taskdoc.html?taskid="+task.supertaskId()
+              +"\">"+task.supertaskId()+"</a>";
         params.setValue("description",
                         "<tr><th>Task id (fully qualified with group id)</th>"
                         "<td>"+taskId+"</td></tr>"
@@ -815,6 +821,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +((task.taskGroup().label()!=task.taskGroup().id())
                           ? " ("+HtmlUtils::htmlEncode(task.taskGroup().label())
                             +")</td></tr>" : "")
+                        +"<tr><th>Supertask (workflow)</th><td>"
+                        +supertaskLink+"</td></th>"
                         +"<tr><th>Additional information</th><td>"
                         +HtmlUtils::htmlEncode(task.info())+"</td></tr>"
                         "<tr><th>Triggers (scheduling)</th><td>"
@@ -1175,6 +1183,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     // LATER this rendering should be pooled
     if (_scheduler) {
       Task task = _scheduler->task(req.param("taskid"));
+      //if (!task.supertaskId().isEmpty())
+      //  task = _scheduler->task(task.supertaskId());
       QString gv = task.workflowDiagram();
       if (!gv.isEmpty()) {
         GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
@@ -1184,9 +1194,15 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         h->deleteLater();
         return true;
       }
+      if (!task.supertaskId().isEmpty()) {
+        res.setContentType("image/svg+xml");
+        res.output()->write(QString(SVG_BELONG_TO_WORKFLOW)
+                            .arg(task.supertaskId()).toUtf8());
+        return true;
+      }
     }
     res.setContentType("image/svg+xml");
-    res.output()->write("<svg height=\"30\" width=\"200\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">No workflow</text></svg>");
+    res.output()->write(SVG_NOT_A_WORKFLOW);
     return true;
   }
   if (path == "/rest/dot/tasks/workflow/v1") {
