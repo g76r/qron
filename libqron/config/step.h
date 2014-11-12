@@ -36,8 +36,7 @@ public:
   Step();
   Step(const Step &);
   Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-       QString workflowTaskId, QHash<QString, Task> oldTasks,
-       QHash<QString, Calendar> namedCalendars);
+       QString workflowTaskId, QHash<QString, Calendar> namedCalendars);
   Step &operator=(const Step &);
   ~Step();
   bool operator==(const Step &other) const;

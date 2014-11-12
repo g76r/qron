@@ -35,8 +35,7 @@ Step::Step() {
 }
 
 Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-           QString workflowTaskId, QHash<QString,Task> oldTasks,
-           QHash<QString, Calendar> namedCalendars) {
+           QString workflowTaskId, QHash<QString, Calendar> namedCalendars) {
   StepData *sd = new StepData;
   sd->_scheduler = scheduler;
   sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false);
@@ -58,8 +57,8 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     if (!taskgroup.isEmpty())
       Log::warning() << "ignoring subtask taskgroup: " << node.toString();
     node.setContent(workflowTaskId+"-"+node.contentAsString());
-    sd->_subtask = Task(node, scheduler, taskGroup, oldTasks,
-                        sd->_workflowId, namedCalendars);
+    sd->_subtask = Task(node, scheduler, taskGroup, sd->_workflowId,
+                        namedCalendars);
     if (sd->_subtask.isNull()) {
       Log::error() << "step with invalid subtask: " << node.toString();
       delete sd;

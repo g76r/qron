@@ -119,6 +119,7 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
     Log::debug() << "keep maxtotaltaskinstances of "
                  << config.maxtotaltaskinstances();
   }
+  config.copyLiveAttributesFromOldTasks(_config.tasks());
   _config = config;
   _alerter->setConfig(_config.alerterConfig());
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",

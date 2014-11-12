@@ -134,8 +134,7 @@ Task::Task(const Task &other) : SharedUiItem(other) {
 }
 
 Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-           QHash<QString, Task> oldTasks, QString supertaskId,
-           QHash<QString,Calendar> namedCalendars) {
+           QString supertaskId, QHash<QString,Calendar> namedCalendars) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
   td->_shortId = ConfigUtils::sanitizeId(node.contentAsString());
@@ -178,23 +177,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   ConfigUtils::loadParamSet(node, &td->_setenv, "setenv");
   td->_unsetenv.setParent(taskGroup.unsetenv());
   ConfigUtils::loadFlagSet(node, &td->_unsetenv, "unsetenv");
-  QHash<QString,CronTrigger> oldCronTriggers;
   td->_supertaskId = supertaskId;
-  // copy mutable fields from old task and build old cron triggers dictionary
-  Task oldTask = oldTasks.value(td->_id);
-  if (!oldTask.isNull()) {
-    foreach (const CronTrigger ct, oldTask.td()->_cronTriggers)
-      oldCronTriggers.insert(ct.canonicalExpression(), ct);
-    td->_lastExecution = oldTask.lastExecution().isValid()
-        ? oldTask.lastExecution().toMSecsSinceEpoch() : LLONG_MIN;
-    td->_nextScheduledExecution = oldTask.nextScheduledExecution().isValid()
-        ? oldTask.nextScheduledExecution().toMSecsSinceEpoch() : LLONG_MIN;
-    td->_instancesCount = oldTask.instancesCount();
-    td->_lastSuccessful = oldTask.lastSuccessful();
-    td->_lastReturnCode = oldTask.lastReturnCode();
-    td->_lastTotalMillis = oldTask.lastTotalMillis();
-    td->_enabled = td->_enabled && oldTask.enabled();
-  }
   // LATER load cron triggers last exec timestamp from on-disk log
   if (supertaskId.isEmpty()) { // subtasks do not have triggers
     foreach (PfNode child, node.childrenByName("trigger")) {
@@ -216,11 +199,6 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         } else if (triggerType == "cron") {
           CronTrigger trigger(grandchild, namedCalendars);
           if (trigger.isValid()) {
-            // keep last triggered timestamp from previously defined trigger
-            CronTrigger oldTrigger =
-                oldCronTriggers.value(trigger.canonicalExpression());
-            if (oldTrigger.isValid())
-              trigger.setLastTriggered(oldTrigger.lastTriggered());
             td->_cronTriggers.append(trigger);
             Log::debug() << "configured cron trigger "
                          << trigger.humanReadableExpression()
@@ -298,7 +276,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       return;
     }
     foreach (PfNode child, steps) {
-      Step step(child, scheduler, taskGroup, td->_shortId, oldTasks, namedCalendars);
+      Step step(child, scheduler, taskGroup, td->_shortId, namedCalendars);
       if (step.isNull()) {
         Log::error() << "workflow task " << td->_id
                      << " has at less one invalid step definition";
@@ -425,6 +403,33 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   }
   setData(td);
   td->_workflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
+}
+
+void Task::copyLiveAttributesFromOldTask(Task oldTask) {
+  TaskData *td = this->td();
+  if (!td || oldTask.isNull())
+    return;
+  // copy mutable fields from old task
+  td->_lastExecution = oldTask.lastExecution().isValid()
+      ? oldTask.lastExecution().toMSecsSinceEpoch() : LLONG_MIN;
+  td->_nextScheduledExecution = oldTask.nextScheduledExecution().isValid()
+      ? oldTask.nextScheduledExecution().toMSecsSinceEpoch() : LLONG_MIN;
+  td->_instancesCount = oldTask.instancesCount();
+  td->_lastSuccessful = oldTask.lastSuccessful();
+  td->_lastReturnCode = oldTask.lastReturnCode();
+  td->_lastTotalMillis = oldTask.lastTotalMillis();
+  td->_enabled = td->_enabled && oldTask.enabled();
+  // keep last triggered timestamp from previously defined trigger
+  QHash<QString,CronTrigger> oldCronTriggers;
+  foreach (const CronTrigger trigger, oldTask.td()->_cronTriggers)
+    oldCronTriggers.insert(trigger.canonicalExpression(), trigger);
+  for (int i = 0; i < td->_cronTriggers.size(); ++i) {
+    CronTrigger &trigger = td->_cronTriggers[i];
+    CronTrigger oldTrigger =
+        oldCronTriggers.value(trigger.canonicalExpression());
+    if (oldTrigger.isValid())
+      trigger.setLastTriggered(oldTrigger.lastTriggered());
+  }
 }
 
 Task Task::templateTask() {

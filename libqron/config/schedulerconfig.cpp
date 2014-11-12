@@ -208,7 +208,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   foreach (PfNode node, root.childrenByName("task")) {
     QString taskGroupId = node.attribute("taskgroup");
     TaskGroup taskGroup = _tasksGroups.value(taskGroupId);
-    Task task(node, scheduler, taskGroup, oldTasks, QString(), _namedCalendars);
+    Task task(node, scheduler, taskGroup, QString(), _namedCalendars);
     if (taskGroupId.isEmpty() || taskGroup.isNull()) {
       Log::error() << "ignoring task with invalid taskgroup: " << node.toPf();
       goto ignore_task;
@@ -517,6 +517,19 @@ QString SchedulerConfig::hash() const {
     d->_hash = hash.result().toHex();
   }
   return d->_hash;
+}
+
+void SchedulerConfig::copyLiveAttributesFromOldTasks(
+    QHash<QString,Task> oldTasks) {
+  if (!d)
+    return;
+  foreach (const Task &oldTask, oldTasks) {
+    Task task = d->_tasks.value(oldTask.id());
+    if (task.isNull())
+      continue;
+    task.copyLiveAttributesFromOldTask(oldTask);
+    d->_tasks.insert(task.id(), task);
+  }
 }
 
 qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {

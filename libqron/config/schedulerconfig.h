@@ -70,6 +70,7 @@ public:
   /** @return number of bytes written or -1 if an error occured */
   qint64 writeAsPf(QIODevice *device) const;
   PfNode toPfNode() const;
+  void copyLiveAttributesFromOldTasks(QHash<QString,Task> oldTasks);
   /** Rename cluster, do not perform any sanity check before or after. */
   Cluster renameCluster(QString oldName, QString newName);
   /** Update task, do not perform any sanity check before or after. */
