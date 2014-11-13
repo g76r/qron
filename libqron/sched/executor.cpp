@@ -361,7 +361,7 @@ void Executor::replyHasFinished(QNetworkReply *reply,
       << status << " (" << reason << ") on host '"
       << _instance.target().hostname() << "' in " << _instance.runningMillis()
       << " ms, with network error '" << networkErrorAsString(error)
-      << "' (code " << error << ")";
+      << "' (QNetworkReply::NetworkError code " << error << ")";
   // LATER translate network error codes into human readable strings
   if (status < 200 || status > 299) {
     int maxsize = _instance.task().params()
