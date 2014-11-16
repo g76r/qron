@@ -632,6 +632,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     QString referer = req.header("Referer");
     QString redirect = req.base64Cookie("redirect", referer);
     QString message;
+    QString userid = ctxt.paramValue("userid").toString();
     if (_scheduler) {
       if (event == "requestTask") {
         // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
@@ -704,17 +705,31 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       message = "E:Scheduler is not available.";
     if (message.startsWith("E:") || message.startsWith("W:"))
       res.setStatus(500); // LATER use more return codes
-    if (auditInstanceIds.isEmpty())
-      auditInstanceIds << taskInstanceId;
-    // LATER add sourc IP address(es) to audit
-    foreach (quint64 auditInstanceId, auditInstanceIds)
-      Log::info(taskId, auditInstanceId)
-          << "AUDIT action: '" << event
-          << ((res.status() < 300 && res.status() >=200)
-              ? "' result: success" : "' result: failure")
-          << " actor: '" << ctxt.paramValue("userid")
-          << "' params: " << req.paramsAsParamSet().toString(false)
-          << " response message: " << message;
+    /*qDebug()
+        << "AUDIT: event " << event
+        << _showAuditEvent.pattern() << _hideAuditEvent.pattern()
+        << event.contains(_showAuditEvent)
+        << (_hideAuditEvent.isEmpty() || !event.contains(_hideAuditEvent))
+        << "user" << userid
+        << _showAuditUser << _hideAuditUser
+        << userid.contains(_showAuditUser)
+        << (_hideAuditUser.isEmpty() || !userid.contains(_hideAuditUser));*/
+    if (event.contains(_showAuditEvent) // empty regexps match any string
+        && (_hideAuditEvent.isEmpty() || !event.contains(_hideAuditEvent))
+        && userid.contains(_showAuditUser)
+        && (_hideAuditUser.isEmpty() || !userid.contains(_hideAuditUser))) {
+      if (auditInstanceIds.isEmpty())
+        auditInstanceIds << taskInstanceId;
+      // LATER add source IP address(es) to audit
+      foreach (quint64 auditInstanceId, auditInstanceIds)
+        Log::info(taskId, auditInstanceId)
+            << "AUDIT action: '" << event
+            << ((res.status() < 300 && res.status() >=200)
+                ? "' result: success" : "' result: failure")
+            << " actor: '" << userid
+            << "' params: " << req.paramsAsParamSet().toString(false)
+            << " response message: " << message;
+    }
     if (!redirect.isEmpty()) {
       res.setBase64SessionCookie("message", message, "/");
       res.clearCookie("redirect", "/");
@@ -1453,6 +1468,18 @@ void WebConsole::globalParamsChanged(ParamSet globalParams) {
   _navtitle = globalParams.rawValue("webconsole.navtitle", _title);
   _titlehref = globalParams.rawValue("webconsole.titlehref", _titlehref);
   _cssoverload = globalParams.rawValue("webconsole.cssoverload", "");
+  QString s = globalParams.rawValue("webconsole.showaudituser.regexp");
+  _showAuditUser = s.isNull()
+      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
+  s = globalParams.rawValue("webconsole.hideaudituser.regexp");
+  _hideAuditUser = s.isNull()
+      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
+  s = globalParams.rawValue("webconsole.showauditevent.regexp");
+  _showAuditEvent = s.isNull()
+      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
+  s = globalParams.rawValue("webconsole.hideauditevent.regexp");
+  _hideAuditEvent = s.isNull()
+      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
   QString customactions_taskslist =
       globalParams.rawValue("webconsole.customactions.taskslist");
   QString customactions_instanceslist =

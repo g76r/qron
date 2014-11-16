@@ -103,6 +103,7 @@ class WebConsole : public HttpHandler {
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
   bool _ownUsersDatabase, _accessControlEnabled;
+  QRegExp _showAuditEvent, _hideAuditEvent, _showAuditUser, _hideAuditUser;
 
 public:
   WebConsole();
