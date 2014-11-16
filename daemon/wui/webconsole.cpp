@@ -620,6 +620,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     QString taskId = req.param("taskid");
     QString alert = req.param("alert");
     quint64 taskInstanceId = req.param("taskinstanceid").toULongLong();
+    QList<quint64> auditInstanceIds;
     QString referer = req.header("Referer");
     QString redirect = req.base64Cookie("redirect", referer);
     QString message;
@@ -635,23 +636,27 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         QList<TaskInstance> instances = _scheduler->syncRequestTask(taskId, params);
         if (!instances.isEmpty()) {
           message = "S:Task '"+taskId+"' submitted for execution with id";
-          foreach (TaskInstance request, instances)
+          foreach (TaskInstance request, instances) {
               message.append(' ').append(QString::number(request.id()));
+              auditInstanceIds << request.id();
+          }
           message.append('.');
         } else
           message = "E:Execution request of task '"+taskId
               +"' failed (see logs for more information).";
       } else if (event == "cancelRequest") {
         TaskInstance instance = _scheduler->cancelRequest(taskInstanceId);
-        if (!instance.isNull())
+        if (!instance.isNull()) {
           message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
-        else
+          taskId = instance.task().id();
+        } else
           message = "E:Cannot cancel request "+QString::number(taskInstanceId)+".";
       } else if (event == "abortTask") {
         TaskInstance instance = _scheduler->abortTask(taskInstanceId);
-        if (!instance.isNull())
+        if (!instance.isNull()) {
           message = "S:Task "+QString::number(taskInstanceId)+" aborted.";
-        else
+          taskId = instance.task().id();
+        } else
           message = "E:Cannot abort task "+QString::number(taskInstanceId)+".";
       } else if (event == "enableTask") {
         bool enable = req.param("enable") == "true";
@@ -676,24 +681,37 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         _scheduler->enableAllTasks(enable);
         message = QString("S:Asked for ")+(enable?"enabling":"disabling")
             +" all tasks at once.";
+        // wait to make it less probable that the page displays before effect
+        QThread::usleep(500000);
       } else if (event=="reloadConfig") {
         // TODO should not display reload button when no config file is defined
         bool ok = Qrond::instance()->reload();
-        // wait 1" to make it less probable that the page displays before reload
-        QThread::usleep(1000000);
         message = ok ? "S:Configuration reloaded."
                      : "E:Cannot reload configuration.";
+        // wait to make it less probable that the page displays before effect
+        QThread::usleep(1000000);
       } else
         message = "E:Internal error: unknown event '"+event+"'.";
     } else
       message = "E:Scheduler is not available.";
+    if (message.startsWith("E:") || message.startsWith("W:"))
+      res.setStatus(500); // LATER use more return codes
+    if (auditInstanceIds.isEmpty())
+      auditInstanceIds << taskInstanceId;
+    // LATER add sourc IP address(es) to audit
+    foreach (quint64 auditInstanceId, auditInstanceIds)
+      Log::info(taskId, auditInstanceId)
+          << "AUDIT action: '" << event
+          << ((res.status() < 300 && res.status() >=200)
+              ? "' result: success" : "' result: failure")
+          << " actor: '" << ctxt.paramValue("userid")
+          << "' params: " << req.paramsAsParamSet().toString(false)
+          << " response message: " << message;
     if (!redirect.isEmpty()) {
       res.setBase64SessionCookie("message", message, "/");
       res.clearCookie("redirect", "/");
       res.redirect(redirect);
     } else {
-      if (message.startsWith("E:") || message.startsWith("W:"))
-        res.setStatus(500);
       res.setContentType("text/plain;charset=UTF-8");
       message.append("\n");
       res.output()->write(message.toUtf8());
