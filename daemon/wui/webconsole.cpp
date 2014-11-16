@@ -90,6 +90,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _stepsModel= new StepsModel(this);
   _warningLogModel = new LogModel(this, Log::Warning, LOG_MAXROWS);
   _infoLogModel = new LogModel(this, Log::Info, LOG_MAXROWS);
+  _auditLogModel = new LogModel(this, Log::Info, LOG_MAXROWS, "AUDIT ");
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
@@ -242,6 +243,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlInfoLogView->itemDelegate())
       ->setPrefixForColumn(5, "%1", 4, logIcons);
   _wuiHandler->addView(_htmlInfoLogView);
+  _htmlAuditLogView = new HtmlTableView(this, "auditlog", LOG_MAXROWS, 100);
+  _htmlAuditLogView->setModel(_auditLogModel);
+  _htmlAuditLogView->setTrClass("%1", 4, logTrClasses);
+  ((HtmlItemDelegate*)_htmlAuditLogView->itemDelegate())
+      ->setPrefixForColumn(5, "%1", 4, logIcons);
+  _wuiHandler->addView(_htmlAuditLogView);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlTaskInstancesView20 =
       new HtmlTableView(this, "taskinstances20",

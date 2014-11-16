@@ -72,14 +72,14 @@ class WebConsole : public HttpHandler {
   LogFilesModel *_logConfigurationModel;
   CalendarsModel *_calendarsModel;
   StepsModel *_stepsModel;
-  LogModel *_warningLogModel, *_infoLogModel;
+  LogModel *_warningLogModel, *_infoLogModel, *_auditLogModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
   *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
-  *_htmlWarningLogView10, *_htmlInfoLogView,
+  *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
   *_htmlTaskInstancesView, *_htmlTaskInstancesView20,
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
   *_htmlTasksListView,
