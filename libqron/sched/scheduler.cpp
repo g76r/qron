@@ -402,7 +402,7 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString taskId) {
     QList<TaskInstance> requests = syncRequestTask(taskId, overridingParams);
     if (!requests.isEmpty())
       foreach (TaskInstance request, requests)
-        Log::debug(taskId, request.id())
+        Log::info(taskId, request.id())
             << "cron trigger " << trigger.humanReadableExpression()
             << " triggered task " << taskId;
     else
@@ -453,8 +453,8 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
     foreach (NoticeTrigger trigger, task.noticeTriggers()) {
       // LATER implement regexp patterns for notice triggers
       if (trigger.expression() == notice) {
-        Log::debug() << "notice " << trigger.humanReadableExpression()
-                     << " triggered task " << task.id();
+        Log::info() << "notice " << trigger.humanReadableExpression()
+                    << " triggered task " << task.id();
         ParamSet overridingParams;
         foreach (QString key, trigger.overridingParams().keys())
           overridingParams
@@ -464,7 +464,7 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
             = syncRequestTask(task.id(), overridingParams);
         if (!requests.isEmpty())
           foreach (TaskInstance request, requests)
-            Log::debug(task.id(), request.id())
+            Log::info(task.id(), request.id())
                 << "notice " << trigger.humanReadableExpression()
                 << " triggered task " << task.id();
         else
