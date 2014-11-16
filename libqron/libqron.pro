@@ -111,7 +111,8 @@ SOURCES += \
     sysutil/parametrizedudpsender.cpp \
     action/requesturlaction.cpp \
     sysutil/parametrizednetworkrequest.cpp \
-    alert/urlalertchannel.cpp
+    alert/urlalertchannel.cpp \
+    ui/htmllogentryitemdelegate.cpp
 
 HEADERS += \
     config/task.h \
@@ -182,4 +183,5 @@ HEADERS += \
     sysutil/parametrizedudpsender.h \
     action/requesturlaction.h \
     sysutil/parametrizednetworkrequest.h \
-    alert/urlalertchannel.h
+    alert/urlalertchannel.h \
+    ui/htmllogentryitemdelegate.h

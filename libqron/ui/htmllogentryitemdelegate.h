@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -11,21 +11,19 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef HTMLTASKITEMDELEGATE_H
-#define HTMLTASKITEMDELEGATE_H
+#ifndef HTMLLOGENTRYITEMDELEGATE_H
+#define HTMLLOGENTRYITEMDELEGATE_H
 
 #include "libqron_global.h"
 #include "textview/htmlitemdelegate.h"
 
-/** Specific item delegate for tasks. */
-class LIBQRONSHARED_EXPORT HtmlTaskItemDelegate : public HtmlItemDelegate {
+/** Specific item delegate for log entries. */
+class LIBQRONSHARED_EXPORT HtmlLogEntryItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
-  Q_DISABLE_COPY(HtmlTaskItemDelegate)
+  Q_DISABLE_COPY(HtmlLogEntryItemDelegate)
 public:
-  explicit HtmlTaskItemDelegate(QObject *parent = 0);
+  explicit HtmlLogEntryItemDelegate(QObject *parent = 0);
   QString text(const QModelIndex &index) const;
-  QString headerText(int section, Qt::Orientation orientation,
-                     const QAbstractItemModel *model) const;
 };
 
-#endif // HTMLTASKITEMDELEGATE_H
+#endif // HTMLLOGENTRYITEMDELEGATE_H

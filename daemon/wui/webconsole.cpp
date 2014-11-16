@@ -26,6 +26,7 @@
 #include "ui/htmltaskinstanceitemdelegate.h"
 #include "ui/htmlalertitemdelegate.h"
 #include "ui/graphvizdiagramsbuilder.h"
+#include "ui/htmllogentryitemdelegate.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -219,14 +220,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
   _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
-  QHash<QString,QString> logTrClasses, logIcons;
+  QHash<QString,QString> logTrClasses;
   logTrClasses.insert("WARNING", "warning");
   logTrClasses.insert("ERROR", "error");
-  logIcons.insert("WARNING", "<i class=\"icon-warning\"></i>&nbsp;");
-  logIcons.insert("ERROR", "<i class=\"icon-minus-circled\"></i>&nbsp;");
   _htmlWarningLogView->setTrClass("%1", 4, logTrClasses);
-  ((HtmlItemDelegate*)_htmlWarningLogView->itemDelegate())
-      ->setPrefixForColumn(5, "%1", 4, logIcons);
+  _htmlWarningLogView->setItemDelegate(
+        new HtmlLogEntryItemDelegate(_htmlWarningLogView));
   _wuiHandler->addView(_htmlWarningLogView);
   _htmlWarningLogView10 =
       new HtmlTableView(this, "warninglog10", SHORT_LOG_MAXROWS, 10);
@@ -234,20 +233,22 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
   _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
   _htmlWarningLogView10->setTrClass("%1", 4, logTrClasses);
-  ((HtmlItemDelegate*)_htmlWarningLogView10->itemDelegate())
-      ->setPrefixForColumn(5, "%1", 4, logIcons);
+  _htmlWarningLogView10->setItemDelegate(
+        new HtmlLogEntryItemDelegate(_htmlWarningLogView10));
   _wuiHandler->addView(_htmlWarningLogView10);
   _htmlInfoLogView = new HtmlTableView(this, "infolog", LOG_MAXROWS, 100);
   _htmlInfoLogView->setModel(_infoLogModel);
   _htmlInfoLogView->setTrClass("%1", 4, logTrClasses);
-  ((HtmlItemDelegate*)_htmlInfoLogView->itemDelegate())
-      ->setPrefixForColumn(5, "%1", 4, logIcons);
+  _htmlInfoLogView->setItemDelegate(
+        new HtmlLogEntryItemDelegate(_htmlInfoLogView));
   _wuiHandler->addView(_htmlInfoLogView);
-  _htmlAuditLogView = new HtmlTableView(this, "auditlog", LOG_MAXROWS, 100);
+  _htmlAuditLogView = new HtmlTableView(this, "auditlog", LOG_MAXROWS, 40);
   _htmlAuditLogView->setModel(_auditLogModel);
   _htmlAuditLogView->setTrClass("%1", 4, logTrClasses);
-  ((HtmlItemDelegate*)_htmlAuditLogView->itemDelegate())
-      ->setPrefixForColumn(5, "%1", 4, logIcons);
+  HtmlLogEntryItemDelegate *htmlLogEntryItemDelegate =
+      new HtmlLogEntryItemDelegate(_htmlAuditLogView);
+  htmlLogEntryItemDelegate->setMaxCellContentLength(2000);
+  _htmlAuditLogView->setItemDelegate(htmlLogEntryItemDelegate);
   _wuiHandler->addView(_htmlAuditLogView);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlTaskInstancesView20 =
