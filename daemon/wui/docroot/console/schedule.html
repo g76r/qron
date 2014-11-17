@@ -64,7 +64,9 @@
           <p><a class="btn btn-primary" href="../rest/svg/tasks/trigger/v1"><i class="icon-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/trigger/v1"><i class="icon-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <p class="text-center"><a href="../rest/svg/tasks/trigger/v1"><img src="../rest/png/tasks/trigger/v1" alt="Tasks trigger diagram"/></a>
+          <div id="tasksTriggerDiagram" style="display: table; margin: 0 auto;">
+            <noscript><img src="../rest/svg/tasks/trigger/v1" alt="Tasks trigger diagram"/></noscript>
+          </div>
         </div>
       </div>
     </div>
@@ -72,6 +74,15 @@
 <!-- start of footer -->
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
+    <script>
+$(document).ready(function(){
+  $('#tasksTriggerDiagram').load('../rest/svg/tasks/trigger/v1', function() {
+    $("a").not("[xlink\\:title='']").each(function() {
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?taskid='+$(this).attr('xlink:title'));
+    });
+  });
+});
+    </script>
   </body>
 </html>
 
