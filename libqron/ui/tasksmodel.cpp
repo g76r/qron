@@ -56,8 +56,9 @@ void TasksModel::renameTask(Task task, QString oldName) {
 }
 
 void TasksModel::configReset(SchedulerConfig config) {
-  _tasks = config.tasks().values();
-  sortAndSetItems(_tasks);
+  QList<Task> tasks = config.tasks().values();
+  qSort(tasks);
+  setItems(_tasks = tasks);
 }
 
 void TasksModel::periodicDataRefresh() {
