@@ -97,7 +97,7 @@ SchedulerConfig LocalConfigRepository::config(QString id) {
 
 QString LocalConfigRepository::addConfig(SchedulerConfig config) {
   QString id = config.hash();
-  if (!id.isNull() && !_configs.contains(id)) {
+  if (!id.isNull()) {
     if (!_basePath.isEmpty()) {
       QSaveFile f(_basePath+"/configs/"+id);
       if (!f.open(QIODevice::WriteOnly|QIODevice::Truncate)
