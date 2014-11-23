@@ -115,12 +115,12 @@ public slots:
                         bool force = false,
                         TaskInstance callerTask = TaskInstance());
   /** Cancel a queued request.
-   * @return TaskRequest.isNull() iff error (e.g. request not found or no longer
-   * queued */
+   * @return TaskInstance.isNull() iff error (e.g. request not found or no
+   * longer queued) */
   TaskInstance cancelRequest(quint64 id);
   TaskInstance cancelRequest(TaskInstance instance) {
     return cancelRequest(instance.id()); }
-  /** Abort a running request.
+  /** Abort a running task instance.
    * For local tasks aborting means killing, for ssh tasks aborting means
    * killing ssh client hence most of time killing actual task, for http tasks
    * aborting means closing the socket.
@@ -128,9 +128,10 @@ public slots:
    * the application processing is actually ended whereas it frees resources
    * and tasks instance counters, hence enabling immediate reexecution of the
    * same task.
-   * @return TaskRequest.isNull() iff error (e.g. request not found or no longer
-   * running */
+   * @return TaskInstance.isNull() iff error (e.g. task instance not found or no
+   * longer running) */
   TaskInstance abortTask(quint64 id);
+  /** @see abortTask(quint64) */
   TaskInstance abortTask(TaskInstance instance) {
     return abortTask(instance.id()); }
   /** Post a notice.

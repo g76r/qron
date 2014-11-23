@@ -335,12 +335,12 @@ TaskInstance Scheduler::doCancelRequest(quint64 id) {
 TaskInstance Scheduler::abortTask(quint64 id) {
   if (this->thread() == QThread::currentThread())
     return doAbortTask(id);
-  TaskInstance request;
+  TaskInstance taskInstance;
   QMetaObject::invokeMethod(this, "doAbortTask",
                             Qt::BlockingQueuedConnection,
-                            Q_RETURN_ARG(TaskInstance, request),
+                            Q_RETURN_ARG(TaskInstance, taskInstance),
                             Q_ARG(quint64, id));
-  return request;
+  return taskInstance;
 }
 
 TaskInstance Scheduler::doAbortTask(quint64 id) {
@@ -352,7 +352,7 @@ TaskInstance Scheduler::doAbortTask(quint64 id) {
       Executor *executor = _runningTasks.value(r2);
       if (executor) {
         Log::warning(taskId, id) << "aborting task as requested";
-        // TODO should return TaskRequest() if executor cannot actually abort
+        // TODO should return TaskInstance() if executor cannot actually abort
         executor->abort();
         return r2;
       }
@@ -659,7 +659,8 @@ void Scheduler::taskFinishing(TaskInstance instance,
                               QPointer<Executor> executor) {
   Task requestedTask = instance.task();
   QString taskId = requestedTask.id();
-  // configured and requested tasks are different if config reloaded meanwhile
+  // configured and requested tasks are different if config was reloaded
+  // meanwhile
   Task configuredTask(_config.tasks().value(taskId));
   configuredTask.fetchAndAddInstancesCount(-1);
   if (executor) {
