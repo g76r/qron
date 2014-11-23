@@ -727,7 +727,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
             << ((res.status() < 300 && res.status() >=200)
                 ? "' result: success" : "' result: failure")
             << " actor: '" << userid
-            << "' params: " << req.paramsAsParamSet().toString(false)
+            << "' address: { " << req.clientAdresses().join(", ")
+            << " } params: " << req.paramsAsParamSet().toString(false)
             << " response message: " << message;
     }
     if (!redirect.isEmpty()) {
