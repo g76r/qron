@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,6 +19,7 @@
 #include "log/log.h"
 #include "sched/taskinstance.h"
 #include "configutils.h"
+#include "util/htmlutils.h"
 
 class RequestFormFieldData : public QSharedData {
 public:
@@ -84,27 +85,36 @@ QString RequestFormField::toHtmlFormFragment(QString inputClass) const {
       "</div>\n";
 }
 
-QString RequestFormField::toHumanReadableDescription() const {
+QString RequestFormField::toHtmlHumanReadableDescription() const {
   QString v;
   if (d) {
-    v = "id: "+d->_param;
+    v = "<p>"+HtmlUtils::htmlEncode(d->_param)+":<dl class=\"dl-horizontal\">";
     if (!d->_label.isEmpty())
-      v.append(" label: ").append(d->_label);
+      v.append("<dt>label</dt><dd>").append(HtmlUtils::htmlEncode(d->_label))
+          .append("</dd>");
     if (!d->_suggestion.isEmpty())
-      v.append(" suggestion: ").append(d->_suggestion);
+      v.append("<dt>suggestion</dt><dd>")
+          .append(HtmlUtils::htmlEncode(d->_suggestion)).append("</dd>");
     if (!d->_placeholder.isEmpty())
-      v.append(" placeholder: ").append(d->_placeholder);
+      v.append("<dt>placeholder</dt><dd>")
+          .append(HtmlUtils::htmlEncode(d->_placeholder)).append("</dd>");
     if (d->_format.isValid())
-      v.append(" format: ").append(d->_format.pattern());
+      v.append("<dt>format</dt><dd>")
+          .append(HtmlUtils::htmlEncode(d->_format.pattern())).append("</dd>");
     if (!d->_setenv.isEmpty()) {
-      v.append(" setenv: ");
+      v.append("<dt>setenv</dt><dd>");
       for (QListIterator<QPair<QString,QString> > i(d->_setenv); i.hasNext();) {
         QPair<QString,QString> p(i.next());
-        v.append(p.first).append("=").append(p.second);
+        v.append(HtmlUtils::htmlEncode(p.first)).append("=")
+            .append(HtmlUtils::htmlEncode(p.second)).append(" ");
       }
+      v.append("</dd>");
     }
     if (!d->_appendcommand.isEmpty())
-      v.append(" appendcommand: ").append(d->_appendcommand.join(" "));
+      v.append("<dt>appendcommand</dt><dd>")
+          .append(HtmlUtils::htmlEncode(d->_appendcommand.join(" ")))
+          .append("</dd>");
+    v.append("</dl>");
   }
   return v;
 }

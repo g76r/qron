@@ -37,7 +37,7 @@ public:
   RequestFormField &operator=(const RequestFormField &);
   ~RequestFormField();
   QString toHtmlFormFragment(QString inputClass = "") const;
-  QString toHumanReadableDescription() const;
+  QString toHtmlHumanReadableDescription() const;
   bool validate(QString value) const;
   void apply(QString value, TaskInstance *request) const;
   bool isNull() const;

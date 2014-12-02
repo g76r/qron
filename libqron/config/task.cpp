@@ -720,11 +720,9 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
   QList<RequestFormField> list = requestFormFields();
   if (list.isEmpty())
     return "(none)";
-  QString v("<ul>");
+  QString v;
   foreach (const RequestFormField rff, list)
-    v.append("<li>")
-        .append(HtmlUtils::htmlEncode(rff.toHumanReadableDescription()));
-  v.append("</ul>");
+    v.append(rff.toHtmlHumanReadableDescription());
   return v;
 }
 
