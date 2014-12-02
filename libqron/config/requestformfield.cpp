@@ -23,10 +23,10 @@
 
 class RequestFormFieldData : public QSharedData {
 public:
-  QString _param, _label, _placeholder, _suggestion;
+  QString _id, _label, _placeholder, _suggestion;
   QRegExp _format;
-  QStringList _appendcommand;
-  QList<QPair<QString,QString> > _setenv;
+  QString _appendcommand;
+  ParamSet _setenv;
 };
 
 RequestFormField::RequestFormField() : d(new RequestFormFieldData) {
@@ -37,16 +37,14 @@ RequestFormField::RequestFormField(const RequestFormField &rhs) : d(rhs.d) {
 
 RequestFormField::RequestFormField(PfNode node) {
   RequestFormFieldData *d = new RequestFormFieldData;
-  QStringList sl = node.stringChildrenByName("param");
-  if (sl.size() != 1) {
-    Log::error() << "request form field "
-                 << (sl.isEmpty() ? "without param value: "
-                                  : "several param values: ")
+  QString id = node.contentAsString();
+  if (id.isEmpty()) {
+    Log::error() << "request form field without id "
                  << node.toString();
     return;
   }
-  d->_param = ConfigUtils::sanitizeId(sl.first());
-  d->_label = node.attribute("label", d->_param);
+  d->_id = ConfigUtils::sanitizeId(id);
+  d->_label = node.attribute("label", d->_id);
   d->_placeholder = node.attribute("placeholder", d->_label);
   d->_suggestion = node.attribute("suggestion");
   QString format = node.attribute("format");
@@ -56,8 +54,8 @@ RequestFormField::RequestFormField(PfNode node) {
                  << node.toString();
     return;
   }
-  d->_appendcommand = node.stringChildrenByName("appendcommand");
-  d->_setenv = node.stringsPairChildrenByName("setenv");
+  d->_appendcommand = node.attribute("appendcommand");
+  ConfigUtils::loadParamSet(node, &d->_setenv, "setenv");
   this->d = d;
   //Log::fatal() << "RequestFormField: " << node.toString() << " " << toHtml();
 }
@@ -75,10 +73,10 @@ QString RequestFormField::toHtmlFormFragment(QString inputClass) const {
   if (!d)
     return QString();
   return "<div class=\"control-group\">\n"
-      "  <label class=\"control-label\" for=\""+d->_param+"\">"+d->_label
+      "  <label class=\"control-label\" for=\""+d->_id+"\">"+d->_label
       +"</label>\n"
       "  <div class=\"controls\">\n"
-      "    <input id=\""+d->_param+"\" name=\""+d->_param+"\" type=\"text\" "
+      "    <input id=\""+d->_id+"\" name=\""+d->_id+"\" type=\"text\" "
       "placeholder=\""+d->_placeholder+"\" value=\""+d->_suggestion+"\""
       "class=\""+inputClass+"\">\n"
       "  </div>\n"
@@ -88,7 +86,7 @@ QString RequestFormField::toHtmlFormFragment(QString inputClass) const {
 QString RequestFormField::toHtmlHumanReadableDescription() const {
   QString v;
   if (d) {
-    v = "<p>"+HtmlUtils::htmlEncode(d->_param)+":<dl class=\"dl-horizontal\">";
+    v = "<p>"+HtmlUtils::htmlEncode(d->_id)+":<dl class=\"dl-horizontal\">";
     if (!d->_label.isEmpty())
       v.append("<dt>label</dt><dd>").append(HtmlUtils::htmlEncode(d->_label))
           .append("</dd>");
@@ -102,18 +100,13 @@ QString RequestFormField::toHtmlHumanReadableDescription() const {
       v.append("<dt>format</dt><dd>")
           .append(HtmlUtils::htmlEncode(d->_format.pattern())).append("</dd>");
     if (!d->_setenv.isEmpty()) {
-      v.append("<dt>setenv</dt><dd>");
-      for (QListIterator<QPair<QString,QString> > i(d->_setenv); i.hasNext();) {
-        QPair<QString,QString> p(i.next());
-        v.append(HtmlUtils::htmlEncode(p.first)).append("=")
-            .append(HtmlUtils::htmlEncode(p.second)).append(" ");
-      }
-      v.append("</dd>");
+      v.append("<dt>setenv</dt><dd>")
+          .append(HtmlUtils::htmlEncode(d->_setenv.toString()))
+          .append("</dd>");
     }
     if (!d->_appendcommand.isEmpty())
       v.append("<dt>appendcommand</dt><dd>")
-          .append(HtmlUtils::htmlEncode(d->_appendcommand.join(" ")))
-          .append("</dd>");
+          .append(HtmlUtils::htmlEncode(d->_appendcommand)).append("</dd>");
     v.append("</dl>");
   }
   return v;
@@ -125,15 +118,13 @@ bool RequestFormField::validate(QString value) const {
 
 void RequestFormField::apply(QString value, TaskInstance *request) const {
   if (request && d && !value.isNull()) {
-    request->overrideParam(d->_param, value);
+    request->overrideParam(d->_id, value);
     QString command(request->command());
-    foreach (QString s, d->_appendcommand)
-      command.append(' ').append(s);
+    if (!d->_appendcommand.isEmpty())
+      command.append(' ').append(d->_appendcommand);
     request->overrideCommand(command);
-    for (QListIterator<QPair<QString,QString> > i(d->_setenv); i.hasNext(); ) {
-      QPair<QString,QString> p(i.next());
-      request->overrideSetenv(p.first, p.second);
-    }
+    foreach (const QString &key, d->_setenv.keys())
+      request->overrideSetenv(key, d->_setenv.value(key));
   }
 }
 
@@ -141,10 +132,28 @@ bool RequestFormField::isNull() const {
   return !d;
 }
 
-QString RequestFormField::param() const {
-  return d ? d->_param : QString();
+QString RequestFormField::id() const {
+  return d ? d->_id : QString();
 }
 
 QString RequestFormField::format() const {
   return d ? d->_format.pattern() : QString();
+}
+
+PfNode RequestFormField::toPfNode() const {
+  if (!d)
+    return PfNode();
+  PfNode node("field", d->_id);
+  if (d->_label != d->_id)
+    node.appendChild(PfNode("label", d->_label));
+  if (d->_placeholder != d->_label)
+    node.appendChild(PfNode("placeholder", d->_placeholder));
+  if (!d->_suggestion.isEmpty())
+    node.appendChild(PfNode("suggestion", d->_suggestion));
+  if (!d->_format.isEmpty() && d->_format.isValid())
+    node.appendChild(PfNode("format", d->_format.pattern()));
+  if (!d->_appendcommand.isEmpty())
+    node.appendChild(PfNode("appendcommand", d->_appendcommand));
+  ConfigUtils::writeParamSet(&node, d->_setenv, "setenv");
+  return node;
 }

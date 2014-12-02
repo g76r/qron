@@ -901,7 +901,7 @@ QVariant TaskData::uiData(int section, int role) const {
     case 25: {
       QString s;
       foreach (const RequestFormField rff, _requestFormFields)
-        s.append(rff.param()).append(' ');
+        s.append(rff.id()).append(' ');
       s.chop(1);
       return s;
     }
@@ -1016,6 +1016,11 @@ PfNode Task::toPfNode() const {
                                        QStringList("onfinish"));
 
   // user interface attributes
-  // FIXME _requestFormFields
+  if (!td->_requestFormFields.isEmpty()) {
+    PfNode requestForm("requestform");
+    foreach (const RequestFormField &field, td->_requestFormFields)
+      requestForm.appendChild(field.toPfNode());
+    node.appendChild(requestForm);
+  }
   return node;
 }

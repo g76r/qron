@@ -213,7 +213,7 @@ QList<TaskInstance> Scheduler::doRequestTask(
   }
   bool fieldsValidated(true);
   foreach (RequestFormField field, task.requestFormFields()) {
-    QString name(field.param());
+    QString name(field.id());
     if (overridingParams.contains(name)) {
       QString value(overridingParams.value(name));
       if (!field.validate(value)) {
@@ -257,7 +257,7 @@ TaskInstance Scheduler::enqueueRequest(
   Task task(request.task());
   QString taskId(task.id());
   foreach (RequestFormField field, task.requestFormFields()) {
-    QString name(field.param());
+    QString name(field.id());
     if (paramsOverriding.contains(name)) {
       QString value(paramsOverriding.value(name));
       field.apply(value, &request);

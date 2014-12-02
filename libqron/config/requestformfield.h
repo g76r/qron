@@ -41,8 +41,9 @@ public:
   bool validate(QString value) const;
   void apply(QString value, TaskInstance *request) const;
   bool isNull() const;
-  QString param() const;
+  QString id() const;
   QString format() const;
+  PfNode toPfNode() const;
 };
 
 #endif // REQUESTFORMFIELD_H
