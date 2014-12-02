@@ -926,7 +926,6 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         params.setValue("customactions", task.params()
                         .evaluate(_customaction_taskdetail, &task));
         _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
-        return true;
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
@@ -937,6 +936,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                                  "/");
       res.redirect(referer);
     }
+    return true;
   }
   if (path.startsWith("/console")) {
     QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
