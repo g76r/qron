@@ -249,7 +249,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
     if (task.mean() == "workflow") {
       recordTaskActionLinks(node, "ontrigger", &requestTaskActionLinks,
                             task.id(), task); // FIXME check that this is consistent
-      foreach(PfNode child, node.childrenByName("task")) {
+      foreach(PfNode child, node.childrenByName("subtask")) {
         recordTaskActionLinks(node, "onstart", &requestTaskActionLinks,
                               task.id()+":"+child.contentAsString(),
                               task);
@@ -541,7 +541,7 @@ qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {
   s.append(QString::fromUtf8(
              node.toPf(PfOptions().setShouldIndent()
                        .setShouldWriteContentBeforeSubnodes())));
-  //qDebug() << "**** SchedulerConfig::writeAsPf" << s;
+  qDebug() << "**** SchedulerConfig::writeAsPf" << s;
   return device->write(s.toUtf8());
 }
 
@@ -570,7 +570,8 @@ PfNode SchedulerConfig::toPfNode() const {
   QList<Task> tasks = d->_tasks.values();
   qSort(tasks);
   foreach(const Task &task, tasks)
-    node.appendChild(task.toPfNode());
+    if (task.supertaskId().isNull())
+      node.appendChild(task.toPfNode());
   // FIXME hosts, clusters, incl. host resources
   node.appendChild(d->_accessControlConfig.toPfNode());
   return node;

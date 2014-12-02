@@ -25,7 +25,7 @@ QString HtmlStepItemDelegate::text(const QModelIndex &index) const {
   case 1: {
     QString kind = index.model()->index(index.row(), 2, index.parent()).data()
         .toString();
-    if (kind == "task")
+    if (kind == "subtask")
       text.prepend("<i class=\"icon-cog\"></i>&nbsp;"); // was: icon-puzzle-piece
     else if (kind == "and")
       text.prepend("<i class=\"icon-chevron-up\"></i>&nbsp;");

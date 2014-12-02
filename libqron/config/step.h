@@ -63,6 +63,7 @@ public:
   void triggerReadyEvents(TaskInstance workflowTaskInstance,
                           ParamSet eventContext) const;
   QList<EventSubscription> onreadyEventSubscriptions() const;
+  PfNode toPfNode() const;
 };
 
 #endif // STEP_H

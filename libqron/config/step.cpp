@@ -45,17 +45,26 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     sd->_kind = Step::AndJoin;
     ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
                                        &sd->_onready, scheduler);
-    // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
+    if (node.hasChild("onsuccess") || node.hasChild("onfailure")
+        || node.hasChild("onfinish") || node.hasChild("onstart"))
+      Log::warning() << "ignoring other events than onready in non-subtask "
+                        "step: " << node.toString();
   } else if (node.name() == "or") {
     sd->_kind = Step::OrJoin;
     ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
                                        &sd->_onready, scheduler);
-    // LATER warn if onsuccess, onfailure, onfinish, onstart is defined
-  } else if (node.name() == "task") {
+    if (node.hasChild("onsuccess") || node.hasChild("onfailure")
+        || node.hasChild("onfinish") || node.hasChild("onstart"))
+      Log::warning() << "ignoring other events than onready in non-subtask "
+                        "step: " << node.toString();
+  } else if (node.name() == "subtask") {
     sd->_kind = Step::SubTask;
-    QString taskgroup = node.attribute("taskgroup");
-    if (!taskgroup.isEmpty())
+    if (node.hasChild("taskgroup"))
       Log::warning() << "ignoring subtask taskgroup: " << node.toString();
+    if (node.hasChild("trigger"))
+      Log::warning() << "ignoring subtask triggers: " << node.toString();
+    if (node.hasChild("onready"))
+      Log::warning() << "ignoring subtask onready event: " << node.toString();
     node.setContent(workflowTaskId+"-"+node.contentAsString());
     sd->_subtask = Task(node, scheduler, taskGroup, sd->_workflowId,
                         namedCalendars);
@@ -67,7 +76,6 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     sd->_onready.append(
           EventSubscription(sd->_fqsn, "onready",
                             RequestTaskAction(scheduler, sd->_subtask.id())));
-    // LATER warn if onready is defined for a subtask step
   } else {
       Log::error() << "unsupported step kind: " << node.toString();
       delete sd;
@@ -142,7 +150,7 @@ QList<EventSubscription> Step::onreadyEventSubscriptions() const {
 QString Step::kindToString(Kind kind) {
   switch (kind) {
   case SubTask:
-    return "task";
+    return "subtask";
   case AndJoin:
     return "and";
   case OrJoin:
@@ -151,4 +159,18 @@ QString Step::kindToString(Kind kind) {
     ;
   }
   return "unknown";
+}
+
+PfNode Step::toPfNode() const {
+  if (!d)
+    return PfNode();
+  PfNode node(kindToString(d->_kind), d->_id);
+  foreach (const PfNode &child, d->_subtask.toPfNode().children()) {
+    const QString &name = child.name();
+    if (name != "taskgroup" && name != "trigger")
+      node.appendChild(child);
+  }
+  if (d->_kind != SubTask)
+    ConfigUtils::writeEventSubscriptions(&node, d->_onready);
+  return node;
 }

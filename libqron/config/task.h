@@ -148,7 +148,7 @@ public:
   void clearOtherTriggers();
   /** Workflow steps. Empty list for standalone tasks. */
   QHash<QString,Step> steps() const;
-  QStringList startSteps() const;
+  QSet<QString> startSteps() const;
   /** Parent task (e.g. workflow task) to which this task belongs, if any. */
   QString supertaskId() const;
   QString workflowDiagram() const;
