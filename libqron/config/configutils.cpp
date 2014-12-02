@@ -60,13 +60,9 @@ void ConfigUtils::writeFlagSet(PfNode *parentnode, QSet<QString> set,
                                QString attrname) {
   if (!parentnode || set.isEmpty())
     return;
-  QString s;
   QStringList list = set.values();
   qSort(list);
-  foreach (const QString &flag, list)
-    s.append(flag).append(' ');
-  s.chop(1);
-  parentnode->appendChild(PfNode(attrname, s));
+  parentnode->appendChild(PfNode(attrname, list.join(' ')));
 }
 
 void ConfigUtils::writeEventSubscriptions(PfNode *parentnode,
