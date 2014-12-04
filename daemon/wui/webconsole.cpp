@@ -694,7 +694,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         QThread::usleep(500000);
       } else if (event=="reloadConfig") {
         // TODO should not display reload button when no config file is defined
-        bool ok = Qrond::instance()->reload();
+        bool ok = Qrond::instance()->loadConfig();
         message = ok ? "S:Configuration reloaded."
                      : "E:Cannot reload configuration.";
         // wait to make it less probable that the page displays before effect
@@ -705,15 +705,6 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       message = "E:Scheduler is not available.";
     if (message.startsWith("E:") || message.startsWith("W:"))
       res.setStatus(500); // LATER use more return codes
-    /*qDebug()
-        << "AUDIT: event " << event
-        << _showAuditEvent.pattern() << _hideAuditEvent.pattern()
-        << event.contains(_showAuditEvent)
-        << (_hideAuditEvent.isEmpty() || !event.contains(_hideAuditEvent))
-        << "user" << userid
-        << _showAuditUser << _hideAuditUser
-        << userid.contains(_showAuditUser)
-        << (_hideAuditUser.isEmpty() || !userid.contains(_hideAuditUser));*/
     if (event.contains(_showAuditEvent) // empty regexps match any string
         && (_hideAuditEvent.isEmpty() || !event.contains(_hideAuditEvent))
         && userid.contains(_showAuditUser)

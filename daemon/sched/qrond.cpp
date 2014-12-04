@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -90,7 +90,7 @@ void Qrond::startup(QStringList args) {
                  << ": " << _httpd->errorString();
   if (!_configDir.isEmpty())
     _configRepository->openRepository(_configDir);
-  reload();
+  systemTriggeredLoadConfig("startup");
   if (_configRepository->currentConfigId().isNull()) {
     Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
@@ -100,7 +100,27 @@ void Qrond::startup(QStringList args) {
   }
 }
 
-bool Qrond::reload() {
+bool Qrond::systemTriggeredLoadConfig(QString actor) {
+  bool result = loadConfig();
+  Log::info() << "AUDIT action: 'reloadConfig' "
+              << (result ? "result: success" : "result: failure")
+              << " actor: '" << actor << "'";
+  return result;
+}
+
+bool Qrond::loadConfig() {
+  bool result = false;
+  if (this->thread() == QThread::currentThread())
+    result = doLoadConfig();
+  else
+    QMetaObject::invokeMethod(this, "doLoadConfig",
+                              Qt::BlockingQueuedConnection,
+                              Q_RETURN_ARG(bool, result));
+  return result;
+}
+
+bool Qrond::doLoadConfig() {
+  bool success = false;
   if (!_configFile.isEmpty()) {
     Log::info() << "loading configuration from file: " << _configFile;
     // LATER support a config directory like /etc/qron.d rather only one file
@@ -110,13 +130,27 @@ bool Qrond::reload() {
       Log::error() << "cannot load configuration from file: " << _configFile;
     } else {
       _configRepository->addCurrent(config);
-      return true;
+      success = true;
     }
   }
-  return false;
+  return success;
+}
+
+void Qrond::systemTriggeredShutdown(int returnCode, QString actor) {
+  Log::info() << "AUDIT action: 'shutdown' actor: '"<< actor << "'";
+  shutdown(returnCode);
 }
 
 void Qrond::shutdown(int returnCode) {
+  if (this->thread() == QThread::currentThread())
+    doShutdown(returnCode);
+  else
+    QMetaObject::invokeMethod(this, "doShutdown",
+                              Qt::BlockingQueuedConnection,
+                              Q_ARG(int, returnCode));
+}
+
+void Qrond::doShutdown(int returnCode) {
   Log::info() << "qrond is shuting down";
   // TODO wait for running tasks while starting new ones is disabled
   // delete HttpServer and Scheduler
@@ -142,14 +176,18 @@ static void signal_handler(int signal_number) {
   if (shutingDown)
     return;
   switch (signal_number) {
-  case SIGHUP:
-    QMetaObject::invokeMethod(qrondInstance(), "reload", Qt::QueuedConnection);
+  case SIGHUP:    
+    QMetaObject::invokeMethod(qrondInstance(), "systemTriggeredLoadConfig",
+                              Qt::QueuedConnection,
+                              Q_ARG(QString, "signal"));
     break;
   case SIGTERM:
   case SIGINT:
     shutingDown = true;
-    QMetaObject::invokeMethod(qrondInstance(), "shutdown",
-                              Qt::QueuedConnection, Q_ARG(int, 0));
+    QMetaObject::invokeMethod(qrondInstance(), "systemTriggeredShutdown",
+                              Qt::QueuedConnection,
+                              Q_ARG(int, 0),
+                              Q_ARG(QString, "signal"));
     break;
   }
 }

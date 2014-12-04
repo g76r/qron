@@ -40,8 +40,15 @@ public:
   static Qrond *instance();
   Q_INVOKABLE void startup(QStringList args);
   /** This method is thread-safe */
-  Q_INVOKABLE bool reload();
-  Q_INVOKABLE void shutdown(int returnCode);
+  bool loadConfig();
+  /** This method is thread-safe */
+  void shutdown(int returnCode);
+
+private:
+  Q_INVOKABLE bool doLoadConfig();
+  Q_INVOKABLE void doShutdown(int returnCode);
+  Q_INVOKABLE bool systemTriggeredLoadConfig(QString actor);
+  Q_INVOKABLE void systemTriggeredShutdown(int returnCode, QString actor);
 };
 
 #endif // QROND_H
