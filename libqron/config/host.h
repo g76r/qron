@@ -38,6 +38,7 @@ public:
   QString resourcesAsString() const;
   QString label() const;
   void detach();
+  PfNode toPf() const;
 
 private:
   HostData *hd();

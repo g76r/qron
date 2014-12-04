@@ -128,11 +128,11 @@ void Calendar::clear() {
   d->_rules.clear();
 }
 
-PfNode Calendar::toPfNode(bool useNameIfAvailable) const {
+PfNode Calendar::toPfNode(bool useNameOnlyIfSet) const {
   QString name(this->name());
-  if (!name.isEmpty() && useNameIfAvailable)
-    return PfNode("calendar", name);
-  PfNode node("calendar");
+  PfNode node("calendar", name);
+  if (!name.isEmpty() && useNameOnlyIfSet)
+    return node;
   foreach (const CalendarData::Rule &r, d->_rules) {
     QString s;
     s.append(r._begin.isNull() ? "" : r._begin.toString("yyyy-MM-dd"));

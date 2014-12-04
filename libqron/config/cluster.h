@@ -39,6 +39,7 @@ public:
   QString balancing() const;
   QString label() const;
   void setId(QString id);
+  PfNode toPfNode() const;
 
 private:
   ClusterData *cd();

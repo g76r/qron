@@ -21,6 +21,7 @@
 #include <QCryptographicHash>
 #include <QMutex>
 
+#define DEFAULT_MAXTOTALTASKINSTANCES 16
 #define DEFAULT_MAXQUEUEDREQUESTS 128
 
 class RequestTaskActionLink {
@@ -164,14 +165,16 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   _clusters.clear();
   foreach (PfNode node, root.childrenByName("cluster")) {
     Cluster cluster(node);
-    foreach (PfNode child, node.childrenByName("host")) {
-      Host host = _hosts.value(child.contentAsString());
-      if (!host.isNull())
-        cluster.appendHost(host);
-      else
-        Log::error() << "host '" << child.contentAsString()
-                     << "' not found, won't add it to cluster '"
-                     << cluster.id() << "'";
+    foreach (PfNode child, node.childrenByName("hosts")) {
+      foreach (const QString &hostId, child.contentAsStringList()) {
+        Host host = _hosts.value(hostId);
+        if (!host.isNull())
+          cluster.appendHost(host);
+        else
+          Log::error() << "host '" << hostId
+                       << "' not found, won't add it to cluster '"
+                       << cluster.id() << "'";
+      }
     }
     if (cluster.hosts().isEmpty())
       Log::warning() << "cluster '" << cluster.id() << "' has no member";
@@ -290,9 +293,9 @@ ignore_task:;
                       "value: " << node.toPf();
   }
   if (maxtotaltaskinstances <= 0) {
-    Log::debug() << "configured 16 task executors (default "
-                    "maxtotaltaskinstances value)";
-    maxtotaltaskinstances = 16;
+    maxtotaltaskinstances = DEFAULT_MAXTOTALTASKINSTANCES;
+    Log::debug() << "configured " << maxtotaltaskinstances
+                 << " task executors (default maxtotaltaskinstances value)";
   }
   _maxtotaltaskinstances = maxtotaltaskinstances;
   int maxqueuedrequests = 0;
@@ -573,8 +576,33 @@ PfNode SchedulerConfig::toPfNode() const {
   foreach(const Task &task, tasks)
     if (task.supertaskId().isNull())
       node.appendChild(task.toPfNode());
-  // FIXME hosts, clusters, incl. host resources
-  node.appendChild(d->_accessControlConfig.toPfNode());
+  QList<Host> hosts = d->_hosts.values();
+  qSort(hosts);
+  foreach (const Host &host, hosts)
+    node.appendChild(host.toPf());
+  QList<Cluster> clusters = d->_clusters.values();
+  qSort(clusters);
+  foreach (const Cluster &cluster, clusters)
+    node.appendChild(cluster.toPfNode());
+  if (d->_maxtotaltaskinstances != DEFAULT_MAXTOTALTASKINSTANCES)
+    node.appendChild(PfNode("maxtotaltaskinstances",
+                            QString::number(d->_maxtotaltaskinstances)));
+  if (d->_maxqueuedrequests != DEFAULT_MAXQUEUEDREQUESTS)
+    node.appendChild(PfNode("maxqueuedrequests",
+                            QString::number(d->_maxqueuedrequests)));
+  // LATER use this when Calendar will be ported to SharedUiItem
+  //QList<Calendar> namedCalendars = d->_namedCalendars.values();
+  //qSort(namedCalendars);
+  //foreach (const Calendar &calendar, namedCalendars)
+  //  node.appendChild(calendar.toPfNode());
+  QStringList calendarNames = d->_namedCalendars.keys();
+  qSort(calendarNames);
+  foreach (const QString &calendarName, calendarNames)
+    node.appendChild(d->_namedCalendars.value(calendarName).toPfNode());
+  // FIXME alerterConfig
+  if (!d->_accessControlConfig.isEmpty())
+    node.appendChild(d->_accessControlConfig.toPfNode());
+  // FIXME _logfiles;
   return node;
 }
 
@@ -583,15 +611,8 @@ PfNode SchedulerConfig::toPfNode() const {
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
   QHash<QString,QHash<QString,qint64> > _hostResources;
-  QList<EventSubscription> _onstart, _onsuccess, _onfailure;
-  QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
-  qint32 _maxtotaltaskinstances, _maxqueuedrequests;
-  PfNode _accessControlNode;
   QHash<QString,Calendar> _namedCalendars;
   AlerterConfig _alerterConfig;
-  AccessControlConfig _accessControlConfig;
   QList<LogFile> _logfiles;
-  QList<Logger*> _loggers;
-
 
 */

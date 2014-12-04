@@ -20,6 +20,8 @@
 #include "log/log.h"
 #include "configutils.h"
 
+#define DEFAULT_BALANCING_METHOD "first"
+
 static QString _uiHeaderNames[] = {
   "Id", // 0
   "Hosts",
@@ -48,7 +50,7 @@ Cluster::Cluster(PfNode node) {
   ClusterData *hgd = new ClusterData;
   hgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
   hgd->_label = node.attribute("label", hgd->_id);
-  hgd->_balancing = node.attribute("balancing", "first");
+  hgd->_balancing = node.attribute("balancing", DEFAULT_BALANCING_METHOD);
   if (hgd->_balancing == "first" || hgd->_balancing == "each")
     setData(hgd);
   else {
@@ -120,4 +122,20 @@ int ClusterData::uiDataCount() const {
 ClusterData *Cluster::cd() {
   detach<ClusterData>();
   return (ClusterData*)constData();
+}
+
+PfNode Cluster::toPfNode() const {
+  const ClusterData *cd = this->cd();
+  if (!cd)
+    return PfNode();
+  PfNode node("cluster", cd->_id);
+  if (cd->_label != cd->_id)
+    node.appendChild(PfNode("label", cd->_label));
+  if (cd->_balancing != DEFAULT_BALANCING_METHOD)
+    node.appendChild(PfNode("balancing", cd->_balancing));
+  QStringList hosts;
+  foreach (const Host &host, cd->_hosts)
+    hosts.append(host.id());
+  node.appendChild(PfNode("hosts", hosts.join(' ')));
+  return node;
 }

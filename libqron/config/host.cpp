@@ -122,3 +122,19 @@ HostData *Host::hd() {
 void Host::detach() {
   SharedUiItem::detach<HostData>();
 }
+
+PfNode Host::toPf() const {
+  const HostData *hd = this->hd();
+  if (!hd)
+    return PfNode();
+  PfNode node("host", hd->_id);
+  if (hd->_label != hd->_id)
+    node.appendChild(PfNode("label", hd->_label));
+  if (hd->_hostname != hd->_id)
+    node.appendChild(PfNode("hostname", hd->_hostname));
+  foreach (const QString &key, hd->_resources.keys())
+    node.appendChild(
+          PfNode("resource",
+                 key+" "+QString::number(hd->_resources.value(key))));
+  return node;
+}

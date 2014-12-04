@@ -43,7 +43,7 @@ public:
   bool isNull() const;
   void clear();
   /** e.g. (calendar name) or (calendar(include 2014-01-01..2018-12-31)) */
-  PfNode toPfNode(bool useNameIfAvailable = false) const;
+  PfNode toPfNode(bool useNameOnlyIfSet = false) const;
   /** Enumerate rules in a human readable fashion
     * e.g. "include 2014-01-01..2018-12-31, exclude 2014-04-01" */
   QString toCommaSeparatedRulesString() const;
