@@ -407,11 +407,9 @@ void Task::copyLiveAttributesFromOldTask(Task oldTask) {
   TaskData *td = this->td();
   if (!td || oldTask.isNull())
     return;
-  // copy mutable fields from old task
+  // copy mutable fields from old task (excepted _nextScheduledExecution)
   td->_lastExecution = oldTask.lastExecution().isValid()
       ? oldTask.lastExecution().toMSecsSinceEpoch() : LLONG_MIN;
-  td->_nextScheduledExecution = oldTask.nextScheduledExecution().isValid()
-      ? oldTask.nextScheduledExecution().toMSecsSinceEpoch() : LLONG_MIN;
   td->_instancesCount = oldTask.instancesCount();
   td->_lastSuccessful = oldTask.lastSuccessful();
   td->_lastReturnCode = oldTask.lastReturnCode();
