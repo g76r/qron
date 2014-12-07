@@ -44,6 +44,7 @@ public:
   QList<AlertRule> rules() const;
   /** Available channels names */
   QStringList channelsNames() const;
+  PfNode toPfNode() const;
 };
 
 #endif // ALERTERCONFIG_H

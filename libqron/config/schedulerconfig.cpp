@@ -600,7 +600,7 @@ PfNode SchedulerConfig::toPfNode() const {
   qSort(calendarNames);
   foreach (const QString &calendarName, calendarNames)
     node.appendChild(d->_namedCalendars.value(calendarName).toPfNode());
-  // FIXME alerterConfig
+  node.appendChild(d->_alerterConfig.toPfNode());
   if (!d->_accessControlConfig.isEmpty())
     node.appendChild(d->_accessControlConfig.toPfNode());
   foreach (const LogFile &logfile, d->_logfiles)

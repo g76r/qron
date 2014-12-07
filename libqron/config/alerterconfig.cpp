@@ -132,3 +132,13 @@ QList<AlertRule> AlerterConfig::rules() const {
 QStringList AlerterConfig::channelsNames() const {
   return d ? d->_channelNames : QStringList();
 }
+
+PfNode AlerterConfig::toPfNode() const {
+  if (!d)
+    return PfNode();
+  PfNode node("alerts");
+  ConfigUtils::writeParamSet(&node, d->_params, "param");
+  foreach (const AlertRule &rule, d->_rules)
+    node.appendChild(rule.toPfNode());
+  return node;
+}
