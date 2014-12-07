@@ -120,9 +120,8 @@ Action Action::createAction(PfNode node, Scheduler *scheduler,
   } else if (node.name() == "end") {
     return EndAction(scheduler, node);
   } else {
-    if (node.name() == "param"
-        || (eventName == "ontrigger"
-            && (node.name() == "cron" || node.name() == "notice")))
+    if (eventName == "ontrigger"
+        && (node.name() == "cron" || node.name() == "notice"))
       ;
     else
       Log::error() << "unknown action type: " << node.name();
