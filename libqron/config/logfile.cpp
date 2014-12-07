@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2014 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -53,4 +53,15 @@ Log::Severity LogFile::minimumSeverity() const {
 
 bool LogFile::buffered() const {
   return d->_buffered;
+}
+
+PfNode LogFile::toPfNode() const {
+  if (!d)
+    return PfNode();
+  PfNode node("log");
+  node.appendChild(PfNode("file", d->_pathPattern));
+  node.appendChild(PfNode("level", Log::severityToString(d->_minimumSeverity)));
+  if (!d->_buffered)
+    node.appendChild(PfNode("unbuffered"));
+  return node;
 }

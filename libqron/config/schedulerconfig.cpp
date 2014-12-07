@@ -112,6 +112,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   QList<Logger*> loggers;
   QList<LogFile> logfiles;
   foreach (PfNode node, root.childrenByName("log")) {
+    // LATER move that parsing code to LogFile
     QString level = node.attribute("level");
     QString filename = node.attribute("file");
     bool buffered = !node.hasChild("unbuffered");
@@ -602,17 +603,7 @@ PfNode SchedulerConfig::toPfNode() const {
   // FIXME alerterConfig
   if (!d->_accessControlConfig.isEmpty())
     node.appendChild(d->_accessControlConfig.toPfNode());
-  // FIXME _logfiles;
+  foreach (const LogFile &logfile, d->_logfiles)
+    node.appendChild(logfile.toPfNode());
   return node;
 }
-
-/*
-
-  QHash<QString,Cluster> _clusters;
-  QHash<QString,Host> _hosts;
-  QHash<QString,QHash<QString,qint64> > _hostResources;
-  QHash<QString,Calendar> _namedCalendars;
-  AlerterConfig _alerterConfig;
-  QList<LogFile> _logfiles;
-
-*/

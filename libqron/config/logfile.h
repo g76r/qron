@@ -17,6 +17,7 @@
 #include "libqron_global.h"
 #include <QSharedDataPointer>
 #include "log/log.h"
+#include "pf/pfnode.h"
 
 class LogFileData;
 
@@ -36,6 +37,7 @@ public:
   QString pathPattern() const;
   Log::Severity minimumSeverity() const;
   bool buffered() const;
+  PfNode toPfNode() const;
 };
 
 #endif // LOGFILE_H
