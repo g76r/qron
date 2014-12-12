@@ -51,11 +51,13 @@ TEMPLATE = app
 
 SOURCES += \
     sched/qrond.cpp \
-    wui/webconsole.cpp
+    wui/webconsole.cpp \
+    wui/configuploadhandler.cpp
 
 HEADERS += \
     sched/qrond.h \
-    wui/webconsole.h
+    wui/webconsole.h \
+    wui/configuploadhandler.h
 
 RESOURCES += \
     wui/webconsole.qrc

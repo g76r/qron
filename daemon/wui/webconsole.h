@@ -42,6 +42,8 @@
 #include <QSortFilterProxyModel>
 #include "ui/stepsmodel.h"
 #include "ui/htmlstepitemdelegate.h"
+#include "configuploadhandler.h"
+#include "configmgt/configrepository.h"
 
 class QThread;
 
@@ -54,6 +56,7 @@ class WebConsole : public HttpHandler {
   Q_DISABLE_COPY(WebConsole)
   QThread *_thread;
   Scheduler *_scheduler;
+  ConfigRepository *_configRepository;
   HostsModel *_hostsModel;
   ClustersModel *_clustersModel;
   HostsResourcesAvailabilityModel *_freeResourcesModel, *_resourcesLwmModel;
@@ -99,6 +102,7 @@ class WebConsole : public HttpHandler {
   *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
+  ConfigUploadHandler *_configUploadHandler;
   QString _title, _navtitle, _titlehref, _cssoverload, _customaction_taskdetail;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
@@ -112,6 +116,7 @@ public:
   bool handleRequest(HttpRequest req, HttpResponse res,
                      HttpRequestContext ctxt);
   void setScheduler(Scheduler *scheduler);
+  void setConfigRepository(ConfigRepository *configRepository);
   void setUsersDatabase(UsersDatabase *usersDatabase, bool takeOwnership);
 
 public slots:

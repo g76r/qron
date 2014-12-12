@@ -34,6 +34,7 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _configRepository(new LocalConfigRepository(this, _scheduler)) {
   WebConsole *webconsole = new WebConsole;
   webconsole->setScheduler(_scheduler);
+  webconsole->setConfigRepository(_configRepository);
   PipelineHttpHandler *pipeline = new PipelineHttpHandler;
   _httpAuthHandler = new BasicAuthHttpHandler;
   _httpAuthHandler->setAuthenticator(_scheduler->authenticator(), false);

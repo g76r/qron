@@ -36,6 +36,7 @@
 #define SVG_NOT_A_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">This task is not a workflow.</text></svg>"
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
+  _configRepository(0),
   _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
   _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false) {
   QList<int> cols;
@@ -49,6 +50,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _tasksTriggerDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
   _wuiHandler = new TemplatingHttpHandler(this, "/console", ":docroot/console");
   _wuiHandler->addFilter("\\.html$");
+  _configUploadHandler = new ConfigUploadHandler("", 1, this);
 
   // models
   _hostsModel = new HostsModel(this);
@@ -1260,6 +1262,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_tasksTriggerDiagram->source(0).toUtf8());
     return true;
   }
+  if (path == "/rest/pf/config/v1") {
+    _configUploadHandler->handleRequest(req, res, ctxt);
+    return true;
+  }
   if (path == "/rest/csv/log/files/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
@@ -1437,6 +1443,16 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   }
 }
 
+void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
+  if (_configRepository) {
+    // FIXME
+  }
+  _configRepository = configRepository;
+  _configUploadHandler->setConfigRepository(_configRepository);
+  if (_configRepository) {
+    // FIXME
+  }
+}
 
 void WebConsole::setUsersDatabase(UsersDatabase *usersDatabase,
                                   bool takeOwnership) {
