@@ -519,6 +519,7 @@ QString SchedulerConfig::hash() const {
     buf.seek(0);
     hash.addData(&buf);
     d->_hash = hash.result().toHex();
+    qDebug() << "SchedulerConfig::hash()" << d->_hash;
   }
   return d->_hash;
 }

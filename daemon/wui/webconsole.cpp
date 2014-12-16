@@ -1263,7 +1263,26 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   if (path == "/rest/pf/config/v1") {
-    _configUploadHandler->handleRequest(req, res, ctxt);
+    if (req.method() == HttpRequest::POST
+        || req.method() == HttpRequest::PUT)
+      _configUploadHandler->handleRequest(req, res, ctxt);
+    else {
+      if (_configRepository) {
+        QString configid = req.param("configid").trimmed();
+        SchedulerConfig config
+            = (configid == "current") ? _configRepository->currentConfig()
+                                      : _configRepository->config(configid);
+        if (config.isNull()) {
+          res.setStatus(404);
+          res.output()->write("no config found with this id\n");
+        } else
+          config.toPfNode() // LATER remove indentation
+              .writePf(res.output(), PfOptions().setShouldIndent());
+      } else {
+        res.setStatus(500);
+        res.output()->write("no config repository is set\n");
+      }
+    }
     return true;
   }
   if (path == "/rest/csv/log/files/v1") {
