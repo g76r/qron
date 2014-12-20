@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2013 Hallowyn and others.
+ Copyright 2012-2014 Hallowyn and others.
  This file is part of qron, see <http://qron.hallowyn.com/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -13,41 +13,7 @@
  You should have received a copy of the GNU Affero General Public License
  along with qron. If not, see <http://www.gnu.org/licenses/>.
 -->
-<html>
-  <head>
-    <title><?value:title?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
-    <link href="css/qicons.css" rel="stylesheet">
-    <link href="css/qron.css" rel="stylesheet">
-    <style type="text/css"><?value:cssoverload?></style>
-  </head>
-  <body>
-    <div class="navbar navbar-inverse navbar-static-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-menu"></span>
-          </a>
-          <a class="brand" href="<?value:titlehref?>"><?value:navtitle?></a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li><a href="index.html">Overview</a></li>
-              <li><a href="tasks.html">Tasks</a></li>
-              <li><a href="infra.html">Infrastructure</a></li>
-              <li><a href="alerts.html">Alerts</a></li>
-              <li><a href="resources.html">Resources</a></li>
-              <li><a href="events.html">Events</a></li>
-              <li><a href="schedule.html">Schedule</a></li>
-              <li class="active"><a href="log.html">Log</a></li>
-              <li><a href="about.html">About</a></li>
-              <li><a><?view:now?></a></li>
-          </div>
-        </div>
-      </div>
-    </div>
-<!-- end of header -->
+<?include:header.html?>
 
     <div class="container">
       <?value:message?>
@@ -83,9 +49,6 @@
       </div>
     </div>
 
-<!-- start of footer -->
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
-  </body>
-</html>
-
+<?include:footer.html?>

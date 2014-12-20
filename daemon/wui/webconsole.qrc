@@ -1,6 +1,8 @@
 <RCC>
     <qresource prefix="/">
         <file>docroot/console/index.html</file>
+        <file>docroot/console/header.html</file>
+        <file>docroot/console/footer.html</file>
         <file>docroot/console/js/bootstrap.min.js</file>
         <file>docroot/console/js/jquery.min.js</file>
         <file>docroot/console/css/bootstrap.min.css</file>
