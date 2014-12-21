@@ -103,7 +103,8 @@ class WebConsole : public HttpHandler {
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
   ConfigUploadHandler *_configUploadHandler;
-  QString _title, _navtitle, _titlehref, _cssoverload, _customaction_taskdetail;
+  QString _title, _navtitle, _titlehref, _cssoverload, _customaction_taskdetail,
+  _configFilePath, _configRepoPath;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
   bool _ownUsersDatabase, _accessControlEnabled;
@@ -116,6 +117,7 @@ public:
   bool handleRequest(HttpRequest req, HttpResponse res,
                      HttpRequestContext ctxt);
   void setScheduler(Scheduler *scheduler);
+  void setConfigPaths(QString configFilePath, QString configRepoPath);
   void setConfigRepository(ConfigRepository *configRepository);
   void setUsersDatabase(UsersDatabase *usersDatabase, bool takeOwnership);
 

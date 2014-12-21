@@ -30,20 +30,20 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _webconsoleAddress(QHostAddress::Any), _webconsolePort(8086),
   _scheduler(new Scheduler),
   _httpd(new HttpServer(8, 32)), // LATER should be configurable
-  _configDir(), _configFile(), _httpAuthRealm("qron"),
-  _configRepository(new LocalConfigRepository(this, _scheduler)) {
-  WebConsole *webconsole = new WebConsole;
-  webconsole->setScheduler(_scheduler);
-  webconsole->setConfigRepository(_configRepository);
+  _httpAuthRealm("qron"),
+  _configRepository(new LocalConfigRepository(this, _scheduler)),
+  _webconsole(new WebConsole) {
+  _webconsole->setScheduler(_scheduler);
+  _webconsole->setConfigRepository(_configRepository);
   PipelineHttpHandler *pipeline = new PipelineHttpHandler;
   _httpAuthHandler = new BasicAuthHttpHandler;
   _httpAuthHandler->setAuthenticator(_scheduler->authenticator(), false);
   _httpAuthHandler->setAuthIsMandatory(false);
   connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
           _httpAuthHandler, SLOT(setAuthIsMandatory(bool)));
-  webconsole->setUsersDatabase(_scheduler->usersDatabase(), false);
+  _webconsole->setUsersDatabase(_scheduler->usersDatabase(), false);
   pipeline->appendHandler(_httpAuthHandler);
-  pipeline->appendHandler(webconsole);
+  pipeline->appendHandler(_webconsole);
   _httpd->appendHandler(pipeline);
   connect(_configRepository, SIGNAL(currentConfigChanged(QString,SchedulerConfig)),
           _scheduler, SLOT(configChanged(QString,SchedulerConfig)));
@@ -74,9 +74,9 @@ void Qrond::startup(QStringList args) {
         Log::error() << "bad port number: " << arg
                      << " using default instead (8086)";
     } else if (i < n-1 && (arg == "--config-file")) {
-       _configFile = args[++i];
+       _configFilePath = args[++i];
     } else if (i < n-1 && (arg == "--config-repository")) {
-       _configDir = args[++i];
+       _configRepoPath = args[++i];
     } else if (i < n-1 && arg == "--http-auth-realm") {
        _httpAuthRealm = args[++i];
        _httpAuthRealm.replace("\"", "'");
@@ -84,13 +84,14 @@ void Qrond::startup(QStringList args) {
       Log::warning() << "unknown command line parameter: " << arg;
     }
   }
+  _webconsole->setConfigPaths(_configFilePath, _configRepoPath);
   _httpAuthHandler->setRealm(_httpAuthRealm);
   if (!_httpd->listen(_webconsoleAddress, _webconsolePort))
     Log::error() << "cannot start webconsole on "
                  << _webconsoleAddress.toString() << ":" << _webconsolePort
                  << ": " << _httpd->errorString();
-  if (!_configDir.isEmpty())
-    _configRepository->openRepository(_configDir);
+  if (!_configRepoPath.isEmpty())
+    _configRepository->openRepository(_configRepoPath);
   systemTriggeredLoadConfig("startup");
   if (_configRepository->currentConfigId().isNull()) {
     Log::fatal() << "cannot load configuration";
@@ -122,13 +123,14 @@ bool Qrond::loadConfig() {
 
 bool Qrond::doLoadConfig() {
   bool success = false;
-  if (!_configFile.isEmpty()) {
-    Log::info() << "loading configuration from file: " << _configFile;
+  if (!_configFilePath.isEmpty()) {
+    Log::info() << "loading configuration from file: " << _configFilePath;
     // LATER support a config directory like /etc/qron.d rather only one file
-    QFile file(_configFile);
+    QFile file(_configFilePath);
     SchedulerConfig config = _configRepository->parseConfig(&file);
     if (config.isNull()) {
-      Log::error() << "cannot load configuration from file: " << _configFile;
+      Log::error() << "cannot load configuration from file: "
+                   << _configFilePath;
     } else {
       _configRepository->addCurrent(config);
       success = true;

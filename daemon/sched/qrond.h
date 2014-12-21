@@ -30,9 +30,10 @@ class Qrond : public QObject {
   quint16 _webconsolePort;
   Scheduler *_scheduler;
   HttpServer *_httpd;
-  QString _configDir, _configFile, _httpAuthRealm;
+  QString _configRepoPath, _configFilePath, _httpAuthRealm;
   BasicAuthHttpHandler *_httpAuthHandler;
   LocalConfigRepository *_configRepository;
+  WebConsole *_webconsole;
 
 public:
   explicit Qrond(QObject *parent = 0);

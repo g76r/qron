@@ -594,6 +594,10 @@ public:
       return QString::number(_console->_scheduler->maxtotaltaskinstances());
     if (key == "maxqueuedrequests")
       return QString::number(_console->_scheduler->maxqueuedrequests());
+    if (key == "configfilepath")
+      return _console->_configFilePath;
+    if (key == "configrepopath")
+      return _console->_configRepoPath;
     QString v(_req.base64Cookie(key));
     return v.isNull() ? _ctxt.paramValue(key, defaultValue) : v;
   }
@@ -1460,6 +1464,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   } else {
     _title = "Qron Web Console";
   }
+}
+
+void WebConsole::setConfigPaths(QString configFilePath,
+                                QString configRepoPath) {
+  _configFilePath = configFilePath;
+  _configRepoPath = configRepoPath;
 }
 
 void WebConsole::setConfigRepository(ConfigRepository *configRepository) {

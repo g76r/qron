@@ -15,6 +15,7 @@
         <file>docroot/console/infra.html</file>
         <file>docroot/console/events.html</file>
         <file>docroot/console/schedule.html</file>
+        <file>docroot/console/config.html</file>
         <file>docroot/console/css/qron.css</file>
         <file>docroot/console/adhoc.html</file>
         <file>docroot/console/taskdoc.html</file>
