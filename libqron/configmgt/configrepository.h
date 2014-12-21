@@ -15,20 +15,22 @@ class LIBQRONSHARED_EXPORT ConfigRepository : public QObject {
 public:
   ConfigRepository(QObject *parent, Scheduler *scheduler);
   virtual QStringList availlableConfigIds() = 0;
-  /** Return id of current config according to repository, which is not
+  /** Return id of active config according to repository, which is not
    * always the same currently than active config. */
-  virtual QString currentConfigId() = 0;
-  /** Syntaxic sugar for config(currentConfigId()) */
-  SchedulerConfig currentConfig() { return config(currentConfigId()); }
+  virtual QString activeConfigId() = 0;
+  /** Syntaxic sugar for config(activeConfigId()) */
+  SchedulerConfig activeConfig() { return config(activeConfigId()); }
   virtual SchedulerConfig config(QString id) = 0;
   /** Add a config to the repository if does not already exist, and return
    * its id. */
   virtual QString addConfig(SchedulerConfig config) = 0;
-  virtual void setCurrent(QString id) = 0;
-  /** Syntaxic sugar for setCurrent(addConfig(config)) */
-  QString addCurrent(SchedulerConfig config) {
+  /** Activate an already loaded config
+   * @return fals if id not found */
+  virtual bool activateConfig(QString id) = 0;
+  /** Syntaxic sugar for activate(addConfig(config)) */
+  QString addAndActivate(SchedulerConfig config) {
     QString id = addConfig(config);
-    setCurrent(id);
+    activateConfig(id);
     return id; }
   /** Syntaxic sugar for addConfig(parseConfig(source)) */
   QString addConfig(QIODevice *source) {
@@ -37,13 +39,16 @@ public:
    * to the repository.
    * This method is thread-safe. */
   SchedulerConfig parseConfig(QIODevice *source);
+  /** Remove a non-active config from the repository.
+   * @return false if id not found or active */
+  virtual bool removeConfig(QString id) = 0;
 
 signals:
-  void currentConfigChanged(QString id, SchedulerConfig config);
+  void configActivated(QString id, SchedulerConfig config);
   void configAdded(QString id, SchedulerConfig config);
   void configRemoved(QString id);
   void historyReset(QList<ConfigHistoryEntry> history);
-  void historyAdded(ConfigHistoryEntry historyEntry);
+  void historyEntryAdded(ConfigHistoryEntry historyEntry);
 
 private:
   Q_INVOKABLE SchedulerConfig parseConfig(PfNode source);

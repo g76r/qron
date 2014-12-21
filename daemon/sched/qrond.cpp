@@ -45,7 +45,7 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   pipeline->appendHandler(_httpAuthHandler);
   pipeline->appendHandler(_webconsole);
   _httpd->appendHandler(pipeline);
-  connect(_configRepository, SIGNAL(currentConfigChanged(QString,SchedulerConfig)),
+  connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
           _scheduler, SLOT(configChanged(QString,SchedulerConfig)));
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
   //        _httpd, SLOT(deleteLater()));
@@ -93,7 +93,7 @@ void Qrond::startup(QStringList args) {
   if (!_configRepoPath.isEmpty())
     _configRepository->openRepository(_configRepoPath);
   systemTriggeredLoadConfig("startup");
-  if (_configRepository->currentConfigId().isNull()) {
+  if (_configRepository->activeConfigId().isNull()) {
     Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
     return; // FIXME remove
@@ -132,7 +132,7 @@ bool Qrond::doLoadConfig() {
       Log::error() << "cannot load configuration from file: "
                    << _configFilePath;
     } else {
-      _configRepository->addCurrent(config);
+      _configRepository->addAndActivate(config);
       success = true;
     }
   }

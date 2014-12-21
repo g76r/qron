@@ -44,6 +44,8 @@
 #include "ui/htmlstepitemdelegate.h"
 #include "configuploadhandler.h"
 #include "configmgt/configrepository.h"
+#include "ui/configsmodel.h"
+#include "ui/htmlschedulerconfigitemdelegate.h"
 
 class QThread;
 
@@ -76,6 +78,7 @@ class WebConsole : public HttpHandler {
   CalendarsModel *_calendarsModel;
   StepsModel *_stepsModel;
   LogModel *_warningLogModel, *_infoLogModel, *_auditLogModel;
+  ConfigsModel *_configsModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
@@ -90,7 +93,9 @@ class WebConsole : public HttpHandler {
   *_htmlLastPostedNoticesView20,
   *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
   *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView,
-  *_htmlLogFilesView, *_htmlCalendarsView, *_htmlStepsView;
+  *_htmlLogFilesView, *_htmlCalendarsView, *_htmlStepsView,
+  *_htmlConfigsView;
+  HtmlSchedulerConfigItemDelegate *_htmlConfigsDelegate;
   ClockView *_clockView;
   CsvTableView *_csvHostsListView,
   *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
@@ -99,7 +104,8 @@ class WebConsole : public HttpHandler {
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmitedAlertsView,
   *_csvAlertRulesView, *_csvLogView, *_csvTaskInstancesView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
-  *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView;
+  *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView,
+  *_csvConfigsView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
   ConfigUploadHandler *_configUploadHandler;

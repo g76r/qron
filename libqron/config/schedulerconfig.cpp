@@ -24,6 +24,13 @@
 #define DEFAULT_MAXTOTALTASKINSTANCES 16
 #define DEFAULT_MAXQUEUEDREQUESTS 128
 
+static QString _uiHeaderNames[] = {
+  "Id", // 0
+  "Last Load Time",
+  "Is Active",
+  "Actions"
+};
+
 class RequestTaskActionLink {
 public:
   Action _action;
@@ -37,7 +44,7 @@ public:
       _contextTask(contextTask) { }
 };
 
-class SchedulerConfigData : public QSharedData{
+class SchedulerConfigData : public SharedUiItemData{
 public:
   ParamSet _globalParams, _setenv, _unsetenv;
   QHash<QString,TaskGroup> _tasksGroups;
@@ -53,12 +60,13 @@ public:
   AccessControlConfig _accessControlConfig;
   QList<LogFile> _logfiles;
   QList<Logger*> _loggers;
+  QDateTime _lastLoadTime;
   mutable QMutex _mutex;
   mutable QString _hash;
   SchedulerConfigData() : _maxtotaltaskinstances(0), _maxqueuedrequests(0) { }
   SchedulerConfigData(PfNode root, Scheduler *scheduler, bool applyLogConfig);
   SchedulerConfigData(const SchedulerConfigData &other)
-    : QSharedData(other),
+    : SharedUiItemData(other),
       _globalParams(other._globalParams), _setenv(other._setenv),
       _unsetenv(other._unsetenv),
       _tasks(other._tasks), _clusters(other._clusters), _hosts(other._hosts),
@@ -74,17 +82,23 @@ public:
       _accessControlConfig(other._accessControlConfig),
       _logfiles(other._logfiles), _loggers(other._loggers) {
   }
+  QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiDataCount() const;
+  QString id() const { return _hash; }
+  QString idQualifier() const { return "config"; }
 };
 
 SchedulerConfig::SchedulerConfig() {
 }
 
-SchedulerConfig::SchedulerConfig(const SchedulerConfig &other) : d(other.d) {
+SchedulerConfig::SchedulerConfig(const SchedulerConfig &other)
+  : SharedUiItem(other) {
 }
 
 SchedulerConfig::SchedulerConfig(PfNode root, Scheduler *scheduler,
                                  bool applyLogConfig)
-  : d (new SchedulerConfigData(root, scheduler, applyLogConfig)) {
+  : SharedUiItem(new SchedulerConfigData(root, scheduler, applyLogConfig)) {
 }
 
 static inline void recordTaskActionLinks(
@@ -380,115 +394,135 @@ ignore_task:;
       Log::error() << "ignoring multiple 'access-control' in configuration";
     }
   }
+  _lastLoadTime = QDateTime::currentDateTime();
 }
 
 SchedulerConfig::~SchedulerConfig() {
 }
 
-SchedulerConfig &SchedulerConfig::operator=(const SchedulerConfig &other) {
-  d = other.d;
-  return *this;
-}
-
 bool SchedulerConfig::isNull() const {
-  return !d;
+  return !scd();
 }
 
 ParamSet SchedulerConfig::globalParams() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_globalParams : ParamSet();
 }
 
 ParamSet SchedulerConfig::setenv() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_setenv : ParamSet();
 }
 
 ParamSet SchedulerConfig::unsetenv() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_unsetenv : ParamSet();
 }
 
 QHash<QString,TaskGroup> SchedulerConfig::tasksGroups() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_tasksGroups : QHash<QString,TaskGroup>();
 }
 
 QHash<QString,Task> SchedulerConfig::tasks() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_tasks : QHash<QString,Task>();
 }
 
 QHash<QString,Cluster> SchedulerConfig::clusters() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_clusters : QHash<QString,Cluster>();
 }
 
 QHash<QString,Host> SchedulerConfig::hosts() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_hosts : QHash<QString,Host>();
 }
 
 QHash<QString,QHash<QString,qint64> > SchedulerConfig::hostResources() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_hostResources : QHash<QString,QHash<QString,qint64> >();
 }
 
 QHash<QString,Calendar> SchedulerConfig::namedCalendars() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_namedCalendars : QHash<QString,Calendar>();
 }
 
 QList<EventSubscription> SchedulerConfig::onstart() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onstart : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onsuccess() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onsuccess : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onfailure() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onfailure : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onlog() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onlog : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onnotice() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onnotice : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onschedulerstart() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onschedulerstart : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onconfigload() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onconfigload : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::allEventsSubscriptions() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_onstart + d->_onsuccess + d->_onfailure + d->_onlog
              + d->_onnotice + d->_onschedulerstart + d->_onconfigload
            : QList<EventSubscription>();
 }
 
 qint32 SchedulerConfig::maxtotaltaskinstances() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_maxtotaltaskinstances : 0;
 }
 
 qint32 SchedulerConfig::maxqueuedrequests() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_maxqueuedrequests : 0;
 }
 
 AlerterConfig SchedulerConfig::alerterConfig() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_alerterConfig : AlerterConfig();
 }
 
 AccessControlConfig SchedulerConfig::accessControlConfig() const {
+  const SchedulerConfigData *d = scd();
   return d ? d->_accessControlConfig : AccessControlConfig();
 }
 
 QList<LogFile> SchedulerConfig::logfiles() const {
-  return d ? d ->_logfiles : QList<LogFile>();
+  const SchedulerConfigData *d = scd();
+  return d ? d->_logfiles : QList<LogFile>();
 }
 
 QList<Logger*> SchedulerConfig::loggers() const {
-  return d ? d ->_loggers : QList<Logger*>();
+  const SchedulerConfigData *d = scd();
+  return d ? d->_loggers : QList<Logger*>();
 }
 
 Cluster SchedulerConfig::renameCluster(QString oldName, QString newName) {
+  SchedulerConfigData *d = scd();
   if (d && d->_clusters.contains(oldName)) {
     Cluster cluster = d->_clusters[oldName];
     cluster.setId(newName);
@@ -500,6 +534,7 @@ Cluster SchedulerConfig::renameCluster(QString oldName, QString newName) {
 }
 
 Task SchedulerConfig::updateTask(Task task) {
+  SchedulerConfigData *d = scd();
   if (d && d->_tasks.contains(task.id())) {
     d->_tasks.insert(task.id(), task);
     return task;
@@ -508,6 +543,7 @@ Task SchedulerConfig::updateTask(Task task) {
 }
 
 QString SchedulerConfig::hash() const {
+  const SchedulerConfigData *d = scd();
   if (!d)
     return QString();
   QMutexLocker locker(&d->_mutex);
@@ -526,6 +562,7 @@ QString SchedulerConfig::hash() const {
 
 void SchedulerConfig::copyLiveAttributesFromOldTasks(
     QHash<QString,Task> oldTasks) {
+  SchedulerConfigData *d = scd();
   if (!d)
     return;
   foreach (const Task &oldTask, oldTasks) {
@@ -552,6 +589,7 @@ qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {
 }
 
 PfNode SchedulerConfig::toPfNode() const {
+  const SchedulerConfigData *d = scd();
   if (!d)
     return PfNode();
   PfNode node("qrontab");
@@ -607,4 +645,32 @@ PfNode SchedulerConfig::toPfNode() const {
   foreach (const LogFile &logfile, d->_logfiles)
     node.appendChild(logfile.toPfNode());
   return node;
+}
+
+SchedulerConfigData *SchedulerConfig::scd() {
+  detach<SchedulerConfigData>();
+  return (SchedulerConfigData*)constData();
+}
+
+QVariant SchedulerConfigData::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int SchedulerConfigData::uiDataCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
+}
+
+QVariant SchedulerConfigData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+    switch(section) {
+    case 0:
+      return _hash;
+    case 1:
+      return _lastLoadTime.toString("yyyy-MM-dd hh:mm:ss,zzz");
+    }
+  }
+  return QVariant();
 }

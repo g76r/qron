@@ -12,7 +12,7 @@ LocalConfigRepository::LocalConfigRepository(
 
 void LocalConfigRepository::openRepository(QString basePath) {
   _basePath = QString();
-  _currentId = QString();
+  _activeConfigId = QString();
   _configs.clear();
   QDir configsDir(basePath+"/configs");
   QDir errorsDir(basePath+"/errors");
@@ -23,23 +23,23 @@ void LocalConfigRepository::openRepository(QString basePath) {
   QFileInfoList fileInfos =
       configsDir.entryInfoList(QDir::Files|QDir::NoSymLinks,
                                QDir::Time|QDir::Reversed);
-  QFile currentFile(basePath+"/current");
-  QString currentId;
-  if (currentFile.open(QIODevice::ReadOnly)) {
-    if (currentFile.size() < 1024) { // arbitrary limit
-      QByteArray hash = currentFile.readAll();
-      currentId = QString::fromUtf8(hash);
+  QFile activeFile(basePath+"/active");
+  QString activeConfigId;
+  if (activeFile.open(QIODevice::ReadOnly)) {
+    if (activeFile.size() < 1024) { // arbitrary limit
+      QByteArray hash = activeFile.readAll().trimmed();
+      activeConfigId = QString::fromUtf8(hash);
     }
-    currentFile.close();
+    activeFile.close();
   }
-  if (currentId.isEmpty()) {
-    if (currentFile.exists()) {
-      Log::error() << "error reading current config: " << currentFile.fileName()
-                   << ((currentFile.error() == QFileDevice::NoError)
-                       ? "" : " : "+currentFile.errorString());
+  if (activeConfigId.isEmpty()) {
+    if (activeFile.exists()) {
+      Log::error() << "error reading active config: " << activeFile.fileName()
+                   << ((activeFile.error() == QFileDevice::NoError)
+                       ? "" : " : "+activeFile.errorString());
     } else {
-      Log::warning() << "config repository lacking current config: "
-                     << currentFile.fileName();
+      Log::warning() << "config repository lacking active config: "
+                     << activeFile.fileName();
     }
   }
   foreach (const QFileInfo &fi, fileInfos) {
@@ -66,29 +66,32 @@ void LocalConfigRepository::openRepository(QString basePath) {
       }
       // FIXME fix repo if hash and filename do not match: rename
       _configs.insert(configId, config);
+      //qDebug() << "***************** openRepository" << configId;
       emit configAdded(configId, config);
     } else {
       Log::error() << "cannot open file in config repository: "
                    << fi.filePath() << ": " << f.errorString();
     }
   }
-  if (_configs.contains(currentId))
-    _currentId = currentId;
-  else {
-    Log::error() << "current configuration do not exist: " << currentId;
-  }
-  // FIXME fix current if needed (e.g. fixed target)
+  qDebug() << "***************** contains" << activeConfigId
+           << _configs.contains(activeConfigId) << _configs.size();
+  // FIXME fix active if needed (e.g. fixed target)
   // FIXME load history
   _basePath = basePath;
-  emit currentConfigChanged(_currentId, _configs.value(_currentId));
+  if (_configs.contains(activeConfigId)) {
+    _activeConfigId = activeConfigId;
+    emit configActivated(_activeConfigId, _configs.value(_activeConfigId));
+  } else {
+    Log::error() << "active configuration do not exist: " << activeConfigId;
+  }
 }
 
 QStringList LocalConfigRepository::availlableConfigIds() {
   return _configs.keys();
 }
 
-QString LocalConfigRepository::currentConfigId() {
-  return _currentId;
+QString LocalConfigRepository::activeConfigId() {
+  return _activeConfigId;
 }
 
 SchedulerConfig LocalConfigRepository::config(QString id) {
@@ -110,28 +113,63 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
       }
     }
     _configs.insert(id, config);
+    //qDebug() << "***************** addConfig" << id;
     emit configAdded(id, config);
   }
   return id;
 }
 
-void LocalConfigRepository::setCurrent(QString id) {
+bool LocalConfigRepository::activateConfig(QString id) {
+  // FIXME threadsafe
   SchedulerConfig config = _configs.value(id);
-  id = config.isNull() ? QString() : id;
-  if (id != _currentId || true) { // FIXME remove || true when config id is really implemented
-    if (!_basePath.isEmpty()) {
-      QSaveFile f(_basePath+"/current");
-      if (!f.open(QIODevice::WriteOnly|QIODevice::Truncate)
-          || f.write(id.toUtf8().append('\n')) < 0
-          || !f.commit()) {
-        Log::error() << "error writing config in repository: " << f.fileName()
-                     << ((f.error() == QFileDevice::NoError)
-                         ? "" : " : "+f.errorString());
-        return; // FIXME right ?
-      }
-      // FIXME write history in repo
-    }
-    _currentId = id;
-    emit currentConfigChanged(_currentId, config);
+  if (config.isNull()) {
+    Log::error() << "cannote activate config since it is not found in "
+                    "repository: " << id;
+    return false;
   }
+  // LATER should avoid activating for real when already active ?
+  //if (id != _activeConfigId) {
+  if (!_basePath.isEmpty()) {
+    QSaveFile f(_basePath+"/active");
+    if (!f.open(QIODevice::WriteOnly|QIODevice::Truncate)
+        || f.write(id.toUtf8().append('\n')) < 0
+        || !f.commit()) {
+      Log::error() << "error writing config in repository: " << f.fileName()
+                   << ((f.error() == QFileDevice::NoError)
+                       ? "" : " : "+f.errorString());
+      return false; // FIXME should activate even on write error ?
+    }
+    // FIXME write history in repo
+  }
+  _activeConfigId = id;
+  emit configActivated(_activeConfigId, config);
+  //}
+  return true;
+}
+
+bool LocalConfigRepository::removeConfig(QString id) {
+  // FIXME threadsafe
+  SchedulerConfig config = _configs.value(id);
+  if (config.isNull()) {
+    Log::error() << "cannote remove config since it is not found in "
+                    "repository: " << id;
+    return false;
+  }
+  if (id == _activeConfigId) {
+    Log::error() << "cannote remove currently active config: " << id;
+    return false;
+  }
+  if (!_basePath.isEmpty()) {
+    QFile f(_basePath+"/configs/"+id);
+    if (f.exists() && !f.remove()) {
+      Log::error() << "error removing config from repository: " << f.fileName()
+                   << ((f.error() == QFileDevice::NoError)
+                       ? "" : " : "+f.errorString());
+      return false; // FIXME should remove even on write error ?
+    }
+    // FIXME write history in repo
+  }
+  _configs.remove(id);
+  emit configRemoved(id);
+  return true;
 }

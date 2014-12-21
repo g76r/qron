@@ -94,6 +94,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _warningLogModel = new LogModel(this, Log::Warning, LOG_MAXROWS);
   _infoLogModel = new LogModel(this, Log::Info, LOG_MAXROWS);
   _auditLogModel = new LogModel(this, Log::Info, LOG_MAXROWS, "AUDIT ");
+  _configsModel = new ConfigsModel(this);
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
@@ -428,6 +429,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlStepsView->enableRowAnchor(0);
   _htmlStepsView->setItemDelegate(new HtmlStepItemDelegate(_htmlStepsView));
   _wuiHandler->addView(_htmlStepsView);
+  _htmlConfigsView = new HtmlTableView(this, "configs", CONFIG_TABLES_MAXROWS);
+  _htmlConfigsView->setModel(_configsModel);
+  _htmlConfigsView->setEmptyPlaceholder("(no config)");
+  _htmlConfigsDelegate = new HtmlSchedulerConfigItemDelegate(_htmlConfigsView);
+  _htmlConfigsView->setItemDelegate(_htmlConfigsDelegate);
+  _wuiHandler->addView(_htmlConfigsView);
 
   // CSV views
   CsvTableView::setDefaultFieldQuote('"');
@@ -480,6 +487,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvCalendarsView->setModel(_calendarsModel);
   _csvStepsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvStepsView->setModel(_stepsModel);
+  _csvConfigsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvConfigsView->setModel(_configsModel);
 
   // other views
   _clockView = new ClockView(this);
@@ -633,6 +642,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     QString event = req.param("event");
     QString taskId = req.param("taskid");
     QString alert = req.param("alert");
+    QString configId = req.param("configid");
     quint64 taskInstanceId = req.param("taskinstanceid").toULongLong();
     QList<quint64> auditInstanceIds;
     QString referer = req.header("Referer");
@@ -705,6 +715,16 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                      : "E:Cannot reload configuration.";
         // wait to make it less probable that the page displays before effect
         QThread::usleep(1000000);
+      } else if (event=="removeConfig") {
+        bool ok = _configRepository->removeConfig(configId);
+        message = ok ? "S:Configuration removed."
+                     : "E:Cannot remove configuration.";
+      } else if (event=="activateConfig") {
+        bool ok = _configRepository->activateConfig(configId);
+        message = ok ? "S:Configuration activated."
+                     : "E:Cannot activate configuration.";
+        // wait to make it less probable that the page displays before effect
+        QThread::usleep(1000000);
       } else
         message = "E:Internal error: unknown event '"+event+"'.";
     } else
@@ -742,7 +762,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/console/confirm") {
     QString event = req.param("event");
     QString taskId = req.param("taskid");
-    QString id = req.param("id");
+    QString id = req.param("id"); // FIXME
+    QString configId = req.param("configid");
     QString referer = req.header("Referer", "index.html");
     QString message;
     if (_scheduler) {
@@ -758,6 +779,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
             + " task '"+taskId+"'";
       } else if (event == "reloadConfig") {
         message = "reload configuration";
+      } else if (event == "removeConfig") {
+        message = "remove configuration "+configId;
+      } else if (event == "activateConfig") {
+        message = "activate configuration "+configId;
       } else if (event == "requestTask") {
         message = "request task '"+taskId+"' execution";
       } else {
@@ -1274,7 +1299,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       if (_configRepository) {
         QString configid = req.param("configid").trimmed();
         SchedulerConfig config
-            = (configid == "current") ? _configRepository->currentConfig()
+            = (configid == "current") ? _configRepository->activeConfig()
                                       : _configRepository->config(configid);
         if (config.isNull()) {
           res.setStatus(404);
@@ -1468,18 +1493,33 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
 
 void WebConsole::setConfigPaths(QString configFilePath,
                                 QString configRepoPath) {
-  _configFilePath = configFilePath;
-  _configRepoPath = configRepoPath;
+  _configFilePath = configFilePath.isEmpty() ? "(none)" : configFilePath;
+  _configRepoPath = configRepoPath.isEmpty() ? "(none)" : configRepoPath;
 }
 
 void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
   if (_configRepository) {
-    // FIXME
+    disconnect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
+               _configsModel, SLOT(configAdded(QString,SchedulerConfig)));
+    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
+               _configsModel, SLOT(configRemoved(QString)));
+    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+               _htmlConfigsDelegate, SLOT(setActiveConfig(QString)));
+    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+               _htmlConfigsView, SLOT(invalidateCache()));
+    _configsModel->removeItems(0, _configsModel->rowCount());
   }
   _configRepository = configRepository;
   _configUploadHandler->setConfigRepository(_configRepository);
   if (_configRepository) {
-    // FIXME
+    connect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
+            _configsModel, SLOT(configAdded(QString,SchedulerConfig)));
+    connect(_configRepository, SIGNAL(configRemoved(QString)),
+            _configsModel, SLOT(configRemoved(QString)));
+    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+             _htmlConfigsDelegate, SLOT(setActiveConfig(QString)));
+    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+             _htmlConfigsView, SLOT(invalidateCache())); // needed by isActive column
   }
 }
 

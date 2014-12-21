@@ -12,17 +12,18 @@
  */
 class LIBQRONSHARED_EXPORT LocalConfigRepository : public ConfigRepository {
   Q_OBJECT
-  QString _currentId, _basePath;
+  QString _activeConfigId, _basePath;
   QHash<QString,SchedulerConfig> _configs;
 
 public:
   LocalConfigRepository(QObject *parent, Scheduler *scheduler,
                         QString basePath = QString());
   QStringList availlableConfigIds();
-  QString currentConfigId();
+  QString activeConfigId();
   SchedulerConfig config(QString id);
   QString addConfig(SchedulerConfig config);
-  void setCurrent(QString id);
+  bool activateConfig(QString id);
+  bool removeConfig(QString id);
   void openRepository(QString basePath);
 };
 

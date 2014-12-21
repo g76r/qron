@@ -23,7 +23,7 @@
           <p><table class="table table-condensed table-hover">
             <tr><th>Standalone Configuration File</th>
                 <td><?value:configfilepath?></td>
-                <td><a class="btn btn-danger" href="confirm?event=reloadConfig"><i class="icon-refresh"></i>Reload config</a></td></tr>
+                <td><a class="btn btn-danger" href="confirm?event=reloadConfig"><i class="icon-refresh"></i>Reload this config file and activate its content</a></td></tr>
             <tr><th>On-disk Configuration Repository</th>
                 <td><?value:configrepopath?></td>
                 <td>&nbsp;</td></tr>
@@ -33,10 +33,11 @@
       <div class="row">
         <div class="span12">
           <h2>Configuration Repository</h2>
+          <!-- LATER add upload config form -->
           <p><a class="btn btn-primary" href="../rest/svg/tasks/trigger/v1"><i class="icon-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/trigger/v1"><i class="icon-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <p><?view:configrepo?>
+          <p><?view:configs?>
         </div>
       </div>
       <div class="row">
@@ -45,13 +46,7 @@
           <p><a class="btn btn-primary" href="../rest/svg/tasks/trigger/v1"><i class="icon-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/trigger/v1"><i class="icon-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <p><?view:confighistory?>
-        </div>
-      </div>
-      <div class="row">
-        <div class="span12">
-          <h2>Configuration Upload Form</h2>
-          <p>
+          <p><?view:configshistory?>
         </div>
       </div>
     </div>

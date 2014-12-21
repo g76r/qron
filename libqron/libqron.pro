@@ -112,7 +112,9 @@ SOURCES += \
     action/requesturlaction.cpp \
     sysutil/parametrizednetworkrequest.cpp \
     alert/urlalertchannel.cpp \
-    ui/htmllogentryitemdelegate.cpp
+    ui/htmllogentryitemdelegate.cpp \
+    ui/configsmodel.cpp \
+    ui/htmlschedulerconfigitemdelegate.cpp
 
 HEADERS += \
     config/task.h \
@@ -184,4 +186,6 @@ HEADERS += \
     action/requesturlaction.h \
     sysutil/parametrizednetworkrequest.h \
     alert/urlalertchannel.h \
-    ui/htmllogentryitemdelegate.h
+    ui/htmllogentryitemdelegate.h \
+    ui/configsmodel.h \
+    ui/htmlschedulerconfigitemdelegate.h

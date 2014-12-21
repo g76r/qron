@@ -25,19 +25,23 @@
 #include "alerterconfig.h"
 #include "accesscontrolconfig.h"
 #include "logfile.h"
+#include "modelview/shareduiitem.h"
 
 class SchedulerConfigData;
 
 /** Whole scheduler configuration */
-class LIBQRONSHARED_EXPORT SchedulerConfig {
-  QSharedDataPointer<SchedulerConfigData> d;
+class LIBQRONSHARED_EXPORT SchedulerConfig : public SharedUiItem {
 public:
   SchedulerConfig();
   SchedulerConfig(const SchedulerConfig &other);
   explicit SchedulerConfig(PfNode root, Scheduler *scheduler,
                            bool applyLogConfig);
   ~SchedulerConfig();
-  SchedulerConfig &operator=(const SchedulerConfig &other);
+  /** Should only be used by SharedUiItemsModels to get size and headers from
+   * a non-null item. */
+  static SchedulerConfig templateSchedulerConfig();
+  SchedulerConfig &operator=(const SchedulerConfig &other) {
+    SharedUiItem::operator=(other); return *this; }
   bool isNull() const;
   ParamSet globalParams() const;
   ParamSet setenv() const;
@@ -75,6 +79,11 @@ public:
   Cluster renameCluster(QString oldName, QString newName);
   /** Update task, do not perform any sanity check before or after. */
   Task updateTask(Task task);
+
+private:
+  SchedulerConfigData *scd();
+  const SchedulerConfigData *scd() const {
+    return (const SchedulerConfigData*)constData(); }
 };
 
 inline uint qHash(SchedulerConfig config) { return qHash(config.hash()); }
