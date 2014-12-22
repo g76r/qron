@@ -121,7 +121,7 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
 
 bool LocalConfigRepository::activateConfig(QString id) {
   // FIXME threadsafe
-  SchedulerConfig config = _configs.value(id);
+  const SchedulerConfig config = _configs.value(id);
   if (config.isNull()) {
     Log::error() << "cannote activate config since it is not found in "
                     "repository: " << id;

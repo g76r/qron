@@ -68,7 +68,7 @@ public:
   SchedulerConfigData(const SchedulerConfigData &other)
     : SharedUiItemData(other),
       _globalParams(other._globalParams), _setenv(other._setenv),
-      _unsetenv(other._unsetenv),
+      _unsetenv(other._unsetenv), _tasksGroups(other._tasksGroups),
       _tasks(other._tasks), _clusters(other._clusters), _hosts(other._hosts),
       _hostResources(other._hostResources),
       _onstart(other._onstart), _onsuccess(other._onsuccess),
@@ -80,7 +80,8 @@ public:
       _namedCalendars(other._namedCalendars),
       _alerterConfig(other._alerterConfig),
       _accessControlConfig(other._accessControlConfig),
-      _logfiles(other._logfiles), _loggers(other._loggers) {
+      _logfiles(other._logfiles), _loggers(other._loggers),
+      _lastLoadTime(other._lastLoadTime), _hash(other._hash) {
   }
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
