@@ -2,10 +2,12 @@
 #include <QtDebug>
 #include "log/log.h"
 #include <QSaveFile>
+#include "csv/csvfile.h"
 
 LocalConfigRepository::LocalConfigRepository(
     QObject *parent, Scheduler *scheduler, QString basePath)
-  : ConfigRepository(parent, scheduler) {
+  : ConfigRepository(parent, scheduler), _historyLog(new CsvFile(this)) {
+  _historyLog->setFieldSeparator(' ');
   if (!basePath.isEmpty())
     openRepository(basePath);
 }
@@ -76,7 +78,30 @@ void LocalConfigRepository::openRepository(QString basePath) {
   qDebug() << "***************** contains" << activeConfigId
            << _configs.contains(activeConfigId) << _configs.size();
   // FIXME fix active if needed (e.g. fixed target)
-  // FIXME load history
+  if (_historyLog->open(basePath+"/history", QIODevice::ReadWrite)) {
+    if (_historyLog->header(0) != "Timestamp") {
+      QStringList headers;
+      headers << "Timestamp" << "Event" << "ConfigId";
+      _historyLog->setHeaders(headers);
+    }
+    int rowCount = _historyLog->rowCount();
+    int rowCountMax = 1024; // TODO parametrize
+    if (rowCount > rowCountMax) { // shorten history when too long
+      _historyLog->removeRows(0, rowCount-rowCountMax-1);
+      rowCount = _historyLog->rowCount();
+    }
+    QList<ConfigHistoryEntry> history;
+    for (int i = 0; i < rowCount; ++i) {
+      const QStringList row = _historyLog->row(i);
+      QDateTime ts = QDateTime::fromString(row[0], Qt::ISODate);
+      SchedulerConfig config = _configs.value(row[2]);
+      history.append(
+            ConfigHistoryEntry(QString::number(i), ts, row[1], config));
+    }
+    emit historyReset(history);
+  } else {
+    Log::error() << "cannot open history log: " << basePath << "/history";
+  }
   _basePath = basePath;
   if (_configs.contains(activeConfigId)) {
     _activeConfigId = activeConfigId;
@@ -99,6 +124,7 @@ SchedulerConfig LocalConfigRepository::config(QString id) {
 }
 
 QString LocalConfigRepository::addConfig(SchedulerConfig config) {
+  // FIXME threadsafe
   QString id = config.hash();
   if (!id.isNull()) {
     if (!_basePath.isEmpty()) {
@@ -112,6 +138,7 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
         return QString();
       }
     }
+    recordInHistory("addConfig", config);
     _configs.insert(id, config);
     //qDebug() << "***************** addConfig" << id;
     emit configAdded(id, config);
@@ -137,9 +164,9 @@ bool LocalConfigRepository::activateConfig(QString id) {
       Log::error() << "error writing config in repository: " << f.fileName()
                    << ((f.error() == QFileDevice::NoError)
                        ? "" : " : "+f.errorString());
-      return false; // FIXME should activate even on write error ?
+      return false;
     }
-    // FIXME write history in repo
+    recordInHistory("activateConfig", config);
   }
   _activeConfigId = id;
   emit configActivated(_activeConfigId, config);
@@ -165,11 +192,23 @@ bool LocalConfigRepository::removeConfig(QString id) {
       Log::error() << "error removing config from repository: " << f.fileName()
                    << ((f.error() == QFileDevice::NoError)
                        ? "" : " : "+f.errorString());
-      return false; // FIXME should remove even on write error ?
+      return false;
     }
-    // FIXME write history in repo
+    recordInHistory("removeConfig", config);
   }
   _configs.remove(id);
   emit configRemoved(id);
   return true;
+}
+
+void LocalConfigRepository::recordInHistory(
+    QString event, SchedulerConfig config) {
+  QDateTime now = QDateTime::currentDateTime();
+  ConfigHistoryEntry entry(QString::number(_historyLog->rowCount()), now, event,
+                           config);
+  QStringList row(now.toString(Qt::ISODate));
+  row.append(event);
+  row.append(config.hash());
+  _historyLog->appendRow(row);
+  emit historyEntryAppended(entry);
 }

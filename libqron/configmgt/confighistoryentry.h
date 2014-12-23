@@ -19,19 +19,17 @@
 
 class ConfigHistoryEntryData;
 
+/** Element of configuration management history */
 class LIBQRONSHARED_EXPORT ConfigHistoryEntry : public SharedUiItem {
 public:
   ConfigHistoryEntry();
   ConfigHistoryEntry(const ConfigHistoryEntry &other);
   ConfigHistoryEntry(
-      QString id, SchedulerConfig config, QDateTime activationDate,
-      QString reason, QString actor);
+      QString id, QDateTime timestamp, QString event, SchedulerConfig config);
   ConfigHistoryEntry &operator=(const ConfigHistoryEntry &other) {
     SharedUiItem::operator=(other); return *this; }
   SchedulerConfig config() const;
-  QDateTime activationDate() const;
-  QString reason() const;
-  QString actor() const;
+  QDateTime timestamp() const;
 
 private:
   ConfigHistoryEntryData *che();

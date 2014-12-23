@@ -15,23 +15,20 @@
 
 static QString _uiHeaderNames[] = {
   "History Entry Id", // 0
+  "Timestamp",
+  "Event",
   "Config Id",
-  "Activation Date",
-  "Reason",
-  "Actor"
 };
 
 class ConfigHistoryEntryData : public SharedUiItemData {
 public:
   QString _id;
+  QDateTime _timestamp;
+  QString _event;
   SchedulerConfig _config;
-  QDateTime _activationDate;
-  QString _reason, _actor;
   ConfigHistoryEntryData(
-      QString id, SchedulerConfig config, QDateTime activationDate,
-      QString reason, QString actor)
-    : _id(id), _config(config), _activationDate(activationDate),
-      _reason(reason), _actor(actor) {
+      QString id, QDateTime timestamp, QString event, SchedulerConfig config)
+    : _id(id), _timestamp(timestamp), _event(event), _config(config) {
   }
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
@@ -49,11 +46,8 @@ ConfigHistoryEntry::ConfigHistoryEntry(const ConfigHistoryEntry &other)
   : SharedUiItem(other) {
 }
 
-ConfigHistoryEntry::ConfigHistoryEntry(
-    QString id, SchedulerConfig config, QDateTime activationDate,
-    QString reason, QString actor)
-  : SharedUiItem(new ConfigHistoryEntryData(id, config, activationDate,
-                                            reason, actor)) {
+ConfigHistoryEntry::ConfigHistoryEntry(QString id, QDateTime timestamp, QString event, SchedulerConfig config)
+  : SharedUiItem(new ConfigHistoryEntryData(id, timestamp, event, config)) {
 }
 
 // FIXME other cstr and accessors
@@ -65,13 +59,11 @@ QVariant ConfigHistoryEntryData::uiData(int section, int role) const {
     case 0:
       return _id;
     case 1:
-      return _config.hash();
+      return _timestamp.toString("yyyy-MM-dd hh:mm:ss,zzz");
     case 2:
-      return _activationDate.toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return _event;
     case 3:
-      return _reason;
-    case 4:
-      return _actor;
+      return _config.hash();
     }
     break;
   default:

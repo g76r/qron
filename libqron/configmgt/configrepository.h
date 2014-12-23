@@ -10,7 +10,6 @@
 class LIBQRONSHARED_EXPORT ConfigRepository : public QObject {
   Q_OBJECT
   Scheduler *_scheduler;
-  QList<ConfigHistoryEntry> _history;
 
 public:
   ConfigRepository(QObject *parent, Scheduler *scheduler);
@@ -48,7 +47,7 @@ signals:
   void configAdded(QString id, SchedulerConfig config);
   void configRemoved(QString id);
   void historyReset(QList<ConfigHistoryEntry> history);
-  void historyEntryAdded(ConfigHistoryEntry historyEntry);
+  void historyEntryAppended(ConfigHistoryEntry historyEntry);
 
 private:
   Q_INVOKABLE SchedulerConfig parseConfig(PfNode source);
