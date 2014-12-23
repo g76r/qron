@@ -40,7 +40,7 @@ EventSubscription::EventSubscription(
   : d(new EventSubscriptionData(subscriberName)) {
   // LATER implement at less regexp filter
   // LATER support for non-text/non-regexp filters e.g. "onstatus >=3"
-  // LATER support for (ifincalendar) and other structured filters
+  // LATER support for (calendar) and other structured filters
   d->_eventName = node.name();
   if (scheduler)
     d->_globalParams = scheduler->globalParams();

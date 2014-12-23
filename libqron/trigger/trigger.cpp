@@ -88,8 +88,7 @@ ParamSet Trigger::overridingParams() const {
 }
 
 bool Trigger::loadConfig(PfNode node, QHash<QString,Calendar> namedCalendars) {
-  // ifincalendar
-  QList<PfNode> list = node.childrenByName("ifincalendar");
+  QList<PfNode> list = node.childrenByName("calendar");
   if (list.size() > 1)
     Log::error() << "ignoring multiple calendar definition: "
                  << node.toPf();
