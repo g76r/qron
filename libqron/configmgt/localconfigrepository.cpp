@@ -94,9 +94,8 @@ void LocalConfigRepository::openRepository(QString basePath) {
     for (int i = 0; i < rowCount; ++i) {
       const QStringList row = _historyLog->row(i);
       QDateTime ts = QDateTime::fromString(row[0], Qt::ISODate);
-      SchedulerConfig config = _configs.value(row[2]);
-      history.append(
-            ConfigHistoryEntry(QString::number(i), ts, row[1], config));
+      history.append(ConfigHistoryEntry(QString::number(i), ts, row[1],
+                     row[2]));
     }
     emit historyReset(history);
   } else {
@@ -138,7 +137,7 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
         return QString();
       }
     }
-    recordInHistory("addConfig", config);
+    recordInHistory("addConfig", id);
     _configs.insert(id, config);
     //qDebug() << "***************** addConfig" << id;
     emit configAdded(id, config);
@@ -166,7 +165,7 @@ bool LocalConfigRepository::activateConfig(QString id) {
                        ? "" : " : "+f.errorString());
       return false;
     }
-    recordInHistory("activateConfig", config);
+    recordInHistory("activateConfig", id);
   }
   _activeConfigId = id;
   emit configActivated(_activeConfigId, config);
@@ -194,7 +193,7 @@ bool LocalConfigRepository::removeConfig(QString id) {
                        ? "" : " : "+f.errorString());
       return false;
     }
-    recordInHistory("removeConfig", config);
+    recordInHistory("removeConfig", id);
   }
   _configs.remove(id);
   emit configRemoved(id);
@@ -202,13 +201,13 @@ bool LocalConfigRepository::removeConfig(QString id) {
 }
 
 void LocalConfigRepository::recordInHistory(
-    QString event, SchedulerConfig config) {
+    QString event, QString configId) {
   QDateTime now = QDateTime::currentDateTime();
   ConfigHistoryEntry entry(QString::number(_historyLog->rowCount()), now, event,
-                           config);
+                           configId);
   QStringList row(now.toString(Qt::ISODate));
   row.append(event);
-  row.append(config.hash());
+  row.append(configId);
   _historyLog->appendRow(row);
   emit historyEntryAppended(entry);
 }

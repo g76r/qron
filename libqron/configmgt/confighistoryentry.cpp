@@ -18,17 +18,17 @@ static QString _uiHeaderNames[] = {
   "Timestamp",
   "Event",
   "Config Id",
+  "Actions"
 };
 
 class ConfigHistoryEntryData : public SharedUiItemData {
 public:
   QString _id;
   QDateTime _timestamp;
-  QString _event;
-  SchedulerConfig _config;
+  QString _event, _configId;
   ConfigHistoryEntryData(
-      QString id, QDateTime timestamp, QString event, SchedulerConfig config)
-    : _id(id), _timestamp(timestamp), _event(event), _config(config) {
+      QString id, QDateTime timestamp, QString event, QString configId)
+    : _id(id), _timestamp(timestamp), _event(event), _configId(configId) {
   }
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
@@ -46,11 +46,10 @@ ConfigHistoryEntry::ConfigHistoryEntry(const ConfigHistoryEntry &other)
   : SharedUiItem(other) {
 }
 
-ConfigHistoryEntry::ConfigHistoryEntry(QString id, QDateTime timestamp, QString event, SchedulerConfig config)
-  : SharedUiItem(new ConfigHistoryEntryData(id, timestamp, event, config)) {
+ConfigHistoryEntry::ConfigHistoryEntry(
+    QString id, QDateTime timestamp, QString event, QString configId)
+  : SharedUiItem(new ConfigHistoryEntryData(id, timestamp, event, configId)) {
 }
-
-// FIXME other cstr and accessors
 
 QVariant ConfigHistoryEntryData::uiData(int section, int role) const {
   switch(role) {
@@ -63,7 +62,7 @@ QVariant ConfigHistoryEntryData::uiData(int section, int role) const {
     case 2:
       return _event;
     case 3:
-      return _config.hash();
+      return _configId;
     }
     break;
   default:

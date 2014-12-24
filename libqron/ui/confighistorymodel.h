@@ -11,28 +11,24 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef CONFIGHISTORYENTRY_H
-#define CONFIGHISTORYENTRY_H
+#ifndef CONFIGHISTORYMODEL_H
+#define CONFIGHISTORYMODEL_H
 
-#include "modelview/shareduiitem.h"
-#include "config/schedulerconfig.h"
+#include "modelview/shareduiitemstablemodel.h"
+#include "configmgt/confighistoryentry.h"
+#include <QList>
 
-class ConfigHistoryEntryData;
+/** Model holding config history entries, last entry first. */
+class LIBQRONSHARED_EXPORT ConfigHistoryModel : public SharedUiItemsTableModel {
+  Q_OBJECT
+  Q_DISABLE_COPY(ConfigHistoryModel)
 
-/** Element of configuration management history */
-class LIBQRONSHARED_EXPORT ConfigHistoryEntry : public SharedUiItem {
 public:
-  ConfigHistoryEntry();
-  ConfigHistoryEntry(const ConfigHistoryEntry &other);
-  ConfigHistoryEntry(
-      QString id, QDateTime timestamp, QString event, QString configId);
-  ConfigHistoryEntry &operator=(const ConfigHistoryEntry &other) {
-    SharedUiItem::operator=(other); return *this; }
+  explicit ConfigHistoryModel(QObject *parent = 0);
 
-private:
-  ConfigHistoryEntryData *che();
-  const ConfigHistoryEntryData *che() const {
-    return (const ConfigHistoryEntryData*)constData(); }
+public slots:
+  void historyReset(QList<ConfigHistoryEntry> history);
+  void historyEntryAppended(ConfigHistoryEntry historyEntry);
 };
 
-#endif // CONFIGHISTORYENTRY_H
+#endif // CONFIGHISTORYMODEL_H

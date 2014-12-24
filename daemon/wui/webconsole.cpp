@@ -95,6 +95,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _infoLogModel = new LogModel(this, Log::Info, LOG_MAXROWS);
   _auditLogModel = new LogModel(this, Log::Info, LOG_MAXROWS, "AUDIT ");
   _configsModel = new ConfigsModel(this);
+  _configHistoryModel = new ConfigHistoryModel(this);
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
@@ -432,9 +433,21 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlConfigsView = new HtmlTableView(this, "configs", CONFIG_TABLES_MAXROWS);
   _htmlConfigsView->setModel(_configsModel);
   _htmlConfigsView->setEmptyPlaceholder("(no config)");
-  _htmlConfigsDelegate = new HtmlSchedulerConfigItemDelegate(_htmlConfigsView);
+  _htmlConfigsDelegate =
+      new HtmlSchedulerConfigItemDelegate(0, 2, 3, _htmlConfigsView);
   _htmlConfigsView->setItemDelegate(_htmlConfigsDelegate);
   _wuiHandler->addView(_htmlConfigsView);
+  _htmlConfigHistoryView = new HtmlTableView(this, "confighistory",
+                                             CONFIG_TABLES_MAXROWS);
+  _htmlConfigHistoryView->setModel(_configHistoryModel);
+  _htmlConfigHistoryView->setEmptyPlaceholder("(empty history)");
+  cols.clear();
+  cols << 1 << 2 << 3 << 4;
+  _htmlConfigHistoryView->setColumnIndexes(cols);
+  _htmlConfigHistoryDelegate =
+      new HtmlSchedulerConfigItemDelegate(3, -1, 4, _htmlConfigsView);
+  _htmlConfigHistoryView->setItemDelegate(_htmlConfigHistoryDelegate);
+  _wuiHandler->addView(_htmlConfigHistoryView);
 
   // CSV views
   CsvTableView::setDefaultFieldQuote('"');
@@ -489,6 +502,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvStepsView->setModel(_stepsModel);
   _csvConfigsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvConfigsView->setModel(_configsModel);
+  _csvConfigHistoryView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvConfigHistoryView->setModel(_configHistoryModel);
 
   // other views
   _clockView = new ClockView(this);
@@ -1499,27 +1514,68 @@ void WebConsole::setConfigPaths(QString configFilePath,
 
 void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
   if (_configRepository) {
+    // Configs
     disconnect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
                _configsModel, SLOT(configAdded(QString,SchedulerConfig)));
     disconnect(_configRepository, SIGNAL(configRemoved(QString)),
                _configsModel, SLOT(configRemoved(QString)));
     disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-               _htmlConfigsDelegate, SLOT(setActiveConfig(QString)));
+               _htmlConfigsDelegate, SLOT(configActivated(QString)));
+    disconnect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
+               _htmlConfigsDelegate, SLOT(configAdded(QString)));
+    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
+               _htmlConfigsDelegate, SLOT(configRemoved(QString)));
     disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-               _htmlConfigsView, SLOT(invalidateCache()));
+               _htmlConfigsView, SLOT(invalidateCache())); // needed for isActive and actions columns
+    // Config History
+    disconnect(_configRepository, SIGNAL(historyReset(QList<ConfigHistoryEntry>)),
+               _configHistoryModel, SLOT(historyReset(QList<ConfigHistoryEntry>)));
+    disconnect(_configRepository, SIGNAL(historyEntryAppended(ConfigHistoryEntry)),
+               _configHistoryModel, SLOT(historyEntryAppended(ConfigHistoryEntry)));
+    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+               _htmlConfigHistoryDelegate, SLOT(configActivated(QString)));
+    disconnect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
+               _htmlConfigHistoryDelegate, SLOT(configAdded(QString)));
+    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
+               _htmlConfigHistoryDelegate, SLOT(configRemoved(QString)));
+    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
+               _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for config id link removal
+    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+               _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for actions column
+    // Data clearing
     _configsModel->removeItems(0, _configsModel->rowCount());
   }
   _configRepository = configRepository;
   _configUploadHandler->setConfigRepository(_configRepository);
   if (_configRepository) {
+    // Configs
     connect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
             _configsModel, SLOT(configAdded(QString,SchedulerConfig)));
     connect(_configRepository, SIGNAL(configRemoved(QString)),
             _configsModel, SLOT(configRemoved(QString)));
     connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-             _htmlConfigsDelegate, SLOT(setActiveConfig(QString)));
+             _htmlConfigsDelegate, SLOT(configActivated(QString)));
+    connect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
+            _htmlConfigsDelegate, SLOT(configAdded(QString)));
+    connect(_configRepository, SIGNAL(configRemoved(QString)),
+            _htmlConfigsDelegate, SLOT(configRemoved(QString)));
     connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-             _htmlConfigsView, SLOT(invalidateCache())); // needed by isActive column
+            _htmlConfigsView, SLOT(invalidateCache())); // needed for isActive and actions columns
+    // Config History
+    connect(_configRepository, SIGNAL(historyReset(QList<ConfigHistoryEntry>)),
+            _configHistoryModel, SLOT(historyReset(QList<ConfigHistoryEntry>)));
+    connect(_configRepository, SIGNAL(historyEntryAppended(ConfigHistoryEntry)),
+            _configHistoryModel, SLOT(historyEntryAppended(ConfigHistoryEntry)));
+    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+            _htmlConfigHistoryDelegate, SLOT(configActivated(QString)));
+    connect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
+            _htmlConfigHistoryDelegate, SLOT(configAdded(QString)));
+    connect(_configRepository, SIGNAL(configRemoved(QString)),
+            _htmlConfigHistoryDelegate, SLOT(configRemoved(QString)));
+    connect(_configRepository, SIGNAL(configRemoved(QString)),
+            _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for config id link removal
+    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
+            _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for actions column
   }
 }
 

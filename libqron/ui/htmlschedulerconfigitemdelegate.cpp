@@ -14,45 +14,56 @@
 #include "htmlschedulerconfigitemdelegate.h"
 
 HtmlSchedulerConfigItemDelegate::HtmlSchedulerConfigItemDelegate(
-    QObject *parent) : HtmlItemDelegate(parent) {
+    int idColumn, int isActiveColumn, int actionsColumn, QObject *parent)
+  : HtmlItemDelegate(parent), _idColumn(idColumn),
+    _isActiveColumn(isActiveColumn), _actionsColumn(actionsColumn) {
 }
 
 QString HtmlSchedulerConfigItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
-  QString id = index.model()->index(index.row(), 0, index.parent())
+  QString id = index.model()->index(index.row(), _idColumn, index.parent())
       .data().toString();
-  switch (index.column()) {
-  case 0:
-    text.prepend("<a href=\"../rest/pf/config/v1?configid="+id+"\">");
-    text.append("</a>");
-    break;
-  case 2:
+  int column = index.column();
+  if (column == _idColumn) {
+    if (_configIds.contains(id)) {
+      text.prepend("<a href=\"../rest/pf/config/v1?configid="+id+"\">");
+      text.append("</a>");
+    }
+  } else if (column == _isActiveColumn) {
     text = (id == _activeConfigId)
         ? "<i class=\"icon-play\"></i>&nbsp;active" : "-";
-    break;
-  case 3:
-    text.prepend("<span class=\"label label-info\" title=\"Download\">"
-                 "<a href=\"../rest/pf/config/v1?configid="+id
-                +"\"><i class=\"icon-file\"></i></a></span> ");
-    if (id == _activeConfigId)
-      text.prepend("<span class=\"label label-default\" title=\""
-                   "Cannot remove active config\">"
-                   "<i class=\"icon-trash\"></i></span> "
-                    "<span class=\"label label-default\" title=\""
-                   "Cannot activate active config\">"
-                    "<i class=\"icon-play\"></i></span> ");
-    else
-      text.prepend("<span class=\"label label-important\" title=\"Remove\">"
-                   "<a href=\"confirm?event=removeConfig&configid="+id
-                   +"\"><i class=\"icon-trash\"></i></a></span> "
-                    "<span class=\"label label-important\" title=\"Activate\">"
-                    "<a href=\"confirm?event=activateConfig&configid="+id
-                   +"\"><i class=\"icon-play\"></i></a></span> ");
-    break;
+  } else if (column == _actionsColumn) {
+    if (_configIds.contains(id)) {
+      text.prepend("<span class=\"label label-info\" title=\"Download\">"
+                   "<a href=\"../rest/pf/config/v1?configid="+id
+                   +"\"><i class=\"icon-file\"></i></a></span> ");
+      if (id == _activeConfigId)
+        text.prepend("<span class=\"label label-default\" title=\""
+                     "Cannot remove active config\">"
+                     "<i class=\"icon-trash\"></i></span> "
+                     "<span class=\"label label-default\" title=\""
+                     "Cannot activate active config\">"
+                     "<i class=\"icon-play\"></i></span> ");
+      else
+        text.prepend("<span class=\"label label-important\" title=\"Remove\">"
+                     "<a href=\"confirm?event=removeConfig&configid="+id
+                     +"\"><i class=\"icon-trash\"></i></a></span> "
+                      "<span class=\"label label-important\" title=\"Activate\">"
+                      "<a href=\"confirm?event=activateConfig&configid="+id
+                     +"\"><i class=\"icon-play\"></i></a></span> ");
+    }
   }
   return text;
 }
 
-void HtmlSchedulerConfigItemDelegate::setActiveConfig(QString configId) {
+void HtmlSchedulerConfigItemDelegate::configActivated(QString configId) {
   _activeConfigId = configId;
+}
+
+void HtmlSchedulerConfigItemDelegate::configAdded(QString id) {
+  _configIds.insert(id);
+}
+
+void HtmlSchedulerConfigItemDelegate::configRemoved(QString id) {
+  _configIds.remove(id);
 }

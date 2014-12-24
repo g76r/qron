@@ -114,7 +114,8 @@ SOURCES += \
     alert/urlalertchannel.cpp \
     ui/htmllogentryitemdelegate.cpp \
     ui/configsmodel.cpp \
-    ui/htmlschedulerconfigitemdelegate.cpp
+    ui/htmlschedulerconfigitemdelegate.cpp \
+    ui/confighistorymodel.cpp
 
 HEADERS += \
     config/task.h \
@@ -188,4 +189,5 @@ HEADERS += \
     alert/urlalertchannel.h \
     ui/htmllogentryitemdelegate.h \
     ui/configsmodel.h \
-    ui/htmlschedulerconfigitemdelegate.h
+    ui/htmlschedulerconfigitemdelegate.h \
+    ui/confighistorymodel.h

@@ -16,6 +16,7 @@
 
 #include "libqron_global.h"
 #include "textview/htmlitemdelegate.h"
+#include <QSet>
 
 /** Specific item delegate for scheduler config. */
 class LIBQRONSHARED_EXPORT HtmlSchedulerConfigItemDelegate
@@ -23,13 +24,18 @@ class LIBQRONSHARED_EXPORT HtmlSchedulerConfigItemDelegate
   Q_OBJECT
   Q_DISABLE_COPY(HtmlSchedulerConfigItemDelegate)
   QString _activeConfigId;
+  QSet<QString> _configIds;
+  int _idColumn, _isActiveColumn, _actionsColumn;
 
 public:
-  explicit HtmlSchedulerConfigItemDelegate(QObject *parent = 0);
+  explicit HtmlSchedulerConfigItemDelegate(
+      int idColumn, int isActiveColumn, int actionsColumn, QObject *parent = 0);
   QString text(const QModelIndex &index) const;
 
 public slots:
-  void setActiveConfig(QString configId);
+  void configActivated(QString configId);
+  void configAdded(QString id);
+  void configRemoved(QString id);
 };
 
 #endif // HTMLSCHEDULERCONFIGITEMDELEGATE_H

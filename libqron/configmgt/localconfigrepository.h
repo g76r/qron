@@ -30,7 +30,7 @@ public:
   void openRepository(QString basePath);
 
 private:
-  inline void recordInHistory(QString event, SchedulerConfig config);
+  inline void recordInHistory(QString event, QString configId);
 };
 
 #endif // LOCALCONFIGREPOSITORY_H

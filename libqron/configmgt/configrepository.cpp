@@ -4,6 +4,8 @@
 
 ConfigRepository::ConfigRepository(QObject *parent, Scheduler *scheduler)
   : QObject(parent), _scheduler(scheduler) {
+  qRegisterMetaType<ConfigHistoryEntry>("ConfigHistoryEntry");
+  qRegisterMetaType<QList<ConfigHistoryEntry> >("QList<ConfigHistoryEntry>");
 }
 
 SchedulerConfig ConfigRepository::parseConfig(QIODevice *source) {
