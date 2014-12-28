@@ -16,15 +16,14 @@ void LocalConfigRepository::openRepository(QString basePath) {
   _basePath = QString();
   _activeConfigId = QString();
   _configs.clear();
+  // create repository subdirectories if needed
   QDir configsDir(basePath+"/configs");
   QDir errorsDir(basePath+"/errors");
   if (!QDir().mkpath(configsDir.path()))
     Log::error() << "cannot access or create directory " << configsDir.path();
   if (!QDir().mkpath(errorsDir.path()))
     Log::error() << "cannot access or create directory " << errorsDir.path();
-  QFileInfoList fileInfos =
-      configsDir.entryInfoList(QDir::Files|QDir::NoSymLinks,
-                               QDir::Time|QDir::Reversed);
+  // read active config id
   QFile activeFile(basePath+"/active");
   QString activeConfigId;
   if (activeFile.open(QIODevice::ReadOnly)) {
@@ -44,6 +43,11 @@ void LocalConfigRepository::openRepository(QString basePath) {
                      << activeFile.fileName();
     }
   }
+  // read and load configs
+  QFileInfoList fileInfos =
+      configsDir.entryInfoList(QDir::Files|QDir::NoSymLinks,
+                               QDir::Time|QDir::Reversed);
+  // TODO limit number of loaded config and/or purge oldest ones
   foreach (const QFileInfo &fi, fileInfos) {
     QFile f(fi.filePath());
     qDebug() << "LocalConfigRepository::openRepository" << fi.filePath();
@@ -75,9 +79,9 @@ void LocalConfigRepository::openRepository(QString basePath) {
                    << fi.filePath() << ": " << f.errorString();
     }
   }
-  qDebug() << "***************** contains" << activeConfigId
-           << _configs.contains(activeConfigId) << _configs.size();
-  // FIXME fix active if needed (e.g. fixed target)
+  //qDebug() << "***************** contains" << activeConfigId
+  //         << _configs.contains(activeConfigId) << _configs.size();
+  // read and load history
   if (_historyLog->open(basePath+"/history", QIODevice::ReadWrite)) {
     if (_historyLog->header(0) != "Timestamp") {
       QStringList headers;
@@ -102,6 +106,7 @@ void LocalConfigRepository::openRepository(QString basePath) {
     Log::error() << "cannot open history log: " << basePath << "/history";
   }
   _basePath = basePath;
+  // activate active config
   if (_configs.contains(activeConfigId)) {
     _activeConfigId = activeConfigId;
     emit configActivated(_activeConfigId, _configs.value(_activeConfigId));
