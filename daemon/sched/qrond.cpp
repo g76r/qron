@@ -97,7 +97,7 @@ void Qrond::startup(QStringList args) {
   if (_configRepository->activeConfigId().isNull()) {
     Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
-    return; // FIXME remove
+    return; // TODO remove and clean up the whole shutdown sequence
     QMetaObject::invokeMethod(qrondInstance(), "shutdown",
                               Qt::QueuedConnection, Q_ARG(int, 1));
   }
