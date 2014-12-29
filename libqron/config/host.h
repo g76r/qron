@@ -33,7 +33,7 @@ public:
   Host &operator=(const Host &other) {
     SharedUiItem::operator=(other); return *this; }
   QString hostname() const;
-  /** Resources available. */
+  /** Configured max resources available. */
   QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;
   QString label() const;

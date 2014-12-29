@@ -30,7 +30,7 @@ static QString _uiHeaderNames[] = {
 class HostData : public SharedUiItemData {
 public:
   QString _id, _label, _hostname;
-  QHash<QString,qint64> _resources;
+  QHash<QString,qint64> _resources; // configured max resources available
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiDataCount() const;

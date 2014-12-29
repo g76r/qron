@@ -56,6 +56,7 @@ class LIBQRONSHARED_EXPORT Scheduler : public QObject {
   long _execCount, _runningTasksHwm, _queuedTasksHwm;
   QFileSystemWatcher *_accessControlFilesWatcher;
   PfNode _accessControlNode;
+  QHash<QString, QHash<QString,qint64> > _consumedResources; // <host, <resource, quantity> >
 
 public:
   Scheduler();

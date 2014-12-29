@@ -51,7 +51,7 @@ public:
   QHash<QString,Task> _tasks;
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
-  QHash<QString,QHash<QString,qint64> > _hostResources; // FIXME remove (replace with Host._resources)
+  QHash<QString,QHash<QString,qint64> > _hostResources;
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   qint32 _maxtotaltaskinstances, _maxqueuedrequests;

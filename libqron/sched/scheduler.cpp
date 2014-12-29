@@ -569,7 +569,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
       // silently use "localhost" as target for means not needing a real target
       if (target.isEmpty()) {
         QString mean = task.mean();
-        if (mean == "local" || mean == "donothing" || mean == "workflow")
+        if (mean == "donothing" || mean == "workflow")
           target = "localhost";
       }
     }
@@ -595,29 +595,33 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
   // LATER implement best effort resource check for forced requests
   QHash<QString,qint64> taskResources = task.resources();
   foreach (Host h, hosts) {
-    QHash<QString,qint64> hostResources = _config.hostResources().value(h.id());
-    if (!instance.force()) {
-      foreach (QString kind, taskResources.keys()) {
-        if (hostResources.value(kind) < taskResources.value(kind)) {
-          Log::info(taskId, instance.id())
-              << "lacks resource '" << kind << "' on host '" << h.id()
-              << "' for task '" << task.id() << "' (need "
-              << taskResources.value(kind) << ", have "
-              << hostResources.value(kind) << ")";
-          goto nexthost;
+    if (!taskResources.isEmpty()) {
+      QHash<QString,qint64> hostConsumedResources = _consumedResources.value(h.id());
+      QHash<QString,qint64> hostAvailableResources = _config.hostResources().value(h.id());
+      if (!instance.force()) {
+        foreach (QString kind, taskResources.keys()) {
+          qint64 alreadyConsumed = hostConsumedResources.value(kind);
+          qint64 stillAvailable = hostAvailableResources.value(kind)-alreadyConsumed;
+          qint64 needed = taskResources.value(kind);
+          if (stillAvailable < needed ) {
+            Log::info(taskId, instance.id())
+                << "lacks resource '" << kind << "' on host '" << h.id()
+                << "' for task '" << task.id() << "' (need " << needed
+                << ", have " << stillAvailable << ")";
+            goto nexthost;
+          }
+          hostConsumedResources.insert(kind, alreadyConsumed+needed);
+          hostAvailableResources.insert(kind, stillAvailable-needed);
+          Log::debug(taskId, instance.id())
+              << "resource '" << kind << "' ok on host '" << h.id()
+              << "' for task '" << taskId << "'";
         }
-        Log::debug(taskId, instance.id())
-            << "resource '" << kind << "' ok on host '" << h.id()
-            << "' for task '" << taskId << "'";
       }
+      // a host with enough resources was found
+      _consumedResources.insert(h.id(), hostConsumedResources);
+      emit hostsResourcesAvailabilityChanged(h.id(), hostAvailableResources);
     }
-    // a host with enough resources was found
-    foreach (QString kind, taskResources.keys())
-      hostResources.insert(kind, hostResources.value(kind)
-                            -taskResources.value(kind));
-    _config.hostResources().insert(h.id(), hostResources);
-    emit hostsResourcesAvailabilityChanged(h.id(), hostResources);
-    _alerter->cancelAlert("resource.exhausted."+target);
+    _alerter->cancelAlert("resource.exhausted."+taskId);
     instance.setTarget(h);
     instance.setStartDatetime();
     foreach (EventSubscription sub, _config.onstart())
@@ -651,7 +655,7 @@ nexthost:;
       << "' now because there is not enough resources on target '"
       << target << "'";
   // LATER suffix alert with resources kind (one alert per exhausted kind)
-  _alerter->raiseAlert("resource.exhausted."+target);
+  _alerter->raiseAlert("resource.exhausted."+taskId);
   return false;
 }
 
@@ -672,17 +676,21 @@ void Scheduler::taskFinishing(TaskInstance instance,
   }
   _runningTasks.remove(instance);
   QHash<QString,qint64> taskResources = requestedTask.resources();
-  QHash<QString,qint64> hostResources =
+  QHash<QString,qint64> hostConsumedResources =
+      _consumedResources.value(instance.target().id());
+  QHash<QString,qint64> hostAvailableResources =
       _config.hostResources().value(instance.target().id());
-  foreach (QString kind, taskResources.keys())
-    hostResources.insert(kind, hostResources.value(kind)
-                          +taskResources.value(kind));
-  _config.hostResources().insert(instance.target().id(), hostResources);
+  foreach (QString kind, taskResources.keys()) {
+    qint64 qty = hostConsumedResources.value(kind)-taskResources.value(kind);
+    hostConsumedResources.insert(kind, qty);
+    hostAvailableResources.insert(kind, hostAvailableResources.value(kind)-qty);
+  }
+  _consumedResources.insert(instance.target().id(), hostConsumedResources);
   if (instance.success())
     _alerter->cancelAlert("task.failure."+taskId);
   else
     _alerter->raiseAlert("task.failure."+taskId);
-  emit hostsResourcesAvailabilityChanged(instance.target().id(), hostResources);
+  emit hostsResourcesAvailabilityChanged(instance.target().id(), hostAvailableResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   if (!instance.startDatetime().isNull() && !instance.endDatetime().isNull()) {
     configuredTask.setLastExecution(instance.startDatetime());

@@ -151,6 +151,9 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   }
   td->_command = node.attribute("command");
   td->_target = ConfigUtils::sanitizeId(node.attribute("target"));
+  // silently use "localhost" as target for "local" mean
+  if (td->_target.isEmpty() && td->_mean == "local")
+    td->_target = "localhost";
   td->_info = node.stringChildrenByName("info").join(" ");
   td->_id = taskGroup.id()+"."+td->_shortId;
   td->_group = taskGroup;
@@ -945,15 +948,19 @@ PfNode Task::toPfNode() const {
 
   // description and execution attributes
   node.setAttribute("taskgroup", td->_group.id());
-  if (!td->_label.isNull())
+  if (!td->_label.isEmpty())
     node.setAttribute("label", td->_label);
-  if (!td->_info.isNull())
+  if (!td->_info.isEmpty())
     node.setAttribute("info", td->_info);
-  if (!td->_mean.isNull())
+  if (!td->_mean.isEmpty())
     node.setAttribute("mean", td->_mean);
-  if (!td->_target.isNull())
+  // do not set target attribute if it is empty,
+  // or in case it is implicit ("localhost" for "local" mean)
+  if (!td->_target.isEmpty()
+      && (td->_target != "localhost"
+          || (!td->_mean.isEmpty() && td->_mean != "local")))
     node.setAttribute("target", td->_target);
-  if (!td->_command.isNull())
+  if (!td->_command.isEmpty())
     node.setAttribute("command", td->_command);
 
   // triggering and constraints attributes
