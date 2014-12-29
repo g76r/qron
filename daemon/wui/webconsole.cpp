@@ -1329,6 +1329,28 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     }
     return true;
   }
+  if (path == "/rest/csv/configs/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvConfigsView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/configs/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlConfigsView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/csv/config/history/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvConfigHistoryView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/config/history/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlConfigHistoryView->text().toUtf8().constData());
+    return true;
+  }
   if (path == "/rest/csv/log/files/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
