@@ -37,7 +37,7 @@ void ConfigUploadHandler::processUploadedFile(
     res.setStatus(500);
     return;
   }
-  SchedulerConfig config = _configRepository->parseConfig(file);
+  SchedulerConfig config = _configRepository->parseConfig(file, false);
   if (config.isNull()) {
     Log::error() << "cannot process uploaded configuration";
     res.setStatus(415);

@@ -64,9 +64,9 @@ void LocalConfigRepository::openRepository(QString basePath) {
   // TODO limit number of loaded config and/or purge oldest ones and/or move oldest into an 'archive' subdir
   foreach (const QFileInfo &fi, fileInfos) {
     QFile f(fi.filePath());
-    qDebug() << "LocalConfigRepository::openRepository" << fi.filePath();
+    //qDebug() << "LocalConfigRepository::openRepository" << fi.filePath();
     if (f.open(QIODevice::ReadOnly)) {
-      SchedulerConfig config = parseConfig(&f);
+      SchedulerConfig config = parseConfig(&f, false);
       if (config.isNull()) {
         Log::warning() << "moving incorect config file to 'errors' subdir: "
                        << fi.fileName();
@@ -135,8 +135,9 @@ void LocalConfigRepository::openRepository(QString basePath) {
   _basePath = basePath;
   // activate active config
   if (_configs.contains(activeConfigId)) {
-    _activeConfigId = activeConfigId;
-    emit configActivated(_activeConfigId, _configs.value(_activeConfigId));
+    SchedulerConfig config = _configs.value(_activeConfigId = activeConfigId);
+    config.applyLogConfig();
+    emit configActivated(_activeConfigId, config);
   } else {
     Log::error() << "active configuration do not exist: " << activeConfigId;
   }
@@ -182,7 +183,7 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
 
 bool LocalConfigRepository::activateConfig(QString id) {
   QMutexLocker locker(&_mutex);
-  const SchedulerConfig config = _configs.value(id);
+  SchedulerConfig config = _configs.value(id);
   if (config.isNull()) {
     Log::error() << "cannote activate config since it is not found in "
                     "repository: " << id;
@@ -203,6 +204,7 @@ bool LocalConfigRepository::activateConfig(QString id) {
     recordInHistory("activateConfig", id);
   }
   _activeConfigId = id;
+  config.applyLogConfig();
   emit configActivated(_activeConfigId, config);
   //}
   return true;

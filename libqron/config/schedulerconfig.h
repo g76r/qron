@@ -34,8 +34,17 @@ class LIBQRONSHARED_EXPORT SchedulerConfig : public SharedUiItem {
 public:
   SchedulerConfig();
   SchedulerConfig(const SchedulerConfig &other);
-  explicit SchedulerConfig(PfNode root, Scheduler *scheduler,
-                           bool applyLogConfig);
+  /**
+   * @param scheduler if 0, many scheduler-dependant objects (such as Action and
+   * it subclasses) won't be able to behave fully correctly but the whole
+   * parsing/writing/reading processes will work, which is convenient if the
+   * config is not used within a scheduler but rather within a user interface
+   * such as a configuration editor
+   * @param applyLogConfig if true, call applyLogConfig() during configuration
+   * parsing, as soon as possible, which may help having more detailed warning
+   * and error messages about the configuration itself
+   */
+  SchedulerConfig(PfNode root, Scheduler *scheduler, bool applyLogConfig);
   ~SchedulerConfig();
   /** Should only be used by SharedUiItemsModels to get size and headers from
    * a non-null item. */
@@ -79,6 +88,9 @@ public:
   Cluster renameCluster(QString oldName, QString newName);
   /** Update task, do not perform any sanity check before or after. */
   Task updateTask(Task task);
+  /** Make log configuration active by calling relevant Log methods.
+   * @see Log */
+  void applyLogConfig() const;
 
 private:
   SchedulerConfigData *scd();

@@ -92,7 +92,8 @@ void Qrond::startup(QStringList args) {
                  << ": " << _httpd->errorString();
   if (!_configRepoPath.isEmpty())
     _configRepository->openRepository(_configRepoPath);
-  systemTriggeredLoadConfig("startup");
+  if (!_configFilePath.isEmpty())
+    systemTriggeredLoadConfig("startup");
   if (_configRepository->activeConfigId().isNull()) {
     Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
@@ -127,7 +128,7 @@ bool Qrond::doLoadConfig() {
     Log::info() << "loading configuration from file: " << _configFilePath;
     // LATER support a config directory like /etc/qron.d rather only one file
     QFile file(_configFilePath);
-    SchedulerConfig config = _configRepository->parseConfig(&file);
+    SchedulerConfig config = _configRepository->parseConfig(&file, true);
     if (config.isNull()) {
       Log::error() << "cannot load configuration from file: "
                    << _configFilePath;

@@ -21,8 +21,9 @@ ConfigRepository::ConfigRepository(QObject *parent, Scheduler *scheduler)
   qRegisterMetaType<QList<ConfigHistoryEntry> >("QList<ConfigHistoryEntry>");
 }
 
-SchedulerConfig ConfigRepository::parseConfig(QIODevice *source) {
-  // TODO should rather have an errorString() methods or a QString *errorString param than directly logging errors
+SchedulerConfig ConfigRepository::parseConfig(
+    QIODevice *source, bool applyLogConfig) {
+  // TODO should rather have an errorString() methods or a QString *errorString param than directly logging errors, however, warnings and error within SchedulerConfig::SchedulerConfig should also be handled
   if (!source->isOpen())
     if (!source->open(QIODevice::ReadOnly)) {
       QString errorString = source->errorString();
@@ -47,12 +48,13 @@ SchedulerConfig ConfigRepository::parseConfig(QIODevice *source) {
     if (root.name() == "qrontab") {
       SchedulerConfig config;
       if (QThread::currentThread() == thread())
-        config = parseConfig(root);
+        config = parseConfig(root, applyLogConfig);
       else
         QMetaObject::invokeMethod(this, "parseConfig",
                                   Qt::BlockingQueuedConnection,
                                   Q_RETURN_ARG(SchedulerConfig, config),
-                                  Q_ARG(PfNode, root));
+                                  Q_ARG(PfNode, root),
+                                  Q_ARG(bool, applyLogConfig));
       return config;
     } else {
       Log::error() << "configuration root node is not \"qrontab\"";
@@ -63,6 +65,6 @@ SchedulerConfig ConfigRepository::parseConfig(QIODevice *source) {
   return SchedulerConfig();
 }
 
-SchedulerConfig ConfigRepository::parseConfig(PfNode root) {
-  return SchedulerConfig(root, _scheduler, true); // FIXME must not apply log config
+SchedulerConfig ConfigRepository::parseConfig(PfNode root, bool applyLogConfig) {
+  return SchedulerConfig(root, _scheduler, applyLogConfig);
 }

@@ -88,6 +88,7 @@ public:
   int uiDataCount() const;
   QString id() const { return _hash; }
   QString idQualifier() const { return "config"; }
+  void applyLogConfig() const;
 };
 
 SchedulerConfig::SchedulerConfig() {
@@ -147,7 +148,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   _logfiles = logfiles;
   _loggers = loggers;
   if (applyLogConfig)
-    Log::replaceLoggersPlusConsole(Log::Fatal, loggers);
+    this->applyLogConfig();
   _unsetenv.clear();
   _globalParams.clear();
   _setenv.clear();
@@ -556,7 +557,7 @@ QString SchedulerConfig::hash() const {
     buf.seek(0);
     hash.addData(&buf);
     d->_hash = hash.result().toHex();
-    qDebug() << "SchedulerConfig::hash()" << d->_hash;
+    //qDebug() << "SchedulerConfig::hash()" << d->_hash;
   }
   return d->_hash;
 }
@@ -585,7 +586,7 @@ qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {
              node.toPf(PfOptions().setShouldIndent()
                        .setShouldWriteContentBeforeSubnodes()
                        .preferDoubleQuoteCharactersProtection())));
-  qDebug() << "**** SchedulerConfig::writeAsPf" << s;
+  //qDebug() << "**** SchedulerConfig::writeAsPf" << s;
   return device->write(s.toUtf8());
 }
 
@@ -674,4 +675,14 @@ QVariant SchedulerConfigData::uiData(int section, int role) const {
     }
   }
   return QVariant();
+}
+
+void SchedulerConfigData::applyLogConfig() const {
+  Log::replaceLoggersPlusConsole(Log::Fatal, _loggers);
+}
+
+void SchedulerConfig::applyLogConfig() const {
+  const SchedulerConfigData *d = scd();
+  if (d)
+    d->applyLogConfig();
 }

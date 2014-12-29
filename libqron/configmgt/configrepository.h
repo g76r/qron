@@ -50,12 +50,12 @@ public:
     activateConfig(id);
     return id; }
   /** Syntaxic sugar for addConfig(parseConfig(source)) */
-  QString addConfig(QIODevice *source) {
-    return addConfig(parseConfig(source)); }
+  QString addConfig(QIODevice *source, bool applyLogConfig) {
+    return addConfig(parseConfig(source, applyLogConfig)); }
   /** Build a SchedulerConfig object from external format, without adding it
    * to the repository.
    * This method is thread-safe. */
-  SchedulerConfig parseConfig(QIODevice *source);
+  SchedulerConfig parseConfig(QIODevice *source, bool applyLogConfig);
   /** Remove a non-active config from the repository.
    * @return false if id not found or active */
   virtual bool removeConfig(QString id) = 0;
@@ -68,7 +68,7 @@ signals:
   void historyEntryAppended(ConfigHistoryEntry historyEntry);
 
 private:
-  Q_INVOKABLE SchedulerConfig parseConfig(PfNode source);
+  Q_INVOKABLE SchedulerConfig parseConfig(PfNode source, bool applyLogConfig);
 };
 
 #endif // CONFIGREPOSITORY_H
