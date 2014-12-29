@@ -1,3 +1,16 @@
+/* Copyright 2014 Hallowyn and others.
+ * This file is part of qron, see <http://qron.hallowyn.com/>.
+ * Qron is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU Affero General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ * Qron is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU Affero General Public License for more details.
+ * You should have received a copy of the GNU Affero General Public License
+ * along with qron. If not, see <http://www.gnu.org/licenses/>.
+ */
 #include "localconfigrepository.h"
 #include <QtDebug>
 #include "log/log.h"
@@ -13,6 +26,7 @@ LocalConfigRepository::LocalConfigRepository(
 }
 
 void LocalConfigRepository::openRepository(QString basePath) {
+  QMutexLocker locker(&_mutex);
   _basePath = QString();
   _activeConfigId = QString();
   _configs.clear();
@@ -47,7 +61,7 @@ void LocalConfigRepository::openRepository(QString basePath) {
   QFileInfoList fileInfos =
       configsDir.entryInfoList(QDir::Files|QDir::NoSymLinks,
                                QDir::Time|QDir::Reversed);
-  // TODO limit number of loaded config and/or purge oldest ones
+  // TODO limit number of loaded config and/or purge oldest ones and/or move oldest into an 'archive' subdir
   foreach (const QFileInfo &fi, fileInfos) {
     QFile f(fi.filePath());
     qDebug() << "LocalConfigRepository::openRepository" << fi.filePath();
@@ -56,6 +70,7 @@ void LocalConfigRepository::openRepository(QString basePath) {
       if (config.isNull()) {
         Log::warning() << "moving incorect config file to 'errors' subdir: "
                        << fi.fileName();
+        QFile(errorsDir.path()+"/"+fi.fileName()).remove();
         if (!f.rename(errorsDir.path()+"/"+fi.fileName()))
           Log::error() << "cannot move incorect config file to 'errors' "
                           "subdir: " << fi.fileName();
@@ -65,12 +80,24 @@ void LocalConfigRepository::openRepository(QString basePath) {
       if (_configs.contains(configId)) {
         Log::warning() << "moving duplicated config file to 'errors' subdir: "
                        << fi.fileName();
+        QFile(errorsDir.path()+"/"+fi.fileName()).remove();
         if (!f.rename(errorsDir.path()+"/"+fi.fileName()))
           Log::error() << "cannot move duplicated config file to 'errors' "
                           "subdir: " << fi.fileName();
         continue; // ignore duplicated config file
       }
-      // FIXME fix repo if hash and filename do not match: rename
+      if (configId != fi.baseName()) {
+        QString rightPath = fi.path()+"/"+configId;
+        Log::warning() << "renaming config file because id mismatch: "
+                       << fi.fileName() << " to " << rightPath;
+        if (!f.rename(rightPath)) {
+          // this is only a warning since the file can already exist and be a
+          // duplicated (in this case the duplicate will be moved to error and
+          // the renaming will succeed next time the repo will be opened)
+          Log::warning() << "cannot rename file: " << fi.fileName() << " to "
+                         << rightPath;
+        }
+      }
       _configs.insert(configId, config);
       //qDebug() << "***************** openRepository" << configId;
       emit configAdded(configId, config);
@@ -116,19 +143,22 @@ void LocalConfigRepository::openRepository(QString basePath) {
 }
 
 QStringList LocalConfigRepository::availlableConfigIds() {
+  QMutexLocker locker(&_mutex);
   return _configs.keys();
 }
 
 QString LocalConfigRepository::activeConfigId() {
+  QMutexLocker locker(&_mutex);
   return _activeConfigId;
 }
 
 SchedulerConfig LocalConfigRepository::config(QString id) {
+  QMutexLocker locker(&_mutex);
   return _configs.value(id);
 }
 
 QString LocalConfigRepository::addConfig(SchedulerConfig config) {
-  // FIXME threadsafe
+  QMutexLocker locker(&_mutex);
   QString id = config.hash();
   if (!id.isNull()) {
     if (!_basePath.isEmpty()) {
@@ -151,7 +181,7 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
 }
 
 bool LocalConfigRepository::activateConfig(QString id) {
-  // FIXME threadsafe
+  QMutexLocker locker(&_mutex);
   const SchedulerConfig config = _configs.value(id);
   if (config.isNull()) {
     Log::error() << "cannote activate config since it is not found in "
@@ -179,7 +209,7 @@ bool LocalConfigRepository::activateConfig(QString id) {
 }
 
 bool LocalConfigRepository::removeConfig(QString id) {
-  // FIXME threadsafe
+  QMutexLocker locker(&_mutex);
   SchedulerConfig config = _configs.value(id);
   if (config.isNull()) {
     Log::error() << "cannote remove config since it is not found in "
