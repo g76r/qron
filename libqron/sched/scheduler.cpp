@@ -130,7 +130,17 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
   emit globalUnsetenvChanged(_config.unsetenv());
   emit accessControlConfigurationChanged(
         !_config.accessControlConfig().isEmpty());
-  emit configChanged(_config); // must be last signal
+  emit configChanged(_config); // must be last signal but hostsResourcesAvailabilityChanged()
+  foreach (const QString &host, _consumedResources.keys()) {
+    const QHash<QString,qint64> &hostConsumedResources
+        = _consumedResources[host];
+    QHash<QString,qint64> hostAvailableResources
+        = _config.hostResources().value(host);
+    foreach (const QString &kind, hostConsumedResources.keys())
+      hostAvailableResources.insert(kind, hostAvailableResources.value(kind)
+                                    - hostConsumedResources.value(kind));
+    emit hostsResourcesAvailabilityChanged(host, hostAvailableResources);
+  }
   reevaluateQueuedRequests();
   // inspect queued requests to replace Task objects or remove request
   for (int i = 0; i < _queuedRequests.size(); ++i) {
