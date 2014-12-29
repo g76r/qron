@@ -127,7 +127,7 @@ QString HtmlTaskItemDelegate::headerText(
       text.prepend("<i class=\"icon-bolt\"></i>&nbsp;");
       break;
     case 8:
-      text.prepend("<i class=\"icon-food\"></i>&nbsp;");
+      text.prepend("<i class=\"icon-fast-food\"></i>&nbsp;");
       break;
     case 14:
       text.prepend("<i class=\"icon-play\"></i>&nbsp;");
