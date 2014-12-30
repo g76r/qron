@@ -777,15 +777,15 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/console/confirm") {
     QString event = req.param("event");
     QString taskId = req.param("taskid");
-    QString id = req.param("id"); // FIXME
+    QString taskInstanceId = req.param("taskinstanceid");
     QString configId = req.param("configid");
     QString referer = req.header("Referer", "index.html");
     QString message;
     if (_scheduler) {
       if (event == "abortTask") {
-        message = "abort task "+id;
+        message = "abort task "+taskInstanceId;
       } else if (event == "cancelRequest") {
-        message = "cancel request "+id;
+        message = "cancel request "+taskInstanceId;
       } else if (event == "enableAllTasks") {
         message = QString(req.param("enable") == "true" ? "enable" : "disable")
             + " all tasks";
