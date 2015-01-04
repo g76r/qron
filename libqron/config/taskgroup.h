@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,6 +27,7 @@ class QDebug;
 class Scheduler;
 class EventSubscription;
 class TaskInstance;
+
 
 /** A task group is a mean to tie tasks together to make them share some
  * configuration and to indicate that they are related (e.g. they belong to

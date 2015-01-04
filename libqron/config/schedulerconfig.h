@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -85,12 +85,9 @@ public:
   qint64 writeAsPf(QIODevice *device) const;
   PfNode toPfNode() const;
   void copyLiveAttributesFromOldTasks(QHash<QString,Task> oldTasks);
-  /** Rename cluster, do not perform any sanity check before or after. */
-  Cluster renameCluster(QString oldName, QString newName);
-  /** Update task, do not perform any sanity check before or after. */
-  Task updateTask(Task task);
-  /** Make log configuration active by calling relevant Log methods.
-   * @see Log */
+  void changeTask(Task newItem, Task oldItem);
+  void changeCluster(Cluster newItem, Cluster oldItem);
+  // TODO change methods for other objects
   void applyLogConfig() const;
 
 private:

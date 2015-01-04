@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,9 +31,9 @@ public:
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
+  int uiSectionCount() const;
   QString id() const { return _id; }
-  void setId(QString id) { _id = id; }
+  //void setId(QString id) { _id = id; }
   QString idQualifier() const { return "taskgroup"; }
 };
 
@@ -172,7 +172,7 @@ QVariant TaskGroupData::uiHeaderData(int section, int role) const {
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int TaskGroupData::uiDataCount() const {
+int TaskGroupData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 

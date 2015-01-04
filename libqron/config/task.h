@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,7 @@
 #include "modelview/shareduiitem.h"
 
 class TaskData;
+class TaskPseudoParamsProvider;
 class QDebug;
 class PfNode;
 class Trigger;
@@ -55,8 +56,7 @@ public:
 };
 
 /** Core task definition object, being it a standalone task or workflow. */
-class LIBQRONSHARED_EXPORT Task
-    : public SharedUiItem, public ParamsProvider {
+class LIBQRONSHARED_EXPORT Task : public SharedUiItem {
 public:
   enum DiscardAliasesOnStart { DiscardNone, DiscardAll, DiscardUnknown };
   Task();
@@ -128,8 +128,10 @@ public:
   static DiscardAliasesOnStart discardAliasesOnStartFromString(QString v);
   QList<RequestFormField> requestFormFields() const;
   QString requestFormFieldsAsHtmlDescription() const;
-  /** give only access to ! pseudo params, not to task params */
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
+  /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
+   * not to task params.
+   * It is up to the caller to delete the object. */
+  inline TaskPseudoParamsProvider pseudoParams() const;
   /** Human readable list of all triggers as one string, for UI purpose. */
   QString triggersAsString() const;
   QString triggersWithCalendarsAsString() const;
@@ -159,10 +161,25 @@ public:
   /** to be called when activating a new configuration, to keep live attributes
    * such as lastReturnCode() or enabled() */
   void copyLiveAttributesFromOldTask(Task oldTask);
+  bool setUiData(int section, const QVariant &value, int role = Qt::EditRole);
 
 private:
   TaskData *td();
   const TaskData *td() const { return (const TaskData*)constData(); }
 };
+
+/** ParamsProvider wrapper for pseudo params. */
+class LIBQRONSHARED_EXPORT TaskPseudoParamsProvider : public ParamsProvider {
+  Task _task;
+
+public:
+  TaskPseudoParamsProvider(Task task) : _task(task) { }
+  QVariant paramValue(QString key, QVariant defaultValue) const;
+};
+
+inline TaskPseudoParamsProvider Task::pseudoParams() const {
+  return TaskPseudoParamsProvider(*this);
+}
+
 
 #endif // TASK_H

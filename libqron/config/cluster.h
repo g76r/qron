@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -40,6 +40,7 @@ public:
   QString label() const;
   void setId(QString id);
   PfNode toPfNode() const;
+  bool setUiData(int section, const QVariant &value, int role = Qt::EditRole);
 
 private:
   ClusterData *cd();

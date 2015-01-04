@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -117,8 +117,10 @@ public:
   QString triggersWithCalendarsAsString() const;
   bool triggersHaveCalendar() const;
   QVariant uiData(int section, int role) const;
+  bool setUiData(int section, const QVariant &value, int role);
+  Qt::ItemFlags uiFlags(int section) const;
   QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
+  int uiSectionCount() const;
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "task"; }
@@ -725,44 +727,45 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
   return v;
 }
 
-QVariant Task::paramValue(QString key, QVariant defaultValue) const {
-  //Log::fatal() << "Task::paramvalue " << key;
+QVariant TaskPseudoParamsProvider::paramValue(
+    QString key, QVariant defaultValue) const {
+  //Log::fatal() << "TaskPseudoParamsProvider::paramValue " << key;
   if (key.at(0) == '!') {
     if (key == "!taskshortid") {
-      return shortId();
+      return _task.shortId();
     } else if (key == "!taskid") {
-      return id();
+      return _task.id();
     } else if (key == "!taskgroupid") {
-      return taskGroup().id();
+      return _task.taskGroup().id();
     } else if (key == "!target") {
-      return target();
+      return _task.target();
     } else if (key == "!minexpectedms") {
-      return minExpectedDuration();
+      return _task.minExpectedDuration();
     } else if (key == "!minexpecteds") {
-      return minExpectedDuration()/1000.0;
+      return _task.minExpectedDuration()/1000.0;
     } else if (key == "!maxexpectedms") {
-      long long ms = maxExpectedDuration();
+      long long ms = _task.maxExpectedDuration();
       return (ms == LLONG_MAX) ? defaultValue : ms;
     } else if (key == "!maxexpecteds") {
-      long long ms = maxExpectedDuration();
+      long long ms = _task.maxExpectedDuration();
       return (ms == LLONG_MAX) ? defaultValue : ms/1000.0;
     } else if (key == "!maxbeforeabortms") {
-      long long ms = maxDurationBeforeAbort();
+      long long ms = _task.maxDurationBeforeAbort();
       return (ms == LLONG_MAX) ? defaultValue : ms;
     } else if (key == "!maxbeforeaborts") {
-      long long ms = maxDurationBeforeAbort();
+      long long ms = _task.maxDurationBeforeAbort();
       return (ms == LLONG_MAX) ? defaultValue : ms/1000.0;
     } else if (key == "!maxexpectedms0") {
-      long long ms = maxExpectedDuration();
+      long long ms = _task.maxExpectedDuration();
       return (ms == LLONG_MAX) ? 0 : ms;
     } else if (key == "!maxexpecteds0") {
-      long long ms = maxExpectedDuration();
+      long long ms = _task.maxExpectedDuration();
       return (ms == LLONG_MAX) ? 0.0 : ms/1000.0;
     } else if (key == "!maxbeforeabortms0") {
-      long long ms = maxDurationBeforeAbort();
+      long long ms = _task.maxDurationBeforeAbort();
       return (ms == LLONG_MAX) ? 0 : ms;
     } else if (key == "!maxbeforeaborts0") {
-      long long ms = maxDurationBeforeAbort();
+      long long ms = _task.maxDurationBeforeAbort();
       return (ms == LLONG_MAX) ? 0.0 : ms/1000.0;
     }
   }
@@ -826,7 +829,7 @@ QVariant TaskData::uiHeaderData(int section, int role) const {
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int TaskData::uiDataCount() const {
+int TaskData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
@@ -928,6 +931,40 @@ QVariant TaskData::uiData(int section, int role) const {
   return QVariant();
 }
 
+bool Task::setUiData(int section, const QVariant &value, int role) {
+  if (isNull())
+    return false;
+  detach<TaskData>();
+  return ((TaskData*)constData())->setUiData(section, value, role);
+}
+
+bool TaskData::setUiData(int section, const QVariant &value, int role) {
+  if (role != Qt::EditRole)
+    return false;
+  switch(section) {
+  case 0:
+    if (value.toString().isEmpty())
+      return false;
+    _shortId = value.toString();
+    _id = _group.id()+"."+_shortId;
+    return true;
+  case 2:
+    _label = value.toString();
+    return true;
+  case 5:
+    _target = value.toString();
+    return true;
+  }
+  return false;
+}
+
+Qt::ItemFlags TaskData::uiFlags(int section) const {
+  Q_UNUSED(section)
+  // TODO more flags, maybe not same ones for every section
+  // FIXME mark only editable sections as editable
+  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+}
+
 void Task::setParentParams(ParamSet parentParams) {
   if (!isNull())
     td()->_params.setParent(parentParams);
@@ -948,7 +985,7 @@ PfNode Task::toPfNode() const {
 
   // description and execution attributes
   node.setAttribute("taskgroup", td->_group.id());
-  if (!td->_label.isEmpty())
+  if (!td->_label.isEmpty() && td->_label != td->_id)
     node.setAttribute("label", td->_label);
   if (!td->_info.isEmpty())
     node.setAttribute("info", td->_info);

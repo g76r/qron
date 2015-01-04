@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -35,9 +35,11 @@ public:
   QList<Host> _hosts;
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
+  int uiSectionCount() const;
   QString id() const { return _id; }
   QString idQualifier() const { return "cluster"; }
+  bool setUiData(int section, const QVariant &value, int role);
+  Qt::ItemFlags uiFlags(int section) const;
 };
 
 Cluster::Cluster() {
@@ -49,7 +51,7 @@ Cluster::Cluster(const Cluster &other) : SharedUiItem(other) {
 Cluster::Cluster(PfNode node) {
   ClusterData *hgd = new ClusterData;
   hgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
-  hgd->_label = node.attribute("label", hgd->_id);
+  hgd->_label = node.attribute("label");
   hgd->_balancing = node.attribute("balancing", DEFAULT_BALANCING_METHOD);
   if (hgd->_balancing == "first" || hgd->_balancing == "each")
     setData(hgd);
@@ -77,7 +79,9 @@ QString Cluster::balancing() const {
 }
 
 QString Cluster::label() const {
-  return !isNull() ? cd()->_label : QString();
+  const ClusterData *d = cd();
+  return d ? (d->_label.isEmpty() ? d->_id : d->_label)
+           : QString();
 }
 
 void Cluster::setId(QString id) {
@@ -100,7 +104,7 @@ QVariant ClusterData::uiData(int section, int role) const {
     case 2:
       return _balancing;
     case 3:
-      return _label;
+      return _label.isEmpty() ? _id : _label;
     }
     break;
   default:
@@ -109,13 +113,54 @@ QVariant ClusterData::uiData(int section, int role) const {
   return QVariant();
 }
 
+bool ClusterData::setUiData(int section, const QVariant &value, int role) {
+  if (role != Qt::EditRole)
+    return false;
+  QString s = value.toString().trimmed();
+  switch(section) {
+  case 0:
+    if (s.isEmpty())
+      return false;
+    _id = s;
+    return true;
+  case 1:
+    // hosts list not text-editable
+    return false;
+  case 2:
+    // FIXME balancing method: convert text to enum
+    return false;
+  case 3:
+    _label = s;
+    return true;
+  }
+  return false;
+}
+
+Qt::ItemFlags ClusterData::uiFlags(int section) const {
+  Qt::ItemFlags flags = SharedUiItemData::uiFlags(section);
+  switch(section) {
+  case 0:
+  case 2:
+  case 3:
+    flags |= Qt::ItemIsEditable;
+  }
+  return flags;
+}
+
+bool Cluster::setUiData(int section, const QVariant &value, int role) {
+  if (isNull())
+    return false;
+  detach<ClusterData>();
+  return ((ClusterData*)constData())->setUiData(section, value, role);
+}
+
 QVariant ClusterData::uiHeaderData(int section, int role) const {
   return role == Qt::DisplayRole && section >= 0
       && (unsigned)section < sizeof _uiHeaderNames
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int ClusterData::uiDataCount() const {
+int ClusterData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
@@ -129,7 +174,7 @@ PfNode Cluster::toPfNode() const {
   if (!cd)
     return PfNode();
   PfNode node("cluster", cd->_id);
-  if (cd->_label != cd->_id)
+  if (!cd->_label.isEmpty() && cd->_label != cd->_id)
     node.appendChild(PfNode("label", cd->_label));
   if (cd->_balancing != DEFAULT_BALANCING_METHOD)
     node.appendChild(PfNode("balancing", cd->_balancing));

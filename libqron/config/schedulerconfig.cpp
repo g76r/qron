@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -85,7 +85,7 @@ public:
   }
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
+  int uiSectionCount() const;
   QString id() const { return _hash; }
   QString idQualifier() const { return "config"; }
   void applyLogConfig() const;
@@ -523,25 +523,22 @@ QList<Logger*> SchedulerConfig::loggers() const {
   return d ? d->_loggers : QList<Logger*>();
 }
 
-Cluster SchedulerConfig::renameCluster(QString oldName, QString newName) {
+void SchedulerConfig::changeTask(Task newItem, Task oldItem) {
   SchedulerConfigData *d = scd();
-  if (d && d->_clusters.contains(oldName)) {
-    Cluster cluster = d->_clusters[oldName];
-    cluster.setId(newName);
-    d->_clusters.remove(oldName);
-    d->_clusters.insert(newName, cluster);
-    return cluster;
-  }
-  return Cluster();
+  if (!d)
+    return;
+  d->_tasks.remove(oldItem.id());
+  if (!newItem.isNull())
+    d->_tasks.insert(newItem.id(), newItem);
 }
 
-Task SchedulerConfig::updateTask(Task task) {
+void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
   SchedulerConfigData *d = scd();
-  if (d && d->_tasks.contains(task.id())) {
-    d->_tasks.insert(task.id(), task);
-    return task;
-  }
-  return Task();
+  if (!d)
+    return;
+  d->_clusters.remove(oldItem.id());
+  if (!newItem.isNull())
+    d->_clusters.insert(newItem.id(), newItem);
 }
 
 QString SchedulerConfig::hash() const {
@@ -660,7 +657,7 @@ QVariant SchedulerConfigData::uiHeaderData(int section, int role) const {
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int SchedulerConfigData::uiDataCount() const {
+int SchedulerConfigData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 

@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,7 +21,7 @@ ConfigsModel::ConfigsModel(QObject *parent)
 void ConfigsModel::configAdded(QString id, SchedulerConfig config) {
   Q_UNUSED(id)
   configRemoved(id);
-  insertItem(0, config);
+  insertItemAt(0, config);
 }
 
 void ConfigsModel::configRemoved(QString id) {

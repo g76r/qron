@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,7 +32,7 @@ public:
   }
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
-  int uiDataCount() const;
+  int uiSectionCount() const;
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "confighistoryentry"; }
@@ -77,7 +77,7 @@ QVariant ConfigHistoryEntryData::uiHeaderData(int section, int role) const {
       ? _uiHeaderNames[section] : QVariant();
 }
 
-int ConfigHistoryEntryData::uiDataCount() const {
+int ConfigHistoryEntryData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 

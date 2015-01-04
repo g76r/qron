@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,10 +23,7 @@
 
 TasksModel::TasksModel(QObject *parent)
   : SharedUiItemsTableModel(parent) {
-//  Task templateTask(PfNode("template").appendChild();, 0, TaskGroup("template"),
-//                    QHash<QString,Task>(), QString(),
-//                    QHash<QString,Calendar>());
-  setHeaderDataFromTemplate(Task::templateTask()); // FIXME
+  setHeaderDataFromTemplate(Task::templateTask());
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(periodicDataRefresh()));
   timer->start(PERIODIC_REFRESH_INTERVAL);
@@ -37,22 +34,16 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
   case Qt::DisplayRole:
     switch(index.column()) {
     case 18:
+      // TODO move that to html delegate
       if (!_customActions.isEmpty()) {
         Task t = _tasks.value(index.row());
-        return t.params().evaluate(_customActions, &t);
+        TaskPseudoParamsProvider ppp = t.pseudoParams();
+        return t.params().evaluate(_customActions, &ppp);
       }
       break;
     }
   }
   return SharedUiItemsModel::data(index, role);
-}
-
-void TasksModel::updateTask(Task task) {
-  updateItem(task);
-}
-
-void TasksModel::renameTask(Task task, QString oldName) {
-  renameItem(task, oldName);
 }
 
 void TasksModel::configReset(SchedulerConfig config) {
