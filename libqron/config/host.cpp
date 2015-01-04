@@ -37,6 +37,8 @@ public:
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "host"; }
+  bool setUiData(int section, const QVariant &value, int role);
+  Qt::ItemFlags uiFlags(int section) const;
 };
 
 Host::Host() {
@@ -102,6 +104,41 @@ QVariant HostData::uiData(int section, int role) const {
     ;
   }
   return QVariant();
+}
+
+bool HostData::setUiData(int section, const QVariant &value, int role) {
+  if (role != Qt::EditRole)
+    return false;
+  QString s = value.toString().trimmed();
+  switch(section) {
+  case 0:
+    if (s.isEmpty())
+      return false;
+    _id = s;
+    return true;
+  case 1:
+    _hostname = s;
+    return true;
+  case 2:
+    // TODO: resources from string
+    return false;
+  case 3:
+    _label = s;
+    return true;
+  }
+  return false;
+}
+
+Qt::ItemFlags HostData::uiFlags(int section) const {
+  Qt::ItemFlags flags = SharedUiItemData::uiFlags(section);
+  switch(section) {
+  case 0:
+  case 1:
+  case 2:
+  case 3:
+    flags |= Qt::ItemIsEditable;
+  }
+  return flags;
 }
 
 QVariant HostData::uiHeaderData(int section, int role) const {

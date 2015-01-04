@@ -39,6 +39,7 @@ public:
   QString label() const;
   void detach();
   PfNode toPf() const;
+  bool setUiData(int section, const QVariant &value, int role = Qt::EditRole);
 
 private:
   HostData *hd();
