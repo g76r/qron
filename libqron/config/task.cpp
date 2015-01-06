@@ -117,7 +117,8 @@ public:
   QString triggersWithCalendarsAsString() const;
   bool triggersHaveCalendar() const;
   QVariant uiData(int section, int role) const;
-  bool setUiData(int section, const QVariant &value, int role);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 int role);
   Qt::ItemFlags uiFlags(int section) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiSectionCount() const;
@@ -931,20 +932,29 @@ QVariant TaskData::uiData(int section, int role) const {
   return QVariant();
 }
 
-bool Task::setUiData(int section, const QVariant &value, int role) {
+bool Task::setUiData(int section, const QVariant &value, QString *errorString,
+                     int role) {
   if (isNull())
     return false;
   detach<TaskData>();
-  return ((TaskData*)constData())->setUiData(section, value, role);
+  return ((TaskData*)constData())->setUiData(section, value, errorString, role);
 }
 
-bool TaskData::setUiData(int section, const QVariant &value, int role) {
-  if (role != Qt::EditRole)
+bool TaskData::setUiData(int section, const QVariant &value,
+                         QString *errorString, int role) {
+  if (role != Qt::EditRole) {
+    if (errorString)
+      *errorString = "cannot set other role than EditRole";
     return false;
+  }
   switch(section) {
   case 0:
-    if (value.toString().isEmpty())
+    if (value.toString().isEmpty()) {
+      if (errorString)
+        *errorString = "id cannot be empty";
       return false;
+    }
+    // FIXME: if label == id, reset label
     _shortId = value.toString();
     _id = _group.id()+"."+_shortId;
     return true;

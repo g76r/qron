@@ -87,6 +87,7 @@ public:
   void copyLiveAttributesFromOldTasks(QHash<QString,Task> oldTasks);
   void changeTask(Task newItem, Task oldItem);
   void changeCluster(Cluster newItem, Cluster oldItem);
+  void changeHost(Host newItem, Host oldItem);
   // TODO change methods for other objects
   void applyLogConfig() const;
 

@@ -37,7 +37,8 @@ public:
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "host"; }
-  bool setUiData(int section, const QVariant &value, int role);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 int role);
   Qt::ItemFlags uiFlags(int section) const;
 };
 
@@ -106,14 +107,30 @@ QVariant HostData::uiData(int section, int role) const {
   return QVariant();
 }
 
-bool HostData::setUiData(int section, const QVariant &value, int role) {
-  if (role != Qt::EditRole)
+bool Host::setUiData(int section, const QVariant &value, QString *errorString,
+                     int role) {
+  if (isNull())
     return false;
+  detach();
+  return ((HostData*)constData())->setUiData(section, value, errorString, role);
+}
+
+bool HostData::setUiData(int section, const QVariant &value,
+                         QString *errorString, int role) {
+  if (role != Qt::EditRole) {
+    if (errorString)
+      *errorString = "cannot set other role than EditRole";
+    return false;
+  }
   QString s = value.toString().trimmed();
   switch(section) {
   case 0:
-    if (s.isEmpty())
+    if (s.isEmpty()) {
+      if (errorString)
+        *errorString = "id cannot be empty";
       return false;
+    }
+    // FIXME: if label == id, reset label
     _id = s;
     return true;
   case 1:

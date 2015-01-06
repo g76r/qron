@@ -161,7 +161,8 @@ public:
   /** to be called when activating a new configuration, to keep live attributes
    * such as lastReturnCode() or enabled() */
   void copyLiveAttributesFromOldTask(Task oldTask);
-  bool setUiData(int section, const QVariant &value, int role = Qt::EditRole);
+  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
+                 int role = Qt::EditRole);
 
 private:
   TaskData *td();

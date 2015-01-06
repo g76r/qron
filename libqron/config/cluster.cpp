@@ -38,7 +38,8 @@ public:
   int uiSectionCount() const;
   QString id() const { return _id; }
   QString idQualifier() const { return "cluster"; }
-  bool setUiData(int section, const QVariant &value, int role);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 int role);
   Qt::ItemFlags uiFlags(int section) const;
 };
 
@@ -113,18 +114,28 @@ QVariant ClusterData::uiData(int section, int role) const {
   return QVariant();
 }
 
-bool ClusterData::setUiData(int section, const QVariant &value, int role) {
-  if (role != Qt::EditRole)
+bool ClusterData::setUiData(int section, const QVariant &value,
+                            QString *errorString, int role) {
+  if (role != Qt::EditRole) {
+    if (errorString)
+      *errorString = "cannot set other role than EditRole";
     return false;
+  }
   QString s = value.toString().trimmed();
   switch(section) {
   case 0:
-    if (s.isEmpty())
+    if (s.isEmpty()) {
+      if (errorString)
+        *errorString = "id cannot be empty";
       return false;
+    }
+    // FIXME: if label == id, reset label
     _id = s;
     return true;
   case 1:
     // hosts list not text-editable
+    if (errorString)
+      *errorString = "hosts list is not text-editable";
     return false;
   case 2:
     // FIXME balancing method: convert text to enum
@@ -147,11 +158,13 @@ Qt::ItemFlags ClusterData::uiFlags(int section) const {
   return flags;
 }
 
-bool Cluster::setUiData(int section, const QVariant &value, int role) {
+bool Cluster::setUiData(int section, const QVariant &value,
+                        QString *errorString, int role) {
   if (isNull())
     return false;
   detach<ClusterData>();
-  return ((ClusterData*)constData())->setUiData(section, value, role);
+  return ((ClusterData*)constData())
+      ->setUiData(section, value, errorString, role);
 }
 
 QVariant ClusterData::uiHeaderData(int section, int role) const {

@@ -541,6 +541,15 @@ void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
     d->_clusters.insert(newItem.id(), newItem);
 }
 
+void SchedulerConfig::changeHost(Host newItem, Host oldItem) {
+  SchedulerConfigData *d = scd();
+  if (!d)
+    return;
+  d->_hosts.remove(oldItem.id());
+  if (!newItem.isNull())
+    d->_hosts.insert(newItem.id(), newItem);
+}
+
 QString SchedulerConfig::hash() const {
   const SchedulerConfigData *d = scd();
   if (!d)

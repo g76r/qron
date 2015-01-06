@@ -40,7 +40,8 @@ public:
   QString label() const;
   void setId(QString id);
   PfNode toPfNode() const;
-  bool setUiData(int section, const QVariant &value, int role = Qt::EditRole);
+  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
+                 int role = Qt::EditRole);
 
 private:
   ClusterData *cd();
