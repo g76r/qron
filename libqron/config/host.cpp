@@ -138,6 +138,8 @@ bool HostData::setUiData(int section, const QVariant &value,
     return true;
   case 2:
     // TODO: resources from string
+    if (errorString)
+      *errorString = "resources cannot be set from string";
     return false;
   case 3:
     _label = s;

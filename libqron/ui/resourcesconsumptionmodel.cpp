@@ -23,10 +23,12 @@ void ResourcesConsumptionModel::configChanged(SchedulerConfig config) {
   QList<Task> tasks = config.tasks().values();
   QHash<QString,Cluster> clusters = config.clusters();
   QList<Host> hosts = config.hosts().values();
-  QHash<QString,QHash<QString,qint64> > resources = config.hostResources();
+  QHash<QString,QHash<QString,qint64> > configured;
+  foreach (const Host &host, config.hosts())
+    configured.insert(host.id(), host.resources());
   qSort(tasks);
   qSort(hosts);
-  QHash<QString,QHash<QString,qint64> > min = resources;
+  QHash<QString,QHash<QString,qint64> > min = configured;
   foreach (const Host &host, hosts)
     setCellValue(MINIMUM_CAPTION, host.id(), QString());
   foreach (const Task &task, tasks) {
@@ -41,7 +43,7 @@ void ResourcesConsumptionModel::configChanged(SchedulerConfig config) {
         QString s;
         foreach (const QString &kind, task.resources().keys()) {
           qint64 consumed = task.resources().value(kind)*task.maxInstances();
-          qint64 available = resources.value(host.id()).value(kind);
+          qint64 available = configured.value(host.id()).value(kind);
           s.append(kind).append(": ").append(QString::number(consumed))
               .append(' ');
           if (available > 0) {
@@ -68,7 +70,7 @@ void ResourcesConsumptionModel::configChanged(SchedulerConfig config) {
     QString s;
     foreach (const QString &kind, host.resources().keys()) {
       qint64 lowest = min.value(host.id()).value(kind);
-      qint64 available = resources.value(host.id()).value(kind);
+      qint64 available = configured.value(host.id()).value(kind);
       s.append(kind).append(": ").append(QString::number(lowest))
           .append("/").append(QString::number(available)).append(' ');
     }

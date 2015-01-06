@@ -63,10 +63,11 @@ void HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged(
 }
 
 void HostsResourcesAvailabilityModel::configChanged(SchedulerConfig config) {
-  _configured = config.hostResources();
-  _lwm = config.hostResources();
-  foreach (QString host, config.hostResources().keys()) {
-    QHash<QString,qint64> hostResources = config.hostResources().value(host);
+  _configured.clear();
+  foreach (QString host, config.hosts().keys()) {
+    QHash<QString,qint64> hostResources
+        = config.hosts().value(host).resources();
+    _configured.insert(host, hostResources);
     foreach (QString kind, hostResources.keys()) {
       QString configured = QString::number(hostResources.value(kind));
       switch (_mode) {
@@ -88,4 +89,5 @@ void HostsResourcesAvailabilityModel::configChanged(SchedulerConfig config) {
       }
     }
   }
+  _lwm = _configured;
 }

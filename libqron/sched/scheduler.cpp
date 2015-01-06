@@ -135,7 +135,7 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
     const QHash<QString,qint64> &hostConsumedResources
         = _consumedResources[host];
     QHash<QString,qint64> hostAvailableResources
-        = _config.hostResources().value(host);
+        = _config.hosts().value(host).resources();
     foreach (const QString &kind, hostConsumedResources.keys())
       hostAvailableResources.insert(kind, hostAvailableResources.value(kind)
                                     - hostConsumedResources.value(kind));
@@ -606,8 +606,10 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
   QHash<QString,qint64> taskResources = task.resources();
   foreach (Host h, hosts) {
     if (!taskResources.isEmpty()) {
-      QHash<QString,qint64> hostConsumedResources = _consumedResources.value(h.id());
-      QHash<QString,qint64> hostAvailableResources = _config.hostResources().value(h.id());
+      QHash<QString,qint64> hostConsumedResources
+          = _consumedResources.value(h.id());
+      QHash<QString,qint64> hostAvailableResources
+          = _config.hosts().value(h.id()).resources();
       if (!instance.force()) {
         foreach (QString kind, taskResources.keys()) {
           qint64 alreadyConsumed = hostConsumedResources.value(kind);
@@ -689,7 +691,7 @@ void Scheduler::taskFinishing(TaskInstance instance,
   QHash<QString,qint64> hostConsumedResources =
       _consumedResources.value(instance.target().id());
   QHash<QString,qint64> hostAvailableResources =
-      _config.hostResources().value(instance.target().id());
+      _config.hosts().value(instance.target().id()).resources();
   foreach (QString kind, taskResources.keys()) {
     qint64 qty = hostConsumedResources.value(kind)-taskResources.value(kind);
     hostConsumedResources.insert(kind, qty);
@@ -700,7 +702,8 @@ void Scheduler::taskFinishing(TaskInstance instance,
     _alerter->cancelAlert("task.failure."+taskId);
   else
     _alerter->raiseAlert("task.failure."+taskId);
-  emit hostsResourcesAvailabilityChanged(instance.target().id(), hostAvailableResources);
+  emit hostsResourcesAvailabilityChanged(instance.target().id(),
+                                         hostAvailableResources);
   // LATER try resubmit if the host was not reachable (this can be usefull with clusters or when host become reachable again)
   if (!instance.startDatetime().isNull() && !instance.endDatetime().isNull()) {
     configuredTask.setLastExecution(instance.startDatetime());

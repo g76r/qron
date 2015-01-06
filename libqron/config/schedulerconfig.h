@@ -59,8 +59,6 @@ public:
   QHash<QString,Task> tasks() const;
   QHash<QString,Cluster> clusters() const;
   QHash<QString,Host> hosts() const;
-  /** Configured max resources available per host */
-  QHash<QString,QHash<QString,qint64> > hostResources() const;
   QHash<QString,Calendar> namedCalendars() const;
   QList<EventSubscription> onstart() const;
   QList<EventSubscription> onsuccess() const;

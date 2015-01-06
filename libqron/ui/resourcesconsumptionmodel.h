@@ -25,7 +25,8 @@
 #include "config/schedulerconfig.h"
 
 /** Model holding maximum possible resources consumption per host, one host per
- * column and one task per line, plus total line on first line. */
+ * column and one task per line, plus total line on first line.
+ * Hosts and tasks are sorted in alphabetical order of their ids. */
 class LIBQRONSHARED_EXPORT ResourcesConsumptionModel : public TextMatrixModel {
   Q_OBJECT
   Q_DISABLE_COPY(ResourcesConsumptionModel)

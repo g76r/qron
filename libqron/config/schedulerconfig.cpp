@@ -51,7 +51,6 @@ public:
   QHash<QString,Task> _tasks;
   QHash<QString,Cluster> _clusters;
   QHash<QString,Host> _hosts;
-  QHash<QString,QHash<QString,qint64> > _hostResources;
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
   QList<EventSubscription> _onlog, _onnotice, _onschedulerstart, _onconfigload;
   qint32 _maxtotaltaskinstances, _maxqueuedrequests;
@@ -70,7 +69,6 @@ public:
       _globalParams(other._globalParams), _setenv(other._setenv),
       _unsetenv(other._unsetenv), _tasksGroups(other._tasksGroups),
       _tasks(other._tasks), _clusters(other._clusters), _hosts(other._hosts),
-      _hostResources(other._hostResources),
       _onstart(other._onstart), _onsuccess(other._onsuccess),
       _onfailure(other._onfailure), _onlog(other._onlog),
       _onnotice(other._onnotice), _onschedulerstart(other._onschedulerstart),
@@ -169,14 +167,12 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
       _namedCalendars.insert(name, calendar);
   }
   _hosts.clear();
-  _hostResources.clear();
   foreach (PfNode node, root.childrenByName("host")) {
     Host host(node);
     if (_hosts.contains(host.id())) {
       Log::error() << "ignoring duplicate host: " << host.id();
     } else {
       _hosts.insert(host.id(), host);
-      _hostResources.insert(host.id(), host.resources());
     }
   }
   _clusters.clear();
@@ -439,11 +435,6 @@ QHash<QString,Cluster> SchedulerConfig::clusters() const {
 QHash<QString,Host> SchedulerConfig::hosts() const {
   const SchedulerConfigData *d = scd();
   return d ? d->_hosts : QHash<QString,Host>();
-}
-
-QHash<QString,QHash<QString,qint64> > SchedulerConfig::hostResources() const {
-  const SchedulerConfigData *d = scd();
-  return d ? d->_hostResources : QHash<QString,QHash<QString,qint64> >();
 }
 
 QHash<QString,Calendar> SchedulerConfig::namedCalendars() const {
