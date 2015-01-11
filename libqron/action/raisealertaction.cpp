@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -22,9 +22,11 @@ public:
   void trigger(EventSubscription subscription, ParamSet eventContext,
                TaskInstance taskContext) const {
     Q_UNUSED(subscription)
-    if (_scheduler)
+    if (_scheduler) {
+      TaskInstancePseudoParamsProvider ppp = taskContext.pseudoParams();
       _scheduler.data()->alerter()
-          ->raiseAlert(eventContext.evaluate(_alert, &taskContext));
+          ->raiseAlert(eventContext.evaluate(_alert, &ppp));
+    }
   }
   QString toString() const {
     return "!+"+_alert;

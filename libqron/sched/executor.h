@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -62,11 +62,11 @@ public:
 signals:
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
     * be emited witout previous taskStarted(). */
-  void taskStarted(TaskInstance instance);
+  void taskInstanceStarted(TaskInstance instance);
   /** Signal emited whenever a task is no longer running or queued:
     * when finished on failure, finished on success, or cannot be started
     * because of a failure on start. */
-  void taskFinished(TaskInstance instance, QPointer<Executor> executor);
+  void taskInstanceFinished(TaskInstance instance, QPointer<Executor> executor);
 
 private slots:
   void processError(QProcess::ProcessError error);
@@ -90,7 +90,7 @@ private:
                          QHash<QString, QString> *setenv = 0);
   void replyHasFinished(QNetworkReply *reply,
                         QNetworkReply::NetworkError error);
-  void taskFinishing(bool success, int returnCode);
+  void taskInstanceFinishing(bool success, int returnCode);
   Q_INVOKABLE void doAbort();
   void workflowFinished(bool success, int returnCode);
   Q_INVOKABLE void doActivateWorkflowTransition(

@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -120,7 +120,7 @@ public slots:
    * longer queued) */
   TaskInstance cancelRequest(quint64 id);
   TaskInstance cancelRequest(TaskInstance instance) {
-    return cancelRequest(instance.id()); }
+    return cancelRequest(instance.idAsLong()); }
   /** Abort a running task instance.
    * For local tasks aborting means killing, for ssh tasks aborting means
    * killing ssh client hence most of time killing actual task, for http tasks
@@ -134,7 +134,7 @@ public slots:
   TaskInstance abortTask(quint64 id);
   /** @see abortTask(quint64) */
   TaskInstance abortTask(TaskInstance instance) {
-    return abortTask(instance.id()); }
+    return abortTask(instance.idAsLong()); }
   /** Post a notice.
    * This method is thread-safe.
    * If params has no parent it will be set global params as parent */
@@ -166,20 +166,22 @@ signals:
    * signals: globalXxxChanged(), accessControlConfigurationChanged(),
    * hostResourceAllocationChanged, etc. */
   void configChanged(SchedulerConfig);
-  /** There is no guarantee that taskQueued() is emited, taskStarted() or
-    * taskFinished() can be emited witout previous taskQueued(). */
-  void taskQueued(TaskInstance instance);
-  /** There is no guarantee that taskStarted() is emited, taskFinished() can
-    * be emited witout previous taskStarted(). */
-  void taskStarted(TaskInstance instance);
-  void taskFinished(TaskInstance instance);
-  /** Called whenever a task or taskinstance changes: queued, started, finished,
-   * disabled, enabled... */
+  /** There is no guarantee that taskInstanceQueued() is emited,
+   * taskInstanceStarted() or taskInstanceFinished() can be emited witout
+   * previous taskInstanceQueued(). */
+  void taskInstanceQueued(TaskInstance instance);
+  /** There is no guarantee that taskInstanceStarted() is emited,
+   * taskInstanceFinished() can be emited witout previous
+   * taskInstanceStarted(). */
+  void taskInstanceStarted(TaskInstance instance);
+  void taskInstanceFinished(TaskInstance instance);
+  /** Called whenever a task or taskinstance of this task changes: queued,
+   * started, finished, disabled, enabled... */
   void taskChanged(Task instance);
   void noticePosted(QString notice, ParamSet params);
 
 private slots:
-  void taskFinishing(TaskInstance instance, QPointer<Executor> executor);
+  void taskInstanceFinishing(TaskInstance instance, QPointer<Executor> executor);
   void periodicChecks();
   /** Fire expired triggers for a given task. */
   void checkTriggersForTask(QVariant taskId);

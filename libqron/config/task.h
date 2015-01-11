@@ -66,7 +66,6 @@ public:
   /** Should only be used by SharedUiItemsModels to get size and headers from
    * a non-null item. */
   static Task templateTask();
-  ~Task();
   Task &operator=(const Task &other) {
     SharedUiItem::operator=(other); return *this; }
   ParamSet params() const;
@@ -129,8 +128,7 @@ public:
   QList<RequestFormField> requestFormFields() const;
   QString requestFormFieldsAsHtmlDescription() const;
   /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
-   * not to task params.
-   * It is up to the caller to delete the object. */
+   * not to task params. */
   inline TaskPseudoParamsProvider pseudoParams() const;
   /** Human readable list of all triggers as one string, for UI purpose. */
   QString triggersAsString() const;
@@ -174,7 +172,7 @@ class LIBQRONSHARED_EXPORT TaskPseudoParamsProvider : public ParamsProvider {
   Task _task;
 
 public:
-  TaskPseudoParamsProvider(Task task) : _task(task) { }
+  inline TaskPseudoParamsProvider(Task task) : _task(task) { }
   QVariant paramValue(QString key, QVariant defaultValue) const;
 };
 

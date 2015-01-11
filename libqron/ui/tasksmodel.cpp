@@ -34,7 +34,7 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
   case Qt::DisplayRole:
     switch(index.column()) {
     case 18:
-      // TODO move that to html delegate
+      // MAYDO move that to html delegate (which needs having access to the Task)
       if (!_customActions.isEmpty()) {
         Task t = _tasks.value(index.row());
         TaskPseudoParamsProvider ppp = t.pseudoParams();

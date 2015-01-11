@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -677,8 +677,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         if (!instances.isEmpty()) {
           message = "S:Task '"+taskId+"' submitted for execution with id";
           foreach (TaskInstance request, instances) {
-              message.append(' ').append(QString::number(request.id()));
-              auditInstanceIds << request.id();
+              message.append(' ').append(QString::number(request.idAsLong()));
+              auditInstanceIds << request.idAsLong();
           }
           message.append('.');
         } else
@@ -960,8 +960,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +EventSubscription::toStringList(task.onfailureEventSubscriptions())
                         .join("\n")+"</td></tr>");
         params.setValue("taskid", taskId);
+        TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
         params.setValue("customactions", task.params()
-                        .evaluate(_customaction_taskdetail, &task));
+                        .evaluate(_customaction_taskdetail, &pseudoParams));
         _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
@@ -1394,8 +1395,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _resourcesLwmModel, SLOT(configChanged(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
                _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
-    disconnect(_scheduler, SIGNAL(taskChanged(Task)),
-               _tasksModel, SLOT(updateTask(Task)));
+    disconnect(_scheduler, &Scheduler::taskChanged,
+               _tasksModel, &SharedUiItemsModel::createOrUpdateItem);
     disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
                _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
@@ -1418,18 +1419,18 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                this, SLOT(alertCancellationEmited(QString)));
     disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
                _alertRulesModel, SLOT(configChanged(AlerterConfig)));
-    disconnect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
-               _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
-    disconnect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
-               _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
-               _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
-    disconnect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
-               _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    disconnect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
-               _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    disconnect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
-               _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
+    disconnect(_scheduler, &Scheduler::taskInstanceQueued,
+               _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
+    disconnect(_scheduler, &Scheduler::taskInstanceStarted,
+               _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
+    disconnect(_scheduler, &Scheduler::taskInstanceFinished,
+               _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
+    disconnect(_scheduler, &Scheduler::taskInstanceQueued,
+               _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
+    disconnect(_scheduler, &Scheduler::taskInstanceStarted,
+               _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
+    disconnect(_scheduler, &Scheduler::taskInstanceFinished,
+               _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                _schedulerEventsModel, SLOT(configChanged(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
@@ -1467,8 +1468,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourcesLwmModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
             _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
-    connect(_scheduler, SIGNAL(taskChanged(Task)),
-            _tasksModel, SLOT(updateTask(Task)));
+    connect(_scheduler, &Scheduler::taskChanged,
+            _tasksModel, &SharedUiItemsModel::createOrUpdateItem);
     connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
             _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
@@ -1491,18 +1492,18 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             this, SLOT(alertCancellationEmited(QString)));
     connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
             _alertRulesModel, SLOT(configChanged(AlerterConfig)));
-    connect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
-            _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
-    connect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
-            _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
-            _taskInstancesHistoryModel, SLOT(taskChanged(TaskInstance)));
-    connect(_scheduler, SIGNAL(taskQueued(TaskInstance)),
-            _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    connect(_scheduler, SIGNAL(taskStarted(TaskInstance)),
-            _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
-    connect(_scheduler, SIGNAL(taskFinished(TaskInstance)),
-            _unfinishedTaskInstancetModel, SLOT(taskChanged(TaskInstance)));
+    connect(_scheduler, &Scheduler::taskInstanceQueued,
+            _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
+    connect(_scheduler, &Scheduler::taskInstanceStarted,
+            _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
+    connect(_scheduler, &Scheduler::taskInstanceFinished,
+            _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
+    connect(_scheduler, &Scheduler::taskInstanceQueued,
+            _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
+    connect(_scheduler, &Scheduler::taskInstanceStarted,
+            _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
+    connect(_scheduler, &Scheduler::taskInstanceFinished,
+            _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             _schedulerEventsModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),

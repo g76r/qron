@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,13 +37,12 @@ public:
     Q_UNUSED(subscription)
     if (_scheduler) {
       ParamSet noticeParams;
+      TaskInstancePseudoParamsProvider ppp = taskContext.pseudoParams();
       foreach (QString key, _noticeParams.keys())
         noticeParams.setValue(
-              key, eventContext.evaluate(_noticeParams.value(key),
-                                         &taskContext));
+              key, eventContext.evaluate(_noticeParams.value(key), &ppp));
       _scheduler.data()
-          ->postNotice(eventContext.evaluate(_notice, &taskContext),
-                       noticeParams);
+          ->postNotice(eventContext.evaluate(_notice, &ppp), noticeParams);
     }
   }
   void trigger(EventSubscription subscription, ParamSet eventContext) const {

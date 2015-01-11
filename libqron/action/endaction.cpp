@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -48,7 +48,7 @@ public:
     //    << "EndAction::triggerWithinTaskInstance "
     //    << transitionId << " " << instance.task().id();
     if (workflow.task().mean() != "workflow") {
-      Log::error(instance.task().id(), instance.id())
+      Log::error(instance.task().id(), instance.idAsLong())
           << "executing a end action in the context of a non-workflow task, "
              "for subscription " << subscription.subscriberName() << "|"
           << subscription.eventName();

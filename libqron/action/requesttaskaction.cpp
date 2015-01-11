@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,10 +27,11 @@ public:
   inline ParamSet evaluatedOverrindingParams(ParamSet eventContext,
                                              TaskInstance instance) const {
     ParamSet overridingParams;
+    TaskInstancePseudoParamsProvider ppp = instance.pseudoParams();
     foreach (QString key, _overridingParams.keys())
       overridingParams
           .setValue(key, eventContext
-                    .value(_overridingParams.rawValue(key), &instance));
+                    .value(_overridingParams.rawValue(key), &ppp));
     //Log::fatal() << "******************* " << requestParams;
     return overridingParams;
   }
@@ -41,7 +42,8 @@ public:
       if (parentInstance.isNull()) {
         id = _id;
       } else {
-        id = eventContext.evaluate(_id, &parentInstance);
+        TaskInstancePseudoParamsProvider ppp = parentInstance.pseudoParams();
+        id = eventContext.evaluate(_id, &ppp);
         QString idIfLocalToGroup = parentInstance.task().taskGroup().id()
             +"."+_id;
         if (_scheduler.data()->taskExists(idIfLocalToGroup))
@@ -51,13 +53,13 @@ public:
           id, evaluatedOverrindingParams(eventContext, parentInstance), _force,
           parentInstance);
       if (instances.isEmpty())
-        Log::error(parentInstance.task().id(), parentInstance.id())
+        Log::error(parentInstance.task().id(), parentInstance.idAsLong())
             << "requesttask action failed to request execution of task "
             << id << " within event subscription context "
             << subscription.subscriberName() << "|" << subscription.eventName();
       else
         foreach (TaskInstance childInstance, instances)
-          Log::info(parentInstance.task().id(), parentInstance.id())
+          Log::info(parentInstance.task().id(), parentInstance.idAsLong())
               << "requesttask action requested execution of task "
               << childInstance.task().id() << "/" << childInstance.groupId();
     }

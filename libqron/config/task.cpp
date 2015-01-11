@@ -440,9 +440,6 @@ Task Task::templateTask() {
   return t;
 }
 
-Task::~Task() {
-}
-
 ParamSet Task::params() const {
   return !isNull() ? td()->_params : ParamSet();
 }
@@ -731,7 +728,7 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
 QVariant TaskPseudoParamsProvider::paramValue(
     QString key, QVariant defaultValue) const {
   //Log::fatal() << "TaskPseudoParamsProvider::paramValue " << key;
-  if (key.at(0) == '!') {
+  if (key.startsWith('!')) {
     if (key == "!taskshortid") {
       return _task.shortId();
     } else if (key == "!taskid") {

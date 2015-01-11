@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,14 +20,14 @@
 #include <QDateTime>
 #include "config/host.h"
 #include "util/paramset.h"
+#include "modelview/shareduiitem.h"
 
 class TaskInstanceData;
+class TaskInstancePseudoParamsProvider;
 
 /** Instance of a task created when the execution is requested and used to track
  * the execution until it is finished and even after. */
-class LIBQRONSHARED_EXPORT TaskInstance : public ParamsProvider {
-  QSharedDataPointer<TaskInstanceData> d;
-
+class LIBQRONSHARED_EXPORT TaskInstance : public SharedUiItem {
 public:
   enum TaskInstanceStatus { Queued, Running, Success, Failure, Canceled };
   TaskInstance();
@@ -36,13 +36,12 @@ public:
                ParamSet overridingParams);
   TaskInstance(Task task, quint64 groupId, bool force, TaskInstance callerTask,
                ParamSet overridingParams);
-  ~TaskInstance();
-  TaskInstance &operator=(const TaskInstance &);
-  bool operator==(const TaskInstance &) const;
+  TaskInstance &operator=(const TaskInstance &other) {
+    SharedUiItem::operator=(other); return *this; }
   Task task() const;
   ParamSet params() const;
   void overrideParam(QString key, QString value);
-  quint64 id() const;
+  quint64 idAsLong() const;
   quint64 groupId() const;
   QDateTime submissionDatetime() const;
   QDateTime startDatetime() const;
@@ -50,18 +49,10 @@ public:
                         = QDateTime::currentDateTime()) const;
   void setEndDatetime(QDateTime datetime = QDateTime::currentDateTime()) const;
   QDateTime endDatetime() const;
-  qint64 queuedMillis() const {
-    QDateTime submission(submissionDatetime());
-    return submission.isNull() ? 0 : submission.msecsTo(startDatetime()); }
-  qint64 runningMillis() const {
-    QDateTime start(startDatetime());
-    return start.isNull() ? 0 : start.msecsTo(endDatetime()); }
-  qint64 totalMillis() const {
-    return submissionDatetime().msecsTo(endDatetime()); }
-  qint64 liveTotalMillis() const {
-    QDateTime end(endDatetime());
-    return submissionDatetime()
-        .msecsTo(end.isNull() ? QDateTime::currentDateTime() : end); }
+  qint64 queuedMillis() const;
+  qint64 runningMillis() const;
+  qint64 totalMillis() const;
+  qint64 liveTotalMillis() const;
   bool success() const;
   void setSuccess(bool success) const;
   int returnCode() const;
@@ -73,7 +64,9 @@ public:
     * queued. */
   Host target() const;
   void setTarget(Host target) const;
-  QVariant paramValue(QString key, QVariant defaultValue = QVariant()) const;
+  /** Create a ParamsProvider wrapper object to give access to ! pseudo params,
+   * not to task params. */
+  inline TaskInstancePseudoParamsProvider pseudoParams() const;
   ParamSet setenv() const;
   void setTask(Task task);
   bool force() const;
@@ -91,7 +84,6 @@ public:
       return true;
     }
   }
-  bool isNull();
   QString command() const;
   void overrideCommand(QString command);
   void overrideSetenv(QString key, QString value);
@@ -100,8 +92,28 @@ public:
   /** Return caller task instance (e.g. task that triggered a requesttask event
    * action or workflow task instance if for a subclass instance), if any. */
   TaskInstance callerTask() const;
+
+private:
+  TaskInstanceData *tid();
+  const TaskInstanceData *tid() const {
+    return (const TaskInstanceData*)constData(); }
 };
 
-uint qHash(const TaskInstance &instance);
+/** ParamsProvider wrapper for pseudo params. */
+class LIBQRONSHARED_EXPORT TaskInstancePseudoParamsProvider
+    : public ParamsProvider {
+  TaskInstance _taskInstance;
+  TaskPseudoParamsProvider _taskPseudoParams;
+
+public:
+  inline TaskInstancePseudoParamsProvider(TaskInstance taskInstance)
+    : _taskInstance(taskInstance),
+      _taskPseudoParams(taskInstance.task().pseudoParams()) { }
+  QVariant paramValue(QString key, QVariant defaultValue) const;
+};
+
+inline TaskInstancePseudoParamsProvider TaskInstance::pseudoParams() const {
+  return TaskInstancePseudoParamsProvider(*this);
+}
 
 #endif // TASKINSTANCE_H

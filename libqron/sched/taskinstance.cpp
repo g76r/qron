@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,9 +16,22 @@
 #include <QDateTime>
 #include <QAtomicInt>
 
+static QString _uiHeaderNames[] = {
+  "Instance Id", // 0
+  "Task Id",
+  "Status",
+  "Submission",
+  "Start Time",
+  "End Time", // 5
+  "Seconds Queued",
+  "Seconds Running",
+  "Actions",
+  "Abortable" // 9
+};
+
 static QAtomicInt _sequence;
 
-class TaskInstanceData : public QSharedData {
+class TaskInstanceData : public SharedUiItemData {
 public:
   quint64 _id, _groupId;
   Task _task;
@@ -70,219 +83,244 @@ private:
         + now.time().second() * 10000LL
         + _sequence.fetchAndAddOrdered(1)%10000;
   }
+
+  // SharedUiItemData interface
+public:
+  QString id() const { return QString::number(_id); }
+  QString idQualifier() const { return "taskinstance"; }
+  int uiSectionCount() const;
+  QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  QDateTime inline submissionDatetime() const { return _submission; }
+  QDateTime inline startDatetime() const { return _start != LLONG_MIN
+        ? QDateTime::fromMSecsSinceEpoch(_start) : QDateTime(); }
+  void inline setStartDatetime(QDateTime datetime) const {
+    _start = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN; }
+  QDateTime inline endDatetime() const { return _end != LLONG_MIN
+        ? QDateTime::fromMSecsSinceEpoch(_end) : QDateTime(); }
+  void inline setEndDatetime(QDateTime datetime) const {
+    _end = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN; }
+  qint64 inline queuedMillis() const { return _submission.msecsTo(startDatetime()); }
+  qint64 inline runningMillis() const {
+    return _start != LLONG_MIN && _end != LLONG_MIN ? _end - _start : 0; }
+  qint64 inline totalMillis() const {
+    return _submission.isValid() && _end != LLONG_MIN
+        ? _end - _submission.toMSecsSinceEpoch() : 0; }
+  qint64 inline liveTotalMillis() const {
+    return (_end != LLONG_MIN ? _end : QDateTime::currentMSecsSinceEpoch())
+        - _submission.toMSecsSinceEpoch(); }
+  TaskInstance::TaskInstanceStatus inline status() const {
+    if (_end != LLONG_MIN) {
+      if (_start == LLONG_MIN)
+        return TaskInstance::Canceled;
+      else
+        return _success ? TaskInstance::Success : TaskInstance::Failure;
+    }
+    if (_start != LLONG_MIN)
+      return TaskInstance::Running;
+    return TaskInstance::Queued;
+  }
 };
 
 TaskInstance::TaskInstance() {
 }
 
-TaskInstance::TaskInstance(const TaskInstance &other) : d(other.d) {
+TaskInstance::TaskInstance(const TaskInstance &other) : SharedUiItem(other) {
 }
 
 // TODO ensure that overridingParams is null when empty, since there are plenty of TaskInstances in memory
 TaskInstance::TaskInstance(Task task, bool force, TaskInstance callerTask,
                            ParamSet overridingParams)
-  : d(new TaskInstanceData(task, overridingParams, force, callerTask)) {
+  : SharedUiItem(new TaskInstanceData(task, overridingParams, force,
+                                      callerTask)) {
 }
 
 TaskInstance::TaskInstance(Task task, quint64 groupId,
                            bool force, TaskInstance callerTask,
                            ParamSet overridingParams)
-  : d(new TaskInstanceData(task, overridingParams, force, callerTask,
-                           groupId)) {
-}
-
-TaskInstance::~TaskInstance() {
-}
-
-TaskInstance &TaskInstance::operator=(const TaskInstance &other) {
-  if (this != &other)
-    d.operator=(other.d);
-  return *this;
-}
-
-bool TaskInstance::operator==(const TaskInstance &other) const {
-  return (!d && !other.d) || (d && other.d && d->_id == other.d->_id);
+  : SharedUiItem(new TaskInstanceData(task, overridingParams, force, callerTask,
+                                      groupId)) {
 }
 
 Task TaskInstance::task() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_task : Task();
 }
 
 ParamSet TaskInstance::params() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_params : ParamSet();
 }
 
 void TaskInstance::overrideParam(QString key, QString value) {
+  TaskInstanceData *d = tid();
   if (d)
     d->_params.setValue(key, value);
 }
 
-quint64 TaskInstance::id() const {
+quint64 TaskInstance::idAsLong() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_id : 0;
 }
 
 quint64 TaskInstance::groupId() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_groupId : 0;
 }
 
 QDateTime TaskInstance::submissionDatetime() const {
-  return d ? d->_submission : QDateTime();
+  const TaskInstanceData *d = tid();
+  return d ? d->submissionDatetime() : QDateTime();
 }
 
-
 QDateTime TaskInstance::startDatetime() const {
-  return d && d->_start != LLONG_MIN
-      ? QDateTime::fromMSecsSinceEpoch(d->_start) : QDateTime();
+  const TaskInstanceData *d = tid();
+  return d ? d->submissionDatetime() : QDateTime();
 }
 
 void TaskInstance::setStartDatetime(QDateTime datetime) const {
+  const TaskInstanceData *d = tid();
   if (d)
-    d->_start = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN;
-}
-
-QDateTime TaskInstance::endDatetime() const {
-  return d && d->_end != LLONG_MIN
-      ? QDateTime::fromMSecsSinceEpoch(d->_end) : QDateTime();
+    d->setStartDatetime(datetime);
 }
 
 void TaskInstance::setEndDatetime(QDateTime datetime) const {
+  const TaskInstanceData *d = tid();
   if (d)
-    d->_end = datetime.isValid() ? datetime.toMSecsSinceEpoch() : LLONG_MIN;
+    d->setEndDatetime(datetime);
+}
+
+QDateTime TaskInstance::endDatetime() const {
+  const TaskInstanceData *d = tid();
+  return d ? d->endDatetime() : QDateTime();
+}
+
+qint64 TaskInstance::queuedMillis() const {
+  const TaskInstanceData *d = tid();
+  return d ? d->queuedMillis() : 0;
+}
+
+qint64 TaskInstance::runningMillis() const {
+  const TaskInstanceData *d = tid();
+  return d ? d->runningMillis() : 0;
+}
+
+qint64 TaskInstance::totalMillis() const {
+  const TaskInstanceData *d = tid();
+  return d ? d->totalMillis() : 0;
+}
+
+qint64 TaskInstance::liveTotalMillis() const {
+  const TaskInstanceData *d = tid();
+  return d ? d->liveTotalMillis() : 0;
+}
+
+TaskInstance::TaskInstanceStatus TaskInstance::status() const {
+  const TaskInstanceData *d = tid();
+  return d ? d->status() : Queued;
 }
 
 bool TaskInstance::success() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_success : false;
 }
 
 void TaskInstance::setSuccess(bool success) const {
+  const TaskInstanceData *d = tid();
   if (d)
     d->_success = success;
 }
 
 int TaskInstance::returnCode() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_returnCode : -1;
 }
 
 void TaskInstance::setReturnCode(int returnCode) const {
+  const TaskInstanceData *d = tid();
   if (d)
     d->_returnCode = returnCode;
 }
 
 Host TaskInstance::target() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_target : Host();
 }
 
 void TaskInstance::setTarget(Host target) const {
+  const TaskInstanceData *d = tid();
   if (d) {
     target.detach();
     d->_target = target;
   }
 }
 
-QVariant TaskInstance::paramValue(QString key, QVariant defaultValue) const {
-  if (!d)
-    return defaultValue;
-  if (key.at(0) == '!') {
+QVariant TaskInstancePseudoParamsProvider::paramValue(
+    QString key, QVariant defaultValue) const {
+  if (key.startsWith('!')) {
     // LATER optimize
-    if (key == "!taskshortid") {
-      return task().shortId();
-    } else if (key == "!taskid") {
-      return task().id();
-    } else if (key == "!taskgroupid") {
-      return task().taskGroup().id();
-    } else if (key == "!taskinstanceid") {
-      return QString::number(id());
+    if (key == "!taskinstanceid") {
+      return QString::number(_taskInstance.idAsLong());
     } else if (key == "!callertaskinstanceid") {
-      return QString::number(callerTask().id());
+      return QString::number(_taskInstance.callerTask().idAsLong());
     } else if (key == "!maintaskinstanceid") {
-      return QString::number(callerTask().isNull() ? id() : callerTask().id());
+      return QString::number(_taskInstance.callerTask().isNull()
+                             ? _taskInstance.idAsLong()
+                             : _taskInstance.callerTask().idAsLong());
     } else if (key == "!taskinstancegroupid") {
-      return QString::number(groupId());
+      return QString::number(_taskInstance.groupId());
     } else if (key == "!runningms") {
-      return QString::number(runningMillis());
+      return QString::number(_taskInstance.runningMillis());
     } else if (key == "!runnings") {
-      return QString::number(runningMillis()/1000);
+      return QString::number(_taskInstance.runningMillis()/1000);
     } else if (key == "!queuedms") {
-      return QString::number(queuedMillis());
+      return QString::number(_taskInstance.queuedMillis());
     } else if (key == "!queueds") {
-      return QString::number(queuedMillis()/1000);
+      return QString::number(_taskInstance.queuedMillis()/1000);
     } else if (key == "!totalms") {
-      return QString::number(queuedMillis()+runningMillis());
+      return QString::number(_taskInstance.queuedMillis()
+                             +_taskInstance.runningMillis());
     } else if (key == "!totals") {
-      return QString::number((queuedMillis()+runningMillis())/1000);
+      return QString::number((_taskInstance.queuedMillis()
+                              +_taskInstance.runningMillis())/1000);
     } else if (key == "!returncode") {
-      return QString::number(returnCode());
+      return QString::number(_taskInstance.returnCode());
     } else if (key == "!status") {
-      return statusAsString();
+      return _taskInstance.statusAsString();
     } else if (key == "!submissiondate") {
       // LATER make this support !date formating
-      return submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return _taskInstance.submissionDatetime()
+          .toString("yyyy-MM-dd hh:mm:ss,zzz");
     } else if (key == "!startdate") {
       // LATER make this support !date formating
-      return startDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return _taskInstance.startDatetime()
+          .toString("yyyy-MM-dd hh:mm:ss,zzz");
     } else if (key == "!enddate") {
       // LATER make this support !date formating
-      return endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return _taskInstance.endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
     } else if (key == "!target") {
-      return target().hostname();
-    } else if (key == "!minexpectedms") {
-      return task().minExpectedDuration();
-    } else if (key == "!minexpecteds") {
-      return task().minExpectedDuration()/1000.0;
-    } else if (key == "!maxexpectedms") {
-      long long ms = task().maxExpectedDuration();
-      return (ms == LLONG_MAX) ? defaultValue : ms;
-    } else if (key == "!maxexpecteds") {
-      long long ms = task().maxExpectedDuration();
-      return (ms == LLONG_MAX) ? defaultValue : ms/1000.0;
-    } else if (key == "!maxbeforeabortms") {
-      long long ms = task().maxDurationBeforeAbort();
-      return (ms == LLONG_MAX) ? defaultValue : ms;
-    } else if (key == "!maxbeforeaborts") {
-      long long ms = task().maxDurationBeforeAbort();
-      return (ms == LLONG_MAX) ? defaultValue : ms/1000.0;
-    } else if (key == "!maxexpectedms0") {
-      long long ms = task().maxExpectedDuration();
-      return (ms == LLONG_MAX) ? 0 : ms;
-    } else if (key == "!maxexpecteds0") {
-      long long ms = task().maxExpectedDuration();
-      return (ms == LLONG_MAX) ? 0.0 : ms/1000.0;
-    } else if (key == "!maxbeforeabortms0") {
-      long long ms = task().maxDurationBeforeAbort();
-      return (ms == LLONG_MAX) ? 0 : ms;
-    } else if (key == "!maxbeforeaborts0") {
-      long long ms = task().maxDurationBeforeAbort();
-      return (ms == LLONG_MAX) ? 0.0 : ms/1000.0;
+      return _taskInstance.target().hostname();
+    } else {
+      return _taskPseudoParams.paramValue(key, defaultValue);
     }
   }
   return defaultValue;
 }
 
 ParamSet TaskInstance::setenv() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_setenv : ParamSet();
 }
 
 void TaskInstance::setTask(Task task) {
+  TaskInstanceData *d = tid();
   if (d)
     d->_task = task;
 }
 
 bool TaskInstance::force() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_force : false;
-}
-
-TaskInstance::TaskInstanceStatus TaskInstance::status() const {
-  if (d) {
-    if (d->_end != LLONG_MIN) {
-      if (d->_start == LLONG_MIN)
-        return Canceled;
-      else
-        return d->_success ? Success : Failure;
-    }
-    if (d->_start != LLONG_MIN)
-      return Running;
-  }
-  return Queued;
 }
 
 QString TaskInstance::statusAsString(
@@ -302,37 +340,84 @@ QString TaskInstance::statusAsString(
   return "unknown";
 }
 
-bool TaskInstance::isNull() {
-  return !d || d->_id == 0;
-}
-
-uint qHash(const TaskInstance &instance) {
-  return (uint)instance.id();
-}
-
 QString TaskInstance::command() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_command : QString();
 }
 
 void TaskInstance::overrideCommand(QString command) {
+  TaskInstanceData *d = tid();
   if (d)
     d->_command = command;
 }
 
 void TaskInstance::overrideSetenv(QString key, QString value) {
+  TaskInstanceData *d = tid();
   if (d)
     d->_setenv.setValue(key, value);
 }
 
 bool TaskInstance::abortable() const {
+  const TaskInstanceData *d = tid();
   return d && d->_abortable;
 }
 
 void TaskInstance::setAbortable(bool abortable) const {
+  const TaskInstanceData *d = tid();
   if (d)
     d->_abortable = abortable;
 }
 
 TaskInstance TaskInstance::callerTask() const {
+  const TaskInstanceData *d = tid();
   return d ? d->_callerTask : TaskInstance();
+}
+
+QVariant TaskInstanceData::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int TaskInstanceData::uiSectionCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
+}
+
+QVariant TaskInstanceData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+    switch(section) {
+    case 0:
+      return _id;
+    case 1:
+      return _task.id();
+    case 2:
+      return TaskInstance::statusAsString(status());
+    case 3:
+      return submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    case 4:
+      return startDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    case 5:
+      return endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    case 6:
+      return startDatetime().isNull() || submissionDatetime().isNull()
+          ? QVariant() : QString::number(queuedMillis()/1000.0);
+    case 7:
+      return endDatetime().isNull() || startDatetime().isNull()
+          ? QVariant() : QString::number(runningMillis()/1000.0);
+    case 8:
+      return QVariant(); // custom actions, handled by the model, if needed
+    case 9:
+      return _abortable;
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
+}
+
+TaskInstanceData *TaskInstance::tid() {
+  detach<TaskInstanceData>();
+  return (TaskInstanceData*)constData();
 }

@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,11 +31,12 @@ public:
   void trigger(EventSubscription subscription, ParamSet eventContext,
                TaskInstance instance) const {
     Q_UNUSED(subscription)
+    TaskInstancePseudoParamsProvider ppp = instance.pseudoParams();
     if (instance.isNull())
       Log::log(_severity) << eventContext.evaluate(_message);
     else
-      Log::log(_severity, instance.task().id(), instance.id())
-          << eventContext.evaluate(_message, &instance);
+      Log::log(_severity, instance.task().id(), instance.idAsLong())
+          << eventContext.evaluate(_message, &ppp);
   }
   PfNode toPfNode() const{
     PfNode node(actionType(), _message);

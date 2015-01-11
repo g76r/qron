@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -40,16 +40,17 @@ public:
     Q_UNUSED(subscription)
     // LATER support binary payloads
     ParamsProviderList evaluationContext(&eventContext);
-    evaluationContext.append(&taskContext);
+    TaskInstancePseudoParamsProvider ppp = taskContext.pseudoParams();
+    evaluationContext.append(&ppp);
     if (_address.startsWith("udp:", Qt::CaseInsensitive)) {
       // LATER run UDP in a separate thread to avoid network/dns/etc. hangups
       ParametrizedUdpSender sender(_address, _params, &evaluationContext,
-                                   taskContext.task().id(), taskContext.id());
+                                   taskContext.task().id(), taskContext.idAsLong());
       sender.performRequest(_message, &evaluationContext);
     } else {
       ParametrizedNetworkRequest request(
             _address, _params, &evaluationContext, taskContext.task().id(),
-            taskContext.id());
+            taskContext.idAsLong());
       QNetworkReply *reply = request.performRequest(
             globalNetworkActionHub->_nam, _message, &evaluationContext);
       if (reply) {
