@@ -115,7 +115,8 @@ SOURCES += \
     ui/htmllogentryitemdelegate.cpp \
     ui/configsmodel.cpp \
     ui/htmlschedulerconfigitemdelegate.cpp \
-    ui/confighistorymodel.cpp
+    ui/confighistorymodel.cpp \
+    sched/noticepseudoparamsprovider.cpp
 
 HEADERS += \
     config/task.h \
@@ -190,4 +191,5 @@ HEADERS += \
     ui/htmllogentryitemdelegate.h \
     ui/configsmodel.h \
     ui/htmlschedulerconfigitemdelegate.h \
-    ui/confighistorymodel.h
+    ui/confighistorymodel.h \
+    sched/noticepseudoparamsprovider.h
