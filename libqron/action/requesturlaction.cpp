@@ -18,13 +18,13 @@
 #include "sysutil/parametrizednetworkrequest.h"
 #include "sysutil/parametrizedudpsender.h"
 
-class GlobalNetworkActionHub {
+class RequestUrlGlobalNetworkActionHub {
 public:
   QNetworkAccessManager *_nam;
-  GlobalNetworkActionHub() : _nam(new QNetworkAccessManager) { }
+  RequestUrlGlobalNetworkActionHub() : _nam(new QNetworkAccessManager) { }
 };
 
-Q_GLOBAL_STATIC(GlobalNetworkActionHub, globalNetworkActionHub)
+Q_GLOBAL_STATIC(RequestUrlGlobalNetworkActionHub, globalNetworkActionHub)
 
 class LIBQRONSHARED_EXPORT RequestUrlActionData : public ActionData {
 public:
