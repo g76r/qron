@@ -32,9 +32,10 @@ public:
   enum TaskInstanceStatus { Queued, Running, Success, Failure, Canceled };
   TaskInstance();
   TaskInstance(const TaskInstance &);
-  TaskInstance(Task task, bool force, TaskInstance callerTask,
+  TaskInstance(Task task, bool force, TaskInstance workflowInstanceTask,
                ParamSet overridingParams);
-  TaskInstance(Task task, quint64 groupId, bool force, TaskInstance callerTask,
+  TaskInstance(Task task, quint64 groupId, bool force,
+               TaskInstance workflowInstanceTask,
                ParamSet overridingParams);
   TaskInstance &operator=(const TaskInstance &other) {
     SharedUiItem::operator=(other); return *this; }
@@ -91,7 +92,7 @@ public:
   void setAbortable(bool abortable = true) const;
   /** Return caller task instance (e.g. task that triggered a requesttask event
    * action or workflow task instance if for a subclass instance), if any. */
-  TaskInstance callerTask() const;
+  TaskInstance workflowInstanceTask() const;
 
 private:
   TaskInstanceData *tid();

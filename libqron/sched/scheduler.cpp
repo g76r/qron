@@ -238,10 +238,13 @@ QList<TaskInstance> Scheduler::doRequestTask(
   if (!fieldsValidated)
     return QList<TaskInstance>();
   QList<TaskInstance> requests;
+  TaskInstance workflowTaskInstance
+      = callerTask.task().mean() == "workflow" ? callerTask : TaskInstance();
   if (cluster.balancing() == "each") {
     qint64 groupId = 0;
     foreach (Host host, cluster.hosts()) {
-      TaskInstance request(task, groupId, force, callerTask, overridingParams);
+      TaskInstance request(task, groupId, force, workflowTaskInstance,
+                           overridingParams);
       if (!groupId)
         groupId = request.groupId();
       request.setTarget(host);
@@ -250,7 +253,7 @@ QList<TaskInstance> Scheduler::doRequestTask(
         requests.append(request);
     }
   } else {
-    TaskInstance request(task, force, callerTask, overridingParams);
+    TaskInstance request(task, force, workflowTaskInstance, overridingParams);
     request = enqueueRequest(request, overridingParams);
     if (!request.isNull())
       requests.append(request);

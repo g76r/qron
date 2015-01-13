@@ -40,7 +40,7 @@ public:
   bool _force;
   QString _command;
   ParamSet _setenv;
-  TaskInstance _callerTask;
+  TaskInstance _workflowInstanceTask;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -60,11 +60,12 @@ public:
   mutable bool _abortable;
 
   TaskInstanceData(Task task, ParamSet params, bool force,
-                   TaskInstance callerTask, quint64 groupId = 0)
+                   TaskInstance workflowInstanceTask, quint64 groupId = 0)
     : _id(newId()), _groupId(groupId ? groupId : _id),
       _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
-      _command(task.command()), _setenv(task.setenv()), _callerTask(callerTask),
+      _command(task.command()), _setenv(task.setenv()),
+      _workflowInstanceTask(workflowInstanceTask),
       _start(LLONG_MIN), _end(LLONG_MIN),
       _success(false), _returnCode(0), _abortable(false) {
     _params.setParent(task.params()); }
@@ -129,17 +130,18 @@ TaskInstance::TaskInstance(const TaskInstance &other) : SharedUiItem(other) {
 }
 
 // TODO ensure that overridingParams is null when empty, since there are plenty of TaskInstances in memory
-TaskInstance::TaskInstance(Task task, bool force, TaskInstance callerTask,
-                           ParamSet overridingParams)
+TaskInstance::TaskInstance(
+    Task task, bool force, TaskInstance workflowInstanceTask,
+    ParamSet overridingParams)
   : SharedUiItem(new TaskInstanceData(task, overridingParams, force,
-                                      callerTask)) {
+                                      workflowInstanceTask)) {
 }
 
 TaskInstance::TaskInstance(Task task, quint64 groupId,
-                           bool force, TaskInstance callerTask,
+                           bool force, TaskInstance workflowInstanceTask,
                            ParamSet overridingParams)
-  : SharedUiItem(new TaskInstanceData(task, overridingParams, force, callerTask,
-                                      groupId)) {
+  : SharedUiItem(new TaskInstanceData(task, overridingParams, force,
+                                      workflowInstanceTask, groupId)) {
 }
 
 Task TaskInstance::task() const {
@@ -261,12 +263,12 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
     // LATER optimize
     if (key == "!taskinstanceid") {
       return QString::number(_taskInstance.idAsLong());
-    } else if (key == "!callertaskinstanceid") {
-      return QString::number(_taskInstance.callerTask().idAsLong());
-    } else if (key == "!maintaskinstanceid") {
-      return QString::number(_taskInstance.callerTask().isNull()
-                             ? _taskInstance.idAsLong()
-                             : _taskInstance.callerTask().idAsLong());
+    } else if (key == "!workflowtaskinstanceid") {
+      if (_taskInstance.task().mean() == "workflow")
+        return QString::number(_taskInstance.idAsLong());
+      TaskInstance workflowTaskInstance = _taskInstance.workflowInstanceTask();
+      if (!workflowTaskInstance.isNull())
+        return QString::number(workflowTaskInstance.idAsLong());
     } else if (key == "!taskinstancegroupid") {
       return QString::number(_taskInstance.groupId());
     } else if (key == "!runningms") {
@@ -368,9 +370,9 @@ void TaskInstance::setAbortable(bool abortable) const {
     d->_abortable = abortable;
 }
 
-TaskInstance TaskInstance::callerTask() const {
+TaskInstance TaskInstance::workflowInstanceTask() const {
   const TaskInstanceData *d = tid();
-  return d ? d->_callerTask : TaskInstance();
+  return d ? d->_workflowInstanceTask : TaskInstance();
 }
 
 QVariant TaskInstanceData::uiHeaderData(int section, int role) const {

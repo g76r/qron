@@ -41,7 +41,7 @@ public:
     }
     QString transitionId = subscription.subscriberName()+"|"
         +subscription.eventName()+"|$end";
-    TaskInstance workflow = instance.callerTask();
+    TaskInstance workflow = instance.workflowInstanceTask();
     if (workflow.isNull())
       workflow = instance;
     //Log::fatal(instance.task().id(), instance.id())
