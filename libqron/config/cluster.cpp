@@ -129,21 +129,19 @@ bool ClusterData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    // FIXME: if label == id, reset label
     _id = s;
     return true;
-  case 1:
-    // hosts list not text-editable
-    if (errorString)
-      *errorString = "hosts list is not text-editable";
-    return false;
-  case 2:
-    // FIXME balancing method: convert text to enum
-    return false;
+    //case 1:
+    // TODO host list: parse
+    //case 2:
+    // TODO balancing method: convert text to enum
   case 3:
     _label = s;
     return true;
   }
+  if (errorString)
+    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
+      +"\" is not text-editable";
   return false;
 }
 

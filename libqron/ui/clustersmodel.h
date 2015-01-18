@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,11 +18,11 @@
 #include "config/cluster.h"
 #include "config/host.h"
 #include "config/schedulerconfig.h"
-#include "modelview/shareduiitemstablemodel.h"
+#include "modelview/shareduiitemstreemodel.h"
 
-/** Model holding list of configured clusters, one per line, along with its
- * configuration attributes. */
-class LIBQRONSHARED_EXPORT ClustersModel : public SharedUiItemsTableModel {
+/** Model holding list of configured clusters, one per root row, along with its
+ * configuration attributes, with associated hosts as children. */
+class LIBQRONSHARED_EXPORT ClustersModel : public SharedUiItemsTreeModel {
   Q_OBJECT
   Q_DISABLE_COPY(ClustersModel)
 
@@ -31,6 +31,10 @@ public:
 
 public slots:
   void configReset(SchedulerConfig config);
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
+
+protected:
+  void setNewItemInsertionPoint(SharedUiItem newItem, QModelIndex *parent, int *row);
 };
 
 #endif // CLUSTERSMODEL_H

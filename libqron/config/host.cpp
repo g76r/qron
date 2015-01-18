@@ -130,21 +130,20 @@ bool HostData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    // FIXME: if label == id, reset label
     _id = s;
     return true;
   case 1:
     _hostname = s;
     return true;
-  case 2:
-    // TODO: resources from string
-    if (errorString)
-      *errorString = "resources cannot be set from string";
-    return false;
+    //case 2:
+    //TODO: resources from string
   case 3:
     _label = s;
     return true;
   }
+  if (errorString)
+    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
+      +"\" is not text-editable";
   return false;
 }
 

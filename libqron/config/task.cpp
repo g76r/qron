@@ -951,7 +951,6 @@ bool TaskData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    // FIXME: if label == id, reset label
     _shortId = value.toString();
     _id = _group.id()+"."+_shortId;
     return true;
@@ -962,6 +961,9 @@ bool TaskData::setUiData(int section, const QVariant &value,
     _target = value.toString();
     return true;
   }
+  if (errorString)
+    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
+      +"\" is not text-editable";
   return false;
 }
 
