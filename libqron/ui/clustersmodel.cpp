@@ -12,7 +12,6 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "clustersmodel.h"
-#include <QtDebug>
 #include <QStringList>
 
 /** Host reference item, to be inserted as cluster child in cluster tree,
@@ -68,9 +67,9 @@ void ClustersModel::changeItem(SharedUiItem newItem, SharedUiItem oldItem) {
       || oldItem.idQualifier() == "cluster") {
     // remove host references rows
     QModelIndex oldIndex = indexOf(oldItem);
-    qDebug() << "ClustersModel::changeItem"
-             << newItem.qualifiedId() << oldItem.qualifiedId()
-             << "oldIndex:" << oldIndex << "oldRowCount:" << rowCount(oldIndex);
+    //qDebug() << "ClustersModel::changeItem"
+    //         << newItem.qualifiedId() << oldItem.qualifiedId()
+    //         << "oldIndex:" << oldIndex << "oldRowCount:" << rowCount(oldIndex);
     if (oldIndex.isValid())
       removeRows(0, rowCount(oldIndex), oldIndex);
     // regular changeItem
@@ -85,7 +84,7 @@ void ClustersModel::changeItem(SharedUiItem newItem, SharedUiItem oldItem) {
               HostReference(cluster.id(), host.id()), nullItem);
       }
     }
-    qDebug() << "/ClustersModel::changeItem";
+    //qDebug() << "/ClustersModel::changeItem";
   } else {
     SharedUiItemsTreeModel::changeItem(newItem, oldItem);
   }
@@ -93,11 +92,12 @@ void ClustersModel::changeItem(SharedUiItem newItem, SharedUiItem oldItem) {
 
 void ClustersModel::setNewItemInsertionPoint(
     SharedUiItem newItem, QModelIndex *parent, int *row) {
+  Q_UNUSED(row)
   if (newItem.idQualifier() == "hostreference") {
     HostReference &hf = reinterpret_cast<HostReference&>(newItem);
     *parent = indexOf("cluster:"+hf.cluster());
-    qDebug() << "ClustersModel::setNewItemInsertionPoint/hostreference"
-             << hf.qualifiedId() << parent;
+    //qDebug() << "ClustersModel::setNewItemInsertionPoint/hostreference"
+    //         << hf.qualifiedId() << parent;
   }
 }
 

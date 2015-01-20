@@ -75,7 +75,8 @@ EventSubscription WorkflowTriggerSubscription::eventSubscription() const {
 
 class TaskData : public SharedUiItemData {
 public:
-  QString _id, _shortId, _label, _mean, _command, _target, _info;
+  QString _id, _shortId, _label, _command, _target, _info;
+  Task::Mean _mean;
   TaskGroup _group;
   ParamSet _params, _setenv, _unsetenv;
   QList<NoticeTrigger> _noticeTriggers;
@@ -142,11 +143,9 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_scheduler = scheduler;
   td->_shortId = ConfigUtils::sanitizeId(node.contentAsString());
   td->_label = node.attribute("label");
-  td->_mean = ConfigUtils::sanitizeId(node.attribute("mean"));
-  if (td->_mean.isEmpty())
-    td->_mean = "local";
-  if (td->_mean != "local" && td->_mean != "ssh" && td->_mean != "http"
-      && td->_mean != "workflow" && td->_mean != "donothing") {
+  td->_mean = meanFromString(node.attribute("mean", "local").trimmed()
+                             .toLower());
+  if (td->_mean == UnknownMean) {
     Log::error() << "task with invalid execution mean: "
                  << node.toString();
     delete td;
@@ -155,7 +154,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   td->_command = node.attribute("command");
   td->_target = ConfigUtils::sanitizeId(node.attribute("target"));
   // silently use "localhost" as target for "local" mean
-  if (td->_target.isEmpty() && td->_mean == "local")
+  if (td->_target.isEmpty() && td->_mean == Local)
     td->_target = "localhost";
   td->_info = node.stringChildrenByName("info").join(" ");
   td->_id = taskGroup.id()+"."+td->_shortId;
@@ -270,7 +269,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
                                      &td->_onfailure, scheduler);
   QList<PfNode> steps = node.childrenByName("subtask")
       +node.childrenByName("and")+node.childrenByName("or");
-  if (td->_mean == "workflow") {
+  if (td->_mean == Workflow) {
     if (steps.isEmpty())
       Log::warning() << "workflow task with no step: " << node.toString();
     if (!supertaskId.isNull()) {
@@ -457,8 +456,8 @@ QString Task::label() const {
                    : QString();
 }
 
-QString Task::mean() const {
-  return !isNull() ? td()->_mean : QString();
+Task::Mean Task::mean() const {
+  return !isNull() ? td()->_mean : UnknownMean;
 }
 
 QString Task::command() const {
@@ -842,7 +841,7 @@ QVariant TaskData::uiData(int section, int role) const {
     case 2:
       return _label.isNull() ? _shortId : _label;
     case 3:
-      return _mean;
+      return Task::meanAsString(_mean);
     case 4:
       return _command;
     case 5:
@@ -998,13 +997,11 @@ PfNode Task::toPfNode() const {
     node.setAttribute("label", td->_label);
   if (!td->_info.isEmpty())
     node.setAttribute("info", td->_info);
-  if (!td->_mean.isEmpty())
-    node.setAttribute("mean", td->_mean);
+  node.setAttribute("mean", meanAsString(td->_mean));
   // do not set target attribute if it is empty,
   // or in case it is implicit ("localhost" for "local" mean)
   if (!td->_target.isEmpty()
-      && (td->_target != "localhost"
-          || (!td->_mean.isEmpty() && td->_mean != "local")))
+      && (td->_target != "localhost" || !td->_mean == Local))
     node.setAttribute("target", td->_target);
   if (!td->_command.isEmpty())
     node.setAttribute("command", td->_command);
@@ -1074,4 +1071,37 @@ PfNode Task::toPfNode() const {
     node.appendChild(requestForm);
   }
   return node;
+}
+
+Task::Mean Task::meanFromString(QString mean) {
+  if (mean == "donothing")
+    return DoNothing;
+  if (mean == "local")
+    return Local;
+  if (mean == "workflow")
+    return Workflow;
+  if (mean == "ssh")
+    return Ssh;
+  if (mean == "http")
+    return Http;
+  return UnknownMean;
+}
+
+QString Task::meanAsString(Task::Mean mean) {
+  // LATER optimize with const QStrings
+  switch(mean) {
+  case DoNothing:
+    return "donothing";
+  case Local:
+    return "local";
+  case Workflow:
+    return "workflow";
+  case Ssh:
+    return "ssh";
+  case Http:
+    return "http";
+  case UnknownMean:
+    ;
+  }
+  return QString();
 }

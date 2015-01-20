@@ -58,7 +58,13 @@ public:
 /** Core task definition object, being it a standalone task or workflow. */
 class LIBQRONSHARED_EXPORT Task : public SharedUiItem {
 public:
-  enum DiscardAliasesOnStart { DiscardNone, DiscardAll, DiscardUnknown };
+  enum DiscardAliasesOnStart {
+    DiscardNone, DiscardAll, DiscardUnknown
+  };
+  enum Mean {
+    UnknownMean = 0, DoNothing, Local, Workflow, Ssh, Http
+  };
+
   Task();
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
@@ -73,7 +79,10 @@ public:
   /** localId within group */
   QString shortId() const;
   QString label() const;
-  QString mean() const;
+  Task::Mean mean() const;
+  static Task::Mean meanFromString(QString mean);
+  static QString meanAsString(Task::Mean mean);
+  QString meanAsString() const { return meanAsString(mean()); }
   QString command() const;
   QString target() const;
   void setTarget(QString target);

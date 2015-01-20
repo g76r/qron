@@ -262,7 +262,7 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
                           task.id(), task);
     recordTaskActionLinks(node, "onfinish", &requestTaskActionLinks,
                           task.id(), task); // FIXME rather use a QStringList than a QString for childname
-    if (task.mean() == "workflow") {
+    if (task.mean() == Task::Workflow) {
       recordTaskActionLinks(node, "ontrigger", &requestTaskActionLinks,
                             task.id(), task); // FIXME check that this is consistent
       foreach(PfNode child, node.childrenByName("subtask")) {

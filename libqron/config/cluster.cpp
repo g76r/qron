@@ -20,18 +20,17 @@
 #include "log/log.h"
 #include "configutils.h"
 
-#define DEFAULT_BALANCING_METHOD "first"
-
 static QString _uiHeaderNames[] = {
   "Id", // 0
   "Hosts",
-  "Balancing method",
+  "Balancing Method",
   "Label",
 };
 
 class ClusterData : public SharedUiItemData {
 public:
-  QString _id, _label, _balancing;
+  QString _id, _label;
+  Cluster::Balancing _balancing;
   QList<Host> _hosts;
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
@@ -53,14 +52,13 @@ Cluster::Cluster(PfNode node) {
   ClusterData *hgd = new ClusterData;
   hgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
   hgd->_label = node.attribute("label");
-  hgd->_balancing = node.attribute("balancing", DEFAULT_BALANCING_METHOD);
-  if (hgd->_balancing == "first" || hgd->_balancing == "each")
-    setData(hgd);
-  else {
-    Log::error() << "invalid cluster balancing method '" << hgd->_balancing
-                 << "': " << node.toString();
+  hgd->_balancing = balancingFromString(node.attribute("balancing", "first")
+                                        .trimmed().toLower());
+  if (hgd->_balancing == UnknownBalancing) {
+    Log::error() << "invalid cluster balancing method: " << node.toString();
     delete hgd;
   }
+  setData(hgd);
 }
 
 Cluster::~Cluster() {
@@ -75,8 +73,8 @@ QList<Host> Cluster::hosts() const {
   return !isNull() ? cd()->_hosts : QList<Host>();
 }
 
-QString Cluster::balancing() const {
-  return !isNull() ? cd()->_balancing : QString();
+Cluster::Balancing Cluster::balancing() const {
+  return !isNull() ? cd()->_balancing : UnknownBalancing;
 }
 
 QString Cluster::label() const {
@@ -103,7 +101,7 @@ QVariant ClusterData::uiData(int section, int role) const {
       return hosts.join(" ");
     }
     case 2:
-      return _balancing;
+      return Cluster::balancingAsString(_balancing);
     case 3:
       return _label.isEmpty() ? _id : _label;
     }
@@ -133,8 +131,17 @@ bool ClusterData::setUiData(int section, const QVariant &value,
     return true;
     //case 1:
     // TODO host list: parse
-    //case 2:
-    // TODO balancing method: convert text to enum
+  case 2: {
+    Cluster::Balancing balancing
+        = Cluster::balancingFromString(value.toString().trimmed().toLower());
+    if (balancing == Cluster::UnknownBalancing) {
+      if (errorString)
+        *errorString = "unsupported balancing value: '"+value.toString()+"'";
+      return false;
+    }
+    _balancing = balancing;
+    return true;
+  }
   case 3:
     _label = s;
     return true;
@@ -187,8 +194,7 @@ PfNode Cluster::toPfNode() const {
   PfNode node("cluster", cd->_id);
   if (!cd->_label.isEmpty() && cd->_label != cd->_id)
     node.appendChild(PfNode("label", cd->_label));
-  if (cd->_balancing != DEFAULT_BALANCING_METHOD)
-    node.appendChild(PfNode("balancing", cd->_balancing));
+  node.appendChild(PfNode("balancing", balancingAsString(cd->_balancing)));
   QStringList hosts;
   foreach (const Host &host, cd->_hosts)
     hosts.append(host.id());
@@ -200,4 +206,25 @@ void Cluster::setHosts(QList<Host> hosts) {
   ClusterData *d = cd();
   if (d)
     d->_hosts = hosts;
+}
+
+Cluster::Balancing Cluster::balancingFromString(QString method) {
+  if (method == "first")
+    return First;
+  if (method == "each")
+    return Each;
+  return UnknownBalancing;
+}
+
+QString Cluster::balancingAsString(Cluster::Balancing method) {
+  // LATER optimize with const QString
+  switch (method) {
+  case First:
+    return "first";
+  case Each:
+    return "each";
+  case UnknownBalancing:
+    ;
+  }
+  return QString();
 }

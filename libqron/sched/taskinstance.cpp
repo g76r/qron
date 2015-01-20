@@ -264,7 +264,7 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
     if (key == "!taskinstanceid") {
       return QString::number(_taskInstance.idAsLong());
     } else if (key == "!workflowtaskinstanceid") {
-      if (_taskInstance.task().mean() == "workflow")
+      if (_taskInstance.task().mean() == Task::Workflow)
         return QString::number(_taskInstance.idAsLong());
       TaskInstance workflowTaskInstance = _taskInstance.workflowInstanceTask();
       if (!workflowTaskInstance.isNull())

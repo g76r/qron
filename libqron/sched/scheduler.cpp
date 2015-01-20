@@ -239,8 +239,9 @@ QList<TaskInstance> Scheduler::doRequestTask(
     return QList<TaskInstance>();
   QList<TaskInstance> requests;
   TaskInstance workflowTaskInstance
-      = callerTask.task().mean() == "workflow" ? callerTask : TaskInstance();
-  if (cluster.balancing() == "each") {
+      = callerTask.task().mean() == Task::Workflow ? callerTask
+                                                   : TaskInstance();
+  if (cluster.balancing() == Cluster::Each) {
     qint64 groupId = 0;
     foreach (Host host, cluster.hosts()) {
       TaskInstance request(task, groupId, force, workflowTaskInstance,
@@ -581,8 +582,8 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
       target = supertask.target();
       // silently use "localhost" as target for means not needing a real target
       if (target.isEmpty()) {
-        QString mean = task.mean();
-        if (mean == "donothing" || mean == "workflow")
+        Task::Mean mean = task.mean();
+        if (mean == Task::DoNothing || mean == Task::Workflow)
           target = "localhost";
       }
     }

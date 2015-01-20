@@ -28,6 +28,10 @@ class PfNode;
  * @see Host */
 class LIBQRONSHARED_EXPORT Cluster : public SharedUiItem {
 public:
+  enum Balancing {
+    UnknownBalancing = 0, First, Each
+  };
+
   Cluster();
   Cluster(const Cluster &other);
   Cluster(PfNode node);
@@ -36,7 +40,10 @@ public:
     SharedUiItem::operator=(other); return *this; }
   void appendHost(Host host);
   QList<Host> hosts() const;
-  QString balancing() const;
+  Cluster::Balancing balancing() const;
+  static Cluster::Balancing balancingFromString(QString method);
+  static QString balancingAsString(Cluster::Balancing method);
+  QString balancingAsString() const { return balancingAsString(balancing()); }
   QString label() const;
   void setId(QString id);
   PfNode toPfNode() const;

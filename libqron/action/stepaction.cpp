@@ -54,7 +54,7 @@ public:
     //    << "StepAction::triggerWithinTaskInstance "
     //    << transitionId << " " << instance.task().id()
     //    << " " << eventContext;
-    if (workflow.task().mean() != "workflow") {
+    if (workflow.task().mean() != Task::Workflow) {
       Log::warning(instance.task().id(), instance.idAsLong())
           << "executing a step action in the context of a non-workflow task, "
              "for subscription " << subscription.subscriberName() << "|"

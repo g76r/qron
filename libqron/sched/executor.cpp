@@ -54,7 +54,7 @@ void Executor::execute(TaskInstance instance) {
 
 void Executor::doExecute(TaskInstance instance) {
   _instance = instance;
-  const QString mean = _instance.task().mean();
+  const Task::Mean mean = _instance.task().mean();
   Log::info(_instance.task().id(), _instance.idAsLong())
       << "starting task '" << _instance.task().id() << "' through mean '"
       << mean << "' after " << _instance.queuedMillis() << " ms in queue";
@@ -62,20 +62,22 @@ void Executor::doExecute(TaskInstance instance) {
   long long maxDurationBeforeAbort = _instance.task().maxDurationBeforeAbort();
   if (maxDurationBeforeAbort <= INT_MAX)
     _abortTimeout->start(maxDurationBeforeAbort);
-  if (mean == "local")
+  switch (mean) {
+  case Task::Local:
     localMean();
-  else if (mean == "ssh")
+  case Task::Ssh:
     sshMean();
-  else if (mean == "http")
+  case Task::Http:
     httpMean();
-  else if (mean == "workflow")
+  case Task::Workflow:
     workflowMean();
-  else if (mean == "donothing") {
+  case Task::DoNothing:
     emit taskInstanceStarted(_instance);
     taskInstanceFinishing(true, 0);
-  } else {
+  default:
     Log::error(_instance.task().id(), _instance.idAsLong())
-        << "cannot execute task with unknown mean '" << mean << "'";
+        << "cannot execute task with unknown mean '"
+        << Task::meanAsString(mean) << "'";
     taskInstanceFinishing(false, -1);
   }
 }
@@ -229,7 +231,7 @@ void Executor::readyProcessWarningOutput() {
       if (!line.isEmpty()) {
         static QRegExp sshConnClosed("^Connection to [^ ]* closed\\.$");
         QList<QRegExp> filters(_instance.task().stderrFilters());
-        if (filters.isEmpty() && _instance.task().mean() == "ssh")
+        if (filters.isEmpty() && _instance.task().mean() == Task::Ssh)
           filters.append(sshConnClosed);
         foreach (QRegExp filter, filters)
           if (filter.indexIn(line) >= 0)
@@ -261,7 +263,7 @@ void Executor::readyReadStandardOutput() {
   if (!_process)
     return;
   _process->setReadChannel(QProcess::StandardOutput);
-  if (_instance.task().mean() == "ssh"
+  if (_instance.task().mean() == Task::Ssh
       && _instance.params().value("ssh.disablepty") != "true")
     readyProcessWarningOutput(); // with pty, stderr and stdout are merged
   else
@@ -539,7 +541,7 @@ void Executor::doAbort() {
     Log::error() << "cannot abort task because this executor is not "
                     "currently responsible for any task";
   } else if (!_instance.abortable()) {
-    if (_instance.task().mean() == "ssh")
+    if (_instance.task().mean() == Task::Ssh)
       Log::warning(_instance.task().id(), _instance.idAsLong())
           << "cannot abort task because ssh tasks are not abortable when "
              "ssh.disablepty is set to true";
@@ -554,7 +556,7 @@ void Executor::doAbort() {
     Log::info(_instance.task().id(), _instance.idAsLong())
         << "http task abort requested";
     _reply->abort();
-  } else if (_instance.task().mean() == "workflow") {
+  } else if (_instance.task().mean() == Task::Workflow) {
     // FIXME should abort running subtasks ?
     workflowFinished(false, -1);
   } else {

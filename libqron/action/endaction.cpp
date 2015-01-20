@@ -47,7 +47,7 @@ public:
     //Log::fatal(instance.task().id(), instance.id())
     //    << "EndAction::triggerWithinTaskInstance "
     //    << transitionId << " " << instance.task().id();
-    if (workflow.task().mean() != "workflow") {
+    if (workflow.task().mean() != Task::Workflow) {
       Log::error(instance.task().id(), instance.idAsLong())
           << "executing a end action in the context of a non-workflow task, "
              "for subscription " << subscription.subscriberName() << "|"

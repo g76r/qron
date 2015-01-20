@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -109,7 +109,8 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     if (!cluster.isNull()) {
       gv.append("\"").append(cluster.id()).append("\"")
           .append("[label=\"").append(cluster.id()).append("\\n(")
-          .append(cluster.balancing()).append(")\"," CLUSTER_NODE "]\n");
+          .append(cluster.balancingAsString())
+          .append(")\"," CLUSTER_NODE "]\n");
       foreach (const Host &host, cluster.hosts())
         gv.append("\"").append(cluster.id()).append("\"--\"").append(host.id())
             .append("\"[" CLUSTER_HOST_EDGE "]\n");
@@ -138,7 +139,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
       continue;
     // draw task node and group--task edge
     gv.append("\""+task.id()+"\" [label=\""+task.shortId()+"\","
-              +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
+              +(task.mean() == Task::Workflow ? WORKFLOW_TASK_NODE : TASK_NODE)
               +",tooltip=\""+task.id()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
         .append("\"").append(task.id())
@@ -151,7 +152,8 @@ QHash<QString,QString> GraphvizDiagramsBuilder
       deployed.append(task);
     foreach (const Task &subtask, deployed)
       edges.insert("\""+task.id()+"\"--\""+subtask.target()+"\" [label=\""
-                   +subtask.mean()+"\"," TASK_TARGET_EDGE "]\n");
+                   +Task::meanAsString(subtask.mean())
+                   +"\"," TASK_TARGET_EDGE "]\n");
     foreach (QString s, edges)
       gv.append(s);
   }
@@ -201,7 +203,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
       continue;
     // task nodes and group--task edges
     gv.append("\""+task.id()+"\" [label=\""+task.shortId()+"\","
-              +(task.mean() == "workflow" ? WORKFLOW_TASK_NODE : TASK_NODE)
+              +(task.mean() == Task::Workflow ? WORKFLOW_TASK_NODE : TASK_NODE)
               +",tooltip=\""+task.id()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
         .append("\"").append(task.id())
@@ -305,7 +307,7 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(Task task) {
 QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     Task task, QHash<QString,StepInstance> stepInstances) {
   // LATER implement instanciated workflow diagram for real
-  if (task.mean() != "workflow")
+  if (task.mean() != Task::Workflow)
     return QString();
   QString gv("graph \""+task.id()+" workflow\"{\n"
              "  graph[" WORKFLOW_GRAPH " ]\n"
