@@ -195,3 +195,9 @@ PfNode Cluster::toPfNode() const {
   node.appendChild(PfNode("hosts", hosts.join(' ')));
   return node;
 }
+
+void Cluster::setHosts(QList<Host> hosts) {
+  ClusterData *d = cd();
+  if (d)
+    d->_hosts = hosts;
+}

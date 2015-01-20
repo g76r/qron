@@ -42,6 +42,7 @@ public:
   PfNode toPfNode() const;
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
                  int role = Qt::EditRole);
+  void setHosts(QList<Host> hosts);
 
 private:
   ClusterData *cd();
