@@ -75,7 +75,8 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
 MailAlertChannel::~MailAlertChannel() {
   if (_mailSender)
     delete _mailSender;
-  qDeleteAll(_queues);
+  foreach (MailAlertQueue *queue, _queues)
+    delete queue;
 }
 
 void MailAlertChannel::doSendMessage(Alert alert, MessageType type) {

@@ -492,7 +492,8 @@ void Executor::workflowFinished(bool success, int returnCode) {
       << "ending workflow in " << (success ? "success" : "failure")
       << " with return code " << returnCode;
   _steps.clear(); // LATER give to TaskInstance for history ?
-  qDeleteAll(_workflowTimers);
+  foreach (TimerWithArguments *timer, _workflowTimers)
+    delete timer;
   _workflowTimers.clear();
   taskInstanceFinishing(success, returnCode);
 }
