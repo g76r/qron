@@ -1105,3 +1105,9 @@ QString Task::meanAsString(Task::Mean mean) {
   }
   return QString();
 }
+
+QStringList Task::validMeanStrings() {
+  QStringList means;
+  means << "donothing" << "local" << "workflow" << "ssh" << "http";
+  return means;
+}

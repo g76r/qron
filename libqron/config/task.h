@@ -83,6 +83,8 @@ public:
   static Task::Mean meanFromString(QString mean);
   static QString meanAsString(Task::Mean mean);
   QString meanAsString() const { return meanAsString(mean()); }
+  /** List of valid mean strings, for ui or syntax check. */
+  static QStringList validMeanStrings();
   QString command() const;
   QString target() const;
   void setTarget(QString target);
