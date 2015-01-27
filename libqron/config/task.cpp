@@ -956,13 +956,23 @@ bool TaskData::setUiData(int section, const QVariant &value,
   case 2:
     _label = value.toString();
     return true;
+  case 3: {
+    Task::Mean mean = Task::meanFromString(value.toString().trimmed());
+    if (mean == Task::UnknownMean) {
+      if (errorString)
+        *errorString = "unknown mean value: '"+value.toString()+"'";
+      return false;
+    }
+    _mean = mean;
+    return true;
+  }
   case 5:
     _target = value.toString();
     return true;
   }
   if (errorString)
     *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not text-editable";
+      +"\" is not ui-editable";
   return false;
 }
 
@@ -999,7 +1009,7 @@ PfNode Task::toPfNode() const {
     node.setAttribute("info", td->_info);
   node.setAttribute("mean", meanAsString(td->_mean));
   // do not set target attribute if it is empty,
-  // or in case it is implicit ("localhost" for "local" mean)
+  // or in case it is implicit ("localhost" for Local mean)
   if (!td->_target.isEmpty()
       && (td->_target != "localhost" || !td->_mean == Local))
     node.setAttribute("target", td->_target);

@@ -143,7 +143,7 @@ bool HostData::setUiData(int section, const QVariant &value,
   }
   if (errorString)
     *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not text-editable";
+      +"\" is not ui-editable";
   return false;
 }
 
