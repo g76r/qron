@@ -1013,7 +1013,11 @@ PfNode Task::toPfNode() const {
   if (!td->_target.isEmpty()
       && (td->_target != "localhost" || !td->_mean == Local))
     node.setAttribute("target", td->_target);
-  if (!td->_command.isEmpty())
+  // do not set command attribute if it is empty
+  // or for means that do not use it (Workflow and DoNothing)
+  if (!td->_command.isEmpty()
+      && td->_mean != DoNothing
+      && td->_mean != Workflow)
     node.setAttribute("command", td->_command);
 
   // triggering and constraints attributes
