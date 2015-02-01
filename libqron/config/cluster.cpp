@@ -50,7 +50,8 @@ Cluster::Cluster(const Cluster &other) : SharedUiItem(other) {
 
 Cluster::Cluster(PfNode node) {
   ClusterData *hgd = new ClusterData;
-  hgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
+  hgd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
+                                     ConfigUtils::GroupId);
   hgd->_label = node.attribute("label");
   hgd->_balancing = balancingFromString(node.attribute("balancing", "first")
                                         .trimmed().toLower());

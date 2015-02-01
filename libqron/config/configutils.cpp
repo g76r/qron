@@ -74,12 +74,24 @@ void ConfigUtils::writeEventSubscriptions(PfNode *parentnode,
       parentnode->appendChild(es.toPfNode());
 }
 
-QString ConfigUtils::sanitizeId(QString string, bool allowDot) {
-  static QRegExp unallowedChars("[^a-zA-Z0-9_\\-]+");
-  static QRegExp unallowedCharsWithDot("[^a-zA-Z0-9_\\-\\.]+");
+QString ConfigUtils::sanitizeId(QString string, IdType idType) {
+  static QRegExp unallowedCharsForTask("[^a-zA-Z0-9_\\-]+");
+  static QRegExp unallowedCharsForGroup("[^a-zA-Z0-9_\\-\\.]+");
+  static QRegExp unallowedCharsForSubTask("[^a-zA-Z0-9_\\-\\:]+");
   static QString placeholder("_");
-  return string.replace(allowDot ? unallowedCharsWithDot : unallowedChars,
-                        placeholder);
+  QRegExp re;
+  switch (idType) {
+  case TaskId:
+    re = unallowedCharsForTask;
+    break;
+  case GroupId:
+    re = unallowedCharsForGroup;
+    break;
+  case SubTaskId:
+    re = unallowedCharsForSubTask;
+    break;
+  }
+  return string.replace(re, placeholder);
 }
 
 QRegExp ConfigUtils::readRawOrRegexpFilter(

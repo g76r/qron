@@ -162,6 +162,7 @@ public:
   QSet<QString> startSteps() const;
   /** Parent task (e.g. workflow task) to which this task belongs, if any. */
   QString supertaskId() const;
+  void setSuperTaskId(QString supertaskId);
   QString workflowDiagram() const;
   QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
   QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;

@@ -43,7 +43,7 @@ RequestFormField::RequestFormField(PfNode node) {
                  << node.toString();
     return;
   }
-  d->_id = ConfigUtils::sanitizeId(id);
+  d->_id = ConfigUtils::sanitizeId(id, ConfigUtils::TaskId);
   d->_label = node.attribute("label", d->_id);
   d->_placeholder = node.attribute("placeholder", d->_label);
   d->_suggestion = node.attribute("suggestion");

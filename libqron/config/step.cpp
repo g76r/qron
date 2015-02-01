@@ -38,7 +38,8 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
            QString workflowTaskId, QHash<QString, Calendar> namedCalendars) {
   StepData *sd = new StepData;
   sd->_scheduler = scheduler;
-  sd->_id = ConfigUtils::sanitizeId(node.contentAsString(), false);
+  sd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
+                                    ConfigUtils::TaskId);
   sd->_fqsn = taskGroup.id()+"."+workflowTaskId+":"+sd->_id;
   sd->_workflowId = taskGroup.id()+"."+workflowTaskId;
   if (node.name() == "and") {
@@ -65,7 +66,7 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       Log::warning() << "ignoring subtask triggers: " << node.toString();
     if (node.hasChild("onready"))
       Log::warning() << "ignoring subtask onready event: " << node.toString();
-    node.setContent(workflowTaskId+"-"+node.contentAsString());
+    node.setContent(workflowTaskId+":"+node.contentAsString());
     sd->_subtask = Task(node, scheduler, taskGroup, sd->_workflowId,
                         namedCalendars);
     if (sd->_subtask.isNull()) {

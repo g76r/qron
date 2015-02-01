@@ -73,7 +73,8 @@ public:
 StepAction::StepAction(Scheduler *scheduler, PfNode node)
   : Action(new StepActionData(
              scheduler,
-             ConfigUtils::sanitizeId(node.contentAsString(), false))) {
+             ConfigUtils::sanitizeId(node.contentAsString(),
+                                     ConfigUtils::TaskId))) {
   //Log::fatal() << "StepAction() " << stepId;
 }
 

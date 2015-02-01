@@ -141,7 +141,10 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
            QString supertaskId, QHash<QString,Calendar> namedCalendars) {
   TaskData *td = new TaskData;
   td->_scheduler = scheduler;
-  td->_shortId = ConfigUtils::sanitizeId(node.contentAsString());
+  td->_shortId =
+      ConfigUtils::sanitizeId(node.contentAsString(),
+                              supertaskId.isEmpty() ? ConfigUtils::TaskId
+                                                    : ConfigUtils::SubTaskId);
   td->_label = node.attribute("label");
   td->_mean = meanFromString(node.attribute("mean", "local").trimmed()
                              .toLower());
@@ -152,7 +155,8 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
     return;
   }
   td->_command = node.attribute("command");
-  td->_target = ConfigUtils::sanitizeId(node.attribute("target"));
+  td->_target =
+      ConfigUtils::sanitizeId(node.attribute("target"), ConfigUtils::GroupId);
   // silently use "localhost" as target for "local" mean
   if (td->_target.isEmpty() && td->_mean == Local)
     td->_target = "localhost";
@@ -234,7 +238,8 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       delete td;
       return;
     } else
-      td->_resources.insert(ConfigUtils::sanitizeId(p.first), p.second);
+      td->_resources.insert(
+            ConfigUtils::sanitizeId(p.first, ConfigUtils::TaskId), p.second);
   }
   QString daos = node.attribute("discardaliasesonstart", "all");
   td->_discardAliasesOnStart = discardAliasesOnStartFromString(daos);
@@ -922,6 +927,18 @@ QVariant TaskData::uiData(int section, int role) const {
       return _supertaskId;
     }
     break;
+  case Qt::EditRole:
+    switch(section) {
+    case 0:
+      // remove workflow id prefix from shortid
+      return _supertaskId.isEmpty() ? _shortId
+                                    : _shortId.mid(_shortId.indexOf(':')+1);
+    case 2:
+      // do not replace label with shortid when editing
+      // must replace null label with empty string otherwise caller is likely
+      // to use DisplayRole instead (and thus receive shortid)
+      return _label.isNull() ? "" : _label;
+    }
   default:
     ;
   }
@@ -934,6 +951,16 @@ bool Task::setUiData(int section, const QVariant &value, QString *errorString,
     return false;
   detach<TaskData>();
   return ((TaskData*)constData())->setUiData(section, value, errorString, role);
+}
+
+void Task::setSuperTaskId(QString supertaskId) {
+  if (!isNull()) {
+    detach<TaskData>();
+    TaskData *d = ((TaskData*)constData());
+    d->_supertaskId = supertaskId;
+    d->_shortId = supertaskId.mid(supertaskId.lastIndexOf('.')+1)+":"
+        +d->_shortId.mid(d->_shortId.indexOf(':')+1);
+  }
 }
 
 bool TaskData::setUiData(int section, const QVariant &value,
@@ -950,7 +977,9 @@ bool TaskData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    _shortId = value.toString();
+    _shortId = ConfigUtils::sanitizeId(value.toString(), ConfigUtils::TaskId);
+    if (!_supertaskId.isEmpty())
+      _shortId = _supertaskId.mid(_supertaskId.lastIndexOf('.')+1)+":"+_shortId;
     _id = _group.id()+"."+_shortId;
     return true;
   case 2:

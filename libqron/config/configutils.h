@@ -25,6 +25,11 @@ class Scheduler;
 /** Miscellaneous tools for handling configuration */
 class LIBQRONSHARED_EXPORT ConfigUtils {
 public:
+  enum IdType {
+    TaskId, // used for tasks and resources; only letters, digits and _
+    GroupId, // used for groups, hosts and clusters; allows dots
+    SubTaskId // used for
+  };
   static void loadParamSet(PfNode parentnode, ParamSet *params,
                            QString attrname);
   inline static ParamSet loadParamSet(PfNode parentnode, QString attrname) {
@@ -35,7 +40,7 @@ public:
                           QString attrname);
   /** For identifier, with or without dot. Cannot contain ParamSet interpreted
    * expressions such as %!yyyy. */
-  static QString sanitizeId(QString string, bool allowDot = false);
+  static QString sanitizeId(QString string, IdType idType);
   /** Interpret s as regexp if it starts and ends with a /, else as raw text */
   static QRegExp readRawOrRegexpFilter(
       QString s, Qt::CaseSensitivity cs = Qt::CaseSensitive);

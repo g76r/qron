@@ -47,7 +47,8 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                      ParamSet parentSetenv, ParamSet parentUnsetenv,
                      Scheduler *scheduler) {
   TaskGroupData *tgd = new TaskGroupData;
-  tgd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
+  tgd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
+                                     ConfigUtils::GroupId);
   tgd->_label = node.attribute("label");
   tgd->_params.setParent(parentParamSet);
   ConfigUtils::loadParamSet(node, &tgd->_params, "param");
@@ -70,7 +71,7 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
 
 TaskGroup::TaskGroup(QString id) {
   TaskGroupData *tgd = new TaskGroupData;
-  tgd->_id = ConfigUtils::sanitizeId(id, true);
+  tgd->_id = ConfigUtils::sanitizeId(id, ConfigUtils::GroupId);
   setData(tgd);
 }
 

@@ -50,10 +50,11 @@ Host::Host(const Host &other) : SharedUiItem(other) {
 
 Host::Host(PfNode node) {
   HostData *hd = new HostData;
-  hd->_id = ConfigUtils::sanitizeId(node.contentAsString(), true);
+  hd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
+                                    ConfigUtils::GroupId);
   hd->_label = node.attribute("label", hd->_id);
   hd->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname", hd->_id),
-                                          true);
+                                          ConfigUtils::GroupId);
   QListIterator<QPair<QString,qlonglong> > it(
         node.stringLongPairChildrenByName("resource"));
   while (it.hasNext()) {
@@ -62,7 +63,8 @@ Host::Host(PfNode node) {
       Log::warning() << "ignoring resource of kind " << p.first
                      << "with incorrect quantity in host" << node.toString();
     else
-      hd->_resources.insert(ConfigUtils::sanitizeId(p.first), p.second);
+      hd->_resources.insert(
+            ConfigUtils::sanitizeId(p.first, ConfigUtils::TaskId), p.second);
   }
   setData(hd);
 }
