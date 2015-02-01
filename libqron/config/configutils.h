@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -38,6 +38,13 @@ public:
     return params; }
   static void loadFlagSet(PfNode parentnode, ParamSet *unsetenv,
                           QString attrname);
+  static void loadResourcesSet(
+      PfNode parentnode, QHash<QString,qint64> *resources, QString attrname);
+  inline static QHash<QString,qint64> loadResourcesSet(
+      PfNode parentnode, QString attrname) {
+    QHash<QString,qint64> resources;
+    loadResourcesSet(parentnode, &resources, attrname);
+    return resources; }
   /** For identifier, with or without dot. Cannot contain ParamSet interpreted
    * expressions such as %!yyyy. */
   static QString sanitizeId(QString string, IdType idType);

@@ -78,12 +78,6 @@ Cluster::Balancing Cluster::balancing() const {
   return !isNull() ? cd()->_balancing : UnknownBalancing;
 }
 
-QString Cluster::label() const {
-  const ClusterData *d = cd();
-  return d ? (d->_label.isEmpty() ? d->_id : d->_label)
-           : QString();
-}
-
 void Cluster::setId(QString id) {
   if (!isNull())
     cd()->_id = id;
@@ -92,6 +86,7 @@ void Cluster::setId(QString id) {
 QVariant ClusterData::uiData(int section, int role) const {
   switch(role) {
   case Qt::DisplayRole:
+  case Qt::EditRole:
     switch(section) {
     case 0:
       return _id;
@@ -104,6 +99,8 @@ QVariant ClusterData::uiData(int section, int role) const {
     case 2:
       return Cluster::balancingAsString(_balancing);
     case 3:
+      if (role == Qt::EditRole)
+        return _label == _id ? QVariant() : _label;
       return _label.isEmpty() ? _id : _label;
     }
     break;
@@ -144,7 +141,7 @@ bool ClusterData::setUiData(int section, const QVariant &value,
     return true;
   }
   case 3:
-    _label = s;
+    _label = s.trimmed();
     return true;
   }
   if (errorString)

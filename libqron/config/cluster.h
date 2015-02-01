@@ -44,7 +44,6 @@ public:
   static Cluster::Balancing balancingFromString(QString method);
   static QString balancingAsString(Cluster::Balancing method);
   QString balancingAsString() const { return balancingAsString(balancing()); }
-  QString label() const;
   void setId(QString id);
   PfNode toPfNode() const;
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,

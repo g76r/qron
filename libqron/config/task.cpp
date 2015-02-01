@@ -228,19 +228,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       Log::warning() << "ignoring trigger in workflow subtask: "
                      << node.toString();
   }
-  QListIterator<QPair<QString,qlonglong> > it(
-        node.stringLongPairChildrenByName("resource"));
-  while (it.hasNext()) {
-    const QPair<QString,qlonglong> &p(it.next());
-    if (p.second <= 0) {
-      Log::error() << "task with incorrect resource quantity for kind '"
-                   << p.first << "': " << node.toString();
-      delete td;
-      return;
-    } else
-      td->_resources.insert(
-            ConfigUtils::sanitizeId(p.first, ConfigUtils::TaskId), p.second);
-  }
+  ConfigUtils::loadResourcesSet(node, &td->_resources, "resource");
   QString daos = node.attribute("discardaliasesonstart", "all");
   td->_discardAliasesOnStart = discardAliasesOnStartFromString(daos);
   if (td->_discardAliasesOnStart == Task::DiscardUnknown) {
@@ -838,13 +826,21 @@ int TaskData::uiSectionCount() const {
 QVariant TaskData::uiData(int section, int role) const {
   switch(role) {
   case Qt::DisplayRole:
+  case Qt::EditRole:
     switch(section) {
     case 0:
+      if (role == Qt::EditRole) {
+        // remove workflow id prefix from shortid
+        return _supertaskId.isEmpty() ? _shortId
+                                      : _shortId.mid(_shortId.indexOf(':')+1);
+      }
       return _shortId;
     case 1:
       return _group.id();
     case 2:
-      return _label.isNull() ? _shortId : _label;
+      if (role == Qt::EditRole)
+        return _label == _shortId ? QVariant() : _label;
+      return _label.isEmpty() ? _shortId : _label;
     case 3:
       return Task::meanAsString(_mean);
     case 4:
@@ -927,18 +923,6 @@ QVariant TaskData::uiData(int section, int role) const {
       return _supertaskId;
     }
     break;
-  case Qt::EditRole:
-    switch(section) {
-    case 0:
-      // remove workflow id prefix from shortid
-      return _supertaskId.isEmpty() ? _shortId
-                                    : _shortId.mid(_shortId.indexOf(':')+1);
-    case 2:
-      // do not replace label with shortid when editing
-      // must replace null label with empty string otherwise caller is likely
-      // to use DisplayRole instead (and thus receive shortid)
-      return _label.isNull() ? "" : _label;
-    }
   default:
     ;
   }
@@ -983,7 +967,7 @@ bool TaskData::setUiData(int section, const QVariant &value,
     _id = _group.id()+"."+_shortId;
     return true;
   case 2:
-    _label = value.toString();
+    _label = value.toString().trimmed();
     return true;
   case 3: {
     Task::Mean mean = Task::meanFromString(value.toString().trimmed());
@@ -998,6 +982,15 @@ bool TaskData::setUiData(int section, const QVariant &value,
   case 5:
     _target = value.toString();
     return true;
+  case 8: {
+    QHash<QString,qint64> resources;
+    if (QronUiUtils::resourcesFromString(value.toString(), &resources,
+                                            errorString)) {
+      _resources = resources;
+      return true;
+    }
+    return false;
+  }
   }
   if (errorString)
     *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()

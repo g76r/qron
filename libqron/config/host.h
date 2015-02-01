@@ -35,8 +35,6 @@ public:
   QString hostname() const;
   /** Configured max resources available. */
   QHash<QString, qint64> resources() const;
-  QString resourcesAsString() const;
-  QString label() const;
   void detach();
   PfNode toPf() const;
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,

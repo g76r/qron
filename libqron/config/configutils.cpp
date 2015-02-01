@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -43,6 +43,23 @@ void ConfigUtils::loadFlagSet(PfNode parentnode, ParamSet *unsetenv,
     QStringList names = content.split(QRegExp("\\s"));
     foreach (const QString name, names)
       unsetenv->setValue(name, QString());
+  }
+}
+
+void ConfigUtils::loadResourcesSet(
+    PfNode parentnode, QHash<QString,qint64> *resources, QString attrname) {
+  if (!resources)
+    return;
+  QListIterator<QPair<QString,qint64> > it(
+        parentnode.stringLongPairChildrenByName(attrname));
+  while (it.hasNext()) {
+    const QPair<QString,qint64> &p(it.next());
+    if (p.second <= 0)
+      Log::warning() << "ignoring resource of kind " << p.first
+                     << "with incorrect quantity " << parentnode.toString();
+    else
+      resources->insert(
+            ConfigUtils::sanitizeId(p.first, ConfigUtils::TaskId), p.second);
   }
 }
 

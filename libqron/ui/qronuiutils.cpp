@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,6 +12,8 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "qronuiutils.h"
+#include <QRegularExpression>
+#include <QtDebug>
 
 QString QronUiUtils::resourcesAsString(QHash<QString,qint64> resources) {
   QString s;
@@ -25,6 +27,35 @@ QString QronUiUtils::resourcesAsString(QHash<QString,qint64> resources) {
         .append(QString::number(resources.value(key)));
   }
   return s;
+}
+
+bool QronUiUtils::resourcesFromString(
+    QString text, QHash<QString,qint64> *resources, QString *errorString) {
+  static QRegularExpression re(
+        "\\s*([_a-zA-Z][_a-zA-Z0-9]*)\\s*=\\s*([0-9xXa-fA-F]+)\\s*");
+  //qDebug() << "QronUiUtils::resourcesFromString" << text << resources
+  //         << errorString;
+  if (!resources) {
+    if (errorString)
+      *errorString = "*resources is null";
+    return false;
+  }
+  QRegularExpressionMatchIterator i = re.globalMatch(text);
+  while (i.hasNext()) {
+    QRegularExpressionMatch match = i.next();
+    QString key = match.captured(1);
+    bool ok = false;
+    qint64 value = match.captured(2).toLongLong(&ok, 0);
+    //qDebug() << "   match:" << key << value << ok;
+    if (!ok) {
+      if (errorString)
+        *errorString = "cannot parse \""+match.captured()+"\"";
+      resources->clear();
+      return false;
+    }
+    resources->insert(key, value);
+  }
+  return true;
 }
 
 QString QronUiUtils::sysenvAsString(ParamSet setenv, ParamSet unsetenv) {

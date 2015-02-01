@@ -52,20 +52,10 @@ Host::Host(PfNode node) {
   HostData *hd = new HostData;
   hd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
                                     ConfigUtils::GroupId);
-  hd->_label = node.attribute("label", hd->_id);
-  hd->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname", hd->_id),
+  hd->_label = node.attribute("label");
+  hd->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname"),
                                           ConfigUtils::GroupId);
-  QListIterator<QPair<QString,qlonglong> > it(
-        node.stringLongPairChildrenByName("resource"));
-  while (it.hasNext()) {
-    const QPair<QString,qlonglong> &p(it.next());
-    if (p.second <= 0)
-      Log::warning() << "ignoring resource of kind " << p.first
-                     << "with incorrect quantity in host" << node.toString();
-    else
-      hd->_resources.insert(
-            ConfigUtils::sanitizeId(p.first, ConfigUtils::TaskId), p.second);
-  }
+  ConfigUtils::loadResourcesSet(node, &hd->_resources, "resource");
   setData(hd);
 }
 
@@ -73,34 +63,33 @@ Host::~Host() {
 }
 
 QString Host::hostname() const {
-  return !isNull() ? hd()->_hostname : QString();
+  if (isNull())
+    return QString();
+  const HostData *d = hd();
+  return d->_hostname.isEmpty() ? d->_id : d->_hostname;
 }
 
 QHash<QString,qint64> Host::resources() const {
   return !isNull() ? hd()->_resources : QHash<QString,qint64>();
 }
 
-QString Host::resourcesAsString() const {
-  return !isNull() ? QronUiUtils::resourcesAsString(hd()->_resources)
-                   : QString();
-}
-
-QString Host::label() const {
-  return !isNull() ? hd()->_label : QString();
-}
-
 QVariant HostData::uiData(int section, int role) const {
   switch(role) {
   case Qt::DisplayRole:
+  case Qt::EditRole:
     switch(section) {
     case 0:
       return _id;
     case 1:
-      return _hostname;
+      if (role == Qt::EditRole)
+        return _hostname == _id ? QVariant() : _hostname;
+      return _hostname.isEmpty() ? _id : _hostname;
     case 2:
       return QronUiUtils::resourcesAsString(_resources);
     case 3:
-      return _label;
+      if (role == Qt::EditRole)
+        return _label == _id ? QVariant() : _label;
+      return _label.isEmpty() ? _id : _label;
     }
     break;
   default:
@@ -137,10 +126,17 @@ bool HostData::setUiData(int section, const QVariant &value,
   case 1:
     _hostname = s;
     return true;
-    //case 2:
-    //TODO: resources from string
+  case 2: {
+    QHash<QString,qint64> resources;
+    if (QronUiUtils::resourcesFromString(value.toString(), &resources,
+                                            errorString)) {
+      _resources = resources;
+      return true;
+    }
+    return false;
+  }
   case 3:
-    _label = s;
+    _label = s.trimmed();
     return true;
   }
   if (errorString)
