@@ -94,7 +94,7 @@ void ConfigUtils::writeEventSubscriptions(PfNode *parentnode,
 QString ConfigUtils::sanitizeId(QString string, IdType idType) {
   static QRegExp unallowedCharsForTask("[^a-zA-Z0-9_\\-]+");
   static QRegExp unallowedCharsForGroup("[^a-zA-Z0-9_\\-\\.]+");
-  static QRegExp unallowedCharsForSubTask("[^a-zA-Z0-9_\\-\\:]+");
+  static QRegExp unallowedCharsForSubTask("[^a-zA-Z0-9_\\-:]+");
   static QString placeholder("_");
   QRegExp re;
   switch (idType) {
@@ -108,7 +108,7 @@ QString ConfigUtils::sanitizeId(QString string, IdType idType) {
     re = unallowedCharsForSubTask;
     break;
   }
-  return string.replace(re, placeholder);
+  return string.trimmed().replace(re, placeholder);
 }
 
 QRegExp ConfigUtils::readRawOrRegexpFilter(

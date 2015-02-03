@@ -26,7 +26,7 @@ class Scheduler;
 class LIBQRONSHARED_EXPORT ConfigUtils {
 public:
   enum IdType {
-    TaskId, // used for tasks and resources; only letters, digits and _
+    TaskId, // used for tasks and resources; only letters, digits, - and _
     GroupId, // used for groups, hosts and clusters; allows dots
     SubTaskId // used for
   };

@@ -968,9 +968,12 @@ bool TaskData::setUiData(int section, const QVariant &value,
     return true;
   case 2:
     _label = value.toString().trimmed();
+    if (_label == _shortId)
+      _label = QString();
     return true;
   case 3: {
-    Task::Mean mean = Task::meanFromString(value.toString().trimmed());
+    Task::Mean mean = Task::meanFromString(value.toString().toLower()
+                                           .trimmed());
     if (mean == Task::UnknownMean) {
       if (errorString)
         *errorString = "unknown mean value: '"+value.toString()+"'";
@@ -980,7 +983,7 @@ bool TaskData::setUiData(int section, const QVariant &value,
     return true;
   }
   case 5:
-    _target = value.toString();
+    _target = ConfigUtils::sanitizeId(value.toString(), ConfigUtils::GroupId);
     return true;
   case 8: {
     QHash<QString,qint64> resources;

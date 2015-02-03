@@ -125,7 +125,7 @@ bool ClusterData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    _id = s;
+    _id = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
     return true;
     //case 1:
     // TODO host list: parse

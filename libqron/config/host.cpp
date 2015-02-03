@@ -121,10 +121,10 @@ bool HostData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    _id = s;
+    _id = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
     return true;
   case 1:
-    _hostname = s;
+    _hostname = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
     return true;
   case 2: {
     QHash<QString,qint64> resources;
@@ -181,9 +181,9 @@ PfNode Host::toPf() const {
   if (!hd)
     return PfNode();
   PfNode node("host", hd->_id);
-  if (hd->_label != hd->_id)
+  if (!hd->_label.isEmpty() && hd->_label != hd->_id)
     node.appendChild(PfNode("label", hd->_label));
-  if (hd->_hostname != hd->_id)
+  if (!hd->_hostname.isEmpty() && hd->_hostname != hd->_id)
     node.appendChild(PfNode("hostname", hd->_hostname));
   foreach (const QString &key, hd->_resources.keys())
     node.appendChild(
