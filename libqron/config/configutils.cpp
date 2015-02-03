@@ -95,8 +95,11 @@ QString ConfigUtils::sanitizeId(QString string, IdType idType) {
   static QRegExp unallowedCharsForTask("[^a-zA-Z0-9_\\-]+");
   static QRegExp unallowedCharsForGroup("[^a-zA-Z0-9_\\-\\.]+");
   static QRegExp unallowedCharsForSubTask("[^a-zA-Z0-9_\\-:]+");
-  static QString placeholder("_");
+  static QRegExp unallowedCharsForHostname("[^a-zA-Z0-9\\-:\\[\\]\\.]+");
+  static QString defaultPlaceholder("_");
+  static QString emptyPlaceholder;
   QRegExp re;
+  QString placeholder(defaultPlaceholder);
   switch (idType) {
   case TaskId:
     re = unallowedCharsForTask;
@@ -106,6 +109,10 @@ QString ConfigUtils::sanitizeId(QString string, IdType idType) {
     break;
   case SubTaskId:
     re = unallowedCharsForSubTask;
+    break;
+  case Hostname:
+    re = unallowedCharsForHostname;
+    placeholder = emptyPlaceholder;
     break;
   }
   return string.trimmed().replace(re, placeholder);

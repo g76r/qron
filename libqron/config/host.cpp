@@ -54,7 +54,7 @@ Host::Host(PfNode node) {
                                     ConfigUtils::GroupId);
   hd->_label = node.attribute("label");
   hd->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname"),
-                                          ConfigUtils::GroupId);
+                                          ConfigUtils::Hostname);
   ConfigUtils::loadResourcesSet(node, &hd->_resources, "resource");
   setData(hd);
 }
@@ -124,7 +124,7 @@ bool HostData::setUiData(int section, const QVariant &value,
     _id = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
     return true;
   case 1:
-    _hostname = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    _hostname = ConfigUtils::sanitizeId(s, ConfigUtils::Hostname);
     return true;
   case 2: {
     QHash<QString,qint64> resources;
