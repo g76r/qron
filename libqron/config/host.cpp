@@ -19,6 +19,7 @@
 #include "log/log.h"
 #include "configutils.h"
 #include "ui/qronuiutils.h"
+#include "modelview/shareduiitemdocumentmanager.h"
 
 static QString _uiHeaderNames[] = {
   "Id", // 0
@@ -38,7 +39,7 @@ public:
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "host"; }
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role);
+                 int role, const SharedUiItemDocumentManager *dm);
   Qt::ItemFlags uiFlags(int section) const;
 };
 
@@ -99,15 +100,22 @@ QVariant HostData::uiData(int section, int role) const {
 }
 
 bool Host::setUiData(int section, const QVariant &value, QString *errorString,
-                     int role) {
+                     int role, const SharedUiItemDocumentManager *dm) {
   if (isNull())
     return false;
   detach();
-  return ((HostData*)constData())->setUiData(section, value, errorString, role);
+  return ((HostData*)constData())
+      ->setUiData(section, value, errorString, role, dm);
 }
 
 bool HostData::setUiData(int section, const QVariant &value,
-                         QString *errorString, int role) {
+                         QString *errorString, int role,
+                         const SharedUiItemDocumentManager *dm) {
+  if (!dm) {
+    if (errorString)
+      *errorString = "cannot set ui data without document manager";
+    return false;
+  }
   if (role != Qt::EditRole) {
     if (errorString)
       *errorString = "cannot set other role than EditRole";
@@ -121,7 +129,18 @@ bool HostData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    _id = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    if (!dm->itemById("cluster", s).isNull()) {
+      if (errorString)
+        *errorString = "New id is already used by a cluster: "+s;
+      return false;
+    }
+    if (!dm->itemById("host", s).isNull()) {
+      if (errorString)
+        *errorString = "New id is already used by another host: "+s;
+      return false;
+    }
+    _id = s;
     return true;
   case 1:
     _hostname = ConfigUtils::sanitizeId(s, ConfigUtils::Hostname);

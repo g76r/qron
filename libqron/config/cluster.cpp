@@ -19,6 +19,7 @@
 #include "pf/pfnode.h"
 #include "log/log.h"
 #include "configutils.h"
+#include "modelview/shareduiitemdocumentmanager.h"
 
 static QString _uiHeaderNames[] = {
   "Id", // 0
@@ -38,7 +39,7 @@ public:
   QString id() const { return _id; }
   QString idQualifier() const { return "cluster"; }
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role);
+                 int role, const SharedUiItemDocumentManager *dm);
   Qt::ItemFlags uiFlags(int section) const;
 };
 
@@ -111,7 +112,13 @@ QVariant ClusterData::uiData(int section, int role) const {
 }
 
 bool ClusterData::setUiData(int section, const QVariant &value,
-                            QString *errorString, int role) {
+                            QString *errorString, int role,
+                            const SharedUiItemDocumentManager *dm) {
+  if (!dm) {
+    if (errorString)
+      *errorString = "cannot set ui data without document manager";
+    return false;
+  }
   if (role != Qt::EditRole) {
     if (errorString)
       *errorString = "cannot set other role than EditRole";
@@ -125,7 +132,18 @@ bool ClusterData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    _id = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    if (!dm->itemById("cluster", s).isNull()) {
+      if (errorString)
+        *errorString = "New id is already used by another cluster: "+s;
+      return false;
+    }
+    if (!dm->itemById("host", s).isNull()) {
+      if (errorString)
+        *errorString = "New id is already used by a host: "+s;
+      return false;
+    }
+    _id = s;
     return true;
     //case 1:
     // TODO host list: parse
@@ -162,12 +180,13 @@ Qt::ItemFlags ClusterData::uiFlags(int section) const {
 }
 
 bool Cluster::setUiData(int section, const QVariant &value,
-                        QString *errorString, int role) {
+                        QString *errorString, int role,
+                        const SharedUiItemDocumentManager *dm) {
   if (isNull())
     return false;
   detach<ClusterData>();
   return ((ClusterData*)constData())
-      ->setUiData(section, value, errorString, role);
+      ->setUiData(section, value, errorString, role, dm);
 }
 
 QVariant ClusterData::uiHeaderData(int section, int role) const {

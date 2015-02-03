@@ -32,6 +32,7 @@
 #include "ui/graphvizdiagramsbuilder.h"
 #include "ui/qronuiutils.h"
 #include "task_p.h"
+#include "modelview/shareduiitemdocumentmanager.h"
 
 class WorkflowTriggerSubscriptionData : public QSharedData {
 public:
@@ -119,7 +120,7 @@ public:
   bool triggersHaveCalendar() const;
   QVariant uiData(int section, int role) const;
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role);
+                 int role, const SharedUiItemDocumentManager *dm);
   Qt::ItemFlags uiFlags(int section) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiSectionCount() const;
@@ -930,11 +931,12 @@ QVariant TaskData::uiData(int section, int role) const {
 }
 
 bool Task::setUiData(int section, const QVariant &value, QString *errorString,
-                     int role) {
+                     int role, const SharedUiItemDocumentManager *dm) {
   if (isNull())
     return false;
   detach<TaskData>();
-  return ((TaskData*)constData())->setUiData(section, value, errorString, role);
+  return ((TaskData*)constData())
+      ->setUiData(section, value, errorString, role, dm);
 }
 
 void Task::setSuperTaskId(QString supertaskId) {
@@ -948,12 +950,19 @@ void Task::setSuperTaskId(QString supertaskId) {
 }
 
 bool TaskData::setUiData(int section, const QVariant &value,
-                         QString *errorString, int role) {
+                         QString *errorString, int role,
+                         const SharedUiItemDocumentManager *dm) {
+  if (!dm) {
+    if (errorString)
+      *errorString = "cannot set ui data without document manager";
+    return false;
+  }
   if (role != Qt::EditRole) {
     if (errorString)
       *errorString = "cannot set other role than EditRole";
     return false;
   }
+  QString s = value.toString().trimmed(), s2;
   switch(section) {
   case 0:
     if (value.toString().isEmpty()) {
@@ -961,10 +970,17 @@ bool TaskData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    _shortId = ConfigUtils::sanitizeId(value.toString(), ConfigUtils::TaskId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::TaskId);
     if (!_supertaskId.isEmpty())
-      _shortId = _supertaskId.mid(_supertaskId.lastIndexOf('.')+1)+":"+_shortId;
-    _id = _group.id()+"."+_shortId;
+      s = _supertaskId.mid(_supertaskId.lastIndexOf('.')+1)+":"+s;
+    s2 = _group.id()+"."+s;
+    if (!dm->itemById("task", s2).isNull()) {
+      if (errorString)
+        *errorString = "New id is already used by another task: "+s;
+      return false;
+    }
+    _shortId = s;
+    _id = s2;
     return true;
   case 2:
     _label = value.toString().trimmed();

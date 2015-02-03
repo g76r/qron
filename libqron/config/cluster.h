@@ -47,7 +47,8 @@ public:
   void setId(QString id);
   PfNode toPfNode() const;
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
-                 int role = Qt::EditRole);
+                 int role = Qt::EditRole,
+                 const SharedUiItemDocumentManager *dm = 0);
   void setHosts(QList<Host> hosts);
 
 private:
