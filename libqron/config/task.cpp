@@ -475,6 +475,11 @@ TaskGroup Task::taskGroup() const {
   return !isNull() ? td()->_group : TaskGroup();
 }
 
+void Task::setTaskGroup(TaskGroup taskGroup) {
+  if (!isNull())
+    td()->_group = taskGroup;
+}
+
 QHash<QString, qint64> Task::resources() const {
   return !isNull() ? td()->_resources : QHash<QString,qint64>();
 }
@@ -934,15 +939,12 @@ bool Task::setUiData(int section, const QVariant &value, QString *errorString,
                      int role, const SharedUiItemDocumentManager *dm) {
   if (isNull())
     return false;
-  detach<TaskData>();
-  return ((TaskData*)constData())
-      ->setUiData(section, value, errorString, role, dm);
+  return td()->setUiData(section, value, errorString, role, dm);
 }
 
 void Task::setSuperTaskId(QString supertaskId) {
   if (!isNull()) {
-    detach<TaskData>();
-    TaskData *d = ((TaskData*)constData());
+    TaskData *d = td();
     d->_supertaskId = supertaskId;
     d->_shortId = supertaskId.mid(supertaskId.lastIndexOf('.')+1)+":"
         +d->_shortId.mid(d->_shortId.indexOf(':')+1);
@@ -982,6 +984,29 @@ bool TaskData::setUiData(int section, const QVariant &value,
     _shortId = s;
     _id = s2;
     return true;
+  case 1: {
+    SharedUiItem group = dm->itemById("taskgroup", s);
+    if (group.isNull()) {
+      if (errorString)
+        *errorString = "No group with such id: \""+s+"\"";
+      return false;
+    }
+    if (!_supertaskId.isEmpty()) {
+      SharedUiItem supertaskItem = dm->itemById("task", _supertaskId);
+      if (!supertaskItem.isNull()) {
+        Task supertask = reinterpret_cast<Task&>(supertaskItem);
+        if (s != supertask.taskGroup().id()) {
+          if (errorString)
+            *errorString = "Cannot make a subtask belong to another group than "
+                           "its parent task's group: \""+s+"\" instead of \""
+              +supertask.taskGroup().id()+"\"";
+          return false;
+        }
+      }
+    }
+    _group = reinterpret_cast<TaskGroup&>(group);
+    return true;
+  }
   case 2:
     _label = value.toString().trimmed();
     if (_label == _shortId)

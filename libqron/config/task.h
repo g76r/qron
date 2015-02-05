@@ -90,6 +90,7 @@ public:
   void setTarget(QString target);
   QString info() const;
   TaskGroup taskGroup() const;
+  void setTaskGroup(TaskGroup taskGroup);
   /** Resources consumed. */
   QHash<QString, qint64> resources() const;
   QString resourcesAsString() const;

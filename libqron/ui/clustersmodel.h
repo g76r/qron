@@ -34,7 +34,7 @@ public slots:
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
 
 protected:
-  void setNewItemInsertionPoint(SharedUiItem newItem, QModelIndex *parent, int *row);
+  void determineItemPlaceInTree(SharedUiItem newItem, QModelIndex *parent, int *row);
 };
 
 #endif // CLUSTERSMODEL_H

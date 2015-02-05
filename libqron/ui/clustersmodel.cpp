@@ -90,7 +90,7 @@ void ClustersModel::changeItem(SharedUiItem newItem, SharedUiItem oldItem) {
   }
 }
 
-void ClustersModel::setNewItemInsertionPoint(
+void ClustersModel::determineItemPlaceInTree(
     SharedUiItem newItem, QModelIndex *parent, int *row) {
   Q_UNUSED(row)
   if (newItem.idQualifier() == "hostreference") {
