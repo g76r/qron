@@ -14,6 +14,7 @@
 #include "configutils.h"
 #include "eventsubscription.h"
 #include "action/action.h"
+#include <QRegularExpression>
 
 ConfigUtils::ConfigUtils() {
 }
@@ -37,10 +38,11 @@ void ConfigUtils::loadParamSet(PfNode parentnode, ParamSet *params,
 
 void ConfigUtils::loadFlagSet(PfNode parentnode, ParamSet *unsetenv,
                               QString attrname) {
+  static QRegularExpression whitespace("\\s");
   if (!unsetenv)
     return;
   foreach (QString content, parentnode.stringChildrenByName(attrname)) {
-    QStringList names = content.split(QRegExp("\\s"));
+    QStringList names = content.split(whitespace);
     foreach (const QString name, names)
       unsetenv->setValue(name, QString());
   }
@@ -92,30 +94,26 @@ void ConfigUtils::writeEventSubscriptions(PfNode *parentnode,
 }
 
 QString ConfigUtils::sanitizeId(QString string, IdType idType) {
-  static QRegExp unallowedCharsForTask("[^a-zA-Z0-9_\\-]+");
-  static QRegExp unallowedCharsForGroup("[^a-zA-Z0-9_\\-\\.]+");
-  static QRegExp unallowedCharsForSubTask("[^a-zA-Z0-9_\\-:]+");
-  static QRegExp unallowedCharsForHostname("[^a-zA-Z0-9\\-:\\[\\]\\.]+");
-  static QString defaultPlaceholder("_");
-  static QString emptyPlaceholder;
-  QRegExp re;
-  QString placeholder(defaultPlaceholder);
+  static QRegularExpression unallowedInTask("[^a-zA-Z0-9_\\-]");
+  static QRegularExpression unallowedInGroup("[^a-zA-Z0-9_\\-\\.]");
+  static QRegularExpression unallowedInSubTask("[^a-zA-Z0-9_\\-:]");
+  static QRegularExpression unallowedInHostname("[^a-zA-Z0-9\\-:\\[\\]\\.]");
+  static QRegularExpression multipleDots("\\.\\.+");
+  static QRegularExpression misplacedDot("(^\\.*)|(\\.*$)");
+  static QString singleDot(".");
+  string = string.trimmed();
   switch (idType) {
   case TaskId:
-    re = unallowedCharsForTask;
-    break;
+    return string.remove(unallowedInTask);
   case GroupId:
-    re = unallowedCharsForGroup;
-    break;
+    return string.remove(unallowedInGroup).replace(multipleDots, singleDot)
+        .remove(misplacedDot);
   case SubTaskId:
-    re = unallowedCharsForSubTask;
-    break;
+    return string.remove(unallowedInSubTask);
   case Hostname:
-    re = unallowedCharsForHostname;
-    placeholder = emptyPlaceholder;
-    break;
+    return string.remove(unallowedInHostname).replace(multipleDots, singleDot);
   }
-  return string.trimmed().replace(re, placeholder);
+  return QString(); // should never happen
 }
 
 QRegExp ConfigUtils::readRawOrRegexpFilter(

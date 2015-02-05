@@ -523,6 +523,15 @@ void SchedulerConfig::changeTask(Task newItem, Task oldItem) {
     d->_tasks.insert(newItem.id(), newItem);
 }
 
+void SchedulerConfig::changeTaskGroup(TaskGroup newItem, TaskGroup oldItem) {
+  SchedulerConfigData *d = data();
+  if (!d)
+    return;
+  d->_tasksGroups.remove(oldItem.id());
+  if (!newItem.isNull())
+    d->_tasksGroups.insert(newItem.id(), newItem);
+}
+
 void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
   SchedulerConfigData *d = data();
   if (!d)

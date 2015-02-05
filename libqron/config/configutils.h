@@ -27,7 +27,7 @@ class LIBQRONSHARED_EXPORT ConfigUtils {
 public:
   enum IdType {
     TaskId, // used for tasks, steps and resources; letters, digits, - and _
-    GroupId, // used for groups, hosts and clusters; allows dots
+    GroupId, // used for groups, hosts and clusters; allows single dots
     SubTaskId, // used for workflow subtasks; allow :
     Hostname // used for hostnames; disallows _ but allows - : [ ] and .
   };

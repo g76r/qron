@@ -57,6 +57,9 @@ public:
   ParamSet unsetenv() const;
   QList<EventSubscription> allEventSubscriptions() const;
   PfNode toPfNode() const;
+  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
+                 int role = Qt::EditRole,
+                 const SharedUiItemDocumentManager *dm = 0);
 
 private:
   TaskGroupData *data();

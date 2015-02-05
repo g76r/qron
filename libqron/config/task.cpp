@@ -935,13 +935,6 @@ QVariant TaskData::uiData(int section, int role) const {
   return QVariant();
 }
 
-bool Task::setUiData(int section, const QVariant &value, QString *errorString,
-                     int role, const SharedUiItemDocumentManager *dm) {
-  if (isNull())
-    return false;
-  return data()->setUiData(section, value, errorString, role, dm);
-}
-
 void Task::setSuperTaskId(QString supertaskId) {
   if (!isNull()) {
     TaskData *d = data();
@@ -949,6 +942,13 @@ void Task::setSuperTaskId(QString supertaskId) {
     d->_shortId = supertaskId.mid(supertaskId.lastIndexOf('.')+1)+":"
         +d->_shortId.mid(d->_shortId.indexOf(':')+1);
   }
+}
+
+bool Task::setUiData(int section, const QVariant &value, QString *errorString,
+                     int role, const SharedUiItemDocumentManager *dm) {
+  if (isNull())
+    return false;
+  return data()->setUiData(section, value, errorString, role, dm);
 }
 
 bool TaskData::setUiData(int section, const QVariant &value,

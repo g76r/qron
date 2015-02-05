@@ -23,6 +23,7 @@
 #include "sched/taskinstance.h"
 #include "task_p.h"
 #include "ui/qronuiutils.h"
+#include "modelview/shareduiitemdocumentmanager.h"
 
 class TaskGroupData : public SharedUiItemData {
 public:
@@ -35,6 +36,9 @@ public:
   QString id() const { return _id; }
   //void setId(QString id) { _id = id; }
   QString idQualifier() const { return "taskgroup"; }
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 int role, const SharedUiItemDocumentManager *dm);
+  Qt::ItemFlags uiFlags(int section) const;
 };
 
 TaskGroup::TaskGroup() {
@@ -137,6 +141,7 @@ QList<EventSubscription> TaskGroup::allEventSubscriptions() const {
 QVariant TaskGroupData::uiData(int section, int role) const {
   switch(role) {
   case Qt::DisplayRole:
+  case Qt::EditRole:
     switch(section) {
     case 0:
     case 11:
@@ -144,7 +149,9 @@ QVariant TaskGroupData::uiData(int section, int role) const {
     case 1:
       return TaskGroup::parentGroupId(_id);
     case 2:
-      return _label.isNull() ? _id : _label;
+      if (role == Qt::EditRole)
+        return _label == _id ? QVariant() : _label;
+      return _label.isEmpty() ? _id : _label;
     case 7:
       return _params.toString(false, false);
     case 14:
@@ -196,4 +203,67 @@ PfNode TaskGroup::toPfNode() const {
   ConfigUtils::writeEventSubscriptions(&node, data()->_onfailure,
                                        QStringList("onfinish"));
   return node;
+}
+
+bool TaskGroup::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    int role, const SharedUiItemDocumentManager *dm) {
+  if (isNull())
+    return false;
+  return data()->setUiData(section, value, errorString, role, dm);
+}
+
+bool TaskGroupData::setUiData(
+    int section, const QVariant &value, QString *errorString, int role,
+    const SharedUiItemDocumentManager *dm) {
+  if (!dm) {
+    if (errorString)
+      *errorString = "cannot set ui data without document manager";
+    return false;
+  }
+  if (role != Qt::EditRole) {
+    if (errorString)
+      *errorString = "cannot set other role than EditRole";
+    return false;
+  }
+  QString s = value.toString().trimmed();
+  switch(section) {
+  case 1: // changing parent group id is changing the begining of id itself
+    if (_id.contains('.'))
+      s = s+_id.mid(_id.lastIndexOf('.'));
+    else
+      s = s+"."+_id;
+    // falling into next case
+  case 0:
+  case 11:
+    if (value.toString().isEmpty()) {
+      if (errorString)
+        *errorString = "id cannot be empty";
+      return false;
+    }
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    if (!dm->itemById("taskgroup", s).isNull()) {
+      if (errorString)
+        *errorString = "New id is already used by another taskgroup: "+s;
+      return false;
+    }
+    _id = s;
+    return true;
+  case 2:
+    _label = value.toString().trimmed();
+    if (_label == _id)
+      _label = QString();
+    return true;
+  }
+  if (errorString)
+    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
+      +"\" is not ui-editable";
+  return false;
+}
+
+Qt::ItemFlags TaskGroupData::uiFlags(int section) const {
+  Q_UNUSED(section)
+  // TODO more flags, maybe not same ones for every section
+  // FIXME mark only editable sections as editable
+  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
 }
