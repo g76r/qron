@@ -30,9 +30,9 @@ public:
     SharedUiItem::operator=(other); return *this; }
 
 private:
-  ConfigHistoryEntryData *che();
-  const ConfigHistoryEntryData *che() const {
-    return (const ConfigHistoryEntryData*)constData(); }
+  ConfigHistoryEntryData *data();
+  const ConfigHistoryEntryData *data() const {
+    return (const ConfigHistoryEntryData*)SharedUiItem::data(); }
 };
 
 #endif // CONFIGHISTORYENTRY_H

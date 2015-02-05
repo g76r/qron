@@ -50,17 +50,17 @@ Cluster::Cluster(const Cluster &other) : SharedUiItem(other) {
 }
 
 Cluster::Cluster(PfNode node) {
-  ClusterData *hgd = new ClusterData;
-  hgd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
+  ClusterData *d = new ClusterData;
+  d->_id = ConfigUtils::sanitizeId(node.contentAsString(),
                                      ConfigUtils::GroupId);
-  hgd->_label = node.attribute("label");
-  hgd->_balancing = balancingFromString(node.attribute("balancing", "first")
+  d->_label = node.attribute("label");
+  d->_balancing = balancingFromString(node.attribute("balancing", "first")
                                         .trimmed().toLower());
-  if (hgd->_balancing == UnknownBalancing) {
+  if (d->_balancing == UnknownBalancing) {
     Log::error() << "invalid cluster balancing method: " << node.toString();
-    delete hgd;
+    delete d;
   }
-  setData(hgd);
+  setData(d);
 }
 
 Cluster::~Cluster() {
@@ -68,20 +68,20 @@ Cluster::~Cluster() {
 
 void Cluster::appendHost(Host host) {
   if (!isNull())
-    cd()->_hosts.append(host);
+    data()->_hosts.append(host);
 }
 
 QList<Host> Cluster::hosts() const {
-  return !isNull() ? cd()->_hosts : QList<Host>();
+  return !isNull() ? data()->_hosts : QList<Host>();
 }
 
 Cluster::Balancing Cluster::balancing() const {
-  return !isNull() ? cd()->_balancing : UnknownBalancing;
+  return !isNull() ? data()->_balancing : UnknownBalancing;
 }
 
 void Cluster::setId(QString id) {
   if (!isNull())
-    cd()->_id = id;
+    data()->_id = id;
 }
 
 QVariant ClusterData::uiData(int section, int role) const {
@@ -185,7 +185,7 @@ bool Cluster::setUiData(int section, const QVariant &value,
   if (isNull())
     return false;
   detach<ClusterData>();
-  return ((ClusterData*)constData())
+  return ((ClusterData*)data())
       ->setUiData(section, value, errorString, role, dm);
 }
 
@@ -199,28 +199,28 @@ int ClusterData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
-ClusterData *Cluster::cd() {
+ClusterData *Cluster::data() {
   detach<ClusterData>();
-  return (ClusterData*)constData();
+  return (ClusterData*)SharedUiItem::data();
 }
 
 PfNode Cluster::toPfNode() const {
-  const ClusterData *cd = this->cd();
-  if (!cd)
+  const ClusterData *d = data();
+  if (!d)
     return PfNode();
-  PfNode node("cluster", cd->_id);
-  if (!cd->_label.isEmpty() && cd->_label != cd->_id)
-    node.appendChild(PfNode("label", cd->_label));
-  node.appendChild(PfNode("balancing", balancingAsString(cd->_balancing)));
+  PfNode node("cluster", d->_id);
+  if (!d->_label.isEmpty() && d->_label != d->_id)
+    node.appendChild(PfNode("label", d->_label));
+  node.appendChild(PfNode("balancing", balancingAsString(d->_balancing)));
   QStringList hosts;
-  foreach (const Host &host, cd->_hosts)
+  foreach (const Host &host, d->_hosts)
     hosts.append(host.id());
   node.appendChild(PfNode("hosts", hosts.join(' ')));
   return node;
 }
 
 void Cluster::setHosts(QList<Host> hosts) {
-  ClusterData *d = cd();
+  ClusterData *d = data();
   if (d)
     d->_hosts = hosts;
 }

@@ -95,9 +95,9 @@ public:
   TaskInstance workflowInstanceTask() const;
 
 private:
-  TaskInstanceData *tid();
-  const TaskInstanceData *tid() const {
-    return (const TaskInstanceData*)constData(); }
+  TaskInstanceData *data();
+  const TaskInstanceData *data() const {
+    return (const TaskInstanceData*)SharedUiItem::data(); }
 };
 
 /** ParamsProvider wrapper for pseudo params. */

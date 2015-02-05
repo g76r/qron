@@ -90,9 +90,9 @@ public:
   void applyLogConfig() const;
 
 private:
-  SchedulerConfigData *scd();
-  const SchedulerConfigData *scd() const {
-    return (const SchedulerConfigData*)constData(); }
+  SchedulerConfigData *data();
+  const SchedulerConfigData *data() const {
+    return (const SchedulerConfigData*)SharedUiItem::data(); }
 };
 
 inline uint qHash(SchedulerConfig config) { return qHash(config.hash()); }

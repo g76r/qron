@@ -46,33 +46,33 @@ TaskGroup::TaskGroup(const TaskGroup &other) : SharedUiItem(other) {
 TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                      ParamSet parentSetenv, ParamSet parentUnsetenv,
                      Scheduler *scheduler) {
-  TaskGroupData *tgd = new TaskGroupData;
-  tgd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
+  TaskGroupData *d = new TaskGroupData;
+  d->_id = ConfigUtils::sanitizeId(node.contentAsString(),
                                      ConfigUtils::GroupId);
-  tgd->_label = node.attribute("label");
-  tgd->_params.setParent(parentParamSet);
-  ConfigUtils::loadParamSet(node, &tgd->_params, "param");
-  tgd->_setenv.setParent(parentSetenv);
-  ConfigUtils::loadParamSet(node, &tgd->_setenv, "setenv");
-  ConfigUtils::loadFlagSet(node, &tgd->_unsetenv, "unsetenv");
-  tgd->_unsetenv.setParent(parentUnsetenv);
-  ConfigUtils::loadEventSubscription(node, "onstart", tgd->_id,
-                                     &tgd->_onstart, scheduler);
-  ConfigUtils::loadEventSubscription(node, "onsuccess", tgd->_id,
-                                     &tgd->_onsuccess, scheduler);
-  ConfigUtils::loadEventSubscription(node, "onfinish", tgd->_id,
-                                     &tgd->_onsuccess, scheduler);
-  ConfigUtils::loadEventSubscription(node, "onfailure", tgd->_id,
-                                     &tgd->_onfailure, scheduler);
-  ConfigUtils::loadEventSubscription(node, "onfinish", tgd->_id,
-                                     &tgd->_onfailure, scheduler);
-  setData(tgd);
+  d->_label = node.attribute("label");
+  d->_params.setParent(parentParamSet);
+  ConfigUtils::loadParamSet(node, &d->_params, "param");
+  d->_setenv.setParent(parentSetenv);
+  ConfigUtils::loadParamSet(node, &d->_setenv, "setenv");
+  ConfigUtils::loadFlagSet(node, &d->_unsetenv, "unsetenv");
+  d->_unsetenv.setParent(parentUnsetenv);
+  ConfigUtils::loadEventSubscription(node, "onstart", d->_id,
+                                     &d->_onstart, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onsuccess", d->_id,
+                                     &d->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", d->_id,
+                                     &d->_onsuccess, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfailure", d->_id,
+                                     &d->_onfailure, scheduler);
+  ConfigUtils::loadEventSubscription(node, "onfinish", d->_id,
+                                     &d->_onfailure, scheduler);
+  setData(d);
 }
 
 TaskGroup::TaskGroup(QString id) {
-  TaskGroupData *tgd = new TaskGroupData;
-  tgd->_id = ConfigUtils::sanitizeId(id, ConfigUtils::GroupId);
-  setData(tgd);
+  TaskGroupData *d = new TaskGroupData;
+  d->_id = ConfigUtils::sanitizeId(id, ConfigUtils::GroupId);
+  setData(d);
 }
 
 QString TaskGroup::parentGroupId(QString groupId) {
@@ -81,56 +81,56 @@ QString TaskGroup::parentGroupId(QString groupId) {
 }
 
 QString TaskGroup::label() const {
-  return !isNull() ? (tgd()->_label.isNull() ? tgd()->_id : tgd()->_label)
+  return !isNull() ? (data()->_label.isNull() ? data()->_id : data()->_label)
                    : QString();
 }
 
 ParamSet TaskGroup::params() const {
-  return !isNull() ? tgd()->_params : ParamSet();
+  return !isNull() ? data()->_params : ParamSet();
 }
 
 void TaskGroup::triggerStartEvents(TaskInstance instance) const {
   // LATER trigger events in parent group first
   if (!isNull())
-    foreach (EventSubscription sub, tgd()->_onstart)
+    foreach (EventSubscription sub, data()->_onstart)
       sub.triggerActions(instance);
 }
 
 void TaskGroup::triggerSuccessEvents(TaskInstance instance) const {
   if (!isNull())
-    foreach (EventSubscription sub, tgd()->_onsuccess)
+    foreach (EventSubscription sub, data()->_onsuccess)
       sub.triggerActions(instance);
 }
 
 void TaskGroup::triggerFailureEvents(TaskInstance instance) const {
   if (!isNull())
-    foreach (EventSubscription sub, tgd()->_onfailure)
+    foreach (EventSubscription sub, data()->_onfailure)
       sub.triggerActions(instance);
 }
 
 QList<EventSubscription> TaskGroup::onstartEventSubscriptions() const {
-  return !isNull() ? tgd()->_onstart : QList<EventSubscription>();
+  return !isNull() ? data()->_onstart : QList<EventSubscription>();
 }
 
 QList<EventSubscription> TaskGroup::onsuccessEventSubscriptions() const {
-  return !isNull() ? tgd()->_onsuccess : QList<EventSubscription>();
+  return !isNull() ? data()->_onsuccess : QList<EventSubscription>();
 }
 
 QList<EventSubscription> TaskGroup::onfailureEventSubscriptions() const {
-  return !isNull() ? tgd()->_onfailure : QList<EventSubscription>();
+  return !isNull() ? data()->_onfailure : QList<EventSubscription>();
 }
 
 ParamSet TaskGroup::setenv() const {
-  return !isNull() ? tgd()->_setenv : ParamSet();
+  return !isNull() ? data()->_setenv : ParamSet();
 }
 
 ParamSet TaskGroup::unsetenv() const {
-  return !isNull() ? tgd()->_unsetenv : ParamSet();
+  return !isNull() ? data()->_unsetenv : ParamSet();
 }
 
 QList<EventSubscription> TaskGroup::allEventSubscriptions() const {
   // LATER avoid creating the collection at every call
-  return !isNull() ? tgd()->_onstart + tgd()->_onsuccess + tgd()->_onfailure
+  return !isNull() ? data()->_onstart + data()->_onsuccess + data()->_onfailure
                    : QList<EventSubscription>();
 }
 
@@ -177,23 +177,23 @@ int TaskGroupData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
-TaskGroupData *TaskGroup::tgd() {
+TaskGroupData *TaskGroup::data() {
   detach<TaskGroupData>();
-  return (TaskGroupData*)constData();
+  return (TaskGroupData*)SharedUiItem::data();
 }
 
 PfNode TaskGroup::toPfNode() const {
-  if (!tgd())
+  if (!data())
     return PfNode();
-  PfNode node("taskgroup", tgd()->id());
-  if (!tgd()->_label.isNull())
-    node.setAttribute("label", tgd()->_label);
-  ConfigUtils::writeParamSet(&node, tgd()->_params, "param");
-  ConfigUtils::writeParamSet(&node, tgd()->_setenv, "setenv");
-  ConfigUtils::writeFlagSet(&node, tgd()->_unsetenv, "unsetenv");
-  ConfigUtils::writeEventSubscriptions(&node, tgd()->_onstart);
-  ConfigUtils::writeEventSubscriptions(&node, tgd()->_onsuccess);
-  ConfigUtils::writeEventSubscriptions(&node, tgd()->_onfailure,
+  PfNode node("taskgroup", data()->id());
+  if (!data()->_label.isNull())
+    node.setAttribute("label", data()->_label);
+  ConfigUtils::writeParamSet(&node, data()->_params, "param");
+  ConfigUtils::writeParamSet(&node, data()->_setenv, "setenv");
+  ConfigUtils::writeFlagSet(&node, data()->_unsetenv, "unsetenv");
+  ConfigUtils::writeEventSubscriptions(&node, data()->_onstart);
+  ConfigUtils::writeEventSubscriptions(&node, data()->_onsuccess);
+  ConfigUtils::writeEventSubscriptions(&node, data()->_onfailure,
                                        QStringList("onfinish"));
   return node;
 }

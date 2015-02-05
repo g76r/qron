@@ -50,14 +50,14 @@ Host::Host(const Host &other) : SharedUiItem(other) {
 }
 
 Host::Host(PfNode node) {
-  HostData *hd = new HostData;
-  hd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
+  HostData *d = new HostData;
+  d->_id = ConfigUtils::sanitizeId(node.contentAsString(),
                                     ConfigUtils::GroupId);
-  hd->_label = node.attribute("label");
-  hd->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname"),
+  d->_label = node.attribute("label");
+  d->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname"),
                                           ConfigUtils::Hostname);
-  ConfigUtils::loadResourcesSet(node, &hd->_resources, "resource");
-  setData(hd);
+  ConfigUtils::loadResourcesSet(node, &d->_resources, "resource");
+  setData(d);
 }
 
 Host::~Host() {
@@ -66,12 +66,12 @@ Host::~Host() {
 QString Host::hostname() const {
   if (isNull())
     return QString();
-  const HostData *d = hd();
+  const HostData *d = data();
   return d->_hostname.isEmpty() ? d->_id : d->_hostname;
 }
 
 QHash<QString,qint64> Host::resources() const {
-  return !isNull() ? hd()->_resources : QHash<QString,qint64>();
+  return !isNull() ? data()->_resources : QHash<QString,qint64>();
 }
 
 QVariant HostData::uiData(int section, int role) const {
@@ -104,7 +104,7 @@ bool Host::setUiData(int section, const QVariant &value, QString *errorString,
   if (isNull())
     return false;
   detach();
-  return ((HostData*)constData())
+  return ((HostData*)data())
       ->setUiData(section, value, errorString, role, dm);
 }
 
@@ -186,9 +186,9 @@ int HostData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
-HostData *Host::hd() {
+HostData *Host::data() {
   SharedUiItem::detach<HostData>();
-  return (HostData*)constData();
+  return (HostData*)SharedUiItem::data();
 }
 
 void Host::detach() {
@@ -196,17 +196,17 @@ void Host::detach() {
 }
 
 PfNode Host::toPf() const {
-  const HostData *hd = this->hd();
-  if (!hd)
+  const HostData *d = this->data();
+  if (!d)
     return PfNode();
-  PfNode node("host", hd->_id);
-  if (!hd->_label.isEmpty() && hd->_label != hd->_id)
-    node.appendChild(PfNode("label", hd->_label));
-  if (!hd->_hostname.isEmpty() && hd->_hostname != hd->_id)
-    node.appendChild(PfNode("hostname", hd->_hostname));
-  foreach (const QString &key, hd->_resources.keys())
+  PfNode node("host", d->_id);
+  if (!d->_label.isEmpty() && d->_label != d->_id)
+    node.appendChild(PfNode("label", d->_label));
+  if (!d->_hostname.isEmpty() && d->_hostname != d->_id)
+    node.appendChild(PfNode("hostname", d->_hostname));
+  foreach (const QString &key, d->_resources.keys())
     node.appendChild(
           PfNode("resource",
-                 key+" "+QString::number(hd->_resources.value(key))));
+                 key+" "+QString::number(d->_resources.value(key))));
   return node;
 }

@@ -81,7 +81,7 @@ int ConfigHistoryEntryData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
-ConfigHistoryEntryData *ConfigHistoryEntry::che() {
+ConfigHistoryEntryData *ConfigHistoryEntry::data() {
   detach<ConfigHistoryEntryData>();
-  return (ConfigHistoryEntryData*)constData();
+  return (ConfigHistoryEntryData*)SharedUiItem::data();
 }

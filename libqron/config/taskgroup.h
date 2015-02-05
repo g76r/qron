@@ -59,8 +59,9 @@ public:
   PfNode toPfNode() const;
 
 private:
-  TaskGroupData *tgd();
-  const TaskGroupData *tgd() const { return (const TaskGroupData*)constData(); }
+  TaskGroupData *data();
+  const TaskGroupData *data() const {
+    return (const TaskGroupData*)SharedUiItem::data(); }
 };
 
 #endif // TASKGROUP_H

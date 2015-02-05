@@ -42,11 +42,11 @@ public:
     : SharedUiItem(other) { }
   HostReference &operator=(const HostReference &other) {
     SharedUiItem::operator=(other); return *this; }
-  QString cluster() const { return isNull() ? QString() : hrd()->_cluster; }
+  QString cluster() const { return isNull() ? QString() : data()->_cluster; }
 
 private:
-  const HostReferenceData *hrd() const {
-    return (const HostReferenceData*)constData(); }
+  const HostReferenceData *data() const {
+    return (const HostReferenceData*)SharedUiItem::data(); }
 };
 
 

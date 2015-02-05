@@ -145,112 +145,112 @@ TaskInstance::TaskInstance(Task task, quint64 groupId,
 }
 
 Task TaskInstance::task() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_task : Task();
 }
 
 ParamSet TaskInstance::params() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_params : ParamSet();
 }
 
 void TaskInstance::overrideParam(QString key, QString value) {
-  TaskInstanceData *d = tid();
+  TaskInstanceData *d = data();
   if (d)
     d->_params.setValue(key, value);
 }
 
 quint64 TaskInstance::idAsLong() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_id : 0;
 }
 
 quint64 TaskInstance::groupId() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_groupId : 0;
 }
 
 QDateTime TaskInstance::submissionDatetime() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->submissionDatetime() : QDateTime();
 }
 
 QDateTime TaskInstance::startDatetime() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->submissionDatetime() : QDateTime();
 }
 
 void TaskInstance::setStartDatetime(QDateTime datetime) const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   if (d)
     d->setStartDatetime(datetime);
 }
 
 void TaskInstance::setEndDatetime(QDateTime datetime) const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   if (d)
     d->setEndDatetime(datetime);
 }
 
 QDateTime TaskInstance::endDatetime() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->endDatetime() : QDateTime();
 }
 
 qint64 TaskInstance::queuedMillis() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->queuedMillis() : 0;
 }
 
 qint64 TaskInstance::runningMillis() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->runningMillis() : 0;
 }
 
 qint64 TaskInstance::totalMillis() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->totalMillis() : 0;
 }
 
 qint64 TaskInstance::liveTotalMillis() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->liveTotalMillis() : 0;
 }
 
 TaskInstance::TaskInstanceStatus TaskInstance::status() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->status() : Queued;
 }
 
 bool TaskInstance::success() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_success : false;
 }
 
 void TaskInstance::setSuccess(bool success) const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   if (d)
     d->_success = success;
 }
 
 int TaskInstance::returnCode() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_returnCode : -1;
 }
 
 void TaskInstance::setReturnCode(int returnCode) const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   if (d)
     d->_returnCode = returnCode;
 }
 
 Host TaskInstance::target() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_target : Host();
 }
 
 void TaskInstance::setTarget(Host target) const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   if (d) {
     target.detach();
     d->_target = target;
@@ -310,18 +310,18 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
 }
 
 ParamSet TaskInstance::setenv() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_setenv : ParamSet();
 }
 
 void TaskInstance::setTask(Task task) {
-  TaskInstanceData *d = tid();
+  TaskInstanceData *d = data();
   if (d)
     d->_task = task;
 }
 
 bool TaskInstance::force() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_force : false;
 }
 
@@ -343,35 +343,35 @@ QString TaskInstance::statusAsString(
 }
 
 QString TaskInstance::command() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_command : QString();
 }
 
 void TaskInstance::overrideCommand(QString command) {
-  TaskInstanceData *d = tid();
+  TaskInstanceData *d = data();
   if (d)
     d->_command = command;
 }
 
 void TaskInstance::overrideSetenv(QString key, QString value) {
-  TaskInstanceData *d = tid();
+  TaskInstanceData *d = data();
   if (d)
     d->_setenv.setValue(key, value);
 }
 
 bool TaskInstance::abortable() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d && d->_abortable;
 }
 
 void TaskInstance::setAbortable(bool abortable) const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   if (d)
     d->_abortable = abortable;
 }
 
 TaskInstance TaskInstance::workflowInstanceTask() const {
-  const TaskInstanceData *d = tid();
+  const TaskInstanceData *d = data();
   return d ? d->_workflowInstanceTask : TaskInstance();
 }
 
@@ -419,7 +419,7 @@ QVariant TaskInstanceData::uiData(int section, int role) const {
   return QVariant();
 }
 
-TaskInstanceData *TaskInstance::tid() {
+TaskInstanceData *TaskInstance::data() {
   detach<TaskInstanceData>();
-  return (TaskInstanceData*)constData();
+  return (TaskInstanceData*)SharedUiItem::data();
 }

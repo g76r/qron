@@ -177,8 +177,8 @@ public:
                  const SharedUiItemDocumentManager *dm = 0);
 
 private:
-  TaskData *td();
-  const TaskData *td() const { return (const TaskData*)constData(); }
+  TaskData *data();
+  const TaskData *data() const { return (const TaskData*)SharedUiItem::data(); }
 };
 
 /** ParamsProvider wrapper for pseudo params. */

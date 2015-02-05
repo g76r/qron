@@ -52,8 +52,9 @@ public:
   void setHosts(QList<Host> hosts);
 
 private:
-  ClusterData *cd();
-  const ClusterData *cd() const { return (const ClusterData*)constData(); }
+  ClusterData *data();
+  const ClusterData *data() const {
+    return (const ClusterData*)SharedUiItem::data(); }
 };
 
 #endif // CLUSTER_H

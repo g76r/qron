@@ -399,123 +399,123 @@ SchedulerConfig::~SchedulerConfig() {
 }
 
 bool SchedulerConfig::isNull() const {
-  return !scd();
+  return !data();
 }
 
 ParamSet SchedulerConfig::globalParams() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_globalParams : ParamSet();
 }
 
 ParamSet SchedulerConfig::setenv() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_setenv : ParamSet();
 }
 
 ParamSet SchedulerConfig::unsetenv() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_unsetenv : ParamSet();
 }
 
 QHash<QString,TaskGroup> SchedulerConfig::tasksGroups() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_tasksGroups : QHash<QString,TaskGroup>();
 }
 
 QHash<QString,Task> SchedulerConfig::tasks() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_tasks : QHash<QString,Task>();
 }
 
 QHash<QString,Cluster> SchedulerConfig::clusters() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_clusters : QHash<QString,Cluster>();
 }
 
 QHash<QString,Host> SchedulerConfig::hosts() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_hosts : QHash<QString,Host>();
 }
 
 QHash<QString,Calendar> SchedulerConfig::namedCalendars() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_namedCalendars : QHash<QString,Calendar>();
 }
 
 QList<EventSubscription> SchedulerConfig::onstart() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onstart : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onsuccess() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onsuccess : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onfailure() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onfailure : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onlog() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onlog : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onnotice() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onnotice : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onschedulerstart() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onschedulerstart : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::onconfigload() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onconfigload : QList<EventSubscription>();
 }
 
 QList<EventSubscription> SchedulerConfig::allEventsSubscriptions() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_onstart + d->_onsuccess + d->_onfailure + d->_onlog
              + d->_onnotice + d->_onschedulerstart + d->_onconfigload
            : QList<EventSubscription>();
 }
 
 qint32 SchedulerConfig::maxtotaltaskinstances() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_maxtotaltaskinstances : 0;
 }
 
 qint32 SchedulerConfig::maxqueuedrequests() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_maxqueuedrequests : 0;
 }
 
 AlerterConfig SchedulerConfig::alerterConfig() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_alerterConfig : AlerterConfig();
 }
 
 AccessControlConfig SchedulerConfig::accessControlConfig() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_accessControlConfig : AccessControlConfig();
 }
 
 QList<LogFile> SchedulerConfig::logfiles() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_logfiles : QList<LogFile>();
 }
 
 QList<Logger*> SchedulerConfig::loggers() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   return d ? d->_loggers : QList<Logger*>();
 }
 
 void SchedulerConfig::changeTask(Task newItem, Task oldItem) {
-  SchedulerConfigData *d = scd();
+  SchedulerConfigData *d = data();
   if (!d)
     return;
   d->_tasks.remove(oldItem.id());
@@ -524,7 +524,7 @@ void SchedulerConfig::changeTask(Task newItem, Task oldItem) {
 }
 
 void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
-  SchedulerConfigData *d = scd();
+  SchedulerConfigData *d = data();
   if (!d)
     return;
   d->_clusters.remove(oldItem.id());
@@ -533,7 +533,7 @@ void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
 }
 
 void SchedulerConfig::changeHost(Host newItem, Host oldItem) {
-  SchedulerConfigData *d = scd();
+  SchedulerConfigData *d = data();
   if (!d)
     return;
   d->_hosts.remove(oldItem.id());
@@ -542,7 +542,7 @@ void SchedulerConfig::changeHost(Host newItem, Host oldItem) {
 }
 
 QString SchedulerConfig::hash() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   if (!d)
     return QString();
   QMutexLocker locker(&d->_mutex);
@@ -561,7 +561,7 @@ QString SchedulerConfig::hash() const {
 
 void SchedulerConfig::copyLiveAttributesFromOldTasks(
     QHash<QString,Task> oldTasks) {
-  SchedulerConfigData *d = scd();
+  SchedulerConfigData *d = data();
   if (!d)
     return;
   foreach (const Task &oldTask, oldTasks) {
@@ -588,7 +588,7 @@ qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {
 }
 
 PfNode SchedulerConfig::toPfNode() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   if (!d)
     return PfNode();
   PfNode node("qrontab");
@@ -646,9 +646,9 @@ PfNode SchedulerConfig::toPfNode() const {
   return node;
 }
 
-SchedulerConfigData *SchedulerConfig::scd() {
+SchedulerConfigData *SchedulerConfig::data() {
   detach<SchedulerConfigData>();
-  return (SchedulerConfigData*)constData();
+  return (SchedulerConfigData*)SharedUiItem::data();
 }
 
 QVariant SchedulerConfigData::uiHeaderData(int section, int role) const {
@@ -679,7 +679,7 @@ void SchedulerConfigData::applyLogConfig() const {
 }
 
 void SchedulerConfig::applyLogConfig() const {
-  const SchedulerConfigData *d = scd();
+  const SchedulerConfigData *d = data();
   if (d)
     d->applyLogConfig();
 }

@@ -42,8 +42,8 @@ public:
                  const SharedUiItemDocumentManager *dm = 0);
 
 private:
-  HostData *hd();
-  const HostData *hd() const { return (const HostData*)constData(); }
+  HostData *data();
+  const HostData *data() const { return (const HostData*)SharedUiItem::data(); }
 };
 
 #endif // HOST_H
