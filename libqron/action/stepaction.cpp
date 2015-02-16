@@ -17,24 +17,24 @@
 
 class StepActionData : public ActionData {
   // using QStringList would be nice but inconsistent with targetName()
-  QString _stepId;
+  QString _stepLocalId;
 
 public:
-  StepActionData(Scheduler *scheduler = 0, QString stepid = QString())
-    : ActionData(scheduler), _stepId(stepid) {
+  StepActionData(Scheduler *scheduler = 0, QString stepLocalId = QString())
+    : ActionData(scheduler), _stepLocalId(stepLocalId) {
   }
   QString toString() const {
-    return "->" + _stepId;
+    return "->" + _stepLocalId;
   }
   QString actionType() const {
     return "step";
   }
   QString targetName() const {
-    return _stepId;
+    return _stepLocalId;
   }
   void trigger(EventSubscription subscription,
-                                 ParamSet eventContext,
-                                 TaskInstance instance) const {
+               ParamSet eventContext,
+               TaskInstance instance) const {
     if (instance.isNull()) {
       // this should never happen since no one should ever configure a step
       // action in global events subscriptions
@@ -42,11 +42,11 @@ public:
                       "context, for subscription "
                    << subscription.subscriberName() << "|"
                    << subscription.eventName()
-                   << " with stepId " << _stepId;
+                   << " with stepLocalId " << _stepLocalId;
       return;
     }
     QString transitionId = subscription.subscriberName()+"|"
-        +subscription.eventName()+"|"+_stepId;
+        +subscription.eventName()+"|"+_stepLocalId;
     TaskInstance workflow = instance.workflowInstanceTask();
     if (workflow.isNull())
       workflow = instance;
@@ -65,8 +65,10 @@ public:
       _scheduler->activateWorkflowTransition(workflow, transitionId,
                                              eventContext);
   }
-  PfNode toPfNode() const{
-    return PfNode(actionType(), _stepId);
+  PfNode toPfNode() const {
+    // following line is failsafe if not found since -1+1=0
+    QString stepLocalId = _stepLocalId.mid(_stepLocalId.indexOf(':')+1);
+    return PfNode(actionType(), stepLocalId);
   }
 };
 
@@ -75,7 +77,10 @@ StepAction::StepAction(Scheduler *scheduler, PfNode node)
              scheduler,
              ConfigUtils::sanitizeId(node.contentAsString(),
                                      ConfigUtils::TaskId))) {
-  //Log::fatal() << "StepAction() " << stepId;
+}
+
+StepAction::StepAction(Scheduler *scheduler, QString stepLocalId)
+  : Action(new StepActionData(scheduler, stepLocalId)) {
 }
 
 StepAction::StepAction(const StepAction &rhs) : Action(rhs) {
@@ -85,7 +90,4 @@ StepAction &StepAction::operator=(const StepAction &rhs) {
   if (this != &rhs)
     d.operator=(rhs.d);
   return *this;
-}
-
-StepAction::~StepAction() {
 }

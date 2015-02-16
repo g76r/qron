@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,12 +20,16 @@
 class StepActionData;
 class Scheduler;
 
+/** Action activating a given workflow step (more or less the "next" step).
+ * Can only be used when called from a workflow subtask event subscription (e.g.
+ * "(onsuccess (step foo))" on a workflow subtask).
+ * Won't work if triggered in another context. */
 class LIBQRONSHARED_EXPORT StepAction : public Action {
 public:
   explicit StepAction(Scheduler *scheduler = 0, PfNode node = PfNode());
+  StepAction(Scheduler *scheduler, QString stepLocalId);
   StepAction(const StepAction &);
   StepAction &operator=(const StepAction &);
-  ~StepAction();
 };
 
 #endif // STEPACTION_H

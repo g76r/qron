@@ -65,15 +65,20 @@ void Executor::doExecute(TaskInstance instance) {
   switch (mean) {
   case Task::Local:
     localMean();
+    break;
   case Task::Ssh:
     sshMean();
+    break;
   case Task::Http:
     httpMean();
+    break;
   case Task::Workflow:
     workflowMean();
+    break;
   case Task::DoNothing:
     emit taskInstanceStarted(_instance);
     taskInstanceFinishing(true, 0);
+    break;
   default:
     Log::error(_instance.task().id(), _instance.idAsLong())
         << "cannot execute task with unknown mean '"
@@ -420,9 +425,14 @@ void Executor::workflowMean() {
   //Log::fatal(_instance.task().id(), _instance.id())
   //    << "starting workflow";
   emit taskInstanceStarted(_instance);
-  foreach (QString id, _instance.task().startSteps())
-    doActivateWorkflowTransition(_instance.task().id()+"|start|"+id,
-                                 ParamSet());
+  //  Log::debug(_instance.task().id(), _instance.id())
+  //      << "********* steps: " << _steps.keys();
+  //  Log::debug(_instance.task().id(), _instance.id())
+  //      << "********* starting " << _instance.task().id()+":$start "
+  //      << _steps[_instance.task().id()+":$start"].step().id();
+  _steps[_instance.task().id()+":$start"].predecessorReady("start", ParamSet());
+  //  Log::debug(_instance.task().id(), _instance.id())
+  //      << "********* done ";
 }
 
 void Executor::activateWorkflowTransition(QString transitionId,
@@ -444,25 +454,27 @@ void Executor::doActivateWorkflowTransition(QString transitionId,
         << "malfored transition id: " << transitionId;
     return;
   }
+  // if event was "onsuccess" or "onfailure", pretend it was "onfinish"
   if (parts[1] == "onsuccess" || parts[1] == "onfailure") {
     parts[1] = "onfinish";
     transitionId = parts.join('|');
   }
+  // if target is "$end", process workflow end
   if (parts[2] == "$end") {
-    workflowFinished(eventContext.valueAsBool("!success", true),
-                     eventContext.valueAsInt("!returncode", 0));
+    finishWorkflow(eventContext.valueAsBool("!success", true),
+                   eventContext.valueAsInt("!returncode", 0));
     return;
   }
-  if (!_steps.contains(parts[2])) {
+  // otherwise this is a regular step to step transition
+  QString targetStepId = _instance.task().id()+":"+parts[2];
+  if (!_steps.contains(targetStepId)) {
     Log::error(_instance.task().id(), _instance.idAsLong())
         << "unknown step id in transition id: " << transitionId;
     return;
   }
-  //Log::fatal(_instance.task().id(), _instance.id())
-  //    << "actual transtion id: " << transitionId;
   Log::debug(_instance.task().id(), _instance.idAsLong())
       << "activating workflow transition " << transitionId;
-  _steps[parts[2]].predecessorReady(transitionId, eventContext);
+  _steps[targetStepId].predecessorReady(transitionId, eventContext);
 }
 
 void Executor::noticePosted(QString notice, ParamSet params) {
@@ -487,14 +499,11 @@ void Executor::cronTriggered(QVariant tsId) {
         wts.trigger().overridingParams(), _instance);
 }
 
-void Executor::workflowFinished(bool success, int returnCode) {
+void Executor::finishWorkflow(bool success, int returnCode) {
+  // TODO abort running steps and other workflow cleanup work
   Log::info(_instance.task().id(), _instance.idAsLong())
       << "ending workflow in " << (success ? "success" : "failure")
       << " with return code " << returnCode;
-  _steps.clear(); // LATER give to TaskInstance for history ?
-  foreach (TimerWithArguments *timer, _workflowTimers)
-    delete timer;
-  _workflowTimers.clear();
   taskInstanceFinishing(success, returnCode);
 }
 
@@ -558,8 +567,8 @@ void Executor::doAbort() {
         << "http task abort requested";
     _reply->abort();
   } else if (_instance.task().mean() == Task::Workflow) {
-    // FIXME should abort running subtasks ?
-    workflowFinished(false, -1);
+    // FIXME should abort running subtasks ? or let finishWorkflow do it ?
+    finishWorkflow(false, -1);
   } else {
     Log::warning(_instance.task().id(), _instance.idAsLong())
         << "cannot abort task because its execution mean is not abortable";
@@ -573,4 +582,7 @@ void Executor::taskInstanceFinishing(bool success, int returnCode) {
   _instance.setEndDatetime();
   emit taskInstanceFinished(_instance, this);
   _instance = TaskInstance();
-}
+  _steps.clear(); // LATER give to TaskInstance for history ?
+  foreach (TimerWithArguments *timer, _workflowTimers)
+    delete timer;
+  _workflowTimers.clear();}

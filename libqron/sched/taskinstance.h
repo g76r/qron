@@ -90,8 +90,8 @@ public:
   void overrideSetenv(QString key, QString value);
   bool abortable() const;
   void setAbortable(bool abortable = true) const;
-  /** Return caller task instance (e.g. task that triggered a requesttask event
-   * action or workflow task instance if for a subclass instance), if any. */
+  /** Return workflow task instance when called on a subtask instance, otherwise
+   * a null instance. */
   TaskInstance workflowInstanceTask() const;
 
 private:

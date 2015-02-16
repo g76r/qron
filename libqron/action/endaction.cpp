@@ -84,6 +84,3 @@ EndAction &EndAction::operator=(const EndAction &rhs) {
     d.operator=(rhs.d);
   return *this;
 }
-
-EndAction::~EndAction() {
-}

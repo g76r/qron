@@ -15,7 +15,7 @@
 #define TASK_P_H
 
 static QString _uiHeaderNames[] = {
-  "Short Id", // 0
+  "Local Id", // 0
   "Parent Group",
   "Label",
   "Mean",

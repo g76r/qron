@@ -76,7 +76,7 @@ EventSubscription WorkflowTriggerSubscription::eventSubscription() const {
 
 class TaskData : public SharedUiItemData {
 public:
-  QString _id, _shortId, _label, _command, _target, _info;
+  QString _id, _localId, _label, _command, _target, _info;
   Task::Mean _mean;
   TaskGroup _group;
   ParamSet _params, _setenv, _unsetenv;
@@ -90,13 +90,14 @@ public:
   long long _maxExpectedDuration, _minExpectedDuration, _maxDurationBeforeAbort;
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormFields;
-  QStringList _otherTriggers; // guessed indirect triggers, resulting from events
+  QStringList _otherTriggers; // guessed indirect triggers resulting from events
   QString _supertaskId;
   QHash<QString,Step> _steps;
-  QSet<QString> _startSteps;
-  QString _workflowDiagram;
-  QHash<QString,WorkflowTriggerSubscription> _workflowTriggerSubscriptionsById;
-  QMultiHash<QString,WorkflowTriggerSubscription> _workflowTriggerSubscriptionsByNotice;
+  QString _graphvizWorkflowDiagram;
+  QHash<QString,WorkflowTriggerSubscription>
+  _workflowTriggerSubscriptionsById;
+  QMultiHash<QString,WorkflowTriggerSubscription>
+  _workflowTriggerSubscriptionsByNotice;
   QHash<QString,CronTrigger> _workflowCronTriggersById;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
@@ -130,19 +131,16 @@ public:
 };
 
 Task::Task() {
-  //Log::fatal() << "Task::Task " << (sizeof(Task)) << " " << (sizeof(TaskData));
 }
 
 Task::Task(const Task &other) : SharedUiItem(other) {
-  //Log::fatal() << "Task::Task copying " << other.id() << " " << other.td()
-  //             << " " << ((const Task*)this)->td();
 }
 
 Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
            QString supertaskId, QHash<QString,Calendar> namedCalendars) {
   TaskData *d = new TaskData;
   d->_scheduler = scheduler;
-  d->_shortId =
+  d->_localId =
       ConfigUtils::sanitizeId(node.contentAsString(),
                               supertaskId.isEmpty() ? ConfigUtils::TaskId
                                                     : ConfigUtils::SubTaskId);
@@ -162,7 +160,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   if (d->_target.isEmpty() && d->_mean == Local)
     d->_target = "localhost";
   d->_info = node.stringChildrenByName("info").join(" ");
-  d->_id = taskGroup.id()+"."+d->_shortId;
+  d->_id = taskGroup.id()+"."+d->_localId;
   d->_group = taskGroup;
   d->_maxInstances = node.attribute("maxinstances", "1").toInt();
   if (d->_maxInstances <= 0) {
@@ -197,7 +195,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
           if (trigger.isValid()) {
             d->_noticeTriggers.append(trigger);
             Log::debug() << "configured notice trigger '" << content
-                         << "' on task '" << d->_shortId << "'";
+                         << "' on task '" << d->_localId << "'";
           } else {
             Log::error() << "task with invalid notice trigger: "
                          << node.toString();
@@ -210,7 +208,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
             d->_cronTriggers.append(trigger);
             Log::debug() << "configured cron trigger "
                          << trigger.humanReadableExpression()
-                         << " on task " << d->_shortId;
+                         << " on task " << d->_localId;
           } else {
             Log::error() << "task with invalid cron trigger: "
                          << node.toString();
@@ -220,7 +218,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
           // LATER read misfire config
         } else {
           Log::warning() << "ignoring unknown trigger type '" << triggerType
-                         << "' on task " << d->_shortId;
+                         << "' on task " << d->_localId;
         }
       }
     }
@@ -233,7 +231,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   QString daos = node.attribute("discardaliasesonstart", "all");
   d->_discardAliasesOnStart = discardAliasesOnStartFromString(daos);
   if (d->_discardAliasesOnStart == Task::DiscardUnknown) {
-    Log::error() << "invalid discardaliasesonstart on task " << d->_shortId
+    Log::error() << "invalid discardaliasesonstart on task " << d->_localId
                  << ": '" << daos << "'";
     delete d;
     return;
@@ -266,14 +264,14 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   if (d->_mean == Workflow) {
     if (steps.isEmpty())
       Log::warning() << "workflow task with no step: " << node.toString();
-    if (!supertaskId.isNull()) {
+    if (!supertaskId.isEmpty()) {
       Log::error() << "workflow task not allowed as a workflow subtask: "
                    << node.toString();
       delete d;
       return;
     }
     foreach (PfNode child, steps) {
-      Step step(child, scheduler, taskGroup, d->_shortId, namedCalendars);
+      Step step(child, scheduler, taskGroup, d->_id, namedCalendars);
       if (step.isNull()) {
         Log::error() << "workflow task " << d->_id
                      << " has at less one invalid step definition";
@@ -288,8 +286,16 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         d->_steps.insert(step.id(), step);
       }
     }
-    d->_startSteps = node.stringListAttribute("start").toSet();
-    foreach (QString id, d->_startSteps)
+    QStringList startSteps = node.stringListAttribute("start").toSet().toList();
+    qSort(startSteps);
+    Step startStep(PfNode("start"), scheduler, taskGroup, d->_id,
+                   namedCalendars);
+    Step endStep(PfNode("end"), scheduler, taskGroup, d->_id,
+                 namedCalendars);
+    //Log::debug() << "steps: " << d->_steps.keys() << " startsteps: "
+    //             << startSteps;
+    foreach (QString localId, startSteps) {
+      QString id = d->_id+":"+localId;
       if (!d->_steps.contains(id)) {
         Log::error() << "workflow task " << d->_id
                      << " has invalid or lacking start steps: "
@@ -297,6 +303,10 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
         delete d;
         return;
       }
+      startStep.appendOnReadyStep(scheduler, localId);
+    }
+    d->_steps.insert(startStep.id(), startStep);
+    d->_steps.insert(endStep.id(), endStep);
     int tsCount = 0;
     QStringList ignoredChildren;
     ignoredChildren << "cron" << "notice";
@@ -332,33 +342,17 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
                          << node.toString();
       }
     }
+    // LATER replace the following predecessor/transition string with a structured data type
     // Note about predecessors' transitionId conventions:
-    // There are several kind of coexisting non-overlaping transitionId types
-    // 1) Start transition:
-    //     format: ${workflow_id}|start|${step_id}
-    //     e.g. app1.group1.workflow1|start|step1
-    // 2) Subtask to any step transition:
-    //     format: ${source_id}|${event_name}|${target_step_id}
-    //     e.g. app1.group1.workflow1-step1|onfinish|step2
-    //     As a special case, if event name is "onsuccess" or "onfailure" it
-    //     will be replaced with "onfinish" to implictely make more intuitive
-    //     cases where both onsucces and onfailure would have been connected
-    //     to the same and join (which is common since writing "onfinish" in
-    //     a configuration file is actually implemented as subcribing to both
-    //     onsuccess and onfailure events).
-    // 3) Join to any step transition:
-    //    format: ${source_fqsn}|${event_name}|${target_step_id}
-    //    e.g. app1.group1.workflow1:step2|onready|step3
-    //    Currently, the only event available in a join step is onready.
-    // 4) End transition:
-    //    format: ${source_id_or_id}|${event_name}|$end
-    //    e.g. app1.group1.workflow1-step3|onfinish|$end
-    //         app1.group1.workflow1:step4|onready|$end
-    foreach (QString id, d->_startSteps) {
-      d->_steps[id].insertPredecessor(d->_id+"|start|"+id);
-      Log::debug() << "adding predecessor " << d->_id+"|start|"+id
-                   << " to step " << d->_steps[id].fqsn();
-    }
+    // The general format about predecessor/transition string is the following:
+    //   format: ${source_step_id}|${event_name}|${target_step_local_id}
+    //   e.g.: group1.workflow1:step1|onfinish|step2
+    //         group1.workflow1:step4|onready|$end
+    // However there is a special handling for "onsuccess" and "onfailure"
+    // events, that are replaced with "onfinish" to ensure that there is only
+    // one predecessor to an "and" step that would be following a "onfinish"
+    // event subscription, or both the "onsuccess" and "onfailure" from the
+    // same subtask step.
     foreach (QString source, d->_steps.keys()) {
       QList<EventSubscription> subList
           = d->_steps[source].onreadyEventSubscriptions()
@@ -367,19 +361,17 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       foreach (EventSubscription es, subList) {
         foreach (Action a, es.actions()) {
           if (a.actionType() == "step") {
-            QString target = a.targetName();
+            QString targetLocalId = a.targetName();
             QString eventName = es.eventName();
             if (eventName == "onsuccess" || eventName == "onfailure")
               eventName = "onfinish";
             QString transitionId;
-            if (d->_steps[source].kind() == Step::SubTask) // task id
-              transitionId = d->_id+"-"+source+"|"+eventName+"|"+target;
-            else // fqsn
-              transitionId = d->_id+":"+source+"|"+eventName+"|"+target;
-            if (d->_steps.contains(target)) {
+            transitionId = source+"|"+eventName+"|"+targetLocalId;
+            QString targetId = d->_id+":"+targetLocalId;
+            if (d->_steps.contains(targetId)) {
               Log::debug() << "registring predecessor " << transitionId
-                           << " to step " << d->_steps[target].fqsn();
-              d->_steps[target].insertPredecessor(transitionId);
+                           << " to step " << d->_steps[targetId].id();
+              d->_steps[targetId].insertPredecessor(transitionId);
             } else {
               Log::error() << "cannot register predecessor " << transitionId
                            << " with unknown target to workflow " << d->_id;
@@ -399,7 +391,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
                      << node.toString();
   }
   setData(d);
-  d->_workflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
+  d->_graphvizWorkflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
 }
 
 void Task::copyLiveAttributesFromOldTask(Task oldTask) {
@@ -441,12 +433,12 @@ QList<NoticeTrigger> Task::noticeTriggers() const {
   return !isNull() ? data()->_noticeTriggers : QList<NoticeTrigger>();
 }
 
-QString Task::shortId() const {
-  return !isNull() ? data()->_shortId : QString();
+QString Task::localId() const {
+  return !isNull() ? data()->_localId : QString();
 }
 
 QString Task::label() const {
-  return !isNull() ? (data()->_label.isNull() ? data()->_shortId : data()->_label)
+  return !isNull() ? (data()->_label.isNull() ? data()->_localId : data()->_label)
                    : QString();
 }
 
@@ -727,8 +719,8 @@ QVariant TaskPseudoParamsProvider::paramValue(
     QString key, QVariant defaultValue) const {
   //Log::fatal() << "TaskPseudoParamsProvider::paramValue " << key;
   if (key.startsWith('!')) {
-    if (key == "!taskshortid") {
-      return _task.shortId();
+    if (key == "!tasklocalid") {
+      return _task.localId();
     } else if (key == "!taskid") {
       return _task.id();
     } else if (key == "!taskgroupid") {
@@ -794,12 +786,8 @@ QString Task::supertaskId() const {
   return !isNull() ? data()->_supertaskId : QString();
 }
 
-QSet<QString> Task::startSteps() const {
-  return !isNull() ? data()->_startSteps : QSet<QString>();
-}
-
-QString Task::workflowDiagram() const {
-  return !isNull() ? data()->_workflowDiagram : QString();
+QString Task::graphvizWorkflowDiagram() const {
+  return !isNull() ? data()->_graphvizWorkflowDiagram : QString();
 }
 
 QHash<QString,WorkflowTriggerSubscription>
@@ -836,17 +824,17 @@ QVariant TaskData::uiData(int section, int role) const {
     switch(section) {
     case 0:
       if (role == Qt::EditRole) {
-        // remove workflow id prefix from shortid
-        return _supertaskId.isEmpty() ? _shortId
-                                      : _shortId.mid(_shortId.indexOf(':')+1);
+        // remove workflow id prefix from localid
+        return _supertaskId.isEmpty() ? _localId
+                                      : _localId.mid(_localId.indexOf(':')+1);
       }
-      return _shortId;
+      return _localId;
     case 1:
       return _group.id();
     case 2:
       if (role == Qt::EditRole)
-        return _label == _shortId ? QVariant() : _label;
-      return _label.isEmpty() ? _shortId : _label;
+        return _label == _localId ? QVariant() : _label;
+      return _label.isEmpty() ? _localId : _label;
     case 3:
       return Task::meanAsString(_mean);
     case 4:
@@ -939,8 +927,8 @@ void Task::setSuperTaskId(QString supertaskId) {
   if (!isNull()) {
     TaskData *d = data();
     d->_supertaskId = supertaskId;
-    d->_shortId = supertaskId.mid(supertaskId.lastIndexOf('.')+1)+":"
-        +d->_shortId.mid(d->_shortId.indexOf(':')+1);
+    d->_localId = supertaskId.mid(supertaskId.lastIndexOf('.')+1)+":"
+        +d->_localId.mid(d->_localId.indexOf(':')+1);
   }
 }
 
@@ -981,7 +969,7 @@ bool TaskData::setUiData(int section, const QVariant &value,
         *errorString = "New id is already used by another task: "+s;
       return false;
     }
-    _shortId = s;
+    _localId = s;
     _id = s2;
     return true;
   case 1: {
@@ -1009,7 +997,7 @@ bool TaskData::setUiData(int section, const QVariant &value,
   }
   case 2:
     _label = value.toString().trimmed();
-    if (_label == _shortId)
+    if (_label == _localId)
       _label = QString();
     return true;
   case 3: {
@@ -1063,7 +1051,7 @@ PfNode Task::toPfNode() const {
   const TaskData *d = data();
   if (!d)
     return PfNode();
-  PfNode node("task", d->_shortId);
+  PfNode node("task", d->_localId);
 
   // description and execution attributes
   node.setAttribute("taskgroup", d->_group.id());
@@ -1104,8 +1092,19 @@ PfNode Task::toPfNode() const {
                  key+" "+QString::number(d->_resources.value(key))));
 
   // workflow attributes
-  if (d->_startSteps.size())
-    ConfigUtils::writeFlagSet(&node, d->_startSteps, "start");
+  Step startStep = d->_steps.value(d->id()+":$start");
+  QSet<QString> startSteps;
+  foreach (const EventSubscription &es, startStep.onreadyEventSubscriptions())
+    foreach (const Action &a, es.actions()) {
+      PfNode node = a.toPfNode();
+      if (node.name() == "step") { // should always be true
+        QString stepLocalId = node.contentAsString();
+        if (!stepLocalId.isEmpty()) // should always be true
+          startSteps.insert(stepLocalId);
+      }
+    }
+  if (startSteps.size())
+    ConfigUtils::writeFlagSet(&node, startSteps, "start");
   if (!d->_workflowTriggerSubscriptionsById.isEmpty()) {
     foreach (const WorkflowTriggerSubscription &wts,
              d->_workflowTriggerSubscriptionsById.values()) {
@@ -1117,7 +1116,8 @@ PfNode Task::toPfNode() const {
   QList<Step> steps = d->_steps.values();
   qSort(steps);
   foreach (const Step &step, steps)
-    node.appendChild(step.toPfNode());
+    if (!step.id().contains('$'))
+      node.appendChild(step.toPfNode());
 
   // params and setenv attributes
   ConfigUtils::writeParamSet(&node, d->_params, "param");

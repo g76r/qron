@@ -1,4 +1,4 @@
-/* Copyright 2013 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,12 +20,15 @@
 class EndActionData;
 class Scheduler;
 
+/** Action triggering workflow end.
+ * Can only be used when called from a workflow subtask event subscription (e.g.
+ * "(onsuccess(end(returncode 42)))" on a workflow subtask).
+ * Won't work if triggered in another context. */
 class LIBQRONSHARED_EXPORT EndAction : public Action {
 public:
   explicit EndAction(Scheduler *scheduler = 0, PfNode node = PfNode());
   EndAction(const EndAction &);
   EndAction &operator=(const EndAction &);
-  ~EndAction();
 };
 
 #endif // ENDACTION_H

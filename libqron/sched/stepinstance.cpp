@@ -74,7 +74,13 @@ void StepInstance::predecessorReady(QString predecessor,
     }
     break;
   case Step::OrJoin:
-  case Step::SubTask: // a subtask step is actually an implicit or join
+  case Step::SubTask: // a subtask step is actually implicitly a or join
+  case Step::Start: // the start step is triggered once to start first steps
+    //Log::debug(workflowTaskInstance().task().id(), workflowTaskInstance().id())
+    //<< "********* predecessorReady " << predecessor << " "
+    //<< d->_step.kindToString() << " " << eventContext << " " << isReady()
+    //<< " "
+    //<< EventSubscription::toStringList(step().onreadyEventSubscriptions());
     if (!d->_ready) {
       d->_ready = true;
       d->_step.triggerReadyEvents(d->_workflowTaskInstance, eventContext);
@@ -84,6 +90,9 @@ void StepInstance::predecessorReady(QString predecessor,
     Log::error(d->_workflowTaskInstance.task().id(),
                d->_workflowTaskInstance.idAsLong())
         << "StepInstance::predecessorReady called on unknown step kind";
+    break;
+  case Step::End: // this should never happen
+    ;
   }
 }
 

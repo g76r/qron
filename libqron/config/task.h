@@ -76,8 +76,8 @@ public:
     SharedUiItem::operator=(other); return *this; }
   ParamSet params() const;
   void setParentParams(ParamSet parentParams);
-  /** localId within group */
-  QString shortId() const;
+  /** local id within group */
+  QString localId() const;
   QString label() const;
   Task::Mean mean() const;
   static Task::Mean meanFromString(QString mean);
@@ -158,15 +158,16 @@ public:
   QStringList otherTriggers() const;
   void appendOtherTriggers(QString text);
   void clearOtherTriggers();
-  /** Workflow steps. Empty list for standalone tasks. */
+  /** Workflow steps. Empty for standalone tasks. */
   QHash<QString,Step> steps() const;
-  QSet<QString> startSteps() const;
   /** Parent task (e.g. workflow task) to which this task belongs, if any. */
   QString supertaskId() const;
   void setSuperTaskId(QString supertaskId);
-  QString workflowDiagram() const;
-  QHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsById() const;
-  QMultiHash<QString,WorkflowTriggerSubscription> workflowTriggerSubscriptionsByNotice() const;
+  QString graphvizWorkflowDiagram() const;
+  QHash<QString,WorkflowTriggerSubscription>
+  workflowTriggerSubscriptionsById() const;
+  QMultiHash<QString,WorkflowTriggerSubscription>
+  workflowTriggerSubscriptionsByNotice() const;
   QHash<QString,CronTrigger> workflowCronTriggersById() const;
   PfNode toPfNode() const;
   /** to be called when activating a new configuration, to keep live attributes

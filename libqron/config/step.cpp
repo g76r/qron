@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -19,136 +19,155 @@
 #include "log/log.h"
 #include "configutils.h"
 #include "action/requesttaskaction.h"
+#include "modelview/shareduiitemdocumentmanager.h"
+#include "action/stepaction.h"
 
-class StepData : public QSharedData {
+static QString _uiHeaderNames[] = {
+  "Local Id", // 0
+  "Id",
+  "Step Kind",
+  "Workflow",
+  "Subtask",
+  "Predecessors", // 5
+  "On Ready",
+  "On Subtask Start",
+  "On Subtask Success",
+  "On Subtask Failure"
+};
+
+class StepData : public SharedUiItemData {
 public:
-  QString _id, _fqsn, _workflowId;
+  QString _id, _localId, _workflowId;
   Step::Kind _kind;
   Task _subtask;
-  QPointer<Scheduler> _scheduler;
   QSet<QString> _predecessors;
   QList<EventSubscription> _onready;
   StepData() : _kind(Step::Unknown) { }
+  QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+  int uiSectionCount() const;
+  QString id() const { return _id; }
+  QString idQualifier() const { return "step"; }
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 int role, const SharedUiItemDocumentManager *dm);
+  Qt::ItemFlags uiFlags(int section) const;
 };
+
+Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
+           QString workflowTaskId, QHash<QString, Calendar> namedCalendars) {
+  StepData *d = new StepData;
+  d->_localId = ConfigUtils::sanitizeId(node.contentAsString(),
+                                        ConfigUtils::TaskId);
+  d->_id = workflowTaskId+":"+d->_localId;
+  d->_workflowId = workflowTaskId;
+  d->_kind = kindFromString(node.name());
+  switch (d->_kind) {
+  case AndJoin:
+    ConfigUtils::loadEventSubscription(node, "onready", d->_id,
+                                       &d->_onready, scheduler);
+    if (node.hasChild("onsuccess") || node.hasChild("onfailure")
+        || node.hasChild("onfinish") || node.hasChild("onstart"))
+      Log::warning() << "ignoring other events than onready in non-subtask "
+                        "step: " << node.toString();
+    setData(d);
+    return;
+  case OrJoin:
+    ConfigUtils::loadEventSubscription(node, "onready", d->_id,
+                                       &d->_onready, scheduler);
+    if (node.hasChild("onsuccess") || node.hasChild("onfailure")
+        || node.hasChild("onfinish") || node.hasChild("onstart"))
+      Log::warning() << "ignoring other events than onready in non-subtask "
+                        "step: " << node.toString();
+    setData(d);
+    return;
+  case SubTask:
+    // TODO move this check in Task ?
+    if (node.hasChild("taskgroup"))
+      Log::warning() << "ignoring subtask taskgroup: " << node.toString();
+    if (node.hasChild("trigger")) // TODO duplicate check in Task
+      Log::warning() << "ignoring subtask triggers: " << node.toString();
+    if (node.hasChild("onready"))
+      Log::warning() << "ignoring subtask onready event: " << node.toString();
+    // compute subtask localid: app1.group1.workflow1:step1 -> workflow1:step1
+    // following line is failsafe even without . since -1+1=0
+    node.setContent(d->_id.mid(d->_id.lastIndexOf('.')+1));
+    d->_subtask = Task(node, scheduler, taskGroup, d->_workflowId,
+                       namedCalendars);
+    if (d->_subtask.isNull()) {
+      Log::error() << "step with invalid subtask: " << node.toString();
+      delete d;
+      return;
+    }
+    d->_onready.append(
+          EventSubscription(d->_id, "onready",
+                            RequestTaskAction(scheduler, d->_subtask.id())));
+    setData(d);
+    return;
+  case Start:
+    // must force ids since $ is not an allowed char
+    d->_localId = "$start";
+    d->_id = workflowTaskId+":$start";
+    setData(d);
+    return;
+  case End:
+    // must force ids since $ is not an allowed char
+    d->_localId = "$end";
+    d->_id = workflowTaskId+":$end";
+    setData(d);
+    return;
+  default:
+    Log::error() << "unsupported step kind: " << node.toString();
+    delete d;
+    return;
+  }
+}
 
 Step::Step() {
 }
 
-Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-           QString workflowTaskId, QHash<QString, Calendar> namedCalendars) {
-  StepData *sd = new StepData;
-  sd->_scheduler = scheduler;
-  sd->_id = ConfigUtils::sanitizeId(node.contentAsString(),
-                                    ConfigUtils::TaskId);
-  sd->_fqsn = taskGroup.id()+"."+workflowTaskId+":"+sd->_id;
-  sd->_workflowId = taskGroup.id()+"."+workflowTaskId;
-  if (node.name() == "and") {
-    sd->_kind = Step::AndJoin;
-    ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
-                                       &sd->_onready, scheduler);
-    if (node.hasChild("onsuccess") || node.hasChild("onfailure")
-        || node.hasChild("onfinish") || node.hasChild("onstart"))
-      Log::warning() << "ignoring other events than onready in non-subtask "
-                        "step: " << node.toString();
-  } else if (node.name() == "or") {
-    sd->_kind = Step::OrJoin;
-    ConfigUtils::loadEventSubscription(node, "onready", sd->_fqsn,
-                                       &sd->_onready, scheduler);
-    if (node.hasChild("onsuccess") || node.hasChild("onfailure")
-        || node.hasChild("onfinish") || node.hasChild("onstart"))
-      Log::warning() << "ignoring other events than onready in non-subtask "
-                        "step: " << node.toString();
-  } else if (node.name() == "subtask") {
-    sd->_kind = Step::SubTask;
-    if (node.hasChild("taskgroup"))
-      Log::warning() << "ignoring subtask taskgroup: " << node.toString();
-    if (node.hasChild("trigger"))
-      Log::warning() << "ignoring subtask triggers: " << node.toString();
-    if (node.hasChild("onready"))
-      Log::warning() << "ignoring subtask onready event: " << node.toString();
-    node.setContent(workflowTaskId+":"+node.contentAsString());
-    sd->_subtask = Task(node, scheduler, taskGroup, sd->_workflowId,
-                        namedCalendars);
-    if (sd->_subtask.isNull()) {
-      Log::error() << "step with invalid subtask: " << node.toString();
-      delete sd;
-      return;
-    }
-    sd->_onready.append(
-          EventSubscription(sd->_fqsn, "onready",
-                            RequestTaskAction(scheduler, sd->_subtask.id())));
-  } else {
-      Log::error() << "unsupported step kind: " << node.toString();
-      delete sd;
-      return;
-  }
-  d = sd;
+Step::Step(const Step &other) : SharedUiItem(other) {
 }
 
-Step::~Step() {
-}
-
-Step::Step(const Step &rhs) : d(rhs.d) {
-}
-
-Step &Step::operator=(const Step &rhs) {
-  if (this != &rhs)
-    d.operator=(rhs.d);
-  return *this;
-}
-
-bool Step::operator==(const Step &other) const {
-  return (isNull() && other.isNull()) || fqsn() == other.fqsn();
-}
-
-bool Step::operator<(const Step &other) const {
-  return fqsn() < other.fqsn();
-}
-
-QString Step::id() const {
-  return d ? d->_id : QString();
-}
-
-QString Step::fqsn() const {
-  return d ? d->_fqsn : QString();
+QString Step::localId() const {
+  return !isNull() ? data()->_localId : QString();
 }
 
 Step::Kind Step::kind() const {
-  return d ? d->_kind : Step::Unknown;
+  return !isNull() ? data()->_kind : Step::Unknown;
 }
 
 Task Step::subtask() const {
-  return d ? d->_subtask : Task();
+  return !isNull() ? data()->_subtask : Task();
 }
 
 QString Step::workflowId() const {
-  return d ? d->_workflowId : QString();
+  return !isNull() ? data()->_workflowId : QString();
 }
 
 QSet<QString> Step::predecessors() const {
-  return d ? d->_predecessors : QSet<QString>();
+  return !isNull() ? data()->_predecessors : QSet<QString>();
 }
 
 void Step::insertPredecessor(QString predecessor) {
-  if (d)
-    d->_predecessors.insert(predecessor);
+  if (!isNull())
+    data()->_predecessors.insert(predecessor);
 }
 
 void Step::triggerReadyEvents(TaskInstance workflowTaskInstance,
                               ParamSet eventContext) const {
-  if (d) {
+  if (!isNull()) {
     //eventContext.setValue("!stepid", d->_id);
     //eventContext.setValue("!fqsn", d->_fqsn);
-    foreach (EventSubscription sub, d->_onready)
+    foreach (EventSubscription sub, data()->_onready)
       sub.triggerActions(eventContext, workflowTaskInstance);
   }
 }
 
 QList<EventSubscription> Step::onreadyEventSubscriptions() const {
-  return d ? d->_onready : QList<EventSubscription>();
+  return !isNull() ? data()->_onready : QList<EventSubscription>();
 }
 
-QString Step::kindToString(Kind kind) {
+QString Step::kindAsString(Kind kind) {
   switch (kind) {
   case SubTask:
     return "subtask";
@@ -156,16 +175,35 @@ QString Step::kindToString(Kind kind) {
     return "and";
   case OrJoin:
     return "or";
+  case Start:
+    return "start";
+  case End:
+    return "end";
   case Unknown:
     ;
   }
   return "unknown";
 }
 
+Step::Kind Step::kindFromString(QString kind) {
+  if (kind == "subtask")
+    return SubTask;
+  if (kind == "or")
+    return OrJoin;
+  if (kind == "and")
+    return AndJoin;
+  if (kind == "start")
+    return Start;
+  if (kind == "end")
+    return End;
+  return Unknown;
+}
+
 PfNode Step::toPfNode() const {
+  const StepData *d = data();
   if (!d)
     return PfNode();
-  PfNode node(kindToString(d->_kind), d->_id);
+  PfNode node(kindAsString(d->_kind), d->_localId);
   foreach (const PfNode &child, d->_subtask.toPfNode().children()) {
     const QString &name = child.name();
     if (name != "taskgroup" && name != "trigger")
@@ -174,4 +212,125 @@ PfNode Step::toPfNode() const {
   if (d->_kind != SubTask)
     ConfigUtils::writeEventSubscriptions(&node, d->_onready);
   return node;
+}
+
+StepData *Step::data() {
+  detach<StepData>();
+  return (StepData*)SharedUiItem::data();
+}
+
+QVariant StepData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+  case Qt::EditRole:
+    switch(section) {
+    case 0:
+      return _localId;
+    case 1:
+      return _id;
+    case 2:
+      return Step::kindAsString(_kind);
+    case 3:
+      return _workflowId;
+    case 4:
+      return _subtask.id();
+    case 5:
+      return QStringList(_predecessors.toList()).join(" ");
+    case 6:
+      return EventSubscription::toStringList(_onready).join('\n');
+    case 7:
+      return EventSubscription::toStringList(
+            _subtask.onstartEventSubscriptions()).join('\n');
+    case 8:
+      return EventSubscription::toStringList(
+            _subtask.onsuccessEventSubscriptions()).join('\n');
+    case 9:
+      return EventSubscription::toStringList(
+            _subtask.onfailureEventSubscriptions()).join('\n');
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
+}
+
+QVariant StepData::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
+}
+
+int StepData::uiSectionCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
+}
+
+bool Step::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    int role, const SharedUiItemDocumentManager *dm) {
+  if (isNull())
+    return false;
+  return data()->setUiData(section, value, errorString, role, dm);
+}
+
+bool StepData::setUiData(
+    int section, const QVariant &value, QString *errorString, int role,
+    const SharedUiItemDocumentManager *dm) {
+  if (!dm) {
+    if (errorString)
+      *errorString = "cannot set ui data without document manager";
+    return false;
+  }
+  if (role != Qt::EditRole) {
+    if (errorString)
+      *errorString = "cannot set other role than EditRole";
+    return false;
+  }
+  QString s = value.toString().trimmed(), s2;
+  switch(section) {
+  case 1:
+    if (!s.startsWith(_workflowId+":")) {
+      if (errorString)
+        *errorString = "id must start with workflow id and a colon";
+      return false;
+    }
+    s = s.mid(_workflowId.size()+1);
+    // falling into next case
+  case 0:
+    if (value.toString().isEmpty()) {
+      if (errorString)
+        *errorString = "id cannot be empty";
+      return false;
+    }
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    s2 = _workflowId+":"+s;
+    if (!dm->itemById("step", s2).isNull()) {
+      if (errorString)
+        *errorString = "New id is already used by another step: "+s;
+      return false;
+    }
+    _localId = s;
+    _id = s2;
+    return true;
+    // TODO more fields
+  }
+  if (errorString)
+    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
+      +"\" is not ui-editable";
+  return false;
+}
+
+Qt::ItemFlags StepData::uiFlags(int section) const {
+  Q_UNUSED(section)
+  // TODO more flags, maybe not same ones for every section
+  // FIXME mark only editable sections as editable
+  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+}
+
+void Step::appendOnReadyStep(Scheduler *scheduler, QString localStepId) {
+  StepData *d = data();
+  if (d)
+    d->_onready.append(
+          EventSubscription(d->_id, "onready",
+                            StepAction(scheduler, localStepId)));
 }

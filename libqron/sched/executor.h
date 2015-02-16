@@ -92,7 +92,7 @@ private:
                         QNetworkReply::NetworkError error);
   void taskInstanceFinishing(bool success, int returnCode);
   Q_INVOKABLE void doAbort();
-  void workflowFinished(bool success, int returnCode);
+  void finishWorkflow(bool success, int returnCode);
   Q_INVOKABLE void doActivateWorkflowTransition(
       QString transitionId, ParamSet eventContext);
 };

@@ -138,7 +138,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     if (!task.supertaskId().isNull())
       continue;
     // draw task node and group--task edge
-    gv.append("\""+task.id()+"\" [label=\""+task.shortId()+"\","
+    gv.append("\""+task.id()+"\" [label=\""+task.localId()+"\","
               +(task.mean() == Task::Workflow ? WORKFLOW_TASK_NODE : TASK_NODE)
               +",tooltip=\""+task.id()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
@@ -202,7 +202,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     if (!task.supertaskId().isNull())
       continue;
     // task nodes and group--task edges
-    gv.append("\""+task.id()+"\" [label=\""+task.shortId()+"\","
+    gv.append("\""+task.id()+"\" [label=\""+task.localId()+"\","
               +(task.mean() == Task::Workflow ? WORKFLOW_TASK_NODE : TASK_NODE)
               +",tooltip=\""+task.id()+"\"]\n");
     gv.append("\"").append(task.taskGroup().id()).append("\"--")
@@ -311,30 +311,34 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     return QString();
   QString gv("graph \""+task.id()+" workflow\"{\n"
              "  graph[" WORKFLOW_GRAPH " ]\n"
-             "  start[" START_NODE "]\n"
-             "  end[" END_NODE "]\n");
+             "  \"step_$start\"[" START_NODE "]\n"
+             "  \"step_$end\"[" END_NODE "]\n");
+  // build nodes from steps (apart from $start and $end)
   foreach (Step s, task.steps().values()) {
     StepInstance si = stepInstances.value(s.id());
     switch (s.kind()) {
     case Step::SubTask:
-      gv.append("  \"step_"+s.id()+"\"[label=\""+s.id()+"\"," TASK_NODE
-                +(si.isReady() ? ",color=orange" : "")
+      gv.append("  \"step_"+s.localId()+"\"[label=\""+s.localId()+"\","
+                TASK_NODE+(si.isReady() ? ",color=orange" : "")
                 +",tooltip=\""+s.subtask().id()+"\"]\n");
       // LATER red if failure, green if ok
       break;
     case Step::AndJoin:
-      gv.append("  \"step_"+s.id()+"\"[" ANDJOIN_NODE
+      gv.append("  \"step_"+s.localId()+"\"[" ANDJOIN_NODE
                 +(si.isReady() ? ",color=greenforest" : "")+"]\n");
       break;
     case Step::OrJoin:
-      gv.append("  \"step_"+s.id()+"\"[" ORJOIN_NODE
+      gv.append("  \"step_"+s.localId()+"\"[" ORJOIN_NODE
                 +(si.isReady() ? ",color=greenforest" : "")+"]\n");
       break;
+    case Step::Start:
+    case Step::End:
     case Step::Unknown:
       ;
     }
   }
   QSet<QString> gvedges; // use a QSet to remove duplicate onfinish edges
+  // build edges from workflow triggers
   foreach (QString tsId, task.workflowTriggerSubscriptionsById().keys()) {
     const WorkflowTriggerSubscription &ts
         = task.workflowTriggerSubscriptionsById().value(tsId);
@@ -345,37 +349,37 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     foreach (Action a, ts.eventSubscription().actions()) {
       if (a.actionType() == "step") {
         QString target = a.targetName();
-        if (task.steps().contains(target)) {
+        if (task.steps().contains(task.id()+":"+target)) {
           gvedges.insert("  \"trigger_"+tsId+"\" -- \"step_"+target
                          +"\"[label=\"\"," TRIGGER_STEP_EDGE  "]\n");
         } else {
           // do nothing, the warning is issued in another loop
         }
       } else if (a.actionType() == "end") {
-        gvedges.insert("  \"trigger_"+tsId+"\" -- end [label=\"\","
+        gvedges.insert("  \"trigger_"+tsId+"\" -- \"step_$end\" [label=\"\","
                 TRIGGER_STEP_EDGE "]\n");
       }
     }
   }
-  foreach (QString id, task.startSteps()) {
-    gvedges.insert("  start -- \"step_"+id+"\"\n");
-  }
-  foreach (QString source, task.steps().keys()) {
+  // build edges from step event subscriptions
+  foreach (Step source, task.steps()) {
     QList<EventSubscription> subList
-        = task.steps()[source].onreadyEventSubscriptions()
-        + task.steps()[source].subtask().allEventsSubscriptions()
-        + task.steps()[source].subtask().taskGroup().allEventSubscriptions();
+        = task.steps()[source.id()].onreadyEventSubscriptions()
+        + task.steps()[source.id()].subtask().allEventsSubscriptions()
+        + task.steps()[source.id()].subtask().taskGroup().allEventSubscriptions();
+    QString sourceLocalId = source.localId();
     foreach (EventSubscription es, subList) {
       foreach (Action a, es.actions()) {
         if (a.actionType() == "step") {
           QString target = a.targetName();
-          if (task.steps().contains(target)) {
-            gvedges.insert("  \"step_"+source+"\" -- \"step_"+target
-                           +"\"[label=\""+es.eventName()+"\"" STEP_EDGE "]\n");
+          if (task.steps().contains(task.id()+":"+target)) {
+            gvedges.insert("  \"step_"+sourceLocalId+"\" -- \"step_"+target
+                           +"\"[label=\""+es.eventName()+"\"," STEP_EDGE "]\n");
           }
         } else if (a.actionType() == "end") {
-          gvedges.insert("  \"step_"+source+"\" -- end [label=\""+es.eventName()
-                         +"\"" STEP_EDGE "]\n");
+          gvedges.insert("  \"step_"+sourceLocalId
+                         +"\" -- \"step_$end\" [label=\""+es.eventName()+"\","
+                         STEP_EDGE "]\n");
         }
       }
     }

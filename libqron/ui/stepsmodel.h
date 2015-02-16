@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,27 +14,20 @@
 #ifndef STEPSMODEL_H
 #define STEPSMODEL_H
 
-#include <QAbstractTableModel>
+#include "modelview/shareduiitemstablemodel.h"
 #include "config/task.h"
 #include "config/taskgroup.h"
 #include "config/step.h"
 #include "config/schedulerconfig.h"
 
 /** Model holding steps along with their attributes, one step per line, in
- * fqsn alphabetical order. */
-class LIBQRONSHARED_EXPORT StepsModel : public QAbstractTableModel {
+ * step id alphabetical order. */
+class LIBQRONSHARED_EXPORT StepsModel : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(StepsModel)
-  class StepWrapper;
-  QList<StepWrapper> _steps;
 
 public:
   explicit StepsModel(QObject *parent = 0);
-  ~StepsModel();
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
   void configChanged(SchedulerConfig config);

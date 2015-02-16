@@ -425,7 +425,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlStepsView->setModel(_stepsModel);
   _htmlStepsView->setEmptyPlaceholder("(no workflow step)");
   cols.clear();
-  cols << 0 << 2 << 3 << 4 << 6 << 7 << 8 << 9;
+  cols << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9;
   _htmlStepsView->setColumnIndexes(cols);
   _htmlStepsView->enableRowAnchor(0);
   _htmlStepsView->setItemDelegate(new HtmlStepItemDelegate(_htmlStepsView));
@@ -930,7 +930,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +QString::number(instancesCount)+" / "
                         +QString::number(task.maxInstances())+"</td></tr>");
         params.setValue("params",
-                        "<tr><th>Execution mean</th><td>"+task.mean()
+                        "<tr><th>Execution mean</th><td>"+task.meanAsString()
                         +"</td></tr>"
                         "<tr><th>Execution target (host or cluster)</th><td>"
                         +task.target()+"</td></tr>"
@@ -1265,7 +1265,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       Task task = _scheduler->task(req.param("taskid"));
       //if (!task.supertaskId().isEmpty())
       //  task = _scheduler->task(task.supertaskId());
-      QString gv = task.workflowDiagram();
+      QString gv = task.graphvizWorkflowDiagram();
       if (!gv.isEmpty()) {
         GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
         h->setImageFormat(GraphvizImageHttpHandler::Svg);
@@ -1288,7 +1288,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/rest/dot/tasks/workflow/v1") {
     if (_scheduler) {
       Task task = _scheduler->task(req.param("taskid"));
-      QString gv = task.workflowDiagram();
+      QString gv = task.graphvizWorkflowDiagram();
       if (!gv.isEmpty()) {
         res.setContentType("text/html;charset=UTF-8");
         res.output()->write(gv.toUtf8());
