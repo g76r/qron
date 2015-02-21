@@ -364,9 +364,9 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
   // build edges from step event subscriptions
   foreach (Step source, task.steps()) {
     QList<EventSubscription> subList
-        = task.steps()[source.id()].onreadyEventSubscriptions()
-        + task.steps()[source.id()].subtask().allEventsSubscriptions()
-        + task.steps()[source.id()].subtask().taskGroup().allEventSubscriptions();
+        = source.onreadyEventSubscriptions()
+        + source.subtask().allEventsSubscriptions()
+        + source.subtask().taskGroup().allEventSubscriptions();
     QString sourceLocalId = source.localId();
     foreach (EventSubscription es, subList) {
       foreach (Action a, es.actions()) {
