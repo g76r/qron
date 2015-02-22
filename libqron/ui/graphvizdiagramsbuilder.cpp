@@ -370,16 +370,25 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     QString sourceLocalId = source.localId();
     foreach (EventSubscription es, subList) {
       foreach (Action a, es.actions()) {
+        QString color = "black";
+        // LATER use graphviz edge color gradients, when broadly available
+        /*if (es.eventName() == "onsuccess")
+          color = "green;0.25:black;0.75";
+        else if (es.eventName() == "onfailure")
+          color = "red;0.25:black;0.75";
+        else if (es.eventName() == "onfinish")
+          color = "blue;0.25:black;0.75";*/
         if (a.actionType() == "step") {
           QString target = a.targetName();
           if (task.steps().contains(task.id()+":"+target)) {
             gvedges.insert("  \"step_"+sourceLocalId+"\" -- \"step_"+target
-                           +"\"[label=\""+es.eventName()+"\"," STEP_EDGE "]\n");
+                           +"\"[label=\""+es.eventName()+"\"," STEP_EDGE
+                           +",color=\""+color+"\"]\n");
           }
         } else if (a.actionType() == "end") {
           gvedges.insert("  \"step_"+sourceLocalId
                          +"\" -- \"step_$end\" [label=\""+es.eventName()+"\","
-                         STEP_EDGE "]\n");
+                         STEP_EDGE ",color=\""+color+"\"]\n");
         }
       }
     }
