@@ -312,7 +312,11 @@ bool StepData::setUiData(
     _localId = s;
     _id = s2;
     return true;
-    // TODO more fields
+  case 2:
+    // FIXME step kind, limited to AndJoin <-> OrJoin
+  case 3:
+    // FIXME workflowid
+    ;
   }
   if (errorString)
     *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
@@ -321,10 +325,15 @@ bool StepData::setUiData(
 }
 
 Qt::ItemFlags StepData::uiFlags(int section) const {
-  Q_UNUSED(section)
-  // TODO more flags, maybe not same ones for every section
-  // FIXME mark only editable sections as editable
-  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+  Qt::ItemFlags flags = SharedUiItemData::uiFlags(section);
+  switch (section) {
+  case 0:
+  case 1:
+  case 2:
+  case 3:
+    flags |= Qt::ItemIsEditable;
+  }
+  return flags;
 }
 
 void Step::appendOnReadyStep(Scheduler *scheduler, QString localStepId) {

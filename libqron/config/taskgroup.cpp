@@ -262,8 +262,13 @@ bool TaskGroupData::setUiData(
 }
 
 Qt::ItemFlags TaskGroupData::uiFlags(int section) const {
-  Q_UNUSED(section)
-  // TODO more flags, maybe not same ones for every section
-  // FIXME mark only editable sections as editable
-  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+  Qt::ItemFlags flags = SharedUiItemData::uiFlags(section);
+  switch (section) {
+  case 0:
+  case 1:
+  case 2:
+  case 11:
+    flags |= Qt::ItemIsEditable;
+  }
+  return flags;
 }

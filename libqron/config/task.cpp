@@ -1031,10 +1031,19 @@ bool TaskData::setUiData(int section, const QVariant &value,
 }
 
 Qt::ItemFlags TaskData::uiFlags(int section) const {
-  Q_UNUSED(section)
-  // TODO more flags, maybe not same ones for every section
-  // FIXME mark only editable sections as editable
-  return Qt::ItemIsEnabled | Qt::ItemIsSelectable | Qt::ItemIsEditable;
+  Qt::ItemFlags flags = SharedUiItemData::uiFlags(section);
+  switch (section) {
+  case 0:
+  case 1:
+  case 2:
+  case 3:
+  case 5:
+  case 8:
+    flags |= Qt::ItemIsEditable;
+  }
+  if (_mean != Task::Workflow)
+    flags |= Qt::ItemNeverHasChildren;
+  return flags;
 }
 
 void Task::setParentParams(ParamSet parentParams) {
