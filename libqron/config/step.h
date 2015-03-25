@@ -27,16 +27,19 @@ class Scheduler;
 class TaskInstance;
 class Calendar;
 class TaskGroup;
+class Trigger;
+class WorkflowTransition;
 
 /** Step of a workflow task. */
 class LIBQRONSHARED_EXPORT Step : public SharedUiItem {
 public:
-  enum Kind { Unknown, SubTask, AndJoin, OrJoin, Start, End };
+  enum Kind { Unknown, SubTask, AndJoin, OrJoin, Start, End, WorkflowTrigger };
 
   Step();
   Step(const Step &other);
   Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
        QString workflowTaskId, QHash<QString, Calendar> namedCalendars);
+  Step(QString localId, Trigger trigger, EventSubscription es, QString workflowTaskId);
   Step &operator=(const Step &other) {
     SharedUiItem::operator=(other); return *this; }
   /** Fully qualified step name.
@@ -51,8 +54,9 @@ public:
   Kind kindFromString(QString kind);
   Task subtask() const;
   QString workflowId() const;
-  QSet<QString> predecessors() const;
-  void insertPredecessor(QString predecessor);
+  Trigger trigger() const;
+  QSet<WorkflowTransition> predecessors() const;
+  void insertPredecessor(WorkflowTransition predecessor);
   void triggerReadyEvents(TaskInstance workflowTaskInstance,
                           ParamSet eventContext) const;
   QList<EventSubscription> onreadyEventSubscriptions() const;

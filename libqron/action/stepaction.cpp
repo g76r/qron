@@ -45,14 +45,19 @@ public:
                    << " with stepLocalId " << _stepLocalId;
       return;
     }
-    QString transitionId = subscription.subscriberName()+"|"
-        +subscription.eventName()+"|"+_stepLocalId;
     TaskInstance workflow = instance.workflowInstanceTask();
     if (workflow.isNull())
       workflow = instance;
+    // step local id is not evaluate (cannot hold e.g. %foo) because it would
+    // be a headache to have dynamicaly evaluated workflow transitions
+    QString sourceLocalId = subscription.subscriberName()
+        .mid(subscription.subscriberName().indexOf(':')+1);
+    WorkflowTransition transition(
+          workflow.task().id(), sourceLocalId, subscription.eventName(),
+          _stepLocalId);
     //Log::fatal(instance.task().id(), instance.id())
     //    << "StepAction::triggerWithinTaskInstance "
-    //    << transitionId << " " << instance.task().id()
+    //    << transition.id() << " " << instance.task().id()
     //    << " " << eventContext;
     if (workflow.task().mean() != Task::Workflow) {
       Log::warning(instance.task().id(), instance.idAsLong())
@@ -62,7 +67,7 @@ public:
       return;
     }
     if (_scheduler)
-      _scheduler->activateWorkflowTransition(workflow, transitionId,
+      _scheduler->activateWorkflowTransition(workflow, transition,
                                              eventContext);
   }
   PfNode toPfNode() const {

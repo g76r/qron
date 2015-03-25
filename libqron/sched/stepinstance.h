@@ -19,7 +19,6 @@
 #include "taskinstance.h"
 
 class StepInstanceData;
-class Executor;
 
 // TODO make this class a SharedUiItem
 class LIBQRONSHARED_EXPORT StepInstance {
@@ -27,8 +26,7 @@ class LIBQRONSHARED_EXPORT StepInstance {
 
 public:
   StepInstance();
-  StepInstance(Step step, TaskInstance workflowTaskInstance,
-               QPointer<Executor> executor);
+  StepInstance(Step step, TaskInstance workflowTaskInstance);
   StepInstance(const StepInstance &);
   StepInstance &operator=(const StepInstance &);
   ~StepInstance();
@@ -40,7 +38,8 @@ public:
     * A subtask step will start the subtask on first call.
     * A join step will trigger onready event when appropriate depending on the
     * join type. */
-  void predecessorReady(QString predecessor, ParamSet eventContext) const;
+  void predecessorReady(WorkflowTransition predecessor,
+                        ParamSet eventContext) const;
   TaskInstance workflowTaskInstance() const;
 };
 

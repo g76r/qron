@@ -39,11 +39,14 @@ public:
                    << subscription.eventName();
       return;
     }
-    QString transitionId = subscription.subscriberName()+"|"
-        +subscription.eventName()+"|$end";
     TaskInstance workflow = instance.workflowInstanceTask();
     if (workflow.isNull())
       workflow = instance;
+    QString sourceLocalId = subscription.subscriberName()
+        .mid(subscription.subscriberName().indexOf(':')+1);
+    WorkflowTransition transition(
+          workflow.task().id(), sourceLocalId, subscription.eventName(),
+          "$end");
     //Log::fatal(instance.task().id(), instance.id())
     //    << "EndAction::triggerWithinTaskInstance "
     //    << transitionId << " " << instance.task().id();
@@ -57,7 +60,7 @@ public:
     eventContext.setValue("!success", (_success ? "true" : "false"));
     eventContext.setValue("!returncode", QString::number(_returnCode));
     if (_scheduler)
-      _scheduler->activateWorkflowTransition(workflow, transitionId,
+      _scheduler->activateWorkflowTransition(workflow, transition,
                                              eventContext);
   }
   PfNode toPfNode() const{
@@ -67,6 +70,9 @@ public:
     if (_returnCode)
       node.appendChild(PfNode("returncode", QString::number(_returnCode)));
     return node;
+  }
+  QString targetName() const {
+    return "$end";
   }
 };
 

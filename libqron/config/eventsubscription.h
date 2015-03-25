@@ -54,6 +54,7 @@ public:
    * e.g. taskid for a task, groupid for a group, fqsn for a step, * for global
    * subscriptions. */
   QString subscriberName() const;
+  void setSubscriberName(QString name);
   /** Trigger actions if context complies with filter conditions.
    * Use this method if the event occured in the context of a task.
    * @param eventContext will get taskContext::params() as parent before being
@@ -68,6 +69,9 @@ public:
   static QStringList toStringList(QList<EventSubscription> list);
   QStringList toStringList() const;
   PfNode toPfNode() const;
+  /** Build target steps local ids for subscribed actions of relevant types
+   * (StepAction and EndAction). */
+  QStringList workflowTargetsLocalIds() const;
 };
 
 #endif // EVENTSUBSCRIPTION_H

@@ -131,6 +131,11 @@ QString EventSubscription::subscriberName() const {
   return d ? d->_subscriberName : QString();
 }
 
+void EventSubscription::setSubscriberName(QString name) {
+  if (d)
+    d->_subscriberName = name;
+}
+
 PfNode EventSubscription::toPfNode() const {
   if (!d)
     return PfNode();
@@ -138,4 +143,15 @@ PfNode EventSubscription::toPfNode() const {
   foreach(const Action &action, d->_actions)
     node.appendChild(action.toPfNode());
   return node;
+}
+
+QStringList EventSubscription::workflowTargetsLocalIds() const {
+  QSet<QString> localIds;
+  foreach (Action action, actions()) {
+    if (action.actionType() == "step"
+        || action.actionType() == "end") {
+      localIds << action.targetName();
+    }
+  }
+  return localIds.toList();
 }

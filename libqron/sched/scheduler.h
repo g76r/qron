@@ -86,8 +86,9 @@ public:
   /** This method is threadsafe */
   Task task(QString taskId);
   /** This method is threadsafe */
-  void activateWorkflowTransition(TaskInstance workflowTaskInstance,
-                                  QString transitionId, ParamSet eventContext);
+  void activateWorkflowTransition(
+      TaskInstance workflowTaskInstance, WorkflowTransition transition,
+      ParamSet eventContext);
 
 public slots:
   /** Explicitely request task execution now.
@@ -210,7 +211,7 @@ private:
   Q_INVOKABLE TaskInstance doCancelRequest(quint64 id);
   Q_INVOKABLE TaskInstance doAbortTask(quint64 id);
   Q_INVOKABLE void doActivateWorkflowTransition(
-      TaskInstance workflowTaskInstance, QString transitionId,
+      TaskInstance workflowTaskInstance, WorkflowTransition transition,
       ParamSet eventContext);
 };
 

@@ -48,6 +48,7 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   qRegisterMetaType<Task>("Task");
+  qRegisterMetaType<WorkflowTransition>("WorkflowTransition");
   qRegisterMetaType<TaskInstance>("TaskInstance");
   qRegisterMetaType<QList<TaskInstance> >("QList<TaskInstance>");
   qRegisterMetaType<Host>("Host");
@@ -793,23 +794,24 @@ Calendar Scheduler::calendarByName(QString name) const {
 }
 
 void Scheduler::activateWorkflowTransition(TaskInstance workflowTaskInstance,
-                                           QString transitionId,
+                                           WorkflowTransition transition,
                                            ParamSet eventContext) {
   QMetaObject::invokeMethod(this, "doActivateWorkflowTransition",
                             Qt::QueuedConnection,
                             Q_ARG(TaskInstance, workflowTaskInstance),
-                            Q_ARG(QString, transitionId),
+                            Q_ARG(WorkflowTransition, transition),
                             Q_ARG(ParamSet, eventContext));
 }
 
 void Scheduler::doActivateWorkflowTransition(TaskInstance workflowTaskInstance,
-                                             QString transitionId,
+                                             WorkflowTransition transition,
                                              ParamSet eventContext) {
   Executor *executor = _runningTasks.value(workflowTaskInstance);
   if (executor)
-    executor->activateWorkflowTransition(transitionId, eventContext);
+    executor->activateWorkflowTransition(transition, eventContext);
   else
     Log::error() << "cannot activate workflow transition on non-running "
                     "workflow " << workflowTaskInstance.task().id()
-                 << "/" << workflowTaskInstance.idAsLong() << ": " << transitionId;
+                 << "/" << workflowTaskInstance.idAsLong() << ": "
+                 << transition.id();
 }

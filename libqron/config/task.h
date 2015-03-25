@@ -33,26 +33,43 @@ class NoticeTrigger;
 class Scheduler;
 class EventSubscription;
 class Step;
-class WorkflowTriggerSubscriptionData;
 class StepInstance;
 class Calendar;
+class WorkflowTransitionData;
 
-/** Data holder for the association between a workflow trigger and actions to
-  * be performed. */
-class LIBQRONSHARED_EXPORT WorkflowTriggerSubscription {
-private:
-  QSharedDataPointer<WorkflowTriggerSubscriptionData> d;
-
+/** Data object for workflow transitions, i.e. links between a source step,
+ * an event name and a destination step, within a given workflow task.
+ *
+ * Source step can be the start step ($start) or a workflow trigger
+ * ($crontrigger_XXX or $noticetrigger_XXX).
+ *
+ * id() returns ${workflowid}:${sourcelocalid}:${eventname}:${targetlocalid}
+ * localId() returns ${sourcelocalid}:${eventname}:${targetlocalid}
+ */
+class LIBQRONSHARED_EXPORT WorkflowTransition : public SharedUiItem {
 public:
-  WorkflowTriggerSubscription();
-  WorkflowTriggerSubscription(Trigger trigger,
-      EventSubscription eventSubscription);
-  WorkflowTriggerSubscription(const WorkflowTriggerSubscription &other);
-  ~WorkflowTriggerSubscription();
-  WorkflowTriggerSubscription &operator=(
-      const WorkflowTriggerSubscription &other);
-  Trigger trigger() const;
-  EventSubscription eventSubscription() const;
+  WorkflowTransition();
+  WorkflowTransition(const WorkflowTransition &other);
+  WorkflowTransition(QString workflowId, QString sourceLocalId,
+                     QString eventName, QString targetLocalId);
+  ~WorkflowTransition();
+  WorkflowTransition &operator=(const WorkflowTransition &other) {
+    SharedUiItem::operator=(other); return *this; }
+  void detach();
+  QString workflowId() const;
+  void setWorkflowId(QString workflowId);
+  QString sourceLocalId() const;
+  QString eventName() const;
+  void setEventName(QString eventName);
+  QString targetLocalId() const;
+  /** Same as id() w/o leading workflowid,
+   * i.e. ${sourcelocalid}:${eventname}:${targetlocalid} */
+  QString localId() const;
+
+private:
+  WorkflowTransitionData *data();
+  const WorkflowTransitionData *data() const {
+    return (const WorkflowTransitionData*)SharedUiItem::data(); }
 };
 
 /** Core task definition object, being it a standalone task or workflow. */
@@ -160,15 +177,13 @@ public:
   void clearOtherTriggers();
   /** Workflow steps. Empty for standalone tasks. */
   QHash<QString,Step> steps() const;
+  QMultiHash<QString,WorkflowTransition>
+  workflowTransitionsBySourceLocalId() const;
+  QHash<QString,CronTrigger> workflowCronTriggersByLocalId() const;
   /** Parent task (e.g. workflow task) to which this task belongs, if any. */
   QString supertaskId() const;
   void setSuperTaskId(QString supertaskId);
   QString graphvizWorkflowDiagram() const;
-  QHash<QString,WorkflowTriggerSubscription>
-  workflowTriggerSubscriptionsById() const;
-  QMultiHash<QString,WorkflowTriggerSubscription>
-  workflowTriggerSubscriptionsByNotice() const;
-  QHash<QString,CronTrigger> workflowCronTriggersById() const;
   PfNode toPfNode() const;
   /** to be called when activating a new configuration, to keep live attributes
    * such as lastReturnCode() or enabled() */
@@ -176,6 +191,9 @@ public:
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
                  int role = Qt::EditRole,
                  const SharedUiItemDocumentManager *dm = 0);
+  void changeWorkflowTransition(WorkflowTransition newItem,
+                                WorkflowTransition oldItem);
+  void changeStep(Step newItem, Step oldItem);
 
 private:
   TaskData *data();

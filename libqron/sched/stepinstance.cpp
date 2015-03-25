@@ -13,7 +13,7 @@
  */
 #include "stepinstance.h"
 #include <QSharedData>
-#include "executor.h"
+#include "modelview/shareduiitemlist.h"
 
 class StepInstanceData : public QSharedData {
 public:
@@ -22,23 +22,19 @@ public:
   // note that QSet is not thread safe, however it is only modified by
   // predecessorReady() which is only called by one thread (the executor thread
   // handling the workflow)
-  mutable QSet<QString> _pendingPredecessors;
+  mutable QSet<WorkflowTransition> _pendingPredecessors;
   TaskInstance _workflowTaskInstance;
-  QPointer<Executor> _executor;
   StepInstanceData(Step step = Step(),
-                   TaskInstance workflowTaskInstance = TaskInstance(),
-                   QPointer<Executor> executor = QPointer<Executor>())
+                   TaskInstance workflowTaskInstance = TaskInstance())
     : _step(step), _ready(false), _pendingPredecessors(step.predecessors()),
-      _workflowTaskInstance(workflowTaskInstance), _executor(executor) { }
+      _workflowTaskInstance(workflowTaskInstance) { }
 };
 
 StepInstance::StepInstance() {
 }
 
-StepInstance::StepInstance(Step step, TaskInstance workflowTaskInstance,
-                           QPointer<Executor> executor)
-  : d(new StepInstanceData(step, workflowTaskInstance, executor)) {
-  // TODO remove useless reference to executor
+StepInstance::StepInstance(Step step, TaskInstance workflowTaskInstance)
+  : d(new StepInstanceData(step, workflowTaskInstance)) {
 }
 
 StepInstance::~StepInstance() {
@@ -61,13 +57,23 @@ bool StepInstance::isReady() const {
   return d ? d->_ready : false;
 }
 
-void StepInstance::predecessorReady(QString predecessor,
+void StepInstance::predecessorReady(WorkflowTransition predecessor,
                                     ParamSet eventContext) const {
   if (!d)
     return;
+  // if event was "onsuccess" or "onfailure", pretend it was "onfinish"
+  if (predecessor.eventName() == "onsuccess"
+      || predecessor.eventName() == "onfailure") {
+    predecessor.setEventName("onfinish");
+  }
   d->_pendingPredecessors.remove(predecessor);
   switch (d->_step.kind()) {
   case Step::AndJoin:
+    //Log::fatal(d->_workflowTaskInstance.task().id(),
+    //         d->_workflowTaskInstance.idAsLong())
+    //  << "AndJoin predecessorReady called for predecessor "
+    //  << predecessor.id() << " with pending predecessors "
+    //  << SharedUiItemList(d->_pendingPredecessors.toList()).join(' ', false);
     if (!d->_ready && d->_pendingPredecessors.isEmpty()) {
       d->_ready = true;
       d->_step.triggerReadyEvents(d->_workflowTaskInstance, eventContext);
@@ -76,20 +82,17 @@ void StepInstance::predecessorReady(QString predecessor,
   case Step::OrJoin:
   case Step::SubTask: // a subtask step is actually implicitly a or join
   case Step::Start: // the start step is triggered once to start first steps
-    //Log::debug(workflowTaskInstance().task().id(), workflowTaskInstance().id())
-    //<< "********* predecessorReady " << predecessor << " "
-    //<< d->_step.kindToString() << " " << eventContext << " " << isReady()
-    //<< " "
-    //<< EventSubscription::toStringList(step().onreadyEventSubscriptions());
     if (!d->_ready) {
       d->_ready = true;
       d->_step.triggerReadyEvents(d->_workflowTaskInstance, eventContext);
     }
     break;
+  case Step::WorkflowTrigger:
   case Step::Unknown:
     Log::error(d->_workflowTaskInstance.task().id(),
                d->_workflowTaskInstance.idAsLong())
-        << "StepInstance::predecessorReady called on unknown step kind";
+        << "StepInstance::predecessorReady called on a step of kind "
+        << d->_step.kindAsString();
     break;
   case Step::End: // this should never happen
     ;

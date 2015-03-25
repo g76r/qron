@@ -21,6 +21,8 @@
 #include "action/requesttaskaction.h"
 #include "modelview/shareduiitemdocumentmanager.h"
 #include "action/stepaction.h"
+#include "trigger/trigger.h"
+#include "modelview/shareduiitemlist.h"
 
 static QString _uiHeaderNames[] = {
   "Local Id", // 0
@@ -32,7 +34,8 @@ static QString _uiHeaderNames[] = {
   "On Ready",
   "On Subtask Start",
   "On Subtask Success",
-  "On Subtask Failure"
+  "On Subtask Failure",
+  "Trigger Expression" // 10
 };
 
 class StepData : public SharedUiItemData {
@@ -40,8 +43,9 @@ public:
   QString _id, _localId, _workflowId;
   Step::Kind _kind;
   Task _subtask;
-  QSet<QString> _predecessors;
+  QSet<WorkflowTransition> _predecessors;
   QList<EventSubscription> _onready;
+  Trigger _trigger;
   StepData() : _kind(Step::Unknown) { }
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
@@ -122,6 +126,18 @@ Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   }
 }
 
+Step::Step(QString localId, Trigger trigger, EventSubscription es,
+           QString workflowTaskId) {
+  StepData *d = new StepData;
+  d->_localId = localId;
+  d->_id = workflowTaskId+":"+d->_localId;
+  d->_workflowId = workflowTaskId;
+  d->_kind = WorkflowTrigger;
+  d->_onready.append(es);
+  d->_trigger = trigger;
+  setData(d);
+}
+
 Step::Step() {
 }
 
@@ -144,13 +160,23 @@ QString Step::workflowId() const {
   return !isNull() ? data()->_workflowId : QString();
 }
 
-QSet<QString> Step::predecessors() const {
-  return !isNull() ? data()->_predecessors : QSet<QString>();
+Trigger Step::trigger() const {
+  return !isNull() ? data()->_trigger : Trigger();
 }
 
-void Step::insertPredecessor(QString predecessor) {
-  if (!isNull())
+QSet<WorkflowTransition> Step::predecessors() const {
+  return !isNull() ? data()->_predecessors : QSet<WorkflowTransition>();
+}
+
+void Step::insertPredecessor(WorkflowTransition predecessor) {
+  if (!isNull()) {
+    // if event was "onsuccess" or "onfailure", pretend it was "onfinish"
+    if (predecessor.eventName() == "onsuccess"
+        || predecessor.eventName() == "onfailure") {
+      predecessor.setEventName("onfinish");
+    }
     data()->_predecessors.insert(predecessor);
+  }
 }
 
 void Step::triggerReadyEvents(TaskInstance workflowTaskInstance,
@@ -179,6 +205,8 @@ QString Step::kindAsString(Kind kind) {
     return "start";
   case End:
     return "end";
+  case WorkflowTrigger:
+    return "trigger";
   case Unknown:
     ;
   }
@@ -196,6 +224,8 @@ Step::Kind Step::kindFromString(QString kind) {
     return Start;
   if (kind == "end")
     return End;
+  if (kind == "trigger")
+    return WorkflowTrigger;
   return Unknown;
 }
 
@@ -235,7 +265,7 @@ QVariant StepData::uiData(int section, int role) const {
     case 4:
       return _subtask.id();
     case 5:
-      return QStringList(_predecessors.toList()).join(" ");
+      return SharedUiItemList(_predecessors.toList()).join(' ', false);
     case 6:
       return EventSubscription::toStringList(_onready).join('\n');
     case 7:
@@ -247,6 +277,8 @@ QVariant StepData::uiData(int section, int role) const {
     case 9:
       return EventSubscription::toStringList(
             _subtask.onfailureEventSubscriptions()).join('\n');
+    case 10:
+      return _trigger.humanReadableExpressionWithCalendar();
     }
     break;
   default:
@@ -316,6 +348,9 @@ bool StepData::setUiData(
     // FIXME step kind, limited to AndJoin <-> OrJoin
   case 3:
     // FIXME workflowid
+    // implies updating predecessors' workflowids
+  case 10:
+    // TODO trigger expression
     ;
   }
   if (errorString)
@@ -331,6 +366,7 @@ Qt::ItemFlags StepData::uiFlags(int section) const {
   case 1:
   case 2:
   case 3:
+  case 10:
     flags |= Qt::ItemIsEditable;
   }
   return flags;

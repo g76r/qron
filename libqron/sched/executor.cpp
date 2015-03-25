@@ -57,7 +57,8 @@ void Executor::doExecute(TaskInstance instance) {
   const Task::Mean mean = _instance.task().mean();
   Log::info(_instance.task().id(), _instance.idAsLong())
       << "starting task '" << _instance.task().id() << "' through mean '"
-      << mean << "' after " << _instance.queuedMillis() << " ms in queue";
+      << Task::meanAsString(mean) << "' after " << _instance.queuedMillis()
+      << " ms in queue";
   _stderrWasUsed = false;
   long long maxDurationBeforeAbort = _instance.task().maxDurationBeforeAbort();
   if (maxDurationBeforeAbort <= INT_MAX)
@@ -394,11 +395,13 @@ void Executor::replyHasFinished(QNetworkReply *reply,
 
 void Executor::workflowMean() {
   foreach (Step step, _instance.task().steps()) {
-    StepInstance si(step, _instance, QPointer<Executor>(this));
+    StepInstance si(step, _instance);
     _steps.insert(step.id(), si);
   }
-  foreach (QString id, _instance.task().workflowCronTriggersById().keys()) {
-    CronTrigger trigger = _instance.task().workflowCronTriggersById().value(id);
+  QHash<QString,CronTrigger> workflowCronTriggers =
+      _instance.task().workflowCronTriggersByLocalId();
+  foreach (QString triggerId, workflowCronTriggers.keys()) {
+    CronTrigger trigger = workflowCronTriggers.value(triggerId);
     trigger.detach();
     QDateTime now(QDateTime::currentDateTime());
     trigger.setLastTriggered(now);
@@ -407,7 +410,7 @@ void Executor::workflowMean() {
       qint64 ms = now.msecsTo(next);
       TimerWithArguments *timer = new TimerWithArguments(this);
       timer->setSingleShot(true);
-      timer->connectWithArgs(this, "cronTriggered", id);
+      timer->connectWithArgs(this, "workflowCronTriggered", triggerId);
       timer->setTimerType(Qt::PreciseTimer); // LATER is it really needed ?
       timer->start(ms < INT_MAX ? ms : INT_MAX);
       _workflowTimers.append(timer);
@@ -417,7 +420,7 @@ void Executor::workflowMean() {
     } else {
       // this is likely to occur for timers too far in the future (> ~20 days)
       Log::debug(_instance.task().id(), _instance.idAsLong())
-          << "invalid workflow timer " << id << " " << next.toString()
+          << "invalid workflow timer " << triggerId << " " << next.toString()
           << " " << trigger.humanReadableExpression();
     }
   }
@@ -430,73 +433,61 @@ void Executor::workflowMean() {
   //  Log::debug(_instance.task().id(), _instance.id())
   //      << "********* starting " << _instance.task().id()+":$start "
   //      << _steps[_instance.task().id()+":$start"].step().id();
-  _steps[_instance.task().id()+":$start"].predecessorReady("start", ParamSet());
+  _steps[_instance.task().id()+":$start"]
+      .predecessorReady(WorkflowTransition(), ParamSet());
   //  Log::debug(_instance.task().id(), _instance.id())
   //      << "********* done ";
 }
 
-void Executor::activateWorkflowTransition(QString transitionId,
+void Executor::activateWorkflowTransition(WorkflowTransition transition,
                                           ParamSet eventContext) {
   QMetaObject::invokeMethod(this, "doActivateWorkflowTransition",
                             Qt::QueuedConnection,
-                            Q_ARG(QString, transitionId),
+                            Q_ARG(WorkflowTransition, transition),
                             Q_ARG(ParamSet, eventContext));
 }
 
-void Executor::doActivateWorkflowTransition(QString transitionId,
+void Executor::doActivateWorkflowTransition(WorkflowTransition transition,
                                             ParamSet eventContext) {
-  // Please read the note about transitionId naming conventions in
-  // Task::Task() method (where the workflow predecessors transitionId are
-  // built on configuration loading)
-  QStringList parts = transitionId.split('|');
-  if (parts.size() != 3) {
-    Log::error(_instance.task().id(), _instance.idAsLong())
-        << "malfored transition id: " << transitionId;
-    return;
-  }
-  // if event was "onsuccess" or "onfailure", pretend it was "onfinish"
-  if (parts[1] == "onsuccess" || parts[1] == "onfailure") {
-    parts[1] = "onfinish";
-    transitionId = parts.join('|');
-  }
-  // if target is "$end", process workflow end
-  if (parts[2] == "$end") {
+  // if target is "$end", finish workflow
+  if (transition.targetLocalId() == "$end") {
     finishWorkflow(eventContext.valueAsBool("!success", true),
                    eventContext.valueAsInt("!returncode", 0));
     return;
   }
   // otherwise this is a regular step to step transition
-  QString targetStepId = _instance.task().id()+":"+parts[2];
+  QString targetStepId = _instance.task().id()+":"+transition.targetLocalId();
   if (!_steps.contains(targetStepId)) {
     Log::error(_instance.task().id(), _instance.idAsLong())
-        << "unknown step id in transition id: " << transitionId;
+        << "unknown step id in transition id: " << transition.id();
     return;
   }
   Log::debug(_instance.task().id(), _instance.idAsLong())
-      << "activating workflow transition " << transitionId;
-  _steps[targetStepId].predecessorReady(transitionId, eventContext);
+      << "activating workflow transition " << transition.id();
+  _steps[targetStepId].predecessorReady(transition, eventContext);
 }
 
 void Executor::noticePosted(QString notice, ParamSet params) {
   params.setValue("!notice", notice);
-  foreach (WorkflowTriggerSubscription wts,
-           _instance.task().workflowTriggerSubscriptionsByNotice()
-           .values(notice)) {
+  Step step = _instance.task().steps().value("$noticetrigger_"+notice);
+  foreach (EventSubscription es, step.onreadyEventSubscriptions()) {
     Log::debug(_instance.task().id(), _instance.idAsLong())
-        << "triggering ontrigger notice ^" << notice << " " << params;
-    wts.eventSubscription().triggerActions(params, _instance);
+        << "triggering " << step.localId() << " "
+        << step.trigger().humanReadableExpressionWithCalendar();
+    // MAYDO overriding params with (evaluated) trigger overriding params
+    es.triggerActions(params, _instance);
   }
 }
 
-void Executor::cronTriggered(QVariant tsId) {
-  WorkflowTriggerSubscription wts
-      = _instance.task().workflowTriggerSubscriptionsById()
-      .value(tsId.toString());
-  Log::debug(_instance.task().id(), _instance.idAsLong())
-      << "triggering ontrigger cron #" << tsId << " "
-      << wts.trigger().humanReadableExpression();
-  wts.eventSubscription().triggerActions(
-        wts.trigger().overridingParams(), _instance);
+void Executor::workflowCronTriggered(QVariant sourceLocalId) {
+  Step step = _instance.task().steps().value(sourceLocalId.toString());
+  foreach (EventSubscription es, step.onreadyEventSubscriptions()) {
+    Log::debug(_instance.task().id(), _instance.idAsLong())
+        << "triggering " << step.localId() << " "
+        << step.trigger().humanReadableExpressionWithCalendar();
+    // MAYDO use (evaluated) trigger overriding params
+    es.triggerActions(ParamSet(), _instance);
+  }
 }
 
 void Executor::finishWorkflow(bool success, int returnCode) {

@@ -57,7 +57,8 @@ public:
   /** Abort current task now. This method is thread-safe. */
   void abort();
   /** This method is thread-safe. */
-  void activateWorkflowTransition(QString transitionId, ParamSet eventContext);
+  void activateWorkflowTransition(WorkflowTransition transition,
+                                  ParamSet eventContext);
 
 signals:
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
@@ -77,7 +78,7 @@ private slots:
   void replyError(QNetworkReply::NetworkError error);
   void replyFinished();
   void noticePosted(QString notice, ParamSet params);
-  void cronTriggered(QVariant tsId);
+  void workflowCronTriggered(QVariant sourceLocalId);
 
 private:
   Q_INVOKABLE void doExecute(TaskInstance instance);
@@ -94,7 +95,7 @@ private:
   Q_INVOKABLE void doAbort();
   void finishWorkflow(bool success, int returnCode);
   Q_INVOKABLE void doActivateWorkflowTransition(
-      QString transitionId, ParamSet eventContext);
+      WorkflowTransition transition, ParamSet eventContext);
 };
 
 #endif // EXECUTOR_H

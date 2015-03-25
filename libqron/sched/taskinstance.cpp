@@ -291,14 +291,17 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
       return _taskInstance.statusAsString();
     } else if (key == "!submissiondate") {
       // LATER make this support !date formating
+      // LATER add !workflowsubmissiondate
       return _taskInstance.submissionDatetime()
           .toString("yyyy-MM-dd hh:mm:ss,zzz");
     } else if (key == "!startdate") {
       // LATER make this support !date formating
+      // LATER add !workflowstartdate
       return _taskInstance.startDatetime()
           .toString("yyyy-MM-dd hh:mm:ss,zzz");
     } else if (key == "!enddate") {
       // LATER make this support !date formating
+      // LATER add !workflowenddate
       return _taskInstance.endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
     } else if (key == "!target") {
       return _taskInstance.target().hostname();

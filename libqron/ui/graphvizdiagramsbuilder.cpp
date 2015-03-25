@@ -65,9 +65,14 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   foreach (const Task &task, tasks.values()) {
     foreach (const NoticeTrigger &trigger, task.noticeTriggers())
       notices.insert(trigger.expression());
-    foreach (const QString &notice,
-             task.workflowTriggerSubscriptionsByNotice().keys())
-      notices.insert(notice);
+    foreach (const Step &step, task.steps().values()) {
+      Trigger trigger = step.trigger();
+      if (trigger.isValid()) {
+        // LATER do not rely on human readable expression to get notice triggers
+        if (trigger.humanReadableExpression().startsWith('^'))
+          notices.insert(trigger.expression());
+      }
+    }
     foreach (const EventSubscription &sub,
              task.allEventsSubscriptions()
              + task.taskGroup().allEventSubscriptions())
@@ -219,7 +224,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
     }
     // workflow internal cron triggers
     foreach (const CronTrigger &cron,
-             task.workflowCronTriggersById().values()) {
+             task.workflowCronTriggersByLocalId().values()) {
       gv.append("\"$cron_").append(QString::number(++cronid))
           .append("\" [label=\"(").append(cron.expression())
           .append(")\"," CRON_TRIGGER_NODE "]\n");
@@ -234,11 +239,17 @@ QHash<QString,QString> GraphvizDiagramsBuilder
           .append(trigger.expression().remove('"'))
           .append("\" [" TASK_TRIGGER_EDGE "]\n");
     // workflow internal notice triggers
-    foreach (QString notice,
-             task.workflowTriggerSubscriptionsByNotice().keys()) {
-      gv.append("\"").append(task.id()).append("\"--\"$notice_")
-          .append(notice.remove('"'))
-          .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
+    foreach (const Step &step, task.steps()) {
+      Trigger trigger = step.trigger();
+      if (trigger.isValid()) {
+        // LATER do not rely on human readable expression to get notice triggers
+        if (trigger.humanReadableExpression().startsWith('^')) {
+          gv.append("\"").append(task.id()).append("\"--\"$notice_")
+              .append(trigger.expression().remove('"'))
+              .append("\" [" WORKFLOW_TASK_TRIGGER_EDGE "]\n");
+
+        }
+      }
     }
     // no trigger pseudo-trigger
     if (task.noticeTriggers().isEmpty() && task.cronTriggers().isEmpty()
@@ -331,6 +342,13 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
       gv.append("  \"step_"+s.localId()+"\"[" ORJOIN_NODE
                 +(si.isReady() ? ",color=greenforest" : "")+"]\n");
       break;
+    case Step::WorkflowTrigger: {
+      QString expr = s.trigger().humanReadableExpression().remove('"');
+      // LATER do not rely on human readable expr to determine trigger style
+      gv.append("  \"step_"+s.localId()+"\"[label=\""+expr+"\","
+                +(expr.startsWith('^')?NOTICE_NODE:CRON_TRIGGER_NODE)+"]\n");
+      break;
+    }
     case Step::Start:
     case Step::End:
     case Step::Unknown:
@@ -338,29 +356,6 @@ QString GraphvizDiagramsBuilder::workflowTaskDiagram(
     }
   }
   QSet<QString> gvedges; // use a QSet to remove duplicate onfinish edges
-  // build edges from workflow triggers
-  foreach (QString tsId, task.workflowTriggerSubscriptionsById().keys()) {
-    const WorkflowTriggerSubscription &ts
-        = task.workflowTriggerSubscriptionsById().value(tsId);
-    QString expr = ts.trigger().humanReadableExpression().remove('"');
-    // LATER do not rely on human readable expr to determine trigger style
-    gv.append("  \"trigger_"+tsId+"\"[label=\""+expr+"\","
-              +(expr.startsWith('^')?NOTICE_NODE:CRON_TRIGGER_NODE)+"]\n");
-    foreach (Action a, ts.eventSubscription().actions()) {
-      if (a.actionType() == "step") {
-        QString target = a.targetName();
-        if (task.steps().contains(task.id()+":"+target)) {
-          gvedges.insert("  \"trigger_"+tsId+"\" -- \"step_"+target
-                         +"\"[label=\"\"," TRIGGER_STEP_EDGE  "]\n");
-        } else {
-          // do nothing, the warning is issued in another loop
-        }
-      } else if (a.actionType() == "end") {
-        gvedges.insert("  \"trigger_"+tsId+"\" -- \"step_$end\" [label=\"\","
-                TRIGGER_STEP_EDGE "]\n");
-      }
-    }
-  }
   // build edges from step event subscriptions
   foreach (Step source, task.steps()) {
     QList<EventSubscription> subList
