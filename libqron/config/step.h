@@ -54,6 +54,7 @@ public:
   Kind kindFromString(QString kind);
   Task subtask() const;
   QString workflowId() const;
+  void setWorkflowId(QString workflowId);
   Trigger trigger() const;
   QSet<WorkflowTransition> predecessors() const;
   void insertPredecessor(WorkflowTransition predecessor);

@@ -43,9 +43,13 @@ public:
   WorkflowTransitionData(QString workflowId, QString sourceLocalId,
                      QString eventName, QString targetLocalId)
     : _workflowId(workflowId), _sourceLocalId(sourceLocalId),
-      _eventName(eventName), _targetLocalId(targetLocalId),
-      _id(_workflowId+":"+_sourceLocalId+":"+_eventName+":"+_targetLocalId),
-      _localId(_sourceLocalId+":"+_eventName+":"+_targetLocalId) { }
+      _eventName(eventName), _targetLocalId(targetLocalId) {
+    computeIds();
+  }
+  void computeIds() {
+    _id = _workflowId+":"+_sourceLocalId+":"+_eventName+":"+_targetLocalId;
+    _localId = _sourceLocalId+":"+_eventName+":"+_targetLocalId;
+  }
   QString id() const { return _id; }
   QString idQualifier() const { return "workflowtransition"; }
 };
@@ -81,8 +85,10 @@ QString WorkflowTransition::workflowId() const {
 }
 
 void WorkflowTransition::setWorkflowId(QString workflowId) {
-  if (!isNull())
+  if (!isNull()) {
     data()->_workflowId = workflowId;
+    data()->computeIds();
+  }
 }
 
 QString WorkflowTransition::sourceLocalId() const {
@@ -94,8 +100,10 @@ QString WorkflowTransition::eventName() const {
 }
 
 void WorkflowTransition::setEventName(QString eventName) {
-  if (!isNull())
+  if (!isNull()) {
     data()->_eventName = eventName;
+    data()->computeIds();
+  }
 }
 
 QString WorkflowTransition::targetLocalId() const {
@@ -171,7 +179,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   d->_scheduler = scheduler;
   d->_localId =
       ConfigUtils::sanitizeId(node.contentAsString(),
-                              supertaskId.isEmpty() ? ConfigUtils::TaskId
+                              supertaskId.isEmpty() ? ConfigUtils::LocalId
                                                     : ConfigUtils::SubTaskId);
   d->_label = node.attribute("label");
   d->_mean = meanFromString(node.attribute("mean", "local").trimmed()
@@ -184,7 +192,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   }
   d->_command = node.attribute("command");
   d->_target =
-      ConfigUtils::sanitizeId(node.attribute("target"), ConfigUtils::GroupId);
+      ConfigUtils::sanitizeId(node.attribute("target"), ConfigUtils::FullyQualifiedId);
   // silently use "localhost" as target for "local" mean
   if (d->_target.isEmpty() && d->_mean == Local)
     d->_target = "localhost";
@@ -980,7 +988,7 @@ bool TaskData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    s = ConfigUtils::sanitizeId(s, ConfigUtils::TaskId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::LocalId);
     if (!_supertaskId.isEmpty())
       s = _supertaskId.mid(_supertaskId.lastIndexOf('.')+1)+":"+s;
     s2 = _group.id()+"."+s;
@@ -995,19 +1003,18 @@ bool TaskData::setUiData(int section, const QVariant &value,
       // update transitions
       QMultiHash<QString,WorkflowTransition> newTransitions;
       foreach (const QString &sourceLocalId,
-               _transitionsBySourceLocalId.keys()) {
-        foreach (WorkflowTransition newTransition,
+               _transitionsBySourceLocalId.uniqueKeys()) {
+        foreach (WorkflowTransition newTransition, // FIXME must iterate in reverse order to preserve QMultiHash insertion order
                  _transitionsBySourceLocalId.values(sourceLocalId)) {
           newTransition.setWorkflowId(_id);
-          newTransitions.insertMulti(sourceLocalId, newTransition);
+          newTransitions.insert(sourceLocalId, newTransition);
         }
       }
       _transitionsBySourceLocalId = newTransitions;
       // update steps' workflowid (for its id and predecessors)
       QHash<QString,Step> newSteps;
       foreach (Step newStep, _steps) {
-        if (!newStep.setUiData(3, _id, errorString, role, dm))
-          return false; // MAYDO override errorString
+        newStep.setWorkflowId(_id);
         newSteps.insert(newStep.id(), newStep);
       }
       _steps = newSteps;
@@ -1056,7 +1063,7 @@ bool TaskData::setUiData(int section, const QVariant &value,
     return true;
   }
   case 5:
-    _target = ConfigUtils::sanitizeId(value.toString(), ConfigUtils::GroupId);
+    _target = ConfigUtils::sanitizeId(value.toString(), ConfigUtils::FullyQualifiedId);
     return true;
   case 8: {
     QHash<QString,qint64> resources;

@@ -81,7 +81,7 @@ StepAction::StepAction(Scheduler *scheduler, PfNode node)
   : Action(new StepActionData(
              scheduler,
              ConfigUtils::sanitizeId(node.contentAsString(),
-                                     ConfigUtils::TaskId))) {
+                                     ConfigUtils::LocalId))) {
 }
 
 StepAction::StepAction(Scheduler *scheduler, QString stepLocalId)

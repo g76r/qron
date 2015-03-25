@@ -61,7 +61,7 @@ void ConfigUtils::loadResourcesSet(
                      << "with incorrect quantity " << parentnode.toString();
     else
       resources->insert(
-            ConfigUtils::sanitizeId(p.first, ConfigUtils::TaskId), p.second);
+            ConfigUtils::sanitizeId(p.first, ConfigUtils::LocalId), p.second);
   }
 }
 
@@ -103,9 +103,9 @@ QString ConfigUtils::sanitizeId(QString string, IdType idType) {
   static QString singleDot(".");
   string = string.trimmed();
   switch (idType) {
-  case TaskId:
+  case LocalId:
     return string.remove(unallowedInTask);
-  case GroupId:
+  case FullyQualifiedId:
     return string.remove(unallowedInGroup).replace(multipleDots, singleDot)
         .remove(misplacedDot);
   case SubTaskId:

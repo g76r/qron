@@ -26,9 +26,9 @@ class Scheduler;
 class LIBQRONSHARED_EXPORT ConfigUtils {
 public:
   enum IdType {
-    TaskId, // used for tasks, steps and resources; letters, digits, - and _
-    GroupId, // used for groups, hosts and clusters; allows single dots
-    SubTaskId, // used for workflow subtasks; allow :
+    LocalId, // used for tasks, steps and resources; letters, digits, - and _
+    FullyQualifiedId, // used for groups, hosts and clusters; local id plus .
+    SubTaskId, // used for workflow subtasks; local id plus :
     Hostname // used for hostnames; disallows _ but allows - : [ ] and .
   };
   static void loadParamSet(PfNode parentnode, ParamSet *params,

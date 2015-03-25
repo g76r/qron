@@ -55,13 +55,14 @@ public:
   bool setUiData(int section, const QVariant &value, QString *errorString,
                  int role, const SharedUiItemDocumentManager *dm);
   Qt::ItemFlags uiFlags(int section) const;
+  void setWorkflowId(QString workflowId);
 };
 
 Step::Step(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
            QString workflowTaskId, QHash<QString, Calendar> namedCalendars) {
   StepData *d = new StepData;
   d->_localId = ConfigUtils::sanitizeId(node.contentAsString(),
-                                        ConfigUtils::TaskId);
+                                        ConfigUtils::LocalId);
   d->_id = workflowTaskId+":"+d->_localId;
   d->_workflowId = workflowTaskId;
   d->_kind = kindFromString(node.name());
@@ -334,7 +335,7 @@ bool StepData::setUiData(
         *errorString = "id cannot be empty";
       return false;
     }
-    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
     s2 = _workflowId+":"+s;
     if (!dm->itemById("step", s2).isNull()) {
       if (errorString)
@@ -345,10 +346,20 @@ bool StepData::setUiData(
     _id = s2;
     return true;
   case 2:
-    // FIXME step kind, limited to AndJoin <-> OrJoin
-  case 3:
-    // FIXME workflowid
-    // implies updating predecessors' workflowids
+    // TODO step kind, limited to AndJoin <-> OrJoin
+    break;
+  /*case 3: {
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
+    SharedUiItem item = dm->itemById("task", s);
+    if (item.isNull()
+        || reinterpret_cast<Task&>(item).mean() != Task::Workflow) {
+      if (errorString)
+        *errorString = "New workflowid does not match a workflow task: "+s;
+      return false;
+    }
+    setWorkflowId(s);
+    return true;
+  }*/
   case 10:
     // TODO trigger expression
     ;
@@ -357,6 +368,21 @@ bool StepData::setUiData(
     *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
       +"\" is not ui-editable";
   return false;
+}
+
+void Step::setWorkflowId(QString workflowId) {
+  if (!isNull())
+    data()->setWorkflowId(workflowId);
+}
+
+void StepData::setWorkflowId(QString workflowId) {
+  _workflowId = workflowId;
+  QSet<WorkflowTransition> newPredecessors;
+  foreach (WorkflowTransition t, _predecessors) {
+    t.setWorkflowId(workflowId);
+    newPredecessors.insert(t);
+  }
+  _predecessors = newPredecessors;
 }
 
 Qt::ItemFlags StepData::uiFlags(int section) const {

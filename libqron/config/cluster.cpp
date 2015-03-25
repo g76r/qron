@@ -52,7 +52,7 @@ Cluster::Cluster(const Cluster &other) : SharedUiItem(other) {
 Cluster::Cluster(PfNode node) {
   ClusterData *d = new ClusterData;
   d->_id = ConfigUtils::sanitizeId(node.contentAsString(),
-                                     ConfigUtils::GroupId);
+                                     ConfigUtils::FullyQualifiedId);
   d->_label = node.attribute("label");
   d->_balancing = balancingFromString(node.attribute("balancing", "first")
                                         .trimmed().toLower());
@@ -132,7 +132,7 @@ bool ClusterData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
     if (!dm->itemById("cluster", s).isNull()) {
       if (errorString)
         *errorString = "New id is already used by another cluster: "+s;

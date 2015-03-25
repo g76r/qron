@@ -52,7 +52,7 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                      Scheduler *scheduler) {
   TaskGroupData *d = new TaskGroupData;
   d->_id = ConfigUtils::sanitizeId(node.contentAsString(),
-                                     ConfigUtils::GroupId);
+                                     ConfigUtils::FullyQualifiedId);
   d->_label = node.attribute("label");
   d->_params.setParent(parentParamSet);
   ConfigUtils::loadParamSet(node, &d->_params, "param");
@@ -75,7 +75,7 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
 
 TaskGroup::TaskGroup(QString id) {
   TaskGroupData *d = new TaskGroupData;
-  d->_id = ConfigUtils::sanitizeId(id, ConfigUtils::GroupId);
+  d->_id = ConfigUtils::sanitizeId(id, ConfigUtils::FullyQualifiedId);
   setData(d);
 }
 
@@ -241,7 +241,7 @@ bool TaskGroupData::setUiData(
         *errorString = "id cannot be empty";
       return false;
     }
-    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
     if (!dm->itemById("taskgroup", s).isNull()) {
       if (errorString)
         *errorString = "New id is already used by another taskgroup: "+s;

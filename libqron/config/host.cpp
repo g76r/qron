@@ -52,7 +52,7 @@ Host::Host(const Host &other) : SharedUiItem(other) {
 Host::Host(PfNode node) {
   HostData *d = new HostData;
   d->_id = ConfigUtils::sanitizeId(node.contentAsString(),
-                                    ConfigUtils::GroupId);
+                                    ConfigUtils::FullyQualifiedId);
   d->_label = node.attribute("label");
   d->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname"),
                                           ConfigUtils::Hostname);
@@ -129,7 +129,7 @@ bool HostData::setUiData(int section, const QVariant &value,
         *errorString = "id cannot be empty";
       return false;
     }
-    s = ConfigUtils::sanitizeId(s, ConfigUtils::GroupId);
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
     if (!dm->itemById("cluster", s).isNull()) {
       if (errorString)
         *errorString = "New id is already used by a cluster: "+s;
