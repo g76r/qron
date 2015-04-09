@@ -31,12 +31,13 @@ public:
   void trigger(EventSubscription subscription, ParamSet eventContext,
                TaskInstance instance) const {
     Q_UNUSED(subscription)
-    TaskInstancePseudoParamsProvider ppp = instance.pseudoParams();
-    if (instance.isNull())
+    if (instance.isNull()) {
       Log::log(_severity) << eventContext.evaluate(_message);
-    else
+    } else {
+      TaskInstancePseudoParamsProvider ppp = instance.pseudoParams();
       Log::log(_severity, instance.task().id(), instance.idAsLong())
           << eventContext.evaluate(_message, &ppp);
+    }
   }
   PfNode toPfNode() const{
     PfNode node(actionType(), _message);
