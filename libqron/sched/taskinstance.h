@@ -110,7 +110,8 @@ public:
   inline TaskInstancePseudoParamsProvider(TaskInstance taskInstance)
     : _taskInstance(taskInstance),
       _taskPseudoParams(taskInstance.task().pseudoParams()) { }
-  QVariant paramValue(QString key, QVariant defaultValue) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
 inline TaskInstancePseudoParamsProvider TaskInstance::pseudoParams() const {

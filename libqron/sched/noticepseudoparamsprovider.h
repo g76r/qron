@@ -26,7 +26,8 @@ class NoticePseudoParamsProvider : public ParamsProvider {
 public:
   NoticePseudoParamsProvider(QString notice, ParamSet params = ParamSet())
     : _notice(notice), _params(params) { }
-  QVariant paramValue(QString key, QVariant defaultValue) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
 #endif // NOTICEPSEUDOPARAMSPROVIDER_H

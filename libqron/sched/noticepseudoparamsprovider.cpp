@@ -14,8 +14,8 @@
 #include "noticepseudoparamsprovider.h"
 
 QVariant NoticePseudoParamsProvider::paramValue(
-    QString key, QVariant defaultValue) const {
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
   if (key == "!notice")
     return _notice;
-  return _params.paramValue(key, defaultValue);
+  return _params.paramValue(key, defaultValue, alreadyEvaluated);
 }

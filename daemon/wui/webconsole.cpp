@@ -579,7 +579,8 @@ public:
       _message = "";
     res.clearCookie("message", "/");
   }
-  QVariant paramValue(const QString key, const QVariant defaultValue) const {
+  QVariant paramValue(const QString key, const QVariant defaultValue,
+                      QSet<QString> alreadyEvaluated) const {
     if (_values.contains(key))
       return _values.value(key);
     if (!_console->_scheduler) // should never happen
@@ -623,7 +624,8 @@ public:
     if (key == "configrepopath")
       return _console->_configRepoPath;
     QString v(_req.base64Cookie(key));
-    return v.isNull() ? _ctxt.paramValue(key, defaultValue) : v;
+    return v.isNull() ? _ctxt.paramValue(key, defaultValue, alreadyEvaluated)
+                      : v;
   }
   void setValue(QString key, QString value) {
     _values.insert(key, value);

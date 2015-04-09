@@ -749,7 +749,8 @@ QString Task::requestFormFieldsAsHtmlDescription() const {
 }
 
 QVariant TaskPseudoParamsProvider::paramValue(
-    QString key, QVariant defaultValue) const {
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
+  Q_UNUSED(alreadyEvaluated)
   //Log::fatal() << "TaskPseudoParamsProvider::paramValue " << key;
   if (key.startsWith('!')) {
     if (key == "!tasklocalid") {

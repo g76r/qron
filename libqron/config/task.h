@@ -206,7 +206,8 @@ class LIBQRONSHARED_EXPORT TaskPseudoParamsProvider : public ParamsProvider {
 
 public:
   inline TaskPseudoParamsProvider(Task task) : _task(task) { }
-  QVariant paramValue(QString key, QVariant defaultValue) const;
+  QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
+                      QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
 
 inline TaskPseudoParamsProvider Task::pseudoParams() const {

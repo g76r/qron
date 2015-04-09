@@ -258,7 +258,7 @@ void TaskInstance::setTarget(Host target) const {
 }
 
 QVariant TaskInstancePseudoParamsProvider::paramValue(
-    QString key, QVariant defaultValue) const {
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
   if (key.startsWith('!')) {
     // LATER optimize
     if (key == "!taskinstanceid") {
@@ -306,7 +306,7 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
     } else if (key == "!target") {
       return _taskInstance.target().hostname();
     } else {
-      return _taskPseudoParams.paramValue(key, defaultValue);
+      return _taskPseudoParams.paramValue(key, defaultValue, alreadyEvaluated);
     }
   }
   return defaultValue;
