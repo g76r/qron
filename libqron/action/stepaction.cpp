@@ -46,8 +46,6 @@ public:
       return;
     }
     TaskInstance workflow = instance.workflowInstanceTask();
-    if (workflow.isNull())
-      workflow = instance;
     // step local id is not evaluate (cannot hold e.g. %foo) because it would
     // be a headache to have dynamicaly evaluated workflow transitions
     QString sourceLocalId = subscription.subscriberName()

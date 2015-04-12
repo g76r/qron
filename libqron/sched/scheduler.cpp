@@ -288,7 +288,7 @@ TaskInstance Scheduler::enqueueRequest(
             << "canceling task because another instance of the same task "
                "is queued"
             << (!task.enabled() ? " and the task is disabled" : "") << ": "
-            << taskId << "/" << request.idAsLong();
+            << taskId << "/" << request.id();
         r2.setReturnCode(-1);
         r2.setSuccess(false);
         r2.setEndDatetime();
@@ -306,7 +306,7 @@ TaskInstance Scheduler::enqueueRequest(
   }
   _alerter->cancelAlert("scheduler.maxqueuedrequests.reached");
   Log::debug(taskId, request.idAsLong())
-      << "queuing task " << taskId << "/" << request.idAsLong() << " "
+      << "queuing task " << taskId << "/" << request.id() << " "
       << paramsOverriding << " with request group id " << request.groupId();
   // note: a request must always be queued even if the task can be started
   // immediately, to avoid the new tasks being started before queued ones
@@ -522,7 +522,7 @@ void Scheduler::startQueuedTasks() {
           if (taskId == r2.task().id() && r.groupId() != r2.groupId()) {
             Log::info(taskId, r2.idAsLong())
                 << "canceling task because another instance of the same task "
-                   "is starting: " << taskId << "/" << r.idAsLong();
+                   "is starting: " << taskId << "/" << r.id();
             r2.setReturnCode(-1);
             r2.setSuccess(false);
             r2.setEndDatetime();
@@ -549,7 +549,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     QString s;
     QDateTime now = QDateTime::currentDateTime();
     foreach (const TaskInstance &ti, _runningTasks.keys())
-      s.append(QString::number(ti.idAsLong())).append(' ')
+      s.append(ti.id()).append(' ')
           .append(ti.task().id()).append(" since ")
           .append(QString::number(ti.startDatetime().msecsTo(now)))
           .append(" ms; ");
@@ -812,6 +812,6 @@ void Scheduler::doActivateWorkflowTransition(TaskInstance workflowTaskInstance,
   else
     Log::error() << "cannot activate workflow transition on non-running "
                     "workflow " << workflowTaskInstance.task().id()
-                 << "/" << workflowTaskInstance.idAsLong() << ": "
+                 << "/" << workflowTaskInstance.id() << ": "
                  << transition.id();
 }

@@ -15,6 +15,7 @@
 #include <QSharedData>
 #include <QDateTime>
 #include <QAtomicInt>
+#include "util/timeformats.h"
 
 static QString _uiHeaderNames[] = {
   "Instance Id", // 0
@@ -34,6 +35,7 @@ static QAtomicInt _sequence;
 class TaskInstanceData : public SharedUiItemData {
 public:
   quint64 _id, _groupId;
+  QString _idAsString;
   Task _task;
   ParamSet _params;
   QDateTime _submission;
@@ -62,6 +64,7 @@ public:
   TaskInstanceData(Task task, ParamSet params, bool force,
                    TaskInstance workflowInstanceTask, quint64 groupId = 0)
     : _id(newId()), _groupId(groupId ? groupId : _id),
+      _idAsString(QString::number(_id)),
       _task(task), _params(params),
       _submission(QDateTime::currentDateTime()), _force(force),
       _command(task.command()), _setenv(task.setenv()),
@@ -87,7 +90,7 @@ private:
 
   // SharedUiItemData interface
 public:
-  QString id() const { return QString::number(_id); }
+  QString id() const { return _idAsString; }
   QString idQualifier() const { return "taskinstance"; }
   int uiSectionCount() const;
   QVariant uiData(int section, int role) const;
@@ -262,13 +265,9 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
   if (key.startsWith('!')) {
     // LATER optimize
     if (key == "!taskinstanceid") {
-      return QString::number(_taskInstance.idAsLong());
+      return _taskInstance.id();
     } else if (key == "!workflowtaskinstanceid") {
-      if (_taskInstance.task().mean() == Task::Workflow)
-        return QString::number(_taskInstance.idAsLong());
-      TaskInstance workflowTaskInstance = _taskInstance.workflowInstanceTask();
-      if (!workflowTaskInstance.isNull())
-        return QString::number(workflowTaskInstance.idAsLong());
+      return _taskInstance.workflowInstanceTask().id();
     } else if (key == "!taskinstancegroupid") {
       return QString::number(_taskInstance.groupId());
     } else if (key == "!runningms") {
@@ -289,20 +288,27 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
       return QString::number(_taskInstance.returnCode());
     } else if (key == "!status") {
       return _taskInstance.statusAsString();
-    } else if (key == "!submissiondate") {
-      // LATER make this support !date formating
-      // LATER add !workflowsubmissiondate
-      return _taskInstance.submissionDatetime()
-          .toString("yyyy-MM-dd hh:mm:ss,zzz");
-    } else if (key == "!startdate") {
-      // LATER make this support !date formating
-      // LATER add !workflowstartdate
-      return _taskInstance.startDatetime()
-          .toString("yyyy-MM-dd hh:mm:ss,zzz");
-    } else if (key == "!enddate") {
-      // LATER make this support !date formating
-      // LATER add !workflowenddate
-      return _taskInstance.endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+    } else if (key.startsWith("!submissiondate")) {
+      return TimeFormats::toExclamationMarkCustomTimestamp(
+            _taskInstance.submissionDatetime(), key.mid(15));
+    } else if (key.startsWith("!startdate")) {
+      return TimeFormats::toExclamationMarkCustomTimestamp(
+            _taskInstance.startDatetime(), key.mid(10));
+    } else if (key.startsWith("!enddate")) {
+      return TimeFormats::toExclamationMarkCustomTimestamp(
+            _taskInstance.endDatetime(), key.mid(8));
+    } else if (key.startsWith("!workflowsubmissiondate")) {
+      return TimeFormats::toExclamationMarkCustomTimestamp(
+            _taskInstance.workflowInstanceTask().submissionDatetime(),
+            key.mid(23));
+    } else if (key.startsWith("!workflowstartdate")) {
+      return TimeFormats::toExclamationMarkCustomTimestamp(
+            _taskInstance.workflowInstanceTask().startDatetime(),
+            key.mid(18));
+    } else if (key.startsWith("!workflowenddate")) {
+      return TimeFormats::toExclamationMarkCustomTimestamp(
+            _taskInstance.workflowInstanceTask().endDatetime(),
+            key.mid(16));
     } else if (key == "!target") {
       return _taskInstance.target().hostname();
     } else {
@@ -375,7 +381,12 @@ void TaskInstance::setAbortable(bool abortable) const {
 
 TaskInstance TaskInstance::workflowInstanceTask() const {
   const TaskInstanceData *d = data();
-  return d ? d->_workflowInstanceTask : TaskInstance();
+  if (d) {
+    if (d->_task.mean() == Task::Workflow)
+      return *this;
+    return d->_workflowInstanceTask;
+  }
+  return TaskInstance();
 }
 
 QVariant TaskInstanceData::uiHeaderData(int section, int role) const {
@@ -393,7 +404,7 @@ QVariant TaskInstanceData::uiData(int section, int role) const {
   case Qt::DisplayRole:
     switch(section) {
     case 0:
-      return _id;
+      return _idAsString;
     case 1:
       return _task.id();
     case 2:

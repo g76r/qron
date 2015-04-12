@@ -40,8 +40,6 @@ public:
       return;
     }
     TaskInstance workflow = instance.workflowInstanceTask();
-    if (workflow.isNull())
-      workflow = instance;
     QString sourceLocalId = subscription.subscriberName()
         .mid(subscription.subscriberName().indexOf(':')+1);
     WorkflowTransition transition(
