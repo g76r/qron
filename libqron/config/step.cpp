@@ -306,6 +306,12 @@ bool Step::setUiData(
   return data()->setUiData(section, value, errorString, role, dm);
 }
 
+void Step::setSubtask(Task subtask) {
+  StepData *d = data();
+  if (d)
+    d->_subtask = subtask;
+}
+
 bool StepData::setUiData(
     int section, const QVariant &value, QString *errorString, int role,
     const SharedUiItemDocumentManager *dm) {

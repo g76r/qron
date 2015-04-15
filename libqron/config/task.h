@@ -85,7 +85,7 @@ public:
   Task();
   Task(const Task &other);
   Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-       QString supertaskId, QHash<QString, Calendar> namedCalendars);
+       QString workflowTaskId, QHash<QString, Calendar> namedCalendars);
   /** Should only be used by SharedUiItemsModels to get size and headers from
    * a non-null item. */
   static Task templateTask();
@@ -181,8 +181,8 @@ public:
   workflowTransitionsBySourceLocalId() const;
   QHash<QString,CronTrigger> workflowCronTriggersByLocalId() const;
   /** Parent task (e.g. workflow task) to which this task belongs, if any. */
-  QString supertaskId() const;
-  void setSuperTaskId(QString supertaskId);
+  QString workflowTaskId() const;
+  void setWorkflowTask(Task workflowTask);
   QString graphvizWorkflowDiagram() const;
   PfNode toPfNode() const;
   /** to be called when activating a new configuration, to keep live attributes
@@ -194,6 +194,13 @@ public:
   void changeWorkflowTransition(WorkflowTransition newItem,
                                 WorkflowTransition oldItem);
   void changeStep(Step newItem, Step oldItem);
+  /** Convenience method around changeStep, replacing current subtask with
+   * another one.
+   * As an exception to regular changeXxx() pattern, this method must only be
+   * called with non-null newItem and oldItem. Moreover oldItem and newItem
+   * must share the same id and a matching Step of kind Subtask must exist
+   * with this id. */
+  void changeSubtask(Task newItem, Task oldItem);
 
 private:
   TaskData *data();

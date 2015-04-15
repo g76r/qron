@@ -578,9 +578,9 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     // use task target if not overiden at intance level
     target = task.target();
     if (target.isEmpty()) {
-      // inherit target from supertask if any
-      Task supertask = _config.tasks().value(task.supertaskId());
-      target = supertask.target();
+      // inherit target from workflow task if any
+      Task workflowTask = _config.tasks().value(task.workflowTaskId());
+      target = workflowTask.target();
       // silently use "localhost" as target for means not needing a real target
       if (target.isEmpty()) {
         Task::Mean mean = task.mean();

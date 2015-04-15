@@ -93,8 +93,8 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   QMultiHash<QString,Task> subtasks;
   foreach (const Task &task, tasks.values()) {
     foreach (const Task &subtask, tasks.values()) {
-      if (!subtask.supertaskId().isNull()
-          && subtask.supertaskId() == task.id())
+      if (!subtask.workflowTaskId().isNull()
+          && subtask.workflowTaskId() == task.id())
         subtasks.insert(task.id(), subtask);
     }
   }
@@ -140,7 +140,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   }
   foreach (const Task &task, tasks.values()) {
     // ignore subtasks
-    if (!task.supertaskId().isNull())
+    if (!task.workflowTaskId().isNull())
       continue;
     // draw task node and group--task edge
     gv.append("\""+task.id()+"\" [label=\""+task.localId()+"\","
@@ -204,7 +204,7 @@ QHash<QString,QString> GraphvizDiagramsBuilder
   int cronid = 0;
   foreach (const Task &task, tasks.values()) {
     // ignore subtasks
-    if (!task.supertaskId().isNull())
+    if (!task.workflowTaskId().isNull())
       continue;
     // task nodes and group--task edges
     gv.append("\""+task.id()+"\" [label=\""+task.localId()+"\","

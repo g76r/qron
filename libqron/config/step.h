@@ -66,6 +66,7 @@ public:
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
                  int role = Qt::EditRole,
                  const SharedUiItemDocumentManager *dm = 0);
+  void setSubtask(Task subtask);
 
 private:
   StepData *data();

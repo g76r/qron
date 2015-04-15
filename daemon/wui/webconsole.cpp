@@ -886,10 +886,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       if (!task.isNull()) {
         WebConsoleParamsProvider params(this, req, res, ctxt);
         int instancesCount = task.instancesCount();
-        QString supertaskLink;
-        if (!task.supertaskId().isEmpty())
-          supertaskLink = "<a href=\"taskdoc.html?taskid="+task.supertaskId()
-              +"\">"+task.supertaskId()+"</a>";
+        QString workflowTaskLink;
+        if (!task.workflowTaskId().isEmpty())
+          workflowTaskLink = "<a href=\"taskdoc.html?taskid="
+              +task.workflowTaskId()+"\">"+task.workflowTaskId()+"</a>";
         params.setValue("description",
                         "<tr><th>Task id (fully qualified with group id)</th>"
                         "<td>"+taskId+"</td></tr>"
@@ -902,8 +902,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +((task.taskGroup().label()!=task.taskGroup().id())
                           ? " ("+HtmlUtils::htmlEncode(task.taskGroup().label())
                             +")</td></tr>" : "")
-                        +"<tr><th>Supertask (workflow)</th><td>"
-                        +supertaskLink+"</td></th>"
+                        +"<tr><th>Workflow Task (for subtasks)</th><td>"
+                        +workflowTaskLink+"</td></th>"
                         +"<tr><th>Additional information</th><td>"
                         +HtmlUtils::htmlEncode(task.info())+"</td></tr>"
                         "<tr><th>Triggers (scheduling)</th><td>"
@@ -945,9 +945,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Request-time overridable parameters</th><td>"
                         +task.requestFormFieldsAsHtmlDescription()+"</td></tr>"
                         "<tr><th>System environment variables set (setenv)</th>"
-                        "<td>"+task.uiString(21)+"</td></tr>"
+                        "<td>"+task.uiString(21)+"</td></tr>" // TODO also display inherited setenv
                         "<tr><th>System environment variables unset (unsetenv)"
-                        "</th><td>"+task.uiString(22)+"</td></tr>"
+                        "</th><td>"+task.uiString(22)+"</td></tr>" // TODO also display inherited unsetenv
                         "<tr><th>Consumed resources</th><td>"
                         +task.resourcesAsString()+"</td></tr>"
                         "<tr><th>Maximum instances count at a time</th><td>"
@@ -1265,8 +1265,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     // LATER this rendering should be pooled
     if (_scheduler) {
       Task task = _scheduler->task(req.param("taskid"));
-      //if (!task.supertaskId().isEmpty())
-      //  task = _scheduler->task(task.supertaskId());
+      //if (!task.workflowTaskId().isEmpty())
+      //  task = _scheduler->task(task.workflowTaskId());
       QString gv = task.graphvizWorkflowDiagram();
       if (!gv.isEmpty()) {
         GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
@@ -1276,10 +1276,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         h->deleteLater();
         return true;
       }
-      if (!task.supertaskId().isEmpty()) {
+      if (!task.workflowTaskId().isEmpty()) {
         res.setContentType("image/svg+xml");
         res.output()->write(QString(SVG_BELONG_TO_WORKFLOW)
-                            .arg(task.supertaskId()).toUtf8());
+                            .arg(task.workflowTaskId()).toUtf8());
         return true;
       }
     }

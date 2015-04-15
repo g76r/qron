@@ -131,7 +131,7 @@ public:
   Task::DiscardAliasesOnStart _discardAliasesOnStart;
   QList<RequestFormField> _requestFormFields;
   QStringList _otherTriggers; // guessed indirect triggers resulting from events
-  QString _supertaskId;
+  QString _workflowTaskId;
   QHash<QString,Step> _steps;
   QString _graphvizWorkflowDiagram;
   QMultiHash<QString,WorkflowTransition> _transitionsBySourceLocalId;
@@ -174,12 +174,12 @@ Task::Task(const Task &other) : SharedUiItem(other) {
 }
 
 Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
-           QString supertaskId, QHash<QString,Calendar> namedCalendars) {
+           QString workflowTaskId, QHash<QString,Calendar> namedCalendars) {
   TaskData *d = new TaskData;
   d->_scheduler = scheduler;
   d->_localId =
       ConfigUtils::sanitizeId(node.contentAsString(),
-                              supertaskId.isEmpty() ? ConfigUtils::LocalId
+                              workflowTaskId.isEmpty() ? ConfigUtils::LocalId
                                                     : ConfigUtils::SubTaskId);
   d->_label = node.attribute("label");
   d->_mean = meanFromString(node.attribute("mean", "local").trimmed()
@@ -220,9 +220,9 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   ConfigUtils::loadParamSet(node, &d->_setenv, "setenv");
   d->_unsetenv.setParent(taskGroup.unsetenv());
   ConfigUtils::loadFlagSet(node, &d->_unsetenv, "unsetenv");
-  d->_supertaskId = supertaskId;
+  d->_workflowTaskId = workflowTaskId;
   // LATER load cron triggers last exec timestamp from on-disk log
-  if (supertaskId.isEmpty()) { // subtasks do not have triggers
+  if (workflowTaskId.isEmpty()) { // subtasks do not have triggers
     foreach (PfNode child, node.childrenByName("trigger")) {
       foreach (PfNode grandchild, child.children()) {
         QString content = grandchild.contentAsString();
@@ -301,7 +301,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   if (d->_mean == Workflow) {
     if (steps.isEmpty())
       Log::warning() << "workflow task with no step: " << node.toString();
-    if (!supertaskId.isEmpty()) {
+    if (!workflowTaskId.isEmpty()) {
       Log::error() << "workflow task not allowed as a workflow subtask: "
                    << node.toString();
       delete d;
@@ -424,6 +424,18 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
                      << node.toString();
   }
   setData(d);
+  // update subtasks with any other information about their workflow task apart
+  // from its id which has already been given through their cstr
+  // e.g. reparenting _setenv
+  foreach (Step step, d->_steps) {
+    Task subtask = step.subtask();
+    // FIXME should probably call changeStep() or changeSubtask()
+    if (!subtask.isNull()) {
+      subtask.setWorkflowTask(*this);
+      step.setSubtask(subtask);
+      d->_steps.insert(step.id(), step);
+    }
+  }
   d->_graphvizWorkflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
 }
 
@@ -816,8 +828,8 @@ QHash<QString, Step> Task::steps() const {
   return !isNull() ? data()->_steps : QHash<QString,Step>();
 }
 
-QString Task::supertaskId() const {
-  return !isNull() ? data()->_supertaskId : QString();
+QString Task::workflowTaskId() const {
+  return !isNull() ? data()->_workflowTaskId : QString();
 }
 
 QString Task::graphvizWorkflowDiagram() const {
@@ -854,7 +866,7 @@ QVariant TaskData::uiData(int section, int role) const {
     case 0:
       if (role == Qt::EditRole) {
         // remove workflow id prefix from localid
-        return _supertaskId.isEmpty() ? _localId
+        return _workflowTaskId.isEmpty() ? _localId
                                       : _localId.mid(_localId.indexOf(':')+1);
       }
       return _localId;
@@ -943,7 +955,7 @@ QVariant TaskData::uiData(int section, int role) const {
     case 30:
       return triggersHaveCalendar();
     case 31:
-      return _supertaskId;
+      return _workflowTaskId;
     }
     break;
   default:
@@ -952,12 +964,20 @@ QVariant TaskData::uiData(int section, int role) const {
   return QVariant();
 }
 
-void Task::setSuperTaskId(QString supertaskId) {
+void Task::setWorkflowTask(Task workflowTask) {
   if (!isNull()) {
     TaskData *d = data();
-    d->_supertaskId = supertaskId;
-    d->_localId = supertaskId.mid(supertaskId.lastIndexOf('.')+1)+":"
+    QString workflowTaskId = workflowTask.id();
+    d->_workflowTaskId = workflowTaskId;
+    d->_localId = workflowTaskId.mid(workflowTaskId.lastIndexOf('.')+1)+":"
         +d->_localId.mid(d->_localId.indexOf(':')+1);
+    if (workflowTask.isNull()) {
+      d->_setenv.setParent(d->_group.setenv());
+      d->_unsetenv.setParent(d->_group.unsetenv());
+    } else {
+      d->_setenv.setParent(workflowTask.setenv());
+      d->_unsetenv.setParent(workflowTask.unsetenv());
+    }
   }
 }
 
@@ -990,8 +1010,8 @@ bool TaskData::setUiData(int section, const QVariant &value,
       return false;
     }
     s = ConfigUtils::sanitizeId(s, ConfigUtils::LocalId);
-    if (!_supertaskId.isEmpty())
-      s = _supertaskId.mid(_supertaskId.lastIndexOf('.')+1)+":"+s;
+    if (!_workflowTaskId.isEmpty())
+      s = _workflowTaskId.mid(_workflowTaskId.lastIndexOf('.')+1)+":"+s;
     s2 = _group.id()+"."+s;
     if (!dm->itemById("task", s2).isNull()) {
       if (errorString)
@@ -1031,15 +1051,15 @@ bool TaskData::setUiData(int section, const QVariant &value,
         *errorString = "No group with such id: \""+s+"\"";
       return false;
     }
-    if (!_supertaskId.isEmpty()) {
-      SharedUiItem supertaskItem = dm->itemById("task", _supertaskId);
-      if (!supertaskItem.isNull()) {
-        Task supertask = reinterpret_cast<Task&>(supertaskItem);
-        if (s != supertask.taskGroup().id()) {
+    if (!_workflowTaskId.isEmpty()) {
+      SharedUiItem workflowTaskItem = dm->itemById("task", _workflowTaskId);
+      if (!workflowTaskItem.isNull()) {
+        Task workflowTask = reinterpret_cast<Task&>(workflowTaskItem);
+        if (s != workflowTask.taskGroup().id()) {
           if (errorString)
             *errorString = "Cannot make a subtask belong to another group than "
                            "its parent task's group: \""+s+"\" instead of \""
-              +supertask.taskGroup().id()+"\"";
+              +workflowTask.taskGroup().id()+"\"";
           return false;
         }
       }
@@ -1252,4 +1272,40 @@ QStringList Task::validMeanStrings() {
   QStringList means;
   means << "donothing" << "local" << "workflow" << "ssh" << "http";
   return means;
+}
+
+void Task::changeWorkflowTransition(WorkflowTransition newItem,
+                                    WorkflowTransition oldItem) {
+  // FIXME
+  // probably strongly related to changeStep
+}
+
+void Task::changeStep(Step newItem, Step oldItem) {
+  // FIXME
+  // probably strongly related to changeWorkflowTransition
+  // must probably also manage triggers collections (since triggers are steps)
+  if (!oldItem.isNull()) {
+    // FIXME
+  }
+  if (!newItem.isNull()) {
+    // FIXME
+  }
+}
+
+void Task::changeSubtask(Task newItem, Task oldItem) {
+  TaskData *d = data();
+  if (!d)
+    return;
+  Step oldStep = d->_steps.value(oldItem.id());
+  if (oldStep.isNull() // cannot create subtasks
+      || oldStep.kind() != Step::SubTask // only applicable to subtask steps
+      || newItem.isNull() // cannot delete subtasks
+      || newItem.id() != oldItem.id() // cannot rename subtasks
+      ) {
+    Log::debug() << "Task::changeSubtask() called in an unsupported way";
+    return;
+  }
+  Step newStep = oldStep;
+  newStep.setSubtask(newItem);
+  changeStep(newStep, oldStep);
 }

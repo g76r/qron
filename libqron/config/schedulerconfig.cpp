@@ -289,9 +289,9 @@ ignore_task:;
   }
   foreach (QString taskId, _tasks.keys()) {
     Task &task = _tasks[taskId];
-    QString supertaskId = task.supertaskId();
-    if (_tasks.contains(supertaskId))
-      task.setParentParams(_tasks[supertaskId].params());
+    QString workflowTaskId = task.workflowTaskId();
+    if (_tasks.contains(workflowTaskId))
+      task.setParentParams(_tasks[workflowTaskId].params());
   }
   int maxtotaltaskinstances = 0;
   foreach (PfNode node, root.childrenByName("maxtotaltaskinstances")) {
@@ -622,7 +622,7 @@ PfNode SchedulerConfig::toPfNode() const {
   QList<Task> tasks = d->_tasks.values();
   qSort(tasks);
   foreach(const Task &task, tasks)
-    if (task.supertaskId().isNull())
+    if (task.workflowTaskId().isNull())
       node.appendChild(task.toPfNode());
   QList<Host> hosts = d->_hosts.values();
   qSort(hosts);
