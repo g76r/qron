@@ -91,7 +91,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
                  /* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
-                 "filter= "+taskId+"/\"><i class=\"icon-file-text\">"
+                 "regexp=^[^ ]* "+taskId+"[/:]\"><i class=\"icon-file-text\">"
                  "</i></a></span> "
                  /* taskdoc */
                  "<span class=\"label label-info\" "

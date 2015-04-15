@@ -36,8 +36,8 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
       text.append(
             /* related task log */
             " <span class=\"label label-info\" title=\"Related tasks log\">"
-            "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?filter= "
-            +re.cap(1)+"/\"><i class=\"icon-file-text\"></i></a></span>"
+            "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?regexp=^[^ ]* "
+            +re.cap(1)+"[/:]\"><i class=\"icon-file-text\"></i></a></span>"
             /* related task taskdoc */
             " <span class=\"label label-info\" title=\"Detailed task info\">"
             "<a href=\"taskdoc.html?taskid="+re.cap(1)+"\">"
