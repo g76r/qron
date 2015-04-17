@@ -289,24 +289,24 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
     } else if (key == "!status") {
       return _taskInstance.statusAsString();
     } else if (key.startsWith("!submissiondate")) {
-      return TimeFormats::toExclamationMarkCustomTimestamp(
+      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
             _taskInstance.submissionDatetime(), key.mid(15));
     } else if (key.startsWith("!startdate")) {
-      return TimeFormats::toExclamationMarkCustomTimestamp(
+      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
             _taskInstance.startDatetime(), key.mid(10));
     } else if (key.startsWith("!enddate")) {
-      return TimeFormats::toExclamationMarkCustomTimestamp(
+      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
             _taskInstance.endDatetime(), key.mid(8));
     } else if (key.startsWith("!workflowsubmissiondate")) {
-      return TimeFormats::toExclamationMarkCustomTimestamp(
+      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
             _taskInstance.workflowInstanceTask().submissionDatetime(),
             key.mid(23));
     } else if (key.startsWith("!workflowstartdate")) {
-      return TimeFormats::toExclamationMarkCustomTimestamp(
+      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
             _taskInstance.workflowInstanceTask().startDatetime(),
             key.mid(18));
     } else if (key.startsWith("!workflowenddate")) {
-      return TimeFormats::toExclamationMarkCustomTimestamp(
+      return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
             _taskInstance.workflowInstanceTask().endDatetime(),
             key.mid(16));
     } else if (key == "!target") {
