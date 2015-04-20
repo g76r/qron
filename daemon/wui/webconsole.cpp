@@ -962,6 +962,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +EventSubscription::toStringList(task.onfailureEventSubscriptions())
                         .join("\n")+"</td></tr>");
         params.setValue("taskid", taskId);
+        params.setValue("taskpf", task.toPfNode().toString());
         TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
         params.setValue("customactions", task.params()
                         .evaluate(_customaction_taskdetail, &pseudoParams));
@@ -1006,6 +1007,22 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   // LATER optimize resource selection (avoid if/if/if)
+  if (path == "/rest/pf/task/config/v1") {
+    QString taskId = req.param("taskid");
+    if (_scheduler) {
+      Task task(_scheduler->task(taskId));
+      if (!task.isNull()) {
+        res.output()->write(task.toPfNode().toPf(PfOptions().setShouldIndent()));
+      } else {
+        res.setStatus(404);
+        res.output()->write("Task not found.");
+      }
+    } else {
+      res.setStatus(500);
+      res.output()->write("Scheduler is not available.");
+    }
+    return true;
+  }
   if (path == "/rest/csv/tasks/list/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");

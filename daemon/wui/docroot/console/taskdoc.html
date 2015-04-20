@@ -62,8 +62,15 @@
           <div id="workflowDiagram" style="display: table; margin: 0 auto;">
             <noscript><img src="../rest/svg/tasks/workflow/v1?taskid=<?value:taskid?>" alt="Task Workflow Diagram"/></noscript>
           </div>
+        </div>
       </div>
-    </div>
+      <div class="row">
+        <div class="span12">
+          <h3>Raw Task Configuration</h3>
+          <p><a class="btn btn-primary" href="../rest/pf/task/config/v1?taskid=<?value:taskid?>"><i class="icon-file"></i> PF</a>
+          <pre><?value:taskpf?></pre>
+        </div> 
+      </div>
 
     <script src="js/jquery.min.js"></script>
     <script src="js/bootstrap.min.js"></script>
