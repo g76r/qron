@@ -715,6 +715,7 @@ void Scheduler::taskInstanceFinishing(TaskInstance instance,
     configuredTask.setLastSuccessful(instance.success());
     configuredTask.setLastReturnCode(instance.returnCode());
     configuredTask.setLastTotalMillis(instance.totalMillis());
+    configuredTask.setLastTaskInstanceId(instance.idAsLong());
   }
   emit taskInstanceFinished(instance);
   emit taskChanged(configuredTask);

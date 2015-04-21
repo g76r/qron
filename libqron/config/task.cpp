@@ -143,13 +143,14 @@ public:
   mutable QAtomicInt _instancesCount;
   mutable bool _enabled, _lastSuccessful;
   mutable int _lastReturnCode, _lastTotalMillis;
+  mutable quint64 _lastTaskInstanceId;
 
   TaskData() : _maxExpectedDuration(LLONG_MAX), _minExpectedDuration(0),
     _maxDurationBeforeAbort(LLONG_MAX),
     _discardAliasesOnStart(Task::DiscardAll),
     _lastExecution(LLONG_MIN), _nextScheduledExecution(LLONG_MIN),
     _enabled(true), _lastSuccessful(true), _lastReturnCode(-1),
-    _lastTotalMillis(-1)  { }
+    _lastTotalMillis(-1), _lastTaskInstanceId(0)  { }
   QDateTime lastExecution() const;
   QDateTime nextScheduledExecution() const;
   QString resourcesAsString() const;
@@ -450,6 +451,7 @@ void Task::copyLiveAttributesFromOldTask(Task oldTask) {
   d->_lastSuccessful = oldTask.lastSuccessful();
   d->_lastReturnCode = oldTask.lastReturnCode();
   d->_lastTotalMillis = oldTask.lastTotalMillis();
+  d->_lastTaskInstanceId = oldTask.lastTaskInstanceId();
   d->_enabled = oldTask.enabled();
   // keep last triggered timestamp from previously defined trigger
   QHash<QString,CronTrigger> oldCronTriggers;
@@ -701,6 +703,14 @@ int Task::lastTotalMillis() const {
 void Task::setLastTotalMillis(int lastTotalMillis) const {
   if (!isNull())
     data()->_lastTotalMillis = lastTotalMillis;
+}
+
+quint64 Task::lastTaskInstanceId() const {
+  return !isNull() ? data()->_lastTaskInstanceId : 0;
+}
+void Task::setLastTaskInstanceId(quint64 lastTaskInstanceId) const {
+  if (!isNull())
+    data()->_lastTaskInstanceId = lastTaskInstanceId;
 }
 
 long long Task::maxExpectedDuration() const {
@@ -956,6 +966,8 @@ QVariant TaskData::uiData(int section, int role) const {
       return triggersHaveCalendar();
     case 31:
       return _workflowTaskId;
+    case 32:
+      return _lastTaskInstanceId;
     }
     break;
   default:

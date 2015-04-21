@@ -141,6 +141,8 @@ public:
   void setLastReturnCode(int code) const;
   int lastTotalMillis() const;
   void setLastTotalMillis(int lastTotalMillis) const;
+  quint64 lastTaskInstanceId() const;
+  void setLastTaskInstanceId(quint64 lastTaskInstanceId) const;
   /** in millis, LLONG_MAX if not set */
   long long maxExpectedDuration() const;
   /** in millis, 0 if not set */

@@ -923,6 +923,13 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         +HtmlUtils::htmlEncode(task.uiString(19))+"</td></tr>"
                         "<tr><th>Last execution duration (seconds)</th><td>"
                         +HtmlUtils::htmlEncode(task.uiString(26))+"</td></tr>"
+                        "<tr><th>Last execution instance</th><td>"
+                        +QString::number(task.lastTaskInstanceId())
+                        +"&nbsp;<span class=\"label label-info\" title=\""
+                        "Last task instance log\"><a target=\"_blank\" href=\""
+                        "../rest/txt/log/all/v1?filter="+task.id()
+                        +"/"+QString::number(task.lastTaskInstanceId())+"\">"
+                        +"<i class=\"icon-file-text\"></i></a></span></td></tr>"
                         "<tr><th>Next execution</th><td>"
                         +task.nextScheduledExecution()
                         .toString("yyyy-MM-dd hh:mm:ss,zzz")+"</td></tr>"
