@@ -968,6 +968,8 @@ QVariant TaskData::uiData(int section, int role) const {
       return _workflowTaskId;
     case 32:
       return _lastTaskInstanceId;
+    case 33:
+      return _info;
     }
     break;
   default:

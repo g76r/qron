@@ -46,8 +46,9 @@ static QString _uiHeaderNames[] = {
   "Triggers incl. calendars",
   "Enabled",
   "Has triggers with calendars", // 30
-  "Parent task",
-  "Last task instance id"
+  "Workflow task",
+  "Last task instance id",
+  "Additional info"
 };
 
 #endif // TASK_P_H

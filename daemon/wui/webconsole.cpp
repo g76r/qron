@@ -890,30 +890,6 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         if (!task.workflowTaskId().isEmpty())
           workflowTaskLink = "<a href=\"taskdoc.html?taskid="
               +task.workflowTaskId()+"\">"+task.workflowTaskId()+"</a>";
-        params.setValue("description",
-                        "<tr><th>Task id (fully qualified with group id)</th>"
-                        "<td>"+taskId+"</td></tr>"
-                        "<tr><th>Task id and label</th><td>"+task.id()
-                        +((task.label()!=task.id())
-                          ? " ("+HtmlUtils::htmlEncode(task.label())
-                            +")</td></tr>" : "")
-                        +"<tr><th>Task group id and label</th><td>"
-                        +task.taskGroup().id()
-                        +((task.taskGroup().label()!=task.taskGroup().id())
-                          ? " ("+HtmlUtils::htmlEncode(task.taskGroup().label())
-                            +")</td></tr>" : "")
-                        +"<tr><th>Workflow Task (for subtasks)</th><td>"
-                        +workflowTaskLink+"</td></th>"
-                        +"<tr><th>Additional information</th><td>"
-                        +HtmlUtils::htmlEncode(task.info())+"</td></tr>"
-                        "<tr><th>Triggers (scheduling)</th><td>"
-                        +task.triggersWithCalendarsAsString()+"</td></tr>"
-                        "<tr><th>Minimum expected duration (seconds)</th><td>"
-                        +task.uiString(23)+"</td></tr>"
-                        "<tr><th>Maximum expected duration (seconds)</th><td>"
-                        +task.uiString(24)+"</td></tr>"
-                        "<tr><th>Maximum duration before abort "
-                        "(seconds)</th><td>"+task.uiString(27)+"</td></tr>");
         params.setValue("status",
                         "<tr><th>Enabled</th><td>"
                         +QString(task.enabled()
@@ -968,12 +944,13 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
                         "<tr><th>Onfailure events</th><td>"
                         +EventSubscription::toStringList(task.onfailureEventSubscriptions())
                         .join("\n")+"</td></tr>");
-        params.setValue("taskid", taskId);
         params.setValue("taskpf", task.toPfNode().toString());
         TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
         params.setValue("customactions", task.params()
                         .evaluate(_customaction_taskdetail, &pseudoParams));
-        _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+        SharedUiItemParamsProvider itemAsParams(task);
+        _wuiHandler->handleRequest(
+              req, res, HttpRequestContext(&params)(&itemAsParams));
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");

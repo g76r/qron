@@ -17,6 +17,7 @@
 #include "config/configutils.h"
 #include "sysutil/parametrizednetworkrequest.h"
 #include "sysutil/parametrizedudpsender.h"
+#include "util/paramsproviderlist.h"
 
 class RequestUrlGlobalNetworkActionHub {
 public:
