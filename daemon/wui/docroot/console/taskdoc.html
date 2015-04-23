@@ -35,7 +35,7 @@
             <tr><th>Task id (fully qualified with group id)</th><td><?value:11?></td></tr>
             <tr><th>Task id and label</th><td><?value:0?> (<?value:2?>)</td></tr>
             <tr><th>Task group id and label</th><td><?value:1?></td></tr>
-            <tr><th>Workflow Task (for subtasks)</th><td><?=%{=ifempty:%31::<a href="taskdoc.html?taskid=%31">%31</a>}?></td></th>
+            <tr><th>Workflow Task (for subtasks)</th><td><?=%{=ifneq:%31::<a href="taskdoc.html?taskid=%31">%31</a>}?></td></th>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
             <tr><th>Triggers (scheduling)</th><td><?value:28:?></td></tr>
             <tr><th>Minimum expected duration (seconds)</th><td><?value:23:?></td></tr>
@@ -47,7 +47,12 @@
           <h3>Task Status</h3>
           <p><a class="btn btn-primary" href="../rest/txt/log/all/v1?regexp=^[^ ]* <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
           <p><table class="table table-condensed table-hover">
-          <?rawvalue:status?>
+             <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="icon-block"></i>&nbsp;false}?></td></tr>
+             <tr><th>Last execution status</th><td><?value:19:?></td></tr>
+             <tr><th>Last execution duration (seconds)</th><td><?value:26:?></td></tr>
+             <tr><th>Last execution instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="../rest/txt/log/all/v1?filter=%11/%32"><i class="icon-file-text"></i></a></span>}?></td></tr>
+             <tr><th>Next execution</th><td><?value:10:?></td></tr>
+             <tr><th>Currently running instances</th><td><?=%{=ifneq:%13:0:<i class="icon-play"></i>&nbsp;%13:%13}?>/<?value:12:?></td></tr>
           </table>
         </div>
       </div>

@@ -941,10 +941,10 @@ QVariant TaskData::uiData(int section, int role) const {
       return QronUiUtils::paramsKeysAsString(_unsetenv);
     case 23:
       return (_minExpectedDuration > 0)
-          ? QString::number(_minExpectedDuration*.001) : QString();
+          ? _minExpectedDuration*.001 : QVariant();
     case 24:
       return (_maxExpectedDuration < LLONG_MAX)
-          ? QString::number(_maxExpectedDuration*.001) : QString();
+          ? _maxExpectedDuration*.001 : QVariant();
     case 25: {
       QString s;
       foreach (const RequestFormField rff, _requestFormFields)
@@ -953,11 +953,10 @@ QVariant TaskData::uiData(int section, int role) const {
       return s;
     }
     case 26:
-      return _lastTotalMillis >= 0
-          ? QString::number(_lastTotalMillis/1000.0) : QString();
+      return _lastTotalMillis >= 0 ? _lastTotalMillis/1000.0 : QVariant();
     case 27:
       return (_maxDurationBeforeAbort < LLONG_MAX)
-          ? QString::number(_maxDurationBeforeAbort*.001) : QString();
+          ? _maxDurationBeforeAbort*.001 : QVariant();
     case 28:
       return triggersWithCalendarsAsString();
     case 29:
@@ -967,7 +966,7 @@ QVariant TaskData::uiData(int section, int role) const {
     case 31:
       return _workflowTaskId;
     case 32:
-      return _lastTaskInstanceId;
+      return _lastTaskInstanceId > 0 ? _lastTaskInstanceId : QVariant();
     case 33:
       return _info;
     }
