@@ -17,7 +17,7 @@
 #include "config/configutils.h"
 #include "sysutil/parametrizednetworkrequest.h"
 #include "sysutil/parametrizedudpsender.h"
-#include "util/paramsproviderlist.h"
+#include "util/paramsprovidermerger.h"
 
 class RequestUrlGlobalNetworkActionHub {
 public:
@@ -40,7 +40,7 @@ public:
                TaskInstance taskContext) const {
     Q_UNUSED(subscription)
     // LATER support binary payloads
-    ParamsProviderList evaluationContext(&eventContext);
+    ParamsProviderMerger evaluationContext(&eventContext);
     TaskInstancePseudoParamsProvider ppp = taskContext.pseudoParams();
     evaluationContext.append(&ppp);
     if (_address.startsWith("udp:", Qt::CaseInsensitive)) {

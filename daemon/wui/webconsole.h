@@ -124,7 +124,7 @@ public:
   ~WebConsole();
   bool acceptRequest(HttpRequest req);
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     HttpRequestContext ctxt);
+                     ParamsProviderMerger *processingContext);
   void setScheduler(Scheduler *scheduler);
   void setConfigPaths(QString configFilePath, QString configRepoPath);
   void setConfigRepository(ConfigRepository *configRepository);

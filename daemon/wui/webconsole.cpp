@@ -533,16 +533,17 @@ bool WebConsole::acceptRequest(HttpRequest req) {
   return true;
 }
 
+// FIXME rewrite this class
 class WebConsoleParamsProvider : public ParamsProvider {
   WebConsole *_console;
   QString _message;
   QHash<QString,QString> _values;
   HttpRequest _req;
-  HttpRequestContext _ctxt;
+
 public:
   WebConsoleParamsProvider(WebConsole *console, HttpRequest req,
-                           HttpResponse res, HttpRequestContext ctxt)
-    : _console(console), _req(req), _ctxt(ctxt) {
+                           HttpResponse res)
+    : _console(console), _req(req) {
     QString message = req.base64Cookie("message");
     //qDebug() << "message cookie:" << message;
     if (!message.isEmpty()) {
@@ -577,34 +578,35 @@ public:
           "&times;</button><h4>"+title+"</h4> "+message+"</div>";
     } else
       _message = "";
-    res.clearCookie("message", "/");
+    res.clearCookie("message", "/"); // FIXME move elsewhere
   }
   QVariant paramValue(const QString key, const QVariant defaultValue,
                       QSet<QString> alreadyEvaluated) const {
+    Q_UNUSED(alreadyEvaluated)
     if (_values.contains(key))
       return _values.value(key);
     if (!_console->_scheduler) // should never happen
       return defaultValue;
     if (key.startsWith('%'))
       return _console->_scheduler->globalParams().evaluate(key);
-    if (key == "title") // TODO remove, needs support for ${webconsole.title:-Qron Web Console}
+    if (key == "title") // FIXME remove, needs support for ${webconsole.title:-Qron Web Console}
       return _console->_title;
-    if (key == "navtitle") // TODO remove
+    if (key == "navtitle") // FIXME remove
       return _console->_navtitle;
-    if (key == "titlehref") // TODO remove
+    if (key == "titlehref") // FIXME remove
       return _console->_titlehref;
-    if (key == "cssoverload") // TODO remove
+    if (key == "cssoverload") // FIXME remove
       return _console->_cssoverload;
     if (key == "message")
       return _message;
     if (key == "startdate")
-      return _console->_scheduler->startdate().toString("yyyy-MM-dd hh:mm:ss");
+      return _console->_scheduler->startdate().toString("yyyy-MM-dd hh:mm:ss"); // FIXME
     if (key == "uptime")
       return TimeFormats::toCoarseHumanReadableTimeInterval(
             _console->_scheduler->startdate()
             .msecsTo(QDateTime::currentDateTime()));
     if (key == "configdate")
-      return _console->_scheduler->configdate().toString("yyyy-MM-dd hh:mm:ss");
+      return _console->_scheduler->configdate().toString("yyyy-MM-dd hh:mm:ss"); // FIXME
     if (key == "execcount")
       return QString::number(_console->_scheduler->execCount());
     if (key == "runningtaskshwm")
@@ -623,18 +625,12 @@ public:
       return _console->_configFilePath;
     if (key == "configrepopath")
       return _console->_configRepoPath;
-    QString v(_req.base64Cookie(key));
-    return v.isNull() ? _ctxt.paramValue(key, defaultValue, alreadyEvaluated)
-                      : v;
-  }
-  void setValue(QString key, QString value) {
-    _values.insert(key, value);
+    return _req.base64Cookie(key);
   }
 };
 
 bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
-                               HttpRequestContext ctxt) {
-  Q_UNUSED(ctxt)
+                               ParamsProviderMerger *processingContext) {
   QString path = req.url().path();
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);
@@ -643,15 +639,19 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   if (_accessControlEnabled
-      && !_authorizer->authorize(ctxt.paramValue("userid").toString(), path)) {
+      && !_authorizer->authorize(
+        processingContext->paramValue("userid").toString(), path)) {
     res.setStatus(403);
     QUrl url(req.url());
     url.setPath("/console/adhoc.html");
     url.setQuery(QString());
     req.overrideUrl(url);
-    WebConsoleParamsProvider params(this, req, res, ctxt);
-    params.setValue("content", "<h2>Permission denied</h2>");
-    _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+    WebConsoleParamsProvider params(this, req, res);
+    processingContext->append(&params);
+    processingContext->overrideParamValue(
+          "content", "<h2>Permission denied</h2>");
+    _wuiHandler->handleRequest(req, res, processingContext);
+    processingContext->remove(&params);
     return true;
   }
   //Log::fatal() << "hit: " << req.url().toString();
@@ -665,7 +665,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     QString referer = req.header("Referer");
     QString redirect = req.base64Cookie("redirect", referer);
     QString message;
-    QString userid = ctxt.paramValue("userid").toString();
+    QString userid = processingContext->paramValue("userid").toString();
     if (_scheduler) {
       if (event == "requestTask") {
         // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
@@ -816,9 +816,11 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       url.setPath("/console/adhoc.html");
       url.setQuery(QString());
       req.overrideUrl(url);
-      WebConsoleParamsProvider params(this, req, res, ctxt);
-      params.setValue("content", message);
-      _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+      WebConsoleParamsProvider params(this, req, res);
+      processingContext->append(&params);
+      processingContext->overrideParamValue("content", message);
+      _wuiHandler->handleRequest(req, res, processingContext);
+      processingContext->remove(&params);
       return true;
     } else {
       res.setBase64SessionCookie("message", "E:Scheduler is not available.",
@@ -834,9 +836,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       Task task(_scheduler->task(taskId));
       if (!task.isNull()) {
         QUrl url(req.url());
+        // FIXME requestform.html instead of adhoc.html
         url.setPath("/console/adhoc.html");
         req.overrideUrl(url);
-        WebConsoleParamsProvider params(this, req, res, ctxt);
         QString form = "<div class=\"alert alert-block\">\n"
             "<h4 class=\"text-center\">About to start task "+taskId+"</h4>\n";
         if (task.label() != task.id())
@@ -863,9 +865,12 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
             "</form>\n"
             "</div>\n";
         // <button type="submit" class="btn">Sign in</button>
-        params.setValue("content", form);
+        WebConsoleParamsProvider params(this, req, res);
+        processingContext->overrideParamValue("content", form);
+        processingContext->append(&params);
         res.setBase64SessionCookie("redirect", redirect, "/");
-        _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+        _wuiHandler->handleRequest(req, res, processingContext);
+        processingContext->remove(&params);
         return true;
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
@@ -884,49 +889,20 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     if (_scheduler) {
       Task task(_scheduler->task(taskId));
       if (!task.isNull()) {
-        WebConsoleParamsProvider params(this, req, res, ctxt);
-        int instancesCount = task.instancesCount();
-        QString workflowTaskLink;
-        if (!task.workflowTaskId().isEmpty())
-          workflowTaskLink = "<a href=\"taskdoc.html?taskid="
-              +task.workflowTaskId()+"\">"+task.workflowTaskId()+"</a>";
-        params.setValue("params",
-                        "<tr><th>Execution mean</th><td>"+task.meanAsString()
-                        +"</td></tr>"
-                        "<tr><th>Execution target (host or cluster)</th><td>"
-                        +task.target()+"</td></tr>"
-                        "<tr><th>Command</th><td>"
-                        +HtmlUtils::htmlEncode(task.command())+"</td></tr>"
-                        "<tr><th>Configuration parameters</th><td>"
-                        +HtmlUtils::htmlEncode(task.params().toString(false,
-                                                                      false))
-                        +"</td></tr>"
-                        "<tr><th>Request-time overridable parameters</th><td>"
-                        +task.requestFormFieldsAsHtmlDescription()+"</td></tr>"
-                        "<tr><th>System environment variables set (setenv)</th>"
-                        "<td>"+task.uiString(21)+"</td></tr>" // TODO also display inherited setenv
-                        "<tr><th>System environment variables unset (unsetenv)"
-                        "</th><td>"+task.uiString(22)+"</td></tr>" // TODO also display inherited unsetenv
-                        "<tr><th>Consumed resources</th><td>"
-                        +task.resourcesAsString()+"</td></tr>"
-                        "<tr><th>Maximum instances count at a time</th><td>"
-                        +QString::number(task.maxInstances())+"</td></tr>"
-                        "<tr><th>Onstart events</th><td>"
-                        +EventSubscription::toStringList(task.onstartEventSubscriptions())
-                        .join("\n")+"</td></tr>"
-                        "<tr><th>Onsuccess events</th><td>"
-                        +EventSubscription::toStringList(task.onsuccessEventSubscriptions())
-                        .join("\n")+"</td></tr>"
-                        "<tr><th>Onfailure events</th><td>"
-                        +EventSubscription::toStringList(task.onfailureEventSubscriptions())
-                        .join("\n")+"</td></tr>");
-        params.setValue("taskpf", task.toPfNode().toString());
+        processingContext->overrideParamValue(
+              "taskpf", task.toPfNode().toString()); // FIXME remove
+        WebConsoleParamsProvider params(this, req, res);
         TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
-        params.setValue("customactions", task.params()
-                        .evaluate(_customaction_taskdetail, &pseudoParams));
+        processingContext->overrideParamValue(
+              "customactions", _customaction_taskdetail); // FIXME include within WebConsoleParamsProvider
         SharedUiItemParamsProvider itemAsParams(task);
-        _wuiHandler->handleRequest(
-              req, res, HttpRequestContext(&params)(&itemAsParams));
+        processingContext->append(&itemAsParams);
+        processingContext->append(&params);
+        processingContext->append(&pseudoParams);
+        _wuiHandler->handleRequest(req, res, processingContext);
+        processingContext->remove(&itemAsParams);
+        processingContext->remove(&params);
+        processingContext->remove(&pseudoParams);
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
@@ -961,8 +937,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         s.append('#').append(anchor);
       res.redirect(s);
     } else {
-      WebConsoleParamsProvider params(this, req, res, ctxt);
-      _wuiHandler->handleRequest(req, res, HttpRequestContext(&params));
+      WebConsoleParamsProvider params(this, req, res);
+      processingContext->append(&params);
+      _wuiHandler->handleRequest(req, res, processingContext);
+      processingContext->remove(&params);
     }
     return true;
   }
@@ -1231,7 +1209,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   if (path == "/rest/svg/tasks/deploy/v1") {
-    return _tasksDeploymentDiagram->handleRequest(req, res, ctxt);
+    return _tasksDeploymentDiagram->handleRequest(req, res, processingContext);
   }
   if (path == "/rest/dot/tasks/deploy/v1") {
     res.setContentType("text/html;charset=UTF-8");
@@ -1249,7 +1227,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
         h->setImageFormat(GraphvizImageHttpHandler::Svg);
         h->setSource(gv);
-        h->handleRequest(req, res, ctxt);
+        h->handleRequest(req, res, processingContext);
         h->deleteLater();
         return true;
       }
@@ -1279,7 +1257,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   if (path == "/rest/svg/tasks/trigger/v1") {
-    return _tasksTriggerDiagram->handleRequest(req, res, ctxt);
+    return _tasksTriggerDiagram->handleRequest(req, res, processingContext);
   }
   if (path == "/rest/dot/tasks/trigger/v1") {
     res.setContentType("text/html;charset=UTF-8");
@@ -1289,7 +1267,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/rest/pf/config/v1") {
     if (req.method() == HttpRequest::POST
         || req.method() == HttpRequest::PUT)
-      _configUploadHandler->handleRequest(req, res, ctxt);
+      _configUploadHandler->handleRequest(req, res, processingContext);
     else {
       if (_configRepository) {
         QString configid = req.param("configid").trimmed();

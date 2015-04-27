@@ -28,9 +28,10 @@ void ConfigUploadHandler::setConfigRepository(
 }
 
 void ConfigUploadHandler::processUploadedFile(
-    HttpRequest req, HttpResponse res, HttpRequestContext ctxt, QFile *file) {
+    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext,
+    QFile *file) {
   Q_UNUSED(req)
-  Q_UNUSED(ctxt)
+  Q_UNUSED(processingContext)
   if (!_configRepository) {
     Log::error() << "ConfigUploadHandler::processUploadedFile called with null "
                     "ConfigRepository";

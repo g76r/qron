@@ -25,7 +25,8 @@ public:
   explicit ConfigUploadHandler(QString urlPathPrefix,
                                int maxSimultaneousUploads, QObject *parent);
   void processUploadedFile(HttpRequest req, HttpResponse res,
-                           HttpRequestContext ctxt, QFile *file);
+                           ParamsProviderMerger *processingContext,
+                           QFile *file);
   ConfigRepository *configRepository() const;
   void setConfigRepository(ConfigRepository *configRepository);
 };

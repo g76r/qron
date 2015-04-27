@@ -16,14 +16,14 @@
 <?include:header.html?>
 
     <div class="container">
-      <?value:message?>
+      <?rawvalue:message?>
       <div class="row">
         <div class="span12">
           <h2>Task <?value:11?></h2>
           <p><a class="btn btn-danger" href="requestform?taskid=<?value:11?>"><i class="icon-play"></i> Request task execution</a>
           <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
           <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
-          <?value:customactions?>
+          <?rawvalue:customactions?>
         </div>
       </div>
       <div class="row">
@@ -40,7 +40,7 @@
             <tr><th>Triggers (scheduling)</th><td><?value:28:?></td></tr>
             <tr><th>Minimum expected duration (seconds)</th><td><?value:23:?></td></tr>
             <tr><th>Maximum expected duration (seconds)</th><td><?value:24:?></td></tr>
-            <tr><th>Maximum duration before abort (seconds)</th><td><?value:27:?></td></tr>
+            <tr><th>Maximum duration before abort (seconds)</th><td><?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?></td></tr>
           </table>
         </div>
         <div class="span4">
@@ -62,7 +62,18 @@
           <p><a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="resources.html">Resources page &raquo;</a>
           <p><table class="table table-condensed table-hover">
-          <?rawvalue:params?>
+            <tr><th>Execution mean</th><td><?value:3:?></td></tr>
+            <tr><th>Execution target (host or cluster)</th><td><?value:5:?></td></tr>
+            <tr><th>Command</th><td><?value:4444:?></td></tr>
+            <tr><th>Configuration parameters</th><td><?value:7:?></td></tr>
+            <tr><th>Request-time overridable parameters</th><td><?value:25:?></td></tr>
+            <tr><th>System environment variables set (setenv)</th><td><?value:21:?></td></tr> <!-- TODO also display inherited setenv -->
+            <tr><th>System environment variables unset (unsetenv)</th><td><?value:22:?></td></tr> <!-- TODO also display inherited setenv -->
+            <tr><th>Consumed resources</th><td><?value:8:?></td></tr>
+            <tr><th>Maximum instances count at a time</th><td><?value:12:?></td></tr>
+            <tr><th>Onstart events</th><td><?value:14:?></td></tr>
+            <tr><th>Onsuccess events</th><td><?value:15:?></td></tr>
+            <tr><th>Onfailure events</th><td><?value:16:?></td></tr>
           </table>
         </div>
       </div>

@@ -48,7 +48,8 @@ static QString _uiHeaderNames[] = {
   "Has triggers with calendars", // 30
   "Workflow task",
   "Last task instance id",
-  "Additional info"
+  "Additional info",
+  "Raw config file fragment"
 };
 
 #endif // TASK_P_H
