@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -112,8 +112,7 @@ class WebConsole : public HttpHandler {
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
   ConfigUploadHandler *_configUploadHandler;
-  QString _title, _navtitle, _titlehref, _cssoverload, _customaction_taskdetail,
-  _configFilePath, _configRepoPath;
+  QString _configFilePath, _configRepoPath;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
   bool _ownUsersDatabase, _accessControlEnabled;

@@ -37,7 +37,6 @@
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0),
-  _title("Qron Web Console"), _navtitle("Qron Web Console"), _titlehref("#"),
   _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false) {
   QList<int> cols;
 
@@ -533,99 +532,57 @@ bool WebConsole::acceptRequest(HttpRequest req) {
   return true;
 }
 
-// FIXME rewrite this class
-class WebConsoleParamsProvider : public ParamsProvider {
+class WebConsoleParamsProvider : public ParamsProviderMerger {
   WebConsole *_console;
-  QString _message;
-  QHash<QString,QString> _values;
   HttpRequest _req;
+  ParamSet _globalParams;
 
 public:
-  WebConsoleParamsProvider(WebConsole *console, HttpRequest req,
-                           HttpResponse res)
-    : _console(console), _req(req) {
-    QString message = req.base64Cookie("message");
-    //qDebug() << "message cookie:" << message;
-    if (!message.isEmpty()) {
-      char alertType = 'I';
-      QString title;
-      QString alertClass;
-      if (message.size() > 1 && message.at(1) == ':') {
-        alertType = message.at(0).toLatin1();
-        message = message.mid(2);
-      }
-      switch (alertType) {
-      case 'S':
-        title = "Success:";
-        alertClass = "alert-success";
-        break;
-      case 'I':
-        title = "Info:";
-        alertClass = "alert-info";
-        break;
-      case 'E':
-        title = "Error!";
-        alertClass = "alert-error";
-        break;
-      case 'W':
-        title = "Warning!";
-        break;
-      default:
-        ;
-      }
-      _message =  "<div class=\"alert alert-block "+alertClass+"\">"
-          "<button type=\"button\" class=\"close\" data-dismiss=\"alert\">"
-          "&times;</button><h4>"+title+"</h4> "+message+"</div>";
-    } else
-      _message = "";
-    res.clearCookie("message", "/"); // FIXME move elsewhere
+  WebConsoleParamsProvider(WebConsole *console, HttpRequest req)
+    : _console(console), _req(req),
+      _globalParams(_console && _console->_scheduler
+                    ? _console->_scheduler->globalParams() : ParamSet()) {
+    append(&_globalParams);
   }
   QVariant paramValue(const QString key, const QVariant defaultValue,
                       QSet<QString> alreadyEvaluated) const {
     Q_UNUSED(alreadyEvaluated)
-    if (_values.contains(key))
-      return _values.value(key);
-    if (!_console->_scheduler) // should never happen
-      return defaultValue;
-    if (key.startsWith('%'))
-      return _console->_scheduler->globalParams().evaluate(key);
-    if (key == "title") // FIXME remove, needs support for ${webconsole.title:-Qron Web Console}
-      return _console->_title;
-    if (key == "navtitle") // FIXME remove
-      return _console->_navtitle;
-    if (key == "titlehref") // FIXME remove
-      return _console->_titlehref;
-    if (key == "cssoverload") // FIXME remove
-      return _console->_cssoverload;
-    if (key == "message")
-      return _message;
-    if (key == "startdate")
-      return _console->_scheduler->startdate().toString("yyyy-MM-dd hh:mm:ss"); // FIXME
-    if (key == "uptime")
-      return TimeFormats::toCoarseHumanReadableTimeInterval(
-            _console->_scheduler->startdate()
-            .msecsTo(QDateTime::currentDateTime()));
-    if (key == "configdate")
-      return _console->_scheduler->configdate().toString("yyyy-MM-dd hh:mm:ss"); // FIXME
-    if (key == "execcount")
-      return QString::number(_console->_scheduler->execCount());
-    if (key == "runningtaskshwm")
-      return QString::number(_console->_scheduler->runningTasksHwm());
-    if (key == "queuedtaskshwm")
-      return QString::number(_console->_scheduler->queuedTasksHwm());
-    if (key == "taskscount")
-      return QString::number(_console->_scheduler->tasksCount());
-    if (key == "tasksgroupscount")
-      return QString::number(_console->_scheduler->tasksGroupsCount());
-    if (key == "maxtotaltaskinstances")
-      return QString::number(_console->_scheduler->maxtotaltaskinstances());
-    if (key == "maxqueuedrequests")
-      return QString::number(_console->_scheduler->maxqueuedrequests());
-    if (key == "configfilepath")
-      return _console->_configFilePath;
-    if (key == "configrepopath")
-      return _console->_configRepoPath;
-    return _req.base64Cookie(key);
+    if (key.startsWith("scheduler.")) {
+      if (!_console || !_console->_scheduler) // should never happen
+        return defaultValue;
+      if (key == "scheduler.startdate") // LATER use %=date syntax
+        return _console->_scheduler->startdate()
+            .toString("yyyy-MM-dd hh:mm:ss");
+      if (key == "scheduler.uptime")
+        return TimeFormats::toCoarseHumanReadableTimeInterval(
+              _console->_scheduler->startdate()
+              .msecsTo(QDateTime::currentDateTime()));
+      if (key == "scheduler.configdate") // LATER use %=date syntax
+        return _console->_scheduler->configdate()
+            .toString("yyyy-MM-dd hh:mm:ss");
+      if (key == "scheduler.execcount")
+        return QString::number(_console->_scheduler->execCount());
+      if (key == "scheduler.runningtaskshwm")
+        return QString::number(_console->_scheduler->runningTasksHwm());
+      if (key == "scheduler.queuedtaskshwm")
+        return QString::number(_console->_scheduler->queuedTasksHwm());
+      if (key == "scheduler.taskscount")
+        return QString::number(_console->_scheduler->tasksCount());
+      if (key == "scheduler.tasksgroupscount")
+        return QString::number(_console->_scheduler->tasksGroupsCount());
+      if (key == "scheduler.maxtotaltaskinstances")
+        return QString::number(_console->_scheduler->maxtotaltaskinstances());
+      if (key == "scheduler.maxqueuedrequests")
+        return QString::number(_console->_scheduler->maxqueuedrequests());
+    } else if (key.startsWith("cookie.")) {
+      return _req.base64Cookie(key.mid(7), defaultValue.toString());
+    } else if (key.startsWith("configrepository.")) {
+      if (key == "configrepository.configfilepath")
+        return _console->_configFilePath;
+      if (key == "configrepository.configrepopath")
+        return _console->_configRepoPath;
+    }
+    return ParamsProviderMerger::paramValue(key, defaultValue, alreadyEvaluated);
   }
 };
 
@@ -646,12 +603,13 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     url.setPath("/console/adhoc.html");
     url.setQuery(QString());
     req.overrideUrl(url);
-    WebConsoleParamsProvider params(this, req, res);
-    processingContext->append(&params);
+    WebConsoleParamsProvider webconsoleParams(this, req);
+    processingContext->append(&webconsoleParams);
     processingContext->overrideParamValue(
           "content", "<h2>Permission denied</h2>");
+    res.clearCookie("message", "/");
     _wuiHandler->handleRequest(req, res, processingContext);
-    processingContext->remove(&params);
+    processingContext->remove(&webconsoleParams);
     return true;
   }
   //Log::fatal() << "hit: " << req.url().toString();
@@ -816,11 +774,12 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       url.setPath("/console/adhoc.html");
       url.setQuery(QString());
       req.overrideUrl(url);
-      WebConsoleParamsProvider params(this, req, res);
-      processingContext->append(&params);
+      WebConsoleParamsProvider webconsoleParams(this, req);
+      processingContext->append(&webconsoleParams);
       processingContext->overrideParamValue("content", message);
+      res.clearCookie("message", "/");
       _wuiHandler->handleRequest(req, res, processingContext);
-      processingContext->remove(&params);
+      processingContext->remove(&webconsoleParams);
       return true;
     } else {
       res.setBase64SessionCookie("message", "E:Scheduler is not available.",
@@ -836,7 +795,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       Task task(_scheduler->task(taskId));
       if (!task.isNull()) {
         QUrl url(req.url());
-        // FIXME requestform.html instead of adhoc.html
+        // LATER requestform.html instead of adhoc.html, after finding a way to handle foreach loop
         url.setPath("/console/adhoc.html");
         req.overrideUrl(url);
         QString form = "<div class=\"alert alert-block\">\n"
@@ -865,12 +824,13 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
             "</form>\n"
             "</div>\n";
         // <button type="submit" class="btn">Sign in</button>
-        WebConsoleParamsProvider params(this, req, res);
+        WebConsoleParamsProvider webconsoleParams(this, req);
         processingContext->overrideParamValue("content", form);
-        processingContext->append(&params);
+        processingContext->append(&webconsoleParams);
         res.setBase64SessionCookie("redirect", redirect, "/");
+        res.clearCookie("message", "/");
         _wuiHandler->handleRequest(req, res, processingContext);
-        processingContext->remove(&params);
+        processingContext->remove(&webconsoleParams);
         return true;
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
@@ -889,20 +849,17 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     if (_scheduler) {
       Task task(_scheduler->task(taskId));
       if (!task.isNull()) {
-        processingContext->overrideParamValue(
-              "taskpf", task.toPfNode().toString()); // FIXME remove
-        WebConsoleParamsProvider params(this, req, res);
+        WebConsoleParamsProvider webconsoleParams(this, req);
         TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
-        processingContext->overrideParamValue(
-              "customactions", _customaction_taskdetail); // FIXME include within WebConsoleParamsProvider
         SharedUiItemParamsProvider itemAsParams(task);
         processingContext->append(&itemAsParams);
-        processingContext->append(&params);
         processingContext->append(&pseudoParams);
+        processingContext->append(&webconsoleParams);
+        res.clearCookie("message", "/");
         _wuiHandler->handleRequest(req, res, processingContext);
-        processingContext->remove(&itemAsParams);
-        processingContext->remove(&params);
+        processingContext->remove(&webconsoleParams);
         processingContext->remove(&pseudoParams);
+        processingContext->remove(&itemAsParams);
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
@@ -937,10 +894,11 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         s.append('#').append(anchor);
       res.redirect(s);
     } else {
-      WebConsoleParamsProvider params(this, req, res);
-      processingContext->append(&params);
+      WebConsoleParamsProvider webconsoleParams(this, req);
+      processingContext->append(&webconsoleParams);
+      res.clearCookie("message", "/");
       _wuiHandler->handleRequest(req, res, processingContext);
-      processingContext->remove(&params);
+      processingContext->remove(&webconsoleParams);
     }
     return true;
   }
@@ -1481,8 +1439,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             _stepsModel, SLOT(configChanged(SchedulerConfig)));
-  } else {
-    _title = "Qron Web Console";
   }
 }
 
@@ -1577,10 +1533,6 @@ void WebConsole::alertCancellationEmited(QString alert) {
 }
 
 void WebConsole::globalParamsChanged(ParamSet globalParams) {
-  _title = globalParams.rawValue("webconsole.title", "Qron Web Console");
-  _navtitle = globalParams.rawValue("webconsole.navtitle", _title);
-  _titlehref = globalParams.rawValue("webconsole.titlehref", _titlehref);
-  _cssoverload = globalParams.rawValue("webconsole.cssoverload", "");
   QString s = globalParams.rawValue("webconsole.showaudituser.regexp");
   _showAuditUser = s.isNull()
       ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
@@ -1595,11 +1547,9 @@ void WebConsole::globalParamsChanged(ParamSet globalParams) {
       ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
   QString customactions_taskslist =
       globalParams.rawValue("webconsole.customactions.taskslist");
+  _tasksModel->setCustomActions(customactions_taskslist);
   QString customactions_instanceslist =
       globalParams.rawValue("webconsole.customactions.instanceslist");
-  _customaction_taskdetail =
-      globalParams.rawValue("webconsole.customactions.taskdetail", "");
-  _tasksModel->setCustomActions(customactions_taskslist);
   _unfinishedTaskInstancetModel->setCustomActions(customactions_instanceslist);
   _taskInstancesHistoryModel->setCustomActions(customactions_instanceslist);
 }

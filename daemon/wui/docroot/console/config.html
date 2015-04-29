@@ -15,17 +15,15 @@
 -->
 <?include:header.html?>
 
-    <div class="container">
-      <?rawvalue:message?>
       <div class="row">
         <div class="span12">
           <h2>Configuration Management Setup</h2>
           <p><table class="table table-condensed table-hover">
             <tr><th>Standalone Configuration File</th>
-                <td><?value:configfilepath?></td>
+                <td><?value:configrepository.configfilepath?></td>
                 <td><a class="btn btn-danger" href="confirm?event=reloadConfig"><i class="icon-refresh"></i>Reload this config file and activate its content</a></td></tr>
             <tr><th>On-disk Configuration Repository</th>
-                <td><?value:configrepopath?></td>
+                <td><?value:configrepository.configrepopath?></td>
                 <td>&nbsp;</td></tr>
           </table>
         </div>

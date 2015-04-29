@@ -1,12 +1,12 @@
 <html>
   <head>
-    <title><?rawvalue:title?></title>
+    <title><?=%{=default:webconsole.title:Qron Web Console}?></title>
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="css/bootstrap.min.css" rel="stylesheet">
     <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="css/qicons.css" rel="stylesheet">
     <link href="css/qron.css" rel="stylesheet">
-    <style type="text/css"><?rawvalue:cssoverload?></style>
+    <style type="text/css"><?rawvalue:webconsole.cssoverload?></style>
   </head>
   <body>
     <div class="navbar navbar-inverse navbar-static-top">
@@ -15,7 +15,7 @@
           <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
             <span class="icon-menu"></span>
           </a>
-          <a class="brand" href="<?rawvalue:titlehref?>"><?rawvalue:navtitle?></a>
+          <a class="brand" href="<?=%{=default:webconsole.titlehref:#}?>"><?=%{=default:webconsole.navtitle:webconsole.title:Qron Web Console}?></a>
           <div class="nav-collapse collapse">
             <ul class="nav">
               <li><a href="index.html">Overview</a></li>
@@ -32,4 +32,10 @@
         </div>
       </div>
     </div>
+    <div class="container">
+      <div class="alert alert-block <?=%{=switch:%{=left/%{cookie.message}/1}:S:alert-success:I:alert-info:E:alert-error:hidden}?>">
+        <button type="button" class="close" data-dismiss="alert">&times;</button>
+        <h4><?=%{=switch:%{=left/%{cookie.message}/1}:S:Success:I:Info:E:Error!:W:Warning!}?></h4>
+        <?=%{=mid:%{cookie.message}:2}?>
+      </div>
 <!-- end of header -->

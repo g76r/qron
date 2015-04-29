@@ -166,6 +166,7 @@ public:
   QString id() const { return _id; }
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "task"; }
+  PfNode toPfNode() const;
 };
 
 Task::Task() {
@@ -969,6 +970,8 @@ QVariant TaskData::uiData(int section, int role) const {
       return _lastTaskInstanceId > 0 ? _lastTaskInstanceId : QVariant();
     case 33:
       return _info;
+    case 34:
+      return toPfNode().toString();
     }
     break;
   default:
@@ -1143,50 +1146,52 @@ TaskData *Task::data() {
 
 PfNode Task::toPfNode() const {
   const TaskData *d = data();
-  if (!d)
-    return PfNode();
-  PfNode node("task", d->_localId);
+  return d ? d->toPfNode() : PfNode();
+}
+
+PfNode TaskData::toPfNode() const {
+  PfNode node("task", _localId);
 
   // description and execution attributes
-  node.setAttribute("taskgroup", d->_group.id());
-  if (!d->_label.isEmpty() && d->_label != d->_id)
-    node.setAttribute("label", d->_label);
-  if (!d->_info.isEmpty())
-    node.setAttribute("info", d->_info);
-  node.setAttribute("mean", meanAsString(d->_mean));
+  node.setAttribute("taskgroup", _group.id());
+  if (!_label.isEmpty() && _label != _id)
+    node.setAttribute("label", _label);
+  if (!_info.isEmpty())
+    node.setAttribute("info", _info);
+  node.setAttribute("mean", Task::meanAsString(_mean));
   // do not set target attribute if it is empty,
   // or in case it is implicit ("localhost" for Local mean)
-  if (!d->_target.isEmpty()
-      && (d->_target != "localhost" || !d->_mean == Local))
-    node.setAttribute("target", d->_target);
+  if (!_target.isEmpty()
+      && (_target != "localhost" || !_mean == Task::Local))
+    node.setAttribute("target", _target);
   // do not set command attribute if it is empty
   // or for means that do not use it (Workflow and DoNothing)
-  if (!d->_command.isEmpty()
-      && d->_mean != DoNothing
-      && d->_mean != Workflow)
-    node.setAttribute("command", d->_command);
+  if (!_command.isEmpty()
+      && _mean != Task::DoNothing
+      && _mean != Task::Workflow)
+    node.setAttribute("command", _command);
 
   // triggering and constraints attributes
   PfNode triggers("trigger");
-  foreach (const Trigger &ct, d->_cronTriggers)
+  foreach (const Trigger &ct, _cronTriggers)
     triggers.appendChild(ct.toPfNode());
-  foreach (const Trigger &nt, d->_noticeTriggers)
+  foreach (const Trigger &nt, _noticeTriggers)
     triggers.appendChild(nt.toPfNode());
   node.appendChild(triggers);
-  if (d->_discardAliasesOnStart != DiscardAll)
+  if (_discardAliasesOnStart != Task::DiscardAll)
     node.appendChild(
           PfNode("discardaliasesonstart",
-                 discardAliasesOnStartAsString(d->_discardAliasesOnStart)));
-  if (d->_maxInstances != 1)
+                 Task::discardAliasesOnStartAsString(_discardAliasesOnStart)));
+  if (_maxInstances != 1)
     node.appendChild(PfNode("maxinstances",
-                            QString::number(d->_maxInstances)));
-  foreach (const QString &key, d->_resources.keys())
+                            QString::number(_maxInstances)));
+  foreach (const QString &key, _resources.keys())
     node.appendChild(
           PfNode("resource",
-                 key+" "+QString::number(d->_resources.value(key))));
+                 key+" "+QString::number(_resources.value(key))));
 
   // workflow attributes
-  Step startStep = d->_steps.value(d->id()+":$start");
+  Step startStep = _steps.value(id()+":$start");
   QSet<QString> startSteps;
   foreach (const EventSubscription &es, startStep.onreadyEventSubscriptions())
     foreach (const Action &a, es.actions()) {
@@ -1199,7 +1204,7 @@ PfNode Task::toPfNode() const {
     }
   if (startSteps.size())
     ConfigUtils::writeFlagSet(&node, startSteps, "start");
-  QList<Step> steps = d->_steps.values();
+  QList<Step> steps = _steps.values();
   qSort(steps);
   foreach(const Step &step, steps) {
     const Trigger trigger = step.trigger();
@@ -1217,31 +1222,31 @@ PfNode Task::toPfNode() const {
       node.appendChild(step.toPfNode());
 
   // params and setenv attributes
-  ConfigUtils::writeParamSet(&node, d->_params, "param");
-  ConfigUtils::writeParamSet(&node, d->_setenv, "setenv");
-  ConfigUtils::writeFlagSet(&node, d->_unsetenv, "unsetenv");
+  ConfigUtils::writeParamSet(&node, _params, "param");
+  ConfigUtils::writeParamSet(&node, _setenv, "setenv");
+  ConfigUtils::writeFlagSet(&node, _unsetenv, "unsetenv");
 
   // monitoring and alerting attributes
-  if (d->_maxExpectedDuration < LLONG_MAX)
+  if (_maxExpectedDuration < LLONG_MAX)
     node.appendChild(PfNode("maxexpectedduration",
-                            QString::number(d->_maxExpectedDuration)));
-  if (d->_minExpectedDuration > 0)
+                            QString::number(_maxExpectedDuration)));
+  if (_minExpectedDuration > 0)
     node.appendChild(PfNode("minexpectedduration",
-                            QString::number(d->_minExpectedDuration)));
-  if (d->_maxDurationBeforeAbort < LLONG_MAX)
+                            QString::number(_minExpectedDuration)));
+  if (_maxDurationBeforeAbort < LLONG_MAX)
     node.appendChild(PfNode("maxdurationbeforeabort",
-                            QString::number(d->_maxDurationBeforeAbort)));
+                            QString::number(_maxDurationBeforeAbort)));
 
   // events (but workflow-specific "ontrigger" events)
-  ConfigUtils::writeEventSubscriptions(&node, d->_onstart);
-  ConfigUtils::writeEventSubscriptions(&node, d->_onsuccess);
-  ConfigUtils::writeEventSubscriptions(&node, d->_onfailure,
+  ConfigUtils::writeEventSubscriptions(&node, _onstart);
+  ConfigUtils::writeEventSubscriptions(&node, _onsuccess);
+  ConfigUtils::writeEventSubscriptions(&node, _onfailure,
                                        QStringList("onfinish"));
 
   // user interface attributes
-  if (!d->_requestFormFields.isEmpty()) {
+  if (!_requestFormFields.isEmpty()) {
     PfNode requestForm("requestform");
-    foreach (const RequestFormField &field, d->_requestFormFields)
+    foreach (const RequestFormField &field, _requestFormFields)
       requestForm.appendChild(field.toPfNode());
     node.appendChild(requestForm);
   }

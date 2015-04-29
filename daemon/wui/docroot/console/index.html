@@ -15,8 +15,6 @@
 -->
 <?include:header.html?>
 
-    <div class="container">
-      <?rawvalue:message?>
       <div class="row">
         <div class="span8">
           <h2>Currently raised alerts</h2>
@@ -28,14 +26,14 @@
         <div class="span4">
           <h2>Global status</h2>
           <p><table class="table table-condensed table-hover">
-            <tr><th>Scheduler started on</th><td><?value:startdate?></td></tr>
-            <tr><th>Uptime</th><td><?value:uptime?></td></tr>
-            <tr><th>Configuration loaded on</th><td><?value:configdate?></td></tr>
-	    <tr><th>Tasks executed since started</th><td><?value:execcount?></td></tr>
-            <tr><th>Configured tasks</th></td><td><?value:taskscount?></td></tr>
-            <tr><th>Configured tasks groups</th></td><td><?value:tasksgroupscount?></td></tr>
-            <tr><th>Running tasks (high water mark / max)</th><td><?value:runningtaskshwm?> / <?value:maxtotaltaskinstances?></td></tr>
-            <tr><th>Queued requests (high water mark / max)</th><td><?value:queuedtaskshwm?> / <?value:maxqueuedrequests?></td></tr>
+            <tr><th>Scheduler started on</th><td><?value:scheduler.startdate?></td></tr>
+            <tr><th>Uptime</th><td><?value:scheduler.uptime?></td></tr>
+            <tr><th>Configuration loaded on</th><td><?value:scheduler.configdate?></td></tr>
+	    <tr><th>Tasks executed since started</th><td><?value:scheduler.execcount?></td></tr>
+            <tr><th>Configured tasks</th></td><td><?value:scheduler.taskscount?></td></tr>
+            <tr><th>Configured tasks groups</th></td><td><?value:scheduler.tasksgroupscount?></td></tr>
+            <tr><th>Running tasks (high water mark / max)</th><td><?value:scheduler.runningtaskshwm?> / <?value:scheduler.maxtotaltaskinstances?></td></tr>
+            <tr><th>Queued requests (high water mark / max)</th><td><?value:scheduler.queuedtaskshwm?> / <?value:scheduler.maxqueuedrequests?></td></tr>
           </table>
         </div>
       </div>
