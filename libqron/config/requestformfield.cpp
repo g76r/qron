@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,7 +13,7 @@
  */
 #include "requestformfield.h"
 #include <QSharedData>
-#include <QRegExp>
+#include <QRegularExpression>
 #include <QPair>
 #include "pf/pfnode.h"
 #include "log/log.h"
@@ -24,9 +24,7 @@
 class RequestFormFieldData : public QSharedData {
 public:
   QString _id, _label, _placeholder, _suggestion;
-  QRegExp _format;
-  QString _appendcommand;
-  ParamSet _setenv;
+  QRegularExpression _format;
 };
 
 RequestFormField::RequestFormField() : d(new RequestFormFieldData) {
@@ -48,14 +46,18 @@ RequestFormField::RequestFormField(PfNode node) {
   d->_placeholder = node.attribute("placeholder", d->_label);
   d->_suggestion = node.attribute("suggestion");
   QString format = node.attribute("format");
-  d->_format = QRegExp(format);
-  if (!d->_format.isValid()) {
-    Log::error() << "request form field with invalid format specification: "
-                 << node.toString();
-    return;
+  if (!format.isEmpty()) {
+    if (!format.startsWith('^'))
+      format.prepend('^');
+    if (!format.endsWith('$'))
+      format.append('$');
+    d->_format = QRegularExpression(format);
+    if (!d->_format.isValid()) {
+      Log::error() << "request form field with invalid format specification: "
+                   << d->_format.errorString() << " : " << node.toString();
+      return;
+    }
   }
-  d->_appendcommand = node.attribute("appendcommand");
-  ConfigUtils::loadParamSet(node, &d->_setenv, "setenv");
   this->d = d;
   //Log::fatal() << "RequestFormField: " << node.toString() << " " << toHtml();
 }
@@ -99,32 +101,18 @@ QString RequestFormField::toHtmlHumanReadableDescription() const {
     if (d->_format.isValid())
       v.append("<dt>format</dt><dd>")
           .append(HtmlUtils::htmlEncode(d->_format.pattern())).append("</dd>");
-    if (!d->_setenv.isEmpty()) {
-      v.append("<dt>setenv</dt><dd>")
-          .append(HtmlUtils::htmlEncode(d->_setenv.toString()))
-          .append("</dd>");
-    }
-    if (!d->_appendcommand.isEmpty())
-      v.append("<dt>appendcommand</dt><dd>")
-          .append(HtmlUtils::htmlEncode(d->_appendcommand)).append("</dd>");
     v.append("</dl>");
   }
   return v;
 }
 
 bool RequestFormField::validate(QString value) const {
-  return d && d->_format.exactMatch(value);
+  return d && d->_format.match(value).hasMatch();
 }
 
 void RequestFormField::apply(QString value, TaskInstance *request) const {
   if (request && d && !value.isNull()) {
     request->overrideParam(d->_id, value);
-    QString command(request->command());
-    if (!d->_appendcommand.isEmpty())
-      command.append(' ').append(d->_appendcommand);
-    request->overrideCommand(command);
-    foreach (const QString &key, d->_setenv.keys())
-      request->overrideSetenv(key, d->_setenv.value(key));
   }
 }
 
@@ -150,10 +138,7 @@ PfNode RequestFormField::toPfNode() const {
     node.appendChild(PfNode("placeholder", d->_placeholder));
   if (!d->_suggestion.isEmpty())
     node.appendChild(PfNode("suggestion", d->_suggestion));
-  if (!d->_format.isEmpty() && d->_format.isValid())
+  if (d->_format.isValid() && !d->_format.pattern().isEmpty())
     node.appendChild(PfNode("format", d->_format.pattern()));
-  if (!d->_appendcommand.isEmpty())
-    node.appendChild(PfNode("appendcommand", d->_appendcommand));
-  ConfigUtils::writeParamSet(&node, d->_setenv, "setenv");
   return node;
 }

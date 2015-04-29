@@ -91,7 +91,8 @@ void Executor::doExecute(TaskInstance instance) {
 void Executor::localMean() {
   QStringList cmdline;
   TaskInstancePseudoParamsProvider ppp = _instance.pseudoParams();
-  cmdline = _instance.params().splitAndEvaluate(_instance.command(), &ppp);
+  cmdline = _instance.params()
+      .splitAndEvaluate(_instance.task().command(), &ppp);
   Log::info(_instance.task().id(), _instance.idAsLong())
       << "exact command line to be executed (locally): " << cmdline.join(" ");
   QProcessEnvironment sysenv;
@@ -103,7 +104,8 @@ void Executor::localMean() {
 void Executor::sshMean() {
   QStringList cmdline, sshCmdline;
   TaskInstancePseudoParamsProvider ppp = _instance.pseudoParams();
-  cmdline = _instance.params().splitAndEvaluate(_instance.command(), &ppp);
+  cmdline = _instance.params()
+      .splitAndEvaluate(_instance.task().command(), &ppp);
   Log::info(_instance.task().id(), _instance.idAsLong())
       << "exact command line to be executed (through ssh on host "
       << _instance.target().hostname() <<  "): " << cmdline.join(" ");
@@ -278,15 +280,15 @@ void Executor::readyReadStandardOutput() {
 }
 
 void Executor::httpMean() {
-  QString command = _instance.command();
+  QString command = _instance.task().command();
   if (command.size() && command.at(0) == '/')
     command = command.mid(1);
   QString url = "http://"+_instance.target().hostname()+command;
   TaskInstancePseudoParamsProvider ppp = _instance.pseudoParams();
   ParametrizedNetworkRequest networkRequest(
         url, _instance.params(), &ppp, _instance.task().id(), _instance.idAsLong());
-  foreach (QString name, _instance.setenv().keys()) {
-    const QString expr(_instance.setenv().rawValue(name));
+  foreach (QString name, _instance.task().setenv().keys()) {
+    const QString expr(_instance.task().setenv().rawValue(name));
     if (name.endsWith(":")) // ignoring : at end of header name
       name.chop(1);
     name.replace(QRegExp("[^a-zA-Z_0-9\\-]+"), "_");
@@ -513,8 +515,8 @@ void Executor::prepareEnv(QProcessEnvironment *sysenv,
   }
   // then build setenv evaluated paramset that may be used apart from merging
   // into sysenv
-  foreach (QString key, _instance.setenv().keys()) {
-    const QString expr(_instance.setenv().rawValue(key));
+  foreach (QString key, _instance.task().setenv().keys()) {
+    const QString expr(_instance.task().setenv().rawValue(key));
     /*Log::debug(_instance.task().id(), _instance.id())
         << "setting environment variable " << key << "="
         << expr << " " << _instance.params().keys(false).size() << " "

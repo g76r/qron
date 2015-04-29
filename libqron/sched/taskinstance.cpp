@@ -37,11 +37,9 @@ public:
   quint64 _id, _groupId;
   QString _idAsString;
   Task _task;
-  ParamSet _params;
+  ParamSet _overridingParams;
   QDateTime _submission;
   bool _force;
-  QString _command;
-  ParamSet _setenv;
   TaskInstance _workflowInstanceTask;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
@@ -61,17 +59,16 @@ public:
   mutable Host _target;
   mutable bool _abortable;
 
-  TaskInstanceData(Task task, ParamSet params, bool force,
+  TaskInstanceData(Task task, ParamSet overridingParams, bool force,
                    TaskInstance workflowInstanceTask, quint64 groupId = 0)
     : _id(newId()), _groupId(groupId ? groupId : _id),
       _idAsString(QString::number(_id)),
-      _task(task), _params(params),
+      _task(task), _overridingParams(overridingParams),
       _submission(QDateTime::currentDateTime()), _force(force),
-      _command(task.command()), _setenv(task.setenv()),
       _workflowInstanceTask(workflowInstanceTask),
       _start(LLONG_MIN), _end(LLONG_MIN),
       _success(false), _returnCode(0), _abortable(false) {
-    _params.setParent(task.params()); }
+    _overridingParams.setParent(task.params()); }
   TaskInstanceData() : _id(0), _groupId(0), _force(false),
       _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
     _abortable(false) { }
@@ -132,7 +129,6 @@ TaskInstance::TaskInstance() {
 TaskInstance::TaskInstance(const TaskInstance &other) : SharedUiItem(other) {
 }
 
-// TODO ensure that overridingParams is null when empty, since there are plenty of TaskInstances in memory
 TaskInstance::TaskInstance(
     Task task, bool force, TaskInstance workflowInstanceTask,
     ParamSet overridingParams)
@@ -154,13 +150,13 @@ Task TaskInstance::task() const {
 
 ParamSet TaskInstance::params() const {
   const TaskInstanceData *d = data();
-  return d ? d->_params : ParamSet();
+  return d ? d->_overridingParams : ParamSet();
 }
 
 void TaskInstance::overrideParam(QString key, QString value) {
   TaskInstanceData *d = data();
   if (d)
-    d->_params.setValue(key, value);
+    d->_overridingParams.setValue(key, value);
 }
 
 quint64 TaskInstance::idAsLong() const {
@@ -318,11 +314,6 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
   return defaultValue;
 }
 
-ParamSet TaskInstance::setenv() const {
-  const TaskInstanceData *d = data();
-  return d ? d->_setenv : ParamSet();
-}
-
 void TaskInstance::setTask(Task task) {
   TaskInstanceData *d = data();
   if (d)
@@ -349,23 +340,6 @@ QString TaskInstance::statusAsString(
     return "canceled";
   }
   return "unknown";
-}
-
-QString TaskInstance::command() const {
-  const TaskInstanceData *d = data();
-  return d ? d->_command : QString();
-}
-
-void TaskInstance::overrideCommand(QString command) {
-  TaskInstanceData *d = data();
-  if (d)
-    d->_command = command;
-}
-
-void TaskInstance::overrideSetenv(QString key, QString value) {
-  TaskInstanceData *d = data();
-  if (d)
-    d->_setenv.setValue(key, value);
 }
 
 bool TaskInstance::abortable() const {

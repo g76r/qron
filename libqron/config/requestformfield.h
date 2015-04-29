@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,9 +24,7 @@ class TaskInstance;
 class ParamSet;
 
 /** Request-time user-overridable task parameter.
- * Define an actual task parameter along with user interface hints and
- * other-than-actual-parameter ways to affect the task execution (e.g. a
- * RequestFormField can change the value of TaskInstance::command()). */
+ * Define an overridable task parameter along with user interface hints. */
 class LIBQRONSHARED_EXPORT RequestFormField {
   QSharedDataPointer<RequestFormFieldData> d;
 
