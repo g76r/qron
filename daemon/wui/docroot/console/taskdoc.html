@@ -21,6 +21,7 @@
           <p><a class="btn btn-danger" href="requestform?taskid=<?value:11?>"><i class="icon-play"></i> Request task execution</a>
           <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
           <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
+          <a class="btn btn-info" href="../rest/txt/log/all/v1?regexp=^[^ ]* <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
           <?rawvalue:webconsole.customactions.taskdetail:?>
         </div>
       </div>
@@ -43,7 +44,7 @@
         </div>
         <div class="span4">
           <h3>Task Status</h3>
-          <p><a class="btn btn-primary" href="../rest/txt/log/all/v1?regexp=^[^ ]* <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
+          <p><a class="btn invisible" href="#">&nbsp;</a>
           <p><table class="table table-condensed table-hover">
              <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="icon-block"></i>&nbsp;false}?></td></tr>
              <tr><th>Last execution status</th><td><?value:19:?></td></tr>
@@ -80,7 +81,6 @@
           <h3>Task Workflow Diagram</h3>
           <p><a class="btn btn-primary" href="../rest/svg/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> DOT</a>
-          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <div id="workflowDiagram" style="display: table; margin: 0 auto;">
             <noscript><img src="../rest/svg/tasks/workflow/v1?taskid=<?value:11?>" alt="Task Workflow Diagram"/></noscript>
           </div>
