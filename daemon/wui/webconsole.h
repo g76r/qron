@@ -47,6 +47,8 @@
 #include "ui/configsmodel.h"
 #include "ui/htmlschedulerconfigitemdelegate.h"
 #include "ui/confighistorymodel.h"
+#include "thread/atomicvalue.h"
+#include <QRegularExpression>
 
 class QThread;
 
@@ -116,7 +118,8 @@ class WebConsole : public HttpHandler {
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
   bool _ownUsersDatabase, _accessControlEnabled;
-  QRegExp _showAuditEvent, _hideAuditEvent, _showAuditUser, _hideAuditUser;
+  AtomicValue<QRegularExpression> _showAuditEvent, _hideAuditEvent,
+  _showAuditUser, _hideAuditUser;
 
 public:
   WebConsole();

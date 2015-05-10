@@ -90,9 +90,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new CalendarsModel(this);
   _stepsModel= new StepsModel(this);
-  _warningLogModel = new LogModel(this, Log::Warning, LOG_MAXROWS);
-  _infoLogModel = new LogModel(this, Log::Info, LOG_MAXROWS);
-  _auditLogModel = new LogModel(this, Log::Info, LOG_MAXROWS, "AUDIT ");
+   // LATER delete logmodels after both WebConsole and their Loggers are destroyed
+  _warningLogModel = new LogModel(0, Log::Warning, LOG_MAXROWS);
+  _infoLogModel = new LogModel(0, Log::Info, LOG_MAXROWS);
+  _auditLogModel = new LogModel(0, Log::Info, LOG_MAXROWS, "AUDIT ");
   _configsModel = new ConfigsModel(this);
   _configHistoryModel = new ConfigHistoryModel(this);
 
@@ -706,10 +707,13 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       message = "E:Scheduler is not available.";
     if (message.startsWith("E:") || message.startsWith("W:"))
       res.setStatus(500); // LATER use more return codes
+
     if (event.contains(_showAuditEvent) // empty regexps match any string
-        && (_hideAuditEvent.isEmpty() || !event.contains(_hideAuditEvent))
+        && (_hideAuditEvent.data().pattern().isEmpty()
+            || !event.contains(_hideAuditEvent))
         && userid.contains(_showAuditUser)
-        && (_hideAuditUser.isEmpty() || !userid.contains(_hideAuditUser))) {
+        && (_hideAuditUser.data().pattern().isEmpty()
+            || !userid.contains(_hideAuditUser))) {
       if (auditInstanceIds.isEmpty())
         auditInstanceIds << taskInstanceId;
       // LATER add source IP address(es) to audit
@@ -1312,8 +1316,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
     disconnect(_scheduler, &Scheduler::taskChanged,
                _tasksModel, &SharedUiItemsModel::createOrUpdateItem);
-    disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
-               _globalParamsModel, SLOT(paramsChanged(ParamSet)));
+    //    disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
+    //               _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
                _globalSetenvModel, SLOT(paramsChanged(ParamSet)));
     disconnect(_scheduler, SIGNAL(globalUnsetenvChanged(ParamSet)),
@@ -1385,8 +1389,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
     connect(_scheduler, &Scheduler::taskChanged,
             _tasksModel, &SharedUiItemsModel::createOrUpdateItem);
-    connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
-            _globalParamsModel, SLOT(paramsChanged(ParamSet)));
+    //    connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
+    //            _globalParamsModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
             _globalSetenvModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler, SIGNAL(globalUnsetenvChanged(ParamSet)),
@@ -1535,16 +1539,16 @@ void WebConsole::alertCancellationEmited(QString alert) {
 void WebConsole::globalParamsChanged(ParamSet globalParams) {
   QString s = globalParams.rawValue("webconsole.showaudituser.regexp");
   _showAuditUser = s.isNull()
-      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
+      ? QRegularExpression() : QRegularExpression(s);
   s = globalParams.rawValue("webconsole.hideaudituser.regexp");
   _hideAuditUser = s.isNull()
-      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
+      ? QRegularExpression() : QRegularExpression(s);
   s = globalParams.rawValue("webconsole.showauditevent.regexp");
   _showAuditEvent = s.isNull()
-      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
+      ? QRegularExpression() : QRegularExpression(s);
   s = globalParams.rawValue("webconsole.hideauditevent.regexp");
   _hideAuditEvent = s.isNull()
-      ? QRegExp() : QRegExp(s, Qt::CaseSensitive, QRegExp::RegExp2);
+      ? QRegularExpression() : QRegularExpression(s);
   QString customactions_taskslist =
       globalParams.rawValue("webconsole.customactions.taskslist");
   _tasksModel->setCustomActions(customactions_taskslist);

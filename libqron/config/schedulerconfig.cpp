@@ -58,7 +58,6 @@ public:
   AlerterConfig _alerterConfig;
   AccessControlConfig _accessControlConfig;
   QList<LogFile> _logfiles;
-  QList<Logger*> _loggers;
   QDateTime _lastLoadTime;
   mutable QMutex _mutex;
   mutable QString _hash;
@@ -78,7 +77,7 @@ public:
       _namedCalendars(other._namedCalendars),
       _alerterConfig(other._alerterConfig),
       _accessControlConfig(other._accessControlConfig),
-      _logfiles(other._logfiles), _loggers(other._loggers),
+      _logfiles(other._logfiles),
       _lastLoadTime(other._lastLoadTime), _hash(other._hash) {
   }
   QVariant uiData(int section, int role) const;
@@ -123,7 +122,6 @@ static inline void recordTaskActionLinks(
 SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
                                          bool applyLogConfig) {
   QList<RequestTaskActionLink> requestTaskActionLinks;
-  QList<Logger*> loggers;
   QList<LogFile> logfiles;
   foreach (PfNode node, root.childrenByName("log")) {
     // LATER move that parsing code to LogFile
@@ -139,12 +137,10 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
     } else {
       Log::debug() << "adding logger " << node.toPf();
       Log::Severity minimumSeverity = Log::severityFromString(level);
-      loggers.append(new FileLogger(filename, minimumSeverity, buffered));
       logfiles.append(LogFile(filename, minimumSeverity, buffered));
     }
   }
   _logfiles = logfiles;
-  _loggers = loggers;
   if (applyLogConfig)
     this->applyLogConfig();
   _unsetenv.clear();
@@ -509,11 +505,6 @@ QList<LogFile> SchedulerConfig::logfiles() const {
   return d ? d->_logfiles : QList<LogFile>();
 }
 
-QList<Logger*> SchedulerConfig::loggers() const {
-  const SchedulerConfigData *d = data();
-  return d ? d->_loggers : QList<Logger*>();
-}
-
 void SchedulerConfig::changeTask(Task newItem, Task oldItem) {
   SchedulerConfigData *d = data();
   if (!d)
@@ -684,7 +675,14 @@ QVariant SchedulerConfigData::uiData(int section, int role) const {
 }
 
 void SchedulerConfigData::applyLogConfig() const {
-  Log::replaceLoggersPlusConsole(Log::Fatal, _loggers);
+  QList<Logger*> loggers;
+  foreach (LogFile logfile, _logfiles) {
+    loggers.append(new FileLogger(
+                     logfile.pathPattern(), logfile.minimumSeverity(),
+                     logfile.buffered()));
+  }
+  // LATER make console severity log level a parameter
+  Log::replaceLoggersPlusConsole(Log::Fatal, loggers, true);
 }
 
 void SchedulerConfig::applyLogConfig() const {

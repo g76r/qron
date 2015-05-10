@@ -73,7 +73,6 @@ public:
   AlerterConfig alerterConfig() const;
   AccessControlConfig accessControlConfig() const;
   QList<LogFile> logfiles() const;
-  QList<Logger*> loggers() const;
   inline bool operator==(const SchedulerConfig &other) const {
     return hash() == other.hash(); }
   inline bool operator<(const SchedulerConfig &other) const {
