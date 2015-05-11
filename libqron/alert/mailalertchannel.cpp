@@ -231,6 +231,26 @@ void MailAlertChannel::processQueue(QVariant address) {
               .append(s);
         }
       }
+      text.append("\r\nFormer alerts canceled:\r\n\r\n");
+      html.append("</ul>\n<p>Former alerts canceled:\n<ul>\n");
+      if (queue->_cancellations.isEmpty()) {
+        text.append("(none)\r\n");
+        html.append("<li>(none)\n");
+      } else {
+        foreach (Alert alert, queue->_cancellations) {
+          s = alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+          s.append(" ").append(alert.rule().cancelMessage(alert))
+              .append("\r\n");
+          text.append(s);
+          QString style =
+              _config.params()
+              .value("mail.cancelstyle."+queue->_address,
+                     _config.params().value("mail.cancelstyle",
+                                            "background:#8080ff"));
+          html.append("<li style=\"").append(style).append("\">")
+              .append(s);
+        }
+      }
       text.append("\r\nAlerts reminders (alerts still raised):\r\n\r\n");
       html.append("</ul>\n<p>Alerts reminders (alerts still raised):\n<ul>\n");
       if (reminders.isEmpty()) {
@@ -251,43 +271,23 @@ void MailAlertChannel::processQueue(QVariant address) {
               .append(s);
         }
       }
-      text.append("\r\nFormer alerts canceled:\r\n\r\n");
-      html.append("</ul>\n<p>Former alerts canceled:\n<ul>\n");
-      if (queue->_cancellations.isEmpty()) {
-        text.append("(none)\r\n");
-        html.append("<li>(none)\n");
-      } else {
-        foreach (Alert alert, queue->_cancellations) {
-          s = alert.datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
-          s.append(" ").append(alert.rule().cancelMessage(alert))
-              .append("\r\n");
-          text.append(s);
-          QString style =
-              _config.params()
-              .value("mail.cancelstyle."+queue->_address,
-                     _config.params().value("mail.cancelstyle",
-                                            "background:#8080ff"));
-          html.append("<li style=\"").append(style).append("\">")
-              .append(s);
-        }
-        // LATER clarify this message
-        text.append(
-              "\r\n"
-              "Please note that there is a delay between alert cancellation\r\n"
-              "request (timestamps above) and the actual time this mail is\r\n"
-              "sent (send timestamp of the mail).\r\n");
-        html.append(
-              "</ul>\n"
-              "<p>Please note that there is a delay between alert cancellation "
-              "request (timestamps above) and the actual time this mail is "
-              "sent (send timestamp of the mail).\n");
-        if (_alerter) {
-          s = "This is the 'canceldelay' parameter, currently configured to "
-              +QString::number(_config.cancelDelay()*.001)
-              +" seconds.";
-          text.append(s);
-          html.append("<p>").append(s);
-        }
+      // LATER clarify this message
+      text.append(
+            "\r\n"
+            "Please note that there is a delay between alert cancellation\r\n"
+            "request (timestamps above) and the actual time this mail is\r\n"
+            "sent (send timestamp of the mail).\r\n");
+      html.append(
+            "</ul>\n"
+            "<p>Please note that there is a delay between alert cancellation "
+            "request (timestamps above) and the actual time this mail is "
+            "sent (send timestamp of the mail).\n");
+      if (_alerter) {
+        s = "This is the 'canceldelay' parameter, currently configured to "
+            +QString::number(_config.cancelDelay()*.001)
+            +" seconds.";
+        text.append(s);
+        html.append("<p>").append(s);
       }
       html.append("</body></html>\n");
       // mime handling
