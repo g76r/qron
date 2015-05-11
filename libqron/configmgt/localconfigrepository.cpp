@@ -124,6 +124,10 @@ void LocalConfigRepository::openRepository(QString basePath) {
     QList<ConfigHistoryEntry> history;
     for (int i = 0; i < rowCount; ++i) {
       const QStringList row = _historyLog->row(i);
+      if (row.size() < 3) {
+        Log::error() << "ignoring invalid config history row #" << i;
+        continue;
+      }
       QDateTime ts = QDateTime::fromString(row[0], Qt::ISODate);
       history.append(ConfigHistoryEntry(QString::number(i), ts, row[1],
                      row[2]));
