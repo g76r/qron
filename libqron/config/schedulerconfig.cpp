@@ -678,7 +678,7 @@ void SchedulerConfigData::applyLogConfig() const {
   QList<Logger*> loggers;
   foreach (LogFile logfile, _logfiles) {
     loggers.append(new FileLogger(
-                     logfile.pathPattern(), logfile.minimumSeverity(),
+                     logfile.pathPattern(), logfile.minimumSeverity(), 60,
                      logfile.buffered()));
   }
   // LATER make console severity log level a parameter
