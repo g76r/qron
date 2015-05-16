@@ -90,10 +90,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new CalendarsModel(this);
   _stepsModel= new StepsModel(this);
-   // LATER delete logmodels after both WebConsole and their Loggers are destroyed
-  _warningLogModel = new LogModel(0, Log::Warning, LOG_MAXROWS);
-  _infoLogModel = new LogModel(0, Log::Info, LOG_MAXROWS);
-  _auditLogModel = new LogModel(0, Log::Info, LOG_MAXROWS, "AUDIT ");
+  _warningLogModel = new LogModel(this, Log::Warning, LOG_MAXROWS);
+  _infoLogModel = new LogModel(this, Log::Info, LOG_MAXROWS);
+  _auditLogModel = new LogModel(this, Log::Info, LOG_MAXROWS, "AUDIT ");
   _configsModel = new ConfigsModel(this);
   _configHistoryModel = new ConfigHistoryModel(this);
 
@@ -523,6 +522,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
+
+  // unparenting models that must not be deleted automaticaly when deleting
+  // this
+  // note that they must be children until there to be moved to the right thread
+  _warningLogModel->setParent(0);
+  _infoLogModel->setParent(0);
+  _auditLogModel->setParent(0);
+  // LATER find a safe way to delete logmodels asynchronously without crashing log framework
 }
 
 WebConsole::~WebConsole() {
