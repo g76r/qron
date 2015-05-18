@@ -970,8 +970,6 @@ QVariant TaskData::uiData(int section, int role) const {
       return _lastTaskInstanceId > 0 ? _lastTaskInstanceId : QVariant();
     case 33:
       return _info;
-    case 34:
-      return toPfNode().toString();
     }
     break;
   default:

@@ -861,6 +861,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       Task task(_scheduler->task(taskId));
       if (!task.isNull()) {
         WebConsoleParamsProvider webconsoleParams(this, req);
+        webconsoleParams.overrideParamValue(
+              "pfconfig", task.toPfNode().toString());
         TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
         SharedUiItemParamsProvider itemAsParams(task);
         processingContext->append(&itemAsParams);
