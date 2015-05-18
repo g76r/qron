@@ -73,7 +73,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _alertRulesModel = new AlertRulesModel(this);
   // memory cost: about 1.5 kB / instance, e.g. 30 MB for 20000 instances
   // (this is an empirical measurement and thus includes model + csv view
-  _taskInstancesHistoryModel = new TaskInstancesModel(this, 20000);
+  _taskInstancesHistoryModel = new TaskInstancesModel(this, 500);
   _unfinishedTaskInstancetModel = new TaskInstancesModel(this, 1000, false);
   _tasksModel = new TasksModel(this);
   _mainTasksModel = new QSortFilterProxyModel(this);
