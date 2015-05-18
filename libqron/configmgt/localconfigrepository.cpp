@@ -166,6 +166,11 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
   QMutexLocker locker(&_mutex);
   QString id = config.hash();
   if (!id.isNull()) {
+    /*if (_configs.contains(id)) {
+      Log::info() << "requested to add an already known config: do "
+                     "nothing: " << id;
+      return id;
+    }*/
     if (!_basePath.isEmpty()) {
       QSaveFile f(_basePath+"/configs/"+id);
       if (!f.open(QIODevice::WriteOnly|QIODevice::Truncate)
@@ -187,14 +192,18 @@ QString LocalConfigRepository::addConfig(SchedulerConfig config) {
 
 bool LocalConfigRepository::activateConfig(QString id) {
   QMutexLocker locker(&_mutex);
+  //qDebug() << "activateConfig" << id << _activeConfigId;
   SchedulerConfig config = _configs.value(id);
   if (config.isNull()) {
     Log::error() << "cannote activate config since it is not found in "
                     "repository: " << id;
     return false;
   }
-  // LATER should avoid activating for real when already active ?
-  //if (id != _activeConfigId) {
+  /*if (_activeConfigId == id) {
+    Log::info() << "requested to activate the already active config: do "
+                   "nothing: " << id;
+    return true;
+  }*/
   if (!_basePath.isEmpty()) {
     QSaveFile f(_basePath+"/active");
     if (!f.open(QIODevice::WriteOnly|QIODevice::Truncate)
@@ -205,12 +214,11 @@ bool LocalConfigRepository::activateConfig(QString id) {
                        ? "" : " : "+f.errorString());
       return false;
     }
-    recordInHistory("activateConfig", id);
   }
+  recordInHistory("activateConfig", id);
   _activeConfigId = id;
   config.applyLogConfig();
   emit configActivated(_activeConfigId, config);
-  //}
   return true;
 }
 
@@ -234,8 +242,8 @@ bool LocalConfigRepository::removeConfig(QString id) {
                        ? "" : " : "+f.errorString());
       return false;
     }
-    recordInHistory("removeConfig", id);
   }
+  recordInHistory("removeConfig", id);
   _configs.remove(id);
   emit configRemoved(id);
   return true;
@@ -246,9 +254,11 @@ void LocalConfigRepository::recordInHistory(
   QDateTime now = QDateTime::currentDateTime();
   ConfigHistoryEntry entry(QString::number(_historyLog->rowCount()), now, event,
                            configId);
-  QStringList row(now.toString(Qt::ISODate));
-  row.append(event);
-  row.append(configId);
-  _historyLog->appendRow(row);
+  if (_historyLog->isOpen()) {
+    QStringList row(now.toString(Qt::ISODate));
+    row.append(event);
+    row.append(configId);
+    _historyLog->appendRow(row);
+  }
   emit historyEntryAppended(entry);
 }
