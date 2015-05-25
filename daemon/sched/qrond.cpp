@@ -21,6 +21,7 @@
 #include <unistd.h>
 #include "httpd/pipelinehttphandler.h"
 #include <stdlib.h>
+#include <time.h>
 #ifdef Q_OS_UNIX
 #include <signal.h>
 #endif
@@ -199,7 +200,7 @@ static void signal_handler(int signal_number) {
 #endif
 
 int main(int argc, char *argv[]) {
-  srandom(time(0));
+  srand(time(0));
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   Log::addConsoleLogger(Log::Info, true);
