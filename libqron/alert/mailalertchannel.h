@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -37,7 +37,7 @@ class LIBQRONSHARED_EXPORT MailAlertChannel : public AlertChannel {
 public:
   explicit MailAlertChannel(QObject *parent, QPointer<Alerter> alerter);
   ~MailAlertChannel();
-  void doSendMessage(Alert alert, MessageType type);
+  void doNotifyAlert(Alert alert);
   void setConfig(AlerterConfig config);
 
 private slots:

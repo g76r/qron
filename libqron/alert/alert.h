@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,31 +16,67 @@
 
 #include "libqron_global.h"
 #include <QSharedDataPointer>
-#include "config/alertrule.h"
 #include <QDateTime>
 #include "util/paramsprovider.h"
+#include "modelview/shareduiitem.h"
 
 class AlertData;
+class AlertPseudoParamsProvider;
+class AlertRule;
 
 /** Class used to represent alert data during emission, in or between Alerter
  * and AlertChannel classes. */
-class LIBQRONSHARED_EXPORT Alert : public ParamsProvider {
-  QSharedDataPointer<AlertData> d;
+class LIBQRONSHARED_EXPORT Alert : public SharedUiItem {
+public:
+  enum AlertStatus { Nonexistent, Raising, MaybeRaising, Raised, Canceling,
+                     Canceled };
+
+  Alert();
+  explicit Alert(QString id,
+                 QDateTime riseDate = QDateTime::currentDateTime());
+  Alert(const Alert&other);
+  Alert &operator=(const Alert &other) {
+    SharedUiItem::operator=(other); return *this; }
+  Alert::AlertStatus status() const;
+  void setStatus(Alert::AlertStatus status);
+  static Alert::AlertStatus statusFromString(QString string);
+  static QString statusToString(Alert::AlertStatus status);
+  QString statusToString() const { return statusToString(status()); }
+  /// Initial raise() call date, before raising period.
+  QDateTime riseDate() const;
+  /// End of raising, may_rise or canceling delays, depending on status.
+  QDateTime dueDate() const;
+  void setDueDate(QDateTime dueDate);
+  AlertPseudoParamsProvider pseudoParams() const;
+  /** Timestamp a raised alert was last reminded.
+   *
+   * Only set by channels which handle reminders, not by Alerter. */
+  QDateTime lastRemindedDate() const;
+  void setLastRemindedDate(QDateTime lastRemindedDate);
+  /** Rule for which an Alert is notified to an AlertChannel.
+   *
+   * Set by Alerter just before notifying an AlertChannel. */
+  AlertRule rule() const;
+  void setRule(AlertRule rule);
+
+private:
+  AlertData *data();
+  const AlertData *data() const {
+    return (const AlertData*)SharedUiItem::data(); }
+};
+
+/** ParamsProvider wrapper for pseudo params. */
+class LIBQRONSHARED_EXPORT AlertPseudoParamsProvider : public ParamsProvider {
+  Alert _alert;
 
 public:
-  Alert();
-  Alert(QString id, AlertRule rule,
-        QDateTime datetime = QDateTime::currentDateTime());
-  Alert(const Alert&);
-  Alert &operator=(const Alert &other);
-  /** Compare id()'s */
-  bool operator<(const Alert &other) const;
-  ~Alert();
-  QString id() const;
-  AlertRule rule() const;
-  QDateTime datetime() const;
+  inline AlertPseudoParamsProvider(Alert alert) : _alert(alert) { }
   QVariant paramValue(QString key, QVariant defaultValue = QVariant(),
                       QSet<QString> alreadyEvaluated = QSet<QString>()) const;
 };
+
+inline AlertPseudoParamsProvider Alert::pseudoParams() const {
+  return AlertPseudoParamsProvider(*this);
+}
 
 #endif // ALERT_H

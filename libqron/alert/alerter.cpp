@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -50,7 +50,6 @@ Alerter::Alerter() : QObject(0), _thread(new QThread) {
   qRegisterMetaType<ParamSet>("ParamSet");
   qRegisterMetaType<QDateTime>("QDateTime");
   qRegisterMetaType<QStringList>("QStringList");
-  qRegisterMetaType<AlertChannel::MessageType>("AlertChannel::MessageType");
 }
 
 Alerter::~Alerter() {
@@ -72,99 +71,180 @@ void Alerter::doSetConfig(AlerterConfig config) {
   emit configChanged(_config);
 }
 
-void Alerter::emitAlert(QString alert) {
-  QMetaObject::invokeMethod(this, "doEmitAlert", Q_ARG(QString, alert),
-                            Q_ARG(AlertChannel::MessageType,
-                                  AlertChannel::Emit));
+void Alerter::emitAlert(QString alertId) {
+  QMetaObject::invokeMethod(this, "doEmitAlert", Q_ARG(QString, alertId));
 }
 
-void Alerter::doEmitAlert(QString alert, AlertChannel::MessageType type,
-                          QDateTime date) {
-  Log::debug() << "emiting alert " << alert << " " << type;
-  int n = 0;
-  foreach (AlertRule rule, _config.rules()) {
-    if (rule.patternRegExp().exactMatch(alert)) {
-      QString channelName = rule.channelName();
-      //Log::debug() << "alert matching rule #" << n;
-      if (channelName == "stop")
-        break;
-      QPointer<AlertChannel> channel = _channels.value(channelName);
-      if (channel) {
-        channel.data()->sendMessage(Alert(alert, rule, date), type);
-      }
-    }
-    ++n;
-  }
-  if (type == AlertChannel::Cancel) {
-    _soonCanceledAlerts.remove(alert);
-    emit alertCanceled(alert);
-  } else {
-    emit alertEmited(alert);
-  }
-}
-
-void Alerter::raiseAlert(QString alert) {
-  QMetaObject::invokeMethod(this, "doRaiseAlert", Q_ARG(QString, alert));
-}
-
-void Alerter::doRaiseAlert(QString alert) {
-  if (!_raisedAlerts.contains(alert)) {
-    if (_soonCanceledAlerts.contains(alert)) {
-      _raisedAlerts.insert(alert, _soonCanceledAlerts.value(alert));
-      _soonCanceledAlerts.remove(alert);
-      emit alertCancellationUnscheduled(alert);
-      Log::debug() << "alert is no longer scheduled for cancellation " << alert
-                   << " (it was raised again within cancel delay)";
-    } else {
-      QDateTime now(QDateTime::currentDateTime());
-      _raisedAlerts.insert(alert, now);
-      Log::debug() << "raising alert " << alert;
-      emit alertRaised(alert);
-      doEmitAlert(alert, AlertChannel::Raise);
-    }
-  }
-}
-
-void Alerter::cancelAlert(QString alert) {
-  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alert),
+void Alerter::raiseAlert(QString alertId) {
+  QMetaObject::invokeMethod(this, "doRaiseAlert", Q_ARG(QString, alertId),
                             Q_ARG(bool, false));
 }
 
-void Alerter::cancelAlertImmediately(QString alert) {
-  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alert),
+void Alerter::raiseAlertImmediately(QString alertId) {
+  QMetaObject::invokeMethod(this, "doRaiseAlert", Q_ARG(QString, alertId),
                             Q_ARG(bool, true));
 }
 
-void Alerter::doCancelAlert(QString alert, bool immediately) {
+void Alerter::cancelAlert(QString alertId) {
+  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alertId),
+                            Q_ARG(bool, false));
+}
+
+void Alerter::cancelAlertImmediately(QString alertId) {
+  QMetaObject::invokeMethod(this, "doCancelAlert", Q_ARG(QString, alertId),
+                            Q_ARG(bool, true));
+}
+
+void Alerter::doRaiseAlert(QString alertId, bool immediately) {
+  Alert oldAlert = _alerts.value(alertId);
+  Alert newAlert = oldAlert.isNull() ? Alert(alertId) : oldAlert;
   if (immediately) {
-    if (_raisedAlerts.contains(alert) || _soonCanceledAlerts.contains(alert)) {
-      Log::debug() << "do cancel alert immediately: " << alert;
-      doEmitAlert(alert, AlertChannel::Cancel);
-      _raisedAlerts.remove(alert);
+    switch (oldAlert.status()) {
+    case Alert::Raising:
+    case Alert::Nonexistent:
+    case Alert::Canceled: // should not happen
+    case Alert::MaybeRaising:
+      actionRaise(&newAlert);
+      break;
+    case Alert::Canceling:
+      actionNoLongerCancel(&newAlert);
+      break;
+    case Alert::Raised:
+      return; // nothing to do
     }
   } else {
-    if (_raisedAlerts.contains(alert) && !_soonCanceledAlerts.contains(alert)) {
-      _raisedAlerts.remove(alert);
-      QDateTime dt(QDateTime::currentDateTime()
-                   .addMSecs(_config.cancelDelay()));
-      _soonCanceledAlerts.insert(alert, dt);
-      Log::debug() << "will cancel alert " << alert << " in "
-                   << _config.cancelDelay()*.001 << " s";
-      emit alertCancellationScheduled(alert, dt);
-      //} else {
-      //  Log::debug() << "would have canceled alert " << alert
-      //               << " if it was raised";
+    switch (oldAlert.status()) {
+    case Alert::Raising:
+    case Alert::Raised:
+      return; // nothing to do
+    case Alert::Nonexistent:
+    case Alert::MaybeRaising:
+    case Alert::Canceled: // should not happen
+      newAlert.setStatus(Alert::Raising);
+      // FIXME handle raise delay, both default and from rules
+      newAlert.setDueDate(newAlert.riseDate().addSecs(42));
+      break;
+    case Alert::Canceling:
+      actionNoLongerCancel(&newAlert);
+      break;
+    }
+  }
+ commitChange(&newAlert, &oldAlert);
+}
+
+void Alerter::doCancelAlert(QString alertId, bool immediately) {
+  Alert oldAlert = _alerts.value(alertId), newAlert = oldAlert;
+  if (immediately) {
+    switch (oldAlert.status()) {
+    case Alert::Nonexistent:
+    case Alert::Canceled: // should not happen
+      return; // nothing to do
+    case Alert::Raising:
+    case Alert::MaybeRaising:
+      newAlert = Alert();
+      break;
+    case Alert::Raised:
+    case Alert::Canceling:
+      actionCancel(&newAlert);
+      break;
+    }
+    return;
+  } else {
+    switch (oldAlert.status()) {
+    case Alert::Nonexistent:
+    case Alert::MaybeRaising:
+    case Alert::Canceling:
+    case Alert::Canceled: // should not happen
+      return; // nothing to do
+    case Alert::Raising:
+      newAlert.setStatus(Alert::MaybeRaising);
+      // leave due date to raising date
+      break;
+    case Alert::Raised:
+      newAlert.setStatus(Alert::Canceling);
+      // FIXME handle cancel delay, both default and from rules
+      newAlert.setDueDate(newAlert.riseDate().addSecs(_config.defaultCancelDelay()));
+    }
+  }
+  commitChange(&newAlert, &oldAlert);
+}
+
+void Alerter::doEmitAlert(QString alertId) {
+  Log::debug() << "emit alert: " << alertId;
+  notifyChannels(Alert(alertId));
+}
+
+void Alerter::asyncProcessing() {
+  QDateTime now = QDateTime::currentDateTime();
+  foreach (Alert oldAlert, _alerts) {
+    if (!oldAlert.isNull() && oldAlert.dueDate() <= now) {
+      Alert newAlert = oldAlert;
+      switch(oldAlert.status()) {
+      case Alert::Nonexistent:
+      case Alert::Raised:
+      case Alert::Canceled: // should never happen
+        continue; // nothing to do
+      case Alert::Raising:
+        actionRaise(&newAlert);
+        break;
+      case Alert::MaybeRaising:
+        newAlert = Alert();
+        break;
+      case Alert::Canceling:
+        actionCancel(&newAlert);
+        break;
+      }
+      commitChange(&newAlert, &oldAlert);
     }
   }
 }
 
-void Alerter::asyncProcessing() {
-  QDateTime now(QDateTime::currentDateTime());
-  // process alerts cancellations after cancel delay
-  foreach (QString alert, _soonCanceledAlerts.keys()) {
-    QDateTime scheduledDate = _soonCanceledAlerts.value(alert);
-    if (scheduledDate <= now)
-      doEmitAlert(alert, AlertChannel::Cancel,
-                  scheduledDate.addMSecs(-_config.cancelDelay()));
+void Alerter::actionRaise(Alert *newAlert) {
+  newAlert->setStatus(Alert::Raised);
+  newAlert->setDueDate(QDateTime());
+  Log::debug() << "alert raised: " << newAlert->id();
+  notifyChannels(*newAlert);
+  emit alertNotified(*newAlert);
+}
+
+void Alerter::actionCancel(Alert *newAlert) {
+  newAlert->setStatus(Alert::Canceled);
+  Log::debug() << "do cancel alert: " << newAlert->id();
+  notifyChannels(*newAlert);
+  emit alertNotified(*newAlert);
+}
+
+void Alerter::actionNoLongerCancel(Alert *newAlert) {
+  newAlert->setStatus(Alert::Raised);
+  newAlert->setDueDate(QDateTime());
+  Log::debug() << "alert is no longer scheduled for cancellation "
+               << newAlert->id()
+               << " (it was raised again within cancel delay)";
+}
+
+void Alerter::notifyChannels(Alert newAlert) {
+  foreach (AlertRule rule, _config.rules()) {
+    if (rule.patternRegExp().exactMatch(newAlert.id())) {
+      QString channelName = rule.channelName();
+      if (channelName == QStringLiteral("stop"))
+        break;
+      QPointer<AlertChannel> channel = _channels.value(channelName);
+      if (channel) {
+        newAlert.setRule(rule);
+        channel.data()->notifyAlert(newAlert);
+      }
+    }
   }
+}
+
+void Alerter::commitChange(Alert *newAlert, Alert *oldAlert) {
+  switch (newAlert->status()) {
+  case Alert::Nonexistent: // should not happen
+  case Alert::Canceled:
+    _alerts.remove(oldAlert->id());
+    break;
+  default:
+    _alerts.insert(newAlert->id(), *newAlert);
+  }
+  emit alertChanged(*newAlert, *oldAlert);
 }

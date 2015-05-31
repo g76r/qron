@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,13 +18,15 @@
 #include <QSharedDataPointer>
 #include <QPointer>
 #include <QString>
-#include <QRegExp>
+#include <QRegExp> // FIXME QRegularExpression
 #include "util/paramset.h"
 
 class AlertRuleData;
 class PfNode;
 class Alert;
 
+// FIXME add raise and cancel delay rules
+// TODO migrate to SharedUiItem
 /** Alert rule is the configuration object defining the matching between an
  * alert id pattern and a alert channel, with optional additional parameters.
  * @see Alerter */
@@ -43,6 +45,8 @@ public:
    *   (address debug)
    *   (emitmessage foo)
    *  )
+   *  (raisedelay 120) # seconds
+   *  (canceldelay 1200) # seconds
    * )
    * Where rulenode is "rule" node and rulechannelnode is "log" node.
    * This is needed because input config format accepts several rulechannelnode
@@ -69,6 +73,10 @@ public:
   bool isNull() const;
   ParamSet params() const;
   PfNode toPfNode() const;
+  /// milliseconds
+  long raiseDelay() const;
+  /// milliseconds
+  long cancelDelay() const;
 };
 
 #endif // ALERTRULE_H

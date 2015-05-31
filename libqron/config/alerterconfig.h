@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -34,13 +34,15 @@ public:
   /** Give access to alerts parameters. */
   ParamSet params() const;
   /** In ms. */
-  int cancelDelay() const;
+  int defaultRaiseDelay() const;
+  /** In ms. */
+  int defaultCancelDelay() const;
   /** In ms. */
   int minDelayBetweenSend() const;
   /** In ms. */
-  int gracePeriodBeforeFirstSend() const;
+  int delayBeforeFirstSend() const;
   /** In ms. */
-  int remindFrequency() const;
+  int remindPeriod() const;
   QList<AlertRule> rules() const;
   /** Available channels names */
   QStringList channelsNames() const;

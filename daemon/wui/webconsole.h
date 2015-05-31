@@ -49,6 +49,7 @@
 #include "ui/confighistorymodel.h"
 #include "thread/atomicvalue.h"
 #include <QRegularExpression>
+#include "modelview/shareduiitemslogmodel.h"
 
 class QThread;
 
@@ -69,7 +70,8 @@ class WebConsole : public HttpHandler {
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
   *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
-  LastOccuredTextEventsModel *_lastEmitedAlertsModel, *_lastPostedNoticesModel;
+  LastOccuredTextEventsModel *_lastPostedNoticesModel; // TODO change to SUILogModel
+  SharedUiItemsLogModel *_lastEmitedAlertsModel;
   AlertRulesModel *_alertRulesModel;
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
@@ -135,12 +137,7 @@ public:
 public slots:
   void enableAccessControl(bool enabled);
 
-signals:
-  void alertEmited(QString alert, int type);
-
 private slots:
-  void alertEmited(QString alert);
-  void alertCancellationEmited(QString alert);
   void globalParamsChanged(ParamSet globalParams);
   void configChanged(SchedulerConfig config);
 

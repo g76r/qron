@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,13 +23,10 @@ AlertChannel::AlertChannel(QObject *parent, QPointer<Alerter> alerter)
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
   _thread->start();
   moveToThread(_thread);
-  qRegisterMetaType<Alert>("Alert");
-  qRegisterMetaType<AlertChannel::MessageType>("AlertChannel::MessageType");
 }
 
-void AlertChannel::sendMessage(Alert alert, AlertChannel::MessageType type) {
-  QMetaObject::invokeMethod(this, "doSendMessage", Q_ARG(Alert, alert),
-                            Q_ARG(AlertChannel::MessageType, type));
+void AlertChannel::notifyAlert(Alert alert) {
+  QMetaObject::invokeMethod(this, "doNotifyAlert", Q_ARG(Alert, alert));
 }
 
 void AlertChannel::setConfig(AlerterConfig config) {

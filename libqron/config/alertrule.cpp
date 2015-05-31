@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -26,6 +26,7 @@ public:
   QString _address, _emitMessage, _cancelMessage, _reminderMessage;
   bool _notifyEmit, _notifyCancel, _notifyReminder;
   ParamSet _params;
+  // FIXME delays
 };
 
 AlertRule::AlertRule() {
@@ -61,6 +62,7 @@ AlertRule::AlertRule(PfNode rulenode, PfNode rulechannelnode,
   d->_notifyReminder = d->_notifyEmit && !rulechannelnode.hasChild("noremindernotify");
   ConfigUtils::loadParamSet(rulenode, &d->_params, "param");
   ConfigUtils::loadParamSet(rulechannelnode, &d->_params, "param");
+  // FIXME delays
   d->_params.setParent(parentParams);
 }
 
@@ -85,6 +87,7 @@ PfNode AlertRule::toPfNode() const {
   if (!d->_notifyReminder)
     node.appendChild(PfNode("noremindernotify"));
   ConfigUtils::writeParamSet(&node, d->_params, "param");
+  // FIXME delays
   rulenode.appendChild(node);
   return rulenode;
 }
@@ -107,28 +110,32 @@ QString AlertRule::rawAddress() const {
 
 QString AlertRule::address(Alert alert) const {
   QString rawAddress = d ? d->_address : QString();
-  return d->_params.evaluate(rawAddress, &alert);
+  AlertPseudoParamsProvider ppp = alert.pseudoParams();
+  return d->_params.evaluate(rawAddress, &ppp);
 }
 
 QString AlertRule::emitMessage(Alert alert) const {
   QString rawMessage = d ? d->_emitMessage : QString();
   if (rawMessage.isEmpty())
     rawMessage = "alert emited: "+alert.id();
-  return d->_params.evaluate(rawMessage, &alert);
+  AlertPseudoParamsProvider ppp = alert.pseudoParams();
+  return d->_params.evaluate(rawMessage, &ppp);
 }
 
 QString AlertRule::cancelMessage(Alert alert) const {
   QString rawMessage = d ? d->_cancelMessage : QString();
   if (rawMessage.isEmpty())
     rawMessage = "alert canceled: "+alert.id();
-  return d->_params.evaluate(rawMessage, &alert);
+  AlertPseudoParamsProvider ppp = alert.pseudoParams();
+  return d->_params.evaluate(rawMessage, &ppp);
 }
 
 QString AlertRule::reminderMessage(Alert alert) const {
   QString rawMessage = d ? d->_reminderMessage : QString();
   if (rawMessage.isEmpty())
     rawMessage = "alert still raised: "+alert.id();
-  return d->_params.evaluate(rawMessage, &alert);
+  AlertPseudoParamsProvider ppp = alert.pseudoParams();
+  return d->_params.evaluate(rawMessage, &ppp);
 }
 
 QString AlertRule::messagesDescriptions() const {
@@ -146,6 +153,7 @@ QString AlertRule::messagesDescriptions() const {
     desc.append("remindermessage=").append(msg).append(' ');
   if (desc.size())
     desc.chop(1);
+  // FIXME delays ?
   return desc;
 }
 
@@ -168,3 +176,5 @@ bool AlertRule::isNull() const {
 ParamSet AlertRule::params() const {
   return d ? d->_params : ParamSet();
 }
+
+// FIXME delays

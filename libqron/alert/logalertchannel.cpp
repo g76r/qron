@@ -1,4 +1,4 @@
-/* Copyright 2012-2013 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -20,20 +20,24 @@ LogAlertChannel::LogAlertChannel(QObject *parent, QPointer<Alerter> alerter)
   _thread->setObjectName("LogAlertChannelThread");
 }
 
-void LogAlertChannel::doSendMessage(Alert alert, MessageType type) {
-  switch(type) {
-  case Emit:
-  case Raise:
+void LogAlertChannel::doNotifyAlert(Alert alert) {
+  switch(alert.status()) {
+  case Alert::Nonexistent:
+  case Alert::Raised:
     if (!alert.rule().notifyEmit())
       return;
     Log::log(alert.rule().emitMessage(alert),
              Log::severityFromString(alert.rule().address(alert)));
     break;
-  case Cancel:
+  case Alert::Canceled:
     if (!alert.rule().notifyCancel())
       return;
     Log::log(alert.rule().cancelMessage(alert),
              Log::severityFromString(alert.rule().address(alert)));
+    break;
+  case Alert::Raising:
+  case Alert::MaybeRaising:
+  case Alert::Canceling:
+    ; // should never happen
   }
-
 }

@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -25,7 +25,7 @@ UrlAlertChannel::UrlAlertChannel(QObject *parent, QPointer<Alerter> alerter) :
   _thread->setObjectName("UrlAlertChannelThread");
 }
 
-void UrlAlertChannel::doSendMessage(Alert alert, MessageType type) {
+void UrlAlertChannel::doNotifyAlert(Alert alert) {
   if (!_nam) {
     // must be created here since the constructor is called by another thread
     // and one cannot create an QObject which parent lies in another thread
@@ -35,9 +35,9 @@ void UrlAlertChannel::doSendMessage(Alert alert, MessageType type) {
   }
   QString address = alert.rule().address(alert), message;
   ParamSet params = alert.rule().params();
-  switch(type) {
-  case Emit:
-  case Raise:
+  switch(alert.status()) {
+  case Alert::Nonexistent:
+  case Alert::Raised:
     if (!alert.rule().notifyEmit())
       return;
     if (params.contains("emitaddress"))
@@ -47,7 +47,7 @@ void UrlAlertChannel::doSendMessage(Alert alert, MessageType type) {
     message = alert.rule().emitMessage(alert);
 
     break;
-  case Cancel:
+  case Alert::Canceled:
     if (!alert.rule().notifyCancel())
       return;
     if (params.contains("canceladdress"))
@@ -56,14 +56,19 @@ void UrlAlertChannel::doSendMessage(Alert alert, MessageType type) {
       params.setValue("method", params.rawValue("cancelmethod"));
     message = alert.rule().cancelMessage(alert);
     break;
+  case Alert::Raising:
+  case Alert::MaybeRaising:
+  case Alert::Canceling:
+    ; // should never happen
   }
   // LATER support for binary messages
+  AlertPseudoParamsProvider ppp = alert.pseudoParams();
   if (address.startsWith("udp:", Qt::CaseInsensitive)) {
-    ParametrizedUdpSender sender(address, params, &alert);
-    sender.performRequest(message, &alert);
+    ParametrizedUdpSender sender(address, params, &ppp);
+    sender.performRequest(message, &ppp);
   } else {
-    ParametrizedNetworkRequest request(address, params, &alert);
-    request.performRequest(_nam, message, &alert);
+    ParametrizedNetworkRequest request(address, params, &ppp);
+    request.performRequest(_nam, message, &ppp);
     /*if (reply) {
     QObject::connect(reply, (void (QNetworkReply::*)(QNetworkReply::NetworkError))&QNetworkReply::error,
                      [=](QNetworkReply::NetworkError error){

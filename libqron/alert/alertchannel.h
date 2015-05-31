@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -35,19 +35,17 @@ protected:
   QPointer<Alerter> _alerter;
 
 public:
-  enum MessageType { Emit, Raise, Cancel };
   AlertChannel(QObject *parent, QPointer<Alerter> alerter);
-  /** Asynchronously call implementation of doSendMessage() within dedicated
+  /** Asynchronously call implementation of doNotifyAlert() within dedicated
    * thread.
    * This method is thread-safe. */
-  void sendMessage(Alert alert, MessageType type);
+  void notifyAlert(Alert alert);
 
 public slots:
   virtual void setConfig(AlerterConfig config);
 
 protected:
-  Q_INVOKABLE virtual void doSendMessage(Alert alert,
-                                         AlertChannel::MessageType type) = 0;
+  Q_INVOKABLE virtual void doNotifyAlert(Alert alert) = 0;
 };
 
 #endif // ALERTCHANNEL_H

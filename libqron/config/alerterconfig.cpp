@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,28 +15,28 @@
 #include <QSharedData>
 #include "configutils.h"
 
-#define DEFAULT_CANCEL_DELAY 900000
-// 900" = 15'
-#define DEFAULT_REMIND_FREQUENCY 3600000
-// 3600" = 1h
-#define DEFAULT_MIN_DELAY_BETWEEN_SEND 600000
-// 600" = 10'
-#define DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND 30000
-// 30"
+#define DEFAULT_RAISE_DELAY 300000 /* 300" = 5' */
+#define DEFAULT_CANCEL_DELAY 900000 /* 900" = 15' */
+#define DEFAULT_REMIND_PERIOD 3600000 /* 3600" = 1h */
+#define DEFAULT_MIN_DELAY_BETWEEN_SEND 600000 /* 600" = 10' */
+#define DEFAULT_DELAY_BEFORE_FIRST_SEND 30000 /* 30" */
 
 class AlerterConfigData : public QSharedData {
 public:
   ParamSet _params;
+  // LATER separate routing and delay routes to improve lookup performance
   QList<AlertRule> _rules;
+  int _raiseDelay;
   int _cancelDelay;
   int _minDelayBetweenSend;
-  int _gracePeriodBeforeFirstSend;
-  int _remindFrequency;
+  int _delayBeforeFirstSend;
+  int _remindPeriod;
   QStringList _channelNames;
-  AlerterConfigData() : _cancelDelay(DEFAULT_CANCEL_DELAY),
+  AlerterConfigData() : _raiseDelay(DEFAULT_RAISE_DELAY),
+    _cancelDelay(DEFAULT_CANCEL_DELAY),
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
-    _gracePeriodBeforeFirstSend(DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND),
-    _remindFrequency(DEFAULT_REMIND_FREQUENCY) {
+    _delayBeforeFirstSend(DEFAULT_DELAY_BEFORE_FIRST_SEND),
+    _remindPeriod(DEFAULT_REMIND_PERIOD) {
   }
   AlerterConfigData(PfNode root);
 };
@@ -51,10 +51,10 @@ AlerterConfig::AlerterConfig(PfNode root) : d(new AlerterConfigData(root)) {
 }
 
 AlerterConfigData::AlerterConfigData(PfNode root)
-  : _cancelDelay(DEFAULT_CANCEL_DELAY),
+  : _raiseDelay(DEFAULT_RAISE_DELAY), _cancelDelay(DEFAULT_CANCEL_DELAY),
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
-    _gracePeriodBeforeFirstSend(DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND),
-    _remindFrequency(DEFAULT_REMIND_FREQUENCY) {
+    _delayBeforeFirstSend(DEFAULT_DELAY_BEFORE_FIRST_SEND),
+    _remindPeriod(DEFAULT_REMIND_PERIOD) {
   _channelNames << "mail" << "url" << "log" << "stop";
   ConfigUtils::loadParamSet(root, &_params, "param");
   foreach (PfNode rulenode, root.childrenByName("rule")) {
@@ -77,6 +77,10 @@ AlerterConfigData::AlerterConfigData(PfNode root)
       }
     }
   }
+  _raiseDelay =
+      _params.valueAsInt("raisedelay", DEFAULT_RAISE_DELAY/1000)*1000;
+  if (_raiseDelay < 1000) // hard coded 1 second minmimum
+    _raiseDelay = DEFAULT_RAISE_DELAY;
   _cancelDelay =
       _params.valueAsInt("canceldelay", DEFAULT_CANCEL_DELAY/1000)*1000;
   if (_cancelDelay < 1000) // hard coded 1 second minmimum
@@ -86,13 +90,13 @@ AlerterConfigData::AlerterConfigData(PfNode root)
                          DEFAULT_MIN_DELAY_BETWEEN_SEND/1000)*1000;
   if (_minDelayBetweenSend < 60000) // hard coded 1 minute minimum
     _minDelayBetweenSend = 60000;
-  _gracePeriodBeforeFirstSend =
-      _params.valueAsInt("graceperiodbeforefirstsend",
-                         DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND/1000)
+  _delayBeforeFirstSend =
+      _params.valueAsInt("delaybeforefirstsend",
+                         DEFAULT_DELAY_BEFORE_FIRST_SEND/1000)
       *1000;
-  _remindFrequency =
-      _params.valueAsInt("remindfrequency",
-                         DEFAULT_REMIND_FREQUENCY/1000)*1000;
+  _remindPeriod =
+      _params.valueAsInt("remindperiod",
+                         DEFAULT_REMIND_PERIOD/1000)*1000;
 }
 
 AlerterConfig &AlerterConfig::operator=(const AlerterConfig &rhs) {
@@ -108,7 +112,7 @@ ParamSet AlerterConfig::params() const {
   return d ? d->_params : ParamSet();
 }
 
-int AlerterConfig::cancelDelay() const {
+int AlerterConfig::defaultCancelDelay() const {
   return d ? d->_cancelDelay : DEFAULT_CANCEL_DELAY;
 }
 
@@ -116,13 +120,13 @@ int AlerterConfig::minDelayBetweenSend() const {
   return d ? d->_minDelayBetweenSend : DEFAULT_MIN_DELAY_BETWEEN_SEND;
 }
 
-int AlerterConfig::gracePeriodBeforeFirstSend() const {
-  return d ? d->_gracePeriodBeforeFirstSend
-           : DEFAULT_GRACE_PERIOD_BEFORE_FIRST_SEND;
+int AlerterConfig::delayBeforeFirstSend() const {
+  return d ? d->_delayBeforeFirstSend
+           : DEFAULT_DELAY_BEFORE_FIRST_SEND;
 }
 
-int AlerterConfig::remindFrequency() const {
-  return d ? d->_remindFrequency : DEFAULT_REMIND_FREQUENCY;
+int AlerterConfig::remindPeriod() const {
+  return d ? d->_remindPeriod : DEFAULT_REMIND_PERIOD;
 }
 
 QList<AlertRule> AlerterConfig::rules() const {

@@ -1,4 +1,4 @@
-/* Copyright 2014 Hallowyn and others.
+/* Copyright 2014-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,7 +27,7 @@ class LIBQRONSHARED_EXPORT UrlAlertChannel : public AlertChannel {
 
 public:
   explicit UrlAlertChannel(QObject *parent, QPointer<Alerter> alerter);
-  void doSendMessage(Alert alert, MessageType type);
+  void doNotifyAlert(Alert alert);
 
 private slots:
   void replyFinished(QNetworkReply *reply);

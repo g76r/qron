@@ -27,6 +27,7 @@
 #include "ui/htmlalertitemdelegate.h"
 #include "ui/graphvizdiagramsbuilder.h"
 #include "ui/htmllogentryitemdelegate.h"
+#include "alert/alert.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -63,11 +64,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _globalUnsetenvModel = new ParamSetModel(this);
   _alertParamsModel = new ParamSetModel(this);
   _raisedAlertsModel = new RaisedAlertsModel(this);
-  _lastEmitedAlertsModel = new LastOccuredTextEventsModel(this, 500);
-  _lastEmitedAlertsModel->setEventName("Alert")
-      ->addEmptyColumn("Actions");
-  connect(this, SIGNAL(alertEmited(QString,int)),
-          _lastEmitedAlertsModel, SLOT(eventOccured(QString,int)));
+  _lastEmitedAlertsModel = new SharedUiItemsLogModel(this, 500);
+  _lastEmitedAlertsModel->setHeaderDataFromTemplate(
+              Alert("template"), Qt::DisplayRole);
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
   _alertRulesModel = new AlertRulesModel(this);
@@ -170,17 +169,27 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       new HtmlTableView(this, "raisedalerts", RAISED_ALERTS_MAXROWS);
   _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
+  cols.clear();
+  cols << 0 << 2 << 4 << 5 << 6 << 1; // FIXME remove 1
+  // FIXME add filter to hide raising alerts in "currently raised" view on overview page and add a "currently raised or rising" view on alert page
+  _htmlRaisedAlertsView->setColumnIndexes(cols);
+  QHash<QString,QString> alertsIcons;
+  alertsIcons.insert("raising", "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>"); // FIXME icon-bell-slash
+  alertsIcons.insert("maybe_raising", "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>"); // FIXME icon-bell-slash
+  alertsIcons.insert("raised", "<i class=\"icon-bell\"></i>&nbsp;");
+  alertsIcons.insert("canceling", "<i class=\"icon-bell\"></i>&nbsp;");
+  alertsIcons.insert("canceled", "<i class=\"icon-check\"></i>&nbsp;");
   _htmlRaisedAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedAlertsView, 0, 3, true));
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsView, 6, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
+      ->setPrefixForColumn(0, "%1", 1, alertsIcons); // FIXME
   _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlRaisedAlertsView10 =
     new HtmlTableView(this, "raisedalerts10", RAISED_ALERTS_MAXROWS, 10);
   _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
   _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
   _htmlRaisedAlertsView10->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedAlertsView10, 0, 3, true));
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsView10, 3, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView10->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsView10);
@@ -189,15 +198,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                         _lastEmitedAlertsModel->maxrows());
   _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
-  QHash<QString,QString> alertsIcons;
-  alertsIcons.insert("0", "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert("1", "<i class=\"icon-check\"></i>&nbsp;");
   _htmlLastEmitedAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlLastEmitedAlertsView, 1, 3, false));
+        new HtmlAlertItemDelegate(_htmlLastEmitedAlertsView, 6, false));
   ((HtmlAlertItemDelegate*)_htmlLastEmitedAlertsView->itemDelegate())
-      ->setPrefixForColumn(1, "%1", 2, alertsIcons);
+      ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   cols.clear();
-  cols << 0 << 1 << 3;
+  cols << _lastEmitedAlertsModel->timestampColumn() << 0 << 6 << 1;
   _htmlLastEmitedAlertsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlLastEmitedAlertsView);
   _htmlLastEmitedAlertsView10 =
@@ -206,7 +212,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
   _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
   ((HtmlItemDelegate*)_htmlLastEmitedAlertsView10->itemDelegate())
-      ->setPrefixForColumn(1, "%1", 2, alertsIcons);
+      ->setPrefixForColumn(_lastEmitedAlertsModel->timestampColumn(), "%1",
+                           2, alertsIcons);
   cols.clear();
   cols << 0 << 1 << 3;
   _htmlLastEmitedAlertsView10->setColumnIndexes(cols);
@@ -1341,10 +1348,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
     disconnect(_scheduler->alerter(), SIGNAL(alertCancellationUnscheduled(QString)),
                _raisedAlertsModel, SLOT(alertCancellationUnscheduled(QString)));
-    disconnect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
-               this, SLOT(alertEmited(QString)));
-    disconnect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
-               this, SLOT(alertCancellationEmited(QString)));
+    disconnect(_scheduler->alerter(), &Alerter::alertNotified,
+               _lastEmitedAlertsModel, &SharedUiItemsLogModel::logItem);
     disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
                _alertRulesModel, SLOT(configChanged(AlerterConfig)));
     disconnect(_scheduler, &Scheduler::taskInstanceQueued,
@@ -1406,18 +1411,10 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _globalUnsetenvModel, SLOT(paramsChanged(ParamSet)));
     connect(_scheduler->alerter(), SIGNAL(paramsChanged(ParamSet)),
             _alertParamsModel, SLOT(paramsChanged(ParamSet)));
-    connect(_scheduler->alerter(), SIGNAL(alertRaised(QString)),
-            _raisedAlertsModel, SLOT(alertRaised(QString)));
-    connect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
-            _raisedAlertsModel, SLOT(alertCanceled(QString)));
-    connect(_scheduler->alerter(), SIGNAL(alertCancellationScheduled(QString,QDateTime)),
-            _raisedAlertsModel, SLOT(alertCancellationScheduled(QString,QDateTime)));
-    connect(_scheduler->alerter(), SIGNAL(alertCancellationUnscheduled(QString)),
-            _raisedAlertsModel, SLOT(alertCancellationUnscheduled(QString)));
-    connect(_scheduler->alerter(), SIGNAL(alertEmited(QString)),
-            this, SLOT(alertEmited(QString)));
-    connect(_scheduler->alerter(), SIGNAL(alertCanceled(QString)),
-            this, SLOT(alertCancellationEmited(QString)));
+    connect(_scheduler->alerter(), &Alerter::alertChanged,
+            _raisedAlertsModel, &SharedUiItemsTableModel::changeItem);
+    connect(_scheduler->alerter(), &Alerter::alertNotified,
+            _lastEmitedAlertsModel, &SharedUiItemsLogModel::logItem);
     connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
             _alertRulesModel, SLOT(configChanged(AlerterConfig)));
     connect(_scheduler, &Scheduler::taskInstanceQueued,
@@ -1535,14 +1532,6 @@ void WebConsole::setUsersDatabase(UsersDatabase *usersDatabase,
 
 void WebConsole::enableAccessControl(bool enabled) {
   _accessControlEnabled = enabled;
-}
-
-void WebConsole::alertEmited(QString alert) {
-  emit alertEmited(alert, 0);
-}
-
-void WebConsole::alertCancellationEmited(QString alert) {
-  emit alertEmited(alert+" canceled", 1);
 }
 
 void WebConsole::globalParamsChanged(ParamSet globalParams) {

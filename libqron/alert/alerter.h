@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -27,16 +27,94 @@ class QThread;
 class PfNode;
 
 /** Main class for the alert system.
- * Mainly responsible for configuration, alerts dispatching among channels and
- * other events handling. */
+ *
+ * Expose alert API, consisting of the following methods:
+ * - raiseAlert: schedule the rise of an alert as soon as the rise delay is
+ *   over, or do nothing is the same alert is already raised, the alert will be
+ *   emited when actually raised
+ * - raiseAlertImmediatly: same, without delay
+ * - cancelAlert: schedule cancellation of a raised alert as soon as the cancel
+ *   delay is over, or do nothing is there are no such alert currently raised,
+ *   an alert cancellation will be emited when actually canceled
+ * - cancelAlertImmediately: same, without delay
+ * - emitAlert: emit an alert, regardless the raise/cancel mechanism, which
+ *   should be done with caution since it provides no protection against mass
+ *   alert spam, whereas raise/cancel do
+ *
+ * Apart from direct emission, alerts can be in 5 states:
+ * - nonexistent
+ * - raising
+ * - raised
+ * - canceling
+ * - canceled (turns into nonexistent just after cancellation notification)
+ * - may_rise (when cancelAlert is called on a raising alert)
+ *
+ * The following table provides state transition according to methods and time
+ * events:
+ *
+ * <pre>
+ * Previous State        Event                Next State  Action
+ * nonexistent|raising|  raise                raising     -
+ *  may_rise
+ * raised|canceling      raise                raised      -
+ * raising               age > raise delay    raised      emit alert
+ * nonexistent|raising|  raiseImmediately     raised      emit alert
+ *  may_rise
+ * raised|canceling      raiseImmediately     raised      -
+ * nonexistent           cancel               nonexistent -
+ * raising|              cancel               may_rise    -
+ *  may_rise
+ * raised|canceling      cancel               canceling   -
+ * canceling             age > cancel delay   canceled    emit cancellation
+ * may_rise              age > cancel delay   nonexistent -
+ * nonexistent|raising|  cancelImmediately    nonexistent -
+ *  may_rise
+ * raised|canceling      cancelImmediately    canceled    emit cancellation
+ * </pre>
+ *
+ * In addition to emitting alert and cancellation, some channels may emit
+ * reminders for alerts that stay raised a long time (actually for alerts that
+ * stay in raised and/or canceling states, but channels are not noticed of
+ * raised -> canceling or canceling -> raised transitions, therefore they see
+ * the two states as only one: raised).
+ *
+ * Internaly, this class is responsible for configuration, and alerts
+ * dispatching among channels following the state machine described above.
+ * Actual alert emission is performed by channels depending on the communication
+ * mean they implement.
+ *
+ * Alerter only notifies channels of state transitions for which there is an
+ * alert or a cancellation to emit, and of emitAlert() calls.
+ * Therefore channels only see 3 alert states, folllowing this table:
+ *
+ * <pre>
+ * Alerter alert state      AlertChannel alert state
+ * nonexistent              (never seen)
+ * raising                  (never seen)
+ * raised                   raised
+ * canceling                raised
+ * canceled                 canceled
+ * may_rise                 (never seen)
+ * (direct emit)            nonexistent (alert has no state)
+ * </pre>
+ *
+ * In other words, a user is only notified through a alert channel (i.e. through
+ * a push communication mean) of alert that are raised, when they are raised
+ * (emit alert) or canceled (emit cancellation), and optionaly when they stay
+ * raised too long (emit reminder), or, obviously, if they are emitte without
+ * the raise/cancel system, through emitAlert method.
+ *
+ * However, access to alerts in non-pushable states (raising, may_rise and the
+ * difference between raised and canceling) is given through data models and
+ * can be queried by users or external tools.
+ */
 class LIBQRONSHARED_EXPORT Alerter : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(Alerter)
   QThread *_thread;
   AlerterConfig _config;
   QHash<QString,AlertChannel*> _channels;
-  QHash<QString,QDateTime> _raisedAlerts; // alert + raise time
-  QHash<QString,QDateTime> _soonCanceledAlerts; // alert + scheduled cancel time
+  QHash<QString,Alert> _alerts;
 
 public:
   explicit Alerter();
@@ -49,14 +127,14 @@ public:
    * In most cases it is strongly recommanded to call raiseAlert() instead.
    * This method is threadsafe.
    * @see raiseAlert() */
-  void emitAlert(QString alert);
+  void emitAlert(QString alertId);
   /** Raise an alert and emit it if it is not already raised.
    * This is the prefered way to report an alert.
    * If the alert is already raised but has been canceled and is still in its
    * cancel grace period, the cancellation is unscheduled.
    * If the alert is already raised and not canceled, this method does nothing.
    * This method is threadsafe. */
-  void raiseAlert(QString alert);
+  void raiseAlert(QString alertId);
   /** Tell the Alerter that an alert should no longer be raised.
    * This is the prefered way to report the end of an alert.
    * This schedule the alert for cancellation after a grace delay set to 15
@@ -69,7 +147,7 @@ public:
    * alerts is raised and cancel several time within the same time interval
    * between alerts send).
    * This method is threadsafe. */
-  void cancelAlert(QString alert);
+  void cancelAlert(QString alertId);
   /** Immediatly cancel an alert, ignoring grace delay.
    * In most cases it is strongly recommanded to call cancelAlert() instead.
    * The only widespread reason to use cancelAlertImmediately() is when one
@@ -78,30 +156,18 @@ public:
    * (e.g. mails) are sent again.
    * This method is threadsafe.
    * @see cancelAlert() */
-  void cancelAlertImmediately(QString alert);
+  void cancelAlertImmediately(QString alertId);
+  // FIXME doc
+  void raiseAlertImmediately(QString alertId);
 
 signals:
-  /** An alert has just been raised.
-   * This signal is not emited when raising an alert that is already raised. */
-  void alertRaised(QString alert);
-  /** An alert has been scheduled for cancellation, e.g. through cancelAlert().
-   * This signal is not emited when trying to cancel an alert that is not
-   * currently raised.
-   * This signal does not mean that the alert is yet actually cancelled.
-   * It will be actually canceled only after a grace period called
-   * 'canceldelay', if it is not raised again meanwhile.
-   * @see alertCancellationEmited()
-   * @see alertCancellationUnscheduled() */
-  void alertCancellationScheduled(QString alert, QDateTime scheduledTime);
-  /** An alert is raised again during then canceldelay grace period. */
-  void alertCancellationUnscheduled(QString alert);
+  // FIXME doc
+  void alertChanged(Alert newAlert, Alert oldAlert);
   /** An alert is emited through alert channels.
    * This can occur when raising an alert that is not already raised (through
    * raiseAlert()) or when directly an alert (through emitAlert()). */
-  void alertEmited(QString alert);
-  /** An alert has been actually canceled and emited through alert channels.
-   * This signal is only emited after the 'canceldelay' grace period. */
-  void alertCanceled(QString alert);
+  // FIXME doc: or when cancelation is emited
+  void alertNotified(Alert alert);
   /** Config parameters changed.
    * Convenience signals emited just before configChanged(). */
   void paramsChanged(ParamSet params);
@@ -113,10 +179,14 @@ private slots:
 
 private:
   Q_INVOKABLE void doSetConfig(AlerterConfig config);
-  Q_INVOKABLE void doEmitAlert(QString alert, AlertChannel::MessageType type,
-                               QDateTime date = QDateTime::currentDateTime());
-  Q_INVOKABLE void doRaiseAlert(QString alert);
-  Q_INVOKABLE void doCancelAlert(QString alert, bool immediately = false);
+  Q_INVOKABLE void doRaiseAlert(QString alertId, bool immediately);
+  Q_INVOKABLE void doCancelAlert(QString alertId, bool immediately);
+  Q_INVOKABLE void doEmitAlert(QString alertId);
+  inline void actionRaise(Alert *newAlert);
+  inline void actionCancel(Alert *newAlert);
+  inline void actionNoLongerCancel(Alert *newAlert);
+  inline void notifyChannels(Alert newAlert);
+  inline void commitChange(Alert *newAlert, Alert *oldAlert);
 };
 
 #endif // ALERTER_H

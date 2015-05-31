@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,64 +12,190 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "alert.h"
-#include <QSharedData>
+#include "config/alertrule.h"
 
-class AlertData : public QSharedData {
-public:
-  QString _id;
-  AlertRule _rule;
-  QDateTime _datetime;
-  AlertData(const QString id = QString(), AlertRule rule = AlertRule(),
-            QDateTime datetime = QDateTime::currentDateTime())
-    : _id(id), _rule(rule), _datetime(datetime) { }
+static QString _uiHeaderNames[] = {
+  "Id", // 0
+  "Status",
+  "Rise Date",
+  "Due Date",
+  "Visibility Date",
+  "Cancellation Date", // 5
+  "Actions"
 };
 
-Alert::Alert() : d(new AlertData) {
+class AlertData : public SharedUiItemData {
+public:
+  QString _id;
+  Alert::AlertStatus _status;
+  QDateTime _riseDate, _dueDate, _lastReminderDate;
+  AlertRule _rule;
+  AlertData(const QString id = QString(),
+            QDateTime riseDate = QDateTime::currentDateTime())
+    : _id(id), _status(Alert::Nonexistent), _riseDate(riseDate ) { }
+  QString id() const { return _id; }
+  QString idQualifier() const { return QStringLiteral("alert"); }
+  int uiSectionCount() const;
+  QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const;
+};
+
+int AlertData::uiSectionCount() const {
+  return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
-Alert::Alert(QString id, AlertRule rule, QDateTime datetime)
-  : d(new AlertData(id, rule, datetime)) {
+QVariant AlertData::uiHeaderData(int section, int role) const {
+  return role == Qt::DisplayRole && section >= 0
+      && (unsigned)section < sizeof _uiHeaderNames
+      ? _uiHeaderNames[section] : QVariant();
 }
 
-Alert::Alert(const Alert &rhs) : d(rhs.d) {
+QVariant AlertData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+  case Qt::EditRole:
+    switch(section) {
+    case 0:
+      return _id;
+    case 1:
+      return Alert::statusToString(_status);
+    case 2:
+      return _riseDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
+    case 3:
+      return _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
+    case 4:
+      return _status == Alert::Raising
+          ? _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
+          : QVariant();
+    case 5:
+      return _status == Alert::MaybeRaising || _status == Alert::Canceling
+          ? _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
+          : QVariant();
+    case 6:
+      break; // actions
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
 }
 
-Alert &Alert::operator=(const Alert &rhs) {
-  if (this != &rhs)
-    d.operator=(rhs.d);
-  return *this;
+Alert::Alert() : SharedUiItem() {
 }
 
-bool Alert::operator<(const Alert &other) const {
-  return this != &other && d->_id < other.d->_id;
+Alert::Alert(QString id, QDateTime datetime)
+  : SharedUiItem(new AlertData(id, datetime)) {
 }
 
-Alert::~Alert() {
+Alert::Alert(const Alert &other) : SharedUiItem(other) {
 }
 
-QString Alert::id() const {
-  return d ? d->_id : QString();
+QDateTime Alert::riseDate() const {
+  const AlertData *d = data();
+  return d ? d->_riseDate : QDateTime();
+}
+
+QDateTime Alert::dueDate() const {
+  const AlertData *d = data();
+  return d ? d->_dueDate : QDateTime();
+}
+
+void Alert::setDueDate(QDateTime dueDate) {
+  AlertData *d = data();
+  if (d)
+    d->_dueDate = dueDate;
+}
+
+Alert::AlertStatus Alert::status() const {
+  const AlertData *d = data();
+  return d ? d->_status : Alert::Nonexistent;
+}
+
+void Alert::setStatus(Alert::AlertStatus status) {
+  AlertData *d = data();
+  if (d)
+    d->_status = status;
+}
+
+QDateTime Alert::lastRemindedDate() const {
+  const AlertData *d = data();
+  return d ? d->_lastReminderDate : QDateTime();
+}
+
+void Alert::setLastRemindedDate(QDateTime lastRemindedDate) {
+  AlertData *d = data();
+  if (d)
+    d->_lastReminderDate = lastRemindedDate;
 }
 
 AlertRule Alert::rule() const {
+  const AlertData *d = data();
   return d ? d->_rule : AlertRule();
 }
 
-QDateTime Alert::datetime() const {
-  return d ? d->_datetime : QDateTime();
+void Alert::setRule(AlertRule rule) {
+  AlertData *d = data();
+  if (d)
+    d->_rule = rule;
 }
 
-QVariant Alert::paramValue(QString key, QVariant defaultValue,
-                           QSet<QString> alreadyEvaluated) const {
+AlertData *Alert::data() {
+  detach<AlertData>();
+  return (AlertData*)SharedUiItem::data();
+}
+
+static QString nonexistentStatus("nonexistent");
+static QString raisingStatus("raising");
+static QString maybeRaisingStatus("maybe_raising");
+static QString raisedStatus("raised");
+static QString cancelingStatus("canceling");
+static QString canceledStatus("canceled");
+
+Alert::AlertStatus Alert::statusFromString(QString string) {
+  if (string == raisingStatus)
+    return Alert::Raising;
+  if (string == maybeRaisingStatus)
+    return Alert::MaybeRaising;
+  if (string == raisedStatus)
+    return Alert::Raised;
+  if (string == cancelingStatus)
+    return Alert::Canceling;
+  if (string == canceledStatus)
+    return Alert::Canceled;
+  return Alert::Nonexistent;
+}
+
+QString Alert::statusToString(Alert::AlertStatus status) {
+  switch(status) {
+  case Alert::Raising:
+    return raisingStatus;
+  case Alert::MaybeRaising:
+    return maybeRaisingStatus;
+  case Alert::Raised:
+    return raisedStatus;
+  case Alert::Canceling:
+    return cancelingStatus;
+  case Alert::Canceled:
+    return canceledStatus;
+  case Alert::Nonexistent:
+    ;
+  }
+  return nonexistentStatus;
+}
+
+QVariant AlertPseudoParamsProvider::paramValue(
+    QString key, QVariant defaultValue, QSet<QString> alreadyEvaluated) const {
   Q_UNUSED(alreadyEvaluated)
   if (key.at(0) == '!') {
     if (key == "!alertid") {
-      return id();
+      return _alert.id();
     } else if (key == "!alertdate") {
-      // LATER make this support !date formating
-      return datetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      // FIXME make this support !date formating
+      return _alert.riseDate().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     }
     // MAYDO guess !taskid from "task.{failure,toolong...}.%!taskid" alerts
   }
-  return defaultValue;
+  return _alert.rule().params().paramValue(key, defaultValue, alreadyEvaluated);
 }
+

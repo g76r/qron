@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,39 +15,18 @@
 #define RAISEDALERTSMODEL_H
 
 #include "libqron_global.h"
-#include <QAbstractTableModel>
-#include <QString>
-#include <QDateTime>
+#include "modelview/shareduiitemstablemodel.h"
 
-/** Model holding raised alerts along with their raise and scheduled
- * cancellation dates, one alert per line, in reverse order of raising. */
-class LIBQRONSHARED_EXPORT RaisedAlertsModel : public QAbstractTableModel {
+// FIXME remove the whole class
+/** Model holding raised alerts along with their status, rise, due, visibility
+ * and cancellation dates, one alert per line, in reverse order of raising. */
+class LIBQRONSHARED_EXPORT RaisedAlertsModel : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(RaisedAlertsModel)
-  class RaisedAlert {
-  public:
-    QString _alert;
-    QDateTime _raiseTime, _scheduledCancellationTime;
-    RaisedAlert(QString alert) : _alert(alert),
-      _raiseTime(QDateTime::currentDateTime()) { }
-    RaisedAlert(const RaisedAlert &o) : _alert(o._alert),
-      _raiseTime(o._raiseTime),
-      _scheduledCancellationTime(o._scheduledCancellationTime) { }
-  };
-  QList<RaisedAlert> _raisedAlerts;
 
 public:
   explicit RaisedAlertsModel(QObject *parent = 0);
-  int rowCount(const QModelIndex &parent) const;
-  int columnCount(const QModelIndex &parent) const;
-  QVariant data(const QModelIndex &index, int role) const;
-  QVariant headerData(int section, Qt::Orientation orientation, int role) const;
-
-public slots:
-  void alertRaised(QString alert);
-  void alertCanceled(QString alert);
-  void alertCancellationScheduled(QString alert, QDateTime scheduledTime);
-  void alertCancellationUnscheduled(QString alert);
+  //void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
 };
 
 #endif // RAISEDALERTSMODEL_H

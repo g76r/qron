@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -12,11 +12,12 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "htmlalertitemdelegate.h"
+#include "alert/alert.h"
 
-HtmlAlertItemDelegate::HtmlAlertItemDelegate(QObject *parent, int alertColumn,
-                                             int actionsColumn, bool canCancel)
-  : HtmlItemDelegate(parent), _alertColumn(alertColumn),
-    _actionsColumn(actionsColumn), _canCancel(canCancel) {
+HtmlAlertItemDelegate::HtmlAlertItemDelegate(
+    QObject *parent, int actionsColumn, bool canRaiseAndCancel)
+  : HtmlItemDelegate(parent), _actionsColumn(actionsColumn),
+    _canRaiseAndCancel(canRaiseAndCancel) {
 }
 
 QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
@@ -24,15 +25,27 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
   if (index.column() == _actionsColumn) {
     static QRegExp taskIdInAlert("task\\.[^\\.]+\\.(.*)");
     QRegExp re = taskIdInAlert;
-    QString alert = index.model()
-        ->index(index.row(), _alertColumn, index.parent()).data().toString();
-    if (_canCancel)
-      text.prepend(/* cancel immediate */
+    QString alertId = index.model()->index(index.row(), 0, index.parent())
+        .data().toString();
+    QString status = index.model()->index(index.row(), 1, index.parent())
+        .data().toString();
+    if (_canRaiseAndCancel)
+      text.prepend(/* immediate cancel */
                    "<span class=\"label label-important\">"
-                   "<a title=\"Cancel alert\"href=\"do?event=cancelAlert&alert="
-                   +alert+"&immediately=true\"><i class=\"icon-check\">"
-                   "</i></a></span> ");
-    if (re.exactMatch(alert)) {
+                   "<a title=\"Cancel alert immediatly\"href=\"do?"
+                   "event=cancelAlert&alert="+alertId
+                   +"&immediately=true\"><i class=\"icon-check\">"
+                    "</i></a></span> ");
+    if (_canRaiseAndCancel
+        && (status == Alert::statusToString(Alert::Raising)
+            || status == Alert::statusToString(Alert::MaybeRaising)))
+      text.prepend(/* immediate raise */
+                   "<span class=\"label label-important\">"
+                   "<a title=\"Raise alert immediately\"href=\"do?"
+                   "event=raiseAlert&alert="+alertId
+                   +"&immediately=true\"><i class=\"icon-bell\">"
+                    "</i></a></span> ");
+    if (re.exactMatch(alertId)) {
       text.append(
             /* related task log */
             " <span class=\"label label-info\" title=\"Related tasks log\">"
