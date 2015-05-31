@@ -148,7 +148,6 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
       actionCancel(&newAlert);
       break;
     }
-    return;
   } else {
     switch (oldAlert.status()) {
     case Alert::Nonexistent:
@@ -204,14 +203,12 @@ void Alerter::actionRaise(Alert *newAlert) {
   newAlert->setDueDate(QDateTime());
   Log::debug() << "alert raised: " << newAlert->id();
   notifyChannels(*newAlert);
-  emit alertNotified(*newAlert);
 }
 
 void Alerter::actionCancel(Alert *newAlert) {
   newAlert->setStatus(Alert::Canceled);
   Log::debug() << "do cancel alert: " << newAlert->id();
   notifyChannels(*newAlert);
-  emit alertNotified(*newAlert);
 }
 
 void Alerter::actionNoLongerCancel(Alert *newAlert) {
@@ -223,6 +220,7 @@ void Alerter::actionNoLongerCancel(Alert *newAlert) {
 }
 
 void Alerter::notifyChannels(Alert newAlert) {
+  emit alertNotified(newAlert);
   foreach (AlertRule rule, _config.rules()) {
     if (rule.patternRegExp().exactMatch(newAlert.id())) {
       QString channelName = rule.channelName();
@@ -242,6 +240,7 @@ void Alerter::commitChange(Alert *newAlert, Alert *oldAlert) {
   case Alert::Nonexistent: // should not happen
   case Alert::Canceled:
     _alerts.remove(oldAlert->id());
+    *newAlert = Alert();
     break;
   default:
     _alerts.insert(newAlert->id(), *newAlert);

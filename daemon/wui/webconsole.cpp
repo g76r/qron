@@ -174,15 +174,22 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // FIXME add filter to hide raising alerts in "currently raised" view on overview page and add a "currently raised or rising" view on alert page
   _htmlRaisedAlertsView->setColumnIndexes(cols);
   QHash<QString,QString> alertsIcons;
-  alertsIcons.insert("raising", "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>"); // FIXME icon-bell-slash
-  alertsIcons.insert("maybe_raising", "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>"); // FIXME icon-bell-slash
-  alertsIcons.insert("raised", "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert("canceling", "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert("canceled", "<i class=\"icon-check\"></i>&nbsp;");
+  alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
+                     "<i class=\"icon-bell\"></i>&nbsp;");
+  alertsIcons.insert(Alert::statusToString(Alert::Raising),
+                     "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
+  alertsIcons.insert(Alert::statusToString(Alert::MaybeRaising),
+                     "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
+  alertsIcons.insert(Alert::statusToString(Alert::Raised),
+                     "<i class=\"icon-bell\"></i>&nbsp;");
+  alertsIcons.insert(Alert::statusToString(Alert::Canceling),
+                     "<i class=\"icon-bell\"></i>&nbsp;");
+  alertsIcons.insert(Alert::statusToString(Alert::Canceled),
+                     "<i class=\"icon-check\"></i>&nbsp;");
   _htmlRaisedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView, 6, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
-      ->setPrefixForColumn(0, "%1", 1, alertsIcons); // FIXME
+      ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlRaisedAlertsView10 =
     new HtmlTableView(this, "raisedalerts10", RAISED_ALERTS_MAXROWS, 10);
@@ -631,7 +638,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/console/do" || path == "/rest/do" ) {
     QString event = req.param("event");
     QString taskId = req.param("taskid");
-    QString alert = req.param("alert");
+    QString alertId = req.param("alertid");
+    if (alertId.isNull()) // LATER remove this backward compatibility trick
+      alertId = req.param("alert");
     QString configId = req.param("configid");
     quint64 taskInstanceId = req.param("taskinstanceid").toULongLong();
     QList<quint64> auditInstanceIds;
@@ -681,16 +690,19 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
           message = "E:Task '"+taskId+"' not found.";
       } else if (event == "cancelAlert") {
         if (req.param("immediately") == "true")
-          _scheduler->alerter()->cancelAlertImmediately(alert);
+          _scheduler->alerter()->cancelAlertImmediately(alertId);
         else
-          _scheduler->alerter()->cancelAlert(alert);
-        message = "S:Canceled alert '"+alert+"'.";
+          _scheduler->alerter()->cancelAlert(alertId);
+        message = "S:Canceled alert '"+alertId+"'.";
       } else if (event == "raiseAlert") {
-        _scheduler->alerter()->raiseAlert(alert);
-        message = "S:Raised alert '"+alert+"'.";
+        if (req.param("immediately") == "true")
+          _scheduler->alerter()->raiseAlertImmediately(alertId);
+        else
+          _scheduler->alerter()->raiseAlert(alertId);
+        message = "S:Raised alert '"+alertId+"'.";
       } else if (event == "emitAlert") {
-        _scheduler->alerter()->emitAlert(alert);
-        message = "S:Emitted alert '"+alert+"'.";
+        _scheduler->alerter()->emitAlert(alertId);
+        message = "S:Emitted alert '"+alertId+"'.";
       } else if (event=="enableAllTasks") {
         bool enable = req.param("enable") == "true";
         _scheduler->enableAllTasks(enable);
