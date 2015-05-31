@@ -38,7 +38,8 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
                     "</i></a></span> ");
     if (_canRaiseAndCancel
         && (status == Alert::statusToString(Alert::Raising)
-            || status == Alert::statusToString(Alert::MaybeRaising)))
+            || status == Alert::statusToString(Alert::MaybeRaising)
+            || status == Alert::statusToString(Alert::Canceling)))
       text.prepend(/* immediate raise */
                    "<span class=\"label label-important\">"
                    "<a title=\"Raise alert immediately\"href=\"do?"
