@@ -117,12 +117,15 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
     case Alert::Raising:
     case Alert::Raised:
       return; // nothing to do
-    case Alert::Nonexistent:
-    case Alert::MaybeRaising:
+    case Alert::Nonexistent: // should not happen
     case Alert::Canceled: // should not happen
-      newAlert.setStatus(Alert::Raising);
+    case Alert::MaybeRaising:
       // FIXME handle raise delay, both default and from rules
       newAlert.setDueDate(newAlert.riseDate().addSecs(42));
+      if (newAlert.dueDate() <= QDateTime::currentDateTime())
+        actionRaise(&newAlert);
+      else
+        newAlert.setStatus(Alert::Raising);
       break;
     case Alert::Canceling:
       actionNoLongerCancel(&newAlert);
@@ -157,7 +160,8 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
       return; // nothing to do
     case Alert::Raising:
       newAlert.setStatus(Alert::MaybeRaising);
-      // leave due date to raising date
+      // FIXME handle cancel delay, both default and from rules
+      newAlert.setDueDate(QDateTime::currentDateTime().addSecs(42));
       break;
     case Alert::Raised:
       newAlert.setStatus(Alert::Canceling);
