@@ -35,9 +35,9 @@ void LogAlertChannel::doNotifyAlert(Alert alert) {
     Log::log(alert.rule().cancelMessage(alert),
              Log::severityFromString(alert.rule().address(alert)));
     break;
-  case Alert::Raising:
-  case Alert::MaybeRaising:
-  case Alert::Canceling:
+  case Alert::Rising:
+  case Alert::MayRise:
+  case Alert::Dropping:
     ; // should never happen
   }
 }

@@ -100,13 +100,13 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
   Alert newAlert = oldAlert.isNull() ? Alert(alertId) : oldAlert;
   if (immediately) {
     switch (oldAlert.status()) {
-    case Alert::Raising:
+    case Alert::Rising:
     case Alert::Nonexistent:
     case Alert::Canceled: // should not happen
-    case Alert::MaybeRaising:
+    case Alert::MayRise:
       actionRaise(&newAlert);
       break;
-    case Alert::Canceling:
+    case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
       break;
     case Alert::Raised:
@@ -114,20 +114,20 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
     }
   } else {
     switch (oldAlert.status()) {
-    case Alert::Raising:
+    case Alert::Rising:
     case Alert::Raised:
       return; // nothing to do
     case Alert::Nonexistent: // should not happen
     case Alert::Canceled: // should not happen
-    case Alert::MaybeRaising:
+    case Alert::MayRise:
       // FIXME handle raise delay, both default and from rules
       newAlert.setDueDate(newAlert.riseDate().addSecs(42));
       if (newAlert.dueDate() <= QDateTime::currentDateTime())
         actionRaise(&newAlert);
       else
-        newAlert.setStatus(Alert::Raising);
+        newAlert.setStatus(Alert::Rising);
       break;
-    case Alert::Canceling:
+    case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
       break;
     }
@@ -142,29 +142,29 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
     case Alert::Nonexistent:
     case Alert::Canceled: // should not happen
       return; // nothing to do
-    case Alert::Raising:
-    case Alert::MaybeRaising:
+    case Alert::Rising:
+    case Alert::MayRise:
       newAlert = Alert();
       break;
     case Alert::Raised:
-    case Alert::Canceling:
+    case Alert::Dropping:
       actionCancel(&newAlert);
       break;
     }
   } else {
     switch (oldAlert.status()) {
     case Alert::Nonexistent:
-    case Alert::MaybeRaising:
-    case Alert::Canceling:
+    case Alert::MayRise:
+    case Alert::Dropping:
     case Alert::Canceled: // should not happen
       return; // nothing to do
-    case Alert::Raising:
-      newAlert.setStatus(Alert::MaybeRaising);
+    case Alert::Rising:
+      newAlert.setStatus(Alert::MayRise);
       // FIXME handle cancel delay, both default and from rules
       newAlert.setDueDate(QDateTime::currentDateTime().addSecs(42));
       break;
     case Alert::Raised:
-      newAlert.setStatus(Alert::Canceling);
+      newAlert.setStatus(Alert::Dropping);
       // FIXME handle cancel delay, both default and from rules
       newAlert.setDueDate(newAlert.riseDate().addSecs(_config.defaultCancelDelay()));
     }
@@ -187,13 +187,13 @@ void Alerter::asyncProcessing() {
       case Alert::Raised:
       case Alert::Canceled: // should never happen
         continue; // nothing to do
-      case Alert::Raising:
+      case Alert::Rising:
         actionRaise(&newAlert);
         break;
-      case Alert::MaybeRaising:
+      case Alert::MayRise:
         newAlert = Alert();
         break;
-      case Alert::Canceling:
+      case Alert::Dropping:
         actionCancel(&newAlert);
         break;
       }

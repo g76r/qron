@@ -64,11 +64,11 @@ QVariant AlertData::uiData(int section, int role) const {
     case 3:
       return _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     case 4:
-      return _status == Alert::Raising
+      return _status == Alert::Rising
           ? _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
           : QVariant();
     case 5:
-      return _status == Alert::MaybeRaising || _status == Alert::Canceling
+      return _status == Alert::MayRise || _status == Alert::Dropping
           ? _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
           : QVariant();
     case 6:
@@ -146,21 +146,21 @@ AlertData *Alert::data() {
 }
 
 static QString nonexistentStatus("nonexistent");
-static QString raisingStatus("raising");
-static QString maybeRaisingStatus("maybe_raising");
+static QString risingStatus("rising");
+static QString mayRiseStatus("may_rise");
 static QString raisedStatus("raised");
-static QString cancelingStatus("canceling");
+static QString droppingStatus("dropping");
 static QString canceledStatus("canceled");
 
 Alert::AlertStatus Alert::statusFromString(QString string) {
-  if (string == raisingStatus)
-    return Alert::Raising;
-  if (string == maybeRaisingStatus)
-    return Alert::MaybeRaising;
+  if (string == risingStatus)
+    return Alert::Rising;
+  if (string == mayRiseStatus)
+    return Alert::MayRise;
   if (string == raisedStatus)
     return Alert::Raised;
-  if (string == cancelingStatus)
-    return Alert::Canceling;
+  if (string == droppingStatus)
+    return Alert::Dropping;
   if (string == canceledStatus)
     return Alert::Canceled;
   return Alert::Nonexistent;
@@ -168,14 +168,14 @@ Alert::AlertStatus Alert::statusFromString(QString string) {
 
 QString Alert::statusToString(Alert::AlertStatus status) {
   switch(status) {
-  case Alert::Raising:
-    return raisingStatus;
-  case Alert::MaybeRaising:
-    return maybeRaisingStatus;
+  case Alert::Rising:
+    return risingStatus;
+  case Alert::MayRise:
+    return mayRiseStatus;
   case Alert::Raised:
     return raisedStatus;
-  case Alert::Canceling:
-    return cancelingStatus;
+  case Alert::Dropping:
+    return droppingStatus;
   case Alert::Canceled:
     return canceledStatus;
   case Alert::Nonexistent:

@@ -107,9 +107,9 @@ void MailAlertChannel::doNotifyAlert(Alert alert) {
         return;
       queue->_cancellations.append(alert);
       break;
-    case Alert::Raising:
-    case Alert::MaybeRaising:
-    case Alert::Canceling:
+    case Alert::Rising:
+    case Alert::MayRise:
+    case Alert::Dropping:
       ; // should never happen
     };
     if (queue->_nextProcessing.isNull()) {

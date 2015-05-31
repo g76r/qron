@@ -56,9 +56,9 @@ void UrlAlertChannel::doNotifyAlert(Alert alert) {
       params.setValue("method", params.rawValue("cancelmethod"));
     message = alert.rule().cancelMessage(alert);
     break;
-  case Alert::Raising:
-  case Alert::MaybeRaising:
-  case Alert::Canceling:
+  case Alert::Rising:
+  case Alert::MayRise:
+  case Alert::Dropping:
     ; // should never happen
   }
   // LATER support for binary messages

@@ -28,7 +28,7 @@ class AlertRule;
  * and AlertChannel classes. */
 class LIBQRONSHARED_EXPORT Alert : public SharedUiItem {
 public:
-  enum AlertStatus { Nonexistent, Raising, MaybeRaising, Raised, Canceling,
+  enum AlertStatus { Nonexistent, Rising, MayRise, Raised, Dropping,
                      Canceled };
 
   Alert();

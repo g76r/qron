@@ -176,13 +176,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
                      "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert(Alert::statusToString(Alert::Raising),
+  alertsIcons.insert(Alert::statusToString(Alert::Rising),
                      "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
-  alertsIcons.insert(Alert::statusToString(Alert::MaybeRaising),
+  alertsIcons.insert(Alert::statusToString(Alert::MayRise),
                      "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
   alertsIcons.insert(Alert::statusToString(Alert::Raised),
                      "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert(Alert::statusToString(Alert::Canceling),
+  alertsIcons.insert(Alert::statusToString(Alert::Dropping),
                      "<i class=\"icon-bell\"></i>&nbsp;");
   alertsIcons.insert(Alert::statusToString(Alert::Canceled),
                      "<i class=\"icon-check\"></i>&nbsp;");

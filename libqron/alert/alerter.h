@@ -43,39 +43,38 @@ class PfNode;
  *
  * Apart from direct emission, alerts can be in 5 states:
  * - nonexistent
- * - raising
+ * - rising
  * - raised
- * - canceling
+ * - dropping
  * - canceled (turns into nonexistent just after cancellation notification)
- * - may_rise (when cancelAlert is called on a raising alert)
+ * - may_rise (when cancelAlert is called on a rising alert)
  *
  * The following table provides state transition according to methods and time
  * events:
  *
  * <pre>
  * Previous State        Event                Next State  Action
- * nonexistent|raising|  raise                raising     -
+ * nonexistent|rising|  raise                rising       -
  *  may_rise
- * raised|canceling      raise                raised      -
- * raising               age > raise delay    raised      emit alert
- * nonexistent|raising|  raiseImmediately     raised      emit alert
+ * raised|dropping      raise                raised       -
+ * rising               age > raise delay    raised       emit alert
+ * nonexistent|rising|  raiseImmediately     raised       emit alert
  *  may_rise
- * raised|canceling      raiseImmediately     raised      -
- * nonexistent           cancel               nonexistent -
- * raising|              cancel               may_rise    -
+ * raised|dropping      raiseImmediately     raised       -
+ * nonexistent          cancel               nonexistent  -
+ * rising|may_rise      cancel               may_rise     -
+ * raised|dropping      cancel               dropping     -
+ * dropping             age > cancel delay   canceled     emit cancellation
+ * may_rise             age > cancel delay   nonexistent  -
+ * nonexistent|rising|  cancelImmediately    nonexistent  -
  *  may_rise
- * raised|canceling      cancel               canceling   -
- * canceling             age > cancel delay   canceled    emit cancellation
- * may_rise              age > cancel delay   nonexistent -
- * nonexistent|raising|  cancelImmediately    nonexistent -
- *  may_rise
- * raised|canceling      cancelImmediately    canceled    emit cancellation
+ * raised|dropping      cancelImmediately    canceled     emit cancellation
  * </pre>
  *
  * In addition to emitting alert and cancellation, some channels may emit
  * reminders for alerts that stay raised a long time (actually for alerts that
- * stay in raised and/or canceling states, but channels are not noticed of
- * raised -> canceling or canceling -> raised transitions, therefore they see
+ * stay in raised and/or dropping states, but channels are not noticed of
+ * raised -> dropping or dropping -> raised transitions, therefore they see
  * the two states as only one: raised).
  *
  * Internaly, this class is responsible for configuration, and alerts
@@ -88,20 +87,20 @@ class PfNode;
  * Therefore channels only see 3 alert states, folllowing this table:
  *
  * <pre>
- * Alerter alert state      AlertChannel alert state
- * nonexistent              (never seen)
- * raising                  (never seen)
- * raised                   raised
- * canceling                raised
- * canceled                 canceled
- * may_rise                 (never seen)
- * (direct emit)            nonexistent (alert has no state)
+ * Alerter alert state    AlertChannel alert state
+ * nonexistent            (never seen)
+ * rising                 (never seen)
+ * raised                 raised
+ * dropping               raised
+ * canceled               canceled
+ * may_rise               (never seen)
+ * (direct emit)          nonexistent (alert has no state)
  * </pre>
  *
  * In other words, a user is only notified through a alert channel (i.e. through
  * a push communication mean) of alert that are raised, when they are raised
  * (emit alert) or canceled (emit cancellation), and optionaly when they stay
- * raised too long (emit reminder), or, obviously, if they are emitte without
+ * raised too long (emit reminder), or, obviously, if they are emitted without
  * the raise/cancel system, through emitAlert method.
  *
  * However, access to alerts in non-pushable states (raising, may_rise and the
