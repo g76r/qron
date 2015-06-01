@@ -50,6 +50,7 @@
 #include "thread/atomicvalue.h"
 #include <QRegularExpression>
 #include "modelview/shareduiitemslogmodel.h"
+#include <QSortFilterProxyModel>
 
 class QThread;
 
@@ -70,6 +71,8 @@ class WebConsole : public HttpHandler {
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
   *_alertParamsModel;
   RaisedAlertsModel *_raisedAlertsModel;
+  QSortFilterProxyModel *_sortedRaisedAlertsModel,
+  *_sortedNotRisingRaisedAlertModel;
   LastOccuredTextEventsModel *_lastPostedNoticesModel; // TODO change to SUILogModel
   SharedUiItemsLogModel *_lastEmitedAlertsModel;
   AlertRulesModel *_alertRulesModel;
@@ -89,7 +92,8 @@ class WebConsole : public HttpHandler {
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
   *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
-  *_htmlRaisedAlertsView, *_htmlRaisedAlertsView10, *_htmlLastEmitedAlertsView,
+  *_htmlRaisedAlertsFullView, *_htmlRaisedAlertsNotRisingView,
+  *_htmlLastEmitedAlertsView,
   *_htmlLastEmitedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
   *_htmlTaskInstancesView, *_htmlTaskInstancesView20,

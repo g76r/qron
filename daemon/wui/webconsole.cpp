@@ -64,6 +64,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _globalUnsetenvModel = new ParamSetModel(this);
   _alertParamsModel = new ParamSetModel(this);
   _raisedAlertsModel = new RaisedAlertsModel(this);
+  _sortedRaisedAlertsModel = new QSortFilterProxyModel(this);
+  _sortedRaisedAlertsModel->setSourceModel(_raisedAlertsModel);
+  _sortedRaisedAlertsModel->sort(0);
+  _sortedNotRisingRaisedAlertModel = new QSortFilterProxyModel(this);
+  _sortedNotRisingRaisedAlertModel->setSourceModel(_raisedAlertsModel);
+  _sortedNotRisingRaisedAlertModel->sort(0);
+  _sortedNotRisingRaisedAlertModel->setFilterKeyColumn(1);
+  _sortedNotRisingRaisedAlertModel->setFilterRegExp("raised|dropping");
   _lastEmitedAlertsModel = new SharedUiItemsLogModel(this, 500);
   _lastEmitedAlertsModel->setHeaderDataFromTemplate(
               Alert("template"), Qt::DisplayRole);
@@ -165,14 +173,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertParamsView = new HtmlTableView(this, "alertparams");
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _wuiHandler->addView(_htmlAlertParamsView);
-  _htmlRaisedAlertsView =
-      new HtmlTableView(this, "raisedalerts", RAISED_ALERTS_MAXROWS);
-  _htmlRaisedAlertsView->setModel(_raisedAlertsModel);
-  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
+  _htmlRaisedAlertsFullView =
+      new HtmlTableView(this, "raisedalertsfull", RAISED_ALERTS_MAXROWS);
+  _htmlRaisedAlertsFullView->setModel(_sortedRaisedAlertsModel);
+  _htmlRaisedAlertsFullView->setEmptyPlaceholder("(no alert)");
   cols.clear();
   cols << 0 << 2 << 4 << 5 << 6 << 1; // FIXME remove 1
   // FIXME add filter to hide raising alerts in "currently raised" view on overview page and add a "currently raised or rising" view on alert page
-  _htmlRaisedAlertsView->setColumnIndexes(cols);
+  _htmlRaisedAlertsFullView->setColumnIndexes(cols);
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
                      "<i class=\"icon-bell\"></i>&nbsp;");
@@ -186,20 +194,23 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                      "<i class=\"icon-bell\"></i>&nbsp;");
   alertsIcons.insert(Alert::statusToString(Alert::Canceled),
                      "<i class=\"icon-check\"></i>&nbsp;");
-  _htmlRaisedAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedAlertsView, 6, true));
-  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
+  _htmlRaisedAlertsFullView->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsFullView, 6, true));
+  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsFullView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
-  _wuiHandler->addView(_htmlRaisedAlertsView);
-  _htmlRaisedAlertsView10 =
-    new HtmlTableView(this, "raisedalerts10", RAISED_ALERTS_MAXROWS, 10);
-  _htmlRaisedAlertsView10->setModel(_raisedAlertsModel);
-  _htmlRaisedAlertsView10->setEmptyPlaceholder("(no alert)");
-  _htmlRaisedAlertsView10->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedAlertsView10, 3, true));
-  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView10->itemDelegate())
+  _wuiHandler->addView(_htmlRaisedAlertsFullView);
+  _htmlRaisedAlertsNotRisingView =
+    new HtmlTableView(this, "raisedalertsnotrising", RAISED_ALERTS_MAXROWS, 10);
+  _htmlRaisedAlertsNotRisingView->setModel(_sortedNotRisingRaisedAlertModel);
+  _htmlRaisedAlertsNotRisingView->setEmptyPlaceholder("(no alert)");
+  cols.clear();
+  cols << 0 << 2 << 5 << 6;
+  _htmlRaisedAlertsNotRisingView->setColumnIndexes(cols);
+  _htmlRaisedAlertsNotRisingView->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsNotRisingView, 6, true));
+  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsNotRisingView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
-  _wuiHandler->addView(_htmlRaisedAlertsView10);
+  _wuiHandler->addView(_htmlRaisedAlertsNotRisingView);
   _htmlLastEmitedAlertsView =
       new HtmlTableView(this, "lastemitedalerts",
                         _lastEmitedAlertsModel->maxrows());
@@ -487,7 +498,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvAlertParamsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvAlertParamsView->setModel(_alertParamsModel);
   _csvRaisedAlertsView = new CsvTableView(this, RAISED_ALERTS_MAXROWS);
-  _csvRaisedAlertsView->setModel(_raisedAlertsModel);
+  _csvRaisedAlertsView->setModel(_sortedRaisedAlertsModel);
   _csvLastEmitedAlertsView =
       new CsvTableView(this, _lastEmitedAlertsModel->maxrows());
   _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
@@ -1087,7 +1098,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   }
   if (path == "/rest/html/alerts/raised/list/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlRaisedAlertsView->text().toUtf8().constData());
+    res.output()->write(_htmlRaisedAlertsFullView->text().toUtf8().constData());
     return true;
   }
   if (path == "/rest/csv/alerts/emited/v1") {
