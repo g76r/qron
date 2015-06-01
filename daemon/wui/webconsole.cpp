@@ -178,8 +178,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsFullView->setModel(_sortedRaisedAlertsModel);
   _htmlRaisedAlertsFullView->setEmptyPlaceholder("(no alert)");
   cols.clear();
-  cols << 0 << 2 << 4 << 5 << 6 << 1; // FIXME remove 1
-  // FIXME add filter to hide raising alerts in "currently raised" view on overview page and add a "currently raised or rising" view on alert page
+  cols << 0 << 2 << 4 << 5 << 6;
   _htmlRaisedAlertsFullView->setColumnIndexes(cols);
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
@@ -221,7 +220,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlAlertItemDelegate*)_htmlLastEmittedAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   cols.clear();
-  cols << _lastEmittedAlertsModel->timestampColumn() << 0 << 6 << 1;
+  cols << _lastEmittedAlertsModel->timestampColumn() << 0 << 6;
   _htmlLastEmittedAlertsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlLastEmittedAlertsView);
   _htmlLastEmittedAlertsView10 =
