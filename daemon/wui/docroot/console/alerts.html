@@ -17,16 +17,17 @@
 
       <div class="row">
         <div class="span12">
-          <p>There are two kinds of alerts: those which are emited when raised
-          and those which are emited immediatly (one shot alerts).
-          <p>The first table display alerts of the first kind, including a
-          cancellation timestamp if the alert as been canceled (cancellation
-          is not immediatly effective to avoid alerts flip/flop).
-          <p>The second table display every alert (raised or not) along with
+          <p>There are two kinds of alerts: those which are emitted when raised
+          and those which are emitted immediatly (one shot alerts).
+          <p>The first table displays alerts of the first kind, including a
+          visibility timestamp if the alert is not yet raised and
+          cancellation timestamp if the alert as been canceled (rising and
+          cancellation are not immediatly effective to avoid alerts flip/flop).
+          <p>The second table displays every alert (raised or not) along with
           its emission timestamp. Note that alerts with a human recipient
           (e.g. e-mail) are aggregated and throttled and therefore may be
           actually sent to their recipient a few time after if other alerts
-          have already been emited recently.
+          have already been emitted recently.
         </div>
       </div>
       <div class="row">
@@ -53,10 +54,10 @@
       </div>
       <div class="row">
         <div class="span8">
-          <h2>Recently emited alerts</h2>
+          <h2>Recently emitted alerts</h2>
           <form class="form-inline" action="do" type="GET">
-          <a class="btn btn-primary" href="../rest/csv/alerts/emited/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/emited/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/alerts/emitted/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/emitted/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="emitAlert" />
@@ -64,7 +65,7 @@
               <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Emit alert</button>
           </span>
           </form>
-          <p><?view:lastemitedalerts?>
+          <p><?view:lastemittedalerts?>
         </div>
         <div class="span4">
           <h2>Available alert channels</h2>
@@ -75,8 +76,8 @@
       <div class="row">
         <div class="span12">
           <h2>Alerts rules</h2>
-          <p>For every emited alert, rules are evaluated from top to bottom.
-           If several rules match an alert, it is emited several times, one
+          <p>For every emitted alert, rules are evaluated from top to bottom.
+           If several rules match an alert, it is emitted several times, one
            per matching rule.
            If a stop rule matches an alert, next rules are not evaluated
            regardless if they match the alert or not.

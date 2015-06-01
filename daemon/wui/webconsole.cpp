@@ -72,8 +72,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedNotRisingRaisedAlertModel->sort(0);
   _sortedNotRisingRaisedAlertModel->setFilterKeyColumn(1);
   _sortedNotRisingRaisedAlertModel->setFilterRegExp("raised|dropping");
-  _lastEmitedAlertsModel = new SharedUiItemsLogModel(this, 500);
-  _lastEmitedAlertsModel->setHeaderDataFromTemplate(
+  _lastEmittedAlertsModel = new SharedUiItemsLogModel(this, 500);
+  _lastEmittedAlertsModel->setHeaderDataFromTemplate(
               Alert("template"), Qt::DisplayRole);
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
@@ -211,31 +211,31 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsNotRisingView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsNotRisingView);
-  _htmlLastEmitedAlertsView =
-      new HtmlTableView(this, "lastemitedalerts",
-                        _lastEmitedAlertsModel->maxrows());
-  _htmlLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
-  _htmlLastEmitedAlertsView->setEmptyPlaceholder("(no alert)");
-  _htmlLastEmitedAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlLastEmitedAlertsView, 6, false));
-  ((HtmlAlertItemDelegate*)_htmlLastEmitedAlertsView->itemDelegate())
+  _htmlLastEmittedAlertsView =
+      new HtmlTableView(this, "lastemittedalerts",
+                        _lastEmittedAlertsModel->maxrows());
+  _htmlLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
+  _htmlLastEmittedAlertsView->setEmptyPlaceholder("(no alert)");
+  _htmlLastEmittedAlertsView->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlLastEmittedAlertsView, 6, false));
+  ((HtmlAlertItemDelegate*)_htmlLastEmittedAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   cols.clear();
-  cols << _lastEmitedAlertsModel->timestampColumn() << 0 << 6 << 1;
-  _htmlLastEmitedAlertsView->setColumnIndexes(cols);
-  _wuiHandler->addView(_htmlLastEmitedAlertsView);
-  _htmlLastEmitedAlertsView10 =
-      new HtmlTableView(this, "lastemitedalerts10",
-                        _lastEmitedAlertsModel->maxrows(), 10);
-  _htmlLastEmitedAlertsView10->setModel(_lastEmitedAlertsModel);
-  _htmlLastEmitedAlertsView10->setEmptyPlaceholder("(no alert)");
-  ((HtmlItemDelegate*)_htmlLastEmitedAlertsView10->itemDelegate())
-      ->setPrefixForColumn(_lastEmitedAlertsModel->timestampColumn(), "%1",
+  cols << _lastEmittedAlertsModel->timestampColumn() << 0 << 6 << 1;
+  _htmlLastEmittedAlertsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlLastEmittedAlertsView);
+  _htmlLastEmittedAlertsView10 =
+      new HtmlTableView(this, "lastemittedalerts10",
+                        _lastEmittedAlertsModel->maxrows(), 10);
+  _htmlLastEmittedAlertsView10->setModel(_lastEmittedAlertsModel);
+  _htmlLastEmittedAlertsView10->setEmptyPlaceholder("(no alert)");
+  ((HtmlItemDelegate*)_htmlLastEmittedAlertsView10->itemDelegate())
+      ->setPrefixForColumn(_lastEmittedAlertsModel->timestampColumn(), "%1",
                            2, alertsIcons);
   cols.clear();
   cols << 0 << 1 << 3;
-  _htmlLastEmitedAlertsView10->setColumnIndexes(cols);
-  _wuiHandler->addView(_htmlLastEmitedAlertsView10);
+  _htmlLastEmittedAlertsView10->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlLastEmittedAlertsView10);
   _htmlAlertRulesView =
       new HtmlTableView(this, "alertrules", CONFIG_TABLES_MAXROWS);
   _htmlAlertRulesView->setModel(_alertRulesModel);
@@ -499,9 +499,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvAlertParamsView->setModel(_alertParamsModel);
   _csvRaisedAlertsView = new CsvTableView(this, RAISED_ALERTS_MAXROWS);
   _csvRaisedAlertsView->setModel(_sortedRaisedAlertsModel);
-  _csvLastEmitedAlertsView =
-      new CsvTableView(this, _lastEmitedAlertsModel->maxrows());
-  _csvLastEmitedAlertsView->setModel(_lastEmitedAlertsModel);
+  _csvLastEmittedAlertsView =
+      new CsvTableView(this, _lastEmittedAlertsModel->maxrows());
+  _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
   _csvAlertRulesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvAlertRulesView->setModel(_alertRulesModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
@@ -1101,15 +1101,15 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlRaisedAlertsFullView->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/csv/alerts/emited/v1") {
+  if (path == "/rest/csv/alerts/emitted/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvLastEmitedAlertsView->text().toUtf8().constData());
+    res.output()->write(_csvLastEmittedAlertsView->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/html/alerts/emited/v1") {
+  if (path == "/rest/html/alerts/emitted/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlLastEmitedAlertsView->text().toUtf8().constData());
+    res.output()->write(_htmlLastEmittedAlertsView->text().toUtf8().constData());
     return true;
   }
   if (path == "/rest/csv/alerts/rules/v1") {
@@ -1372,7 +1372,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler->alerter(), SIGNAL(alertCancellationUnscheduled(QString)),
                _raisedAlertsModel, SLOT(alertCancellationUnscheduled(QString)));
     disconnect(_scheduler->alerter(), &Alerter::alertNotified,
-               _lastEmitedAlertsModel, &SharedUiItemsLogModel::logItem);
+               _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
     disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
                _alertRulesModel, SLOT(configChanged(AlerterConfig)));
     disconnect(_scheduler, &Scheduler::taskInstanceQueued,
@@ -1437,7 +1437,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler->alerter(), &Alerter::alertChanged,
             _raisedAlertsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler->alerter(), &Alerter::alertNotified,
-            _lastEmitedAlertsModel, &SharedUiItemsLogModel::logItem);
+            _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
     connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
             _alertRulesModel, SLOT(configChanged(AlerterConfig)));
     connect(_scheduler, &Scheduler::taskInstanceQueued,
