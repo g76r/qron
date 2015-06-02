@@ -24,7 +24,6 @@
 #include "ui/hostsmodel.h"
 #include "ui/clustersmodel.h"
 #include "util/paramsetmodel.h"
-#include "ui/raisedalertsmodel.h"
 #include "ui/lastoccuredtexteventsmodel.h"
 #include "textview/clockview.h"
 #include "ui/alertrulesmodel.h"
@@ -70,7 +69,7 @@ class WebConsole : public HttpHandler {
   ResourcesConsumptionModel *_resourcesConsumptionModel;
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
   *_alertParamsModel;
-  RaisedAlertsModel *_raisedAlertsModel;
+  SharedUiItemsTableModel *_raisedAlertsModel;
   QSortFilterProxyModel *_sortedRaisedAlertsModel,
   *_sortedNotRisingRaisedAlertModel;
   LastOccuredTextEventsModel *_lastPostedNoticesModel; // TODO change to SUILogModel

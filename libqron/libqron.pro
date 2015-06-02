@@ -66,7 +66,6 @@ SOURCES += \
     alert/mailalertchannel.cpp \
     alert/logalertchannel.cpp \
     alert/execalertchannel.cpp \
-    ui/raisedalertsmodel.cpp \
     ui/alertrulesmodel.cpp \
     ui/taskinstancesmodel.cpp \
     ui/tasksmodel.cpp \
@@ -137,7 +136,6 @@ HEADERS += \
     alert/mailalertchannel.h \
     alert/logalertchannel.h \
     alert/execalertchannel.h \
-    ui/raisedalertsmodel.h \
     ui/alertrulesmodel.h \
     ui/taskinstancesmodel.h \
     ui/tasksmodel.h \

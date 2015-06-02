@@ -63,7 +63,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _globalSetenvModel = new ParamSetModel(this);
   _globalUnsetenvModel = new ParamSetModel(this);
   _alertParamsModel = new ParamSetModel(this);
-  _raisedAlertsModel = new RaisedAlertsModel(this);
+  _raisedAlertsModel = new SharedUiItemsTableModel(this);
+  _raisedAlertsModel->setHeaderDataFromTemplate(Alert("template"));
+  _raisedAlertsModel->setDefaultInsertionPoint(
+        SharedUiItemsTableModel::FirstItem);
   _sortedRaisedAlertsModel = new QSortFilterProxyModel(this);
   _sortedRaisedAlertsModel->setSourceModel(_raisedAlertsModel);
   _sortedRaisedAlertsModel->sort(0);
