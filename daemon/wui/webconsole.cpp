@@ -31,6 +31,8 @@
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
+#define TASK_INSTANCE_MAXROWS 500
+#define UNFINISHED_TASK_INSTANCE_MAXROWS 1000
 #define LOG_MAXROWS 500
 #define SHORT_LOG_MAXROWS 100
 #define SVG_BELONG_TO_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><a xlink:title=\"%1\"><text x=\"0\" y=\"15\">This task belongs to workflow \"%1\".</text></a></svg>"
@@ -81,10 +83,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
   _alertRulesModel = new AlertRulesModel(this);
-  // memory cost: about 1.5 kB / instance, e.g. 30 MB for 20000 instances
-  // (this is an empirical measurement and thus includes model + csv view
-  _taskInstancesHistoryModel = new TaskInstancesModel(this, 500);
-  _unfinishedTaskInstancetModel = new TaskInstancesModel(this, 1000, false);
+  _taskInstancesHistoryModel =
+      new TaskInstancesModel(this, TASK_INSTANCE_MAXROWS);
+  _unfinishedTaskInstancetModel =
+      new TaskInstancesModel(this, UNFINISHED_TASK_INSTANCE_MAXROWS, false);
   _tasksModel = new TasksModel(this);
   _mainTasksModel = new QSortFilterProxyModel(this);
   _mainTasksModel->setFilterKeyColumn(31);
