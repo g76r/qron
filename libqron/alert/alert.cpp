@@ -18,17 +18,16 @@ static QString _uiHeaderNames[] = {
   "Id", // 0
   "Status",
   "Rise Date",
-  "Due Date",
   "Visibility Date",
-  "Cancellation Date", // 5
-  "Actions"
+  "Cancellation Date",
+  "Actions" // 5
 };
 
 class AlertData : public SharedUiItemData {
 public:
   QString _id;
   Alert::AlertStatus _status;
-  QDateTime _riseDate, _dueDate, _lastReminderDate;
+  QDateTime _riseDate, _visibilityDate, _cancellationDate, _lastReminderDate;
   AlertRule _rule;
   AlertData(const QString id = QString(),
             QDateTime riseDate = QDateTime::currentDateTime())
@@ -62,16 +61,14 @@ QVariant AlertData::uiData(int section, int role) const {
     case 2:
       return _riseDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     case 3:
-      return _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
+      return _status == Alert::Rising || _status == Alert::MayRise
+          ? _visibilityDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
+          : QVariant();
     case 4:
-      return _status == Alert::Rising
-          ? _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
+      return _status == Alert::MayRise || _status == Alert::Dropping
+          ? _cancellationDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
           : QVariant();
     case 5:
-      return _status == Alert::MayRise || _status == Alert::Dropping
-          ? _dueDate.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
-          : QVariant();
-    case 6:
       break; // actions
     }
     break;
@@ -96,15 +93,26 @@ QDateTime Alert::riseDate() const {
   return d ? d->_riseDate : QDateTime();
 }
 
-QDateTime Alert::dueDate() const {
+QDateTime Alert::cancellationDate() const {
   const AlertData *d = data();
-  return d ? d->_dueDate : QDateTime();
+  return d ? d->_cancellationDate : QDateTime();
 }
 
-void Alert::setDueDate(QDateTime dueDate) {
+void Alert::setCancellationDate(QDateTime cancellationDate) {
   AlertData *d = data();
   if (d)
-    d->_dueDate = dueDate;
+    d->_cancellationDate = cancellationDate;
+}
+
+QDateTime Alert::visibilityDate() const {
+  const AlertData *d = data();
+  return d ? d->_visibilityDate : QDateTime();
+}
+
+void Alert::setVisibilityDate(QDateTime visibilityDate) {
+  AlertData *d = data();
+  if (d)
+    d->_visibilityDate = visibilityDate;
 }
 
 Alert::AlertStatus Alert::status() const {

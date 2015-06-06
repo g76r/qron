@@ -98,6 +98,10 @@ void Alerter::cancelAlertImmediately(QString alertId) {
 void Alerter::doRaiseAlert(QString alertId, bool immediately) {
   Alert oldAlert = _alerts.value(alertId);
   Alert newAlert = oldAlert.isNull() ? Alert(alertId) : oldAlert;
+//  if (alertId.startsWith("task.maxinstancesreached")
+//      || alertId.startsWith("task.maxinstancesreached")) {
+//    qDebug() << "doRaiseAlert:" << alertId << immediately << oldAlert.statusToString();
+//  }
   if (immediately) {
     switch (oldAlert.status()) {
     case Alert::Rising:
@@ -117,15 +121,17 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
     case Alert::Rising:
     case Alert::Raised:
       return; // nothing to do
-    case Alert::Nonexistent: // should not happen
-    case Alert::Canceled: // should not happen
     case Alert::MayRise:
-      // FIXME handle raise delay, both default and from rules
-      newAlert.setDueDate(newAlert.riseDate().addSecs(42));
-      if (newAlert.dueDate() <= QDateTime::currentDateTime())
+      if (newAlert.visibilityDate() <= QDateTime::currentDateTime()) {
         actionRaise(&newAlert);
-      else
-        newAlert.setStatus(Alert::Rising);
+        break;
+      }
+      // else fall through next case
+    case Alert::Nonexistent:
+    case Alert::Canceled: // should not happen
+      // FIXME handle rise delay, both default and from rules
+      newAlert.setVisibilityDate(newAlert.riseDate().addSecs(42));
+      newAlert.setStatus(Alert::Rising);
       break;
     case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
@@ -137,6 +143,10 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
 
 void Alerter::doCancelAlert(QString alertId, bool immediately) {
   Alert oldAlert = _alerts.value(alertId), newAlert = oldAlert;
+//  if (alertId.startsWith("task.maxinstancesreached")
+//      || alertId.startsWith("task.maxinstancesreached")) {
+//    qDebug() << "doCancelAlert:" << alertId << immediately << oldAlert.statusToString();
+//  }
   if (immediately) {
     switch (oldAlert.status()) {
     case Alert::Nonexistent:
@@ -160,13 +170,13 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
       return; // nothing to do
     case Alert::Rising:
       newAlert.setStatus(Alert::MayRise);
-      // FIXME handle cancel delay, both default and from rules
-      newAlert.setDueDate(QDateTime::currentDateTime().addSecs(42));
+      // FIXME handle may_rise delay, both default and from rules, default rise delay / 2
+      newAlert.setCancellationDate(QDateTime::currentDateTime().addSecs(21));
       break;
     case Alert::Raised:
       newAlert.setStatus(Alert::Dropping);
       // FIXME handle cancel delay, both default and from rules
-      newAlert.setDueDate(newAlert.riseDate().addSecs(_config.defaultCancelDelay()));
+      newAlert.setCancellationDate(newAlert.riseDate().addSecs(_config.defaultCancelDelay()));
     }
   }
   commitChange(&newAlert, &oldAlert);
@@ -180,31 +190,38 @@ void Alerter::doEmitAlert(QString alertId) {
 void Alerter::asyncProcessing() {
   QDateTime now = QDateTime::currentDateTime();
   foreach (Alert oldAlert, _alerts) {
-    if (!oldAlert.isNull() && oldAlert.dueDate() <= now) {
-      Alert newAlert = oldAlert;
-      switch(oldAlert.status()) {
-      case Alert::Nonexistent:
-      case Alert::Raised:
-      case Alert::Canceled: // should never happen
-        continue; // nothing to do
-      case Alert::Rising:
+    switch(oldAlert.status()) {
+    case Alert::Nonexistent: // should never happen
+    case Alert::Canceled: // should never happen
+    case Alert::Raised:
+      continue; // nothing to do
+    case Alert::Rising:
+      if (oldAlert.visibilityDate() <= now) {
+        Alert newAlert = oldAlert;
         actionRaise(&newAlert);
-        break;
-      case Alert::MayRise:
-        newAlert = Alert();
-        break;
-      case Alert::Dropping:
-        actionCancel(&newAlert);
-        break;
+        commitChange(&newAlert, &oldAlert);
       }
-      commitChange(&newAlert, &oldAlert);
+      break;
+    case Alert::MayRise:
+      if (oldAlert.cancellationDate() <= now) {
+        Alert newAlert;
+        commitChange(&newAlert, &oldAlert);
+      }
+      break;
+    case Alert::Dropping:
+      if (oldAlert.cancellationDate() <= now) {
+        Alert newAlert = oldAlert;
+        actionCancel(&newAlert);
+        commitChange(&newAlert, &oldAlert);
+      }
+      break;
     }
   }
 }
 
 void Alerter::actionRaise(Alert *newAlert) {
   newAlert->setStatus(Alert::Raised);
-  newAlert->setDueDate(QDateTime());
+  newAlert->setVisibilityDate(QDateTime());
   Log::debug() << "alert raised: " << newAlert->id();
   notifyChannels(*newAlert);
 }
@@ -217,7 +234,7 @@ void Alerter::actionCancel(Alert *newAlert) {
 
 void Alerter::actionNoLongerCancel(Alert *newAlert) {
   newAlert->setStatus(Alert::Raised);
-  newAlert->setDueDate(QDateTime());
+  newAlert->setCancellationDate(QDateTime());
   Log::debug() << "alert is no longer scheduled for cancellation "
                << newAlert->id()
                << " (it was raised again within cancel delay)";
@@ -249,5 +266,9 @@ void Alerter::commitChange(Alert *newAlert, Alert *oldAlert) {
   default:
     _alerts.insert(newAlert->id(), *newAlert);
   }
+//  if (newAlert->id().startsWith("task.maxinstancesreached")
+//      || oldAlert->id().startsWith("task.maxinstancesreached")) {
+//    qDebug() << "commitChange:" << newAlert->id() << newAlert->statusToString() << oldAlert->statusToString();
+//  }
   emit alertChanged(*newAlert, *oldAlert);
 }

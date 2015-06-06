@@ -21,12 +21,10 @@
 class LIBQRONSHARED_EXPORT HtmlAlertItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlAlertItemDelegate)
-  int _actionsColumn;
   bool _canRaiseAndCancel;
 
 public:
-  explicit HtmlAlertItemDelegate(QObject *parent,
-                                 int actionsColumn, bool canRaiseAndCancel);
+  explicit HtmlAlertItemDelegate(QObject *parent, bool canRaiseAndCancel);
   QString text(const QModelIndex &index) const;
 };
 

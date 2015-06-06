@@ -183,7 +183,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsFullView->setModel(_sortedRaisedAlertsModel);
   _htmlRaisedAlertsFullView->setEmptyPlaceholder("(no alert)");
   cols.clear();
-  cols << 0 << 2 << 4 << 5 << 6;
+  cols << 0 << 2 << 3 << 4 << 1 << 5;
   _htmlRaisedAlertsFullView->setColumnIndexes(cols);
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
@@ -199,7 +199,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   alertsIcons.insert(Alert::statusToString(Alert::Canceled),
                      "<i class=\"icon-check\"></i>&nbsp;");
   _htmlRaisedAlertsFullView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedAlertsFullView, 6, true));
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsFullView, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsFullView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   _wuiHandler->addView(_htmlRaisedAlertsFullView);
@@ -208,10 +208,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsNotRisingView->setModel(_sortedNotRisingRaisedAlertModel);
   _htmlRaisedAlertsNotRisingView->setEmptyPlaceholder("(no alert)");
   cols.clear();
-  cols << 0 << 2 << 5 << 6;
+  cols << 0 << 2 << 4 << 5;
   _htmlRaisedAlertsNotRisingView->setColumnIndexes(cols);
   _htmlRaisedAlertsNotRisingView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedAlertsNotRisingView, 6, true));
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsNotRisingView, true));
   ((HtmlAlertItemDelegate*)_htmlRaisedAlertsNotRisingView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsNotRisingView);
@@ -221,7 +221,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
   _htmlLastEmittedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlLastEmittedAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlLastEmittedAlertsView, 6, false));
+        new HtmlAlertItemDelegate(_htmlLastEmittedAlertsView, false));
   ((HtmlAlertItemDelegate*)_htmlLastEmittedAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   cols.clear();

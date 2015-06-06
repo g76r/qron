@@ -14,15 +14,16 @@
 #include "htmlalertitemdelegate.h"
 #include "alert/alert.h"
 
+#define ACTION_COLUMN 5
+
 HtmlAlertItemDelegate::HtmlAlertItemDelegate(
-    QObject *parent, int actionsColumn, bool canRaiseAndCancel)
-  : HtmlItemDelegate(parent), _actionsColumn(actionsColumn),
-    _canRaiseAndCancel(canRaiseAndCancel) {
+    QObject *parent, bool canRaiseAndCancel)
+  : HtmlItemDelegate(parent), _canRaiseAndCancel(canRaiseAndCancel) {
 }
 
 QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
-  if (index.column() == _actionsColumn) {
+  if (index.column() == ACTION_COLUMN) {
     static QRegExp taskIdInAlert("task\\.[^\\.]+\\.(.*)");
     QRegExp re = taskIdInAlert;
     QString alertId = index.model()->index(index.row(), 0, index.parent())

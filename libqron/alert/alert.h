@@ -42,19 +42,23 @@ public:
   static Alert::AlertStatus statusFromString(QString string);
   static QString statusToString(Alert::AlertStatus status);
   QString statusToString() const { return statusToString(status()); }
-  /// Initial raise() call date, before raising period.
+  /** Initial raise() call date, before rising period.
+   * Won't change in the alert lifetime. */
   QDateTime riseDate() const;
-  /// End of raising, may_rise or canceling delays, depending on status.
-  QDateTime dueDate() const;
-  void setDueDate(QDateTime dueDate);
+  /** End of rise or cancellation delays.
+   * Applicable to may_rise and dropping status. */
+  QDateTime cancellationDate() const;
+  void setCancellationDate(QDateTime cancellationDate);
+  /** End of rising delay.
+   * Applicable to rising and may_rise status. */
+  QDateTime visibilityDate() const;
+  void setVisibilityDate(QDateTime visibilityDate);
   AlertPseudoParamsProvider pseudoParams() const;
   /** Timestamp a raised alert was last reminded.
-   *
    * Only set by channels which handle reminders, not by Alerter. */
   QDateTime lastRemindedDate() const;
   void setLastRemindedDate(QDateTime lastRemindedDate);
   /** Rule for which an Alert is notified to an AlertChannel.
-   *
    * Set by Alerter just before notifying an AlertChannel. */
   AlertRule rule() const;
   void setRule(AlertRule rule);
