@@ -37,6 +37,21 @@ public:
     _nextProcessing = scheduling;
     TimerWithArguments::singleShot(ms, channel, "processQueue", _address);
   }
+  QString toString() const {
+    QString s = "{\n  address: "+_address+"\n  alerts: [ ";
+    foreach(const Alert &alert, _alerts)
+      s.append(alert.id()).append(' ');
+    s.append("]\n  cancellations: [ ");
+    foreach(const Alert &alert, _cancellations)
+      s.append(alert.id()).append(' ');
+    s.append("]\n  reminders: [ ");
+    foreach(const Alert &alert, _reminders)
+      s.append(alert.id()).append(' ');
+    s.append("]\n  last mail: ").append(_lastMail.toString())
+        .append("\n  next processing: ").append(_nextProcessing.toString());
+    s.append("\n}");
+    return s;
+  }
 };
 
 MailAlertChannel::MailAlertChannel(QObject *parent,
@@ -59,13 +74,16 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
   if (_mailSender)
     delete _mailSender;
   _mailSender = new MailSender(relay);
+  QString queueDump;
   foreach(const MailAlertQueue *queue, _queues.values()) {
-    if (queue->_alerts.size() + queue->_cancellations.size()
+    queueDump.append(queue->toString()).append("\n");
+    if (queue->_alerts.size() + queue->_cancellations.size() // FIXME or if there are no longer subsription
         + queue->_reminders.size() == 0) {
       _queues.remove(queue->_address);
       delete queue;
     }
   }
+  Log::debug() << "mail queues before config reload:\n" << queueDump;
   // LATER: also delete queues to address that are no longer referenced by any rule since they are likely to be only a spam source
   QMetaObject::invokeMethod(this, "asyncProcessing", Qt::QueuedConnection);
   Log::debug() << "MailAlertChannel configured " << relay << " "
