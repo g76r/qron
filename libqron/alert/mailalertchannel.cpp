@@ -74,17 +74,26 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
   if (_mailSender)
     delete _mailSender;
   _mailSender = new MailSender(relay);
-  QString queueDump;
+  QString queuesBeforeReload;
+  QStringList queuesRemoved;
+  QSet<QString> configuredAddresses;
+  foreach (const AlertRule &rule, config.rules())
+    if (rule.channelName() == QStringLiteral("mail"))
+      configuredAddresses.insert(rule.address(Alert()));
   foreach(const MailAlertQueue *queue, _queues.values()) {
-    queueDump.append(queue->toString()).append("\n");
-    if (queue->_alerts.size() + queue->_cancellations.size() // FIXME or if there are no longer subsription
-        + queue->_reminders.size() == 0) {
+    queuesBeforeReload.append(queue->toString()).append("\n");
+    if (queue->_alerts.size() + queue->_cancellations.size()
+        + queue->_reminders.size() == 0
+        || !configuredAddresses.contains(queue->_address)) {
       _queues.remove(queue->_address);
+      queuesRemoved.append(queue->_address);
       delete queue;
     }
   }
-  Log::debug() << "mail queues before config reload:\n" << queueDump;
-  // LATER: also delete queues to address that are no longer referenced by any rule since they are likely to be only a spam source
+  Log::debug() << "mail queues before config reload: [\n" << queuesBeforeReload
+               << "]";
+  Log::info() << "mail queues removed on reload: [ "
+              << queuesRemoved.join(' ') << " ]";
   QMetaObject::invokeMethod(this, "asyncProcessing", Qt::QueuedConnection);
   Log::debug() << "MailAlertChannel configured " << relay << " "
                << config.params().toString();
