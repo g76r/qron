@@ -339,6 +339,8 @@ TaskInstance Scheduler::doCancelRequest(quint64 id) {
       r2.setEndDatetime();
       emit taskInstanceFinished(r2);
       _queuedRequests.removeAt(i);
+      if (r2.task().instancesCount() < r2.task().maxInstances())
+        _alerter->cancelAlert("task.maxinstancesreached."+taskId);
       return r2;
     }
   }
