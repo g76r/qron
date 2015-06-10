@@ -1,4 +1,4 @@
-# Copyright 2012-2014 Hallowyn and others.
+# Copyright 2012-2015 Hallowyn and others.
 # This file is part of qron, see <http://qron.hallowyn.com/>.
 # Qron is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -19,16 +19,15 @@ CONFIG += console largefile
 CONFIG -= app_bundle
 
 INCLUDEPATH += ../libqtpf ../libqtssu ../libqron
-win32:debug:LIBS += -L../build-libqtpf-windows/libqtpf/debug \
-  -L../build-libqtpf-windows/libqtpfsql/debug \
+win32:debug:LIBS += \
+  -L../build-libqtpf-windows/debug \
   -L../build-libqron-windows/debug \
   -L../build-libqtssu-windows/debug
-win32:release:LIBS += -L../build-libqtpf-windows/libqtpf/release \
-  -L../build-libqtpf-windows/libqtpfsql/release \
+win32:release:LIBS += \
+  -L../build-libqtpf-windows/release \
   -L../build-libqron-windows/release \
   -L../build-libqtssu-windows/release
-unix:LIBS += -L../libqtpf/libqtpf -L../libqtpf/libqtpfsql -L../libqtssu \
-  -L../libqron
+unix:LIBS += -L../libqtpf -L../libqtssu -L../libqron
 LIBS += -lqtpf -lqtssu -lqron
 
 
