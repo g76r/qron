@@ -31,6 +31,7 @@ unix:LIBS += -L../libqtpf -L../libqtssu -L../libqron
 LIBS += -lqtpf -lqtssu -lqron
 
 
+exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 QMAKE_CXXFLAGS += -Wextra
 #QMAKE_CXXFLAGS += -fno-elide-constructors
 unix:debug:QMAKE_CXXFLAGS += -ggdb
