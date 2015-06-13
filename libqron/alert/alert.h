@@ -22,7 +22,7 @@
 
 class AlertData;
 class AlertPseudoParamsProvider;
-class AlertRule;
+class AlertSubscription;
 
 /** Class used to represent alert data during emission, in or between Alerter
  * and AlertChannel classes. */
@@ -60,8 +60,8 @@ public:
   void setLastRemindedDate(QDateTime lastRemindedDate);
   /** Rule for which an Alert is notified to an AlertChannel.
    * Set by Alerter just before notifying an AlertChannel. */
-  AlertRule rule() const;
-  void setRule(AlertRule rule);
+  AlertSubscription rule() const;
+  void setRule(AlertSubscription rule);
 
 private:
   AlertData *data();

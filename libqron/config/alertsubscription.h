@@ -11,33 +11,30 @@
  * You should have received a copy of the GNU Affero General Public License
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
-#ifndef ALERTRULE_H
-#define ALERTRULE_H
+#ifndef ALERTSUBSCRIPTION_H
+#define ALERTSUBSCRIPTION_H
 
 #include "libqron_global.h"
 #include <QSharedDataPointer>
 #include <QPointer>
 #include <QString>
-#include <QRegExp> // FIXME QRegularExpression
+#include <QRegularExpression>
 #include "util/paramset.h"
+#include "modelview/shareduiitem.h"
 
-class AlertRuleData;
+class AlertSubscriptionData;
 class PfNode;
 class Alert;
 
-// FIXME add raise and cancel delay rules
-// TODO migrate to SharedUiItem
-/** Alert rule is the configuration object defining the matching between an
- * alert id pattern and a alert channel, with optional additional parameters.
+/** Alert subscription is the configuration object defining the matching between
+ * an alert id pattern and a alert channel, with optional additional parameters.
  * @see Alerter */
-class LIBQRONSHARED_EXPORT AlertRule {
-  QSharedDataPointer<AlertRuleData> d;
-
+class LIBQRONSHARED_EXPORT AlertSubscription : public SharedUiItem {
 public:
-  AlertRule();
-  AlertRule(const AlertRule &);
+  AlertSubscription();
+  AlertSubscription(const AlertSubscription &other);
   /** parses this form in Pf:
-   * (rule
+   * (subscription
    *  (param foo bar)
    *  (match **)
    *  (log
@@ -45,19 +42,19 @@ public:
    *   (address debug)
    *   (emitmessage foo)
    *  )
-   *  (raisedelay 120) # seconds
-   *  (canceldelay 1200) # seconds
    * )
-   * Where rulenode is "rule" node and rulechannelnode is "log" node.
-   * This is needed because input config format accepts several rulechannelnode
-   * per rulenode, in this case config reader will create several AlertRule
-   * objects.
+   * Where subscriptionnode is "subscription" node and channelnode is "log"
+   * (or any other channel name) node.
+   * This is needed because input config format accepts several channel nodes
+   * per subscription node, in this case config reader will create several
+   * AlertSubscription objects.
    */
-  AlertRule(PfNode rulenode, PfNode rulechannelnode, ParamSet parentParams);
-  AlertRule &operator=(const AlertRule &);
-  ~AlertRule();
+  AlertSubscription(PfNode subscriptionnode, PfNode channelnode,
+                    ParamSet parentParams);
+  AlertSubscription &operator=(const AlertSubscription &other) {
+    SharedUiItem::operator=(other); return *this; }
   QString pattern() const;
-  QRegExp patternRegExp() const;
+  QRegularExpression patternRegexp() const;
   QString channelName() const;
   QString rawAddress() const;
   QString address(Alert alert) const;
@@ -70,13 +67,12 @@ public:
   bool notifyEmit() const;
   bool notifyCancel() const;
   bool notifyReminder() const;
-  bool isNull() const;
   ParamSet params() const;
   PfNode toPfNode() const;
-  /// milliseconds
-  long raiseDelay() const;
-  /// milliseconds
-  long cancelDelay() const;
+
+private:
+  const AlertSubscriptionData *data() const {
+    return (const AlertSubscriptionData*)SharedUiItem::data(); }
 };
 
-#endif // ALERTRULE_H
+#endif // ALERTSUBSCRIPTION_H

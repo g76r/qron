@@ -17,7 +17,7 @@
 #include "libqron_global.h"
 #include "pf/pfnode.h"
 #include "util/paramset.h"
-#include <QRegExp>
+#include <QRegularExpression>
 
 class EventSubscription;
 class Scheduler;
@@ -49,13 +49,10 @@ public:
   /** For identifier, with or without dot. Cannot contain ParamSet interpreted
    * expressions such as %!yyyy. */
   static QString sanitizeId(QString string, IdType idType);
-  /** Interpret s as regexp if it starts and ends with a /, else as raw text */
-  static QRegExp readRawOrRegexpFilter(
-      QString s, Qt::CaseSensitivity cs = Qt::CaseSensitive);
   /** Interpret s as regexp if it starts and ends with a /, else as
    * dot-hierarchical globing with * meaning [^.]* and ** meaning .* */
-  static QRegExp readDotHierarchicalFilter(
-      QString s, Qt::CaseSensitivity cs = Qt::CaseSensitive);
+  static QRegularExpression readDotHierarchicalFilter(
+      QString s, bool caseSensitive = true, bool dotPatternMatchesAll = true);
   static void loadEventSubscription(
       PfNode parentNode, QString childName, QString subscriberId,
       QList<EventSubscription> *list, Scheduler *scheduler);
@@ -77,8 +74,8 @@ private:
   ConfigUtils();
   /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
    * "some.path.with.\*.star.and.\\.backslash" into regular expressions. */
-  static QRegExp convertDotHierarchicalFilterToRegexp(
-      QString pattern, Qt::CaseSensitivity cs = Qt::CaseSensitive);
+  static QRegularExpression convertDotHierarchicalFilterToRegexp(
+      QString pattern, bool caseSensitive = true);
 };
 
 #endif // CONFIGUTILS_H

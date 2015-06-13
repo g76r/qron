@@ -12,7 +12,7 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "alert.h"
-#include "config/alertrule.h"
+#include "config/alertsubscription.h"
 
 static QString _uiHeaderNames[] = {
   "Id", // 0
@@ -28,7 +28,7 @@ public:
   QString _id;
   Alert::AlertStatus _status;
   QDateTime _riseDate, _visibilityDate, _cancellationDate, _lastReminderDate;
-  AlertRule _rule;
+  AlertSubscription _rule;
   AlertData(const QString id = QString(),
             QDateTime riseDate = QDateTime::currentDateTime())
     : _id(id), _status(Alert::Nonexistent), _riseDate(riseDate ) { }
@@ -137,12 +137,12 @@ void Alert::setLastRemindedDate(QDateTime lastRemindedDate) {
     d->_lastReminderDate = lastRemindedDate;
 }
 
-AlertRule Alert::rule() const {
+AlertSubscription Alert::rule() const {
   const AlertData *d = data();
-  return d ? d->_rule : AlertRule();
+  return d ? d->_rule : AlertSubscription();
 }
 
-void Alert::setRule(AlertRule rule) {
+void Alert::setRule(AlertSubscription rule) {
   AlertData *d = data();
   if (d)
     d->_rule = rule;

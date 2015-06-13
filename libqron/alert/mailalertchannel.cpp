@@ -77,7 +77,7 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
   QString queuesBeforeReload;
   QStringList queuesRemoved;
   QSet<QString> configuredAddresses;
-  foreach (const AlertRule &rule, config.rules())
+  foreach (const AlertSubscription &rule, config.alertSubscriptions())
     if (rule.channelName() == QStringLiteral("mail"))
       configuredAddresses.insert(rule.address(Alert()));
   foreach(const MailAlertQueue *queue, _queues.values()) {
@@ -315,7 +315,7 @@ void MailAlertChannel::processQueue(QVariant address) {
             "sent (send timestamp of the mail).\n");
       if (_alerter) {
         s = "This is the 'canceldelay' parameter, currently configured to "
-            +QString::number(_config.defaultCancelDelay()*.001)
+            +QString::number(_config.dropDelay()*.001)
             +" seconds.";
         text.append(s);
         html.append("<p>").append(s);

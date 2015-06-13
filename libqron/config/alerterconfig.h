@@ -18,7 +18,8 @@
 #include <QSharedDataPointer>
 #include "pf/pfnode.h"
 #include "util/paramset.h"
-#include "alertrule.h"
+#include "alertsubscription.h"
+#include "alertsettings.h"
 
 class AlerterConfigData;
 
@@ -33,17 +34,20 @@ public:
   ~AlerterConfig();
   /** Give access to alerts parameters. */
   ParamSet params() const;
+  /** AlertConfig-level delay, in ms. */
+  qint64 riseDelay() const;
+  /** AlertConfig-level delay, in ms. */
+  qint64 mayriseDelay() const;
+  /** AlertConfig-level delay, in ms. */
+  qint64 dropDelay() const;
   /** In ms. */
-  int defaultRaiseDelay() const;
+  qint64 minDelayBetweenSend() const;
   /** In ms. */
-  int defaultCancelDelay() const;
+  qint64 delayBeforeFirstSend() const;
   /** In ms. */
-  int minDelayBetweenSend() const;
-  /** In ms. */
-  int delayBeforeFirstSend() const;
-  /** In ms. */
-  int remindPeriod() const;
-  QList<AlertRule> rules() const;
+  qint64 remindPeriod() const;
+  QList<AlertSubscription> alertSubscriptions() const;
+  QList<AlertSettings> alertSettings() const;
   /** Available channels names */
   QStringList channelsNames() const;
   PfNode toPfNode() const;

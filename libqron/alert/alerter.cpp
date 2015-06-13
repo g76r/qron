@@ -44,8 +44,8 @@ Alerter::Alerter() : QObject(0), _thread(new QThread) {
   connect(timer, SIGNAL(timeout()), this, SLOT(asyncProcessing()));
   timer->start(ASYNC_PROCESSING_INTERVAL);
   moveToThread(_thread);
-  qRegisterMetaType<QList<AlertRule> >("QList<AlertRule>");
-  qRegisterMetaType<AlertRule>("AlertRule");
+  qRegisterMetaType<QList<AlertSubscription> >("QList<AlertRule>");
+  qRegisterMetaType<AlertSubscription>("AlertRule");
   qRegisterMetaType<Alert>("Alert");
   qRegisterMetaType<ParamSet>("ParamSet");
   qRegisterMetaType<QDateTime>("QDateTime");
@@ -66,6 +66,8 @@ void Alerter::setConfig(AlerterConfig config) {
 }
 
 void Alerter::doSetConfig(AlerterConfig config) {
+  _alertSubscriptionsCache.clear();
+  _alertSettingsCache.clear();
   _config = config;
   emit paramsChanged(_config.params());
   emit configChanged(_config);
@@ -129,8 +131,8 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
       // else fall through next case
     case Alert::Nonexistent:
     case Alert::Canceled: // should not happen
-      // FIXME handle rise delay, both default and from rules
-      newAlert.setVisibilityDate(newAlert.riseDate().addSecs(42));
+      newAlert.setVisibilityDate(newAlert.riseDate().addMSecs(
+                                   riseDelay(alertId)));
       newAlert.setStatus(Alert::Rising);
       break;
     case Alert::Dropping:
@@ -170,13 +172,13 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
       return; // nothing to do
     case Alert::Rising:
       newAlert.setStatus(Alert::MayRise);
-      // FIXME handle may_rise delay, both default and from rules, default rise delay / 2
-      newAlert.setCancellationDate(QDateTime::currentDateTime().addSecs(21));
+      newAlert.setCancellationDate(QDateTime::currentDateTime().addMSecs(
+                                     mayriseDelay(alertId)));
       break;
     case Alert::Raised:
       newAlert.setStatus(Alert::Dropping);
-      // FIXME handle cancel delay, both default and from rules
-      newAlert.setCancellationDate(newAlert.riseDate().addSecs(_config.defaultCancelDelay()));
+      newAlert.setCancellationDate(newAlert.riseDate().addMSecs(
+                                     dropDelay(alertId)));
     }
   }
   commitChange(&newAlert, &oldAlert);
@@ -237,21 +239,17 @@ void Alerter::actionNoLongerCancel(Alert *newAlert) {
   newAlert->setCancellationDate(QDateTime());
   Log::debug() << "alert is no longer scheduled for cancellation "
                << newAlert->id()
-               << " (it was raised again within cancel delay)";
+               << " (it was raised again within drop delay)";
 }
 
 void Alerter::notifyChannels(Alert newAlert) {
   emit alertNotified(newAlert);
-  foreach (AlertRule rule, _config.rules()) {
-    if (rule.patternRegExp().exactMatch(newAlert.id())) {
-      QString channelName = rule.channelName();
-      if (channelName == QStringLiteral("stop"))
-        break;
-      QPointer<AlertChannel> channel = _channels.value(channelName);
-      if (channel) {
-        newAlert.setRule(rule);
-        channel.data()->notifyAlert(newAlert);
-      }
+  // LATER add cache to avoid reading the whole rules table every time
+  foreach (AlertSubscription sub, alertSubscriptions(newAlert.id())) {
+    QPointer<AlertChannel> channel = _channels.value(sub.channelName());
+    if (channel) { // should never be false
+      newAlert.setRule(sub);
+      channel.data()->notifyAlert(newAlert);
     }
   }
 }
@@ -272,3 +270,51 @@ void Alerter::commitChange(Alert *newAlert, Alert *oldAlert) {
 //  }
   emit alertChanged(*newAlert, *oldAlert);
 }
+
+QList<AlertSubscription> Alerter::alertSubscriptions(QString alertId) {
+  if (!_alertSubscriptionsCache.contains(alertId)) {
+    QList<AlertSubscription> list;
+    foreach (const AlertSubscription &sub, _config.alertSubscriptions()) {
+      if (sub.patternRegexp().match(alertId).hasMatch()) {
+        QString channelName = sub.channelName();
+        if (channelName == QStringLiteral("stop"))
+          break;
+        if (!_channels.contains(channelName)) // should never happen
+          continue;
+        list.append(sub);
+      }
+    }
+    _alertSubscriptionsCache.insert(alertId, list);
+  }
+  return _alertSubscriptionsCache.value(alertId);
+}
+
+AlertSettings Alerter::alertSettings(QString alertId) {
+  if (!_alertSettingsCache.contains(alertId)) {
+    foreach (const AlertSettings &settings, _config.alertSettings()) {
+      if (settings.patternRegexp().match(alertId).hasMatch()) {
+        _alertSettingsCache.insert(alertId, settings);
+        goto found;
+      }
+    }
+    _alertSettingsCache.insert(alertId, AlertSettings());
+found:;
+  }
+  return _alertSettingsCache.value(alertId);
+}
+
+qint64 Alerter::riseDelay(QString alertId) {
+  qint64 delay = alertSettings(alertId).riseDelay();
+  return delay > 0 ? delay : _config.riseDelay();
+}
+
+qint64 Alerter::mayriseDelay(QString alertId) {
+  qint64 delay = alertSettings(alertId).mayriseDelay();
+  return delay > 0 ? delay : _config.mayriseDelay();
+}
+
+qint64 Alerter::dropDelay(QString alertId) {
+  qint64 delay = alertSettings(alertId).dropDelay();
+  return delay > 0 ? delay : _config.dropDelay();
+}
+

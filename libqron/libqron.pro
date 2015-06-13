@@ -60,12 +60,10 @@ SOURCES += \
     ui/hostsresourcesavailabilitymodel.cpp \
     alert/alerter.cpp \
     alert/alert.cpp \
-    config/alertrule.cpp \
     alert/alertchannel.cpp \
     alert/mailalertchannel.cpp \
     alert/logalertchannel.cpp \
     alert/execalertchannel.cpp \
-    ui/alertrulesmodel.cpp \
     ui/taskinstancesmodel.cpp \
     ui/tasksmodel.cpp \
     action/action.cpp \
@@ -79,7 +77,6 @@ SOURCES += \
     ui/lastoccuredtexteventsmodel.cpp \
     ui/taskgroupsmodel.cpp \
     config/configutils.cpp \
-    ui/alertchannelsmodel.cpp \
     config/requestformfield.cpp \
     ui/resourcesconsumptionmodel.cpp \
     config/logfile.cpp \
@@ -114,7 +111,9 @@ SOURCES += \
     ui/configsmodel.cpp \
     ui/htmlschedulerconfigitemdelegate.cpp \
     ui/confighistorymodel.cpp \
-    sched/noticepseudoparamsprovider.cpp
+    sched/noticepseudoparamsprovider.cpp \
+    config/alertsettings.cpp \
+    config/alertsubscription.cpp
 
 HEADERS += \
     config/task.h \
@@ -130,12 +129,10 @@ HEADERS += \
     ui/hostsresourcesavailabilitymodel.h \
     alert/alerter.h \
     alert/alert.h \
-    config/alertrule.h \
     alert/alertchannel.h \
     alert/mailalertchannel.h \
     alert/logalertchannel.h \
     alert/execalertchannel.h \
-    ui/alertrulesmodel.h \
     ui/taskinstancesmodel.h \
     ui/tasksmodel.h \
     action/action.h \
@@ -150,7 +147,6 @@ HEADERS += \
     ui/lastoccuredtexteventsmodel.h \
     ui/taskgroupsmodel.h \
     config/configutils.h \
-    ui/alertchannelsmodel.h \
     config/requestformfield.h \
     ui/resourcesconsumptionmodel.h \
     config/logfile.h \
@@ -189,4 +185,6 @@ HEADERS += \
     ui/configsmodel.h \
     ui/htmlschedulerconfigitemdelegate.h \
     ui/confighistorymodel.h \
-    sched/noticepseudoparamsprovider.h
+    sched/noticepseudoparamsprovider.h \
+    config/alertsettings.h \
+    config/alertsubscription.h

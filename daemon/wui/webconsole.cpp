@@ -82,7 +82,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
               Alert("template"), Qt::DisplayRole);
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
-  _alertRulesModel = new AlertRulesModel(this);
+  _alertSubscriptionsModel = new SharedUiItemsTableModel(this);
+  _alertSubscriptionsModel->setHeaderDataFromTemplate(
+        AlertSubscription(PfNode("subscription"), PfNode(), ParamSet()));
   _taskInstancesHistoryModel =
       new TaskInstancesModel(this, TASK_INSTANCE_MAXROWS);
   _unfinishedTaskInstancetModel =
@@ -98,7 +100,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _subtasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
-  _alertChannelsModel = new AlertChannelsModel(this);
+  _alertChannelsModel = new TextMatrixModel(this);
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new CalendarsModel(this);
   _stepsModel= new StepsModel(this);
@@ -240,15 +242,18 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 0 << 1 << 3;
   _htmlLastEmittedAlertsView10->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlLastEmittedAlertsView10);
-  _htmlAlertRulesView =
-      new HtmlTableView(this, "alertrules", CONFIG_TABLES_MAXROWS);
-  _htmlAlertRulesView->setModel(_alertRulesModel);
-  QHash<QString,QString> alertRulesIcons;
-  alertRulesIcons.insert("stop", "<i class=\"icon-stop\"></i>&nbsp;");
-  ((HtmlItemDelegate*)_htmlAlertRulesView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-filter\"></i>&nbsp;")
-      ->setPrefixForColumn(1, "%1", 1, alertRulesIcons);
-  _wuiHandler->addView(_htmlAlertRulesView);
+  _htmlAlertSubscriptionsView =
+      new HtmlTableView(this, "alertsubscriptions", CONFIG_TABLES_MAXROWS);
+  _htmlAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
+  QHash<QString,QString> alertSubscriptionsIcons;
+  alertSubscriptionsIcons.insert("stop", "<i class=\"icon-stop\"></i>&nbsp;");
+  ((HtmlItemDelegate*)_htmlAlertSubscriptionsView->itemDelegate())
+      ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;")
+      ->setPrefixForColumn(2, "%1", 2, alertSubscriptionsIcons);
+  cols.clear();
+  cols << 1 << 2 << 3 << 4 << 5 << 12;
+  _htmlAlertSubscriptionsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlAlertSubscriptionsView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
   _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
@@ -506,8 +511,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvLastEmittedAlertsView =
       new CsvTableView(this, _lastEmittedAlertsModel->maxrows());
   _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
-  _csvAlertRulesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
-  _csvAlertRulesView->setModel(_alertRulesModel);
+  _csvAlertSubscriptionsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
   _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =
@@ -1116,15 +1121,15 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlLastEmittedAlertsView->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/csv/alerts/rules/v1") {
+  if (path == "/rest/csv/alerts/subscriptions/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvAlertRulesView->text().toUtf8().constData());
+    res.output()->write(_csvAlertSubscriptionsView->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/html/alerts/rules/v1") {
+  if (path == "/rest/html/alerts/subscriptions/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlAlertRulesView->text().toUtf8().constData());
+    res.output()->write(_htmlAlertSubscriptionsView->text().toUtf8().constData());
     return true;
   }
   if (path == "/rest/csv/log/info/v1") {
@@ -1378,7 +1383,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     disconnect(_scheduler->alerter(), &Alerter::alertNotified,
                _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
     disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
-               _alertRulesModel, SLOT(configChanged(AlerterConfig)));
+               this, SLOT(alerterConfigChanged(AlerterConfig)));
     disconnect(_scheduler, &Scheduler::taskInstanceQueued,
                _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
     disconnect(_scheduler, &Scheduler::taskInstanceStarted,
@@ -1401,8 +1406,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
                _taskGroupsModel, SLOT(configReset(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                this, SLOT(configChanged(SchedulerConfig)));
-    disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
-               _alertChannelsModel, SLOT(configChanged(AlerterConfig)));
     disconnect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
                this, SLOT(enableAccessControl(bool)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
@@ -1443,7 +1446,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler->alerter(), &Alerter::alertNotified,
             _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
     connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
-            _alertRulesModel, SLOT(configChanged(AlerterConfig)));
+             this, SLOT(alerterConfigChanged(AlerterConfig)));
     connect(_scheduler, &Scheduler::taskInstanceQueued,
             _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
     connect(_scheduler, &Scheduler::taskInstanceStarted,
@@ -1466,8 +1469,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _taskGroupsModel, SLOT(configReset(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             this, SLOT(configChanged(SchedulerConfig)));
-    connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
-            _alertChannelsModel, SLOT(configChanged(AlerterConfig)));
     connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
             this, SLOT(enableAccessControl(bool)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
@@ -1611,4 +1612,12 @@ void WebConsole::configChanged(SchedulerConfig config) {
       = GraphvizDiagramsBuilder::configDiagrams(config);
   _tasksDeploymentDiagram->setSource(diagrams.value("tasksDeploymentDiagram"));
   _tasksTriggerDiagram->setSource(diagrams.value("tasksTriggerDiagram"));
+}
+
+void WebConsole::alerterConfigChanged(AlerterConfig config) {
+  _alertSubscriptionsModel->setItems(config.alertSubscriptions());
+  // FIXME settings
+  _alertChannelsModel->clear();
+  foreach (const QString channel, config.channelsNames())
+    _alertChannelsModel->setCellValue(channel, "enabled", "true");
 }

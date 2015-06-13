@@ -26,13 +26,11 @@
 #include "util/paramsetmodel.h"
 #include "ui/lastoccuredtexteventsmodel.h"
 #include "textview/clockview.h"
-#include "ui/alertrulesmodel.h"
 #include "log/logmodel.h"
 #include "ui/taskinstancesmodel.h"
 #include "ui/tasksmodel.h"
 #include "ui/schedulereventsmodel.h"
 #include "ui/taskgroupsmodel.h"
-#include "ui/alertchannelsmodel.h"
 #include "auth/inmemoryrulesauthorizer.h"
 #include "auth/usersdatabase.h"
 #include "httpd/graphvizimagehttphandler.h"
@@ -74,13 +72,13 @@ class WebConsole : public HttpHandler {
   *_sortedNotRisingRaisedAlertModel;
   LastOccuredTextEventsModel *_lastPostedNoticesModel; // TODO change to SUILogModel
   SharedUiItemsLogModel *_lastEmittedAlertsModel;
-  AlertRulesModel *_alertRulesModel;
+  SharedUiItemsTableModel *_alertSubscriptionsModel, *_alertSettingsModel;
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
   QSortFilterProxyModel *_mainTasksModel, *_subtasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
   TaskGroupsModel *_taskGroupsModel;
-  AlertChannelsModel *_alertChannelsModel;
+  TextMatrixModel *_alertChannelsModel;
   LogFilesModel *_logConfigurationModel;
   CalendarsModel *_calendarsModel;
   StepsModel *_stepsModel;
@@ -93,7 +91,7 @@ class WebConsole : public HttpHandler {
   *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsFullView, *_htmlRaisedAlertsNotRisingView,
   *_htmlLastEmittedAlertsView,
-  *_htmlLastEmittedAlertsView10, *_htmlAlertRulesView, *_htmlWarningLogView,
+  *_htmlLastEmittedAlertsView10, *_htmlAlertSubscriptionsView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
   *_htmlTaskInstancesView, *_htmlTaskInstancesView20,
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
@@ -112,7 +110,7 @@ class WebConsole : public HttpHandler {
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmittedAlertsView,
-  *_csvAlertRulesView, *_csvLogView, *_csvTaskInstancesView, *_csvTasksView,
+  *_csvAlertSubscriptionsView, *_csvLogView, *_csvTaskInstancesView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView,
   *_csvConfigsView, *_csvConfigHistoryView;
@@ -143,6 +141,7 @@ public slots:
 private slots:
   void globalParamsChanged(ParamSet globalParams);
   void configChanged(SchedulerConfig config);
+  void alerterConfigChanged(AlerterConfig config);
 
 private:
   static void copyFilteredFiles(QStringList paths, QIODevice *output,

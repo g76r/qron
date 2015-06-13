@@ -15,8 +15,9 @@
 #include <QSharedData>
 #include "configutils.h"
 
-#define DEFAULT_RAISE_DELAY 300000 /* 300" = 5' */
-#define DEFAULT_CANCEL_DELAY 900000 /* 900" = 15' */
+#define DEFAULT_RISE_DELAY 120000 /* 120" = 2' */
+#define DEFAULT_MAYRISE_DELAY 60000 /* 60" = 1' */
+#define DEFAULT_DROP_DELAY 900000 /* 900" = 15' */
 #define DEFAULT_REMIND_PERIOD 3600000 /* 3600" = 1h */
 #define DEFAULT_MIN_DELAY_BETWEEN_SEND 600000 /* 600" = 10' */
 #define DEFAULT_DELAY_BEFORE_FIRST_SEND 30000 /* 30" */
@@ -24,16 +25,14 @@
 class AlerterConfigData : public QSharedData {
 public:
   ParamSet _params;
-  // LATER separate routing and delay routes to improve lookup performance
-  QList<AlertRule> _rules;
-  int _raiseDelay;
-  int _cancelDelay;
-  int _minDelayBetweenSend;
-  int _delayBeforeFirstSend;
-  int _remindPeriod;
+  // LATER separate routing and delay routes to improve lookup performance, or add delay and routing caches by alertid
+  QList<AlertSubscription> _alertSubscriptions;
+  QList<AlertSettings> _alertSettings;
+  qint64 _riseDelay, _mayriseDelay, _dropDelay, _minDelayBetweenSend;
+  qint64 _delayBeforeFirstSend, _remindPeriod;
   QStringList _channelNames;
-  AlerterConfigData() : _raiseDelay(DEFAULT_RAISE_DELAY),
-    _cancelDelay(DEFAULT_CANCEL_DELAY),
+  AlerterConfigData() : _riseDelay(DEFAULT_RISE_DELAY),
+    _mayriseDelay(DEFAULT_MAYRISE_DELAY), _dropDelay(DEFAULT_DROP_DELAY),
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
     _delayBeforeFirstSend(DEFAULT_DELAY_BEFORE_FIRST_SEND),
     _remindPeriod(DEFAULT_REMIND_PERIOD) {
@@ -51,52 +50,55 @@ AlerterConfig::AlerterConfig(PfNode root) : d(new AlerterConfigData(root)) {
 }
 
 AlerterConfigData::AlerterConfigData(PfNode root)
-  : _raiseDelay(DEFAULT_RAISE_DELAY), _cancelDelay(DEFAULT_CANCEL_DELAY),
+  : _riseDelay(DEFAULT_RISE_DELAY), _mayriseDelay(DEFAULT_MAYRISE_DELAY),
+    _dropDelay(DEFAULT_DROP_DELAY),
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
     _delayBeforeFirstSend(DEFAULT_DELAY_BEFORE_FIRST_SEND),
     _remindPeriod(DEFAULT_REMIND_PERIOD) {
   _channelNames << "mail" << "url" << "log" << "stop";
   ConfigUtils::loadParamSet(root, &_params, "param");
-  foreach (PfNode rulenode, root.childrenByName("rule")) {
-    //Log::debug() << "found alert rule section " << pattern << " " << stop;
-    foreach (PfNode rulechannelnode, rulenode.children()) {
-      if (rulechannelnode.name() == "match"
-          || rulechannelnode.name() == "param") {
+  foreach (PfNode settingsnode, root.childrenByName("settings")) {
+    // FIXME
+    // FIXME add a cache in alerter to avoid evaluating the whole rules each time
+  }
+  foreach (PfNode subscriptionnode, root.childrenByName("subscription")) {
+    //Log::debug() << "found alert subscription section " << pattern << " " << stop;
+    foreach (PfNode channelnode, subscriptionnode.children()) {
+      if (channelnode.name() == "match"
+          || channelnode.name() == "param") {
         // ignore
       } else {
-        if (_channelNames.contains(rulechannelnode.name())) {
-          AlertRule rule(rulenode, rulechannelnode, _params);
-          _rules.append(rule);
-          Log::debug() << "configured alert rule " << rulechannelnode.name()
-                       << " " << rule.pattern() << " "
-                       << rule.patternRegExp().pattern();
+        if (_channelNames.contains(channelnode.name())) {
+          AlertSubscription sub(subscriptionnode, channelnode, _params);
+          _alertSubscriptions.append(sub);
+          Log::debug() << "configured alert subscription " << channelnode.name()
+                       << " " << sub.pattern() << " "
+                       << sub.patternRegexp().pattern();
         } else {
-          Log::warning() << "alert channel '" << rulechannelnode.name()
-                         << "' unknown in alert rule";
+          Log::warning() << "alert channel '" << channelnode.name()
+                         << "' unknown in alert subscription";
         }
       }
     }
   }
-  _raiseDelay =
-      _params.valueAsInt("raisedelay", DEFAULT_RAISE_DELAY/1000)*1000;
-  if (_raiseDelay < 1000) // hard coded 1 second minmimum
-    _raiseDelay = DEFAULT_RAISE_DELAY;
-  _cancelDelay =
-      _params.valueAsInt("canceldelay", DEFAULT_CANCEL_DELAY/1000)*1000;
-  if (_cancelDelay < 1000) // hard coded 1 second minmimum
-    _cancelDelay = DEFAULT_CANCEL_DELAY;
-  _minDelayBetweenSend =
-      _params.valueAsInt("mindelaybetweensend",
-                         DEFAULT_MIN_DELAY_BETWEEN_SEND/1000)*1000;
+  _riseDelay = root.longAttribute("risedelay", DEFAULT_RISE_DELAY/1000)*1000;
+  if (_riseDelay < 1000) // hard coded 1 second minmimum
+    _riseDelay = DEFAULT_RISE_DELAY;
+  _mayriseDelay = root.longAttribute(
+        "mayrisedelay", DEFAULT_MAYRISE_DELAY/1000)*1000;
+  if (_mayriseDelay < 1000) // hard coded 1 second minmimum
+    _mayriseDelay = DEFAULT_MAYRISE_DELAY;
+  _dropDelay = root.longAttribute("dropdelay", DEFAULT_RISE_DELAY/1000)*1000;
+  if (_dropDelay < 1000) // hard coded 1 second minmimum
+    _dropDelay = DEFAULT_DROP_DELAY;
+  _minDelayBetweenSend = root.longAttribute(
+        "mindelaybetweensend", DEFAULT_MIN_DELAY_BETWEEN_SEND/1000)*1000;
   if (_minDelayBetweenSend < 60000) // hard coded 1 minute minimum
     _minDelayBetweenSend = 60000;
-  _delayBeforeFirstSend =
-      _params.valueAsInt("delaybeforefirstsend",
-                         DEFAULT_DELAY_BEFORE_FIRST_SEND/1000)
-      *1000;
-  _remindPeriod =
-      _params.valueAsInt("remindperiod",
-                         DEFAULT_REMIND_PERIOD/1000)*1000;
+  _delayBeforeFirstSend = root.longAttribute(
+        "delaybeforefirstsend", DEFAULT_DELAY_BEFORE_FIRST_SEND/1000)*1000;
+  _remindPeriod = root.longAttribute(
+        "remindperiod", DEFAULT_REMIND_PERIOD/1000)*1000;
 }
 
 AlerterConfig &AlerterConfig::operator=(const AlerterConfig &rhs) {
@@ -112,25 +114,37 @@ ParamSet AlerterConfig::params() const {
   return d ? d->_params : ParamSet();
 }
 
-int AlerterConfig::defaultCancelDelay() const {
-  return d ? d->_cancelDelay : DEFAULT_CANCEL_DELAY;
+qint64 AlerterConfig::riseDelay() const {
+  return d ? d->_riseDelay : DEFAULT_RISE_DELAY;
 }
 
-int AlerterConfig::minDelayBetweenSend() const {
+qint64 AlerterConfig::mayriseDelay() const {
+  return d ? d->_mayriseDelay : DEFAULT_MAYRISE_DELAY;
+}
+
+qint64 AlerterConfig::dropDelay() const {
+  return d ? d->_dropDelay : DEFAULT_DROP_DELAY;
+}
+
+qint64 AlerterConfig::minDelayBetweenSend() const {
   return d ? d->_minDelayBetweenSend : DEFAULT_MIN_DELAY_BETWEEN_SEND;
 }
 
-int AlerterConfig::delayBeforeFirstSend() const {
+qint64 AlerterConfig::delayBeforeFirstSend() const {
   return d ? d->_delayBeforeFirstSend
            : DEFAULT_DELAY_BEFORE_FIRST_SEND;
 }
 
-int AlerterConfig::remindPeriod() const {
+qint64 AlerterConfig::remindPeriod() const {
   return d ? d->_remindPeriod : DEFAULT_REMIND_PERIOD;
 }
 
-QList<AlertRule> AlerterConfig::rules() const {
-  return d ? d->_rules : QList<AlertRule>();
+QList<AlertSubscription> AlerterConfig::alertSubscriptions() const {
+  return d ? d->_alertSubscriptions : QList<AlertSubscription>();
+}
+
+QList<AlertSettings> AlerterConfig::alertSettings() const {
+  return d ? d->_alertSettings : QList<AlertSettings>();
 }
 
 QStringList AlerterConfig::channelsNames() const {
@@ -142,7 +156,23 @@ PfNode AlerterConfig::toPfNode() const {
     return PfNode();
   PfNode node("alerts");
   ConfigUtils::writeParamSet(&node, d->_params, "param");
-  foreach (const AlertRule &rule, d->_rules)
-    node.appendChild(rule.toPfNode());
+  if (d->_riseDelay != DEFAULT_RISE_DELAY)
+    node.setAttribute("risedelay", QString::number(d->_riseDelay));
+  if (d->_riseDelay != DEFAULT_MAYRISE_DELAY)
+    node.setAttribute("mayrisedelay", QString::number(d->_mayriseDelay));
+  if (d->_riseDelay != DEFAULT_DROP_DELAY)
+    node.setAttribute("dropdelay", QString::number(d->_dropDelay));
+  if (d->_riseDelay != DEFAULT_MIN_DELAY_BETWEEN_SEND)
+    node.setAttribute("mindelaybetweensend",
+                      QString::number(d->_minDelayBetweenSend));
+  if (d->_riseDelay != DEFAULT_DELAY_BEFORE_FIRST_SEND)
+    node.setAttribute("delaybeforefirstsend",
+                      QString::number(d->_delayBeforeFirstSend));
+  if (d->_riseDelay != DEFAULT_REMIND_PERIOD)
+    node.setAttribute("remindperiod", QString::number(d->_remindPeriod));
+  foreach (const AlertSubscription &sub, d->_alertSubscriptions)
+    node.appendChild(sub.toPfNode());
+  foreach (const AlertSettings &settings, d->_alertSettings)
+    node.appendChild(settings.toPfNode());
   return node;
 }

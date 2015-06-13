@@ -16,7 +16,7 @@
 
 #include <QObject>
 #include "util/paramset.h"
-#include "config/alertrule.h"
+#include "config/alertsubscription.h"
 #include "alertchannel.h"
 #include <QHash>
 #include <QString>
@@ -114,13 +114,15 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
   AlerterConfig _config;
   QHash<QString,AlertChannel*> _channels;
   QHash<QString,Alert> _alerts;
+  // LATER periodicaly remove unused values from the cache, using LRU or other algorithm
+  QHash<QString, QList<AlertSubscription> > _alertSubscriptionsCache;
+  QHash<QString, AlertSettings> _alertSettingsCache;
 
 public:
   explicit Alerter();
   ~Alerter();
   /** This method is threadsafe. */
   void setConfig(AlerterConfig config);
-  //AlerterConfig config() const;
   /** Immediatly emit an alert, regardless of raised alert, even if the same
    * alert has just been emited.
    * In most cases it is strongly recommanded to call raiseAlert() instead.
@@ -186,6 +188,16 @@ private:
   inline void actionNoLongerCancel(Alert *newAlert);
   inline void notifyChannels(Alert newAlert);
   inline void commitChange(Alert *newAlert, Alert *oldAlert);
-};
+  inline QList<AlertSubscription> alertSubscriptions(QString alertId);
+  inline AlertSettings alertSettings(QString alertId);
+  /** Delay according to (settings) or by default AlertConfig-level delay,
+   * in ms. */
+  inline qint64 riseDelay(QString alertId);
+  /** Delay according to (settings) or by default AlertConfig-level delay,
+   * in ms. */
+  inline qint64 mayriseDelay(QString alertId);
+  /** Delay according to (settings) or by default AlertConfig-level delay,
+   * in ms. */
+  inline qint64 dropDelay(QString alertId);};
 
 #endif // ALERTER_H

@@ -116,22 +116,20 @@ QString ConfigUtils::sanitizeId(QString string, IdType idType) {
   return QString(); // should never happen
 }
 
-QRegExp ConfigUtils::readRawOrRegexpFilter(
-    QString s, Qt::CaseSensitivity cs) {
+QRegularExpression ConfigUtils::readDotHierarchicalFilter(
+    QString s, bool caseSensitive, bool dotPatternMatchesAll) {
   if (s.size() > 1 && s[0] == '/' && s[s.size()-1] == '/' )
-    return QRegExp(s.mid(1, s.size()-2), cs);
-  return QRegExp(s, cs, QRegExp::FixedString);
+    return QRegularExpression(
+          s.mid(1, s.size()-2),
+          caseSensitive ? QRegularExpression::NoPatternOption
+                        : QRegularExpression::CaseInsensitiveOption);
+  return convertDotHierarchicalFilterToRegexp(
+        dotPatternMatchesAll ? '^'+s+'$' : s,
+        caseSensitive);
 }
 
-QRegExp ConfigUtils::readDotHierarchicalFilter(
-    QString s, Qt::CaseSensitivity cs) {
-  if (s.size() > 1 && s[0] == '/' && s[s.size()-1] == '/' )
-    return QRegExp(s.mid(1, s.size()-2), cs);
-  return convertDotHierarchicalFilterToRegexp(s, cs);
-}
-
-QRegExp ConfigUtils::convertDotHierarchicalFilterToRegexp(
-    QString pattern, Qt::CaseSensitivity cs) {
+QRegularExpression ConfigUtils::convertDotHierarchicalFilterToRegexp(
+    QString pattern, bool caseSensitive) {
   QString re;
   for (int i = 0; i < pattern.size(); ++i) {
     QChar c = pattern.at(i);
@@ -174,7 +172,9 @@ QRegExp ConfigUtils::convertDotHierarchicalFilterToRegexp(
       re.append(c);
     }
   }
-  return QRegExp(re, cs);
+  return QRegularExpression(
+        re, caseSensitive ? QRegularExpression::NoPatternOption
+                          : QRegularExpression::CaseInsensitiveOption);
 }
 
 void ConfigUtils::loadEventSubscription(
