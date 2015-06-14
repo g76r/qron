@@ -91,7 +91,7 @@ class WebConsole : public HttpHandler {
   *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
   *_htmlRaisedAlertsFullView, *_htmlRaisedAlertsNotRisingView,
   *_htmlLastEmittedAlertsView,
-  *_htmlLastEmittedAlertsView10, *_htmlAlertSubscriptionsView,
+  /*_htmlLastEmittedAlertsView10,*/ *_htmlAlertSubscriptionsView,
   *_htmlAlertSettingsView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
   *_htmlTaskInstancesView, *_htmlTaskInstancesView20,

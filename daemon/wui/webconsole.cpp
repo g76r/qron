@@ -190,7 +190,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsFullView->setModel(_sortedRaisedAlertsModel);
   _htmlRaisedAlertsFullView->setEmptyPlaceholder("(no alert)");
   cols.clear();
-  cols << 0 << 2 << 3 << 4 << 1 << 5;
+  cols << 0 << 2 << 3 << 4 << 5;
   _htmlRaisedAlertsFullView->setColumnIndexes(cols);
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
@@ -232,10 +232,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlAlertItemDelegate*)_htmlLastEmittedAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   cols.clear();
-  cols << _lastEmittedAlertsModel->timestampColumn() << 0 << 6;
+  cols << _lastEmittedAlertsModel->timestampColumn() << 0 << 5;
   _htmlLastEmittedAlertsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlLastEmittedAlertsView);
-  _htmlLastEmittedAlertsView10 =
+  /*_htmlLastEmittedAlertsView10 =
       new HtmlTableView(this, "lastemittedalerts10",
                         _lastEmittedAlertsModel->maxrows(), 10);
   _htmlLastEmittedAlertsView10->setModel(_lastEmittedAlertsModel);
@@ -243,10 +243,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlLastEmittedAlertsView10->itemDelegate())
       ->setPrefixForColumn(_lastEmittedAlertsModel->timestampColumn(), "%1",
                            2, alertsIcons);
-  cols.clear();
-  cols << 0 << 1 << 3;
-  _htmlLastEmittedAlertsView10->setColumnIndexes(cols);
-  _wuiHandler->addView(_htmlLastEmittedAlertsView10);
+  _wuiHandler->addView(_htmlLastEmittedAlertsView10);*/
   _htmlAlertSubscriptionsView =
       new HtmlTableView(this, "alertsubscriptions", CONFIG_TABLES_MAXROWS);
   _htmlAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
