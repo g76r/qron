@@ -52,7 +52,7 @@ public:
   /** Interpret s as regexp if it starts and ends with a /, else as
    * dot-hierarchical globing with * meaning [^.]* and ** meaning .* */
   static QRegularExpression readDotHierarchicalFilter(
-      QString s, bool caseSensitive = true, bool dotPatternMatchesAll = true);
+      QString s, bool caseSensitive = true);
   static void loadEventSubscription(
       PfNode parentNode, QString childName, QString subscriberId,
       QList<EventSubscription> *list, Scheduler *scheduler);
@@ -73,7 +73,8 @@ public:
 private:
   ConfigUtils();
   /** Convert patterns like "some.path.**" "some.*.path" "some.**.path" or
-   * "some.path.with.\*.star.and.\\.backslash" into regular expressions. */
+   * "some.path.with.\*.star.and.\\.backslash" into regular expressions,
+   * such as "^some\.path\..*$". */
   static QRegularExpression convertDotHierarchicalFilterToRegexp(
       QString pattern, bool caseSensitive = true);
 };

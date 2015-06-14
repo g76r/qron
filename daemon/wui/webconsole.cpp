@@ -82,9 +82,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
               Alert("template"), Qt::DisplayRole);
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
+  PfNode nodeWithValidMatch("dummy");
+  nodeWithValidMatch.setAttribute("match", "**");
   _alertSubscriptionsModel = new SharedUiItemsTableModel(this);
   _alertSubscriptionsModel->setHeaderDataFromTemplate(
-        AlertSubscription(PfNode("subscription"), PfNode(), ParamSet()));
+        AlertSubscription(nodeWithValidMatch, PfNode(), ParamSet()));
+  _alertSettingsModel = new SharedUiItemsTableModel(this);
+  _alertSettingsModel->setHeaderDataFromTemplate(
+        AlertSettings(nodeWithValidMatch));
   _taskInstancesHistoryModel =
       new TaskInstancesModel(this, TASK_INSTANCE_MAXROWS);
   _unfinishedTaskInstancetModel =
@@ -254,6 +259,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 1 << 2 << 3 << 4 << 5 << 12;
   _htmlAlertSubscriptionsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlAlertSubscriptionsView);
+  _htmlAlertSettingsView =
+      new HtmlTableView(this, "alertsettings", CONFIG_TABLES_MAXROWS);
+  _htmlAlertSettingsView->setModel(_alertSettingsModel);
+  ((HtmlItemDelegate*)_htmlAlertSettingsView->itemDelegate())
+      ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;");
+  cols.clear();
+  cols << 1 << 2;
+  _htmlAlertSettingsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlAlertSettingsView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
   _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
@@ -513,6 +527,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
   _csvAlertSubscriptionsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
+  _csvAlertSettingsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvAlertSettingsView->setModel(_alertSettingsModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
   _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =
@@ -1124,12 +1140,25 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/rest/csv/alerts/subscriptions/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvAlertSubscriptionsView->text().toUtf8().constData());
+    res.output()->write(_csvAlertSubscriptionsView->text().toUtf8()
+                        .constData());
     return true;
   }
   if (path == "/rest/html/alerts/subscriptions/v1") {
     res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlAlertSubscriptionsView->text().toUtf8().constData());
+    res.output()->write(_htmlAlertSubscriptionsView->text().toUtf8()
+                        .constData());
+    return true;
+  }
+  if (path == "/rest/csv/alerts/settings/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvAlertSettingsView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/alerts/settings/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlAlertSettingsView->text().toUtf8().constData());
     return true;
   }
   if (path == "/rest/csv/log/info/v1") {
@@ -1616,7 +1645,7 @@ void WebConsole::configChanged(SchedulerConfig config) {
 
 void WebConsole::alerterConfigChanged(AlerterConfig config) {
   _alertSubscriptionsModel->setItems(config.alertSubscriptions());
-  // FIXME settings
+  _alertSettingsModel->setItems(config.alertSettings());
   _alertChannelsModel->clear();
   foreach (const QString channel, config.channelsNames())
     _alertChannelsModel->setCellValue(channel, "enabled", "true");

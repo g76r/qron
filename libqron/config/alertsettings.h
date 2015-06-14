@@ -14,6 +14,7 @@
 #ifndef ALERTSETTINGS_H
 #define ALERTSETTINGS_H
 
+#include "libqron_global.h"
 #include "modelview/shareduiitem.h"
 #include "pf/pfnode.h"
 
@@ -22,7 +23,7 @@ class AlertSettingsData;
 /** Alert settings is the configuration object than enable overriding alerter
  * settings such as delays for specific alerts.
  * @see Alerter */
-class AlertSettings : public SharedUiItem {
+class LIBQRONSHARED_EXPORT AlertSettings : public SharedUiItem {
 public:
   AlertSettings();
   AlertSettings(const AlertSettings &other);

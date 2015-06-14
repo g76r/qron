@@ -117,20 +117,18 @@ QString ConfigUtils::sanitizeId(QString string, IdType idType) {
 }
 
 QRegularExpression ConfigUtils::readDotHierarchicalFilter(
-    QString s, bool caseSensitive, bool dotPatternMatchesAll) {
+    QString s, bool caseSensitive) {
   if (s.size() > 1 && s[0] == '/' && s[s.size()-1] == '/' )
     return QRegularExpression(
           s.mid(1, s.size()-2),
           caseSensitive ? QRegularExpression::NoPatternOption
                         : QRegularExpression::CaseInsensitiveOption);
-  return convertDotHierarchicalFilterToRegexp(
-        dotPatternMatchesAll ? '^'+s+'$' : s,
-        caseSensitive);
+  return convertDotHierarchicalFilterToRegexp(s, caseSensitive);
 }
 
 QRegularExpression ConfigUtils::convertDotHierarchicalFilterToRegexp(
     QString pattern, bool caseSensitive) {
-  QString re;
+  QString re('^');
   for (int i = 0; i < pattern.size(); ++i) {
     QChar c = pattern.at(i);
     switch (c.toLatin1()) {
@@ -172,6 +170,7 @@ QRegularExpression ConfigUtils::convertDotHierarchicalFilterToRegexp(
       re.append(c);
     }
   }
+  re.append('$');
   return QRegularExpression(
         re, caseSensitive ? QRegularExpression::NoPatternOption
                           : QRegularExpression::CaseInsensitiveOption);

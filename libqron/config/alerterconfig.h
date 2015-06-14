@@ -23,6 +23,7 @@
 
 class AlerterConfigData;
 
+/** Alerter config: main/root alert configuration object. */
 class LIBQRONSHARED_EXPORT AlerterConfig {
   QSharedDataPointer<AlerterConfigData> d;
 

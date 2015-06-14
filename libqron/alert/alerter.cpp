@@ -44,8 +44,9 @@ Alerter::Alerter() : QObject(0), _thread(new QThread) {
   connect(timer, SIGNAL(timeout()), this, SLOT(asyncProcessing()));
   timer->start(ASYNC_PROCESSING_INTERVAL);
   moveToThread(_thread);
-  qRegisterMetaType<QList<AlertSubscription> >("QList<AlertRule>");
-  qRegisterMetaType<AlertSubscription>("AlertRule");
+  qRegisterMetaType<QList<AlertSubscription> >("QList<AlertSubscription>");
+  qRegisterMetaType<AlertSubscription>("AlertSubscription");
+  qRegisterMetaType<AlertSettings>("AlertSettings");
   qRegisterMetaType<Alert>("Alert");
   qRegisterMetaType<ParamSet>("ParamSet");
   qRegisterMetaType<QDateTime>("QDateTime");
@@ -244,11 +245,10 @@ void Alerter::actionNoLongerCancel(Alert *newAlert) {
 
 void Alerter::notifyChannels(Alert newAlert) {
   emit alertNotified(newAlert);
-  // LATER add cache to avoid reading the whole rules table every time
   foreach (AlertSubscription sub, alertSubscriptions(newAlert.id())) {
     QPointer<AlertChannel> channel = _channels.value(sub.channelName());
     if (channel) { // should never be false
-      newAlert.setRule(sub);
+      newAlert.setSubscription(sub);
       channel.data()->notifyAlert(newAlert);
     }
   }
@@ -299,6 +299,8 @@ AlertSettings Alerter::alertSettings(QString alertId) {
     }
     _alertSettingsCache.insert(alertId, AlertSettings());
 found:;
+    //Log::debug() << "adding settings to cache: " << alertId << " "
+    //             << _alertSettingsCache.value(alertId).toPfNode().toString();
   }
   return _alertSettingsCache.value(alertId);
 }

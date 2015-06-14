@@ -33,28 +33,28 @@ void UrlAlertChannel::doNotifyAlert(Alert alert) {
     connect(_nam, SIGNAL(finished(QNetworkReply*)),
             this, SLOT(replyFinished(QNetworkReply*)));
   }
-  QString address = alert.rule().address(alert), message;
-  ParamSet params = alert.rule().params();
+  QString address = alert.subscription().address(alert), message;
+  ParamSet params = alert.subscription().params();
   switch(alert.status()) {
   case Alert::Nonexistent:
   case Alert::Raised:
-    if (!alert.rule().notifyEmit())
+    if (!alert.subscription().notifyEmit())
       return;
     if (params.contains("emitaddress"))
       address = params.rawValue("emitaddress");
     if (params.contains("emitmethod"))
       params.setValue("method", params.rawValue("emitmethod"));
-    message = alert.rule().emitMessage(alert);
+    message = alert.subscription().emitMessage(alert);
 
     break;
   case Alert::Canceled:
-    if (!alert.rule().notifyCancel())
+    if (!alert.subscription().notifyCancel())
       return;
     if (params.contains("canceladdress"))
       address = params.rawValue("canceladdress");
     if (params.contains("cancelmethod"))
       params.setValue("method", params.rawValue("cancelmethod"));
-    message = alert.rule().cancelMessage(alert);
+    message = alert.subscription().cancelMessage(alert);
     break;
   case Alert::Rising:
   case Alert::MayRise:

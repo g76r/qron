@@ -58,10 +58,10 @@ public:
    * Only set by channels which handle reminders, not by Alerter. */
   QDateTime lastRemindedDate() const;
   void setLastRemindedDate(QDateTime lastRemindedDate);
-  /** Rule for which an Alert is notified to an AlertChannel.
+  /** Subscription for which an Alert is notified to an AlertChannel.
    * Set by Alerter just before notifying an AlertChannel. */
-  AlertSubscription rule() const;
-  void setRule(AlertSubscription rule);
+  AlertSubscription subscription() const;
+  void setSubscription(AlertSubscription subscription);
 
 private:
   AlertData *data();

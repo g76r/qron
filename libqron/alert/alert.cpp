@@ -28,7 +28,7 @@ public:
   QString _id;
   Alert::AlertStatus _status;
   QDateTime _riseDate, _visibilityDate, _cancellationDate, _lastReminderDate;
-  AlertSubscription _rule;
+  AlertSubscription _subscription;
   AlertData(const QString id = QString(),
             QDateTime riseDate = QDateTime::currentDateTime())
     : _id(id), _status(Alert::Nonexistent), _riseDate(riseDate ) { }
@@ -137,15 +137,15 @@ void Alert::setLastRemindedDate(QDateTime lastRemindedDate) {
     d->_lastReminderDate = lastRemindedDate;
 }
 
-AlertSubscription Alert::rule() const {
+AlertSubscription Alert::subscription() const {
   const AlertData *d = data();
-  return d ? d->_rule : AlertSubscription();
+  return d ? d->_subscription : AlertSubscription();
 }
 
-void Alert::setRule(AlertSubscription rule) {
+void Alert::setSubscription(AlertSubscription subscription) {
   AlertData *d = data();
   if (d)
-    d->_rule = rule;
+    d->_subscription = subscription;
 }
 
 AlertData *Alert::data() {
@@ -200,10 +200,12 @@ QVariant AlertPseudoParamsProvider::paramValue(
       return _alert.id();
     } else if (key == "!alertdate") {
       // FIXME make this support !date formating
-      return _alert.riseDate().toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
+      return _alert.riseDate()
+          .toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     }
     // MAYDO guess !taskid from "task.{failure,toolong...}.%!taskid" alerts
   }
-  return _alert.rule().params().paramValue(key, defaultValue, alreadyEvaluated);
+  return _alert.subscription().params()
+      .paramValue(key, defaultValue, alreadyEvaluated);
 }
 

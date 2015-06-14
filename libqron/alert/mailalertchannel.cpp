@@ -108,7 +108,7 @@ MailAlertChannel::~MailAlertChannel() {
 
 void MailAlertChannel::doNotifyAlert(Alert alert) {
   // LATER support more complex mail addresses with quotes and so on
-  QStringList addresses = alert.rule().address(alert).split(',');
+  QStringList addresses = alert.subscription().address(alert).split(',');
   foreach (QString address, addresses) {
     address = address.trimmed();
     MailAlertQueue *queue = _queues.value(address);
@@ -118,19 +118,19 @@ void MailAlertChannel::doNotifyAlert(Alert alert) {
     }
     switch (alert.status()) {
     case Alert::Raised:
-      if (alert.rule().notifyReminder()) {
+      if (alert.subscription().notifyReminder()) {
         alert.setLastRemindedDate(QDateTime());
         queue->_reminders.insert(alert);
       }
       // fall into next case
     case Alert::Nonexistent:
-      if (!alert.rule().notifyEmit())
+      if (!alert.subscription().notifyEmit())
         return;
       queue->_alerts.append(alert);
       break;
     case Alert::Canceled:
       queue->_reminders.remove(alert);
-      if (!alert.rule().notifyCancel())
+      if (!alert.subscription().notifyCancel())
         return;
       queue->_cancellations.append(alert);
       break;
@@ -249,7 +249,7 @@ void MailAlertChannel::processQueue(QVariant address) {
       } else {
         foreach (Alert alert, queue->_alerts) {
           s = alert.riseDate().toString("yyyy-MM-dd hh:mm:ss,zzz");
-          s.append(" ").append(alert.rule().emitMessage(alert))
+          s.append(" ").append(alert.subscription().emitMessage(alert))
               .append("\r\n");
           text.append(s);
           QString style =
@@ -270,7 +270,7 @@ void MailAlertChannel::processQueue(QVariant address) {
       } else {
         foreach (Alert alert, queue->_cancellations) {
           s = alert.riseDate().toString("yyyy-MM-dd hh:mm:ss,zzz");
-          s.append(" ").append(alert.rule().cancelMessage(alert))
+          s.append(" ").append(alert.subscription().cancelMessage(alert))
               .append("\r\n");
           text.append(s);
           QString style =
@@ -290,7 +290,7 @@ void MailAlertChannel::processQueue(QVariant address) {
       } else {
         foreach (Alert alert, reminders) {
           s = alert.riseDate().toString("yyyy-MM-dd hh:mm:ss,zzz");
-          s.append(" ").append(alert.rule().reminderMessage(alert))
+          s.append(" ").append(alert.subscription().reminderMessage(alert))
               .append("\r\n");
           text.append(s);
           QString style =

@@ -62,9 +62,9 @@ AlertSettings::AlertSettings(PfNode node) {
   if (d->_pattern.isEmpty() || !d->_patternRegexp.isValid())
     Log::warning() << "unsupported alert settings match pattern '"
                    << d->_pattern << "': " << node.toString();
-  d->_riseDelay = node.longAttribute(QStringLiteral("risedelay"), 0);
-  d->_mayriseDelay = node.longAttribute(QStringLiteral("mayrisedelay"), 0);
-  d->_dropDelay = node.longAttribute(QStringLiteral("dropdelay"), 0);
+  d->_riseDelay = node.longAttribute(QStringLiteral("risedelay"), 0)*1000;
+  d->_mayriseDelay = node.longAttribute(QStringLiteral("mayrisedelay"), 0)*1000;
+  d->_dropDelay = node.longAttribute(QStringLiteral("dropdelay"), 0)*1000;
   setData(d);
 }
 
@@ -75,11 +75,11 @@ PfNode AlertSettings::toPfNode() const {
   PfNode node(QStringLiteral("settings"));
   node.setAttribute(QStringLiteral("pattern"), d->_pattern);
   if (d->_riseDelay > 0)
-    node.setAttribute(QStringLiteral("risedelay"), d->_riseDelay);
+    node.setAttribute(QStringLiteral("risedelay"), d->_riseDelay/1000);
   if (d->_mayriseDelay > 0)
-    node.setAttribute(QStringLiteral("mayrisedelay"), d->_mayriseDelay);
+    node.setAttribute(QStringLiteral("mayrisedelay"), d->_mayriseDelay/1000);
   if (d->_dropDelay > 0)
-    node.setAttribute(QStringLiteral("dropdelay"), d->_dropDelay);
+    node.setAttribute(QStringLiteral("dropdelay"), d->_dropDelay/1000);
   return node;
 }
 
@@ -128,11 +128,11 @@ QVariant AlertSettingsData::uiData(int section, int role) const {
       return s;
     }
     case 3:
-      return _riseDelay > 0 ? QVariant(_riseDelay) : QVariant();
+      return _riseDelay > 0 ? _riseDelay/1000 : QVariant();
     case 4:
-      return _mayriseDelay > 0 ? _mayriseDelay : QVariant();
+      return _mayriseDelay > 0 ? _mayriseDelay/1000 : QVariant();
     case 5:
-      return _dropDelay > 0 ? _dropDelay : QVariant();
+      return _dropDelay > 0 ? _dropDelay/1000 : QVariant();
     }
     break;
   default:

@@ -25,7 +25,6 @@
 class AlerterConfigData : public QSharedData {
 public:
   ParamSet _params;
-  // LATER separate routing and delay routes to improve lookup performance, or add delay and routing caches by alertid
   QList<AlertSubscription> _alertSubscriptions;
   QList<AlertSettings> _alertSettings;
   qint64 _riseDelay, _mayriseDelay, _dropDelay, _minDelayBetweenSend;
@@ -57,9 +56,12 @@ AlerterConfigData::AlerterConfigData(PfNode root)
     _remindPeriod(DEFAULT_REMIND_PERIOD) {
   _channelNames << "mail" << "url" << "log" << "stop";
   ConfigUtils::loadParamSet(root, &_params, "param");
-  foreach (PfNode settingsnode, root.childrenByName("settings")) {
-    // FIXME
-    // FIXME add a cache in alerter to avoid evaluating the whole rules each time
+  foreach (PfNode node, root.childrenByName("settings")) {
+    AlertSettings settings(node);
+    _alertSettings.append(settings);
+    //Log::debug() << "configured alert settings " << settings.pattern() << " "
+    //             << settings.patternRegexp().pattern() << " : "
+    //             << settings.toPfNode().toString();
   }
   foreach (PfNode subscriptionnode, root.childrenByName("subscription")) {
     //Log::debug() << "found alert subscription section " << pattern << " " << stop;
@@ -71,9 +73,9 @@ AlerterConfigData::AlerterConfigData(PfNode root)
         if (_channelNames.contains(channelnode.name())) {
           AlertSubscription sub(subscriptionnode, channelnode, _params);
           _alertSubscriptions.append(sub);
-          Log::debug() << "configured alert subscription " << channelnode.name()
-                       << " " << sub.pattern() << " "
-                       << sub.patternRegexp().pattern();
+          //Log::debug() << "configured alert subscription " << channelnode.name()
+          //             << " " << sub.pattern() << " "
+          //             << sub.patternRegexp().pattern();
         } else {
           Log::warning() << "alert channel '" << channelnode.name()
                          << "' unknown in alert subscription";
@@ -170,9 +172,9 @@ PfNode AlerterConfig::toPfNode() const {
                       QString::number(d->_delayBeforeFirstSend));
   if (d->_riseDelay != DEFAULT_REMIND_PERIOD)
     node.setAttribute("remindperiod", QString::number(d->_remindPeriod));
-  foreach (const AlertSubscription &sub, d->_alertSubscriptions)
-    node.appendChild(sub.toPfNode());
   foreach (const AlertSettings &settings, d->_alertSettings)
     node.appendChild(settings.toPfNode());
+  foreach (const AlertSubscription &sub, d->_alertSubscriptions)
+    node.appendChild(sub.toPfNode());
   return node;
 }
