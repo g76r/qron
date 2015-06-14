@@ -199,16 +199,16 @@ void MailAlertChannel::processQueue(QVariant address) {
             .value("mail.alertsubject."+queue->_address,
                    _config.params().value("mail.alertsubject",
                                           "NEW QRON ALERT"));
-      else if (reminders.size())
-        subject = _config.params()
-            .value("mail.remindersubject."+queue->_address,
-                   _config.params().value("mail.remindersubject",
-                                          "qron alert reminder"));
-      else
+      else if (queue->_cancellations.size())
         subject = _config.params()
             .value("mail.cancelsubject."+queue->_address,
                    _config.params().value("mail.cancelsubject",
                                           "canceling qron alert"));
+      else
+        subject = _config.params()
+            .value("mail.remindersubject."+queue->_address,
+                   _config.params().value("mail.remindersubject",
+                                          "qron alert reminder"));
       headers.insert("Subject", subject);
       headers.insert("To", addr);
       headers.insert("User-Agent", "qron free scheduler (www.qron.eu)");
@@ -305,14 +305,14 @@ void MailAlertChannel::processQueue(QVariant address) {
       // LATER clarify this message
       text.append(
             "\r\n"
-            "Please note that there is a delay between alert cancellation\r\n"
-            "request (timestamps above) and the actual time this mail is\r\n"
-            "sent (send timestamp of the mail).\r\n");
+            "Please note that there is a delay between alert rise and\r\n"
+            "cancellation requests (timestamps above) and the actual time\r\n"
+            "this mail is sent (send timestamp of the mail).\r\n");
       html.append(
             "</ul>\n"
-            "<p>Please note that there is a delay between alert cancellation "
-            "request (timestamps above) and the actual time this mail is "
-            "sent (send timestamp of the mail).\n");
+            "<p>Please note that there is a delay between alert rise and "
+            "cancellation requests (timestamps above) and the actual time this "
+            "mail is sent (send timestamp of the mail).\n");
       if (_alerter) {
         s = "This is the 'canceldelay' parameter, currently configured to "
             +QString::number(_config.dropDelay()*.001)
