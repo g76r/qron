@@ -16,17 +16,23 @@
 <?include:header.html?>
 
       <div class="row">
-        <div class="span4">
+        <div class="col-md-4">
+          <div class="row">
+            <div class="col-xs-6 col-md-12">
           <h2>Global setenv</h2>
           <p><a class="btn btn-primary" href="../rest/csv/setenv/global/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/setenv/global/list/v1"><i class="icon-file-html"></i> HTML</a>
           <p><?view:globalsetenv?>
+            </div>
+            <div class="col-xs-6 col-md-12">
           <h2>Global unsetenv</h2>
           <p><a class="btn btn-primary" href="../rest/csv/unsetenv/global/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/unsetenv/global/list/v1"><i class="icon-file-html"></i> HTML</a>
           <p><?view:globalunsetenv?>
+            </div>
+          </div>
         </div>
-        <div class="span8">
+        <div class="col-md-8">
           <h2>Global params</h2>
           <p><a class="btn btn-primary" href="../rest/csv/params/global/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/params/global/list/v1"><i class="icon-file-html"></i> HTML</a>
@@ -34,7 +40,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h2>Named calendars</h2>
           <p>
           <a class="btn btn-primary" href="../rest/csv/calendars/list/v1"><i class="icon-file-excel"></i> CSV</a>
@@ -43,7 +49,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h2>Tasks groups configuration</h2>
           <p>
           <a class="btn btn-primary" href="../rest/csv/taskgroups/list/v1"><i class="icon-file-excel"></i> CSV</a>
@@ -52,7 +58,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <a name="config"></a>
           <h2>Tasks execution configuration</h2>
           <p><form class="form-inline" onSubmit="return false;">
@@ -66,7 +72,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <a name="config"></a>
           <h2>Tasks parameters configuration</h2>
           <p><form class="form-inline" onSubmit="return false;">
@@ -78,7 +84,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h2>Tasks schedule</h2>
           <p>Only main tasks are shown (workflow subtasks are hidden).
           <p><form class="form-inline" onSubmit="return false;">
@@ -95,7 +101,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <a name="instances"></a>
           <h2>Last tasks executions</h2>
           <p><a class="btn btn-primary" href="../rest/csv/taskinstances/list/v1"><i class="icon-file-excel"></i> CSV</a>
@@ -107,8 +113,7 @@
       </div>
     </div>
 
-    <script src="js/jquery.min.js"></script>
-    <script src="js/bootstrap.min.js"></script>
+<?include:common-scripts.html?>
     <script>
 var tasksschedule_rows = $('table#tasksschedule tbody tr');
 function tasksschedule_filter() {

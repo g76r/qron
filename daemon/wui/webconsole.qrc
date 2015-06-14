@@ -2,11 +2,11 @@
     <qresource prefix="/">
         <file>docroot/console/index.html</file>
         <file>docroot/console/header.html</file>
+        <file>docroot/console/common-scripts.html</file>
         <file>docroot/console/footer.html</file>
         <file>docroot/console/js/bootstrap.min.js</file>
         <file>docroot/console/js/jquery.min.js</file>
         <file>docroot/console/css/bootstrap.min.css</file>
-        <file>docroot/console/css/bootstrap-responsive.min.css</file>
         <file>docroot/console/about.html</file>
         <file>docroot/console/resources.html</file>
         <file>docroot/console/alerts.html</file>
@@ -21,7 +21,6 @@
         <file>docroot/console/taskdoc.html</file>
         <file>docroot/console/img/work_eu.png</file>
         <file>docroot/console/img/work_na.png</file>
-        <file>docroot/console/css/animation.css</file>
         <file>docroot/console/css/qicons-codes.css</file>
         <file>docroot/console/css/qicons.css</file>
         <file>docroot/console/css/qicons-embedded.css</file>

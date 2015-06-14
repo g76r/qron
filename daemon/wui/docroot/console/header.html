@@ -1,37 +1,60 @@
 <html>
   <head>
+    <meta charset="utf-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
     <title><?=%{=default:webconsole.title:Qron Web Console}?></title>
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="css/bootstrap.min.css" rel="stylesheet">
-    <link href="css/bootstrap-responsive.min.css" rel="stylesheet">
     <link href="css/qicons.css" rel="stylesheet">
     <link href="css/qron.css" rel="stylesheet">
     <style type="text/css"><?rawvalue:webconsole.cssoverload?></style>
   </head>
   <body>
-    <div class="navbar navbar-inverse navbar-static-top">
-      <div class="navbar-inner">
-        <div class="container">
-          <a class="btn btn-navbar" data-toggle="collapse" data-target=".nav-collapse">
-            <span class="icon-menu"></span>
-          </a>
-          <a class="brand" href="<?=%{=default:webconsole.titlehref:#}?>"><?=%{=default:webconsole.navtitle:webconsole.title:Qron Web Console}?></a>
-          <div class="nav-collapse collapse">
-            <ul class="nav">
-              <li><a href="index.html">Overview</a></li>
-              <li><a href="tasks.html">Tasks</a></li>
-              <li><a href="infra.html">Infrastructure</a></li>
-              <li><a href="alerts.html">Alerts</a></li>
-              <li><a href="resources.html">Resources</a></li>
-              <li><a href="events.html">Events</a></li>
-              <li><a href="config.html">Config</a></li>
-              <li><a href="log.html">Log</a></li>
-              <li><a href="about.html">About</a></li>
-              <li><a><?view:now?></a></li>
-          </div>
+    <nav class="navbar navbar-default navbar-inverse">
+      <div class="container">
+        <div class="navbar-header">
+          <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
+            <span class="sr-only">Toggle navigation</span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+            <span class="icon-bar"></span>
+          </button>
+          <a class="navbar-brand" href="<?=%{=default:webconsole.titlehref:#}?>"><?=%{=default:webconsole.navtitle:webconsole.title:Qron Web Console}?></a>
+        </div>
+        <div class="collapse navbar-collapse" id="navbar">
+          <ul class="nav navbar-nav">
+            <li><a href="index.html">Overview</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="tasks.html">Tasks</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="infra.html">Infrastructure</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="alerts.html">Alerts</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="resources.html">Resources</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="events.html">Events</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="config.html">Config</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="log.html">Log</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a href="about.html">About</a></li>
+          </ul>
+          <ul class="nav navbar-nav">
+            <li><a><?view:now?></a></li>
+          </ul>
         </div>
       </div>
-    </div>
+    </nav>
     <div class="container">
       <div class="alert alert-block <?=%{=switch:%{=left/%{cookie.message}/1}:S:alert-success:I:alert-info:E:alert-error:hidden}?>">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
