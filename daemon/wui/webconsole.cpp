@@ -269,8 +269,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   QHash<QString,QString> logTrClasses;
-  logTrClasses.insert("WARNING", "warning");
-  logTrClasses.insert("ERROR", "error");
+  logTrClasses.insert(Log::severityToString(Log::Warning), "warning");
+  logTrClasses.insert(Log::severityToString(Log::Error), "danger");
+  logTrClasses.insert(Log::severityToString(Log::Fatal), "danger");
   _htmlWarningLogView->setTrClass("%1", 4, logTrClasses);
   _htmlWarningLogView->setItemDelegate(
         new HtmlLogEntryItemDelegate(_htmlWarningLogView));
@@ -304,7 +305,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                         _unfinishedTaskInstancetModel->maxrows(), 20);
   _htmlTaskInstancesView20->setModel(_unfinishedTaskInstancetModel);
   QHash<QString,QString> taskInstancesTrClasses;
-  taskInstancesTrClasses.insert("failure", "error");
+  taskInstancesTrClasses.insert("failure", "danger");
   taskInstancesTrClasses.insert("queued", "warning");
   taskInstancesTrClasses.insert("running", "info");
   _htmlTaskInstancesView20->setTrClass("%1", 2, taskInstancesTrClasses);

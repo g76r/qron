@@ -78,12 +78,12 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
         .data().toString();
     text = index.data().toString(); // disable truncating and HTML encoding
     text.prepend(/* requestTask */ QString() +
-                 "<span class=\"label label-important\" "
+                 "<span class=\"label label-danger\" "
                  "title=\"Request execution\"><a href=\"requestform?"
                  "taskid="+taskId+"\"><i class=\"icon-play\"></i></a>"
                  "</span> "
                  /* {enable,disable}Task */
-                 "<span class=\"label label-"+(enabled?"important":"warning")
+                 "<span class=\"label label-"+(enabled?"danger":"warning")
                  +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
                  "<a href=\"do?event=enableTask&taskid="+taskId+"&enable="
                  +(enabled?"false":"true")+"\"><i class=\"icon-block\">"

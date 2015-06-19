@@ -32,7 +32,7 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
         .data().toString();
     if (_canRaiseAndCancel)
       text.prepend(/* immediate cancel */
-                   "<span class=\"label label-important\">"
+                   "<span class=\"label label-danger\">"
                    "<a title=\"Cancel alert immediatly\"href=\"do?"
                    "event=cancelAlert&alert="+alertId
                    +"&immediately=true\"><i class=\"icon-check\">"
@@ -42,7 +42,7 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
             || status == Alert::statusToString(Alert::MayRise)
             || status == Alert::statusToString(Alert::Dropping)))
       text.prepend(/* immediate raise */
-                   "<span class=\"label label-important\">"
+                   "<span class=\"label label-danger\">"
                    "<a title=\"Raise alert immediately\"href=\"do?"
                    "event=raiseAlert&alert="+alertId
                    +"&immediately=true\"><i class=\"icon-bell\">"

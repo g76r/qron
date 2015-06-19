@@ -50,14 +50,14 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                  +taskId+"\"><i class=\"icon-cog\"></i></a></span> ");
     if (status == "queued")
       text.prepend(/* cancel */
-                   "<span class=\"label label-important\" title=\"Cancel "
+                   "<span class=\"label label-danger\" title=\"Cancel "
                    "request\"><a href=\"confirm?event=cancelRequest&"
                    "taskinstanceid="+taskInstanceId+"\">"
                    "<i class=\"icon-cancel\"></i></a></span> ");
     else if (status == "running") {
       if (abortable)
         text.prepend(/* abort */
-                     "<span class=\"label label-important\" title=\"Abort "
+                     "<span class=\"label label-danger\" title=\"Abort "
                      "task\"><a href=\"confirm?event=abortTask&taskinstanceid="
                      +taskInstanceId+"\"><i class=\"icon-fire\"></i>"
                      "</a></span> ");
@@ -67,7 +67,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                      "<i class=\"icon-fire\"></i></span> ");
     } else
       text.prepend(/* reexec */
-                   "<span class=\"label label-important\" "
+                   "<span class=\"label label-danger\" "
                    "title=\"Request execution of same task\"><a href=\""
                    "requestform?taskid="+taskId+"\">"
                    "<i class=\"icon-repeat\"></i></a></span> ");

@@ -45,10 +45,10 @@ QString HtmlSchedulerConfigItemDelegate::text(const QModelIndex &index) const {
                      "Cannot activate active config\">"
                      "<i class=\"icon-play\"></i></span> ");
       else
-        text.prepend("<span class=\"label label-important\" title=\"Remove\">"
+        text.prepend("<span class=\"label label-danger\" title=\"Remove\">"
                      "<a href=\"confirm?event=removeConfig&configid="+id
                      +"\"><i class=\"icon-trash\"></i></a></span> "
-                      "<span class=\"label label-important\" title=\"Activate\">"
+                      "<span class=\"label label-danger\" title=\"Activate\">"
                       "<a href=\"confirm?event=activateConfig&configid="+id
                      +"\"><i class=\"icon-play\"></i></a></span> ");
     }

@@ -8,3 +8,6 @@ span[class^="label"],span[class*=" label"] a {
 [class^="icon-"]:before, [class*=" icon-"]:before {
   display:inline; /* enable &nbsp; before and after icon */
 }
+.pagination-frame {
+  text-align: center;
+}
