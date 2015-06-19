@@ -16,7 +16,7 @@
 <?include:header.html?>
 
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <a name="warninglog"></a>
           <h2>Last warnings and errors log entries</h2>
           <p><a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="icon-file-text"></i> Current log file</a>
@@ -25,7 +25,7 @@
           <a class="btn btn-info" href="#auditlog">Last audit log entries &raquo;</a>
           <p><?view:warninglog?>
         </div>
-        <div class="span12">
+        <div class="col-md-12">
           <a name="infolog"></a>
           <h2>Last info, warning and errors log entries</h2>
           <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="icon-file-excel"></i> CSV</a>
@@ -35,7 +35,7 @@
           <a class="btn btn-info" href="#auditlog">Last audit log entries &raquo;</a>
           <p><?view:infolog?>
         </div>
-        <div class="span12">
+        <div class="col-md-12">
           <a name="auditlog"></a>
           <h2>Last audit log entries</h2>
           <p><a class="btn btn-primary" href="../rest/txt/log/current/v1?filter=INFO%20AUDIT"><i class="icon-file-text"></i> Current log file audit entries</a>

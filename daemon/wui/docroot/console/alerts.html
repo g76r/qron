@@ -16,7 +16,7 @@
 <?include:header.html?>
 
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <p>There are two kinds of alerts: those which are emitted when raised
           and those which are emitted immediatly (one shot alerts).
           <p>The first table displays alerts of the first kind, including a
@@ -31,7 +31,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span8">
+        <div class="col-md-12">
           <h2>Currently rising or raised alerts</h2>
           <form class="form-inline" action="do" type="GET">
           <a class="btn btn-primary" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file-excel"></i> CSV</a>
@@ -45,15 +45,9 @@
           </form>
           <p><?view:raisedalertsfull?>
         </div>
-        <div class="span4">
-          <h2>Alert params</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/params/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/params/v1"><i class="icon-file-html"></i> HTML</a>
-          <p><?view:alertparams?>
-        </div>
       </div>
       <div class="row">
-        <div class="span8">
+        <div class="col-md-12">
           <h2>Recently emitted alerts</h2>
           <form class="form-inline" action="do" type="GET">
           <a class="btn btn-primary" href="../rest/csv/alerts/emitted/v1"><i class="icon-file-excel"></i> CSV</a>
@@ -67,14 +61,9 @@
           </form>
           <p><?view:lastemittedalerts?>
         </div>
-        <div class="span4">
-          <h2>Available alert channels</h2>
-          <p>Following channels can be used in alert subscriptions.
-          <p><?view:alertchannels?>
-        </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h2>Alerts Subscriptions</h2>
           <p>For every emitted alert, subscriptions are evaluated from top to bottom.
            If several subsctiptions match an alert, it is emitted several times, one
@@ -87,7 +76,29 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
+          <h2>Tasks parameters related to alerts</h2>
+          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
+          <p><?view:tasksalerts?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-8">
+          <h2>Alert params</h2>
+          <p><a class="btn btn-primary" href="../rest/csv/alerts/params/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/params/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><?view:alertparams?>
+        </div>
+        <div class="col-md-4 hidden-xs hidden-sm">
+          <h2>Available alert channels</h2>
+          <p>Following channels can be used in alert subscriptions.
+          <p><?view:alertchannels?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-8">
           <h2>Alerts Settings</h2>
           <p>For every emitted alert, some global alerts settings can be
            overriden with the following settings.
@@ -97,14 +108,10 @@
           <a class="btn btn-primary" href="../rest/html/alerts/settings/v1"><i class="icon-file-html"></i> HTML</a>
           <p><?view:alertsettings?>
         </div>
-      </div>
-      <div class="row">
-        <div class="span12">
-          <h2>Tasks parameters related to alerts</h2>
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
-          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <p><?view:tasksalerts?>
+        <div class="col-md-4">
+          <h2>Global Settings</h2>
+          <p>These settings are used by default.
+          <p><?view:globalalertsettings?>
         </div>
       </div>
      </div>
