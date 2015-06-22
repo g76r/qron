@@ -22,30 +22,50 @@
 #define DEFAULT_MIN_DELAY_BETWEEN_SEND 600000 /* 600" = 10' */
 #define DEFAULT_DELAY_BEFORE_FIRST_SEND 30000 /* 30" */
 
-class AlerterConfigData : public QSharedData {
+static QString _uiHeaderNames[] = {
+  "Id", // 0
+  "Params",
+  "Rise Delay",
+  "Mayrise Delay",
+  "Drop Delay",
+  "Minimum Delay Between Send", // 5
+  "Delay Before First Send",
+  "Remind Period"
+};
+
+static QAtomicInt _sequence;
+
+class AlerterConfigData : public SharedUiItemData {
 public:
+  QString _id;
   ParamSet _params;
   QList<AlertSubscription> _alertSubscriptions;
   QList<AlertSettings> _alertSettings;
   qint64 _riseDelay, _mayriseDelay, _dropDelay, _minDelayBetweenSend;
   qint64 _delayBeforeFirstSend, _remindPeriod;
   QStringList _channelNames;
-  AlerterConfigData() : _riseDelay(DEFAULT_RISE_DELAY),
+  AlerterConfigData() : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
+    _riseDelay(DEFAULT_RISE_DELAY),
     _mayriseDelay(DEFAULT_MAYRISE_DELAY), _dropDelay(DEFAULT_DROP_DELAY),
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
     _delayBeforeFirstSend(DEFAULT_DELAY_BEFORE_FIRST_SEND),
     _remindPeriod(DEFAULT_REMIND_PERIOD) {
   }
   AlerterConfigData(PfNode root);
+  QString id() const { return _id; }
+  QString idQualifier() const { return QStringLiteral("alerterconfig"); }
+  int uiSectionCount() const {
+    return sizeof _uiHeaderNames / sizeof *_uiHeaderNames; }
+  QVariant uiData(int section, int role) const;
+  QVariant uiHeaderData(int section, int role) const {
+    return role == Qt::DisplayRole && section >= 0
+        && (unsigned)section < sizeof _uiHeaderNames
+        ? _uiHeaderNames[section] : QVariant();
+  }
 };
 
-AlerterConfig::AlerterConfig() : d(new AlerterConfigData) {
-}
-
-AlerterConfig::AlerterConfig(const AlerterConfig &rhs) : d(rhs.d) {
-}
-
-AlerterConfig::AlerterConfig(PfNode root) : d(new AlerterConfigData(root)) {
+AlerterConfig::AlerterConfig(PfNode root)
+  : SharedUiItem(new AlerterConfigData(root)) {
 }
 
 AlerterConfigData::AlerterConfigData(PfNode root)
@@ -103,57 +123,59 @@ AlerterConfigData::AlerterConfigData(PfNode root)
         "remindperiod", DEFAULT_REMIND_PERIOD/1000)*1000;
 }
 
-AlerterConfig &AlerterConfig::operator=(const AlerterConfig &rhs) {
-  if (this != &rhs)
-    d.operator=(rhs.d);
-  return *this;
-}
-
-AlerterConfig::~AlerterConfig() {
-}
-
 ParamSet AlerterConfig::params() const {
+  const AlerterConfigData *d = data();
   return d ? d->_params : ParamSet();
 }
 
 qint64 AlerterConfig::riseDelay() const {
+  const AlerterConfigData *d = data();
   return d ? d->_riseDelay : DEFAULT_RISE_DELAY;
 }
 
 qint64 AlerterConfig::mayriseDelay() const {
+  const AlerterConfigData *d = data();
   return d ? d->_mayriseDelay : DEFAULT_MAYRISE_DELAY;
 }
 
 qint64 AlerterConfig::dropDelay() const {
+  const AlerterConfigData *d = data();
   return d ? d->_dropDelay : DEFAULT_DROP_DELAY;
 }
 
 qint64 AlerterConfig::minDelayBetweenSend() const {
+  const AlerterConfigData *d = data();
   return d ? d->_minDelayBetweenSend : DEFAULT_MIN_DELAY_BETWEEN_SEND;
 }
 
 qint64 AlerterConfig::delayBeforeFirstSend() const {
+  const AlerterConfigData *d = data();
   return d ? d->_delayBeforeFirstSend
            : DEFAULT_DELAY_BEFORE_FIRST_SEND;
 }
 
 qint64 AlerterConfig::remindPeriod() const {
+  const AlerterConfigData *d = data();
   return d ? d->_remindPeriod : DEFAULT_REMIND_PERIOD;
 }
 
 QList<AlertSubscription> AlerterConfig::alertSubscriptions() const {
+  const AlerterConfigData *d = data();
   return d ? d->_alertSubscriptions : QList<AlertSubscription>();
 }
 
 QList<AlertSettings> AlerterConfig::alertSettings() const {
+  const AlerterConfigData *d = data();
   return d ? d->_alertSettings : QList<AlertSettings>();
 }
 
 QStringList AlerterConfig::channelsNames() const {
+  const AlerterConfigData *d = data();
   return d ? d->_channelNames : QStringList();
 }
 
 PfNode AlerterConfig::toPfNode() const {
+  const AlerterConfigData *d = data();
   if (!d)
     return PfNode();
   PfNode node("alerts");
@@ -177,4 +199,34 @@ PfNode AlerterConfig::toPfNode() const {
   foreach (const AlertSubscription &sub, d->_alertSubscriptions)
     node.appendChild(sub.toPfNode());
   return node;
+}
+
+QVariant AlerterConfigData::uiData(int section, int role) const {
+  switch(role) {
+  case Qt::DisplayRole:
+  case Qt::EditRole:
+    switch(section) {
+    case 0:
+      return _id;
+    case 1:
+      return _params.toString(false, false);
+    case 2:
+      return _riseDelay > 0 ? _riseDelay/1000 : QVariant();
+    case 3:
+      return _mayriseDelay > 0 ? _mayriseDelay/1000 : QVariant();
+    case 4:
+      return _dropDelay > 0 ? _dropDelay/1000 : QVariant();
+    case 5:
+      return _minDelayBetweenSend > 0 ? _minDelayBetweenSend/1000 : QVariant();
+    case 6:
+      return _delayBeforeFirstSend > 0 ? _delayBeforeFirstSend/1000
+                                       : QVariant();
+    case 7:
+      return _remindPeriod > 0 ? _remindPeriod/1000 : QVariant();
+    }
+    break;
+  default:
+    ;
+  }
+  return QVariant();
 }

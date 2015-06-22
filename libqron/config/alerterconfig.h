@@ -20,19 +20,19 @@
 #include "util/paramset.h"
 #include "alertsubscription.h"
 #include "alertsettings.h"
+#include "modelview/shareduiitem.h"
 
 class AlerterConfigData;
 
 /** Alerter config: main/root alert configuration object. */
-class LIBQRONSHARED_EXPORT AlerterConfig {
-  QSharedDataPointer<AlerterConfigData> d;
+class LIBQRONSHARED_EXPORT AlerterConfig : public SharedUiItem {
 
 public:
-  AlerterConfig();
-  AlerterConfig(const AlerterConfig &);
+  AlerterConfig() { }
+  AlerterConfig(const AlerterConfig &other) : SharedUiItem(other) { }
   AlerterConfig(PfNode root);
-  AlerterConfig &operator=(const AlerterConfig &);
-  ~AlerterConfig();
+  AlerterConfig &operator=(const AlerterConfig &other) {
+    SharedUiItem::operator=(other); return *this; }
   /** Give access to alerts parameters. */
   ParamSet params() const;
   /** AlertConfig-level delay, in ms. */
@@ -52,6 +52,10 @@ public:
   /** Available channels names */
   QStringList channelsNames() const;
   PfNode toPfNode() const;
+
+private:
+  const AlerterConfigData *data() const {
+    return (const AlerterConfigData *)SharedUiItem::data(); }
 };
 
 #endif // ALERTERCONFIG_H
