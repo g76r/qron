@@ -915,7 +915,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       if (!task.isNull()) {
         WebConsoleParamsProvider webconsoleParams(this, req);
         webconsoleParams.overrideParamValue(
-              "pfconfig", task.toPfNode().toString());
+              "pfconfig", QString::fromUtf8(
+                task.toPfNode().toPf(PfOptions().setShouldIndent()
+                                     .setShouldWriteContentBeforeSubnodes()
+                                     .setShouldIgnoreComment(false))));
         TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
         SharedUiItemParamsProvider itemAsParams(task);
         processingContext->save();
@@ -978,7 +981,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     if (_scheduler) {
       Task task(_scheduler->task(taskId));
       if (!task.isNull()) {
-        res.output()->write(task.toPfNode().toPf(PfOptions().setShouldIndent()));
+        res.output()->write(task.toPfNode().toPf(
+                              PfOptions().setShouldIndent()
+                              .setShouldWriteContentBeforeSubnodes()
+                              .setShouldIgnoreComment(false)));
       } else {
         res.setStatus(404);
         res.output()->write("Task not found.");
@@ -1320,7 +1326,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
           res.output()->write("no config found with this id\n");
         } else
           config.toPfNode() // LATER remove indentation
-              .writePf(res.output(), PfOptions().setShouldIndent());
+              .writePf(res.output(), PfOptions().setShouldIndent()
+                       .setShouldWriteContentBeforeSubnodes()
+                       .setShouldIgnoreComment(false));
       } else {
         res.setStatus(500);
         res.output()->write("no config repository is set\n");

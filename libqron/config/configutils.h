@@ -69,6 +69,11 @@ public:
   static void writeEventSubscriptions(
       PfNode *parentnode, QList<EventSubscription> list,
       QStringList exclusionList = QStringList());
+  /** Recursively load comments children of node into commentsList.
+   * @param maxDepth -1 means infinite recursion */
+  static void loadComments(PfNode node, QStringList *commentsList,
+                           int maxDepth = -1);
+  static void writeComments(PfNode *node, QStringList commentsList);
 
 private:
   ConfigUtils();

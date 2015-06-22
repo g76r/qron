@@ -184,3 +184,24 @@ void ConfigUtils::loadEventSubscription(
   foreach (PfNode listnode, parentNode.childrenByName(childName))
     list->append(EventSubscription(subscriberId, listnode, scheduler));
 }
+
+void ConfigUtils::loadComments(
+    PfNode node, QStringList *commentsList, int maxDepth) {
+  if (!commentsList)
+    return;
+  int newMaxDepth = maxDepth < 0 ? maxDepth : (maxDepth-1);
+  foreach (const PfNode &child, node.children()) {
+    if (child.isComment())
+      commentsList->append(child.contentAsString());
+    if (maxDepth)
+      loadComments(child, commentsList, newMaxDepth);
+  }
+}
+
+void ConfigUtils::writeComments(PfNode *node, QStringList commentsList) {
+  if (!node)
+    return;
+  foreach (const QString &comment, commentsList) {
+    node->appendCommentChild(comment);
+  }
+}

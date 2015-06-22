@@ -136,6 +136,7 @@ public:
   QString _graphvizWorkflowDiagram;
   QMultiHash<QString,WorkflowTransition> _transitionsBySourceLocalId;
   QHash<QString,CronTrigger> _workflowCronTriggersByLocalId;
+  QStringList _commentsList;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -425,6 +426,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       Log::warning() << "ignoring step definitions in non-workflow task: "
                      << node.toString();
   }
+  ConfigUtils::loadComments(node, &d->_commentsList);
   setData(d);
   // update subtasks with any other information about their workflow task apart
   // from its id which has already been given through their cstr
@@ -1149,6 +1151,9 @@ PfNode Task::toPfNode() const {
 
 PfNode TaskData::toPfNode() const {
   PfNode node("task", _localId);
+
+  // comments
+  ConfigUtils::writeComments(&node, _commentsList);
 
   // description and execution attributes
   node.setAttribute("taskgroup", _group.id());

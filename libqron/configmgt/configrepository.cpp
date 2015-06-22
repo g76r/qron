@@ -32,7 +32,7 @@ SchedulerConfig ConfigRepository::parseConfig(
     }
   PfDomHandler pdh;
   PfParser pp(&pdh);
-  pp.parse(source);
+  pp.parse(source, PfOptions().setShouldIgnoreComment(false));
   if (pdh.errorOccured()) {
     QString errorString = pdh.errorString()+" at line "
         +QString::number(pdh.errorLine())
@@ -40,7 +40,10 @@ SchedulerConfig ConfigRepository::parseConfig(
     Log::error() << "empty or invalid configuration: " << errorString;
     return SchedulerConfig();
   }
-  QList<PfNode> roots = pdh.roots();
+  QList<PfNode> roots;
+  foreach (const PfNode &node, pdh.roots())
+    if (!node.isComment())
+      roots.append(node);
   if (roots.size() == 0) {
     Log::error() << "configuration lacking root node";
   } else if (roots.size() == 1) {
