@@ -16,17 +16,18 @@
 <?include:header.html?>
 
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h2>Task <?value:11?></h2>
           <p><a class="btn btn-danger" href="requestform?taskid=<?value:11?>"><i class="icon-play"></i> Request task execution</a>
           <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
           <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
           <a class="btn btn-info" href="../rest/txt/log/all/v1?regexp=^[^ ]* <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
           <?rawvalue:webconsole.customactions.taskdetail:?>
+          <p>All durations and delays are in seconds.
         </div>
       </div>
       <div class="row">
-        <div class="span8">
+        <div class="col-md-8">
           <h3>Task Description</h3>
           <p><a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="index.html">Overview page &raquo;</a>
@@ -37,18 +38,18 @@
             <tr><th>Workflow Task (for subtasks)</th><td><?=%{=ifneq:%31::<a href="taskdoc.html?taskid=%31">%31</a>}?></td></th>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
             <tr><th>Triggers (scheduling)</th><td><?value:28:?></td></tr>
-            <tr><th>Minimum expected duration (seconds)</th><td><?value:23:?></td></tr>
-            <tr><th>Maximum expected duration (seconds)</th><td><?value:24:?></td></tr>
-            <tr><th>Maximum duration before abort (seconds)</th><td><?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?></td></tr>
+            <tr><th>Minimum expected duration</th><td><?value:23:?></td></tr>
+            <tr><th>Maximum expected duration</th><td><?value:24:?></td></tr>
+            <tr><th>Maximum duration before abort</th><td><?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?></td></tr>
           </table>
         </div>
-        <div class="span4">
+        <div class="col-md-4">
           <h3>Task Status</h3>
           <p><a class="btn invisible" href="#">&nbsp;</a>
           <p><table class="table table-condensed table-hover">
              <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="icon-block"></i>&nbsp;false}?></td></tr>
              <tr><th>Last execution status</th><td><?value:19:?></td></tr>
-             <tr><th>Last execution duration (seconds)</th><td><?value:26:?></td></tr>
+             <tr><th>Last execution duration</th><td><?value:26:?></td></tr>
              <tr><th>Last execution instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="../rest/txt/log/all/v1?filter=%11/%32"><i class="icon-file-text"></i></a></span>}?></td></tr>
              <tr><th>Next execution</th><td><?value:10:?></td></tr>
              <tr><th>Currently running instances</th><td><?=%{=ifneq:%13:0:<i class="icon-play"></i>&nbsp;%13:%13}?>/<?value:12:?></td></tr>
@@ -56,7 +57,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h3>Task Parameters and Resources</h3>
           <p><a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="resources.html">Resources page &raquo;</a>
@@ -77,7 +78,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h3>Task Workflow Diagram</h3>
           <p><a class="btn btn-primary" href="../rest/svg/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> DOT</a>
@@ -87,7 +88,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="span12">
+        <div class="col-md-12">
           <h3>Raw Task Configuration</h3>
           <p><a class="btn btn-primary" target="_blank" href="../rest/pf/task/config/v1?taskid=<?value:11?>"><i class="icon-file"></i> PF</a>
           <pre><?=%{=htmlencode:%pfconfig}?></pre>
