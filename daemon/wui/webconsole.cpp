@@ -918,14 +918,13 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
               "pfconfig", task.toPfNode().toString());
         TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
         SharedUiItemParamsProvider itemAsParams(task);
+        processingContext->save();
         processingContext->append(&itemAsParams);
         processingContext->append(&pseudoParams);
         processingContext->append(&webconsoleParams);
         res.clearCookie("message", "/");
         _wuiHandler->handleRequest(req, res, processingContext);
-        processingContext->remove(&webconsoleParams);
-        processingContext->remove(&pseudoParams);
-        processingContext->remove(&itemAsParams);
+        processingContext->restore();
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
@@ -961,10 +960,15 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       res.redirect(s);
     } else {
       WebConsoleParamsProvider webconsoleParams(this, req);
+      processingContext->save();
       processingContext->append(&webconsoleParams);
+      SharedUiItemParamsProvider alerterConfigAsParams(_alerterConfig);
+      if (path.startsWith("/console/alerts.html")) {
+        processingContext->append(&alerterConfigAsParams);
+      }
       res.clearCookie("message", "/");
       _wuiHandler->handleRequest(req, res, processingContext);
-      processingContext->remove(&webconsoleParams);
+      processingContext->restore();
     }
     return true;
   }
@@ -1642,6 +1646,7 @@ void WebConsole::configChanged(SchedulerConfig config) {
 }
 
 void WebConsole::alerterConfigChanged(AlerterConfig config) {
+  _alerterConfig = config;
   _alertSubscriptionsModel->setItems(config.alertSubscriptions());
   _alertSettingsModel->setItems(config.alertSettings());
   _alertChannelsModel->clear();

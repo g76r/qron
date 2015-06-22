@@ -125,6 +125,7 @@ class WebConsole : public HttpHandler {
   bool _ownUsersDatabase, _accessControlEnabled;
   AtomicValue<QRegularExpression> _showAuditEvent, _hideAuditEvent,
   _showAuditUser, _hideAuditUser;
+  AtomicValue<AlerterConfig> _alerterConfig;
 
 public:
   WebConsole();
