@@ -45,6 +45,6 @@ void ConfigUploadHandler::processUploadedFile(
     return;
   }
   _configRepository->addConfig(config);
-  res.setHeader("X-Qron-ConfigId", config.hash());
-  res.output()->write(QString("(id %1)\n").arg(config.hash()).toUtf8());
+  res.setHeader("X-Qron-ConfigId", config.id());
+  res.output()->write(QString("(id %1)\n").arg(config.id()).toUtf8());
 }

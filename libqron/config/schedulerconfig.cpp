@@ -60,7 +60,7 @@ public:
   QList<LogFile> _logfiles;
   QDateTime _lastLoadTime;
   mutable QMutex _mutex;
-  mutable QString _hash;
+  mutable QString _id;
   SchedulerConfigData() : _maxtotaltaskinstances(0), _maxqueuedrequests(0) { }
   SchedulerConfigData(PfNode root, Scheduler *scheduler, bool applyLogConfig);
   SchedulerConfigData(const SchedulerConfigData &other)
@@ -78,12 +78,12 @@ public:
       _alerterConfig(other._alerterConfig),
       _accessControlConfig(other._accessControlConfig),
       _logfiles(other._logfiles),
-      _lastLoadTime(other._lastLoadTime), _hash(other._hash) {
+      _lastLoadTime(other._lastLoadTime), _id(other._id) {
   }
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiSectionCount() const;
-  QString id() const { return _hash; }
+  QString id() const { return _id; }
   QString idQualifier() const { return "config"; }
   void applyLogConfig() const;
 };
@@ -98,6 +98,7 @@ SchedulerConfig::SchedulerConfig(const SchedulerConfig &other)
 SchedulerConfig::SchedulerConfig(PfNode root, Scheduler *scheduler,
                                  bool applyLogConfig)
   : SharedUiItem(new SchedulerConfigData(root, scheduler, applyLogConfig)) {
+  recomputeId();
 }
 
 static inline void recordTaskActionLinks(
@@ -512,6 +513,7 @@ void SchedulerConfig::changeTask(Task newItem, Task oldItem) {
   d->_tasks.remove(oldItem.id());
   if (!newItem.isNull())
     d->_tasks.insert(newItem.id(), newItem);
+  recomputeId();
 }
 
 void SchedulerConfig::changeTaskGroup(TaskGroup newItem, TaskGroup oldItem) {
@@ -521,6 +523,7 @@ void SchedulerConfig::changeTaskGroup(TaskGroup newItem, TaskGroup oldItem) {
   d->_tasksGroups.remove(oldItem.id());
   if (!newItem.isNull())
     d->_tasksGroups.insert(newItem.id(), newItem);
+  recomputeId();
 }
 
 void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
@@ -530,6 +533,7 @@ void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
   d->_clusters.remove(oldItem.id());
   if (!newItem.isNull())
     d->_clusters.insert(newItem.id(), newItem);
+  recomputeId();
 }
 
 void SchedulerConfig::changeHost(Host newItem, Host oldItem) {
@@ -539,24 +543,25 @@ void SchedulerConfig::changeHost(Host newItem, Host oldItem) {
   d->_hosts.remove(oldItem.id());
   if (!newItem.isNull())
     d->_hosts.insert(newItem.id(), newItem);
+  recomputeId();
 }
 
-QString SchedulerConfig::hash() const {
+QString SchedulerConfig::recomputeId() const {
   const SchedulerConfigData *d = data();
   if (!d)
     return QString();
   QMutexLocker locker(&d->_mutex);
-  if (d->_hash.isNull()) {
-    QCryptographicHash hash(QCryptographicHash::Sha1);
-    QBuffer buf;
-    buf.open(QIODevice::ReadWrite);
-    writeAsPf(&buf);
-    buf.seek(0);
-    hash.addData(&buf);
-    d->_hash = hash.result().toHex();
-    //qDebug() << "SchedulerConfig::hash()" << d->_hash;
-  }
-  return d->_hash;
+  QCryptographicHash hash(QCryptographicHash::Sha1);
+  QByteArray data;
+  QBuffer buf(&data);
+  buf.open(QIODevice::ReadWrite);
+  writeAsPf(&buf);
+  buf.seek(0);
+  hash.addData(&buf);
+  d->_id = hash.result().toHex();
+  //qDebug() << "SchedulerConfig::recomputeId()" << d->_id << buf.size()
+  //         << QString::fromUtf8(data); // FIXME
+  return d->_id;
 }
 
 void SchedulerConfig::copyLiveAttributesFromOldTasks(
@@ -582,7 +587,7 @@ qint64 SchedulerConfig::writeAsPf(QIODevice *device) const {
   s.append(QString::fromUtf8(
              node.toPf(PfOptions().setShouldIndent()
                        .setShouldWriteContentBeforeSubnodes()
-                       .preferDoubleQuoteCharactersProtection())));
+                       .setShouldIgnoreComment(false))));
   //qDebug() << "**** SchedulerConfig::writeAsPf" << s;
   return device->write(s.toUtf8());
 }
@@ -666,7 +671,7 @@ QVariant SchedulerConfigData::uiData(int section, int role) const {
   case Qt::DisplayRole:
     switch(section) {
     case 0:
-      return _hash;
+      return _id;
     case 1:
       return _lastLoadTime.toString("yyyy-MM-dd hh:mm:ss,zzz");
     }

@@ -73,11 +73,6 @@ public:
   AlerterConfig alerterConfig() const;
   AccessControlConfig accessControlConfig() const;
   QList<LogFile> logfiles() const;
-  inline bool operator==(const SchedulerConfig &other) const {
-    return hash() == other.hash(); }
-  inline bool operator<(const SchedulerConfig &other) const {
-    return hash() < other.hash(); }
-  QString hash() const;
   /** @return number of bytes written or -1 if an error occured */
   qint64 writeAsPf(QIODevice *device) const;
   PfNode toPfNode() const;
@@ -93,8 +88,7 @@ private:
   SchedulerConfigData *data();
   const SchedulerConfigData *data() const {
     return (const SchedulerConfigData*)SharedUiItem::data(); }
+  QString recomputeId() const;
 };
-
-inline uint qHash(SchedulerConfig config) { return qHash(config.hash()); }
 
 #endif // SCHEDULERCONFIG_H

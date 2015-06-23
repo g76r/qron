@@ -57,7 +57,7 @@ AlertSettings::AlertSettings(const AlertSettings &other) : SharedUiItem(other) {
 
 AlertSettings::AlertSettings(PfNode node) {
   AlertSettingsData *d = new AlertSettingsData;
-  d->_pattern = node.attribute("match", "**");
+  d->_pattern = node.attribute("pattern", "**");
   d->_patternRegexp = ConfigUtils::readDotHierarchicalFilter(d->_pattern);
   if (d->_pattern.isEmpty() || !d->_patternRegexp.isValid())
     Log::warning() << "unsupported alert settings match pattern '"

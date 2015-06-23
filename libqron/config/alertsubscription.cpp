@@ -71,7 +71,8 @@ AlertSubscription::AlertSubscription(
     PfNode subscriptionnode, PfNode channelnode, ParamSet parentParams) {
   AlertSubscriptionData *d = new AlertSubscriptionData;
   d->_channelName = channelnode.name();
-  d->_pattern = subscriptionnode.attribute("match", "**");
+  d->_pattern = subscriptionnode.attribute(QStringLiteral("pattern"),
+                                           QStringLiteral("**"));
   d->_patternRegexp = ConfigUtils::readDotHierarchicalFilter(d->_pattern);
   if (d->_pattern.isEmpty() || !d->_patternRegexp.isValid())
     Log::warning() << "unsupported alert subscription match pattern '"
@@ -93,8 +94,8 @@ PfNode AlertSubscription::toPfNode() const {
   const AlertSubscriptionData *d = data();
   if (!d)
     return PfNode();
-  PfNode rulenode("rule");
-  rulenode.appendChild(PfNode(QStringLiteral("match"), d->_pattern));
+  PfNode subscriptionNode("subscription");
+  subscriptionNode.appendChild(PfNode(QStringLiteral("pattern"), d->_pattern));
   PfNode node(d->_channelName);
   if (!d->_address.isEmpty())
   node.appendChild(PfNode(QStringLiteral("address"), d->_address));
@@ -113,8 +114,8 @@ PfNode AlertSubscription::toPfNode() const {
   if (!d->_notifyReminder)
     node.appendChild(PfNode(QStringLiteral("noremindernotify")));
   ConfigUtils::writeParamSet(&node, d->_params, QStringLiteral("param"));
-  rulenode.appendChild(node);
-  return rulenode;
+  subscriptionNode.appendChild(node);
+  return subscriptionNode;
 }
 
 QString AlertSubscription::pattern() const {

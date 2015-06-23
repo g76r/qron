@@ -86,7 +86,7 @@ AlerterConfigData::AlerterConfigData(PfNode root)
   foreach (PfNode subscriptionnode, root.childrenByName("subscription")) {
     //Log::debug() << "found alert subscription section " << pattern << " " << stop;
     foreach (PfNode channelnode, subscriptionnode.children()) {
-      if (channelnode.name() == "match"
+      if (channelnode.name() == "pattern"
           || channelnode.name() == "param") {
         // ignore
       } else {
@@ -181,19 +181,19 @@ PfNode AlerterConfig::toPfNode() const {
   PfNode node("alerts");
   ConfigUtils::writeParamSet(&node, d->_params, "param");
   if (d->_riseDelay != DEFAULT_RISE_DELAY)
-    node.setAttribute("risedelay", QString::number(d->_riseDelay));
-  if (d->_riseDelay != DEFAULT_MAYRISE_DELAY)
-    node.setAttribute("mayrisedelay", QString::number(d->_mayriseDelay));
-  if (d->_riseDelay != DEFAULT_DROP_DELAY)
-    node.setAttribute("dropdelay", QString::number(d->_dropDelay));
-  if (d->_riseDelay != DEFAULT_MIN_DELAY_BETWEEN_SEND)
+    node.setAttribute("risedelay", QString::number(d->_riseDelay/1000));
+  if (d->_mayriseDelay != DEFAULT_MAYRISE_DELAY)
+    node.setAttribute("mayrisedelay", QString::number(d->_mayriseDelay/1000));
+  if (d->_dropDelay != DEFAULT_DROP_DELAY)
+    node.setAttribute("dropdelay", QString::number(d->_dropDelay/1000));
+  if (d->_minDelayBetweenSend != DEFAULT_MIN_DELAY_BETWEEN_SEND)
     node.setAttribute("mindelaybetweensend",
-                      QString::number(d->_minDelayBetweenSend));
-  if (d->_riseDelay != DEFAULT_DELAY_BEFORE_FIRST_SEND)
+                      QString::number(d->_minDelayBetweenSend/1000));
+  if (d->_delayBeforeFirstSend != DEFAULT_DELAY_BEFORE_FIRST_SEND)
     node.setAttribute("delaybeforefirstsend",
-                      QString::number(d->_delayBeforeFirstSend));
-  if (d->_riseDelay != DEFAULT_REMIND_PERIOD)
-    node.setAttribute("remindperiod", QString::number(d->_remindPeriod));
+                      QString::number(d->_delayBeforeFirstSend/1000));
+  if (d->_remindPeriod != DEFAULT_REMIND_PERIOD)
+    node.setAttribute("remindperiod", QString::number(d->_remindPeriod/1000));
   foreach (const AlertSettings &settings, d->_alertSettings)
     node.appendChild(settings.toPfNode());
   foreach (const AlertSubscription &sub, d->_alertSubscriptions)
