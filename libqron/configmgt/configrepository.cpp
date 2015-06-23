@@ -48,7 +48,7 @@ SchedulerConfig ConfigRepository::parseConfig(
     Log::error() << "configuration lacking root node";
   } else if (roots.size() == 1) {
     PfNode &root(roots.first());
-    if (root.name() == "qrontab") {
+    if (root.name() == "config") {
       SchedulerConfig config;
       if (QThread::currentThread() == thread())
         config = parseConfig(root, applyLogConfig);
@@ -60,7 +60,7 @@ SchedulerConfig ConfigRepository::parseConfig(
                                   Q_ARG(bool, applyLogConfig));
       return config;
     } else {
-      Log::error() << "configuration root node is not \"qrontab\"";
+      Log::error() << "configuration root node is not \"config\"";
     }
   } else {
     Log::error() << "configuration with more than one root node";

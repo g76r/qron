@@ -591,7 +591,7 @@ PfNode SchedulerConfig::toPfNode() const {
   const SchedulerConfigData *d = data();
   if (!d)
     return PfNode();
-  PfNode node("qrontab");
+  PfNode node("config");
   ParamSet configuredSetenv = d->_setenv;
   configuredSetenv.removeValue("TASKID");
   configuredSetenv.removeValue("TASKINSTANCEID");

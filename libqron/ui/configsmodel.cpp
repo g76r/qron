@@ -15,7 +15,7 @@
 
 ConfigsModel::ConfigsModel(QObject *parent)
 : SharedUiItemsTableModel(parent) {
-  setHeaderDataFromTemplate(SchedulerConfig(PfNode("qrontab"), 0, false));
+  setHeaderDataFromTemplate(SchedulerConfig(PfNode("config"), 0, false));
 }
 
 void ConfigsModel::configAdded(QString id, SchedulerConfig config) {
