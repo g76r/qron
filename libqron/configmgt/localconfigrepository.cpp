@@ -67,40 +67,41 @@ void LocalConfigRepository::openRepository(QString basePath) {
     //qDebug() << "LocalConfigRepository::openRepository" << fi.filePath();
     if (f.open(QIODevice::ReadOnly)) {
       SchedulerConfig config = parseConfig(&f, false);
-      if (config.isNull()) {
+      if (config.isNull()) { // incorrect files must be removed
         Log::warning() << "moving incorect config file to 'errors' subdir: "
                        << fi.fileName();
+        // remove previously existing same file in errors dir if any
         QFile(errorsDir.path()+"/"+fi.fileName()).remove();
         if (!f.rename(errorsDir.path()+"/"+fi.fileName()))
           Log::error() << "cannot move incorect config file to 'errors' "
                           "subdir: " << fi.fileName();
         continue; // ignore incorrect config files
       }
-      QString configId = config.hash();
-      if (_configs.contains(configId)) {
-        Log::warning() << "moving duplicated config file to 'errors' subdir: "
-                       << fi.fileName();
-        QFile(errorsDir.path()+"/"+fi.fileName()).remove();
-        if (!f.rename(errorsDir.path()+"/"+fi.fileName()))
-          Log::error() << "cannot move duplicated config file to 'errors' "
-                          "subdir: " << fi.fileName();
-        continue; // ignore duplicated config file
-      }
-      if (configId != fi.baseName()) {
+      QString configId = config.id();
+      if (configId != fi.baseName()) { // filename must be fixed to match id
         QString rightPath = fi.path()+"/"+configId;
         Log::warning() << "renaming config file because id mismatch: "
                        << fi.fileName() << " to " << rightPath;
+        QFile target(rightPath);
+        if (target.exists()) {
+          // target can already exist, since file with bad id can be a duplicate
+          // remove previously existing same file in errors dir if any
+          QFile(errorsDir.path()+"/"+configId).remove();
+          // move to errors dir
+          if (!target.rename(errorsDir.path()+"/"+configId))
+            Log::error() << "cannot move duplicated config file to 'errors' "
+                            "subdir: " << fi.fileName();
+        }
         if (!f.rename(rightPath)) {
-          // this is only a warning since the file can already exist and be a
-          // duplicated (in this case the duplicate will be moved to error and
-          // the renaming will succeed next time the repo will be opened)
           Log::warning() << "cannot rename file: " << fi.fileName() << " to "
                          << rightPath;
         }
       }
-      _configs.insert(configId, config);
-      //qDebug() << "***************** openRepository" << configId;
-      emit configAdded(configId, config);
+      if (!_configs.contains(configId)) { // ignore duplicated config file
+        //qDebug() << "loaded configuration successfully" << configId << fi.baseName();
+        _configs.insert(configId, config);
+        emit configAdded(configId, config);
+      }
     } else {
       Log::error() << "cannot open file in config repository: "
                    << fi.filePath() << ": " << f.errorString();
@@ -143,7 +144,7 @@ void LocalConfigRepository::openRepository(QString basePath) {
     config.applyLogConfig();
     emit configActivated(_activeConfigId, config);
   } else {
-    Log::error() << "active configuration do not exist: " << activeConfigId;
+    Log::error() << "active configuration does not exist: " << activeConfigId;
   }
 }
 
@@ -164,7 +165,7 @@ SchedulerConfig LocalConfigRepository::config(QString id) {
 
 QString LocalConfigRepository::addConfig(SchedulerConfig config) {
   QMutexLocker locker(&_mutex);
-  QString id = config.hash();
+  QString id = config.id();
   if (!id.isNull()) {
     /*if (_configs.contains(id)) {
       Log::info() << "requested to add an already known config: do "
