@@ -623,7 +623,7 @@ PfNode SchedulerConfig::toPfNode() const {
   QList<Host> hosts = d->_hosts.values();
   qSort(hosts);
   foreach (const Host &host, hosts)
-    node.appendChild(host.toPf());
+    node.appendChild(host.toPfNode());
   QList<Cluster> clusters = d->_clusters.values();
   qSort(clusters);
   foreach (const Cluster &cluster, clusters)

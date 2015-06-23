@@ -36,7 +36,7 @@ public:
   /** Configured max resources available. */
   QHash<QString, qint64> resources() const;
   void detach();
-  PfNode toPf() const;
+  PfNode toPfNode() const;
   bool setUiData(int section, const QVariant &value, QString *errorString = 0,
                  int role = Qt::EditRole,
                  const SharedUiItemDocumentManager *dm = 0);

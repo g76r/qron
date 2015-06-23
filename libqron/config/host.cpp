@@ -195,7 +195,7 @@ void Host::detach() {
   SharedUiItem::detach<HostData>();
 }
 
-PfNode Host::toPf() const {
+PfNode Host::toPfNode() const {
   const HostData *d = this->data();
   if (!d)
     return PfNode();
