@@ -1232,13 +1232,13 @@ PfNode TaskData::toPfNode() const {
   // monitoring and alerting attributes
   if (_maxExpectedDuration < LLONG_MAX)
     node.appendChild(PfNode("maxexpectedduration",
-                            QString::number(_maxExpectedDuration/1000)));
+                            QString::number(_maxExpectedDuration/1e3)));
   if (_minExpectedDuration > 0)
     node.appendChild(PfNode("minexpectedduration",
-                            QString::number(_minExpectedDuration/1000)));
+                            QString::number(_minExpectedDuration/1e3)));
   if (_maxDurationBeforeAbort < LLONG_MAX)
     node.appendChild(PfNode("maxdurationbeforeabort",
-                            QString::number(_maxDurationBeforeAbort/1000)));
+                            QString::number(_maxDurationBeforeAbort/1e3)));
 
   // events (but workflow-specific "ontrigger" events)
   ConfigUtils::writeEventSubscriptions(&node, _onstart);
