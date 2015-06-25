@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,6 +24,7 @@ public:
   QString _subscriberName, _eventName;
   QList<Action> _actions;
   ParamSet _globalParams;
+  QStringList _commentsList;
   EventSubscriptionData(QString subscriberName = QString(),
                         QString eventName = QString(),
                         ParamSet globalParams = ParamSet())
@@ -45,12 +46,13 @@ EventSubscription::EventSubscription(
   if (scheduler)
     d->_globalParams = scheduler->globalParams();
   foreach (PfNode child, node.children()) {
-    if (ignoredChildren.contains(child.name()))
+    if (ignoredChildren.contains(child.name()) || child.isComment())
       continue;
     Action a = Action::createAction(child, scheduler, d->_eventName);
     if (!a.isNull())
       d->_actions.append(a);
   }
+  ConfigUtils::loadComments(node, &d->_commentsList, 0);
 }
 
 EventSubscription::EventSubscription(
@@ -140,6 +142,7 @@ PfNode EventSubscription::toPfNode() const {
   if (!d)
     return PfNode();
   PfNode node(d->_eventName);
+  ConfigUtils::writeComments(&node, d->_commentsList);
   foreach(const Action &action, d->_actions)
     node.appendChild(action.toPfNode());
   return node;

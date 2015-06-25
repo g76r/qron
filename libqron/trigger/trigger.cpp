@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,6 +13,15 @@
  */
 #include "trigger_p.h"
 #include "config/configutils.h"
+
+static QSet<QString> excludedDescendantsForComments;
+
+static class ExcludedDescendantsForCommentsInitializer {
+public:
+  ExcludedDescendantsForCommentsInitializer() {
+    excludedDescendantsForComments.insert("calendar");
+  }
+} excludedDescendantsForCommentsInitializer;
 
 Trigger::Trigger() {
 }
@@ -46,7 +55,9 @@ QString Trigger::humanReadableExpression() const {
 
 QString Trigger::humanReadableExpressionWithCalendar() const {
   return (!calendar().isNull())
-      ? '['+QString::fromUtf8(calendar().toPfNode(true).toPf())+']'
+      ? '['+QString::fromUtf8(calendar().toPfNode(true)
+                              .toPf(PfOptions()
+                                    .setShouldWriteContentBeforeSubnodes()))+']'
         +humanReadableExpression()
       : humanReadableExpression();
 }
@@ -88,7 +99,9 @@ ParamSet Trigger::overridingParams() const {
 }
 
 bool Trigger::loadConfig(PfNode node, QHash<QString,Calendar> namedCalendars) {
-  QList<PfNode> list = node.childrenByName("calendar");
+  ConfigUtils::loadComments(node, &d->_commentsList,
+                            excludedDescendantsForComments);
+  QList<PfNode> list = node.childrenByName(QStringLiteral("calendar"));
   if (list.size() > 1)
     Log::error() << "ignoring multiple calendar definition: "
                  << node.toPf();
@@ -102,6 +115,11 @@ bool Trigger::loadConfig(PfNode node, QHash<QString,Calendar> namedCalendars) {
                      << "': " << child.toPf();
       else {
         d->_calendar = calendar;
+        // load comments only for named calendars, since their global definition
+        // will be taken instead of child node content
+        // in the other hand, non-named calendars are loaded as actual calendars
+        // and therefore will load their comments by their own
+        ConfigUtils::loadComments(child, &d->_commentsList);
       }
     } else {
       Calendar calendar = Calendar(child);
@@ -112,17 +130,19 @@ bool Trigger::loadConfig(PfNode node, QHash<QString,Calendar> namedCalendars) {
         d->_calendar = calendar;
     }
   }
-  ConfigUtils::loadParamSet(node, &d->_overridingParams, "param");
+  ConfigUtils::loadParamSet(node, &d->_overridingParams,
+                            QStringLiteral("param"));
   return true;
 }
 
 QString TriggerData::triggerType() const {
-  return "unknown";
+  return QStringLiteral("unknown");
 }
 
 PfNode TriggerData::toPfNode() const {
   PfNode node(triggerType(), expression());
-  ConfigUtils::writeParamSet(&node, _overridingParams, "param");
+  ConfigUtils::writeComments(&node, _commentsList);
+  ConfigUtils::writeParamSet(&node, _overridingParams, QStringLiteral("param"));
   if (!_calendar.isNull())
     node.appendChild(_calendar.toPfNode(true));
   return node;

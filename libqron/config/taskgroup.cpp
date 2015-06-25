@@ -25,6 +25,19 @@
 #include "ui/qronuiutils.h"
 #include "modelview/shareduiitemdocumentmanager.h"
 
+static QSet<QString> excludedDescendantsForComments;
+
+static class ExcludedDescendantsForCommentsInitializer {
+public:
+  ExcludedDescendantsForCommentsInitializer() {
+    excludedDescendantsForComments.insert("onsuccess");
+    excludedDescendantsForComments.insert("onfailure");
+    excludedDescendantsForComments.insert("onfinish");
+    excludedDescendantsForComments.insert("onstart");
+    excludedDescendantsForComments.insert("ontrigger");
+  }
+} excludedDescendantsForCommentsInitializer;
+
 class TaskGroupData : public SharedUiItemData {
 public:
   QString _id, _label;

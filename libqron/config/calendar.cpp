@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@
 #include <QDate>
 #include <QStringList>
 #include "log/log.h"
+#include "configutils.h"
 
 class CalendarData : public QSharedData {
 public:
@@ -30,6 +31,7 @@ public:
   };
   QList<Rule> _rules;
   QString _name;
+  QStringList _commentsList;
   CalendarData(QString name = QString())
     : _name(name.isEmpty() ? QString() : name) { }
   inline CalendarData &append(QDate begin, QDate end, bool include);
@@ -55,6 +57,8 @@ Calendar::Calendar(PfNode node)
   bool atLessOneExclude = false;
   //qDebug() << "*** Calendar(PfNode): " << node.toPf();
   foreach(PfNode child, node.children()) {
+    if (child.isComment())
+      continue;
     bool include;
     //qDebug() << child.name() << ": " << child.contentAsString();
     if (child.name() == "include")
@@ -95,6 +99,7 @@ Calendar::Calendar(PfNode node)
     // if calendar only declares "include" rules, append a final "exclude" rule
     append(false);
   }
+  ConfigUtils::loadComments(node, &d->_commentsList);
 }
 
 Calendar::~Calendar() {
@@ -133,6 +138,7 @@ PfNode Calendar::toPfNode(bool useNameOnlyIfSet) const {
   PfNode node("calendar", name);
   if (!name.isEmpty() && useNameOnlyIfSet)
     return node;
+  ConfigUtils::writeComments(&node, d->_commentsList);
   foreach (const CalendarData::Rule &r, d->_rules) {
     QString s;
     s.append(r._begin.isNull() ? "" : r._begin.toString("yyyy-MM-dd"));

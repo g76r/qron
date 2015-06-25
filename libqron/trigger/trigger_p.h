@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,6 +23,7 @@ class LIBQRONSHARED_EXPORT TriggerData : public QSharedData {
 public:
   ParamSet _overridingParams;
   Calendar _calendar;
+  QStringList _commentsList;
   virtual QString expression() const;
   /** default: call expression() */
   virtual QString canonicalExpression() const;

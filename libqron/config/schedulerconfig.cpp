@@ -31,6 +31,27 @@ static QString _uiHeaderNames[] = {
   "Actions"
 };
 
+static QSet<QString> excludedDescendantsForComments;
+
+static class ExcludedDescendantsForCommentsInitializer {
+public:
+  ExcludedDescendantsForCommentsInitializer() {
+    excludedDescendantsForComments.insert("task");
+    excludedDescendantsForComments.insert("calendar");
+    excludedDescendantsForComments.insert("alerts");
+    excludedDescendantsForComments.insert("access-control");
+    excludedDescendantsForComments.insert("onsuccess");
+    excludedDescendantsForComments.insert("onfailure");
+    excludedDescendantsForComments.insert("onfinish");
+    excludedDescendantsForComments.insert("onstart");
+    excludedDescendantsForComments.insert("ontrigger");
+    excludedDescendantsForComments.insert("onstart");
+    excludedDescendantsForComments.insert("onschedulerstart");
+    excludedDescendantsForComments.insert("onconfigload");
+    excludedDescendantsForComments.insert("onnotice");
+  }
+} excludedDescendantsForCommentsInitializer;
+
 class RequestTaskActionLink {
 public:
   Action _action;

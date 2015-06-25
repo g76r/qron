@@ -40,6 +40,12 @@ static class ExcludedDescendantsForCommentsInitializer {
 public:
   ExcludedDescendantsForCommentsInitializer() {
     excludedDescendantsForComments.insert("subtask");
+    excludedDescendantsForComments.insert("trigger");
+    excludedDescendantsForComments.insert("onsuccess");
+    excludedDescendantsForComments.insert("onfailure");
+    excludedDescendantsForComments.insert("onfinish");
+    excludedDescendantsForComments.insert("onstart");
+    excludedDescendantsForComments.insert("ontrigger");
   }
 } excludedDescendantsForCommentsInitializer;
 
@@ -235,8 +241,16 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   d->_workflowTaskId = workflowTaskId;
   // LATER load cron triggers last exec timestamp from on-disk log
   if (workflowTaskId.isEmpty()) { // subtasks do not have triggers
-    foreach (PfNode child, node.childrenByName("trigger")) {
+    foreach (PfNode child, node.childrenByName(QStringLiteral("trigger"))) {
       foreach (PfNode grandchild, child.children()) {
+        QList<PfNode> inheritedComments;
+        foreach (PfNode commentNode, child.children())
+          if (commentNode.isComment())
+            inheritedComments.append(commentNode);
+        std::reverse(inheritedComments.begin(), inheritedComments.end());
+        foreach (PfNode commentNode, inheritedComments)
+          grandchild.prependChild(commentNode);
+        //grandchild.appendChild(commentGrandChild);
         QString content = grandchild.contentAsString();
         QString triggerType = grandchild.name();
         if (triggerType == "notice") {

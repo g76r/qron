@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -95,36 +95,50 @@ QString ActionData::targetName() const {
 }
 
 PfNode Action::toPfNode() const {
-  return d ? d->toPfNode() : PfNode();
+  PfNode node;
+  if (d) {
+    node = d->toPfNode();
+    // MAYDO write comments before content
+    ConfigUtils::writeComments(&node, d->_commentsList);
+  }
+  return node;
+}
+
+PfNode ActionData::toPfNode() const {
+  return PfNode(); // should never happen
 }
 
 Action Action::createAction(PfNode node, Scheduler *scheduler,
                             QString eventName) {
+  Action action;
   // LATER implement ExecAction
   if (node.name() == "postnotice") {
-    return PostNoticeAction(scheduler, node);
+    action = PostNoticeAction(scheduler, node);
   } else if (node.name() == "raisealert") {
-    return RaiseAlertAction(scheduler, node);
+    action = RaiseAlertAction(scheduler, node);
   } else if (node.name() == "cancelalert") {
-    return CancelAlertAction(scheduler, node);
+    action = CancelAlertAction(scheduler, node);
   } else if (node.name() == "emitalert") {
-    return EmitAlertAction(scheduler, node);
+    action = EmitAlertAction(scheduler, node);
   } else if (node.name() == "requesttask") {
-    return RequestTaskAction(scheduler, node);
+    action = RequestTaskAction(scheduler, node);
   } else if (node.name() == "requesturl") {
-    return RequestUrlAction(scheduler, node);
+    action = RequestUrlAction(scheduler, node);
   } else if (node.name() == "log") {
-    return LogAction(scheduler, node);
+    action = LogAction(scheduler, node);
   } else if (node.name() == "step") {
-    return StepAction(scheduler, node);
+    action = StepAction(scheduler, node);
   } else if (node.name() == "end") {
-    return EndAction(scheduler, node);
+    action = EndAction(scheduler, node);
   } else {
     if (eventName == "ontrigger"
         && (node.name() == "cron" || node.name() == "notice"))
       ;
     else
       Log::error() << "unknown action type: " << node.name();
-    return Action();
   }
+  if (!action.isNull()) {
+    ConfigUtils::loadComments(node, &action.d->_commentsList);
+  }
+  return action;
 }
