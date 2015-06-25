@@ -82,6 +82,7 @@ void LocalConfigRepository::openRepository(QString basePath) {
         QString rightPath = fi.path()+"/"+configId;
         Log::warning() << "renaming config file because id mismatch: "
                        << fi.fileName() << " to " << rightPath;
+        // LATER also rename in config log to keep consistency
         QFile target(rightPath);
         if (target.exists()) {
           // target can already exist, since file with bad id can be a duplicate
