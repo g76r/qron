@@ -32,6 +32,7 @@ public:
   QString _id, _pattern;
   QRegularExpression _patternRegexp;
   qint64 _riseDelay, _mayriseDelay, _dropDelay;
+  QStringList _commentsList;
   // MAYDO add params
 
   AlertSettingsData()
@@ -65,6 +66,7 @@ AlertSettings::AlertSettings(PfNode node) {
   d->_riseDelay = node.longAttribute(QStringLiteral("risedelay"), 0)*1000;
   d->_mayriseDelay = node.longAttribute(QStringLiteral("mayrisedelay"), 0)*1000;
   d->_dropDelay = node.longAttribute(QStringLiteral("dropdelay"), 0)*1000;
+  ConfigUtils::loadComments(node, &d->_commentsList);
   setData(d);
 }
 
@@ -73,6 +75,7 @@ PfNode AlertSettings::toPfNode() const {
   if (!d)
     return PfNode();
   PfNode node(QStringLiteral("settings"));
+  ConfigUtils::writeComments(&node, d->_commentsList);
   node.setAttribute(QStringLiteral("pattern"), d->_pattern);
   if (d->_riseDelay > 0)
     node.setAttribute(QStringLiteral("risedelay"), d->_riseDelay/1000);

@@ -22,6 +22,8 @@
 #define DEFAULT_MIN_DELAY_BETWEEN_SEND 600000 /* 600" = 10' */
 #define DEFAULT_DELAY_BEFORE_FIRST_SEND 30000 /* 30" */
 
+namespace { // unnamed namespace hides even class definitions to other .cpp
+
 static QString _uiHeaderNames[] = {
   "Id", // 0
   "Params",
@@ -35,6 +37,18 @@ static QString _uiHeaderNames[] = {
 
 static QAtomicInt _sequence;
 
+QSet<QString> excludedDescendantsForComments;
+
+class ExcludedDescendantsForCommentsInitializer {
+public:
+  ExcludedDescendantsForCommentsInitializer() {
+    excludedDescendantsForComments.insert("subscription");
+    excludedDescendantsForComments.insert("settings");
+  }
+} excludedDescendantsForCommentsInitializer;
+
+} // unnamed namespace
+
 class AlerterConfigData : public SharedUiItemData {
 public:
   QString _id;
@@ -43,7 +57,7 @@ public:
   QList<AlertSettings> _alertSettings;
   qint64 _riseDelay, _mayriseDelay, _dropDelay, _minDelayBetweenSend;
   qint64 _delayBeforeFirstSend, _remindPeriod;
-  QStringList _channelNames;
+  QStringList _channelNames, _commentsList;
   AlerterConfigData() : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
     _riseDelay(DEFAULT_RISE_DELAY),
     _mayriseDelay(DEFAULT_MAYRISE_DELAY), _dropDelay(DEFAULT_DROP_DELAY),
@@ -121,6 +135,8 @@ AlerterConfigData::AlerterConfigData(PfNode root)
         "delaybeforefirstsend", DEFAULT_DELAY_BEFORE_FIRST_SEND/1000)*1000;
   _remindPeriod = root.longAttribute(
         "remindperiod", DEFAULT_REMIND_PERIOD/1000)*1000;
+  ConfigUtils::loadComments(root, &_commentsList,
+                            excludedDescendantsForComments);
 }
 
 ParamSet AlerterConfig::params() const {
@@ -179,6 +195,7 @@ PfNode AlerterConfig::toPfNode() const {
   if (!d)
     return PfNode();
   PfNode node("alerts");
+  ConfigUtils::writeComments(&node, d->_commentsList);
   ConfigUtils::writeParamSet(&node, d->_params, "param");
   if (d->_riseDelay != DEFAULT_RISE_DELAY)
     node.setAttribute("risedelay", QString::number(d->_riseDelay/1000));

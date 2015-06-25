@@ -44,6 +44,7 @@ public:
   QString _address, _emitMessage, _cancelMessage, _reminderMessage;
   bool _notifyEmit, _notifyCancel, _notifyReminder;
   ParamSet _params;
+  QStringList _commentsList;
   AlertSubscriptionData()
     : _id(QString::number(_sequence.fetchAndAddOrdered(1))), _notifyEmit(false),
       _notifyCancel(false), _notifyReminder(false) {
@@ -87,6 +88,8 @@ AlertSubscription::AlertSubscription(
   ConfigUtils::loadParamSet(subscriptionnode, &d->_params, "param");
   ConfigUtils::loadParamSet(channelnode, &d->_params, "param");
   d->_params.setParent(parentParams);
+  ConfigUtils::loadComments(subscriptionnode, &d->_commentsList, 0);
+  ConfigUtils::loadComments(channelnode, &d->_commentsList);
   setData(d);
 }
 
@@ -97,6 +100,7 @@ PfNode AlertSubscription::toPfNode() const {
   PfNode subscriptionNode("subscription");
   subscriptionNode.appendChild(PfNode(QStringLiteral("pattern"), d->_pattern));
   PfNode node(d->_channelName);
+  ConfigUtils::writeComments(&node, d->_commentsList);
   if (!d->_address.isEmpty())
   node.appendChild(PfNode(QStringLiteral("address"), d->_address));
   if (!d->_emitMessage.isEmpty())
