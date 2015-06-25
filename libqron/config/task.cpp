@@ -34,6 +34,15 @@
 #include "task_p.h"
 #include "modelview/shareduiitemdocumentmanager.h"
 
+static QSet<QString> excludedDescendantsForComments;
+
+static class ExcludedDescendantsForCommentsInitializer {
+public:
+  ExcludedDescendantsForCommentsInitializer() {
+    excludedDescendantsForComments.insert("subtask");
+  }
+} excludedDescendantsForCommentsInitializer;
+
 class WorkflowTransitionData : public SharedUiItemData {
 public:
   QString _workflowId, _sourceLocalId, _eventName, _targetLocalId, _id,
@@ -426,7 +435,8 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
       Log::warning() << "ignoring step definitions in non-workflow task: "
                      << node.toString();
   }
-  ConfigUtils::loadComments(node, &d->_commentsList);
+  ConfigUtils::loadComments(node, &d->_commentsList,
+                            excludedDescendantsForComments);
   setData(d);
   // update subtasks with any other information about their workflow task apart
   // from its id which has already been given through their cstr

@@ -70,9 +70,15 @@ public:
       PfNode *parentnode, QList<EventSubscription> list,
       QStringList exclusionList = QStringList());
   /** Recursively load comments children of node into commentsList.
+   * @param excludedDescendants descendant nodes names ignored during recursion
    * @param maxDepth -1 means infinite recursion */
   static void loadComments(PfNode node, QStringList *commentsList,
+                           QSet<QString> excludedDescendants = QSet<QString>(),
                            int maxDepth = -1);
+  /** Convenience method. */
+  static void loadComments(PfNode node, QStringList *commentsList,
+                           int maxDepth) {
+    loadComments(node, commentsList, QSet<QString>(), maxDepth); }
   static void writeComments(PfNode *node, QStringList commentsList);
 
 private:

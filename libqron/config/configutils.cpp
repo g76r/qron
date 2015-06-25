@@ -186,14 +186,15 @@ void ConfigUtils::loadEventSubscription(
 }
 
 void ConfigUtils::loadComments(
-    PfNode node, QStringList *commentsList, int maxDepth) {
+    PfNode node, QStringList *commentsList, QSet<QString> excludedDescendants,
+    int maxDepth) {
   if (!commentsList)
     return;
   int newMaxDepth = maxDepth < 0 ? maxDepth : (maxDepth-1);
   foreach (const PfNode &child, node.children()) {
     if (child.isComment())
       commentsList->append(child.contentAsString());
-    if (maxDepth)
+    if (maxDepth && !excludedDescendants.contains(child.name()))
       loadComments(child, commentsList, newMaxDepth);
   }
 }
