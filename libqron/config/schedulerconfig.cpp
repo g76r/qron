@@ -31,9 +31,11 @@ static QString _uiHeaderNames[] = {
   "Actions"
 };
 
-static QSet<QString> excludedDescendantsForComments;
+namespace { // unnamed namespace hides even class definitions to other .cpp
 
-static class ExcludedDescendantsForCommentsInitializer {
+QSet<QString> excludedDescendantsForComments;
+
+class ExcludedDescendantsForCommentsInitializer {
 public:
   ExcludedDescendantsForCommentsInitializer() {
     excludedDescendantsForComments.insert("task");
@@ -51,6 +53,8 @@ public:
     excludedDescendantsForComments.insert("onnotice");
   }
 } excludedDescendantsForCommentsInitializer;
+
+}
 
 class RequestTaskActionLink {
 public:
@@ -80,6 +84,7 @@ public:
   AccessControlConfig _accessControlConfig;
   QList<LogFile> _logfiles;
   QDateTime _lastLoadTime;
+  QStringList _commentsList;
   mutable QMutex _mutex;
   mutable QString _id;
   SchedulerConfigData() : _maxtotaltaskinstances(0), _maxqueuedrequests(0) { }

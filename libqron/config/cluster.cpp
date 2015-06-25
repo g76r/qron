@@ -33,6 +33,7 @@ public:
   QString _id, _label;
   Cluster::Balancing _balancing;
   QList<Host> _hosts;
+  QStringList _commentsList;
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiSectionCount() const;
@@ -60,6 +61,7 @@ Cluster::Cluster(PfNode node) {
     Log::error() << "invalid cluster balancing method: " << node.toString();
     delete d;
   }
+  ConfigUtils::loadComments(node, &d->_commentsList);
   setData(d);
 }
 
@@ -209,6 +211,7 @@ PfNode Cluster::toPfNode() const {
   if (!d)
     return PfNode();
   PfNode node("cluster", d->_id);
+  ConfigUtils::writeComments(&node, d->_commentsList);
   if (!d->_label.isEmpty() && d->_label != d->_id)
     node.appendChild(PfNode("label", d->_label));
   node.appendChild(PfNode("balancing", balancingAsString(d->_balancing)));

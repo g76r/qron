@@ -34,9 +34,11 @@
 #include "task_p.h"
 #include "modelview/shareduiitemdocumentmanager.h"
 
-static QSet<QString> excludedDescendantsForComments;
+namespace { // unnamed namespace hides even class definitions to other .cpp
 
-static class ExcludedDescendantsForCommentsInitializer {
+QSet<QString> excludedDescendantsForComments;
+
+class ExcludedDescendantsForCommentsInitializer {
 public:
   ExcludedDescendantsForCommentsInitializer() {
     excludedDescendantsForComments.insert("subtask");
@@ -48,6 +50,8 @@ public:
     excludedDescendantsForComments.insert("ontrigger");
   }
 } excludedDescendantsForCommentsInitializer;
+
+}
 
 class WorkflowTransitionData : public SharedUiItemData {
 public:
@@ -1173,6 +1177,8 @@ PfNode Task::toPfNode() const {
   return d ? d->toPfNode() : PfNode();
 }
 
+static QStringList excludeOnfinishSubscriptions("onfinish");
+
 PfNode TaskData::toPfNode() const {
   PfNode node("task", _localId);
 
@@ -1268,7 +1274,7 @@ PfNode TaskData::toPfNode() const {
   ConfigUtils::writeEventSubscriptions(&node, _onstart);
   ConfigUtils::writeEventSubscriptions(&node, _onsuccess);
   ConfigUtils::writeEventSubscriptions(&node, _onfailure,
-                                       QStringList("onfinish"));
+                                       excludeOnfinishSubscriptions);
 
   // user interface attributes
   if (!_requestFormFields.isEmpty()) {

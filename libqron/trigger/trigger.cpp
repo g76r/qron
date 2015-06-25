@@ -14,14 +14,18 @@
 #include "trigger_p.h"
 #include "config/configutils.h"
 
-static QSet<QString> excludedDescendantsForComments;
+namespace { // unnamed namespace hides even class definitions to other .cpp
 
-static class ExcludedDescendantsForCommentsInitializer {
+QSet<QString> excludedDescendantsForComments;
+
+class ExcludedDescendantsForCommentsInitializer {
 public:
   ExcludedDescendantsForCommentsInitializer() {
     excludedDescendantsForComments.insert("calendar");
   }
 } excludedDescendantsForCommentsInitializer;
+
+}
 
 Trigger::Trigger() {
 }

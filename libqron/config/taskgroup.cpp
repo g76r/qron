@@ -25,9 +25,11 @@
 #include "ui/qronuiutils.h"
 #include "modelview/shareduiitemdocumentmanager.h"
 
-static QSet<QString> excludedDescendantsForComments;
+namespace { // unnamed namespace hides even class definitions to other .cpp
 
-static class ExcludedDescendantsForCommentsInitializer {
+QSet<QString> excludedDescendantsForComments;
+
+class ExcludedDescendantsForCommentsInitializer {
 public:
   ExcludedDescendantsForCommentsInitializer() {
     excludedDescendantsForComments.insert("onsuccess");
@@ -38,11 +40,14 @@ public:
   }
 } excludedDescendantsForCommentsInitializer;
 
+}
+
 class TaskGroupData : public SharedUiItemData {
 public:
   QString _id, _label;
   ParamSet _params, _setenv, _unsetenv;
   QList<EventSubscription> _onstart, _onsuccess, _onfailure;
+  QStringList _commentsList;
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiSectionCount() const;
@@ -52,6 +57,7 @@ public:
   bool setUiData(int section, const QVariant &value, QString *errorString,
                  int role, const SharedUiItemDocumentManager *dm);
   Qt::ItemFlags uiFlags(int section) const;
+
 };
 
 TaskGroup::TaskGroup() {
@@ -83,6 +89,8 @@ TaskGroup::TaskGroup(PfNode node, ParamSet parentParamSet,
                                      &d->_onfailure, scheduler);
   ConfigUtils::loadEventSubscription(node, "onfinish", d->_id,
                                      &d->_onfailure, scheduler);
+  ConfigUtils::loadComments(node, &d->_commentsList,
+                            excludedDescendantsForComments);
   setData(d);
 }
 
@@ -202,19 +210,23 @@ TaskGroupData *TaskGroup::data() {
   return (TaskGroupData*)SharedUiItem::data();
 }
 
+static QStringList excludeOnfinishSubscriptions("onfinish");
+
 PfNode TaskGroup::toPfNode() const {
-  if (!data())
+  const TaskGroupData *d = data();
+  if (!d)
     return PfNode();
-  PfNode node("taskgroup", data()->id());
-  if (!data()->_label.isNull())
-    node.setAttribute("label", data()->_label);
-  ConfigUtils::writeParamSet(&node, data()->_params, "param");
-  ConfigUtils::writeParamSet(&node, data()->_setenv, "setenv");
-  ConfigUtils::writeFlagSet(&node, data()->_unsetenv, "unsetenv");
-  ConfigUtils::writeEventSubscriptions(&node, data()->_onstart);
-  ConfigUtils::writeEventSubscriptions(&node, data()->_onsuccess);
-  ConfigUtils::writeEventSubscriptions(&node, data()->_onfailure,
-                                       QStringList("onfinish"));
+  PfNode node(QStringLiteral("taskgroup"), d->id());
+  ConfigUtils::writeComments(&node, d->_commentsList);
+  if (!d->_label.isNull())
+    node.setAttribute(QStringLiteral("label"), d->_label);
+  ConfigUtils::writeParamSet(&node, d->_params, QStringLiteral("param"));
+  ConfigUtils::writeParamSet(&node, d->_setenv, QStringLiteral("setenv"));
+  ConfigUtils::writeFlagSet(&node, d->_unsetenv, QStringLiteral("unsetenv"));
+  ConfigUtils::writeEventSubscriptions(&node, d->_onstart);
+  ConfigUtils::writeEventSubscriptions(&node, d->_onsuccess);
+  ConfigUtils::writeEventSubscriptions(&node, d->_onfailure,
+                                       excludeOnfinishSubscriptions);
   return node;
 }
 

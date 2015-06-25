@@ -32,6 +32,7 @@ class HostData : public SharedUiItemData {
 public:
   QString _id, _label, _hostname;
   QHash<QString,qint64> _resources; // configured max resources available
+  QStringList _commentsList;
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiSectionCount() const;
@@ -57,6 +58,7 @@ Host::Host(PfNode node) {
   d->_hostname = ConfigUtils::sanitizeId(node.attribute("hostname"),
                                           ConfigUtils::Hostname);
   ConfigUtils::loadResourcesSet(node, &d->_resources, "resource");
+  ConfigUtils::loadComments(node, &d->_commentsList);
   setData(d);
 }
 
@@ -200,6 +202,7 @@ PfNode Host::toPfNode() const {
   if (!d)
     return PfNode();
   PfNode node("host", d->_id);
+  ConfigUtils::writeComments(&node, d->_commentsList);
   if (!d->_label.isEmpty() && d->_label != d->_id)
     node.appendChild(PfNode("label", d->_label));
   if (!d->_hostname.isEmpty() && d->_hostname != d->_id)
