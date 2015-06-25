@@ -49,3 +49,5 @@ contains(QT_VERSION, ^4\\..*) {
 TEMPLATE = app
 
 SOURCES += main.cpp
+
+QMAKE_CLEAN += *.iteration1 *.iteration2
