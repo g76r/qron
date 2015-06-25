@@ -51,7 +51,9 @@ public:
   }
 } excludedDescendantsForCommentsInitializer;
 
-}
+static QStringList excludeOnfinishSubscriptions("onfinish");
+
+} // unnamed namespace
 
 class WorkflowTransitionData : public SharedUiItemData {
 public:
@@ -1176,8 +1178,6 @@ PfNode Task::toPfNode() const {
   const TaskData *d = data();
   return d ? d->toPfNode() : PfNode();
 }
-
-static QStringList excludeOnfinishSubscriptions("onfinish");
 
 PfNode TaskData::toPfNode() const {
   PfNode node("task", _localId);

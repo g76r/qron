@@ -40,7 +40,9 @@ public:
   }
 } excludedDescendantsForCommentsInitializer;
 
-}
+static QStringList excludeOnfinishSubscriptions("onfinish");
+
+} // unnamed namespace
 
 class TaskGroupData : public SharedUiItemData {
 public:
@@ -209,8 +211,6 @@ TaskGroupData *TaskGroup::data() {
   detach<TaskGroupData>();
   return (TaskGroupData*)SharedUiItem::data();
 }
-
-static QStringList excludeOnfinishSubscriptions("onfinish");
 
 PfNode TaskGroup::toPfNode() const {
   const TaskGroupData *d = data();

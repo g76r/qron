@@ -25,7 +25,7 @@ public:
   }
 } excludedDescendantsForCommentsInitializer;
 
-}
+} // unnamed namespace
 
 Trigger::Trigger() {
 }

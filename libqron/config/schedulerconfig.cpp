@@ -24,6 +24,8 @@
 #define DEFAULT_MAXTOTALTASKINSTANCES 16
 #define DEFAULT_MAXQUEUEDREQUESTS 128
 
+namespace { // unnamed namespace hides even class definitions to other .cpp
+
 static QString _uiHeaderNames[] = {
   "Id", // 0
   "Last Load Time",
@@ -31,14 +33,15 @@ static QString _uiHeaderNames[] = {
   "Actions"
 };
 
-namespace { // unnamed namespace hides even class definitions to other .cpp
-
 QSet<QString> excludedDescendantsForComments;
 
 class ExcludedDescendantsForCommentsInitializer {
 public:
   ExcludedDescendantsForCommentsInitializer() {
     excludedDescendantsForComments.insert("task");
+    excludedDescendantsForComments.insert("taskgroup");
+    excludedDescendantsForComments.insert("host");
+    excludedDescendantsForComments.insert("cluster");
     excludedDescendantsForComments.insert("calendar");
     excludedDescendantsForComments.insert("alerts");
     excludedDescendantsForComments.insert("access-control");
@@ -54,7 +57,7 @@ public:
   }
 } excludedDescendantsForCommentsInitializer;
 
-}
+static QStringList excludeOnfinishSubscriptions("onfinish");
 
 class RequestTaskActionLink {
 public:
@@ -68,6 +71,8 @@ public:
     : _action(action), _eventType(eventType), _contextLabel(contextLabel),
       _contextTask(contextTask) { }
 };
+
+} // unnamed namespace
 
 class SchedulerConfigData : public SharedUiItemData{
 public:
@@ -416,6 +421,8 @@ ignore_task:;
     }
   }
   _lastLoadTime = QDateTime::currentDateTime();
+  ConfigUtils::loadComments(root, &_commentsList,
+                            excludedDescendantsForComments);
 }
 
 SchedulerConfig::~SchedulerConfig() {
@@ -623,16 +630,17 @@ PfNode SchedulerConfig::toPfNode() const {
   if (!d)
     return PfNode();
   PfNode node("config");
+  ConfigUtils::writeComments(&node, d->_commentsList);
   ParamSet configuredSetenv = d->_setenv;
-  configuredSetenv.removeValue("TASKID");
-  configuredSetenv.removeValue("TASKINSTANCEID");
-  ConfigUtils::writeParamSet(&node, d->_globalParams, "param");
-  ConfigUtils::writeParamSet(&node, configuredSetenv, "setenv");
-  ConfigUtils::writeFlagSet(&node, d->_unsetenv, "unsetenv");
+  configuredSetenv.removeValue(QStringLiteral("TASKID"));
+  configuredSetenv.removeValue(QStringLiteral("TASKINSTANCEID"));
+  ConfigUtils::writeParamSet(&node, d->_globalParams, QStringLiteral("param"));
+  ConfigUtils::writeParamSet(&node, configuredSetenv, QStringLiteral("setenv"));
+  ConfigUtils::writeFlagSet(&node, d->_unsetenv, QStringLiteral("unsetenv"));
   ConfigUtils::writeEventSubscriptions(&node, d->_onstart);
   ConfigUtils::writeEventSubscriptions(&node, d->_onsuccess);
   ConfigUtils::writeEventSubscriptions(&node, d->_onfailure,
-                                       QStringList("onfinish"));
+                                       excludeOnfinishSubscriptions);
   ConfigUtils::writeEventSubscriptions(&node, d->_onlog);
   ConfigUtils::writeEventSubscriptions(&node, d->_onnotice);
   ConfigUtils::writeEventSubscriptions(&node, d->_onschedulerstart);
@@ -655,11 +663,11 @@ PfNode SchedulerConfig::toPfNode() const {
   foreach (const Cluster &cluster, clusters)
     node.appendChild(cluster.toPfNode());
   if (d->_maxtotaltaskinstances != DEFAULT_MAXTOTALTASKINSTANCES)
-    node.appendChild(PfNode("maxtotaltaskinstances",
-                            QString::number(d->_maxtotaltaskinstances)));
+    node.setAttribute(QStringLiteral("maxtotaltaskinstances"),
+                      QString::number(d->_maxtotaltaskinstances));
   if (d->_maxqueuedrequests != DEFAULT_MAXQUEUEDREQUESTS)
-    node.appendChild(PfNode("maxqueuedrequests",
-                            QString::number(d->_maxqueuedrequests)));
+    node.setAttribute(QStringLiteral("maxqueuedrequests"),
+                      QString::number(d->_maxqueuedrequests));
   // LATER use this when Calendar will be ported to SharedUiItem
   //QList<Calendar> namedCalendars = d->_namedCalendars.values();
   //qSort(namedCalendars);
