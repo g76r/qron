@@ -28,7 +28,12 @@
 // LATER replace this 10" ugly batch with predictive timer (min(timestamps))
 #define ASYNC_PROCESSING_INTERVAL 10000
 
-Alerter::Alerter() : QObject(0), _thread(new QThread) {
+Alerter::Alerter() : QObject(0), _thread(new QThread),
+  _emitRequestsCounter(0), _raiseRequestsCounter(0), _cancelRequestsCounter(0),
+  _raiseImmediateRequestsCounter(0), _cancelImmediateRequestsCounter(0),
+  _emitNotificationsCounter(0), _raiseNotificationsCounter(0),
+  _cancelNotificationsCounter(0), _totalChannelsNotificationsCounter(0),
+  _rulesCacheSize(0), _rulesCacheHwm(0) {
   _thread->setObjectName("AlerterThread");
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
@@ -67,6 +72,9 @@ void Alerter::setConfig(AlerterConfig config) {
 }
 
 void Alerter::doSetConfig(AlerterConfig config) {
+  _rulesCacheHwm = qMax(_rulesCacheHwm, qMax(_alertSubscriptionsCache.size(),
+                                             _alertSettingsCache.size()));
+  _rulesCacheSize = 0;
   _alertSubscriptionsCache.clear();
   _alertSettingsCache.clear();
   _config = config;
@@ -101,11 +109,13 @@ void Alerter::cancelAlertImmediately(QString alertId) {
 void Alerter::doRaiseAlert(QString alertId, bool immediately) {
   Alert oldAlert = _alerts.value(alertId);
   Alert newAlert = oldAlert.isNull() ? Alert(alertId) : oldAlert;
+  ++_raiseRequestsCounter;
 //  if (alertId.startsWith("task.maxinstancesreached")
 //      || alertId.startsWith("task.maxinstancesreached")) {
 //    qDebug() << "doRaiseAlert:" << alertId << immediately << oldAlert.statusToString();
 //  }
   if (immediately) {
+    ++_raiseImmediateRequestsCounter;
     switch (oldAlert.status()) {
     case Alert::Rising:
     case Alert::Nonexistent:
@@ -146,11 +156,13 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
 
 void Alerter::doCancelAlert(QString alertId, bool immediately) {
   Alert oldAlert = _alerts.value(alertId), newAlert = oldAlert;
+  ++_cancelRequestsCounter;
 //  if (alertId.startsWith("task.maxinstancesreached")
 //      || alertId.startsWith("task.maxinstancesreached")) {
 //    qDebug() << "doCancelAlert:" << alertId << immediately << oldAlert.statusToString();
 //  }
   if (immediately) {
+    ++_cancelImmediateRequestsCounter;
     switch (oldAlert.status()) {
     case Alert::Nonexistent:
     case Alert::Canceled: // should not happen
@@ -187,6 +199,7 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
 
 void Alerter::doEmitAlert(QString alertId) {
   Log::debug() << "emit alert: " << alertId;
+  ++_emitRequestsCounter;
   notifyChannels(Alert(alertId));
 }
 
@@ -220,6 +233,9 @@ void Alerter::asyncProcessing() {
       break;
     }
   }
+  _rulesCacheSize = qMax(_alertSubscriptionsCache.size(),
+                         _alertSettingsCache.size());
+  _rulesCacheHwm = qMax(_rulesCacheHwm, _rulesCacheSize);
 }
 
 void Alerter::actionRaise(Alert *newAlert) {
@@ -245,9 +261,23 @@ void Alerter::actionNoLongerCancel(Alert *newAlert) {
 
 void Alerter::notifyChannels(Alert newAlert) {
   emit alertNotified(newAlert);
+  switch(newAlert.status()) {
+  case Alert::Raised:
+    ++_raiseNotificationsCounter;
+    break;
+  case Alert::Canceled:
+    ++_cancelNotificationsCounter;
+    break;
+  case Alert::Nonexistent:
+    ++_emitNotificationsCounter;
+    break;
+  default: // should never happen
+    ;
+  }
   foreach (AlertSubscription sub, alertSubscriptions(newAlert.id())) {
     QPointer<AlertChannel> channel = _channels.value(sub.channelName());
     if (channel) { // should never be false
+      ++_totalChannelsNotificationsCounter;
       newAlert.setSubscription(sub);
       channel.data()->notifyAlert(newAlert);
     }

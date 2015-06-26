@@ -117,6 +117,11 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
   // LATER periodicaly remove unused values from the cache, using LRU or other algorithm
   QHash<QString, QList<AlertSubscription> > _alertSubscriptionsCache;
   QHash<QString, AlertSettings> _alertSettingsCache;
+  qint64 _emitRequestsCounter, _raiseRequestsCounter, _cancelRequestsCounter,
+  _raiseImmediateRequestsCounter, _cancelImmediateRequestsCounter;
+  qint64 _emitNotificationsCounter, _raiseNotificationsCounter,
+  _cancelNotificationsCounter, _totalChannelsNotificationsCounter;
+  int _rulesCacheSize, _rulesCacheHwm;
 
 public:
   explicit Alerter();
@@ -160,6 +165,46 @@ public:
   void cancelAlertImmediately(QString alertId);
   // FIXME doc
   void raiseAlertImmediately(QString alertId);
+  /** Count of emitAlert() requests since startup. */
+  qint64 emitRequestsCounter() const { return _emitRequestsCounter; }
+  /** Count of raiseAlert() and raiseAlertImmediately() requests since startup,
+   * regardless the number of alert rises actually notified to subscriptions
+   * and/or channels. */
+  qint64 raiseRequestsCounter() const { return _raiseRequestsCounter; }
+  /** Count of cancelAlert() and cancelAlertImmediately() requests since
+   * startup, regardless the number of alert cancellations actually notified
+   * to subscriptions and/or channels. */
+  qint64 cancelRequestsCounter() const { return _cancelRequestsCounter; }
+  /** Count of raiseAlertImmediately() requests since startup. */
+  qint64 raiseImmediateRequestsCounter() const {
+    return _raiseImmediateRequestsCounter; }
+  /** Count of cancelAlertImmediately() requests since startup. */
+  qint64 cancelImmediateRequestsCounter() const {
+    return _cancelImmediateRequestsCounter; }
+  /** Count of alerts notified to channels due to emitAlert() requests,
+   * regardless the number of subscriptions and/or channels notified, even if 0.
+   * Should be equal to emtiRequestsCounter(). */
+  qint64 emitNotificationsCounter() const { return _emitNotificationsCounter; }
+  /** Count of alerts notified to channels due to raiseAlert() or
+   * raiseAlertImmediately() requests, regardless the number of subscriptions
+   * and/or channels notified, even if 0. */
+  qint64 raiseNotificationsCounter() const {
+    return _raiseNotificationsCounter; }
+  /** Count of alerts notified to channels due to cancelAlert() or
+   * cancelAlertImmediately() requests, regardless the number of subscriptions
+   * and/or channels notified, even if 0. */
+  qint64 cancelNotificationsCounter() const {
+    return _cancelNotificationsCounter; }
+  /** Count of alert notifications sent to channels since startup, which depends
+   * on subscriptions since an alert can be raised 100 times and notified 0
+   * times if it has no subscription, or in the other hand can be raised 3 times
+   * and notified 18 times if 6 different subscriptions match it. */
+  qint64 totalChannelsNotificationsCounter() const {
+    return _totalChannelsNotificationsCounter; }
+  /** Current size of rules cache. The cache is reset on reload. */
+  int rulesCacheSize() const { return _rulesCacheSize; }
+  /** Highest size of rules cache since startup. */
+  int rulesCacheHwm() const { return _rulesCacheHwm; }
 
 signals:
   // FIXME doc

@@ -53,7 +53,7 @@ class LIBQRONSHARED_EXPORT Scheduler : public QObject {
   InMemoryUsersDatabase *_usersDatabase;
   bool _firstConfigurationLoad;
   qint64 _startdate, _configdate;
-  long _execCount, _runningTasksHwm, _queuedTasksHwm;
+  qint64 _execCount, _runningTasksHwm, _queuedTasksHwm;
   QFileSystemWatcher *_accessControlFilesWatcher;
   PfNode _accessControlNode;
   QHash<QString, QHash<QString,qint64> > _consumedResources; // <host, <resource, quantity> >
@@ -70,9 +70,9 @@ public:
   QDateTime configdate() const {
     return _configdate == LLONG_MIN
         ? QDateTime() : QDateTime::fromMSecsSinceEpoch(_configdate); }
-  long execCount() const { return _execCount; }
-  long runningTasksHwm() const { return _runningTasksHwm; }
-  long queuedTasksHwm() const { return _queuedTasksHwm; }
+  qint64 execCount() const { return _execCount; }
+  qint64 runningTasksHwm() const { return _runningTasksHwm; }
+  qint64 queuedTasksHwm() const { return _queuedTasksHwm; }
   int tasksCount() const { return _config.tasks().count(); }
   int tasksGroupsCount() const { return _config.tasksGroups().count(); }
   int maxtotaltaskinstances() const { return _config.maxtotaltaskinstances(); }

@@ -617,19 +617,47 @@ public:
         return _console->_scheduler->configdate()
             .toString("yyyy-MM-dd hh:mm:ss");
       if (key == "scheduler.execcount")
-        return QString::number(_console->_scheduler->execCount());
+        return _console->_scheduler->execCount();
       if (key == "scheduler.runningtaskshwm")
-        return QString::number(_console->_scheduler->runningTasksHwm());
+        return _console->_scheduler->runningTasksHwm();
       if (key == "scheduler.queuedtaskshwm")
-        return QString::number(_console->_scheduler->queuedTasksHwm());
+        return _console->_scheduler->queuedTasksHwm();
       if (key == "scheduler.taskscount")
-        return QString::number(_console->_scheduler->tasksCount());
+        return _console->_scheduler->tasksCount();
       if (key == "scheduler.tasksgroupscount")
-        return QString::number(_console->_scheduler->tasksGroupsCount());
+        return _console->_scheduler->tasksGroupsCount();
       if (key == "scheduler.maxtotaltaskinstances")
-        return QString::number(_console->_scheduler->maxtotaltaskinstances());
+        return _console->_scheduler->maxtotaltaskinstances();
       if (key == "scheduler.maxqueuedrequests")
-        return QString::number(_console->_scheduler->maxqueuedrequests());
+        return _console->_scheduler->maxqueuedrequests();
+    } else if (key.startsWith("alerter.")) {
+      if (key == "alerter.rulescachesize")
+        return _console->_scheduler->alerter()->rulesCacheSize();
+      if (key == "alerter.rulescachehwm")
+        return _console->_scheduler->alerter()->rulesCacheHwm();
+      if (key == "alerter.alertsettingscount")
+        return _console->_alerterConfig.data().alertSettings().size();
+      if (key == "alerter.alertsubscriptionscount")
+        return _console->_alerterConfig.data().alertSubscriptions().size();
+      if (key == "alerter.raiserequestscounter")
+        return _console->_scheduler->alerter()->raiseRequestsCounter();
+      if (key == "alerter.raiseimmediaterequestscounter")
+        return _console->_scheduler->alerter()->raiseImmediateRequestsCounter();
+      if (key == "alerter.raisenotificationscounter")
+        return _console->_scheduler->alerter()->raiseNotificationsCounter();
+      if (key == "alerter.cancelrequestscounter")
+        return _console->_scheduler->alerter()->cancelRequestsCounter();
+      if (key == "alerter.cancelimmediaterequestscounter")
+        return _console->_scheduler->alerter()->cancelImmediateRequestsCounter();
+      if (key == "alerter.cancelnotificationscounter")
+        return _console->_scheduler->alerter()->cancelNotificationsCounter();
+      if (key == "alerter.emitrequestscounter")
+        return _console->_scheduler->alerter()->emitRequestsCounter();
+      if (key == "alerter.emitnotificationscounter")
+        return _console->_scheduler->alerter()->emitNotificationsCounter();
+      if (key == "alerter.totalchannelsnotificationscounter")
+        return _console->_scheduler->alerter()
+            ->totalChannelsNotificationsCounter();
     } else if (key.startsWith("cookie.")) {
       return _req.base64Cookie(key.mid(7), defaultValue.toString());
     } else if (key.startsWith("configrepository.")) {
