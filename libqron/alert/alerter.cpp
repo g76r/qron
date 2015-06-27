@@ -192,8 +192,8 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
       break;
     case Alert::Raised:
       newAlert.setStatus(Alert::Dropping);
-      newAlert.setCancellationDate(newAlert.riseDate().addMSecs(
-                                     dropDelay(alertId)));
+      newAlert.setCancellationDate(QDateTime::currentDateTime().addMSecs(
+                                     mayriseDelay(alertId)));
     }
   }
   commitChange(&newAlert, &oldAlert);
