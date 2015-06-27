@@ -16,7 +16,9 @@
 #include "configutils.h"
 
 #define DEFAULT_RISE_DELAY 120000 /* 120" = 2' */
-#define DEFAULT_MAYRISE_DELAY 60000 /* 60" = 1' */
+// mayrise delay is disabled de facto when >= rise delay since rise delay will
+// always expire before mayrise delay and the alert will become raised
+#define DEFAULT_MAYRISE_DELAY DEFAULT_RISE_DELAY
 #define DEFAULT_DROP_DELAY 900000 /* 900" = 15' */
 #define DEFAULT_DUPLICATE_EMIT_DELAY 600000 /* 600" = 10' */
 #define DEFAULT_REMIND_PERIOD 3600000 /* 3600" = 1h */

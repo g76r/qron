@@ -76,6 +76,7 @@ class PfNode;
  * nonexistent|rising|  cancelImmediately    nonexistent  -
  *  mayrise
  * raised|dropping      cancelImmediately    canceled     emit cancellation
+ * canceled             (immediate)          nonexistent  -
  * </pre>
  *
  * In addition to emitting alert and cancellation, some channels may emit
