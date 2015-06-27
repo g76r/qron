@@ -238,14 +238,15 @@ void Alerter::asyncProcessing() {
     case Alert::Raised:
       continue; // nothing to do
     case Alert::Rising:
+    case Alert::MayRise:
       if (oldAlert.visibilityDate() <= now) {
         Alert newAlert = oldAlert;
         actionRaise(&newAlert);
         commitChange(&newAlert, &oldAlert);
+        break;
       }
-      break;
-    case Alert::MayRise:
-      if (oldAlert.cancellationDate() <= now) {
+      if (oldAlert.status() == Alert::MayRise
+          && oldAlert.cancellationDate() <= now) {
         Alert newAlert;
         commitChange(&newAlert, &oldAlert);
       }
