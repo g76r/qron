@@ -40,6 +40,8 @@
           <form class="form-inline" action="do" type="GET">
           <a class="btn btn-primary" href="../rest/csv/alerts/raisable/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/alerts/raisable/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-info" role="button" data-toggle="collapse" href="#collapseExample" aria-expanded="false"
+              aria-controls="collapseExample">Show State Diagram</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="raiseAlert" />
@@ -47,6 +49,9 @@
               <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Raise alert</button>
           </span>
           </form>
+          <div class="collapse" id="collapseExample">
+            <p><img src="doc/alerts_statuses.svg" alt="Alerts State Diagram" class="img-responsive">
+          </div>
           <p><?view:raisablealerts?>
         </div>
       </div>

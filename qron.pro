@@ -1,3 +1,3 @@
 TEMPLATE = subdirs
 CONFIG += ordered
-SUBDIRS = libqtpf libqtssu libqron daemon
+SUBDIRS = libqtpf libqtssu libqron doc daemon
