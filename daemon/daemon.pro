@@ -15,7 +15,7 @@ QT       += core network
 QT       -= gui
 
 TARGET = qrond
-CONFIG += console largefile
+CONFIG += console largefile c++11
 CONFIG -= app_bundle
 
 INCLUDEPATH += ../libqtpf ../libqtssu ../libqron

@@ -14,7 +14,7 @@
 QT       += core network
 QT       -= gui
 
-CONFIG += console largefile
+CONFIG += console largefile c++11
 CONFIG -= app_bundle
 
 TEMPLATE = lib

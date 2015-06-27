@@ -247,7 +247,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   d->_workflowTaskId = workflowTaskId;
   // LATER load cron triggers last exec timestamp from on-disk log
   if (workflowTaskId.isEmpty()) { // subtasks do not have triggers
-    foreach (PfNode child, node.childrenByName(QStringLiteral("trigger"))) {
+    foreach (PfNode child, node.childrenByName("trigger")) {
       foreach (PfNode grandchild, child.children()) {
         QList<PfNode> inheritedComments;
         foreach (PfNode commentNode, child.children())

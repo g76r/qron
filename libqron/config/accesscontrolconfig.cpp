@@ -90,7 +90,7 @@ AccessControlConfig::~AccessControlConfig() {
 }
 
 AccessControlConfigData::AccessControlConfigData(PfNode node) {
-  foreach (PfNode child, node.childrenByName(QStringLiteral("user-file"))) {
+  foreach (PfNode child, node.childrenByName("user-file")) {
     QString path = child.contentAsString().trimmed();
     InMemoryAuthenticator::Encoding cipher
         = InMemoryAuthenticator::encodingFromString(
@@ -108,7 +108,7 @@ AccessControlConfigData::AccessControlConfigData(PfNode node) {
       _userFiles.append(userFile);
     }
   }
-  foreach (PfNode child, node.childrenByName(QStringLiteral("user"))) {
+  foreach (PfNode child, node.childrenByName("user")) {
     QString userId = child.contentAsString().trimmed();
     QString encodedPassword = child.attribute(QStringLiteral("password"));
     InMemoryAuthenticator::Encoding cipher
