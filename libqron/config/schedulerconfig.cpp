@@ -361,6 +361,8 @@ ignore_task:;
     Log::error() << "multiple alerts configuration (ignoring all but last one)";
   if (alerts.size())
     _alerterConfig = AlerterConfig(alerts.last());
+  else // build an empty but not null AlerterConfig
+    _alerterConfig = AlerterConfig(PfNode(QStringLiteral("alerts")));
   _onstart.clear();
   ConfigUtils::loadEventSubscription(root, "onstart", "*", &_onstart,
                                      scheduler);
