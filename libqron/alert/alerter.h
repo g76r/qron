@@ -22,6 +22,8 @@
 #include <QString>
 #include <QDateTime>
 #include "config/alerterconfig.h"
+#include "gridboard.h"
+#include "thread/atomicvalue.h"
 
 class QThread;
 class PfNode;
@@ -131,6 +133,7 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
   _cancelNotificationsCounter, _totalChannelsNotificationsCounter;
   int _rulesCacheSize, _rulesCacheHwm, _deduplicatingAlertsCount,
   _deduplicatingAlertsHwm;
+  AtomicValue<QList<Gridboard> > _gridboards;
 
 public:
   explicit Alerter();
@@ -225,6 +228,8 @@ public:
   int deduplicatingAlertsCount() const { return _deduplicatingAlertsCount; }
   /** Highest value of duplicateEmitCount() since startup. */
   int deduplicatingAlertsHwm() const { return _deduplicatingAlertsHwm; }
+  // FIXME doc, threadsafe
+  QList<Gridboard> gridboards() const { return _gridboards; }
 
 signals:
   /** A raisable alert (i.e. an alert handled through raiseAlert()/cancelAlert()
@@ -258,6 +263,7 @@ private:
   inline void actionCancel(Alert *newAlert);
   inline void actionNoLongerCancel(Alert *newAlert);
   inline void notifyChannels(Alert newAlert);
+  inline void notifyGridboards(Alert newAlert);
   inline void commitChange(Alert *newAlert, Alert *oldAlert);
   inline QList<AlertSubscription> alertSubscriptions(QString alertId);
   inline AlertSettings alertSettings(QString alertId);

@@ -932,9 +932,11 @@ QVariant TaskData::uiData(int section, int role) const {
     case 8:
       return resourcesAsString();
     case 9:
-      return lastExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return lastExecution().toString(
+            QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     case 10:
-      return nextScheduledExecution().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return nextScheduledExecution().toString(
+            QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     case 11:
       return _id;
     case 12:
@@ -959,7 +961,7 @@ QVariant TaskData::uiData(int section, int role) const {
       QString returnCode = QString::number(_lastReturnCode);
       QString returnCodeLabel =
           _params.value("return.code."+returnCode+".label");
-      QString s = dt.toString("yyyy-MM-dd hh:mm:ss,zzz")
+      QString s = dt.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
           .append(_lastSuccessful ? " success" : " failure")
           .append(" (code ").append(returnCode);
       if (!returnCodeLabel.isEmpty())

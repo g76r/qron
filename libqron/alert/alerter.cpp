@@ -124,9 +124,11 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
     case Alert::Canceled: // should not happen
     case Alert::MayRise:
       actionRaise(&newAlert);
+      notifyGridboards(newAlert);
       break;
     case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
+      notifyGridboards(newAlert);
       break;
     case Alert::Raised:
       return; // nothing to do
@@ -139,6 +141,7 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
     case Alert::MayRise:
       if (newAlert.visibilityDate() <= QDateTime::currentDateTime()) {
         actionRaise(&newAlert);
+        notifyGridboards(newAlert);
         break;
       }
       // else fall through next case
@@ -147,9 +150,11 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
       newAlert.setVisibilityDate(newAlert.riseDate().addMSecs(
                                    riseDelay(alertId)));
       newAlert.setStatus(Alert::Rising);
+      notifyGridboards(newAlert);
       break;
     case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
+      notifyGridboards(newAlert);
       break;
     }
   }
@@ -168,14 +173,18 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
     switch (oldAlert.status()) {
     case Alert::Nonexistent:
     case Alert::Canceled: // should not happen
+      // FIXME refresh timestamp ? notifyGridboards(newAlert);
       return; // nothing to do
     case Alert::Rising:
+      newAlert.setStatus(Alert::Canceled);
+      notifyGridboards(newAlert);
     case Alert::MayRise:
       newAlert = Alert();
       break;
     case Alert::Raised:
     case Alert::Dropping:
       actionCancel(&newAlert);
+      notifyGridboards(newAlert);
       break;
     }
   } else {
@@ -184,14 +193,17 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
     case Alert::MayRise:
     case Alert::Dropping:
     case Alert::Canceled: // should not happen
+      // FIXME refresh timestamp ? notifyGridboards(newAlert);
       return; // nothing to do
     case Alert::Rising:
       newAlert.setStatus(Alert::MayRise);
+      notifyGridboards(newAlert);
       newAlert.setCancellationDate(QDateTime::currentDateTime().addMSecs(
                                      mayriseDelay(alertId)));
       break;
     case Alert::Raised:
       newAlert.setStatus(Alert::Dropping);
+      notifyGridboards(newAlert);
       newAlert.setCancellationDate(QDateTime::currentDateTime().addMSecs(
                                      mayriseDelay(alertId)));
     }
@@ -320,6 +332,21 @@ void Alerter::notifyChannels(Alert newAlert) {
   emit alertNotified(newAlert);
 }
 
+void Alerter::notifyGridboards(Alert newAlert) {
+  QList<Gridboard> gridboards = _gridboards;
+  for (int i = 0; i < gridboards.size(); ++i) {
+    Gridboard &gridboard = gridboards[i];
+    QRegularExpressionMatch match =
+        gridboard.patternRegexp().match(newAlert.id());
+    if (match.hasMatch()) {
+      // FIXME stats: here
+      gridboard.update(match, newAlert);
+    }
+  }
+  // FIXME stats: or here
+  _gridboards = gridboards;
+}
+
 void Alerter::commitChange(Alert *newAlert, Alert *oldAlert) {
   switch (newAlert->status()) {
   case Alert::Nonexistent: // should not happen
@@ -390,3 +417,8 @@ qint64 Alerter::duplicateEmitDelay(QString alertId) {
   qint64 delay = alertSettings(alertId).duplicateEmitDelay();
   return delay > 0 ? delay : _config.duplicateEmitDelay();
 }
+
+/*QList<Gridboard> Alerter::gridboards() const {
+  // FIXME lock
+  return _gridboards;
+}*/

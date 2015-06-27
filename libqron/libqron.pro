@@ -113,7 +113,8 @@ SOURCES += \
     ui/confighistorymodel.cpp \
     sched/noticepseudoparamsprovider.cpp \
     config/alertsettings.cpp \
-    config/alertsubscription.cpp
+    config/alertsubscription.cpp \
+    alert/gridboard.cpp
 
 HEADERS += \
     config/task.h \
@@ -187,4 +188,5 @@ HEADERS += \
     ui/confighistorymodel.h \
     sched/noticepseudoparamsprovider.h \
     config/alertsettings.h \
-    config/alertsubscription.h
+    config/alertsubscription.h \
+    alert/gridboard.h

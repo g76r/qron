@@ -384,11 +384,14 @@ QVariant TaskInstanceData::uiData(int section, int role) const {
     case 2:
       return TaskInstance::statusAsString(status());
     case 3:
-      return submissionDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return submissionDatetime().toString(
+            QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     case 4:
-      return startDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return startDatetime().toString(
+            QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     case 5:
-      return endDatetime().toString("yyyy-MM-dd hh:mm:ss,zzz");
+      return endDatetime().toString(
+            QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     case 6:
       return startDatetime().isNull() || submissionDatetime().isNull()
           ? QVariant() : QString::number(queuedMillis()/1000.0);

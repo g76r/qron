@@ -14,6 +14,7 @@
 #include "alerterconfig.h"
 #include <QSharedData>
 #include "configutils.h"
+#include "alert/gridboard.h"
 
 #define DEFAULT_RISE_DELAY 120000 /* 120" = 2' */
 // mayrise delay is disabled de facto when >= rise delay since rise delay will
@@ -48,6 +49,7 @@ public:
   ExcludedDescendantsForCommentsInitializer() {
     excludedDescendantsForComments.insert("subscription");
     excludedDescendantsForComments.insert("settings");
+    excludedDescendantsForComments.insert("gridboard");
   }
 } excludedDescendantsForCommentsInitializer;
 
@@ -62,6 +64,7 @@ public:
   qint64 _riseDelay, _mayriseDelay, _dropDelay, _duplicateEmitDelay,
   _minDelayBetweenSend, _delayBeforeFirstSend, _remindPeriod;
   QStringList _channelNames, _commentsList;
+  QList<Gridboard> _gridboards;
   AlerterConfigData() : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
     _riseDelay(DEFAULT_RISE_DELAY),
     _mayriseDelay(DEFAULT_MAYRISE_DELAY), _dropDelay(DEFAULT_DROP_DELAY),
@@ -147,6 +150,10 @@ AlerterConfigData::AlerterConfigData(PfNode root)
         "remindperiod", DEFAULT_REMIND_PERIOD/1e3)*1e3;
   ConfigUtils::loadComments(root, &_commentsList,
                             excludedDescendantsForComments);
+  foreach (PfNode child, root.childrenByName("gridboard")) {
+    Gridboard gridboard(child, Gridboard()); // load old gridboard state
+    _gridboards.append(gridboard);
+  }
 }
 
 ParamSet AlerterConfig::params() const {
@@ -262,4 +269,9 @@ QVariant AlerterConfigData::uiData(int section, int role) const {
     ;
   }
   return QVariant();
+}
+
+QList<Gridboard> AlerterConfig::gridboards() const {
+  const AlerterConfigData *d = data();
+  return d ? d->_gridboards : QList<Gridboard>();
 }

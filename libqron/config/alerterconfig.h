@@ -23,6 +23,7 @@
 #include "modelview/shareduiitem.h"
 
 class AlerterConfigData;
+class Gridboard;
 
 /** Alerter config: main/root alert configuration object. */
 class LIBQRONSHARED_EXPORT AlerterConfig : public SharedUiItem {
@@ -54,6 +55,7 @@ public:
   /** Available channels names */
   QStringList channelsNames() const;
   PfNode toPfNode() const;
+  QList<Gridboard> gridboards() const;
 
 private:
   const AlerterConfigData *data() const {
