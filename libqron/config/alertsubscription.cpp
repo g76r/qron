@@ -153,7 +153,7 @@ QString AlertSubscription::emitMessage(Alert alert) const {
   const AlertSubscriptionData *d = data();
   QString rawMessage = d ? d->_emitMessage : QString();
   if (rawMessage.isEmpty())
-    rawMessage = "alert emited: "+alert.id();
+    rawMessage = "alert emited: "+alert.idWithCount();
   AlertPseudoParamsProvider ppp = alert.pseudoParams();
   return d->_params.evaluate(rawMessage, &ppp);
 }
@@ -162,7 +162,7 @@ QString AlertSubscription::cancelMessage(Alert alert) const {
   const AlertSubscriptionData *d = data();
   QString rawMessage = d ? d->_cancelMessage : QString();
   if (rawMessage.isEmpty())
-    rawMessage = "alert canceled: "+alert.id();
+    rawMessage = "alert canceled: "+alert.idWithCount();
   AlertPseudoParamsProvider ppp = alert.pseudoParams();
   return d->_params.evaluate(rawMessage, &ppp);
 }
@@ -171,7 +171,7 @@ QString AlertSubscription::reminderMessage(Alert alert) const {
   const AlertSubscriptionData *d = data();
   QString rawMessage = d ? d->_reminderMessage : QString();
   if (rawMessage.isEmpty())
-    rawMessage = "alert still raised: "+alert.id();
+    rawMessage = "alert still raised: "+alert.idWithCount();
   AlertPseudoParamsProvider ppp = alert.pseudoParams();
   return d->_params.evaluate(rawMessage, &ppp);
 }

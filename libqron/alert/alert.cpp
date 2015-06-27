@@ -20,7 +20,9 @@ static QString _uiHeaderNames[] = {
   "Rise Date",
   "Visibility Date",
   "Cancellation Date",
-  "Actions" // 5
+  "Actions", // 5
+  "Count",
+  "Id With Count"
 };
 
 class AlertData : public SharedUiItemData {
@@ -29,14 +31,17 @@ public:
   Alert::AlertStatus _status;
   QDateTime _riseDate, _visibilityDate, _cancellationDate, _lastReminderDate;
   AlertSubscription _subscription;
+  int _count;
   AlertData(const QString id = QString(),
             QDateTime riseDate = QDateTime::currentDateTime())
-    : _id(id), _status(Alert::Nonexistent), _riseDate(riseDate ) { }
+    : _id(id), _status(Alert::Nonexistent), _riseDate(riseDate), _count(1) { }
   QString id() const { return _id; }
   QString idQualifier() const { return QStringLiteral("alert"); }
   int uiSectionCount() const;
   QVariant uiData(int section, int role) const;
   QVariant uiHeaderData(int section, int role) const;
+  QString idWithCount() const {
+    return _count > 1 ? _id+" x "+QString::number(_count) : _id; }
 };
 
 int AlertData::uiSectionCount() const {
@@ -70,6 +75,10 @@ QVariant AlertData::uiData(int section, int role) const {
           : QVariant();
     case 5:
       break; // actions
+    case 6:
+      return _count;
+    case 7:
+      return idWithCount();
     }
     break;
   default:
@@ -91,6 +100,12 @@ Alert::Alert(const Alert &other) : SharedUiItem(other) {
 QDateTime Alert::riseDate() const {
   const AlertData *d = data();
   return d ? d->_riseDate : QDateTime();
+}
+
+void Alert::setRiseDate(QDateTime riseDate) {
+  AlertData *d = data();
+  if (d)
+    d->_riseDate = riseDate;
 }
 
 QDateTime Alert::cancellationDate() const {
@@ -198,6 +213,10 @@ QVariant AlertPseudoParamsProvider::paramValue(
   if (key.at(0) == '!') {
     if (key == "!alertid") {
       return _alert.id();
+    } else if (key == "!alertidwithcount") {
+      return _alert.idWithCount();
+    } else if (key == "!alertcount") {
+      return _alert.count();
     } else if (key == "!alertdate") {
       // FIXME make this support !date formating
       return _alert.riseDate()
@@ -209,3 +228,23 @@ QVariant AlertPseudoParamsProvider::paramValue(
       .paramValue(key, defaultValue, alreadyEvaluated);
 }
 
+int Alert::count() const {
+  const AlertData *d = data();
+  return d ? d->_count : 0;
+}
+
+int Alert::incrementCount() {
+  AlertData *d = data();
+  return d ? ++(d->_count) : 0;
+}
+
+void Alert::resetCount() {
+  AlertData *d = data();
+  if (d)
+    d->_count = 0;
+}
+
+QString Alert::idWithCount() const {
+  const AlertData *d = data();
+  return d ? d->idWithCount() : QString();
+}

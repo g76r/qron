@@ -17,25 +17,29 @@
 
       <div class="row">
         <div class="col-md-12">
-          <p>There are two kinds of alerts: those which are emitted when raised
-          and those which are emitted immediatly (one shot alerts).
-          <p>The first table displays alerts of the first kind, including a
+          <p>There are two kinds of alerts: raisable alerts, which are emitted
+          when raised and canceled and simpler one shot alerts which are emitted
+          directly and are only de-duplicated to avoid spam.
+          <p>The first table displays raisable alerts, including a
           visibility timestamp if the alert is not yet raised and
-          cancellation timestamp if the alert as been canceled (rising and
-          cancellation are not immediatly effective to avoid alerts flip/flop).
-          <p>The second table displays every alert (raised or not) along with
+          cancellation timestamp if the alert as been canceled but the cancellation
+          has not already been notified to subscribers (rising and
+          cancellation are not immediatly notified to avoid alerts flip/flop
+          spam).
+          <p>The second table displays every alert (raisable or one shot) along with
           its emission timestamp. Note that alerts with a human recipient
           (e.g. e-mail) are aggregated and throttled and therefore may be
           actually sent to their recipient a few time after if other alerts
-          have already been emitted recently.
+          have already been emitted recently (e.g. by default e-mails are sent
+          at most every 10 minutes).
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Currently Rising or Raised Alerts</h2>
+          <h2>Current Raisable Alerts</h2>
           <form class="form-inline" action="do" type="GET">
-          <a class="btn btn-primary" href="../rest/csv/alerts/raised/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/raised/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/csv/alerts/raisable/list/v1"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/html/alerts/raisable/list/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="raiseAlert" />
@@ -43,7 +47,7 @@
               <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Raise alert</button>
           </span>
           </form>
-          <p><?view:raisedalertsfull?>
+          <p><?view:raisablealerts?>
         </div>
       </div>
       <div class="row">
@@ -73,6 +77,8 @@
           <p><table class="table table-condensed table-hover">
             <tr><th>Rules Cache Size (current)</th><td><?=%{alerter.rulescachesize}?></td></tr>
             <tr><th>Rules Cache Size (high water mark)</th><td><?=%{alerter.rulescachehwm}?></td></tr>
+            <tr><th>Deduplicating Alerts Count (current)</th><td><?=%{alerter.deduplicatingalertscount}?></td></tr>
+            <tr><th>Deduplicating Alerts Count (high water mark)</th><td><?=%{alerter.deduplicatingalertshwm}?></td></tr>
             <tr><th>Alerts Subscriptions Count</th><td><?=%{alerter.alertsubscriptionscount}?></td></tr>
             <tr><th>Alerts Settings Count</th><td><?=%{alerter.alertsettingscount}?></td></tr>
           </table>
@@ -139,6 +145,7 @@
             <tr><th>Rise Delay</th><td><?=%2?></td></tr>
             <tr><th>Mayrise Delay</th><td><?=%3?></td></tr>
             <tr><th>Drop Delay</th><td><?=%4?></td></tr>
+            <tr><th>Duplicate Emit Delay</th><td><?=%8?></td></tr>
             <tr><th>Minimum Delay Between Send</th><td><?=%5?></td></tr>
             <tr><th>Delay Before First Send</th><td><?=%6?></td></tr>
             <tr><th>Remind Period</th><td><?=%7?></td></tr>

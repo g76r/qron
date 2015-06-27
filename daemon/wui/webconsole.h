@@ -67,9 +67,8 @@ class WebConsole : public HttpHandler {
   ResourcesConsumptionModel *_resourcesConsumptionModel;
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
   *_alertParamsModel;
-  SharedUiItemsTableModel *_raisedAlertsModel;
-  QSortFilterProxyModel *_sortedRaisedAlertsModel,
-  *_sortedNotRisingRaisedAlertModel;
+  SharedUiItemsTableModel *_raisableAlertsModel;
+  QSortFilterProxyModel *_sortedRaisableAlertsModel, *_sortedRaisedAlertModel;
   LastOccuredTextEventsModel *_lastPostedNoticesModel; // TODO change to SUILogModel
   SharedUiItemsLogModel *_lastEmittedAlertsModel;
   SharedUiItemsTableModel *_alertSubscriptionsModel, *_alertSettingsModel;
@@ -89,9 +88,8 @@ class WebConsole : public HttpHandler {
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
   *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
-  *_htmlRaisedAlertsFullView, *_htmlRaisedAlertsNotRisingView,
-  *_htmlLastEmittedAlertsView,
-  /*_htmlLastEmittedAlertsView10,*/ *_htmlAlertSubscriptionsView,
+  *_htmlRaisableAlertsView, *_htmlRaisedView,
+  *_htmlLastEmittedAlertsView, *_htmlAlertSubscriptionsView,
   *_htmlAlertSettingsView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
   *_htmlTaskInstancesView, *_htmlTaskInstancesView20,
@@ -110,7 +108,7 @@ class WebConsole : public HttpHandler {
   *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
-  *_csvAlertParamsView, *_csvRaisedAlertsView, *_csvLastEmittedAlertsView,
+  *_csvAlertParamsView, *_csvRaisableAlertsView, *_csvLastEmittedAlertsView,
   *_csvAlertSubscriptionsView, *_csvAlertSettingsView, *_csvLogView,
   *_csvTaskInstancesView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,

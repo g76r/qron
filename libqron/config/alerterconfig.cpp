@@ -18,6 +18,7 @@
 #define DEFAULT_RISE_DELAY 120000 /* 120" = 2' */
 #define DEFAULT_MAYRISE_DELAY 60000 /* 60" = 1' */
 #define DEFAULT_DROP_DELAY 900000 /* 900" = 15' */
+#define DEFAULT_DUPLICATE_EMIT_DELAY 600000 /* 600" = 10' */
 #define DEFAULT_REMIND_PERIOD 3600000 /* 3600" = 1h */
 #define DEFAULT_MIN_DELAY_BETWEEN_SEND 600000 /* 600" = 10' */
 #define DEFAULT_DELAY_BEFORE_FIRST_SEND 30000 /* 30" */
@@ -32,7 +33,8 @@ static QString _uiHeaderNames[] = {
   "Drop Delay",
   "Minimum Delay Between Send", // 5
   "Delay Before First Send",
-  "Remind Period"
+  "Remind Period",
+  "Duplicate Emit Delay"
 };
 
 static QAtomicInt _sequence;
@@ -55,12 +57,13 @@ public:
   ParamSet _params;
   QList<AlertSubscription> _alertSubscriptions;
   QList<AlertSettings> _alertSettings;
-  qint64 _riseDelay, _mayriseDelay, _dropDelay, _minDelayBetweenSend;
-  qint64 _delayBeforeFirstSend, _remindPeriod;
+  qint64 _riseDelay, _mayriseDelay, _dropDelay, _duplicateEmitDelay,
+  _minDelayBetweenSend, _delayBeforeFirstSend, _remindPeriod;
   QStringList _channelNames, _commentsList;
   AlerterConfigData() : _id(QString::number(_sequence.fetchAndAddOrdered(1))),
     _riseDelay(DEFAULT_RISE_DELAY),
     _mayriseDelay(DEFAULT_MAYRISE_DELAY), _dropDelay(DEFAULT_DROP_DELAY),
+    _duplicateEmitDelay(DEFAULT_DUPLICATE_EMIT_DELAY),
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
     _delayBeforeFirstSend(DEFAULT_DELAY_BEFORE_FIRST_SEND),
     _remindPeriod(DEFAULT_REMIND_PERIOD) {
@@ -85,6 +88,7 @@ AlerterConfig::AlerterConfig(PfNode root)
 AlerterConfigData::AlerterConfigData(PfNode root)
   : _riseDelay(DEFAULT_RISE_DELAY), _mayriseDelay(DEFAULT_MAYRISE_DELAY),
     _dropDelay(DEFAULT_DROP_DELAY),
+    _duplicateEmitDelay(DEFAULT_DUPLICATE_EMIT_DELAY),
     _minDelayBetweenSend(DEFAULT_MIN_DELAY_BETWEEN_SEND),
     _delayBeforeFirstSend(DEFAULT_DELAY_BEFORE_FIRST_SEND),
     _remindPeriod(DEFAULT_REMIND_PERIOD) {
@@ -117,24 +121,28 @@ AlerterConfigData::AlerterConfigData(PfNode root)
       }
     }
   }
-  _riseDelay = root.longAttribute("risedelay", DEFAULT_RISE_DELAY/1000)*1000;
+  _riseDelay = root.doubleAttribute("risedelay", DEFAULT_RISE_DELAY/1e3)*1e3;
   if (_riseDelay < 1000) // hard coded 1 second minmimum
     _riseDelay = DEFAULT_RISE_DELAY;
-  _mayriseDelay = root.longAttribute(
-        "mayrisedelay", DEFAULT_MAYRISE_DELAY/1000)*1000;
+  _mayriseDelay = root.doubleAttribute(
+        "mayrisedelay", DEFAULT_MAYRISE_DELAY/1e3)*1e3;
   if (_mayriseDelay < 1000) // hard coded 1 second minmimum
     _mayriseDelay = DEFAULT_MAYRISE_DELAY;
-  _dropDelay = root.longAttribute("dropdelay", DEFAULT_RISE_DELAY/1000)*1000;
+  _dropDelay = root.doubleAttribute("dropdelay", DEFAULT_DROP_DELAY/1e3)*1e3;
   if (_dropDelay < 1000) // hard coded 1 second minmimum
     _dropDelay = DEFAULT_DROP_DELAY;
-  _minDelayBetweenSend = root.longAttribute(
-        "mindelaybetweensend", DEFAULT_MIN_DELAY_BETWEEN_SEND/1000)*1000;
+  _duplicateEmitDelay = root.doubleAttribute(
+        "duplicateemitdelay", DEFAULT_DUPLICATE_EMIT_DELAY/1e3)*1e3;
+  if (_duplicateEmitDelay < 1000) // hard coded 1 second minmimum
+    _duplicateEmitDelay = DEFAULT_DUPLICATE_EMIT_DELAY;
+  _minDelayBetweenSend = root.doubleAttribute(
+        "mindelaybetweensend", DEFAULT_MIN_DELAY_BETWEEN_SEND/1e3)*1e3;
   if (_minDelayBetweenSend < 60000) // hard coded 1 minute minimum
     _minDelayBetweenSend = 60000;
-  _delayBeforeFirstSend = root.longAttribute(
-        "delaybeforefirstsend", DEFAULT_DELAY_BEFORE_FIRST_SEND/1000)*1000;
-  _remindPeriod = root.longAttribute(
-        "remindperiod", DEFAULT_REMIND_PERIOD/1000)*1000;
+  _delayBeforeFirstSend = root.doubleAttribute(
+        "delaybeforefirstsend", DEFAULT_DELAY_BEFORE_FIRST_SEND/1e3)*1e3;
+  _remindPeriod = root.doubleAttribute(
+        "remindperiod", DEFAULT_REMIND_PERIOD/1e3)*1e3;
   ConfigUtils::loadComments(root, &_commentsList,
                             excludedDescendantsForComments);
 }
@@ -157,6 +165,11 @@ qint64 AlerterConfig::mayriseDelay() const {
 qint64 AlerterConfig::dropDelay() const {
   const AlerterConfigData *d = data();
   return d ? d->_dropDelay : DEFAULT_DROP_DELAY;
+}
+
+qint64 AlerterConfig::duplicateEmitDelay() const {
+  const AlerterConfigData *d = data();
+  return d ? d->_duplicateEmitDelay : DEFAULT_DUPLICATE_EMIT_DELAY;
 }
 
 qint64 AlerterConfig::minDelayBetweenSend() const {
@@ -198,19 +211,19 @@ PfNode AlerterConfig::toPfNode() const {
   ConfigUtils::writeComments(&node, d->_commentsList);
   ConfigUtils::writeParamSet(&node, d->_params, "param");
   if (d->_riseDelay != DEFAULT_RISE_DELAY)
-    node.setAttribute("risedelay", QString::number(d->_riseDelay/1000));
+    node.setAttribute("risedelay", d->_riseDelay/1e3);
   if (d->_mayriseDelay != DEFAULT_MAYRISE_DELAY)
-    node.setAttribute("mayrisedelay", QString::number(d->_mayriseDelay/1000));
+    node.setAttribute("mayrisedelay", d->_mayriseDelay/1e3);
   if (d->_dropDelay != DEFAULT_DROP_DELAY)
-    node.setAttribute("dropdelay", QString::number(d->_dropDelay/1000));
+    node.setAttribute("dropdelay", d->_dropDelay/1e3);
+  if (d->_duplicateEmitDelay != DEFAULT_DUPLICATE_EMIT_DELAY)
+    node.setAttribute("duplicateemitdelay", d->_duplicateEmitDelay/1e3);
   if (d->_minDelayBetweenSend != DEFAULT_MIN_DELAY_BETWEEN_SEND)
-    node.setAttribute("mindelaybetweensend",
-                      QString::number(d->_minDelayBetweenSend/1000));
+    node.setAttribute("mindelaybetweensend", d->_minDelayBetweenSend/1e3);
   if (d->_delayBeforeFirstSend != DEFAULT_DELAY_BEFORE_FIRST_SEND)
-    node.setAttribute("delaybeforefirstsend",
-                      QString::number(d->_delayBeforeFirstSend/1000));
+    node.setAttribute("delaybeforefirstsend", d->_delayBeforeFirstSend/1e3);
   if (d->_remindPeriod != DEFAULT_REMIND_PERIOD)
-    node.setAttribute("remindperiod", QString::number(d->_remindPeriod/1000));
+    node.setAttribute("remindperiod", d->_remindPeriod/1e3);
   foreach (const AlertSettings &settings, d->_alertSettings)
     node.appendChild(settings.toPfNode());
   foreach (const AlertSubscription &sub, d->_alertSubscriptions)
@@ -228,18 +241,19 @@ QVariant AlerterConfigData::uiData(int section, int role) const {
     case 1:
       return _params.toString(false, false);
     case 2:
-      return _riseDelay > 0 ? _riseDelay/1000 : QVariant();
+      return _riseDelay/1e3;
     case 3:
-      return _mayriseDelay > 0 ? _mayriseDelay/1000 : QVariant();
+      return _mayriseDelay/1e3;
     case 4:
-      return _dropDelay > 0 ? _dropDelay/1000 : QVariant();
+      return _dropDelay/1e3;
     case 5:
-      return _minDelayBetweenSend > 0 ? _minDelayBetweenSend/1000 : QVariant();
+      return _minDelayBetweenSend/1e3;
     case 6:
-      return _delayBeforeFirstSend > 0 ? _delayBeforeFirstSend/1000
-                                       : QVariant();
+      return _delayBeforeFirstSend/1e3;
     case 7:
-      return _remindPeriod > 0 ? _remindPeriod/1000 : QVariant();
+      return _remindPeriod/1e3;
+    case 8:
+      return _duplicateEmitDelay / 1e3;
     }
     break;
   default:

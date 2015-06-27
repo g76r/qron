@@ -42,6 +42,8 @@ public:
   /** AlertConfig-level delay, in ms. */
   qint64 dropDelay() const;
   /** In ms. */
+  qint64 duplicateEmitDelay() const;
+  /** In ms. */
   qint64 minDelayBetweenSend() const;
   /** In ms. */
   qint64 delayBeforeFirstSend() const;

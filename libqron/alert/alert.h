@@ -45,6 +45,7 @@ public:
   /** Initial raise() call date, before rising period.
    * Won't change in the alert lifetime. */
   QDateTime riseDate() const;
+  void setRiseDate(QDateTime riseDate);
   /** End of rise or cancellation delays.
    * Applicable to may_rise and dropping status. */
   QDateTime cancellationDate() const;
@@ -62,6 +63,15 @@ public:
    * Set by Alerter just before notifying an AlertChannel. */
   AlertSubscription subscription() const;
   void setSubscription(AlertSubscription subscription);
+  /** Times the alert as to be notified. Should always be 1 except for emitted
+   * alerts that have been aggregated. */
+  int count() const;
+  int incrementCount();
+  void resetCount();
+  /** Return a string of the form id()+" x "+count() if count() != 1, and only
+   * id() otherwise. This is convenient to display aggregated alerts almost the
+   * same way than other alerts in a human readable way. */
+  QString idWithCount() const;
 
 private:
   AlertData *data();

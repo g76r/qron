@@ -46,6 +46,8 @@ public:
   qint64 mayriseDelay() const;
   /** milliseconds, 0 when not set */
   qint64 dropDelay() const;
+  /** milliseconds, 0 when not set */
+  qint64 duplicateEmitDelay() const;
 
 private:
   const AlertSettingsData *data() const {

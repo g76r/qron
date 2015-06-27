@@ -28,7 +28,10 @@ class PfNode;
 
 /** Main class for the alert system.
  *
- * Expose alert API, consisting of the following methods:
+ * Expose alert API, for two kind of alerts: raisable alerts and one-shot
+ * alerts.
+ *
+ * The raisable alerts API consists of the following methods:
  * - raiseAlert: schedule the rise of an alert as soon as the rise delay is
  *   over, or do nothing is the same alert is already raised, the alert will be
  *   emited when actually raised
@@ -37,17 +40,21 @@ class PfNode;
  *   delay is over, or do nothing is there are no such alert currently raised,
  *   an alert cancellation will be emited when actually canceled
  * - cancelAlertImmediately: same, without delay
- * - emitAlert: emit an alert, regardless the raise/cancel mechanism, which
- *   should be done with caution since it provides no protection against mass
- *   alert spam, whereas raise/cancel do
  *
- * Apart from direct emission, alerts can be in 5 states:
+ * The one-shot alerts API consists of the following methods:
+ * - emitAlert: emit an alert, regardless the raise/cancel mechanism, if the
+ *  same alert has already been emitted recently, it will only been emitted
+ *  after a while, and only once for all same alerts for which emission will be
+ *  requested until then.
+ *
+ * One-shot alerts have no state, but raisable alerts can have the following
+ * states:
  * - nonexistent
  * - rising
  * - raised
  * - dropping
  * - canceled (turns into nonexistent just after cancellation notification)
- * - may_rise (when cancelAlert is called on a rising alert)
+ * - mayrise (when cancelAlert is called on a rising alert)
  *
  * The following table provides state transition according to methods and time
  * events:
@@ -55,19 +62,19 @@ class PfNode;
  * <pre>
  * Previous State        Event                Next State  Action
  * nonexistent|rising|  raise                rising       -
- *  may_rise
+ *  mayrise
  * raised|dropping      raise                raised       -
  * rising               age > raise delay    raised       emit alert
  * nonexistent|rising|  raiseImmediately     raised       emit alert
- *  may_rise
+ *  mayrise
  * raised|dropping      raiseImmediately     raised       -
  * nonexistent          cancel               nonexistent  -
- * rising|may_rise      cancel               may_rise     -
+ * rising|mayrise       cancel               mayrise      -
  * raised|dropping      cancel               dropping     -
  * dropping             age > cancel delay   canceled     emit cancellation
- * may_rise             age > cancel delay   nonexistent  -
+ * mayrise              age > mayrise delay  nonexistent  -
  * nonexistent|rising|  cancelImmediately    nonexistent  -
- *  may_rise
+ *  mayrise
  * raised|dropping      cancelImmediately    canceled     emit cancellation
  * </pre>
  *
@@ -83,7 +90,7 @@ class PfNode;
  * mean they implement.
  *
  * Alerter only notifies channels of state transitions for which there is an
- * alert or a cancellation to emit, and of emitAlert() calls.
+ * alert or a cancellation to emit, and of one-shot alerts.
  * Therefore channels only see 3 alert states, folllowing this table:
  *
  * <pre>
@@ -93,17 +100,16 @@ class PfNode;
  * raised                 raised
  * dropping               raised
  * canceled               canceled
- * may_rise               (never seen)
- * (direct emit)          nonexistent (alert has no state)
+ * mayrise                (never seen)
+ * (one-shot alert)       nonexistent (alert has no state)
  * </pre>
  *
  * In other words, a user is only notified through a alert channel (i.e. through
  * a push communication mean) of alert that are raised, when they are raised
  * (emit alert) or canceled (emit cancellation), and optionaly when they stay
- * raised too long (emit reminder), or, obviously, if they are emitted without
- * the raise/cancel system, through emitAlert method.
+ * raised too long (emit reminder), or, obviously, of one-shot alerts.
  *
- * However, access to alerts in non-pushable states (raising, may_rise and the
+ * However, access to alerts in non-pushable states (raising, mayrise and the
  * difference between raised and canceling) is given through data models and
  * can be queried by users or external tools.
  */
@@ -113,7 +119,8 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
   QThread *_thread;
   AlerterConfig _config;
   QHash<QString,AlertChannel*> _channels;
-  QHash<QString,Alert> _alerts;
+  QHash<QString,Alert> _raisableAlerts;
+  QHash<QString,Alert> _emittedAlerts;
   // LATER periodicaly remove unused values from the cache, using LRU or other algorithm
   QHash<QString, QList<AlertSubscription> > _alertSubscriptionsCache;
   QHash<QString, AlertSettings> _alertSettingsCache;
@@ -121,40 +128,43 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
   _raiseImmediateRequestsCounter, _cancelImmediateRequestsCounter;
   qint64 _emitNotificationsCounter, _raiseNotificationsCounter,
   _cancelNotificationsCounter, _totalChannelsNotificationsCounter;
-  int _rulesCacheSize, _rulesCacheHwm;
+  int _rulesCacheSize, _rulesCacheHwm, _deduplicatingAlertsCount,
+  _deduplicatingAlertsHwm;
 
 public:
   explicit Alerter();
   ~Alerter();
   /** This method is threadsafe. */
   void setConfig(AlerterConfig config);
-  /** Immediatly emit an alert, regardless of raised alert, even if the same
-   * alert has just been emited.
-   * In most cases it is strongly recommanded to call raiseAlert() instead.
+  /** Emit a one-shot alert, regardless of raised alerts.
+   *
    * This method is threadsafe.
    * @see raiseAlert() */
   void emitAlert(QString alertId);
-  /** Raise an alert and emit it if it is not already raised.
-   * This is the prefered way to report an alert.
+  /** Raise an alert and emit it after a rise delay if it is not already raised.
+   *
+   * This is the prefered way to report an alert, along with cancelAlert().
    * If the alert is already raised but has been canceled and is still in its
    * cancel grace period, the cancellation is unscheduled.
    * If the alert is already raised and not canceled, this method does nothing.
    * This method is threadsafe. */
   void raiseAlert(QString alertId);
   /** Tell the Alerter that an alert should no longer be raised.
+   *
    * This is the prefered way to report the end of an alert.
    * This schedule the alert for cancellation after a grace delay set to 15
    * minutes by default and configurable through "canceldelay" parameter (with
    * a value in seconds).
    * The grace delay should be configured longer than any time interval
-   * between alerts send which recipients are human beings (e.g.
-   * "mindelaybetweensend" for mail alerts, which default is 10 mintues)
-   * since it avoids flip/flop spam (which otherwise would occur if the same
+   * between alerts send which recipients are human beings
+   * ("mindelaybetweensend", which defaults to 10 minutes) since it avoids
+   * flip/flop spam (which otherwise would occur if the same
    * alerts is raised and cancel several time within the same time interval
    * between alerts send).
    * This method is threadsafe. */
   void cancelAlert(QString alertId);
   /** Immediatly cancel an alert, ignoring grace delay.
+   *
    * In most cases it is strongly recommanded to call cancelAlert() instead.
    * The only widespread reason to use cancelAlertImmediately() is when one
    * wants to manually cancel an alert to ensure that if it occurs again soon
@@ -163,7 +173,11 @@ public:
    * This method is threadsafe.
    * @see cancelAlert() */
   void cancelAlertImmediately(QString alertId);
-  // FIXME doc
+  /** Immediatly raise an alert, ignoring rise delay.
+   *
+   * In most cases it is strongly recommanded to call raiseAlert() instead.
+   * This method is threadsafe.
+   * @see cancelAlert() */
   void raiseAlertImmediately(QString alertId);
   /** Count of emitAlert() requests since startup. */
   qint64 emitRequestsCounter() const { return _emitRequestsCounter; }
@@ -183,7 +197,7 @@ public:
     return _cancelImmediateRequestsCounter; }
   /** Count of alerts notified to channels due to emitAlert() requests,
    * regardless the number of subscriptions and/or channels notified, even if 0.
-   * Should be equal to emtiRequestsCounter(). */
+   */
   qint64 emitNotificationsCounter() const { return _emitNotificationsCounter; }
   /** Count of alerts notified to channels due to raiseAlert() or
    * raiseAlertImmediately() requests, regardless the number of subscriptions
@@ -205,17 +219,28 @@ public:
   int rulesCacheSize() const { return _rulesCacheSize; }
   /** Highest size of rules cache since startup. */
   int rulesCacheHwm() const { return _rulesCacheHwm; }
+  /** Current number of alerts that have not been yet emitted due to duplicate
+   * emit delay and thus being deduplicated. */
+  int deduplicatingAlertsCount() const { return _deduplicatingAlertsCount; }
+  /** Highest value of duplicateEmitCount() since startup. */
+  int deduplicatingAlertsHwm() const { return _deduplicatingAlertsHwm; }
 
 signals:
-  // FIXME doc
-  void alertChanged(Alert newAlert, Alert oldAlert);
+  /** A raisable alert (i.e. an alert handled through raiseAlert()/cancelAlert()
+   * calls, not through emitAlert()) has been created or destroyed or modified.
+   * Can be connected to a SharedUiItemsModel. */
+  void raisableAlertChanged(Alert newAlert, Alert oldAlert);
   /** An alert is emited through alert channels.
-   * This can occur when raising an alert that is not already raised (through
-   * raiseAlert()) or when directly an alert (through emitAlert()). */
-  // FIXME doc: or when cancelation is emited
+   * This occurs for raisable alerts when raising an alert that is not
+   * already raised (through raiseAlert()) or when canceling a raised alert
+   * (through cancelAlert()).
+   * And this occurs too for one-shots alerts when they are emitted (through
+   * emitAlert()) immediately or after a while if the same alert is emitted
+   * several time and aggregation occurs. */
   void alertNotified(Alert alert);
   /** Config parameters changed.
-   * Convenience signals emited just before configChanged(). */
+   * Convenience signal emited just before configChanged(). */
+  // LATER remove and use lambdas instead of convenience signals
   void paramsChanged(ParamSet params);
   /** Configuration has changed. */
   void configChanged(AlerterConfig config);
@@ -243,6 +268,10 @@ private:
   inline qint64 mayriseDelay(QString alertId);
   /** Delay according to (settings) or by default AlertConfig-level delay,
    * in ms. */
-  inline qint64 dropDelay(QString alertId);};
+  inline qint64 dropDelay(QString alertId);
+  /** Delay according to (settings) or by default AlertConfig-level delay,
+   * in ms. */
+  inline qint64 duplicateEmitDelay(QString alertId);
+};
 
 #endif // ALERTER_H

@@ -22,7 +22,8 @@ static QString _uiHeaderNames[] = {
   "Options",
   "Rise Delay",
   "Mayrise Delay",
-  "Drop Delay" // 5
+  "Drop Delay", // 5
+  "Duplicate Emit Delay"
 };
 
 static QAtomicInt _sequence;
@@ -31,13 +32,13 @@ class AlertSettingsData : public SharedUiItemData {
 public:
   QString _id, _pattern;
   QRegularExpression _patternRegexp;
-  qint64 _riseDelay, _mayriseDelay, _dropDelay;
+  qint64 _riseDelay, _mayriseDelay, _dropDelay, _duplicateEmitDelay;
   QStringList _commentsList;
   // MAYDO add params
 
   AlertSettingsData()
     : _id(QString::number(_sequence.fetchAndAddOrdered(1))), _riseDelay(0),
-      _mayriseDelay(0), _dropDelay(0) { }
+      _mayriseDelay(0), _dropDelay(0), _duplicateEmitDelay(0) { }
   QString id() const { return _id; }
   QString idQualifier() const { return QStringLiteral("alertsettings"); }
   int uiSectionCount() const {
@@ -63,9 +64,12 @@ AlertSettings::AlertSettings(PfNode node) {
   if (d->_pattern.isEmpty() || !d->_patternRegexp.isValid())
     Log::warning() << "unsupported alert settings match pattern '"
                    << d->_pattern << "': " << node.toString();
-  d->_riseDelay = node.longAttribute(QStringLiteral("risedelay"), 0)*1000;
-  d->_mayriseDelay = node.longAttribute(QStringLiteral("mayrisedelay"), 0)*1000;
-  d->_dropDelay = node.longAttribute(QStringLiteral("dropdelay"), 0)*1000;
+  d->_riseDelay = node.doubleAttribute(QStringLiteral("risedelay"), 0)*1e3;
+  d->_mayriseDelay = node.doubleAttribute(
+        QStringLiteral("mayrisedelay"), 0)*1e3;
+  d->_dropDelay = node.doubleAttribute(QStringLiteral("dropdelay"), 0)*1e3;
+  d->_duplicateEmitDelay = node.doubleAttribute(
+        QStringLiteral("duplicateemitdelay"), 0)*1e3;
   ConfigUtils::loadComments(node, &d->_commentsList);
   setData(d);
 }
@@ -78,11 +82,14 @@ PfNode AlertSettings::toPfNode() const {
   ConfigUtils::writeComments(&node, d->_commentsList);
   node.setAttribute(QStringLiteral("pattern"), d->_pattern);
   if (d->_riseDelay > 0)
-    node.setAttribute(QStringLiteral("risedelay"), d->_riseDelay/1000);
+    node.setAttribute(QStringLiteral("risedelay"), d->_riseDelay/1e3);
   if (d->_mayriseDelay > 0)
-    node.setAttribute(QStringLiteral("mayrisedelay"), d->_mayriseDelay/1000);
+    node.setAttribute(QStringLiteral("mayrisedelay"), d->_mayriseDelay/1e3);
   if (d->_dropDelay > 0)
-    node.setAttribute(QStringLiteral("dropdelay"), d->_dropDelay/1000);
+    node.setAttribute(QStringLiteral("dropdelay"), d->_dropDelay/1e3);
+  if (d->_duplicateEmitDelay > 0)
+    node.setAttribute(QStringLiteral("duplicateemitdelay"),
+                      d->_duplicateEmitDelay/1e3);
   return node;
 }
 
@@ -111,6 +118,11 @@ qint64 AlertSettings::dropDelay() const {
   return d ? d->_dropDelay : 0;
 }
 
+qint64 AlertSettings::duplicateEmitDelay() const {
+  const AlertSettingsData *d = data();
+  return d ? d->_duplicateEmitDelay : 0;
+}
+
 QVariant AlertSettingsData::uiData(int section, int role) const {
   switch(role) {
   case Qt::DisplayRole:
@@ -123,19 +135,24 @@ QVariant AlertSettingsData::uiData(int section, int role) const {
     case 2: {
       QString s;
       if (_riseDelay > 0)
-        s.append("risedelay=").append(QString::number(_riseDelay/1000));
+        s.append("risedelay=").append(QString::number(_riseDelay/1e3));
       if (_mayriseDelay > 0)
-        s.append("mayrisedelay=").append(QString::number(_mayriseDelay/1000));
+        s.append("mayrisedelay=").append(QString::number(_mayriseDelay/1e3));
       if (_dropDelay > 0)
-        s.append("dropdelay=").append(QString::number(_dropDelay/1000));
+        s.append("dropdelay=").append(QString::number(_dropDelay/1e3));
+      if (_duplicateEmitDelay > 0)
+        s.append("duplicateemitdelay=")
+            .append(QString::number(_duplicateEmitDelay/1e3));
       return s;
     }
     case 3:
-      return _riseDelay > 0 ? _riseDelay/1000 : QVariant();
+      return _riseDelay > 0 ? _riseDelay/1e3 : QVariant();
     case 4:
-      return _mayriseDelay > 0 ? _mayriseDelay/1000 : QVariant();
+      return _mayriseDelay > 0 ? _mayriseDelay/1e3 : QVariant();
     case 5:
-      return _dropDelay > 0 ? _dropDelay/1000 : QVariant();
+      return _dropDelay > 0 ? _dropDelay/1e3 : QVariant();
+    case 6:
+      return _duplicateEmitDelay > 0 ? _duplicateEmitDelay/1e3 : QVariant();
     }
     break;
   default:
