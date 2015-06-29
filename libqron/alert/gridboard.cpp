@@ -260,7 +260,7 @@ QRegularExpression Gridboard::patternRegexp() const {
 }
 
 void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
-  qDebug() << "Gridboard::update" << alert.id();
+  //qDebug() << "Gridboard::update" << alert.id();
   GridboardData *d = data();
   if (!d || d->_dimensions.isEmpty())
     return;
@@ -273,9 +273,9 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
         d->_params.evaluate(d->_dimensions[i].key(), &rempp);
     if (dimensionValue.isEmpty())
       dimensionValue = QStringLiteral("(none)");
-    qDebug() << "rempp.paramValue" << d->_dimensions[i].key() << "->"
-             << dimensionValue << match.capturedTexts()
-             << match.regularExpression().namedCaptureGroups();
+    //qDebug() << "rempp.paramValue" << d->_dimensions[i].key() << "->"
+    //         << dimensionValue << match.capturedTexts()
+    //         << match.regularExpression().namedCaptureGroups();
     dimensionValues.append(dimensionValue);
     TreeItem *root = d->_dataIndexesByDimension[i].value(dimensionValue);
     if (root)
@@ -285,31 +285,31 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
   // merge roots when needed
   while (roots.size() > 1) {
     TreeItem *source = roots.takeFirst();
-    qDebug() << "merging root:" << source << source->_name << "into"
-             << roots.first() << roots.first()->_name;
+    //qDebug() << "merging root:" << source << source->_name << "into"
+    //         << roots.first() << roots.first()->_name;
     mergeDataRoots(roots.first(), source, &d->_dataRoots,
                    &d->_dataIndexesByDimension);
   }
   TreeItem *root = roots.size() > 0 ? roots.first() : 0;
   // create new root if needed
   if (!root) {
-    root = new TreeItem("root"); // FIXME
+    root = new TreeItem(QString());
     d->_dataRoots.append(root);
     d->_dataIndexesByDimension[0].insert(dimensionValues[0], root);
-    qDebug() << "creating new root" << dimensionValues[0]
-             << d->_dataRoots.size() << d->_dataIndexesByDimension.size()
-             << d->_dataIndexesByDimension[0].size();
+    //qDebug() << "creating new root" << dimensionValues[0]
+    //         << d->_dataRoots.size() << d->_dataIndexesByDimension.size()
+    //         << d->_dataIndexesByDimension[0].size();
   }
-  // walk through dimensions to create or update item
   TreeItem *item = root;
-  qDebug() << "found root" << root << root->_name << root->_children.size()
-           << "for" << alert.id();
+  //qDebug() << "found root" << root << root->_name << root->_children.size()
+  //         << "for" << alert.id();
+  // walk through dimensions to create or update item
   for (int i = 0; i < d->_dimensions.size(); ++i) {
-    qDebug() << "****a" << i << d->_dimensions.size() << dimensionValues.size()
-             << item << root;
+    //qDebug() << "****a" << i << d->_dimensions.size() << dimensionValues.size()
+    //         << item << root;
     TreeItem *child = item->_children.value(dimensionValues[i]);
-    qDebug() << "  " << child << (child ? child->_name : "null")
-             << (child ? child->_children.size() : 0);
+    //qDebug() << "  " << child << (child ? child->_name : "null")
+    //         << (child ? child->_children.size() : 0);
     if (!child) {
       child = new TreeItem(dimensionValues[i]);
       d->_dataIndexesByDimension[i].insert(dimensionValues[i], root);
@@ -318,7 +318,7 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
     item = child;
   }
   item->setDataFromAlert(alert);
-  qDebug() << "  ->" << item << item->_name << item->_children.size();
+  //qDebug() << "  ->" << item << item->_name << item->_children.size();
 }
 
 QString Gridboard::toHtml() const {
@@ -357,6 +357,7 @@ QString Gridboard::toHtml() const {
     dataRoots = d->_dataRoots;
   }
   s = s+"<div class=\""+divClass+"\">\n";
+  // FIXME sort dataRoot by their first (in alpha order) child alpha order, or replace QHash<> children with QMap<>
   foreach (TreeItem *dataRoot, dataRoots) {
     QDateTime now = QDateTime::currentDateTime();
     QHash<QString,QHash<QString, TreeItem*> > matrix;
@@ -370,15 +371,15 @@ QString Gridboard::toHtml() const {
       foreach (TreeItem *treeItem1, dataRoot->_children) {
         matrix[treeItem1->_name][fakeDimensionName] = treeItem1;
         rows.append(treeItem1->_name);
-        qDebug() << "**b" << treeItem1 << treeItem1->_name
-                 << treeItem1->_children.size() << treeItem1->_timestamp
-                 << statusToHumanReadableString(treeItem1->_status);
-        if (treeItem1->_children.size()) {
-          qDebug() << "  " << treeItem1->_children[0];
-          qDebug() << "  " << treeItem1->_children[0]->_name;
-          qDebug() << "  " << treeItem1->_children[0]->_timestamp;
-          qDebug() << "  " << statusToHumanReadableString(treeItem1->_children[0]->_status);
-        }
+        //qDebug() << "**b" << treeItem1 << treeItem1->_name
+        //         << treeItem1->_children.size() << treeItem1->_timestamp
+        //         << statusToHumanReadableString(treeItem1->_status);
+        //if (treeItem1->_children.size()) {
+        //  qDebug() << "  " << treeItem1->_children[0];
+        //  qDebug() << "  " << treeItem1->_children[0]->_name;
+        //  qDebug() << "  " << treeItem1->_children[0]->_timestamp;
+        //  qDebug() << "  " << statusToHumanReadableString(treeItem1->_children[0]->_status);
+        //}
       }
       qSort(rows);
       columns.append(fakeDimensionName);
@@ -387,12 +388,12 @@ QString Gridboard::toHtml() const {
     case 2: {
       QSet<QString> columnsSet;
       foreach (TreeItem *treeItem1, dataRoot->_children) {
-        qDebug() << "**c row:" << treeItem1 << treeItem1->_name
-                 << treeItem1->_children.size();
+        //qDebug() << "**c row:" << treeItem1 << treeItem1->_name
+        //         << treeItem1->_children.size();
         rows.append(treeItem1->_name);
         foreach (TreeItem *treeItem2, treeItem1->_children) {
-          qDebug() << "**c col:" << treeItem2 << treeItem2->_name
-                   << treeItem2->_children.size();
+          //qDebug() << "**c col:" << treeItem2 << treeItem2->_name
+          //         << treeItem2->_children.size();
           matrix[treeItem1->_name][treeItem2->_name] = treeItem2;
           columnsSet.insert(treeItem2->_name);
         }

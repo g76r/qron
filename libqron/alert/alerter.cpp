@@ -332,12 +332,12 @@ void Alerter::notifyChannels(Alert newAlert) {
 void Alerter::notifyGridboards(Alert newAlert) {
   // FIXME move to another thread
   QList<Gridboard> gridboards = _gridboards;
-  qDebug() << "Alerter::notifyGridboards" << gridboards.size() << newAlert.id()
-           << newAlert.statusToString();
+  //qDebug() << "Alerter::notifyGridboards" << gridboards.size() << newAlert.id()
+  //         << newAlert.statusToString();
   for (int i = 0; i < gridboards.size(); ++i) {
     QRegularExpressionMatch match =
         gridboards[i].patternRegexp().match(newAlert.id());
-    qDebug() << " " << gridboards[i].id() << match.hasMatch();
+    //qDebug() << " " << gridboards[i].id() << match.hasMatch();
     if (match.hasMatch()) {
       // FIXME stats: here
       gridboards[i].update(match, newAlert);
