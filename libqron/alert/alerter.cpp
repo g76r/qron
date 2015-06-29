@@ -140,7 +140,6 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
     case Alert::MayRise:
       if (newAlert.visibilityDate() <= QDateTime::currentDateTime()) {
         actionRaise(&newAlert);
-        //notifyGridboards(newAlert);
         break;
       }
       // else fall through next case
@@ -149,16 +148,16 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
       newAlert.setVisibilityDate(newAlert.riseDate().addMSecs(
                                    riseDelay(alertId)));
       newAlert.setStatus(Alert::Rising);
-      //notifyGridboards(newAlert);
       break;
     case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
-      //notifyGridboards(newAlert);
       break;
     }
   }
  commitChange(&newAlert, &oldAlert);
 nothing_changed:
+ if (newAlert.isNull()) // gridboards need an id to identify canceled alert
+   newAlert = Alert(alertId); // TODO not sure it is usefull for raise
  notifyGridboards(newAlert);
 }
 
@@ -176,7 +175,6 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
     case Alert::Canceled: // should not happen
       goto nothing_changed;
     case Alert::Rising:
-      newAlert.setStatus(Alert::Canceled);
     case Alert::MayRise:
       newAlert = Alert();
       break;
@@ -205,6 +203,8 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
   }
   commitChange(&newAlert, &oldAlert);
 nothing_changed:
+  if (newAlert.isNull()) // gridboards need an id to identify canceled alert
+    newAlert = Alert(alertId);
   notifyGridboards(newAlert);
 }
 

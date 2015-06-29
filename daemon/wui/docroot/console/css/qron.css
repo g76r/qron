@@ -11,3 +11,9 @@ span[class^="label"],span[class*=" label"] a {
 .pagination-frame {
   text-align: center;
 }
+.gridboard-component {
+  border: 2px solid lightgrey;
+  padding: 8px;
+  margin-bottom: 16px;
+  border-radius: 10px;
+}
