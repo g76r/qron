@@ -79,6 +79,7 @@ void Alerter::doSetConfig(AlerterConfig config) {
   _alertSubscriptionsCache.clear();
   _alertSettingsCache.clear();
   _config = config;
+  _gridboards = config.gridboards(); // FIXME merge with current data
   // LATER recompute visibilityDate and cancellationDate in raisableAlerts and emittedAlerts
   emit paramsChanged(_config.params());
   emit configChanged(_config);
@@ -124,24 +125,22 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
     case Alert::Canceled: // should not happen
     case Alert::MayRise:
       actionRaise(&newAlert);
-      notifyGridboards(newAlert);
       break;
     case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
-      notifyGridboards(newAlert);
       break;
     case Alert::Raised:
-      return; // nothing to do
+      goto nothing_changed;
     }
   } else {
     switch (oldAlert.status()) {
     case Alert::Rising:
     case Alert::Raised:
-      return; // nothing to do
+      goto nothing_changed;
     case Alert::MayRise:
       if (newAlert.visibilityDate() <= QDateTime::currentDateTime()) {
         actionRaise(&newAlert);
-        notifyGridboards(newAlert);
+        //notifyGridboards(newAlert);
         break;
       }
       // else fall through next case
@@ -150,15 +149,17 @@ void Alerter::doRaiseAlert(QString alertId, bool immediately) {
       newAlert.setVisibilityDate(newAlert.riseDate().addMSecs(
                                    riseDelay(alertId)));
       newAlert.setStatus(Alert::Rising);
-      notifyGridboards(newAlert);
+      //notifyGridboards(newAlert);
       break;
     case Alert::Dropping:
       actionNoLongerCancel(&newAlert);
-      notifyGridboards(newAlert);
+      //notifyGridboards(newAlert);
       break;
     }
   }
  commitChange(&newAlert, &oldAlert);
+nothing_changed:
+ notifyGridboards(newAlert);
 }
 
 void Alerter::doCancelAlert(QString alertId, bool immediately) {
@@ -173,18 +174,15 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
     switch (oldAlert.status()) {
     case Alert::Nonexistent:
     case Alert::Canceled: // should not happen
-      // FIXME refresh timestamp ? notifyGridboards(newAlert);
-      return; // nothing to do
+      goto nothing_changed;
     case Alert::Rising:
       newAlert.setStatus(Alert::Canceled);
-      notifyGridboards(newAlert);
     case Alert::MayRise:
       newAlert = Alert();
       break;
     case Alert::Raised:
     case Alert::Dropping:
       actionCancel(&newAlert);
-      notifyGridboards(newAlert);
       break;
     }
   } else {
@@ -193,22 +191,21 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
     case Alert::MayRise:
     case Alert::Dropping:
     case Alert::Canceled: // should not happen
-      // FIXME refresh timestamp ? notifyGridboards(newAlert);
-      return; // nothing to do
+      goto nothing_changed;
     case Alert::Rising:
       newAlert.setStatus(Alert::MayRise);
-      notifyGridboards(newAlert);
       newAlert.setCancellationDate(QDateTime::currentDateTime().addMSecs(
                                      mayriseDelay(alertId)));
       break;
     case Alert::Raised:
       newAlert.setStatus(Alert::Dropping);
-      notifyGridboards(newAlert);
       newAlert.setCancellationDate(QDateTime::currentDateTime().addMSecs(
                                      mayriseDelay(alertId)));
     }
   }
   commitChange(&newAlert, &oldAlert);
+nothing_changed:
+  notifyGridboards(newAlert);
 }
 
 void Alerter::doEmitAlert(QString alertId) {
@@ -333,14 +330,17 @@ void Alerter::notifyChannels(Alert newAlert) {
 }
 
 void Alerter::notifyGridboards(Alert newAlert) {
+  // FIXME move to another thread
   QList<Gridboard> gridboards = _gridboards;
+  qDebug() << "Alerter::notifyGridboards" << gridboards.size() << newAlert.id()
+           << newAlert.statusToString();
   for (int i = 0; i < gridboards.size(); ++i) {
-    Gridboard &gridboard = gridboards[i];
     QRegularExpressionMatch match =
-        gridboard.patternRegexp().match(newAlert.id());
+        gridboards[i].patternRegexp().match(newAlert.id());
+    qDebug() << " " << gridboards[i].id() << match.hasMatch();
     if (match.hasMatch()) {
       // FIXME stats: here
-      gridboard.update(match, newAlert);
+      gridboards[i].update(match, newAlert);
     }
   }
   // FIXME stats: or here
@@ -418,7 +418,9 @@ qint64 Alerter::duplicateEmitDelay(QString alertId) {
   return delay > 0 ? delay : _config.duplicateEmitDelay();
 }
 
-/*QList<Gridboard> Alerter::gridboards() const {
-  // FIXME lock
-  return _gridboards;
-}*/
+Gridboard Alerter::gridboard(QString gridboardId) const {
+  foreach (const Gridboard &gridboard, _gridboards.data())
+    if (gridboard.id() == gridboardId)
+      return gridboard;
+  return Gridboard();
+}

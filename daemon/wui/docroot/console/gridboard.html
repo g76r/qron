@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2015 Hallowyn and others.
+ This file is part of qron, see <http://qron.hallowyn.com/>.
+ Qron is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ Qron is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+ You should have received a copy of the GNU Affero General Public License
+ along with qron. If not, see <http://www.gnu.org/licenses/>.
+-->
+<?include:header.html?>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Gridboard: <?=%{=default:1:0:}?></h2>
+          <p><a class="btn btn-info" href="alerts.html">Alerts page &raquo;</a>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <h2>Gridboard Description</h2>
+          <p><table class="table table-condensed table-hover">
+          <tr><th>Id</th><td><?value:0:?></td></tr>
+          <tr><th>Label</th><td><?value:1:?></td></tr>
+          <tr><th>Pattern</th><td><?value:2:?></td></tr>
+          <tr><th>Dimensions</th><td><?value:3:?></td></tr>
+          <tr><th>Params</th><td><?value:4:?>(FIXME: remove)</td></tr>
+          <tr><th>Warning Delay</th><td><?value:5:?></td></tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <h2>Gridboard Statistics</h2>
+          <p>FIXME: display
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Current Status</h2>
+          <p><?rawvalue:gridboard.data?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <h2>Gridboard Parameters</h2>
+          <p>FIXME: display
+        </div>
+        <div class="col-md-6">
+          <h2>Alerter Parameters</h2>
+          <p>Inherited by gridboard parameters.
+          <p>FIXME: display
+        </div>
+      </div>
+
+<?include:common-scripts.html?>
+<?include:footer.html?>

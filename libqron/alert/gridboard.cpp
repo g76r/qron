@@ -12,7 +12,6 @@
  * along with qron. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "gridboard.h"
-#include "util/paramset.h"
 #include "config/configutils.h"
 #include "util/regularexpressionmatchparamsprovider.h"
 
@@ -68,7 +67,23 @@ public:
       _status = Unknown;
     }
   }
-  ~TreeItem() { qDeleteAll(_children.values()); }
+  ~TreeItem() {
+    qDebug() << "~TreeItem" << _name << _children.size();
+    //char *n = 0;
+    //*n = 42;
+    foreach (TreeItem *item, _children)
+      delete item;
+  }
+  void merge(const TreeItem *source) {
+    foreach (const QString &dimensionValue, source->_children.keys()) {
+      if (!_children.contains(dimensionValue)) {
+        _children.insert(dimensionValue, new TreeItem(dimensionValue));
+      }
+      _children[dimensionValue]->merge(source->_children[dimensionValue]);
+    }
+    _status = source->_status;
+    _timestamp = source->_timestamp;
+  }
 };
 
 class DimensionData : public SharedUiItemData {
@@ -92,6 +107,7 @@ public:
     if (d->_key.isEmpty())
       d->_key = "%{"+d->_id+"}";
     d->_label = node.attribute(QStringLiteral("label"));
+    setData(d);
   }
   PfNode toPfNode() const {
     const DimensionData *d = data();
@@ -119,6 +135,23 @@ public:
 
 } // unnamed namespace
 
+static void mergeDataRoots(
+    TreeItem *target, TreeItem *source,
+    QList<TreeItem*> *roots, QList<QHash<QString,TreeItem*>> *indexes) {
+  // recursive merge tree
+  target->merge(source);
+  // replace references in indexes
+  for (int i = 0; i < indexes->size(); ++i) {
+    QHash<QString,TreeItem*> &index = (*indexes)[i];
+    foreach (const QString &dimensionValue, index.keys())
+      if (index.value(dimensionValue) == source)
+        index.insert(dimensionValue, target);
+  }
+  // delete source
+  roots->removeOne(source);
+  delete source;
+}
+
 class GridboardData : public SharedUiItemData {
 public:
   QString _id, _label, _pattern;
@@ -126,10 +159,11 @@ public:
   QList<Dimension> _dimensions;
   ParamSet _params;
   qint64 _warningDelay;
-  TreeItem _dataTree;
+  QList<TreeItem*> _dataRoots;
+  QList<QHash<QString,TreeItem*>> _dataIndexesByDimension;
   QStringList _commentsList;
-  GridboardData() : _warningDelay(DEFAULT_WARNING_DELAY),
-    _dataTree(QStringLiteral("root")) { }
+  GridboardData() : _warningDelay(DEFAULT_WARNING_DELAY) { }
+  ~GridboardData() { } // FIXME delete roots when no longer shared by any copied instance
   QString id() const { return _id; }
   QString idQualifier() const { return QStringLiteral("gridboard"); }
   int uiSectionCount() const {
@@ -142,7 +176,8 @@ public:
   }
 };
 
-Gridboard::Gridboard(PfNode node, Gridboard oldGridboard) {
+Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
+                     ParamSet parentParams) {
   GridboardData *d = new GridboardData;
   d->_id = node.contentAsString();
   if (d->_id.isEmpty()) {
@@ -167,10 +202,13 @@ Gridboard::Gridboard(PfNode node, Gridboard oldGridboard) {
       d->_dimensions.append(dimension);
     }
   }
+  for (int i = 0; i < d->_dimensions.size(); ++i)
+    d->_dataIndexesByDimension.append(QHash<QString,TreeItem*>());
   d->_warningDelay = node.doubleAttribute(
         QStringLiteral("gridboard.warningdelay"),
         DEFAULT_WARNING_DELAY/1e3)*1e3;
-  ConfigUtils::loadParamSet(node, QStringLiteral("param"));
+  d->_params.setParent(parentParams);
+  ConfigUtils::loadParamSet(node, &d->_params, QStringLiteral("param"));
   ConfigUtils::loadComments(node, &d->_commentsList);
   // FIXME load old state
   // FIXME load initvalues
@@ -207,101 +245,183 @@ QRegularExpression Gridboard::patternRegexp() const {
 }
 
 void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
+  qDebug() << "Gridboard::update" << alert.id();
   GridboardData *d = data();
-  if (!d)
+  if (!d || d->_dimensions.isEmpty())
     return;
-  TreeItem *treeItem = &d->_dataTree;
+  // compute dimension values and identify possible roots
+  QSet<TreeItem*> rootsSet;
   RegularExpressionMatchParamsProvider rempp(match);
-  foreach (const Dimension &dimension, d->_dimensions) {
+  QStringList dimensionValues;
+  for (int i = 0; i < d->_dimensions.size(); ++i) {
     QString dimensionValue =
-        rempp.paramValue(dimension.key(), QStringLiteral("(none)")).toString();
-    TreeItem *child = treeItem->_children.value(dimensionValue);
-    if (!child) {
-      child = new TreeItem(dimensionValue);
-      treeItem->_children.insert(dimensionValue, child);
-    }
-    treeItem = child;
+        d->_params.evaluate(d->_dimensions[i].key(), &rempp);
+    if (dimensionValue.isEmpty())
+      dimensionValue = QStringLiteral("(none)");
+    qDebug() << "rempp.paramValue" << d->_dimensions[i].key() << "->"
+             << dimensionValue << match.capturedTexts()
+             << match.regularExpression().namedCaptureGroups();
+    dimensionValues.append(dimensionValue);
+    TreeItem *root = d->_dataIndexesByDimension[i].value(dimensionValue);
+    if (root)
+      rootsSet.insert(root);
   }
-  treeItem->setDataFromAlert(alert);
+  QList<TreeItem*> roots = rootsSet.toList();
+  // merge roots when needed
+  while (roots.size() > 1) {
+    TreeItem *source = roots.takeFirst();
+    mergeDataRoots(roots.first(), source, &d->_dataRoots,
+                   &d->_dataIndexesByDimension);
+  }
+  TreeItem *root = roots.size() > 0 ? roots.first() : 0;
+  // create new root if needed
+  if (!root) {
+    root = new TreeItem(dimensionValues[0]);
+    d->_dataRoots.append(root);
+    d->_dataIndexesByDimension[0].insert(dimensionValues[0], root);
+    qDebug() << "creating new root" << dimensionValues[0]
+             << d->_dataRoots.size() << d->_dataIndexesByDimension.size()
+             << d->_dataIndexesByDimension[0].size();
+  }
+  // walk through dimensions to create or update item
+  TreeItem *item = root;
+  for (int i = 1; i < d->_dimensions.size(); ++i) {
+    qDebug() << "****a" << i << d->_dimensions.size() << dimensionValues.size()
+             << item << root;
+    qDebug() << "  " << item->_children.value(dimensionValues[i]);
+    qDebug() << "  " << item->_children.size();
+    qDebug() << "/";
+    TreeItem *child = item->_children.value(dimensionValues[i]);
+    if (!child) {
+      child = new TreeItem(dimensionValues[i]);
+      d->_dataIndexesByDimension[i].insert(dimensionValues[i], root);
+      item->_children.insert(dimensionValues[i], child);
+    }
+    item = child;
+  }
+  item->setDataFromAlert(alert);
 }
 
-static QString oneDimensionColumnName = "status";
-
-QString Gridboard::toHtmlTable() const {
+QString Gridboard::toHtml() const {
   const GridboardData *d = data();
   if (!d)
-    return QString();
-  QDateTime now = QDateTime::currentDateTime();
-  QHash<QString,QHash<QString, TreeItem*> > matrix;
-  QStringList rows, columns;
-  switch (d->_dimensions.size()) {
-  case 1:
-    foreach (TreeItem *treeItem1, d->_dataTree._children) {
-      matrix[treeItem1->_name][oneDimensionColumnName] = treeItem1;
-      rows.append(treeItem1->_name);
-    }
-    qSort(rows);
-    columns.append(oneDimensionColumnName);
-    break;
-  case 2: {
-    QSet<QString> columnsSet;
-    foreach (TreeItem *treeItem1, d->_dataTree._children) {
-      rows.append(treeItem1->_name);
-      foreach (TreeItem *treeItem2, treeItem1->_children) {
-        matrix[treeItem1->_name][treeItem2->_name] = treeItem2;
-        columnsSet.insert(treeItem2->_name);
-      }
-    }
-    columns = columnsSet.toList();
-    qSort(rows);
-    qSort(columns);
-    break;
-  }
-  default:
-    // LATER support more than 2 dimensions
-    return "Gridboard do not yet support more than 2 dimensions.";
-  }
+    return QString("Null gridboard");
+  if (d->_dataRoots.isEmpty())
+    return QString("Empty gridboard");
   QString tableClass = d->_params.value(
-        QStringLiteral("table.class"),
+        QStringLiteral("gridboard.tableclass"),
         QStringLiteral("table table-condensed table-hover"));
-  QString tdClassOk = d->_params.value(QStringLiteral("td.class.ok"));
+  QString divClass = d->_params.value(QStringLiteral("gridboard.divclass"));
+  QString tdClassOk = d->_params.value(QStringLiteral("gridboard.tdclass.ok"));
   QString tdClassWarning = d->_params.value(
-        QStringLiteral("td.class.warning"), QStringLiteral("warning"));
+        QStringLiteral("gridboard.tdclass.warning"), QStringLiteral("warning"));
   QString tdClassError = d->_params.value(
-        QStringLiteral("td.class.error"), QStringLiteral("danger"));
-  QString tdClassUnknown = d->_params.value(QStringLiteral("td.class.warning"));
-  QString s = "<table class=\""+tableClass+"\" id=\"gridboard."+d->_id
-      +"\"><tr><th>&nbsp;</th>";
-  foreach (const QString &column, columns)
-    s = s+"<th>"+column+"</th>";
-  foreach (const QString &row, rows) {
-    s += "</tr><tr>";
-    foreach (const QString &column, columns) {
-      TreeItem *item = matrix[row][column];
-      GridStatus status = item->_status;
-      if (status == Ok && item->_timestamp.msecsTo(now) > d->_warningDelay)
-        status = Long;
-      QString tdClass;
-      switch (status) {
-      case Ok:
-        tdClass = tdClassOk;
-        break;
-      case Long:
-        tdClass = tdClassWarning;
-        break;
-      case Error:
-        tdClass = tdClassError;
-        break;
-      case Unknown:
-        tdClass = tdClassUnknown;
-        break;
-      }
-      s = s+"<td class=\""+tdClass+"\">"+statusToHumanReadableString(status)+"<br/>"
-          +item->_timestamp.toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))
-          +"</td>";
-    }
+        QStringLiteral("gridboard.tdclass.error"), QStringLiteral("danger"));
+  QString tdClassUnknown = d->_params.value(
+        QStringLiteral("gridboard.tdclass.warning"));
+  QString s;
+  // FIXME support multiple roots
+  QList<TreeItem*> dataRoots;
+  TreeItem *pseudoRoot = 0;
+  if (d->_dimensions.size() == 1) {
+    // with 1 dimension merge roots by adding a fake root under actual ones
+    pseudoRoot = new TreeItem(QString()); // FIXME
+    foreach (TreeItem *child, d->_dataRoots)
+      pseudoRoot->_children.insert(child->_name, child);
+    dataRoots.append(pseudoRoot);
+  } else {
+    dataRoots = d->_dataRoots;
   }
-  s += "</tr></table>";
+  foreach (TreeItem *dataRoot, dataRoots) {
+    QDateTime now = QDateTime::currentDateTime();
+    QHash<QString,QHash<QString, TreeItem*> > matrix;
+    QStringList rows, columns;
+    switch (d->_dimensions.size()) {
+    case 1: {
+      // with 1 dimension convert to 2 dimensions by adding a fake column
+      QString fakeDimensionName = d->_params.value(
+            QStringLiteral("gridboard.fakedimensionname"),
+            QStringLiteral("status"));
+      foreach (TreeItem *treeItem1, dataRoot->_children) {
+        matrix[treeItem1->_name][fakeDimensionName] = treeItem1;
+        rows.append(treeItem1->_name);
+        qDebug() << "**b" << treeItem1 << treeItem1->_name
+                 << treeItem1->_children.size() << treeItem1->_timestamp
+                 << statusToHumanReadableString(treeItem1->_status);
+        if (treeItem1->_children.size()) {
+          qDebug() << "  " << treeItem1->_children[0];
+          qDebug() << "  " << treeItem1->_children[0]->_name;
+          qDebug() << "  " << treeItem1->_children[0]->_timestamp;
+          qDebug() << "  " << statusToHumanReadableString(treeItem1->_children[0]->_status);
+        }
+      }
+      qSort(rows);
+      columns.append(fakeDimensionName);
+      break;
+    }
+    case 2: {
+      QSet<QString> columnsSet;
+      foreach (TreeItem *treeItem1, dataRoot->_children) {
+        rows.append(treeItem1->_name);
+        foreach (TreeItem *treeItem2, treeItem1->_children) {
+          matrix[treeItem1->_name][treeItem2->_name] = treeItem2;
+          columnsSet.insert(treeItem2->_name);
+        }
+      }
+      columns = columnsSet.toList();
+      qSort(rows);
+      qSort(columns);
+      break;
+    }
+    case 0:
+      return "Gridboard with 0 dimensions.";
+    default:
+      // LATER support more than 2 dimensions
+      return "Gridboard do not yet support more than 2 dimensions.";
+    }
+    s = s+"<div class=\""+divClass+"\"><table class=\""+tableClass
+        +"\" id=\"gridboard."+d->_id+"\"><tr><th>&nbsp;</th>";
+    foreach (const QString &column, columns)
+      s = s+"<th>"+column+"</th>";
+    foreach (const QString &row, rows) {
+      s = s+"</tr><tr><th>"+row+"</th>";
+      foreach (const QString &column, columns) {
+        TreeItem *item = matrix[row][column];
+        GridStatus status = item->_status;
+        if (status == Ok && item->_timestamp.msecsTo(now) > d->_warningDelay)
+          status = Long;
+        QString tdClass;
+        switch (status) {
+        case Ok:
+          tdClass = tdClassOk;
+          break;
+        case Long:
+          tdClass = tdClassWarning;
+          break;
+        case Error:
+          tdClass = tdClassError;
+          break;
+        case Unknown:
+          tdClass = tdClassUnknown;
+          break;
+        }
+        s = s+"<td class=\""+tdClass+"\">"+statusToHumanReadableString(status)
+            +"<br/>"+item->_timestamp.toString(
+              QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"))+"</td>";
+      }
+    }
+    s += "</tr></table></div>\n";
+    s = s+"<p>rows:"+rows.join(',')+" columns:"+columns.join(',') // FIXME remove
+        +" dimensions#:"+QString::number(d->_dimensions.size())
+        +" roots#:"+QString::number(dataRoots.size())
+        +" indexes:";
+    for (int i = 0; i < d->_dataIndexesByDimension.size(); ++i)
+      s = s+QString::number(d->_dataIndexesByDimension[i].size())+" ";
+  }
+  if (pseudoRoot) {
+    pseudoRoot->_children.clear(); // prevent deleting children
+    delete pseudoRoot;
+  }
   return s;
 }
 

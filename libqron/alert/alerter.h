@@ -229,7 +229,8 @@ public:
   /** Highest value of duplicateEmitCount() since startup. */
   int deduplicatingAlertsHwm() const { return _deduplicatingAlertsHwm; }
   // FIXME doc, threadsafe
-  QList<Gridboard> gridboards() const { return _gridboards; }
+  //QList<Gridboard> gridboards() const { return _gridboards; }
+  Gridboard gridboard(QString gridboardId) const;
 
 signals:
   /** A raisable alert (i.e. an alert handled through raiseAlert()/cancelAlert()

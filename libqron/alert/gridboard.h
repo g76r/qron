@@ -18,18 +18,19 @@
 #include "alert.h"
 #include <QRegularExpression>
 #include "pf/pfnode.h"
+#include "util/paramset.h"
 
 class GridboardData;
 
 // FIXME doc
-class Gridboard : public SharedUiItem {
+class LIBQRONSHARED_EXPORT Gridboard : public SharedUiItem {
 public:
   Gridboard() { }
   Gridboard(const Gridboard &other) : SharedUiItem(other) { }
-  Gridboard(PfNode node, Gridboard oldGridboard);
+  Gridboard(PfNode node, Gridboard oldGridboard, ParamSet parentParams);
   QRegularExpression patternRegexp() const;
   void update(QRegularExpressionMatch match, Alert alert);
-  QString toHtmlTable() const;
+  QString toHtml() const;
   // LATER QString toCsvTable() const;
   PfNode toPfNode() const;
 

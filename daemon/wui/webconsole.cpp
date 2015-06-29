@@ -963,6 +963,34 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     }
     return true;
   }
+  if (path == "/console/gridboard.html") {
+    QString gridboardId = req.param("gridboardid");
+    QString referer = req.header("Referer", "index.html");
+    if (_scheduler) {
+      Gridboard gridboard(_scheduler->alerter()->gridboard(gridboardId));
+      if (!gridboard.isNull()) {
+        WebConsoleParamsProvider webconsoleParams(this, req);
+        SharedUiItemParamsProvider itemAsParams(gridboard);
+        processingContext->save();
+        processingContext->append(&itemAsParams);
+        processingContext->append(&webconsoleParams);
+        processingContext->overrideParamValue("gridboard.data",
+                                              gridboard.toHtml());
+        res.clearCookie("message", "/");
+        _wuiHandler->handleRequest(req, res, processingContext);
+        processingContext->restore();
+      } else {
+        res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
+                                   +"' not found.", "/");
+        res.redirect(referer);
+      }
+    } else {
+      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
+                                 "/");
+      res.redirect(referer);
+    }
+    return true;
+  }
   if (path.startsWith("/console")) {
     QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
     if (queryItems.size()) {

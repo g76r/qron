@@ -151,7 +151,7 @@ AlerterConfigData::AlerterConfigData(PfNode root)
   ConfigUtils::loadComments(root, &_commentsList,
                             excludedDescendantsForComments);
   foreach (PfNode child, root.childrenByName("gridboard")) {
-    Gridboard gridboard(child, Gridboard()); // load old gridboard state
+    Gridboard gridboard(child, Gridboard(), _params); // TODO load old gridboard state
     _gridboards.append(gridboard);
   }
 }

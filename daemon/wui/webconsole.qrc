@@ -19,6 +19,7 @@
         <file>docroot/console/css/qron.css</file>
         <file>docroot/console/adhoc.html</file>
         <file>docroot/console/taskdoc.html</file>
+        <file>docroot/console/gridboard.html</file>
         <file>docroot/console/doc/alerts_statuses.svg</file>
         <file>docroot/console/img/work_eu.png</file>
         <file>docroot/console/img/work_na.png</file>
