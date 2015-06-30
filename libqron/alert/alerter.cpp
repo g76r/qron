@@ -45,12 +45,9 @@ public:
       if (_buffer.tryGet(&alert, 500)) {
         QList<Gridboard> gridboards = _alerter->_gridboards;
         ++_gridboardsEvaluationsCounter;
-        //qDebug() << "Alerter::notifyGridboards" << gridboards.size() << newAlert.id()
-        //         << newAlert.statusToString();
         for (int i = 0; i < gridboards.size(); ++i) {
           QRegularExpressionMatch match =
               gridboards[i].patternRegexp().match(alert.id());
-          //qDebug() << " " << gridboards[i].id() << match.hasMatch();
           if (match.hasMatch()) {
             ++_gridboardsUpdatesCounter;
             gridboards[i].update(match, alert);
@@ -125,7 +122,7 @@ void Alerter::doSetConfig(AlerterConfig config) {
   _alertSubscriptionsCache.clear();
   _alertSettingsCache.clear();
   _config = config;
-  _gridboards = config.gridboards(); // FIXME merge with current data
+  _gridboards = config.gridboards(); // LATER merge with current data
   // LATER recompute visibilityDate and cancellationDate in raisableAlerts and emittedAlerts
   emit paramsChanged(_config.params());
   emit configChanged(_config);

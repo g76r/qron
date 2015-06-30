@@ -22,18 +22,40 @@
 
 class GridboardData;
 
-// FIXME doc
+/** Class for building a grid-like HTML dashboard of statuses from alert
+ * patterns conventions such as host.down.http.$host.$port.$path (think of
+ * host.down.http.www_google_com.80.index_html).
+ *
+ * Works by first mapping an alert id string pattern to a multi-dimensionnal
+ * matrix of statuses, and then mapping this matrix to a set of connected
+ * components submatrixes displayable in HTML.
+ *
+ * Configuration examples:
+ * (gridboard ping
+ *   (label Hosts Ping Statuses)
+ *   (pattern "^host\.down\.ping\.(?<host>[^\.]+)")
+ *   (dimension host)
+ *   (initvalue (dimension host localhost))
+ *   (warningdelay 30)
+ *   (param gridboard.fakedimensionname current status)
+ * )
+ * (gridboard service_x_instance
+ *   (pattern "^host\.down\.http\.(?<host>[^\.]+)\.(?<port>[0-9]+)\.(?<path>.+)$")
+ *   (dimension service (key "%path"))
+ *   (dimension instance (key "%host:%port"))
+ *   (warningdelay 30)
+ * )
+ */
 class LIBQRONSHARED_EXPORT Gridboard : public SharedUiItem {
 public:
   Gridboard() { }
   Gridboard(const Gridboard &other) : SharedUiItem(other) { }
   Gridboard(PfNode node, Gridboard oldGridboard, ParamSet parentParams);
   QRegularExpression patternRegexp() const;
+  PfNode toPfNode() const;
   void update(QRegularExpressionMatch match, Alert alert);
   void clear();
   QString toHtml() const;
-  // LATER QString toCsvTable() const;
-  PfNode toPfNode() const;
 
 private:
   const GridboardData *data() const {
