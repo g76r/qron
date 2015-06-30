@@ -218,7 +218,7 @@ QVariant AlertPseudoParamsProvider::paramValue(
     } else if (key == "!alertcount") {
       return _alert.count();
     } else if (key == "!alertdate") {
-      // FIXME make this support !date formating
+      // LATER make this support !date formating
       return _alert.riseDate()
           .toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
     }
