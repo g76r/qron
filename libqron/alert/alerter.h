@@ -27,6 +27,7 @@
 
 class QThread;
 class PfNode;
+class GridboardThread;
 
 /** Main class for the alert system.
  *
@@ -117,9 +118,11 @@ class PfNode;
  * can be queried by users or external tools.
  */
 class LIBQRONSHARED_EXPORT Alerter : public QObject {
+  friend class GridboardThread;
   Q_OBJECT
   Q_DISABLE_COPY(Alerter)
-  QThread *_thread;
+  QThread *_alerterThread;
+  GridboardThread *_gridboardThread;
   AlerterConfig _config;
   QHash<QString,AlertChannel*> _channels;
   QHash<QString,Alert> _raisableAlerts;
@@ -228,8 +231,13 @@ public:
   int deduplicatingAlertsCount() const { return _deduplicatingAlertsCount; }
   /** Highest value of duplicateEmitCount() since startup. */
   int deduplicatingAlertsHwm() const { return _deduplicatingAlertsHwm; }
-  // FIXME doc, threadsafe
-  //QList<Gridboard> gridboards() const { return _gridboards; }
+  /** Count of alerts that have been tested against gridboards pattern since
+   * startup. */
+  qint64 gridboardsEvaluationsCounter() const;
+  /** Times a gridboard has been updated by an alert since startup. */
+  qint64 gridboardsUpdatesCounter() const;
+  /** Provide a gridboard given its id.
+   * This method is thread-safe. */
   Gridboard gridboard(QString gridboardId) const;
 
 signals:

@@ -653,6 +653,11 @@ public:
         return _console->_scheduler->alerter()->deduplicatingAlertsCount();
       if (key == "alerter.deduplicatingalertshwm")
         return _console->_scheduler->alerter()->deduplicatingAlertsHwm();
+    } else if (key.startsWith("gridboards.")) {
+      if (key == "gridboards.evaluationscounter")
+        return _console->_scheduler->alerter()->gridboardsEvaluationsCounter();
+      if (key == "gridboards.updatescounter")
+        return _console->_scheduler->alerter()->gridboardsUpdatesCounter();
     } else if (key.startsWith("cookie.")) {
       return _req.base64Cookie(key.mid(7), defaultValue.toString());
     } else if (key.startsWith("configrepository.")) {

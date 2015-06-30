@@ -24,24 +24,63 @@
 #include <QCoreApplication>
 #include "config/configutils.h"
 #include "alert.h"
+#include "thread/circularbuffer.h"
 
 // LATER replace this 10" ugly batch with predictive timer (min(timestamps))
 #define ASYNC_PROCESSING_INTERVAL 10000
 
-Alerter::Alerter() : QObject(0), _thread(new QThread),
+class GridboardThread : public QThread {
+  friend class Alerter;
+  Q_DISABLE_COPY(GridboardThread)
+  Alerter *_alerter;
+  CircularBuffer<Alert> _buffer;
+  qint64 _gridboardsEvaluationsCounter, _gridboardsUpdatesCounter;
+
+public:
+  GridboardThread(Alerter *alerter) : _alerter(alerter), _buffer(10),
+  _gridboardsEvaluationsCounter(0), _gridboardsUpdatesCounter(0) { }
+  void run() {
+    while (!isInterruptionRequested()) {
+      Alert alert;
+      if (_buffer.tryGet(&alert, 500)) {
+        QList<Gridboard> gridboards = _alerter->_gridboards;
+        ++_gridboardsEvaluationsCounter;
+        //qDebug() << "Alerter::notifyGridboards" << gridboards.size() << newAlert.id()
+        //         << newAlert.statusToString();
+        for (int i = 0; i < gridboards.size(); ++i) {
+          QRegularExpressionMatch match =
+              gridboards[i].patternRegexp().match(alert.id());
+          //qDebug() << " " << gridboards[i].id() << match.hasMatch();
+          if (match.hasMatch()) {
+            ++_gridboardsUpdatesCounter;
+            gridboards[i].update(match, alert);
+          }
+        }
+        _alerter->_gridboards = gridboards;
+      }
+    }
+  }
+};
+
+Alerter::Alerter() : QObject(0), _alerterThread(new QThread),
+  _gridboardThread(new GridboardThread(this)),
   _emitRequestsCounter(0), _raiseRequestsCounter(0), _cancelRequestsCounter(0),
   _raiseImmediateRequestsCounter(0), _cancelImmediateRequestsCounter(0),
   _emitNotificationsCounter(0), _raiseNotificationsCounter(0),
   _cancelNotificationsCounter(0), _totalChannelsNotificationsCounter(0),
   _rulesCacheSize(0), _rulesCacheHwm(0), _deduplicatingAlertsCount(0),
   _deduplicatingAlertsHwm(0) {
-  _thread->setObjectName("AlerterThread");
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
-  _thread->start();
-  _channels.insert("log", new LogAlertChannel(0, this));
-  _channels.insert("url", new UrlAlertChannel(0, this));
-  _channels.insert("mail", new MailAlertChannel(0, this));
+  _alerterThread->setObjectName("AlerterThread");
+  connect(_alerterThread, &QThread::finished,
+          _alerterThread, &QThread::deleteLater);
+  _alerterThread->start();
+  _gridboardThread->setObjectName("GridboardThread");
+  connect(_gridboardThread, &GridboardThread::finished,
+          _gridboardThread, &GridboardThread::deleteLater);
+  _gridboardThread->start();
+  _channels.insert("log", new LogAlertChannel(this));
+  _channels.insert("url", new UrlAlertChannel(this));
+  _channels.insert("mail", new MailAlertChannel(this));
   foreach (AlertChannel *channel, _channels)
     connect(this, SIGNAL(configChanged(AlerterConfig)),
             channel, SLOT(setConfig(AlerterConfig)),
@@ -49,7 +88,7 @@ Alerter::Alerter() : QObject(0), _thread(new QThread),
   QTimer *timer = new QTimer(this);
   connect(timer, SIGNAL(timeout()), this, SLOT(asyncProcessing()));
   timer->start(ASYNC_PROCESSING_INTERVAL);
-  moveToThread(_thread);
+  moveToThread(_alerterThread);
   qRegisterMetaType<QList<AlertSubscription> >("QList<AlertSubscription>");
   qRegisterMetaType<AlertSubscription>("AlertSubscription");
   qRegisterMetaType<AlertSettings>("AlertSettings");
@@ -60,8 +99,15 @@ Alerter::Alerter() : QObject(0), _thread(new QThread),
 }
 
 Alerter::~Alerter() {
+  // delete channels
   foreach (AlertChannel *channel, _channels.values())
-    channel->deleteLater(); // cant be a child cause it lives it its own thread
+    channel->deleteLater();
+  // stop and delete alerter thread
+  _alerterThread->quit();
+  // stop and delete gridboard thread
+  _gridboardThread->_buffer.clear();
+  _gridboardThread->requestInterruption();
+  _gridboardThread->wait();
 }
 
 void Alerter::setConfig(AlerterConfig config) {
@@ -330,21 +376,7 @@ void Alerter::notifyChannels(Alert newAlert) {
 }
 
 void Alerter::notifyGridboards(Alert newAlert) {
-  // FIXME move to another thread
-  QList<Gridboard> gridboards = _gridboards;
-  //qDebug() << "Alerter::notifyGridboards" << gridboards.size() << newAlert.id()
-  //         << newAlert.statusToString();
-  for (int i = 0; i < gridboards.size(); ++i) {
-    QRegularExpressionMatch match =
-        gridboards[i].patternRegexp().match(newAlert.id());
-    //qDebug() << " " << gridboards[i].id() << match.hasMatch();
-    if (match.hasMatch()) {
-      // FIXME stats: here
-      gridboards[i].update(match, newAlert);
-    }
-  }
-  // FIXME stats: or here
-  _gridboards = gridboards;
+  _gridboardThread->_buffer.tryPut(newAlert, 10);
 }
 
 void Alerter::commitChange(Alert *newAlert, Alert *oldAlert) {
@@ -423,4 +455,12 @@ Gridboard Alerter::gridboard(QString gridboardId) const {
     if (gridboard.id() == gridboardId)
       return gridboard;
   return Gridboard();
+}
+
+qint64 Alerter::gridboardsEvaluationsCounter() const {
+  return _gridboardThread->_gridboardsEvaluationsCounter;
+}
+
+qint64 Alerter::gridboardsUpdatesCounter() const {
+  return _gridboardThread->_gridboardsUpdatesCounter;
 }
