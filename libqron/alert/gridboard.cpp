@@ -25,7 +25,11 @@ static QString _uiHeaderNames[] = {
   "Pattern",
   "Dimensions",
   "Params",
-  "Warning Delay" // 5
+  "Warning Delay", // 5
+  "Updates Counter",
+  "Renders Counter",
+  "Current Components Count",
+  "Current Items Count"
 };
 
 enum GridStatus { Unknown, Ok, Long, Error };
@@ -177,7 +181,10 @@ public:
   QList<TreeItem*> _dataRoots;
   QList<QHash<QString,TreeItem*>> _dataIndexesByDimension;
   QStringList _commentsList;
-  GridboardData() : _warningDelay(DEFAULT_WARNING_DELAY) { }
+  qint64 _updatesCounter, _currentComponentsCount, _currentItemsCount;
+  mutable QAtomicInteger<int> _rendersCounter;
+  GridboardData() : _warningDelay(DEFAULT_WARNING_DELAY),
+    _updatesCounter(0), _currentComponentsCount(0), _currentItemsCount(0) { }
   ~GridboardData() { } // FIXME delete roots when no longer shared by any copied instance
   QString id() const { return _id; }
   QString idQualifier() const { return QStringLiteral("gridboard"); }
@@ -264,6 +271,7 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
   GridboardData *d = data();
   if (!d || d->_dimensions.isEmpty())
     return;
+  ++d->_updatesCounter;
   // compute dimension values and identify possible roots
   QSet<TreeItem*> rootsSet;
   RegularExpressionMatchParamsProvider rempp(match);
@@ -289,6 +297,7 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
     //         << roots.first() << roots.first()->_name;
     mergeDataRoots(roots.first(), source, &d->_dataRoots,
                    &d->_dataIndexesByDimension);
+    --d->_currentComponentsCount;
   }
   TreeItem *root = roots.size() > 0 ? roots.first() : 0;
   // create new root if needed
@@ -296,6 +305,7 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
     root = new TreeItem(QString());
     d->_dataRoots.append(root);
     d->_dataIndexesByDimension[0].insert(dimensionValues[0], root);
+    ++d->_currentComponentsCount;
     //qDebug() << "creating new root" << dimensionValues[0]
     //         << d->_dataRoots.size() << d->_dataIndexesByDimension.size()
     //         << d->_dataIndexesByDimension[0].size();
@@ -312,6 +322,8 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
     //         << (child ? child->_children.size() : 0);
     if (!child) {
       child = new TreeItem(dimensionValues[i]);
+      if (i == d->_dimensions.size()-1)
+        ++d->_currentItemsCount;
       d->_dataIndexesByDimension[i].insert(dimensionValues[i], root);
       item->_children.insert(dimensionValues[i], child);
     }
@@ -325,6 +337,7 @@ QString Gridboard::toHtml() const {
   const GridboardData *d = data();
   if (!d)
     return QString("Null gridboard");
+  d->_rendersCounter.fetchAndAddOrdered(1);
   if (d->_dataRoots.isEmpty())
     return QString("No data so far");
   QString tableClass = d->_params.value(
@@ -482,6 +495,14 @@ QVariant GridboardData::uiData(int section, int role) const {
       return _params.toString(false, false);
     case 5:
       return _warningDelay/1e3;
+    case 6:
+      return _updatesCounter;
+    case 7:
+      return _rendersCounter.load();
+    case 8:
+      return _currentComponentsCount;
+    case 9:
+      return _currentItemsCount;
     }
     break;
   default:
