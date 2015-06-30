@@ -338,6 +338,15 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
   //qDebug() << "  ->" << item << item->_name << item->_children.size();
 }
 
+void Gridboard::clear() {
+  GridboardData *d = data();
+  d->_dataRoots.clear();
+  for (int i = 0; i < d->_dataIndexesByDimension.size(); ++i)
+    d->_dataIndexesByDimension[i].clear();
+  d->_currentComponentsCount = 0;
+  d->_currentItemsCount = 0;
+}
+
 QString Gridboard::toHtml() const {
   const GridboardData *d = data();
   if (!d)
@@ -514,3 +523,4 @@ QVariant GridboardData::uiData(int section, int role) const {
   }
   return QVariant();
 }
+

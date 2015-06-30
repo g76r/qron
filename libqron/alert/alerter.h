@@ -136,7 +136,7 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
   _cancelNotificationsCounter, _totalChannelsNotificationsCounter;
   int _rulesCacheSize, _rulesCacheHwm, _deduplicatingAlertsCount,
   _deduplicatingAlertsHwm;
-  AtomicValue<QList<Gridboard> > _gridboards;
+  AtomicValue<QList<Gridboard>> _gridboards;
 
 public:
   explicit Alerter();
@@ -239,6 +239,9 @@ public:
   /** Provide a gridboard given its id.
    * This method is thread-safe. */
   Gridboard gridboard(QString gridboardId) const;
+  /** Remove any current data from a gridboard given its id.
+   * This method is thread-safe. */
+  void clearGridboard(QString gridboardId);
 
 signals:
   /** A raisable alert (i.e. an alert handled through raiseAlert()/cancelAlert()

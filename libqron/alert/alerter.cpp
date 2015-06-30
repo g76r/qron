@@ -457,6 +457,16 @@ Gridboard Alerter::gridboard(QString gridboardId) const {
   return Gridboard();
 }
 
+void Alerter::clearGridboard(QString gridboardId) {
+  QList<Gridboard> &gridboards = _gridboards.lockData();
+  for (int i = 0; i < gridboards.size(); ++i)
+    if (gridboards[i].id() == gridboardId) {
+      gridboards[i].clear();
+      break;
+    }
+  _gridboards.unlockData();
+}
+
 qint64 Alerter::gridboardsEvaluationsCounter() const {
   return _gridboardThread->_gridboardsEvaluationsCounter;
 }

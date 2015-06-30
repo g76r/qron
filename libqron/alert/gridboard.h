@@ -30,6 +30,7 @@ public:
   Gridboard(PfNode node, Gridboard oldGridboard, ParamSet parentParams);
   QRegularExpression patternRegexp() const;
   void update(QRegularExpressionMatch match, Alert alert);
+  void clear();
   QString toHtml() const;
   // LATER QString toCsvTable() const;
   PfNode toPfNode() const;

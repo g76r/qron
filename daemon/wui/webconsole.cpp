@@ -701,6 +701,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     QString event = req.param("event");
     QString taskId = req.param("taskid");
     QString alertId = req.param("alertid");
+    QString gridboardId = req.param("gridboardid");
     if (alertId.isNull()) // LATER remove this backward compatibility trick
       alertId = req.param("alert");
     QString configId = req.param("configid");
@@ -765,6 +766,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       } else if (event == "emitAlert") {
         _scheduler->alerter()->emitAlert(alertId);
         message = "S:Emitted alert '"+alertId+"'.";
+      } else if (event == "clearGridboard") {
+        _scheduler->alerter()->clearGridboard(gridboardId);
+        message = "S:Cleared gridboard '"+gridboardId+"'.";
       } else if (event=="enableAllTasks") {
         bool enable = req.param("enable") == "true";
         _scheduler->enableAllTasks(enable);
@@ -829,6 +833,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/console/confirm") {
     QString event = req.param("event");
     QString taskId = req.param("taskid");
+    QString gridboardId = req.param("gridboardid");
     QString taskInstanceId = req.param("taskinstanceid");
     QString configId = req.param("configid");
     QString referer = req.header("Referer", "index.html");
@@ -850,6 +855,8 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         message = "remove configuration "+configId;
       } else if (event == "activateConfig") {
         message = "activate configuration "+configId;
+      } else if (event == "clearGridboard") {
+        message = "clear gridboard "+gridboardId;
       } else if (event == "requestTask") {
         message = "request task '"+taskId+"' execution";
       } else {
