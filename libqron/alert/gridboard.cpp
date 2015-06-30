@@ -226,22 +226,25 @@ Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
   GridboardData *d = new GridboardData;
   d->_id = node.contentAsString();
   if (d->_id.isEmpty()) {
-    // FIXME warn
+    Log::warning() << "gridboard with empty id: " << node.toString();
     delete d;
     return;
   }
   d->_label = node.attribute(QStringLiteral("label"));
   d->_pattern = node.attribute(QStringLiteral("pattern"));
   d->_patternRegexp = QRegularExpression(d->_pattern);
-  // FIXME warn if invalid
+  if (!d->_patternRegexp.isValid())
+    Log::warning() << "gridboard with invalid pattern: " << node.toString();
   foreach (const PfNode &child, node.childrenByName("dimension")) {
     Dimension dimension(child);
     if (dimension.isNull()) {
-      // FIXME warn
+      Log::warning() << "gridboard " << d->_id << " with invalid dimension: "
+                     << child.toString();
       continue;
     } else {
       if (d->_dimensions.contains(dimension)) {
-        // FIXME warn
+        Log::warning() << "gridboard " << d->_id
+                       << " with duplicate dimension: " << child.toString();
         continue;
       }
       d->_dimensions.append(dimension);
