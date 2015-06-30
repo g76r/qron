@@ -68,7 +68,7 @@ public:
   QString _name;
   GridStatus _status;
   QDateTime _timestamp;
-  QHash<QString,TreeItem*> _children;
+  QMap<QString,TreeItem*> _children;
   TreeItem(QString name) : _name(name), _status(Unknown) { }
   void setDataFromAlert(Alert alert) {
     _timestamp = QDateTime::currentDateTime();
@@ -383,8 +383,17 @@ QString Gridboard::toHtml() const {
   } else {
     dataRoots = d->_dataRoots;
   }
+  // sort components in the order of their first child
+  std::sort(dataRoots.begin(), dataRoots.end(),
+      [](const QSharedPointer<TreeItem> &a, const QSharedPointer<TreeItem> &b)
+            -> bool {
+    bool result =
+        !b->_children.isEmpty() // b cannot be greater if empty
+        && (a->_children.isEmpty() // a is lower if empty
+            || a->_children.first()->_name < b->_children.first()->_name);
+    return result;
+  });
   s = s+"<div class=\""+divClass+"\">\n";
-  // FIXME sort dataRoot by their first (in alpha order) child alpha order, or replace QHash<> children with QMap<>
   foreach (QSharedPointer<TreeItem> dataRoot, dataRoots) {
     QDateTime now = QDateTime::currentDateTime();
     QHash<QString,QHash<QString, TreeItem*> > matrix;
@@ -408,7 +417,6 @@ QString Gridboard::toHtml() const {
         //  qDebug() << "  " << statusToHumanReadableString(treeItem1->_children[0]->_status);
         //}
       }
-      qSort(rows);
       columns.append(fakeDimensionName);
       break;
     }
@@ -426,8 +434,6 @@ QString Gridboard::toHtml() const {
         }
       }
       columns = columnsSet.toList();
-      qSort(rows);
-      qSort(columns);
       break;
     }
     case 0:
