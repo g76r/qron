@@ -14,6 +14,7 @@
 #include "gridboard.h"
 #include "config/configutils.h"
 #include "util/regularexpressionmatchparamsprovider.h"
+#include <QSharedPointer>
 
 #define DEFAULT_WARNING_DELAY 600000 /* 600" = 10' */
 
@@ -155,8 +156,8 @@ public:
 } // unnamed namespace
 
 static void mergeDataRoots(
-    TreeItem *target, TreeItem *source,
-    QList<TreeItem*> *roots, QList<QHash<QString,TreeItem*>> *indexes) {
+    TreeItem *target, TreeItem *source, QList<QSharedPointer<TreeItem>> *roots,
+    QList<QHash<QString,TreeItem*>> *indexes) {
   // recursive merge tree
   target->merge(source);
   // replace references in indexes
@@ -167,7 +168,11 @@ static void mergeDataRoots(
         index.insert(dimensionValue, target);
   }
   // delete source
-  roots->removeOne(source);
+  for (int i = 0; i < roots->size(); ++i)
+    if (roots->at(i).data() == source) {
+      roots->removeAt(i);
+      break;
+    }
   delete source;
 }
 
@@ -178,14 +183,14 @@ public:
   QList<Dimension> _dimensions;
   ParamSet _params;
   qint64 _warningDelay;
-  QList<TreeItem*> _dataRoots;
+  QList<QSharedPointer<TreeItem>> _dataRoots;
   QList<QHash<QString,TreeItem*>> _dataIndexesByDimension;
   QStringList _commentsList;
   qint64 _updatesCounter, _currentComponentsCount, _currentItemsCount;
   mutable QAtomicInteger<int> _rendersCounter;
   GridboardData() : _warningDelay(DEFAULT_WARNING_DELAY),
     _updatesCounter(0), _currentComponentsCount(0), _currentItemsCount(0) { }
-  ~GridboardData() { } // FIXME delete roots when no longer shared by any copied instance
+  ~GridboardData() { }
   QString id() const { return _id; }
   QString idQualifier() const { return QStringLiteral("gridboard"); }
   int uiSectionCount() const {
@@ -303,7 +308,7 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
   // create new root if needed
   if (!root) {
     root = new TreeItem(QString());
-    d->_dataRoots.append(root);
+    d->_dataRoots.append(QSharedPointer<TreeItem>(root));
     d->_dataIndexesByDimension[0].insert(dimensionValues[0], root);
     ++d->_currentComponentsCount;
     //qDebug() << "creating new root" << dimensionValues[0]
@@ -357,21 +362,21 @@ QString Gridboard::toHtml() const {
   QString tdClassUnknown = d->_params.value(
         QStringLiteral("gridboard.tdclass.warning"));
   QString s;
-  QList<TreeItem*> dataRoots;
+  QList<QSharedPointer<TreeItem>> dataRoots;
   TreeItem *pseudoRoot = 0;
   if (d->_dimensions.size() == 1) {
     // with 1 dimension merge roots by replacing actual roots by a fake one
     pseudoRoot = new TreeItem(QString());
-    foreach (TreeItem *root, d->_dataRoots)
+    foreach (QSharedPointer<TreeItem> root, d->_dataRoots)
       foreach (TreeItem *child, root->_children)
         pseudoRoot->_children.insert(child->_name, child);
-    dataRoots.append(pseudoRoot);
+    dataRoots.append(QSharedPointer<TreeItem>(pseudoRoot));
   } else {
     dataRoots = d->_dataRoots;
   }
   s = s+"<div class=\""+divClass+"\">\n";
   // FIXME sort dataRoot by their first (in alpha order) child alpha order, or replace QHash<> children with QMap<>
-  foreach (TreeItem *dataRoot, dataRoots) {
+  foreach (QSharedPointer<TreeItem> dataRoot, dataRoots) {
     QDateTime now = QDateTime::currentDateTime();
     QHash<QString,QHash<QString, TreeItem*> > matrix;
     QStringList rows, columns;
@@ -467,7 +472,6 @@ QString Gridboard::toHtml() const {
   s += "</div>";
   if (pseudoRoot) {
     pseudoRoot->_children.clear(); // prevent deleting children
-    delete pseudoRoot;
   }
   return s;
 }
