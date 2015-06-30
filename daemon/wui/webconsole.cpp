@@ -28,6 +28,7 @@
 #include "ui/graphvizdiagramsbuilder.h"
 #include "ui/htmllogentryitemdelegate.h"
 #include "alert/alert.h"
+#include "alert/gridboard.h"
 
 #define CONFIG_TABLES_MAXROWS 500
 #define RAISED_ALERTS_MAXROWS 500
@@ -82,14 +83,17 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
               Alert("template"), Qt::DisplayRole);
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
-  PfNode nodeWithValidMatch("dummy");
-  nodeWithValidMatch.setAttribute("match", "**");
+  PfNode nodeWithValidPattern("dummy", "dummy");
+  nodeWithValidPattern.setAttribute("pattern", ".*");
   _alertSubscriptionsModel = new SharedUiItemsTableModel(this);
   _alertSubscriptionsModel->setHeaderDataFromTemplate(
-        AlertSubscription(nodeWithValidMatch, PfNode(), ParamSet()));
+        AlertSubscription(nodeWithValidPattern, PfNode(), ParamSet()));
   _alertSettingsModel = new SharedUiItemsTableModel(this);
   _alertSettingsModel->setHeaderDataFromTemplate(
-        AlertSettings(nodeWithValidMatch));
+        AlertSettings(nodeWithValidPattern));
+  _gridboardsModel = new SharedUiItemsTableModel(this);
+  _gridboardsModel->setHeaderDataFromTemplate(
+        Gridboard(nodeWithValidPattern, Gridboard(), ParamSet()));
   _taskInstancesHistoryModel =
       new TaskInstancesModel(this, TASK_INSTANCE_MAXROWS);
   _unfinishedTaskInstancetModel =
@@ -256,6 +260,17 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 1 << 2;
   _htmlAlertSettingsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlAlertSettingsView);
+  _htmlGridboardsView =
+      new HtmlTableView(this, "gridboards", CONFIG_TABLES_MAXROWS);
+  _htmlGridboardsView->setModel(_gridboardsModel);
+  ((HtmlItemDelegate*)_htmlGridboardsView->itemDelegate())
+      ->setPrefixForColumn(0, "<i class=\"icon-gauge\"></i>&nbsp;"
+                              "<a href=\"gridboard.html?gridboardid=%1\">", 0)
+      ->setSuffixForColumn(0, "</a>");
+  cols.clear();
+  cols << 0 << 1 << 2 << 3;
+  _htmlGridboardsView->setColumnIndexes(cols);
+  _wuiHandler->addView(_htmlGridboardsView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
   _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
@@ -518,6 +533,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
   _csvAlertSettingsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
   _csvAlertSettingsView->setModel(_alertSettingsModel);
+  _csvGridboardsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGridboardsView->setModel(_gridboardsModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
   _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =
@@ -1232,6 +1249,17 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     res.output()->write(_htmlAlertSettingsView->text().toUtf8().constData());
     return true;
   }
+  if (path == "/rest/csv/gridboards/list/v1") {
+    res.setContentType("text/csv;charset=UTF-8");
+    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+    res.output()->write(_csvGridboardsView->text().toUtf8().constData());
+    return true;
+  }
+  if (path == "/rest/html/gridboards/list/v1") {
+    res.setContentType("text/html;charset=UTF-8");
+    res.output()->write(_htmlGridboardsView->text().toUtf8().constData());
+    return true;
+  }
   if (path == "/rest/csv/log/info/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
@@ -1713,6 +1741,7 @@ void WebConsole::alerterConfigChanged(AlerterConfig config) {
   _alertSubscriptionsModel->setItems(config.alertSubscriptions());
   _alertSettingsModel->setItems(config.alertSettings());
   _alertChannelsModel->clear();
+  _gridboardsModel->setItems((config.gridboards()));
   foreach (const QString channel, config.channelsNames())
     _alertChannelsModel->setCellValue(channel, "enabled", "true");
 }

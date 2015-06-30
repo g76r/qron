@@ -71,7 +71,8 @@ class WebConsole : public HttpHandler {
   QSortFilterProxyModel *_sortedRaisableAlertsModel, *_sortedRaisedAlertModel;
   LastOccuredTextEventsModel *_lastPostedNoticesModel; // TODO change to SUILogModel
   SharedUiItemsLogModel *_lastEmittedAlertsModel;
-  SharedUiItemsTableModel *_alertSubscriptionsModel, *_alertSettingsModel;
+  SharedUiItemsTableModel *_alertSubscriptionsModel, *_alertSettingsModel,
+  *_gridboardsModel;
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
   QSortFilterProxyModel *_mainTasksModel, *_subtasksModel;
@@ -90,7 +91,7 @@ class WebConsole : public HttpHandler {
   *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
   *_htmlRaisableAlertsView, *_htmlRaisedView,
   *_htmlLastEmittedAlertsView, *_htmlAlertSubscriptionsView,
-  *_htmlAlertSettingsView, *_htmlWarningLogView,
+  *_htmlAlertSettingsView, *_htmlGridboardsView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
   *_htmlTaskInstancesView, *_htmlTaskInstancesView20,
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
@@ -109,8 +110,8 @@ class WebConsole : public HttpHandler {
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvRaisableAlertsView, *_csvLastEmittedAlertsView,
-  *_csvAlertSubscriptionsView, *_csvAlertSettingsView, *_csvLogView,
-  *_csvTaskInstancesView, *_csvTasksView,
+  *_csvAlertSubscriptionsView, *_csvAlertSettingsView, *_csvGridboardsView,
+  *_csvLogView, *_csvTaskInstancesView, *_csvTasksView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView,
   *_csvConfigsView, *_csvConfigHistoryView;
