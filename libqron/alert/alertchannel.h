@@ -30,12 +30,14 @@ class Alerter;
 class LIBQRONSHARED_EXPORT AlertChannel : public QObject {
   Q_OBJECT
   Q_DISABLE_COPY(AlertChannel)
+
 protected:
   QThread *_thread;
   QPointer<Alerter> _alerter;
 
 public:
-  AlertChannel(QObject *parent, QPointer<Alerter> alerter);
+  // can't have a parent because it lives it its own thread
+  AlertChannel(QPointer<Alerter> alerter);
   /** Asynchronously call implementation of doNotifyAlert() within dedicated
    * thread.
    * This method is thread-safe. */

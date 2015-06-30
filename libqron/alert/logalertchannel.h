@@ -24,7 +24,7 @@ class LIBQRONSHARED_EXPORT LogAlertChannel : public AlertChannel {
   Q_DISABLE_COPY(LogAlertChannel)
 
 public:
-  LogAlertChannel(QObject *parent, QPointer<Alerter> alerter);
+  LogAlertChannel(QPointer<Alerter> alerter);
   void doNotifyAlert(Alert alert);
 };
 

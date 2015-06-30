@@ -20,8 +20,8 @@
 #include <QThread>
 #include <QNetworkReply>
 
-UrlAlertChannel::UrlAlertChannel(QObject *parent, QPointer<Alerter> alerter) :
-  AlertChannel(parent, alerter), _nam(0) {
+UrlAlertChannel::UrlAlertChannel(QPointer<Alerter> alerter)
+  : AlertChannel(alerter), _nam(0) {
   _thread->setObjectName("UrlAlertChannelThread");
 }
 

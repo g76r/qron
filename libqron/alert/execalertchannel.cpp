@@ -13,8 +13,8 @@
  */
 #include "execalertchannel.h"
 
-ExecAlertChannel::ExecAlertChannel(QObject *parent, QPointer<Alerter> alerter)
-  : AlertChannel(parent, alerter) {
+ExecAlertChannel::ExecAlertChannel(QPointer<Alerter> alerter)
+  : AlertChannel(alerter) {
 }
 
 void ExecAlertChannel::doNotifyAlert(Alert alert) {

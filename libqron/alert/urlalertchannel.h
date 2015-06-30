@@ -26,7 +26,7 @@ class LIBQRONSHARED_EXPORT UrlAlertChannel : public AlertChannel {
   QNetworkAccessManager *_nam;
 
 public:
-  explicit UrlAlertChannel(QObject *parent, QPointer<Alerter> alerter);
+  explicit UrlAlertChannel(QPointer<Alerter> alerter);
   void doNotifyAlert(Alert alert);
 
 private slots:

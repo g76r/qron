@@ -35,7 +35,7 @@ class LIBQRONSHARED_EXPORT MailAlertChannel : public AlertChannel {
   QTimer *_asyncProcessingTimer;
 
 public:
-  explicit MailAlertChannel(QObject *parent, QPointer<Alerter> alerter);
+  explicit MailAlertChannel(QPointer<Alerter> alerter);
   ~MailAlertChannel();
   void doNotifyAlert(Alert alert);
   void setConfig(AlerterConfig config);

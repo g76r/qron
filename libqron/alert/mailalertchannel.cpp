@@ -54,9 +54,8 @@ public:
   }
 };
 
-MailAlertChannel::MailAlertChannel(QObject *parent,
-                                   QPointer<Alerter> alerter)
-  : AlertChannel(parent, alerter), _mailSender(0),
+MailAlertChannel::MailAlertChannel(QPointer<Alerter> alerter)
+  : AlertChannel(alerter), _mailSender(0),
     _asyncProcessingTimer(new QTimer) {
   _thread->setObjectName("MailAlertChannelThread");
   qRegisterMetaType<MailAlertQueue>("MailAlertQueue");
