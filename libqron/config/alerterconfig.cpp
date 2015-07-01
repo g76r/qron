@@ -237,6 +237,8 @@ PfNode AlerterConfig::toPfNode() const {
     node.appendChild(settings.toPfNode());
   foreach (const AlertSubscription &sub, d->_alertSubscriptions)
     node.appendChild(sub.toPfNode());
+  foreach (const Gridboard &gridboard, d->_gridboards)
+    node.appendChild(gridboard.toPfNode());
   return node;
 }
 

@@ -13,8 +13,9 @@
  */
 #include "gridboard.h"
 #include "config/configutils.h"
-#include "util/regularexpressionmatchparamsprovider.h"
+#include "util/regexpparamsprovider.h"
 #include <QSharedPointer>
+#include "util/stringsparamsprovider.h"
 
 #define DEFAULT_WARNING_DELAY 600000 /* 600" = 10' */
 
@@ -127,7 +128,7 @@ public:
     const DimensionData *d = data();
     if (!d)
       return PfNode();
-    PfNode node(QStringLiteral("dimension"));
+    PfNode node(QStringLiteral("dimension"), d->_id);
     if (d->_key != "%{"+d->_id+"}" && d->_key != "%"+d->_id)
       node.setAttribute(QStringLiteral("key"), d->_key);
     if (!d->_label.isEmpty())
@@ -252,8 +253,7 @@ Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
   for (int i = 0; i < d->_dimensions.size(); ++i)
     d->_dataIndexesByDimension.append(QHash<QString,TreeItem*>());
   d->_warningDelay = node.doubleAttribute(
-        QStringLiteral("warningdelay"),
-        DEFAULT_WARNING_DELAY/1e3)*1e3;
+        QStringLiteral("warningdelay"), DEFAULT_WARNING_DELAY/1e3)*1e3;
   d->_params.setParent(parentParams);
   ConfigUtils::loadParamSet(node, &d->_params, QStringLiteral("param"));
   ConfigUtils::loadComments(node, &d->_commentsList);
@@ -268,16 +268,15 @@ PfNode Gridboard::toPfNode() const {
     return PfNode();
   PfNode node(QStringLiteral("gridboard"), d->_id);
   ConfigUtils::writeComments(&node, d->_commentsList);
-  ConfigUtils::writeParamSet(&node, d->_params, QStringLiteral("param"));
-  if (d->_warningDelay != DEFAULT_WARNING_DELAY)
-    node.setAttribute(QStringLiteral("gridboard.warningdelay"),
-                      d->_warningDelay/1e3);
   if (!d->_label.isEmpty())
     node.setAttribute(QStringLiteral("label"), d->_label);
   node.setAttribute(QStringLiteral("pattern"), d->_pattern);
   foreach (const Dimension &dimension, d->_dimensions)
     node.appendChild(dimension.toPfNode());
   // LATER initvalues
+  ConfigUtils::writeParamSet(&node, d->_params, QStringLiteral("param"));
+  if (d->_warningDelay != DEFAULT_WARNING_DELAY)
+    node.setAttribute(QStringLiteral("warningdelay"), d->_warningDelay/1e3);
   return node;
 }
 
@@ -299,7 +298,7 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
   ++d->_updatesCounter;
   // compute dimension values and identify possible roots
   QSet<TreeItem*> componentsRootsSet;
-  RegularExpressionMatchParamsProvider rempp(match);
+  RegexpParamsProvider rempp(match);
   QStringList dimensionValues;
   for (int i = 0; i < d->_dimensions.size(); ++i) {
     QString dimensionValue =
@@ -353,6 +352,12 @@ void Gridboard::clear() {
     d->_dataIndexesByDimension[i].clear();
   d->_currentComponentsCount = 0;
   d->_currentItemsCount = 0;
+}
+
+inline QString affixed(QString text, QString prefixKey, QString suffixKey,
+                       ParamSet params) {
+  StringsParamsProvider slpp(text);
+  return params.value(prefixKey, &slpp)+text+params.value(suffixKey, &slpp);
 }
 
 QString Gridboard::toHtml() const {
@@ -441,9 +446,14 @@ QString Gridboard::toHtml() const {
     s = s+"<div class=\""+componentClass+"\"><table class=\""+tableClass
         +"\" id=\"gridboard."+d->_id+"\"><tr><th>&nbsp;</th>";
     foreach (const QString &column, columns)
-      s = s+"<th>"+column+"</th>";
+      s = s+"<th>"
+          +affixed(column, QStringLiteral("gridboard.columnprefix"),
+                   QStringLiteral("gridboard.columnsuffix"), d->_params)
+          +"</th>";
     foreach (const QString &row, rows) {
-      s = s+"</tr><tr><th>"+row+"</th>";
+      s = s+"</tr><tr><th>"
+          +affixed(row, QStringLiteral("gridboard.rowprefix"),
+                   QStringLiteral("gridboard.rowsuffix"), d->_params)+"</th>";
       foreach (const QString &column, columns) {
         TreeItem *item = matrix[row][column];
         GridStatus status = item ? item->_status : Unknown;
