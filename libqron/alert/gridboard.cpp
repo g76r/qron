@@ -354,10 +354,9 @@ void Gridboard::clear() {
   d->_currentItemsCount = 0;
 }
 
-inline QString affixed(QString text, QString prefixKey, QString suffixKey,
-                       ParamSet params) {
+inline QString formatted(QString text, QString key, ParamSet params) {
   StringsParamsProvider slpp(text);
-  return params.value(prefixKey, &slpp)+text+params.value(suffixKey, &slpp);
+  return params.value(key, text, true, &slpp);
 }
 
 QString Gridboard::toHtml() const {
@@ -447,13 +446,12 @@ QString Gridboard::toHtml() const {
         +"\" id=\"gridboard."+d->_id+"\"><tr><th>&nbsp;</th>";
     foreach (const QString &column, columns)
       s = s+"<th>"
-          +affixed(column, QStringLiteral("gridboard.columnprefix"),
-                   QStringLiteral("gridboard.columnsuffix"), d->_params)
-          +"</th>";
+          +formatted(column, QStringLiteral("gridboard.columnformat"),
+                     d->_params)+"</th>";
     foreach (const QString &row, rows) {
       s = s+"</tr><tr><th>"
-          +affixed(row, QStringLiteral("gridboard.rowprefix"),
-                   QStringLiteral("gridboard.rowsuffix"), d->_params)+"</th>";
+          +formatted(row, QStringLiteral("gridboard.rowformat"), d->_params)
+          +"</th>";
       foreach (const QString &column, columns) {
         TreeItem *item = matrix[row][column];
         GridStatus status = item ? item->_status : Unknown;
