@@ -168,7 +168,6 @@ static void mergeComponents(
       components->removeAt(i);
       break;
     }
-  delete source;
 }
 
 class GridboardData : public SharedUiItemData {
