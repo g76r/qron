@@ -429,6 +429,7 @@ QString Gridboard::toHtml() const {
         }
       }
       columns = columnsSet.toList();
+      qSort(columns);
       break;
     }
     case 0:
