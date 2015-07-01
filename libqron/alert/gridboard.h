@@ -45,6 +45,15 @@ class GridboardData;
  *   (dimension instance (key "%host:%port"))
  *   (warningdelay 30)
  * )
+ * (gridboard tasks
+ *   (label Tasks Alerts)
+ *   (pattern "^task\.(?<status>[^\.]+)\.(?<taskid>.+)$")
+ *   (dimension taskid)
+ *   (dimension status)
+ *   (warningdelay 2000000000)
+ *   (param gridboard.rowprefix '<a href="taskdoc.html?taskid=%1">')
+ *   (param gridboard.rowsuffix '</a>')
+ * )
  */
 class LIBQRONSHARED_EXPORT Gridboard : public SharedUiItem {
 public:
