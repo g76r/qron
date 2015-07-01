@@ -43,8 +43,8 @@ public:
     while (!isInterruptionRequested()) {
       Alert alert;
       if (_buffer.tryGet(&alert, 500)) {
-        QList<Gridboard> gridboards = _alerter->_gridboards;
         ++_gridboardsEvaluationsCounter;
+        QList<Gridboard> &gridboards = _alerter->_gridboards.lockData();
         for (int i = 0; i < gridboards.size(); ++i) {
           QRegularExpressionMatch match =
               gridboards[i].patternRegexp().match(alert.id());
@@ -53,7 +53,7 @@ public:
             gridboards[i].update(match, alert);
           }
         }
-        _alerter->_gridboards = gridboards;
+        _alerter->_gridboards.unlockData();
       }
     }
   }
