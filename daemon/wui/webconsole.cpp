@@ -730,7 +730,9 @@ bool WebConsole::handleRequest(
         foreach (QString key, params.keys())
           if (params.value(key).isEmpty())
             params.removeValue(key);
-        // FXIME evaluate overriding params within overriding > global context
+        params.removeValue("taskid");
+        params.removeValue("event");
+        // FIXME evaluate overriding params within overriding > global context
         QList<TaskInstance> instances = _scheduler->syncRequestTask(taskId, params);
         if (!instances.isEmpty()) {
           message = "S:Task '"+taskId+"' submitted for execution with id";
