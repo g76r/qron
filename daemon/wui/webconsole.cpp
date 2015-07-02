@@ -596,18 +596,11 @@ bool WebConsole::acceptRequest(HttpRequest req) {
   return true;
 }
 
-class WebConsoleParamsProvider : public ParamsProviderMerger {
+class WebConsoleParamsProvider : public ParamsProvider {
   WebConsole *_console;
-  HttpRequest _req;
-  ParamSet _globalParams;
 
 public:
-  WebConsoleParamsProvider(WebConsole *console, HttpRequest req)
-    : _console(console), _req(req),
-      _globalParams(_console && _console->_scheduler
-                    ? _console->_scheduler->globalParams() : ParamSet()) {
-    append(&_globalParams);
-  }
+  WebConsoleParamsProvider(WebConsole *console) : _console(console) { }
   QVariant paramValue(const QString key, const QVariant defaultValue,
                       QSet<QString> alreadyEvaluated) const {
     Q_UNUSED(alreadyEvaluated)
@@ -675,21 +668,25 @@ public:
         return _console->_scheduler->alerter()->gridboardsEvaluationsCounter();
       if (key == "gridboards.updatescounter")
         return _console->_scheduler->alerter()->gridboardsUpdatesCounter();
-    } else if (key.startsWith("cookie.")) {
-      return _req.base64Cookie(key.mid(7), defaultValue.toString());
     } else if (key.startsWith("configrepository.")) {
       if (key == "configrepository.configfilepath")
         return _console->_configFilePath;
       if (key == "configrepository.configrepopath")
         return _console->_configRepoPath;
     }
-    return ParamsProviderMerger::paramValue(key, defaultValue, alreadyEvaluated);
+    return defaultValue;
   }
 };
 
-bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
-                               ParamsProviderMerger *processingContext) {
+bool WebConsole::handleRequest(
+    HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *originalProcessingContext) {
   QString path = req.url().path();
+  ParamsProviderMerger processingContext(*originalProcessingContext);
+  WebConsoleParamsProvider webconsoleParams(this);
+  processingContext.append(&webconsoleParams);
+  if (_scheduler)
+    processingContext.append(_scheduler->globalParams());
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);
   if (path.isEmpty()) {
@@ -698,19 +695,16 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   }
   if (_accessControlEnabled
       && !_authorizer->authorize(
-        processingContext->paramValue("userid").toString(), path)) {
+        processingContext.paramValue("userid").toString(), path)) {
     res.setStatus(403);
     QUrl url(req.url());
     url.setPath("/console/adhoc.html");
     url.setQuery(QString());
     req.overrideUrl(url);
-    WebConsoleParamsProvider webconsoleParams(this, req);
-    processingContext->append(&webconsoleParams);
-    processingContext->overrideParamValue(
+    processingContext.overrideParamValue(
           "content", "<h2>Permission denied</h2>");
     res.clearCookie("message", "/");
-    _wuiHandler->handleRequest(req, res, processingContext);
-    processingContext->remove(&webconsoleParams);
+    _wuiHandler->handleRequest(req, res, &processingContext);
     return true;
   }
   //Log::fatal() << "hit: " << req.url().toString();
@@ -727,7 +721,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     QString referer = req.header("Referer");
     QString redirect = req.base64Cookie("redirect", referer);
     QString message;
-    QString userid = processingContext->paramValue("userid").toString();
+    QString userid = processingContext.paramValue("userid").toString();
     if (_scheduler) {
       if (event == "requestTask") {
         // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
@@ -890,12 +884,9 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
       url.setPath("/console/adhoc.html");
       url.setQuery(QString());
       req.overrideUrl(url);
-      WebConsoleParamsProvider webconsoleParams(this, req);
-      processingContext->append(&webconsoleParams);
-      processingContext->overrideParamValue("content", message);
+      processingContext.overrideParamValue("content", message);
       res.clearCookie("message", "/");
-      _wuiHandler->handleRequest(req, res, processingContext);
-      processingContext->remove(&webconsoleParams);
+      _wuiHandler->handleRequest(req, res, &processingContext);
       return true;
     } else {
       res.setBase64SessionCookie("message", "E:Scheduler is not available.",
@@ -940,13 +931,10 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
             "</form>\n"
             "</div>\n";
         // <button type="submit" class="btn">Sign in</button>
-        WebConsoleParamsProvider webconsoleParams(this, req);
-        processingContext->overrideParamValue("content", form);
-        processingContext->append(&webconsoleParams);
+        processingContext.overrideParamValue("content", form);
         res.setBase64SessionCookie("redirect", redirect, "/");
         res.clearCookie("message", "/");
-        _wuiHandler->handleRequest(req, res, processingContext);
-        processingContext->remove(&webconsoleParams);
+        _wuiHandler->handleRequest(req, res, &processingContext);
         return true;
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
@@ -965,21 +953,17 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     if (_scheduler) {
       Task task(_scheduler->task(taskId));
       if (!task.isNull()) {
-        WebConsoleParamsProvider webconsoleParams(this, req);
-        webconsoleParams.overrideParamValue(
+        processingContext.overrideParamValue(
               "pfconfig", QString::fromUtf8(
                 task.toPfNode().toPf(PfOptions().setShouldIndent()
                                      .setShouldWriteContentBeforeSubnodes()
                                      .setShouldIgnoreComment(false))));
-        TaskPseudoParamsProvider pseudoParams = task.pseudoParams();
+        TaskPseudoParamsProvider tppp = task.pseudoParams();
         SharedUiItemParamsProvider itemAsParams(task);
-        processingContext->save();
-        processingContext->append(&itemAsParams);
-        processingContext->append(&pseudoParams);
-        processingContext->append(&webconsoleParams);
+        processingContext.append(&tppp);
+        processingContext.append(&itemAsParams);
         res.clearCookie("message", "/");
-        _wuiHandler->handleRequest(req, res, processingContext);
-        processingContext->restore();
+        _wuiHandler->handleRequest(req, res, &processingContext);
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
@@ -998,16 +982,12 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     if (_scheduler) {
       Gridboard gridboard(_scheduler->alerter()->gridboard(gridboardId));
       if (!gridboard.isNull()) {
-        WebConsoleParamsProvider webconsoleParams(this, req);
         SharedUiItemParamsProvider itemAsParams(gridboard);
-        processingContext->save();
-        processingContext->append(&itemAsParams);
-        processingContext->append(&webconsoleParams);
-        processingContext->overrideParamValue("gridboard.data",
+        processingContext.append(&itemAsParams);
+        processingContext.overrideParamValue("gridboard.data",
                                               gridboard.toHtml());
         res.clearCookie("message", "/");
-        _wuiHandler->handleRequest(req, res, processingContext);
-        processingContext->restore();
+        _wuiHandler->handleRequest(req, res, &processingContext);
       } else {
         res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
                                    +"' not found.", "/");
@@ -1042,16 +1022,12 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         s.append('#').append(anchor);
       res.redirect(s);
     } else {
-      WebConsoleParamsProvider webconsoleParams(this, req);
-      processingContext->save();
-      processingContext->append(&webconsoleParams);
       SharedUiItemParamsProvider alerterConfigAsParams(_alerterConfig);
       if (path.startsWith("/console/alerts.html")) {
-        processingContext->append(&alerterConfigAsParams);
+        processingContext.append(&alerterConfigAsParams);
       }
       res.clearCookie("message", "/");
-      _wuiHandler->handleRequest(req, res, processingContext);
-      processingContext->restore();
+      _wuiHandler->handleRequest(req, res, &processingContext);
     }
     return true;
   }
@@ -1347,7 +1323,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   if (path == "/rest/svg/tasks/deploy/v1") {
-    return _tasksDeploymentDiagram->handleRequest(req, res, processingContext);
+    return _tasksDeploymentDiagram->handleRequest(req, res, &processingContext);
   }
   if (path == "/rest/dot/tasks/deploy/v1") {
     res.setContentType("text/html;charset=UTF-8");
@@ -1365,7 +1341,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
         GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
         h->setImageFormat(GraphvizImageHttpHandler::Svg);
         h->setSource(gv);
-        h->handleRequest(req, res, processingContext);
+        h->handleRequest(req, res, &processingContext);
         h->deleteLater();
         return true;
       }
@@ -1395,7 +1371,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
     return true;
   }
   if (path == "/rest/svg/tasks/trigger/v1") {
-    return _tasksTriggerDiagram->handleRequest(req, res, processingContext);
+    return _tasksTriggerDiagram->handleRequest(req, res, &processingContext);
   }
   if (path == "/rest/dot/tasks/trigger/v1") {
     res.setContentType("text/html;charset=UTF-8");
@@ -1405,7 +1381,7 @@ bool WebConsole::handleRequest(HttpRequest req, HttpResponse res,
   if (path == "/rest/pf/config/v1") {
     if (req.method() == HttpRequest::POST
         || req.method() == HttpRequest::PUT)
-      _configUploadHandler->handleRequest(req, res, processingContext);
+      _configUploadHandler->handleRequest(req, res, &processingContext);
     else {
       if (_configRepository) {
         QString configid = req.param("configid").trimmed();
