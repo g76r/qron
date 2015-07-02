@@ -12,6 +12,8 @@ requesttaskaction [label="RequestTask Action\nOverriding Params"]
 otheraction [label="Other Action Params\n(RequestUrl, RaiseAlert...)"]
 alerts [label="Alerts Params"]
 //webconsole [label="Web Console Params"]
+alertsub [label="Alert Subcription Params"]
+gridboard [label="Gridboard Params"]
 
 // runtime objects carrying params
 node [shape=ellipse]
@@ -33,12 +35,13 @@ taskgroup -- task [label="(otherwise)"]
 task -- taskinstance
 global -- event
 global -- notice
-global -- alerts
+global -- alerts -- alertsub
+alerts -- gridboard
 //global -- webconsole
 
 // parameter injection at runtime
 edge [dir=forward,arrowhead=vee,color=black,fontcolor=black]
-workflowtaskinstance -- taskinstance
+workflowtaskinstance -- taskinstance [label="(if workflow subtask)"]
 crontrigger -- taskinstance
 noticetrigger -- taskinstance
 event -- notice [label="postnotice\naction"]
