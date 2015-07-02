@@ -40,7 +40,7 @@ public:
   ParamSet _overridingParams;
   QDateTime _submission;
   bool _force;
-  TaskInstance _workflowInstanceTask;
+  TaskInstance _workflowTaskInstance;
   // note: since QDateTime (as most Qt classes) is not thread-safe, it cannot
   // be used in a mutable QSharedData field as soon as the object embedding the
   // QSharedData is used by several thread at a time, hence the qint64
@@ -60,15 +60,24 @@ public:
   mutable bool _abortable;
 
   TaskInstanceData(Task task, ParamSet overridingParams, bool force,
-                   TaskInstance workflowInstanceTask, quint64 groupId = 0)
+                   TaskInstance workflowTaskInstance, quint64 groupId = 0)
     : _id(newId()), _groupId(groupId ? groupId : _id),
       _idAsString(QString::number(_id)),
       _task(task), _overridingParams(overridingParams),
       _submission(QDateTime::currentDateTime()), _force(force),
-      _workflowInstanceTask(workflowInstanceTask),
+      _workflowTaskInstance(workflowTaskInstance),
       _start(LLONG_MIN), _end(LLONG_MIN),
       _success(false), _returnCode(0), _abortable(false) {
-    _overridingParams.setParent(task.params()); }
+    if (!workflowTaskInstance.isNull()) {
+      // inherit overriding params from workflow task instance
+      foreach (const QString &key,
+               workflowTaskInstance.overridingParams().keys(false))
+        if(!_overridingParams.contains(key, false))
+          _overridingParams.setValue(
+                key, workflowTaskInstance.overridingParams().rawValue(key));
+    }
+    _overridingParams.setParent(task.params());
+  }
   TaskInstanceData() : _id(0), _groupId(0), _force(false),
       _start(LLONG_MIN), _end(LLONG_MIN), _success(false), _returnCode(0),
     _abortable(false) { }
@@ -157,6 +166,11 @@ void TaskInstance::overrideParam(QString key, QString value) {
   TaskInstanceData *d = data();
   if (d)
     d->_overridingParams.setValue(key, value);
+}
+
+ParamSet TaskInstance::overridingParams() const {
+  const TaskInstanceData *d = data();
+  return d ? d->_overridingParams : ParamSet();
 }
 
 quint64 TaskInstance::idAsLong() const {
@@ -263,7 +277,7 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
     if (key == "!taskinstanceid") {
       return _taskInstance.id();
     } else if (key == "!workflowtaskinstanceid") {
-      return _taskInstance.workflowInstanceTask().id();
+      return _taskInstance.workflowTaskInstance().id();
     } else if (key == "!taskinstancegroupid") {
       return QString::number(_taskInstance.groupId());
     } else if (key == "!runningms") {
@@ -295,15 +309,15 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
             _taskInstance.endDatetime(), key.mid(8));
     } else if (key.startsWith("!workflowsubmissiondate")) {
       return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-            _taskInstance.workflowInstanceTask().submissionDatetime(),
+            _taskInstance.workflowTaskInstance().submissionDatetime(),
             key.mid(23));
     } else if (key.startsWith("!workflowstartdate")) {
       return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-            _taskInstance.workflowInstanceTask().startDatetime(),
+            _taskInstance.workflowTaskInstance().startDatetime(),
             key.mid(18));
     } else if (key.startsWith("!workflowenddate")) {
       return TimeFormats::toMultifieldSpecifiedCustomTimestamp(
-            _taskInstance.workflowInstanceTask().endDatetime(),
+            _taskInstance.workflowTaskInstance().endDatetime(),
             key.mid(16));
     } else if (key == "!target") {
       return _taskInstance.target().hostname();
@@ -353,12 +367,12 @@ void TaskInstance::setAbortable(bool abortable) const {
     d->_abortable = abortable;
 }
 
-TaskInstance TaskInstance::workflowInstanceTask() const {
+TaskInstance TaskInstance::workflowTaskInstance() const {
   const TaskInstanceData *d = data();
   if (d) {
     if (d->_task.mean() == Task::Workflow)
       return *this;
-    return d->_workflowInstanceTask;
+    return d->_workflowTaskInstance;
   }
   return TaskInstance();
 }

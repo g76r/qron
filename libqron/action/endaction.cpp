@@ -39,7 +39,7 @@ public:
                    << subscription.eventName();
       return;
     }
-    TaskInstance workflow = instance.workflowInstanceTask();
+    TaskInstance workflow = instance.workflowTaskInstance();
     QString sourceLocalId = subscription.subscriberName()
         .mid(subscription.subscriberName().indexOf(':')+1);
     WorkflowTransition transition(

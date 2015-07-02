@@ -32,16 +32,17 @@ public:
   enum TaskInstanceStatus { Queued, Running, Success, Failure, Canceled };
   TaskInstance();
   TaskInstance(const TaskInstance &);
-  TaskInstance(Task task, bool force, TaskInstance workflowInstanceTask,
+  TaskInstance(Task task, bool force, TaskInstance workflowTaskInstance,
                ParamSet overridingParams);
   TaskInstance(Task task, quint64 groupId, bool force,
-               TaskInstance workflowInstanceTask,
+               TaskInstance workflowTaskInstance,
                ParamSet overridingParams);
   TaskInstance &operator=(const TaskInstance &other) {
     SharedUiItem::operator=(other); return *this; }
   Task task() const;
   ParamSet params() const;
   void overrideParam(QString key, QString value);
+  ParamSet overridingParams() const;
   quint64 idAsLong() const;
   quint64 groupId() const;
   QDateTime submissionDatetime() const;
@@ -90,7 +91,7 @@ public:
   void setAbortable(bool abortable = true) const;
   /** Return workflow task instance when called on a subtask instance,
    * or *this if called on a workflow instance, otherwise a null instance. */
-  TaskInstance workflowInstanceTask() const;
+  TaskInstance workflowTaskInstance() const;
 
 private:
   TaskInstanceData *data();
