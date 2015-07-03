@@ -39,6 +39,10 @@
 #define SVG_BELONG_TO_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><a xlink:title=\"%1\"><text x=\"0\" y=\"15\">This task belongs to workflow \"%1\".</text></a></svg>"
 #define SVG_NOT_A_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">This task is not a workflow.</text></svg>"
 
+static PfNode nodeWithValidPattern =
+    PfNode("dummy", "dummy").setAttribute("pattern", ".*")
+    .setAttribute("dimension", "dummy");
+
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0),
   _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false) {
@@ -83,8 +87,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
               Alert("template"), Qt::DisplayRole);
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
-  PfNode nodeWithValidPattern("dummy", "dummy");
-  nodeWithValidPattern.setAttribute("pattern", ".*");
   _alertSubscriptionsModel = new SharedUiItemsTableModel(this);
   _alertSubscriptionsModel->setHeaderDataFromTemplate(
         AlertSubscription(nodeWithValidPattern, PfNode(), ParamSet()));

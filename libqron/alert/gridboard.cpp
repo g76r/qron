@@ -221,6 +221,9 @@ public:
   }
 };
 
+static Dimension fakeStatusDimension =
+    Dimension(PfNode("dimension", "status").setAttribute("key", "status"));
+
 Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
                      ParamSet parentParams) {
   GridboardData *d = new GridboardData;
@@ -249,6 +252,20 @@ Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
       }
       d->_dimensions.append(dimension);
     }
+  }
+  switch (d->_dimensions.size()) {
+  case 1:
+    // 1 dimension gridboards get a second constant dimension with a constant
+    // value
+    d->_dimensions.append(fakeStatusDimension);
+    break;
+  case 2:
+    break; // nothing to do
+  default:
+    Log::warning() << "gridboard with unsupported number of dimensions ("
+                   << d->_dimensions.size() << "): " << node.toString();
+    delete d;
+    return;
   }
   for (int i = 0; i < d->_dimensions.size(); ++i)
     d->_dataIndexesByDimension.append(QHash<QString,TreeItem*>());
@@ -383,18 +400,7 @@ QString Gridboard::toHtml() const {
   QString tdClassUnknown = d->_params.value(
         QStringLiteral("gridboard.tdclass.warning"));
   QString s;
-  QList<QSharedPointer<TreeItem>> componentRoots;
-  TreeItem *pseudoRoot = 0;
-  if (d->_dimensions.size() == 1) {
-    // with 1 dimension merge roots by replacing actual roots by a fake one
-    pseudoRoot = new TreeItem(QString());
-    foreach (QSharedPointer<TreeItem> componentRoot, d->_dataComponents)
-      foreach (TreeItem *child, componentRoot->_children)
-        pseudoRoot->_children.insert(child->_name, child);
-    componentRoots.append(QSharedPointer<TreeItem>(pseudoRoot));
-  } else {
-    componentRoots = d->_dataComponents;
-  }
+  QList<QSharedPointer<TreeItem>> componentRoots = d->_dataComponents;
   // sort components in the order of their first child
   std::sort(componentRoots.begin(), componentRoots.end(),
       [](const QSharedPointer<TreeItem> &a, const QSharedPointer<TreeItem> &b)
@@ -411,18 +417,8 @@ QString Gridboard::toHtml() const {
     QHash<QString,QHash<QString, TreeItem*> > matrix;
     QStringList rows, columns;
     switch (d->_dimensions.size()) {
-    case 1: {
-      // with 1 dimension convert to 2 dimensions by adding a fake column
-      QString fakeDimensionName = d->_params.value(
-            QStringLiteral("gridboard.fakedimensionname"),
-            QStringLiteral("status"));
-      foreach (TreeItem *treeItem1, componentRoot->_children) {
-        matrix[treeItem1->_name][fakeDimensionName] = treeItem1;
-        rows.append(treeItem1->_name);
-      }
-      columns.append(fakeDimensionName);
-      break;
-    }
+    case 0:
+      return "Gridboard with 0 dimensions.";
     case 2: {
       QSet<QString> columnsSet;
       foreach (TreeItem *treeItem1, componentRoot->_children) {
@@ -436,8 +432,6 @@ QString Gridboard::toHtml() const {
       qSort(columns);
       break;
     }
-    case 0:
-      return "Gridboard with 0 dimensions.";
     default:
       // LATER support more than 2 dimensions
       return "Gridboard do not yet support more than 2 dimensions.";
@@ -483,9 +477,6 @@ QString Gridboard::toHtml() const {
     s += "</tr></table></div>\n";
   }
   s += "</div>";
-  if (pseudoRoot) {
-    pseudoRoot->_children.clear(); // prevent deleting children
-  }
   return s;
 }
 
