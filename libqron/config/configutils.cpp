@@ -93,16 +93,20 @@ void ConfigUtils::writeEventSubscriptions(PfNode *parentnode,
       parentnode->appendChild(es.toPfNode());
 }
 
+static QRegularExpression unallowedInDimension("[^a-zA-Z0-9_]");
+static QRegularExpression unallowedInTask("[^a-zA-Z0-9_\\-]");
+static QRegularExpression unallowedInGroup("[^a-zA-Z0-9_\\-\\.]");
+static QRegularExpression unallowedInSubTask("[^a-zA-Z0-9_\\-:]");
+static QRegularExpression unallowedInHostname("[^a-zA-Z0-9\\-:\\[\\]\\.]");
+static QRegularExpression multipleDots("\\.\\.+");
+static QRegularExpression misplacedDot("(^\\.*)|(\\.*$)");
+static QString singleDot(".");
+
 QString ConfigUtils::sanitizeId(QString string, IdType idType) {
-  static QRegularExpression unallowedInTask("[^a-zA-Z0-9_\\-]");
-  static QRegularExpression unallowedInGroup("[^a-zA-Z0-9_\\-\\.]");
-  static QRegularExpression unallowedInSubTask("[^a-zA-Z0-9_\\-:]");
-  static QRegularExpression unallowedInHostname("[^a-zA-Z0-9\\-:\\[\\]\\.]");
-  static QRegularExpression multipleDots("\\.\\.+");
-  static QRegularExpression misplacedDot("(^\\.*)|(\\.*$)");
-  static QString singleDot(".");
   string = string.trimmed();
   switch (idType) {
+  case AlphanumId:
+    return string.remove(unallowedInDimension);
   case LocalId:
     return string.remove(unallowedInTask);
   case FullyQualifiedId:

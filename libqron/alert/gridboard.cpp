@@ -103,7 +103,7 @@ public:
 
 class DimensionData : public SharedUiItemData {
   friend class Dimension;
-  QString _id, _key, _label;
+  QString _id, _rawValue, _label;
   QString id() const { return _id; }
   QString idQualifier() const { return QStringLiteral("gridboarddimension"); }
 };
@@ -112,15 +112,16 @@ class Dimension : public SharedUiItem {
 public:
   Dimension(PfNode node) {
     DimensionData *d = new DimensionData;
-    d->_id = ConfigUtils::sanitizeId(node.contentAsString(),
-                                     ConfigUtils::LocalId);
+    QStringList idAndValue = node.contentAsTwoStringsList();
+    d->_id = ConfigUtils::sanitizeId(
+          idAndValue.value(1), ConfigUtils::AlphanumId);
     if (d->_id.isEmpty()) {
       delete d;
       return;
     }
-    d->_key = node.attribute(QStringLiteral("key"));
-    if (d->_key.isEmpty())
-      d->_key = "%{"+d->_id+"}";
+    d->_rawValue = idAndValue.value(2);
+    if (d->_rawValue.isEmpty())
+      d->_rawValue = "%"+d->_id;
     d->_label = node.attribute(QStringLiteral("label"));
     setData(d);
   }
@@ -128,9 +129,9 @@ public:
     const DimensionData *d = data();
     if (!d)
       return PfNode();
-    PfNode node(QStringLiteral("dimension"), d->_id);
-    if (d->_key != "%{"+d->_id+"}" && d->_key != "%"+d->_id)
-      node.setAttribute(QStringLiteral("key"), d->_key);
+    QString idAndValue;
+    idAndValue = d->_id+' '+d->_rawValue;
+    PfNode node(QStringLiteral("dimension"), idAndValue);
     if (!d->_label.isEmpty())
       node.setAttribute(QStringLiteral("label"), d->_label);
     return node;
@@ -138,9 +139,9 @@ public:
   const DimensionData *data() const {
     return (const DimensionData *)SharedUiItem::data();
   }
-  QString key() const {
+  QString rawValue() const {
     const DimensionData *d = data();
-    return d ? d->_key : QString();
+    return d ? d->_rawValue : QString();
   }
   QString label() const {
     const DimensionData *d = data();
@@ -222,7 +223,7 @@ public:
 };
 
 static Dimension fakeStatusDimension =
-    Dimension(PfNode("dimension", "status").setAttribute("key", "status"));
+    Dimension(PfNode("dimension", "status status"));
 
 Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
                      ParamSet parentParams) {
@@ -319,7 +320,7 @@ void Gridboard::update(QRegularExpressionMatch match, Alert alert) {
   QStringList dimensionValues;
   for (int i = 0; i < d->_dimensions.size(); ++i) {
     QString dimensionValue =
-        d->_params.evaluate(d->_dimensions[i].key(), &rempp);
+        d->_params.evaluate(d->_dimensions[i].rawValue(), &rempp);
     if (dimensionValue.isEmpty())
       dimensionValue = QStringLiteral("(none)");
     dimensionValues.append(dimensionValue);
@@ -495,7 +496,7 @@ QVariant GridboardData::uiData(int section, int role) const {
       // LATER optimize
       QStringList list;
       foreach (const Dimension &dimension, _dimensions) {
-        list << dimension.id()+"="+dimension.key();
+        list << dimension.id()+"="+dimension.rawValue();
       }
       return list.join(' ');
     }

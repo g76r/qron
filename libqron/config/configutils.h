@@ -26,6 +26,7 @@ class Scheduler;
 class LIBQRONSHARED_EXPORT ConfigUtils {
 public:
   enum IdType {
+    AlphanumId, // used for gridboards dimension: letters, digits and _.
     LocalId, // used for tasks, steps and resources; letters, digits, - and _
     FullyQualifiedId, // used for groups, hosts and clusters; local id plus .
     SubTaskId, // used for workflow subtasks; local id plus :
