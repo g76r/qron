@@ -1231,6 +1231,18 @@ bool WebConsole::handleRequest(
     res.output()->write(_htmlGridboardsView->text().toUtf8().constData());
     return true;
   }
+  if (path == "/rest/html/gridboard/render/v1") {
+    if (_scheduler) {
+      QString gridboardid = req.param(QStringLiteral("gridboardid"));
+      Gridboard gridboard = _scheduler->alerter()->gridboard(gridboardid);
+      res.setContentType("text/html;charset=UTF-8");
+      res.output()->write(gridboard.toHtml().toUtf8().constData());
+    } else {
+      res.setStatus(500);
+      res.output()->write("No scheduler.");
+    }
+    return true;
+  }
   if (path == "/rest/csv/log/info/v1") {
     res.setContentType("text/csv;charset=UTF-8");
     res.setHeader("Content-Disposition", "attachment; filename=table.csv");
