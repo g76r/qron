@@ -875,7 +875,7 @@ bool WebConsole::handleRequest(
       } else {
         message = event;
       }
-      message = "<div class=\"alert alert-block\">"
+      message = "<div class=\"well\">"
           "<h4 class=\"text-center\">Are you sure you want to "+message
           +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
           "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
@@ -907,7 +907,7 @@ bool WebConsole::handleRequest(
         // LATER requestform.html instead of adhoc.html, after finding a way to handle foreach loop
         url.setPath("/console/adhoc.html");
         req.overrideUrl(url);
-        QString form = "<div class=\"alert alert-block\">\n"
+        QString form = "<div class=\"well\">\n"
             "<h4 class=\"text-center\">About to start task "+taskId+"</h4>\n";
         if (task.label() != task.id())
           form +="<h4 class=\"text-center\">("+task.label()+")</h4>\n";
@@ -915,24 +915,17 @@ bool WebConsole::handleRequest(
         if (task.requestFormFields().size())
           form += "<p class=\"text-center\">Task parameters can be defined in "
               "the following form:";
-        form += "<p><form class=\"form-horizontal\" action=\"do\">";
+        form += "<p><form action=\"do\">";
         foreach (RequestFormField rff, task.requestFormFields())
-          form.append(rff.toHtmlFormFragment("input-xxlarge"));
-        /*form += "<p><p class=\"text-center\"><a class=\"btn btn-danger\" "
-            "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
-            +"\">Request task execution</a> <a class=\"btn\" href=\""
-            +referer+"\">Cancel</a>\n"*/
+          form.append(rff.toHtmlFormFragment());
         form += "<input type=\"hidden\" name=\"taskid\" value=\""+taskId+"\">\n"
             "<input type=\"hidden\" name=\"event\" value=\"requestTask\">\n"
-            "<p class=\"text-center\">"
-            //"<div class=\"control-group\"><div class=\"controls\">"
+            "<div><p><p class=\"text-center\">"
             "<button type=\"submit\" class=\"btn btn-danger\">"
             "Request task execution</button>\n"
-            "<a class=\"btn\" href=\""+referer+"\">Cancel</a>\n"
-            //"</div></div>\n"
+            "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
             "</form>\n"
             "</div>\n";
-        // <button type="submit" class="btn">Sign in</button>
         processingContext.overrideParamValue("content", form);
         res.setBase64SessionCookie("redirect", redirect, "/");
         res.clearCookie("message", "/");

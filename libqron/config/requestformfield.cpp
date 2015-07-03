@@ -71,16 +71,16 @@ RequestFormField &RequestFormField::operator=(const RequestFormField &rhs) {
   return *this;
 }
 
-QString RequestFormField::toHtmlFormFragment(QString inputClass) const {
+QString RequestFormField::toHtmlFormFragment() const {
   if (!d)
     return QString();
-  return "<div class=\"control-group\">\n"
+  return "<div class=\"from-group\">\n"
       "  <label class=\"control-label\" for=\""+d->_id+"\">"+d->_label
       +"</label>\n"
-      "  <div class=\"controls\">\n"
+      "  <div>\n"
       "    <input id=\""+d->_id+"\" name=\""+d->_id+"\" type=\"text\" "
       "placeholder=\""+d->_placeholder+"\" value=\""+d->_suggestion+"\""
-      "class=\""+inputClass+"\">\n"
+      "class=\"form-control\">\n"
       "  </div>\n"
       "</div>\n";
 }
