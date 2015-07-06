@@ -7,3 +7,8 @@ Testing alerts under heavy load:
 for j in {1..1000}; do (echo $j:; for i in {1..120}; do (curl "http://192.168.79.76:8086/console/do?event=emitAlert&alert=foo" &); done; sleep 1); done
 for j in {1..1000}; do (echo $j:; for i in {1..120}; do (curl "http://192.168.79.76:8086/console/do?event=raiseAlert&alert=bar" &); done; sleep 1); done
 for j in {1..1000}; do (echo $j:; for i in {1..120}; do (curl "http://192.168.79.76:8086/console/do?event=cancelAlert&alert=baz" &); done; sleep 1); done
+
+Testing gridboards clear + config reload:
+for j in {1..1000}; do (echo $j:; for i in {1..30}; do (curl "http://192.168.79.76:8086/console/do?event=reloadConfig" & curl "http://192.168.79.76:8086/console/do?event=activateConfig&configid=11de7d0f952621923dcf4f4cf7310ead6ba66594" & curl "http://192.168.79.76:8086/console/do?event=clearGridboard&gridboardid=tasks" &); done; sleep 10); done
+for j in {1..1000}; do (echo $j:; for i in {1..120}; do (curl "http://192.168.79.76:8086/rest/html/gridboard/render/v1?gridboardid=tasks" & ); done; sleep 10); done
+for j in {1..1000}; do (echo $j:; for i in {1..30}; do (curl "http://192.168.79.76:8086/console/do?event=clearGridboard&gridboardid=tasks" & curl "http://192.168.79.76:8086/rest/html/gridboard/render/v1?gridboardid=tasks" & ); done; sleep 10); done
