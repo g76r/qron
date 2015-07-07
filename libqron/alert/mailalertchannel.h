@@ -45,6 +45,7 @@ private slots:
 
 private:
   Q_INVOKABLE void processQueue(QVariant address);
+  inline static QStringList splittedAddresses(QString commaSeparatedAddresses);
 };
 
 #endif // MAILALERTCHANNEL_H

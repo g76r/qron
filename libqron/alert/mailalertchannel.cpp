@@ -76,9 +76,11 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
   QString queuesBeforeReload;
   QStringList queuesRemoved;
   QSet<QString> configuredAddresses;
-  foreach (const AlertSubscription &rule, config.alertSubscriptions())
-    if (rule.channelName() == QStringLiteral("mail"))
-      configuredAddresses.insert(rule.address(Alert()));
+  foreach (const AlertSubscription &subscription, config.alertSubscriptions())
+    if (subscription.channelName() == QStringLiteral("mail"))
+      foreach (const QString address,
+               splittedAddresses(subscription.address(Alert())))
+        configuredAddresses.insert(address);
   foreach(const MailAlertQueue *queue, _queues.values()) {
     queuesBeforeReload.append(queue->toString()).append("\n");
     if (queue->_alerts.size() + queue->_cancellations.size()
@@ -91,6 +93,8 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
   }
   Log::debug() << "mail queues before config reload: [\n" << queuesBeforeReload
                << "]";
+  Log::debug() << "mail addresses with configured subscription:"
+               << configuredAddresses.toList();
   Log::info() << "mail queues removed on reload: [ "
               << queuesRemoved.join(' ') << " ]";
   QMetaObject::invokeMethod(this, "asyncProcessing", Qt::QueuedConnection);
@@ -105,10 +109,17 @@ MailAlertChannel::~MailAlertChannel() {
     delete queue;
 }
 
-void MailAlertChannel::doNotifyAlert(Alert alert) {
+QStringList MailAlertChannel::splittedAddresses(
+    QString commaSeparatedAddresses) {
   // LATER support more complex mail addresses with quotes and so on
-  QStringList addresses = alert.subscription().address(alert).split(',');
-  foreach (QString address, addresses) {
+  QStringList addresses;
+  foreach (const QString &s, commaSeparatedAddresses.split(','))
+    addresses.append(s.trimmed());
+}
+
+void MailAlertChannel::doNotifyAlert(Alert alert) {
+  foreach (QString address,
+           splittedAddresses(alert.subscription().address(alert))) {
     address = address.trimmed();
     MailAlertQueue *queue = _queues.value(address);
     if (!queue) {
