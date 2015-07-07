@@ -30,6 +30,7 @@ unix:LIBS += -L../libqtpf -L../libqtssu
 LIBS += -lqtpf -lqtssu
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
+exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra
 #QMAKE_CXXFLAGS += -std=gnu++11
 #QMAKE_CXXFLAGS += -fno-elide-constructors
