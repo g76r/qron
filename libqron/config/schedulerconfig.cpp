@@ -24,40 +24,22 @@
 #define DEFAULT_MAXTOTALTASKINSTANCES 16
 #define DEFAULT_MAXQUEUEDREQUESTS 128
 
-namespace { // unnamed namespace hides even class definitions to other .cpp
-
-static QString _uiHeaderNames[] = {
+static QString _uiHeaderNames[] {
   "Id", // 0
   "Last Load Time",
   "Is Active",
   "Actions"
 };
 
-QSet<QString> excludedDescendantsForComments;
+static QSet<QString> excludedDescendantsForComments {
+  "task", "taskgroup", "host", "cluster", "calendar", "alerts",
+  "access-control", "onsuccess", "onfailure", "onfinish", "onstart",
+  "ontrigger", "onschedulerstart", "onconfigload", "onnotice"
+};
 
-class ExcludedDescendantsForCommentsInitializer {
-public:
-  ExcludedDescendantsForCommentsInitializer() {
-    excludedDescendantsForComments.insert("task");
-    excludedDescendantsForComments.insert("taskgroup");
-    excludedDescendantsForComments.insert("host");
-    excludedDescendantsForComments.insert("cluster");
-    excludedDescendantsForComments.insert("calendar");
-    excludedDescendantsForComments.insert("alerts");
-    excludedDescendantsForComments.insert("access-control");
-    excludedDescendantsForComments.insert("onsuccess");
-    excludedDescendantsForComments.insert("onfailure");
-    excludedDescendantsForComments.insert("onfinish");
-    excludedDescendantsForComments.insert("onstart");
-    excludedDescendantsForComments.insert("ontrigger");
-    excludedDescendantsForComments.insert("onstart");
-    excludedDescendantsForComments.insert("onschedulerstart");
-    excludedDescendantsForComments.insert("onconfigload");
-    excludedDescendantsForComments.insert("onnotice");
-  }
-} excludedDescendantsForCommentsInitializer;
+static QStringList excludeOnfinishSubscriptions { "onfinish" };
 
-static QStringList excludeOnfinishSubscriptions("onfinish");
+namespace {
 
 class RequestTaskActionLink {
 public:

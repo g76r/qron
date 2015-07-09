@@ -26,8 +26,6 @@
 #define DEFAULT_MIN_DELAY_BETWEEN_SEND 600000 /* 600" = 10' */
 #define DEFAULT_DELAY_BEFORE_FIRST_SEND 30000 /* 30" */
 
-namespace { // unnamed namespace hides even class definitions to other .cpp
-
 static QString _uiHeaderNames[] = {
   "Id", // 0
   "Params",
@@ -42,18 +40,9 @@ static QString _uiHeaderNames[] = {
 
 static QAtomicInt _sequence;
 
-QSet<QString> excludedDescendantsForComments;
-
-class ExcludedDescendantsForCommentsInitializer {
-public:
-  ExcludedDescendantsForCommentsInitializer() {
-    excludedDescendantsForComments.insert("subscription");
-    excludedDescendantsForComments.insert("settings");
-    excludedDescendantsForComments.insert("gridboard");
-  }
-} excludedDescendantsForCommentsInitializer;
-
-} // unnamed namespace
+static QSet<QString> excludedDescendantsForComments {
+  "subscription", "settings", "gridboard"
+};
 
 class AlerterConfigData : public SharedUiItemData {
 public:

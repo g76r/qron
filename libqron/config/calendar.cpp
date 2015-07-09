@@ -50,10 +50,11 @@ Calendar::Calendar() : d(new CalendarData) {
 Calendar::Calendar(const Calendar &rhs) : d(rhs.d) {
 }
 
+static QRegExp reDate("(([0-9]+)-([0-9]+)-([0-9]+))?"
+                      "(..)?(([0-9]+)-([0-9]+)-([0-9]+))?");
+
 Calendar::Calendar(PfNode node)
   : d(new CalendarData(node.contentAsString())) {
-  static QRegExp reDate("(([0-9]+)-([0-9]+)-([0-9]+))?"
-                        "(..)?(([0-9]+)-([0-9]+)-([0-9]+))?");
   bool atLessOneExclude = false;
   //qDebug() << "*** Calendar(PfNode): " << node.toPf();
   foreach(PfNode child, node.children()) {

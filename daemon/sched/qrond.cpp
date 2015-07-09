@@ -174,11 +174,12 @@ void Qrond::doShutdown(int returnCode) {
 }
 
 #ifdef Q_OS_UNIX
+static QMutex signalHandlerMutex;
+static bool shutingDown(false);
+
 static void signal_handler(int signal_number) {
   //qDebug() << "signal" << signal_number;
-  static QMutex mutex;
-  static bool shutingDown(false);
-  QMutexLocker ml(&mutex);
+  QMutexLocker ml(&signalHandlerMutex);
   if (shutingDown)
     return;
   switch (signal_number) {

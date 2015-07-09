@@ -34,26 +34,12 @@
 #include "task_p.h"
 #include "modelview/shareduiitemdocumentmanager.h"
 
-namespace { // unnamed namespace hides even class definitions to other .cpp
+static QSet<QString> excludedDescendantsForComments {
+  "subtask", "trigger", "onsuccess", "onfailure", "onfinish", "onstart",
+  "ontrigger"
+};
 
-QSet<QString> excludedDescendantsForComments;
-
-class ExcludedDescendantsForCommentsInitializer {
-public:
-  ExcludedDescendantsForCommentsInitializer() {
-    excludedDescendantsForComments.insert("subtask");
-    excludedDescendantsForComments.insert("trigger");
-    excludedDescendantsForComments.insert("onsuccess");
-    excludedDescendantsForComments.insert("onfailure");
-    excludedDescendantsForComments.insert("onfinish");
-    excludedDescendantsForComments.insert("onstart");
-    excludedDescendantsForComments.insert("ontrigger");
-  }
-} excludedDescendantsForCommentsInitializer;
-
-static QStringList excludeOnfinishSubscriptions("onfinish");
-
-} // unnamed namespace
+static QStringList excludeOnfinishSubscriptions { "onfinish" };
 
 class WorkflowTransitionData : public SharedUiItemData {
 public:

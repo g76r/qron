@@ -19,19 +19,7 @@
 #include <QFileSystemWatcher>
 #include "config/configutils.h"
 
-namespace { // unnamed namespace hides even class definitions to other .cpp
-
-QSet<QString> excludedDescendantsForComments;
-
-class ExcludedDescendantsForCommentsInitializer {
-public:
-  ExcludedDescendantsForCommentsInitializer() {
-    excludedDescendantsForComments.insert("user-file");
-    excludedDescendantsForComments.insert("user");
-  }
-} excludedDescendantsForCommentsInitializer;
-
-} // unnamed namespace
+static QSet<QString> excludedDescendantsForComments { "user-file", "user" };
 
 class AccessControlConfigData : public QSharedData {
 public:

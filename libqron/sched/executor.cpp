@@ -222,6 +222,8 @@ void Executor::processFinished(int exitCode, QProcess::ExitStatus exitStatus) {
   taskInstanceFinishing(success, exitCode);
 }
 
+static QRegExp sshConnClosed("^Connection to [^ ]* closed\\.$");
+
 void Executor::readyProcessWarningOutput() {
   // LATER provide a way to define several stderr filter regexps
   // LATER provide a way to choose log level for stderr
@@ -237,7 +239,6 @@ void Executor::readyProcessWarningOutput() {
         line = QString::fromUtf8(_errBuf.mid(0, i)).trimmed();
       _errBuf.remove(0, i+1);
       if (!line.isEmpty()) {
-        static QRegExp sshConnClosed("^Connection to [^ ]* closed\\.$");
         QList<QRegExp> filters(_instance.task().stderrFilters());
         if (filters.isEmpty() && _instance.task().mean() == Task::Ssh)
           filters.append(sshConnClosed);
@@ -324,6 +325,9 @@ void Executor::replyError(QNetworkReply::NetworkError error) {
   replyHasFinished(qobject_cast<QNetworkReply*>(sender()), error);
 }
 
+// LATER replace with QRegularExpression, but not without regression/unit tests
+static QRegExp asciiControlCharsRE("[\\0-\\x1f]+");
+
 void Executor::replyFinished() {
   replyHasFinished(qobject_cast<QNetworkReply*>(sender()),
                   QNetworkReply::NoError);
@@ -385,10 +389,10 @@ void Executor::replyHasFinished(QNetworkReply *reply,
         break;
       now = QDateTime::currentMSecsSinceEpoch();
     }
-    static QRegExp re("[\\0-\\x1f]+");
     Log::info(taskId, _instance.idAsLong())
         << "HTTP reply began with: "
-        << QString::fromUtf8(reply->read(maxsize)).replace(re, " ");
+        << QString::fromUtf8(reply->read(maxsize))
+           .replace(asciiControlCharsRE, QStringLiteral(" "));
   }
   reply->deleteLater();
   _reply = 0;
@@ -500,6 +504,8 @@ void Executor::finishWorkflow(bool success, int returnCode) {
   taskInstanceFinishing(success, returnCode);
 }
 
+static QRegularExpression notIdentifier("[^a-zA-Z_0-9]+");
+
 void Executor::prepareEnv(QProcessEnvironment *sysenv,
                           QHash<QString,QString> *setenv) {
   if (_instance.task().params().valueAsBool("clearsysenv"))
@@ -523,8 +529,7 @@ void Executor::prepareEnv(QProcessEnvironment *sysenv,
         << _instance.params().keys(true).size() << " ["
         << _instance.params().evaluate("%!yyyy %!taskid %{!taskid}", &_instance)
         << "]";*/
-    static QRegExp notIdentifier("[^a-zA-Z_0-9]+");
-    key.replace(QRegExp(notIdentifier), "_");
+    key.replace(notIdentifier, "_");
     if (key.size() > 0 && strchr("0123456789", key[0].toLatin1()))
       key.insert(0, '_');
     const QString value = _instance.params().evaluate(expr, &_instance);

@@ -36,9 +36,10 @@ void ConfigUtils::loadParamSet(PfNode parentnode, ParamSet *params,
   }
 }
 
+static QRegularExpression whitespace("\\s");
+
 void ConfigUtils::loadFlagSet(PfNode parentnode, ParamSet *unsetenv,
                               QString attrname) {
-  static QRegularExpression whitespace("\\s");
   if (!unsetenv)
     return;
   foreach (QString content, parentnode.stringChildrenByName(attrname)) {

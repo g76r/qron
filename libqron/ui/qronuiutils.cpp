@@ -29,10 +29,11 @@ QString QronUiUtils::resourcesAsString(QHash<QString,qint64> resources) {
   return s;
 }
 
+static QRegularExpression keyEqualNumberRE(
+      "\\s*([_a-zA-Z][_a-zA-Z0-9]*)\\s*=\\s*([0-9xXa-fA-F]+)\\s*");
+
 bool QronUiUtils::resourcesFromString(
     QString text, QHash<QString,qint64> *resources, QString *errorString) {
-  static QRegularExpression re(
-        "\\s*([_a-zA-Z][_a-zA-Z0-9]*)\\s*=\\s*([0-9xXa-fA-F]+)\\s*");
   //qDebug() << "QronUiUtils::resourcesFromString" << text << resources
   //         << errorString;
   if (!resources) {
@@ -40,7 +41,7 @@ bool QronUiUtils::resourcesFromString(
       *errorString = "*resources is null";
     return false;
   }
-  QRegularExpressionMatchIterator i = re.globalMatch(text);
+  QRegularExpressionMatchIterator i = keyEqualNumberRE.globalMatch(text);
   while (i.hasNext()) {
     QRegularExpressionMatch match = i.next();
     QString key = match.captured(1);

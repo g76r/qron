@@ -13,6 +13,7 @@
  */
 #include "htmlalertitemdelegate.h"
 #include "alert/alert.h"
+#include <QRegularExpression>
 
 #define ACTION_COLUMN 5
 
@@ -21,11 +22,11 @@ HtmlAlertItemDelegate::HtmlAlertItemDelegate(
   : HtmlItemDelegate(parent), _canRaiseAndCancel(canRaiseAndCancel) {
 }
 
+static QRegularExpression taskIdInAlertRE{"^task\\.[^\\.]+\\.(.*)$"};
+
 QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
   if (index.column() == ACTION_COLUMN) {
-    static QRegExp taskIdInAlert("task\\.[^\\.]+\\.(.*)");
-    QRegExp re = taskIdInAlert;
     QString alertId = index.model()->index(index.row(), 0, index.parent())
         .data().toString();
     QString status = index.model()->index(index.row(), 1, index.parent())
@@ -47,15 +48,17 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
                    "event=raiseAlert&alert="+alertId
                    +"&immediately=true\"><i class=\"icon-bell\">"
                     "</i></a></span> ");
-    if (re.exactMatch(alertId)) {
+    QRegularExpressionMatch match = taskIdInAlertRE.match(alertId);
+    if (match.hasMatch()) {
       text.append(
             /* related task log */
             " <span class=\"label label-info\" title=\"Related tasks log\">"
             "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?regexp=^[^ ]* "
-            +re.cap(1)+"[/:]\"><i class=\"icon-file-text\"></i></a></span>"
+            +match.captured(1)+"[/:]\"><i class=\"icon-file-text\"></i></a>"
+            "</span>"
             /* related task taskdoc */
             " <span class=\"label label-info\" title=\"Detailed task info\">"
-            "<a href=\"taskdoc.html?taskid="+re.cap(1)+"\">"
+            "<a href=\"taskdoc.html?taskid="+match.captured(1)+"\">"
             "<i class=\"icon-cog\"></i></a></span>");
     }
   }
