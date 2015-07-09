@@ -327,13 +327,6 @@ void MailAlertChannel::processQueue(QVariant address) {
             "<p>Please note that there is a delay between alert rise and "
             "cancellation requests (timestamps above) and the actual time this "
             "mail is sent (send timestamp of the mail).\n");
-      if (_alerter) {
-        s = "This is the 'canceldelay' parameter, currently configured to "
-            +QString::number(_config.dropDelay()*.001)
-            +" seconds.";
-        text.append(s);
-        html.append("<p>").append(s);
-      }
       html.append("</body></html>\n");
       // mime handling
       QString body;
