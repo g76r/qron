@@ -284,7 +284,7 @@ void Executor::httpMean() {
   QString command = _instance.task().command();
   if (command.size() && command.at(0) == '/')
     command = command.mid(1);
-  QString url = "http://"+_instance.target().hostname()+command;
+  QString url = "http://"+_instance.target().hostname()+"/"+command;
   TaskInstancePseudoParamsProvider ppp = _instance.pseudoParams();
   ParametrizedNetworkRequest networkRequest(
         url, _instance.params(), &ppp, _instance.task().id(), _instance.idAsLong());
