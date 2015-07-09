@@ -76,15 +76,18 @@ void MailAlertChannel::setConfig(AlerterConfig config) {
   QString queuesBeforeReload;
   QStringList queuesRemoved;
   QSet<QString> configuredAddresses;
-  foreach (const AlertSubscription &subscription, config.alertSubscriptions())
+  foreach (const AlertSubscription &subscription, _config.alertSubscriptions())
     if (subscription.channelName() == QStringLiteral("mail"))
-      foreach (const QString address,
+      foreach (const QString &address,
                splittedAddresses(subscription.address(Alert())))
         configuredAddresses.insert(address);
+  QDateTime maxLastMailDate = // date until when an empty queue can be removed
+      QDateTime::currentDateTime().addMSecs(-_config.remindPeriod());
   foreach(const MailAlertQueue *queue, _queues.values()) {
     queuesBeforeReload.append(queue->toString()).append("\n");
-    if (queue->_alerts.size() + queue->_cancellations.size()
-        + queue->_reminders.size() == 0
+    if ((queue->_alerts.size() + queue->_cancellations.size()
+         + queue->_reminders.size() == 0
+         && queue->_lastMail < maxLastMailDate)
         || !configuredAddresses.contains(queue->_address)) {
       _queues.remove(queue->_address);
       queuesRemoved.append(queue->_address);
@@ -115,6 +118,7 @@ QStringList MailAlertChannel::splittedAddresses(
   QStringList addresses;
   foreach (const QString &s, commaSeparatedAddresses.split(','))
     addresses.append(s.trimmed());
+  return addresses;
 }
 
 void MailAlertChannel::doNotifyAlert(Alert alert) {
