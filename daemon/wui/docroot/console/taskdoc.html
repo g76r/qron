@@ -91,8 +91,8 @@
         <div class="col-md-12">
           <h3>Raw Task Configuration</h3>
           <p><a class="btn btn-primary" target="_blank" href="../rest/pf/task/config/v1?taskid=<?value:11?>"><i class="icon-file"></i> PF</a>
-          <pre><?=%{=htmlencode:%pfconfig}?></pre>
-        </div> 
+          <pre><?=%{=rawvalue:pfconfig:h}?></pre>
+        </div>
       </div>
 
 <?include:common-scripts.html?>
