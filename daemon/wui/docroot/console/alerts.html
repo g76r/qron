@@ -56,7 +56,7 @@
         </div>
       </div>
       <div class="row">
-        <div class="col-md-8">
+        <div class="col-md-12">
           <h2>Recently Emitted Alerts</h2>
           <form class="form-inline" action="do" type="GET">
           <a class="btn btn-primary" href="../rest/csv/alerts/emitted/v1"><i class="icon-file-excel"></i> CSV</a>
@@ -69,25 +69,6 @@
           </span>
           </form>
           <p><?view:lastemittedalerts?>
-        </div>
-        <div class="col-md-4">
-          <h2>Alerter Stats</h2>
-          <p><table class="table table-condensed table-hover">
-            <tr><th>&nbsp;</th><th>Total Requests</th><th>Immediate Requests</th><th>Notifications / Updates</th></tr>
-            <tr><th>Raise</th><td><?=%{alerter.raiserequestscounter}?></td><td><?=%{alerter.raiseimmediaterequestscounter}?></td><td><?=%{alerter.raisenotificationscounter}?></td></tr>
-            <tr><th>Cancel</th><td><?=%{alerter.cancelrequestscounter}?></td><td><?=%{alerter.cancelimmediaterequestscounter}?></td><td><?=%{alerter.cancelnotificationscounter}?></td></tr>
-            <tr><th>Emit</th><td><?=%{alerter.emitrequestscounter}?></td><td>&nbsp;</td><td><?=%{alerter.emitnotificationscounter}?></td></tr>
-            <tr><th>Per Channel</th><td>&nbsp;</td><td>&nbsp;</td><td><?=%{alerter.totalchannelsnotificationscounter}?></td></tr>
-            <tr><th>To Gridboards</th><td><?=%{gridboards.evaluationscounter}?></td><td>&nbsp;</td><td><?=%{gridboards.updatescounter}?></td></tr>
-          </table>
-          <p><table class="table table-condensed table-hover">
-            <tr><th>Rules Cache Size (current)</th><td><?=%{alerter.rulescachesize}?></td></tr>
-            <tr><th>Rules Cache Size (high water mark)</th><td><?=%{alerter.rulescachehwm}?></td></tr>
-            <tr><th>Deduplicating Alerts Count (current)</th><td><?=%{alerter.deduplicatingalertscount}?></td></tr>
-            <tr><th>Deduplicating Alerts Count (high water mark)</th><td><?=%{alerter.deduplicatingalertshwm}?></td></tr>
-            <tr><th>Alerts Subscriptions Count</th><td><?=%{alerter.alertsubscriptionscount}?></td></tr>
-            <tr><th>Alerts Settings Count</th><td><?=%{alerter.alertsettingscount}?></td></tr>
-          </table>
         </div>
       </div>
       <div class="row">
@@ -167,6 +148,27 @@
             <tr><th>Remind Period</th><td><?=%7?></td></tr>
           </table>  
         </div>
+      </div>
+      <div class="row">
+      <div class="col-md-8">
+        <h2>Alerter Stats</h2>
+        <p><table class="table table-condensed table-hover">
+          <tr><th>&nbsp;</th><th>Total Requests</th><th>Immediate Requests</th><th>Notifications / Updates</th></tr>
+          <tr><th>Raise</th><td><?=%{alerter.raiserequestscounter}?></td><td><?=%{alerter.raiseimmediaterequestscounter}?></td><td><?=%{alerter.raisenotificationscounter}?></td></tr>
+          <tr><th>Cancel</th><td><?=%{alerter.cancelrequestscounter}?></td><td><?=%{alerter.cancelimmediaterequestscounter}?></td><td><?=%{alerter.cancelnotificationscounter}?></td></tr>
+          <tr><th>Emit</th><td><?=%{alerter.emitrequestscounter}?></td><td>&nbsp;</td><td><?=%{alerter.emitnotificationscounter}?></td></tr>
+          <tr><th>Per Channel</th><td>&nbsp;</td><td>&nbsp;</td><td><?=%{alerter.totalchannelsnotificationscounter}?></td></tr>
+          <tr><th>To Gridboards</th><td><?=%{gridboards.evaluationscounter}?></td><td>&nbsp;</td><td><?=%{gridboards.updatescounter}?></td></tr>
+        </table>
+        <p><table class="table table-condensed table-hover">
+          <tr><th>Rules Cache Size (current)</th><td><?=%{alerter.rulescachesize}?></td></tr>
+          <tr><th>Rules Cache Size (high water mark)</th><td><?=%{alerter.rulescachehwm}?></td></tr>
+          <tr><th>Deduplicating Alerts Count (current)</th><td><?=%{alerter.deduplicatingalertscount}?></td></tr>
+          <tr><th>Deduplicating Alerts Count (high water mark)</th><td><?=%{alerter.deduplicatingalertshwm}?></td></tr>
+          <tr><th>Alerts Subscriptions Count</th><td><?=%{alerter.alertsubscriptionscount}?></td></tr>
+          <tr><th>Alerts Settings Count</th><td><?=%{alerter.alertsettingscount}?></td></tr>
+        </table>
+      </div>
       </div>
      </div>
 
