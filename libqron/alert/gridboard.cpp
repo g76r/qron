@@ -31,7 +31,8 @@ static QString _uiHeaderNames[] = {
   "Updates Counter",
   "Renders Counter",
   "Current Components Count",
-  "Current Items Count"
+  "Current Items Count",
+  "Additional Info" // 10
 };
 
 enum GridStatus { Unknown, Ok, Long, Error };
@@ -174,7 +175,7 @@ static void mergeComponents(
 
 class GridboardData : public SharedUiItemData {
 public:
-  QString _id, _label, _pattern;
+  QString _id, _label, _pattern, _info;
   QRegularExpression _patternRegexp;
   QList<Dimension> _dimensions;
   ParamSet _params;
@@ -235,6 +236,7 @@ Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
     return;
   }
   d->_label = node.attribute(QStringLiteral("label"));
+  d->_info = node.attribute(QStringLiteral("info"));
   d->_pattern = node.attribute(QStringLiteral("pattern"));
   d->_patternRegexp = QRegularExpression(d->_pattern);
   if (!d->_patternRegexp.isValid())
@@ -286,8 +288,10 @@ PfNode Gridboard::toPfNode() const {
     return PfNode();
   PfNode node(QStringLiteral("gridboard"), d->_id);
   ConfigUtils::writeComments(&node, d->_commentsList);
-  if (!d->_label.isEmpty())
+  if (!d->_label.isEmpty() && d->_label != d->_id)
     node.setAttribute(QStringLiteral("label"), d->_label);
+  if (!d->_info.isEmpty())
+    node.setAttribute(QStringLiteral("info"), d->_info);
   node.setAttribute(QStringLiteral("pattern"), d->_pattern);
   foreach (const Dimension &dimension, d->_dimensions)
     node.appendChild(dimension.toPfNode());
@@ -489,7 +493,9 @@ QVariant GridboardData::uiData(int section, int role) const {
     case 0:
       return _id;
     case 1:
-      return _label;
+      if (role == Qt::EditRole)
+        return _label == _id ? QVariant() : _label;
+      return _label.isEmpty() ? _id : _label;
     case 2:
       return _pattern;
     case 3: {
@@ -512,6 +518,8 @@ QVariant GridboardData::uiData(int section, int role) const {
       return _currentComponentsCount;
     case 9:
       return _currentItemsCount;
+    case 10:
+      return _info;
     }
     break;
   default:

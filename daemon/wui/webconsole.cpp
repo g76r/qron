@@ -266,11 +266,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       new HtmlTableView(this, "gridboards", CONFIG_TABLES_MAXROWS);
   _htmlGridboardsView->setModel(_gridboardsModel);
   ((HtmlItemDelegate*)_htmlGridboardsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-gauge\"></i>&nbsp;"
+      ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
                               "<a href=\"gridboard.html?gridboardid=%1\">", 0)
-      ->setSuffixForColumn(0, "</a>");
+      ->setSuffixForColumn(1, "</a>");
   cols.clear();
-  cols << 0 << 1 << 2 << 3;
+  cols << 1 << 2 << 3;
   _htmlGridboardsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlGridboardsView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);

@@ -1175,7 +1175,7 @@ PfNode TaskData::toPfNode() const {
 
   // description and execution attributes
   node.setAttribute("taskgroup", _group.id());
-  if (!_label.isEmpty() && _label != _id)
+  if (!_label.isEmpty() && _label != _localId)
     node.setAttribute("label", _label);
   if (!_info.isEmpty())
     node.setAttribute("info", _info);

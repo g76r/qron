@@ -17,7 +17,7 @@
 
       <div class="row">
         <div class="col-md-12">
-          <h2>Gridboard: <?=%{=default:1:0:}?></h2>
+          <h2>Gridboard: <?value:1?></h2>
           <p><a class="btn btn-danger" href="confirm?event=clearGridboard&gridboardid=<?value:0?>"><i class="icon-trash"></i> Clear gridboard</a>
           <a class="btn btn-info" href="alerts.html">Alerts page &raquo;</a>
         </div>
@@ -28,6 +28,7 @@
           <p><table class="table table-condensed table-hover">
           <tr><th>Id</th><td><?value:0:?></td></tr>
           <tr><th>Label</th><td><?value:1:?></td></tr>
+          <tr><th>Additional Info</th><td><?value:10:?></td></tr>
           <tr><th>Pattern</th><td><?value:2:?></td></tr>
           <tr><th>Dimensions</th><td><?value:3:?></td></tr>
           </table>
