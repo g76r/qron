@@ -223,9 +223,6 @@ public:
   }
 };
 
-static Dimension fakeStatusDimension =
-    Dimension(PfNode("dimension", "status status"));
-
 Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
                      ParamSet parentParams) {
   GridboardData *d = new GridboardData;
@@ -260,7 +257,7 @@ Gridboard::Gridboard(PfNode node, Gridboard oldGridboard,
   case 1:
     // 1 dimension gridboards get a second constant dimension with a constant
     // value
-    d->_dimensions.append(fakeStatusDimension);
+    d->_dimensions.append(Dimension(PfNode("dimension", "status status")));
     break;
   case 2:
     break; // nothing to do
