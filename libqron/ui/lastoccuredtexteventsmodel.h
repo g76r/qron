@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -42,7 +42,7 @@ protected:
   QList<OccuredEvent> _occuredEvents;
   int _maxrows;
   QString _eventName;
-  QList<QString> _additionnalColumnsHeaders;
+  QStringList _additionnalColumnsHeaders;
 
 public:
   // LATER limit last emited alerts by age
