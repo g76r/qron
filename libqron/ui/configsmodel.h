@@ -21,13 +21,16 @@
 class LIBQRONSHARED_EXPORT ConfigsModel : public SharedUiItemsTableModel {
   Q_OBJECT
   Q_DISABLE_COPY(ConfigsModel)
+  QString _activeConfigId;
 
 public:
   explicit ConfigsModel(QObject *parent = 0);
+  QVariant data(const QModelIndex &index, int role) const override;
 
 public slots:
   void configAdded(QString id, SchedulerConfig config);
   void configRemoved(QString id);
+  void configActivated(QString id);
 };
 
 #endif // CONFIGMODEL_H

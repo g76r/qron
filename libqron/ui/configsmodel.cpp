@@ -33,4 +33,24 @@ void ConfigsModel::configRemoved(QString id) {
     } else
       ++ i;
   }
+  if (id == _activeConfigId)
+    _activeConfigId = QString();
+}
+
+void ConfigsModel::configActivated(QString id) {
+  QSet<QString> ids { id, _activeConfigId };
+  _activeConfigId = id;
+  for (int i = 0; i < rowCount(); ++i) {
+    if (ids.contains(itemAt(i).id()))
+      emit dataChanged(index(i, 0), index(i, columnCount()-1));
+  }
+}
+
+QVariant ConfigsModel::data(const QModelIndex &index, int role) const {
+  if (index.column() == 2 && role == Qt::DisplayRole) {
+    SharedUiItem item = itemAt(index.row());
+    return item.id() == _activeConfigId
+        ? QStringLiteral("active") : QStringLiteral("-");
+  }
+  return SharedUiItemsTableModel::data(index, role);
 }

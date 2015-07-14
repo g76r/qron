@@ -1596,18 +1596,20 @@ void WebConsole::setConfigPaths(QString configFilePath,
 void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
   if (_configRepository) {
     // Configs
-    disconnect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
-               _configsModel, SLOT(configAdded(QString,SchedulerConfig)));
-    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
-               _configsModel, SLOT(configRemoved(QString)));
-    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-               _htmlConfigsDelegate, SLOT(configActivated(QString)));
-    disconnect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
-               _htmlConfigsDelegate, SLOT(configAdded(QString)));
-    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
-               _htmlConfigsDelegate, SLOT(configRemoved(QString)));
-    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-               _htmlConfigsView, SLOT(invalidateCache())); // needed for isActive and actions columns
+    disconnect(_configRepository, &ConfigRepository::configAdded,
+               _configsModel, &ConfigsModel::configAdded);
+    disconnect(_configRepository, &ConfigRepository::configRemoved,
+               _configsModel, &ConfigsModel::configRemoved);
+    disconnect(_configRepository, &ConfigRepository::configActivated,
+               _configsModel, &ConfigsModel::configActivated);
+    disconnect(_configRepository, &ConfigRepository::configAdded,
+               _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configAdded);
+    disconnect(_configRepository, &ConfigRepository::configRemoved,
+               _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configRemoved);
+    disconnect(_configRepository, &ConfigRepository::configActivated,
+               _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configActivated);
+    disconnect(_configRepository, &ConfigRepository::configActivated,
+               _htmlConfigsView, &HtmlTableView::invalidateCache); // needed for isActive and actions columns
     // Config History
     disconnect(_configRepository, SIGNAL(historyReset(QList<ConfigHistoryEntry>)),
                _configHistoryModel, SLOT(historyReset(QList<ConfigHistoryEntry>)));
@@ -1630,18 +1632,20 @@ void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
   _configUploadHandler->setConfigRepository(_configRepository);
   if (_configRepository) {
     // Configs
-    connect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
-            _configsModel, SLOT(configAdded(QString,SchedulerConfig)));
-    connect(_configRepository, SIGNAL(configRemoved(QString)),
-            _configsModel, SLOT(configRemoved(QString)));
-    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-             _htmlConfigsDelegate, SLOT(configActivated(QString)));
-    connect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
-            _htmlConfigsDelegate, SLOT(configAdded(QString)));
-    connect(_configRepository, SIGNAL(configRemoved(QString)),
-            _htmlConfigsDelegate, SLOT(configRemoved(QString)));
-    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-            _htmlConfigsView, SLOT(invalidateCache())); // needed for isActive and actions columns
+    connect(_configRepository, &ConfigRepository::configAdded,
+            _configsModel, &ConfigsModel::configAdded);
+    connect(_configRepository, &ConfigRepository::configRemoved,
+            _configsModel, &ConfigsModel::configRemoved);
+    connect(_configRepository, &ConfigRepository::configActivated,
+            _configsModel, &ConfigsModel::configActivated);
+    connect(_configRepository, &ConfigRepository::configAdded,
+            _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configAdded);
+    connect(_configRepository, &ConfigRepository::configRemoved,
+            _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configRemoved);
+    connect(_configRepository, &ConfigRepository::configActivated,
+            _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configActivated);
+    connect(_configRepository, &ConfigRepository::configActivated,
+            _htmlConfigsView, &HtmlTableView::invalidateCache); // needed for isActive and actions columns
     // Config History
     connect(_configRepository, SIGNAL(historyReset(QList<ConfigHistoryEntry>)),
             _configHistoryModel, SLOT(historyReset(QList<ConfigHistoryEntry>)));
