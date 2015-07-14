@@ -201,7 +201,7 @@ static void signal_handler(int signal_number) {
 #endif
 
 int main(int argc, char *argv[]) {
-  srand(time(0));
+  qsrand(time(0));
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   Log::addConsoleLogger(Log::Info, true);
