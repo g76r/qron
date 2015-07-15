@@ -33,16 +33,15 @@ void ConfigsModel::configRemoved(QString id) {
     } else
       ++ i;
   }
-  if (id == _activeConfigId)
-    _activeConfigId = QString();
 }
 
 void ConfigsModel::configActivated(QString id) {
   QSet<QString> ids { id, _activeConfigId };
   _activeConfigId = id;
   for (int i = 0; i < rowCount(); ++i) {
-    if (ids.contains(itemAt(i).id()))
+    if (ids.contains(itemAt(i).id())) {
       emit dataChanged(index(i, 0), index(i, columnCount()-1));
+    }
   }
 }
 

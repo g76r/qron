@@ -1597,17 +1597,17 @@ void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
   if (_configRepository) {
     // Configs
     disconnect(_configRepository, &ConfigRepository::configAdded,
-               _configsModel, &ConfigsModel::configAdded);
-    disconnect(_configRepository, &ConfigRepository::configRemoved,
-               _configsModel, &ConfigsModel::configRemoved);
-    disconnect(_configRepository, &ConfigRepository::configActivated,
-               _configsModel, &ConfigsModel::configActivated);
-    disconnect(_configRepository, &ConfigRepository::configAdded,
                _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configAdded);
     disconnect(_configRepository, &ConfigRepository::configRemoved,
                _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configRemoved);
     disconnect(_configRepository, &ConfigRepository::configActivated,
                _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configActivated);
+    disconnect(_configRepository, &ConfigRepository::configAdded,
+               _configsModel, &ConfigsModel::configAdded);
+    disconnect(_configRepository, &ConfigRepository::configRemoved,
+               _configsModel, &ConfigsModel::configRemoved);
+    disconnect(_configRepository, &ConfigRepository::configActivated,
+               _configsModel, &ConfigsModel::configActivated);
     disconnect(_configRepository, &ConfigRepository::configActivated,
                _htmlConfigsView, &HtmlTableView::invalidateCache); // needed for isActive and actions columns
     // Config History
@@ -1633,17 +1633,17 @@ void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
   if (_configRepository) {
     // Configs
     connect(_configRepository, &ConfigRepository::configAdded,
-            _configsModel, &ConfigsModel::configAdded);
-    connect(_configRepository, &ConfigRepository::configRemoved,
-            _configsModel, &ConfigsModel::configRemoved);
-    connect(_configRepository, &ConfigRepository::configActivated,
-            _configsModel, &ConfigsModel::configActivated);
-    connect(_configRepository, &ConfigRepository::configAdded,
             _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configAdded);
     connect(_configRepository, &ConfigRepository::configRemoved,
             _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configRemoved);
     connect(_configRepository, &ConfigRepository::configActivated,
             _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configActivated);
+    connect(_configRepository, &ConfigRepository::configAdded,
+            _configsModel, &ConfigsModel::configAdded);
+    connect(_configRepository, &ConfigRepository::configRemoved,
+            _configsModel, &ConfigsModel::configRemoved);
+    connect(_configRepository, &ConfigRepository::configActivated,
+            _configsModel, &ConfigsModel::configActivated);
     connect(_configRepository, &ConfigRepository::configActivated,
             _htmlConfigsView, &HtmlTableView::invalidateCache); // needed for isActive and actions columns
     // Config History
