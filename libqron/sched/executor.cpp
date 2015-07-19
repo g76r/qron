@@ -522,6 +522,8 @@ void Executor::prepareEnv(QProcessEnvironment *sysenv,
   // then build setenv evaluated paramset that may be used apart from merging
   // into sysenv
   foreach (QString key, _instance.task().setenv().keys()) {
+    if (key.isEmpty())
+      continue;
     const QString expr(_instance.task().setenv().rawValue(key));
     /*Log::debug(_instance.task().id(), _instance.id())
         << "setting environment variable " << key << "="
@@ -530,9 +532,10 @@ void Executor::prepareEnv(QProcessEnvironment *sysenv,
         << _instance.params().evaluate("%!yyyy %!taskid %{!taskid}", &_instance)
         << "]";*/
     key.replace(notIdentifier, "_");
-    if (key.size() > 0 && strchr("0123456789", key[0].toLatin1()))
+    if (key[0] >= '0' && key[0] <= '9' )
       key.insert(0, '_');
-    const QString value = _instance.params().evaluate(expr, &_instance);
+    TaskInstancePseudoParamsProvider ppp(_instance);
+    const QString value = _instance.params().evaluate(expr, &ppp);
     if (setenv)
       setenv->insert(key, value);
     sysenv->insert(key, value);

@@ -321,11 +321,9 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
             key.mid(16));
     } else if (key == "!target") {
       return _taskInstance.target().hostname();
-    } else {
-      return _taskPseudoParams.paramValue(key, defaultValue, alreadyEvaluated);
     }
   }
-  return defaultValue;
+  return _taskPseudoParams.paramValue(key, defaultValue, alreadyEvaluated);
 }
 
 void TaskInstance::setTask(Task task) {
