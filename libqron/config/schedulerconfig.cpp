@@ -160,8 +160,6 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
   _unsetenv.clear();
   _globalParams.clear();
   _setenv.clear();
-  _setenv.setValue("TASKINSTANCEID", "%!taskinstanceid");
-  _setenv.setValue("TASKID", "%!taskid");
   ConfigUtils::loadParamSet(root, &_globalParams, "param");
   ConfigUtils::loadParamSet(root, &_setenv, "setenv");
   ConfigUtils::loadFlagSet(root, &_unsetenv, "unsetenv");
@@ -616,8 +614,6 @@ PfNode SchedulerConfig::toPfNode() const {
   PfNode node("config");
   ConfigUtils::writeComments(&node, d->_commentsList);
   ParamSet configuredSetenv = d->_setenv;
-  configuredSetenv.removeValue(QStringLiteral("TASKID"));
-  configuredSetenv.removeValue(QStringLiteral("TASKINSTANCEID"));
   ConfigUtils::writeParamSet(&node, d->_globalParams, QStringLiteral("param"));
   ConfigUtils::writeParamSet(&node, configuredSetenv, QStringLiteral("setenv"));
   ConfigUtils::writeFlagSet(&node, d->_unsetenv, QStringLiteral("unsetenv"));
