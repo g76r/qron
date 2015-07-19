@@ -56,9 +56,9 @@
       </div>
     </nav>
     <div class="container">
-      <div class="alert alert-block <?=%{=switch:%{=left/%{cookie.message}/1}:S:alert-success:I:alert-info:E:alert-danger:hidden}?>">
+      <div class="alert alert-block <?=%{=switch:%{=left/%{!cookie!message}/1}:S:alert-success:I:alert-info:E:alert-danger:hidden}?>">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <h4><?=%{=switch:%{=left/%{cookie.message}/1}:S:Success:I:Info:E:Error!:W:Warning!}?></h4>
-        <?=%{=mid:%{cookie.message}:2}?>
+        <h4><?=%{=switch:%{=left/%{!cookie!message}/1}:S:Success:I:Info:E:Error!:W:Warning!}?></h4>
+        <?=%{=mid:%{!cookie!message}:2}?>
       </div>
 <!-- end of header -->
