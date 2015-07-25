@@ -1147,8 +1147,6 @@ Qt::ItemFlags TaskData::uiFlags(int section) const {
   case 8:
     flags |= Qt::ItemIsEditable;
   }
-  if (_mean != Task::Workflow)
-    flags |= Qt::ItemNeverHasChildren;
   return flags;
 }
 

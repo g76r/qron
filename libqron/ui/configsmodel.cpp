@@ -21,7 +21,7 @@ ConfigsModel::ConfigsModel(QObject *parent)
 void ConfigsModel::configAdded(QString id, SchedulerConfig config) {
   Q_UNUSED(id)
   configRemoved(id);
-  insertItemAt(0, config);
+  insertItemAt(config, 0);
 }
 
 void ConfigsModel::configRemoved(QString id) {

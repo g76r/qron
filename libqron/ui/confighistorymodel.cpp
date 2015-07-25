@@ -25,5 +25,5 @@ void ConfigHistoryModel::historyReset(QList<ConfigHistoryEntry> history) {
 }
 
 void ConfigHistoryModel::historyEntryAppended(ConfigHistoryEntry historyEntry) {
-  insertItemAt(0, historyEntry);
+  insertItemAt(historyEntry, 0);
 }
