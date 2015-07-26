@@ -17,7 +17,7 @@
 #include <QSharedPointer>
 #include "util/stringsparamsprovider.h"
 
-#define DEFAULT_WARNING_DELAY 600000 /* 600" = 10' */
+#define DEFAULT_WARNING_DELAY 0 /* 0 means disabled */
 
 namespace {
 
@@ -451,7 +451,7 @@ QString Gridboard::toHtml() const {
       foreach (const QString &column, columns) {
         TreeItem *item = matrix[row][column];
         GridStatus status = item ? item->_status : Unknown;
-        if (status == Ok && item &&
+        if (status == Ok && item && d->_warningDelay &&
             item->_timestamp.msecsTo(now) > d->_warningDelay)
           status = Long;
         QString tdClass;
