@@ -148,7 +148,7 @@ bool ClusterData::setUiData(int section, const QVariant &value,
     _id = s;
     return true;
     //case 1:
-    // TODO host list: parse
+    // LATER host list: parse
   case 2: {
     Cluster::Balancing balancing
         = Cluster::balancingFromString(value.toString().trimmed().toLower());

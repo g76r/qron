@@ -28,6 +28,12 @@ class LIBQRONSHARED_EXPORT ClustersModel : public SharedUiItemsTreeModel {
 
 public:
   explicit ClustersModel(QObject *parent = 0);
+  bool canDropMimeData(
+      const QMimeData *data, Qt::DropAction action, int targetRow,
+      int targetColumn, const QModelIndex &targetParent) const;
+  bool dropMimeData(
+      const QMimeData *data, Qt::DropAction action, int targetRow,
+      int targetColumn, const QModelIndex &targetParent);
 
 public slots:
   void configReset(SchedulerConfig config);

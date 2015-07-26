@@ -13,6 +13,8 @@
  */
 #include "clustersmodel.h"
 #include <QStringList>
+#include <QMimeData>
+#include "modelview/shareduiitemdocumentmanager.h"
 
 /** Host reference item, to be inserted as cluster child in cluster tree,
  * without the need of having real host items which data are inconsistent with
@@ -25,7 +27,7 @@ class HostReference : public SharedUiItem {
     HostReferenceData() { }
     HostReferenceData(QString cluster, QString host)
       : _cluster(cluster), _host(host) { }
-    QString id() const { return _cluster+"-"+_host; }
+    QString id() const { return _host; }
     QString idQualifier() const { return "hostreference"; }
     int uiSectionCount() const { return 1; }
     QVariant uiData(int section, int role) const {
@@ -101,3 +103,87 @@ void ClustersModel::determineItemPlaceInTree(
   }
 }
 
+bool ClustersModel::canDropMimeData(
+    const QMimeData *data, Qt::DropAction action, int targetRow,
+    int targetColumn, const QModelIndex &targetParent) const {
+  Q_UNUSED(action)
+  Q_UNUSED(targetRow)
+  Q_UNUSED(targetColumn)
+  if (!documentManager())
+    return false; // cannot change data w/o dm
+  if (!targetParent.isValid())
+    return false; // cannot drop on root
+  QList<QByteArray> idsArrays =
+      data->data(suiQualifiedIdsListMimeType).split(' ');
+  if (idsArrays.isEmpty())
+    return false; // nothing to drop
+  foreach (const QByteArray &qualifiedId, idsArrays) {
+    QString idQualifier = QString::fromUtf8(
+          qualifiedId.left(qualifiedId.indexOf(':')));
+    if (idQualifier != QStringLiteral("host")
+        && idQualifier != QStringLiteral("hostreference"))
+      return false; // can only drop hosts
+  }
+  return true;
+}
+
+// Dropping on ClustersModel provide mean to reorder hosts of a given cluster
+// and/or to add hosts to it.
+// Therefore we support dropping a mix of hosts and hostreferences and make no
+// assumption of whether they already belong to targeted cluster or not.
+bool ClustersModel::dropMimeData(
+    const QMimeData *data, Qt::DropAction action, int targetRow,
+    int targetColumn, const QModelIndex &targetParent) {
+  Q_UNUSED(action)
+  Q_UNUSED(targetColumn)
+  //qDebug() << "ClustersModel::dropMimeData";
+  // find cluster to modify
+  QModelIndex clusterIndex;
+  if (targetParent.parent().isValid()) {
+    clusterIndex = targetParent.parent();
+    targetRow = targetParent.row();
+  } else {
+    clusterIndex = targetParent;
+    targetRow = 0;
+  }
+  SharedUiItem clusterSui = itemAt(clusterIndex);
+  Cluster &oldCluster = static_cast<Cluster&>(clusterSui);
+  //qDebug() << "  dropping on:" << oldCluster.id() << targetRow;
+  // build new hosts id list
+  QList<QByteArray> idsArrays =
+      data->data(suiQualifiedIdsListMimeType).split(' ');
+  QStringList oldHostsIds, droppedHostsIds, newHostsIds;
+  foreach (const Host &host, oldCluster.hosts())
+    oldHostsIds << host.id();
+  foreach (const QByteArray &qualifiedId, idsArrays)
+    droppedHostsIds += QString::fromUtf8(
+          qualifiedId.mid(qualifiedId.indexOf(':')+1));
+  int oldIndex = 0;
+  for (; oldIndex < targetRow && oldIndex < oldHostsIds.size(); ++oldIndex) {
+    const QString &id = oldHostsIds[oldIndex];
+    if (!droppedHostsIds.contains(id))
+      newHostsIds << id;
+  }
+  for (int droppedIndex = 0; droppedIndex < droppedHostsIds.size();
+       ++droppedIndex)
+    newHostsIds << droppedHostsIds[droppedIndex];
+  for (; oldIndex < oldHostsIds.size(); ++oldIndex) {
+    const QString &id = oldHostsIds[oldIndex];
+    if (!droppedHostsIds.contains(id))
+      newHostsIds << id;
+  }
+  //qDebug() << "  new hosts list:" << newHostsIds;
+  //qDebug() << "  old one:" << oldHostsIds << "dropped one:" << droppedHostsIds;
+  // update actual data item
+  QList<Host> newHosts;
+  foreach (const QString &id, newHostsIds) {
+    SharedUiItem hostSui =
+        documentManager()->itemById(QStringLiteral("host"), id);
+    Host &host = static_cast<Host&>(hostSui);
+    newHosts << host;
+  }
+  Cluster newCluster = oldCluster;
+  newCluster.setHosts(newHosts);
+  documentManager()->changeItem(newCluster, oldCluster);
+  return true;
+}
