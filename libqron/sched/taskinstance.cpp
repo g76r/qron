@@ -320,6 +320,8 @@ QVariant TaskInstancePseudoParamsProvider::paramValue(
             _taskInstance.workflowTaskInstance().endDatetime(),
             key.mid(16));
     } else if (key == "!target") {
+      return _taskInstance.target().id();
+    } else if (key == "!targethostname") {
       return _taskInstance.target().hostname();
     }
   }

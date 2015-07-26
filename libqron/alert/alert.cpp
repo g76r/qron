@@ -22,7 +22,8 @@ static QString _uiHeaderNames[] = {
   "Cancellation Date",
   "Actions", // 5
   "Count",
-  "Id With Count"
+  "Id With Count",
+  "Status"
 };
 
 class AlertData : public SharedUiItemData {
@@ -79,6 +80,8 @@ QVariant AlertData::uiData(int section, int role) const {
       return _count;
     case 7:
       return idWithCount();
+    case 8:
+      return Alert::statusToString(_status);
     }
     break;
   default:
@@ -217,10 +220,20 @@ QVariant AlertPseudoParamsProvider::paramValue(
       return _alert.idWithCount();
     } else if (key == "!alertcount") {
       return _alert.count();
-    } else if (key == "!alertdate") {
+    } else if (key == "!risedate") {
       // LATER make this support !date formating
       return _alert.riseDate()
           .toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
+    } else if (key == "!cancellationdate") {
+      // LATER make this support !date formating
+      return _alert.cancellationDate()
+          .toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
+    } else if (key == "!visibilitydate") {
+      // LATER make this support !date formating
+      return _alert.visibilityDate()
+          .toString(QStringLiteral("yyyy-MM-dd hh:mm:ss,zzz"));
+    } else if (key == "!alertstatus") {
+      return _alert.statusToString();
     }
     // MAYDO guess !taskid from "task.{failure,toolong...}.%!taskid" alerts
   }
