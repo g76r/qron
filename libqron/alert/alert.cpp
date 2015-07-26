@@ -22,7 +22,8 @@ static QString _uiHeaderNames[] = {
   "Cancellation Date",
   "Actions", // 5
   "Count",
-  "Id With Count"
+  "Id With Count",
+  "Status"
 };
 
 class AlertData : public SharedUiItemData {
@@ -79,6 +80,8 @@ QVariant AlertData::uiData(int section, int role) const {
       return _count;
     case 7:
       return idWithCount();
+    case 8:
+      return Alert::statusToString(_status);
     }
     break;
   default:
