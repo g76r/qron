@@ -137,13 +137,13 @@ QVariant AlertSettingsData::uiData(int section, int role) const {
       if (_riseDelay > 0)
         s.append("risedelay=").append(QString::number(_riseDelay/1e3));
       if (_mayriseDelay > 0)
-        s.append("mayrisedelay=").append(QString::number(_mayriseDelay/1e3));
+        s.append(" mayrisedelay=").append(QString::number(_mayriseDelay/1e3));
       if (_dropDelay > 0)
-        s.append("dropdelay=").append(QString::number(_dropDelay/1e3));
+        s.append(" dropdelay=").append(QString::number(_dropDelay/1e3));
       if (_duplicateEmitDelay > 0)
-        s.append("duplicateemitdelay=")
+        s.append(" duplicateemitdelay=")
             .append(QString::number(_duplicateEmitDelay/1e3));
-      return s;
+      return s.trimmed();
     }
     case 3:
       return _riseDelay > 0 ? _riseDelay/1e3 : QVariant();
