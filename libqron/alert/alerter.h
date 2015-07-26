@@ -127,7 +127,6 @@ class LIBQRONSHARED_EXPORT Alerter : public QObject {
   QHash<QString,AlertChannel*> _channels;
   QHash<QString,Alert> _raisableAlerts;
   QHash<QString,Alert> _emittedAlerts;
-  // LATER periodicaly remove unused values from the cache, using LRU or other algorithm
   QHash<QString, QList<AlertSubscription> > _alertSubscriptionsCache;
   QHash<QString, AlertSettings> _alertSettingsCache;
   qint64 _emitRequestsCounter, _raiseRequestsCounter, _cancelRequestsCounter,

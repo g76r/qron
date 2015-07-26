@@ -324,6 +324,14 @@ void Alerter::asyncProcessing() {
   _rulesCacheSize = qMax(_alertSubscriptionsCache.size(),
                          _alertSettingsCache.size());
   _rulesCacheHwm = qMax(_rulesCacheHwm, _rulesCacheSize);
+  if (_rulesCacheSize > 1000) {
+    // clear rules cache if too large, just to avoid memory overflow if a huge
+    // number of different alerts occurs
+    // LATER have a nicer LRU-or-the-like cache algorithm
+    _alertSubscriptionsCache.clear();
+    _alertSettingsCache.clear();
+    _rulesCacheSize = 0;
+  }
 }
 
 void Alerter::actionRaise(Alert *newAlert) {
