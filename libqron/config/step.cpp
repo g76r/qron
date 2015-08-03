@@ -266,7 +266,8 @@ QVariant StepData::uiData(int section, int role) const {
     case 4:
       return _subtask.id();
     case 5:
-      return SharedUiItemList(_predecessors.toList()).join(' ', false);
+      return SharedUiItemList<WorkflowTransition>(_predecessors.toList())
+          .join(' ', false);
     case 6:
       return EventSubscription::toStringList(_onready).join('\n');
     case 7:
