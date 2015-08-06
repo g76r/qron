@@ -34,12 +34,13 @@ class LIBQRONSHARED_EXPORT TaskInstancesModel : public SharedUiItemsTableModel {
 public:
   explicit TaskInstancesModel(QObject *parent = 0, int maxrows = 100,
                              bool keepFinished = true);
-  QVariant data(const QModelIndex &index, int role) const;
+  QVariant data(const QModelIndex &index, int role) const override;
   /** Way to add custom html at the end of "Actions" column. Will be evaluated
    * through TaskInstance.params(). */
   void setCustomActions(QString customActions) {
     _customActions = customActions; }
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier) override;
 };
 
 #endif // TASKINSTANCESMODEL_H

@@ -30,18 +30,19 @@ public:
   explicit ClustersModel(QObject *parent = 0);
   bool canDropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
-      int targetColumn, const QModelIndex &targetParent) const;
+      int targetColumn, const QModelIndex &targetParent) const override;
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
-      int targetColumn, const QModelIndex &targetParent);
+      int targetColumn, const QModelIndex &targetParent) override;
 
 public slots:
   void configReset(SchedulerConfig config);
-  void changeItem(SharedUiItem newItem, SharedUiItem oldItem);
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier) override;
 
 protected:
   void determineItemPlaceInTree(SharedUiItem newItem, QModelIndex *parent,
-                                int *row);
+                                int *row) override;
 };
 
 #endif // CLUSTERSMODEL_H

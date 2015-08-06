@@ -61,12 +61,12 @@ void ClustersModel::configReset(SchedulerConfig config) {
   clear();
   SharedUiItem nullItem;
   foreach(const Cluster &cluster, config.clusters())
-    changeItem(cluster, nullItem);
+    changeItem(cluster, nullItem, cluster.idQualifier());
 }
 
-void ClustersModel::changeItem(SharedUiItem newItem, SharedUiItem oldItem) {
-  if (newItem.idQualifier() == "cluster"
-      || oldItem.idQualifier() == "cluster") {
+void ClustersModel::changeItem(
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+  if (idQualifier == QStringLiteral("cluster")) {
     // remove host references rows
     QModelIndex oldIndex = indexOf(oldItem);
     //qDebug() << "ClustersModel::changeItem"
@@ -75,7 +75,7 @@ void ClustersModel::changeItem(SharedUiItem newItem, SharedUiItem oldItem) {
     if (oldIndex.isValid())
       removeRows(0, rowCount(oldIndex), oldIndex);
     // regular changeItem
-    SharedUiItemsTreeModel::changeItem(newItem, oldItem);
+    SharedUiItemsTreeModel::changeItem(newItem, oldItem, idQualifier);
     // insert host references rows
     QModelIndex newIndex = indexOf(newItem);
     if (newIndex.isValid()) {
@@ -83,12 +83,13 @@ void ClustersModel::changeItem(SharedUiItem newItem, SharedUiItem oldItem) {
       SharedUiItem nullItem;
       foreach (const Host &host, cluster.hosts()) {
         SharedUiItemsTreeModel::changeItem(
-              HostReference(cluster.id(), host.id()), nullItem);
+              HostReference(cluster.id(), host.id()), nullItem,
+              QStringLiteral("hostreference"));
       }
     }
     //qDebug() << "/ClustersModel::changeItem";
   } else {
-    SharedUiItemsTreeModel::changeItem(newItem, oldItem);
+    SharedUiItemsTreeModel::changeItem(newItem, oldItem, idQualifier);
   }
 }
 
