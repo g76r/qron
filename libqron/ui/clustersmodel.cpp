@@ -54,14 +54,9 @@ private:
 
 ClustersModel::ClustersModel(QObject *parent)
   : SharedUiItemsTreeModel(parent) {
+  QStringList clustersQualifiers { "cluster", "hostreference" };
   setHeaderDataFromTemplate(Cluster(PfNode("template")));
-}
-
-void ClustersModel::configReset(SchedulerConfig config) {
-  clear();
-  SharedUiItem nullItem;
-  foreach(const Cluster &cluster, config.clusters())
-    changeItem(cluster, nullItem, cluster.idQualifier());
+  setChangeItemQualifierFilter(clustersQualifiers);
 }
 
 void ClustersModel::changeItem(
@@ -69,9 +64,6 @@ void ClustersModel::changeItem(
   if (idQualifier == QStringLiteral("cluster")) {
     // remove host references rows
     QModelIndex oldIndex = indexOf(oldItem);
-    //qDebug() << "ClustersModel::changeItem"
-    //         << newItem.qualifiedId() << oldItem.qualifiedId()
-    //         << "oldIndex:" << oldIndex << "oldRowCount:" << rowCount(oldIndex);
     if (oldIndex.isValid())
       removeRows(0, rowCount(oldIndex), oldIndex);
     // regular changeItem
@@ -87,7 +79,6 @@ void ClustersModel::changeItem(
               QStringLiteral("hostreference"));
       }
     }
-    //qDebug() << "/ClustersModel::changeItem";
   } else {
     SharedUiItemsTreeModel::changeItem(newItem, oldItem, idQualifier);
   }
@@ -99,8 +90,6 @@ void ClustersModel::determineItemPlaceInTree(
   if (newItem.idQualifier() == "hostreference") {
     HostReference &hf = reinterpret_cast<HostReference&>(newItem);
     *parent = indexOf("cluster:"+hf.cluster());
-    //qDebug() << "ClustersModel::setNewItemInsertionPoint/hostreference"
-    //         << hf.qualifiedId() << parent;
   }
 }
 

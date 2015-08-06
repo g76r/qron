@@ -246,7 +246,8 @@ signals:
   /** A raisable alert (i.e. an alert handled through raiseAlert()/cancelAlert()
    * calls, not through emitAlert()) has been created or destroyed or modified.
    * Can be connected to a SharedUiItemsModel. */
-  void raisableAlertChanged(Alert newAlert, Alert oldAlert);
+  void raisableAlertChanged(Alert newAlert, Alert oldAlert,
+                            QString idQualifier);
   /** An alert is emited through alert channels.
    * This occurs for raisable alerts when raising an alert that is not
    * already raised (through raiseAlert()) or when canceling a raised alert

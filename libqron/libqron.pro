@@ -56,7 +56,6 @@ SOURCES += \
     sched/taskinstance.cpp \
     sched/executor.cpp \
     config/cluster.cpp \
-    ui/hostsmodel.cpp \
     ui/clustersmodel.cpp \
     ui/hostsresourcesavailabilitymodel.cpp \
     alert/alerter.cpp \
@@ -126,7 +125,6 @@ HEADERS += \
     sched/taskinstance.h \
     sched/executor.h \
     config/cluster.h \
-    ui/hostsmodel.h \
     ui/clustersmodel.h \
     ui/hostsresourcesavailabilitymodel.h \
     alert/alerter.h \

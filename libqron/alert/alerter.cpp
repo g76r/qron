@@ -398,7 +398,7 @@ void Alerter::commitChange(Alert *newAlert, Alert *oldAlert) {
 //      || oldAlert->id().startsWith("task.maxinstancesreached")) {
 //    qDebug() << "commitChange:" << newAlert->id() << newAlert->statusToString() << oldAlert->statusToString();
 //  }
-  emit raisableAlertChanged(*newAlert, *oldAlert);
+  emit raisableAlertChanged(*newAlert, *oldAlert, QStringLiteral("alert"));
 }
 
 QList<AlertSubscription> Alerter::alertSubscriptions(QString alertId) {

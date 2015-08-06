@@ -167,6 +167,9 @@ signals:
    * signals: globalXxxChanged(), accessControlConfigurationChanged(),
    * hostResourceAllocationChanged, etc. */
   void configChanged(SchedulerConfig);
+  // FIXME emit this instead of configChanged
+  void configItemChanged(SharedUiItem newItem, SharedUiItem oldItem,
+                         QString idQualifier);
   /** There is no guarantee that taskInstanceQueued() is emited,
    * taskInstanceStarted() or taskInstanceFinished() can be emited witout
    * previous taskInstanceQueued(). */

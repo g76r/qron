@@ -34,9 +34,6 @@ public:
   bool dropMimeData(
       const QMimeData *data, Qt::DropAction action, int targetRow,
       int targetColumn, const QModelIndex &targetParent) override;
-
-public slots:
-  void configReset(SchedulerConfig config);
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier) override;
 

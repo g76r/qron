@@ -21,7 +21,6 @@
 #include "sched/scheduler.h"
 #include "ui/hostsresourcesavailabilitymodel.h"
 #include "ui/resourcesconsumptionmodel.h"
-#include "ui/hostsmodel.h"
 #include "ui/clustersmodel.h"
 #include "util/paramsetmodel.h"
 #include "ui/lastoccuredtexteventsmodel.h"
@@ -61,7 +60,7 @@ class WebConsole : public HttpHandler {
   QThread *_thread;
   Scheduler *_scheduler;
   ConfigRepository *_configRepository;
-  HostsModel *_hostsModel;
+  SharedUiItemsTableModel *_hostsModel;
   ClustersModel *_clustersModel;
   HostsResourcesAvailabilityModel *_freeResourcesModel, *_resourcesLwmModel;
   ResourcesConsumptionModel *_resourcesConsumptionModel;

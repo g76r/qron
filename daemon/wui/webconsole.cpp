@@ -60,7 +60,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configUploadHandler = new ConfigUploadHandler("", 1, this);
 
   // models
-  _hostsModel = new HostsModel(this);
+  _hostsModel = new SharedUiItemsTableModel(Host(PfNode("template")), this);
   _clustersModel = new ClustersModel(this);
   _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
   _resourcesLwmModel = new HostsResourcesAvailabilityModel(
@@ -1465,8 +1465,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                _tasksModel, SLOT(configReset(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _hostsModel, SLOT(configReset(SchedulerConfig)));
+    disconnect(_scheduler, &Scheduler::configItemChanged,
+               _hostsModel, &SharedUiItemsTableModel::changeItem);
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
                _clustersModel, SLOT(configReset(SchedulerConfig)));
     disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
@@ -1526,8 +1526,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
   if (_scheduler) {
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             _tasksModel, SLOT(configReset(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _hostsModel, SLOT(configReset(SchedulerConfig)));
+    connect(_scheduler, &Scheduler::configItemChanged,
+            _hostsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
             _clustersModel, SLOT(configReset(SchedulerConfig)));
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
