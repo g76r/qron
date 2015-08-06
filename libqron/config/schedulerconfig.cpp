@@ -521,44 +521,39 @@ QList<LogFile> SchedulerConfig::logfiles() const {
   return d ? d->_logfiles : QList<LogFile>();
 }
 
-void SchedulerConfig::changeTask(Task newItem, Task oldItem) {
+void SchedulerConfig::changeItem(
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   SchedulerConfigData *d = data();
   if (!d)
     return;
-  d->_tasks.remove(oldItem.id());
-  if (!newItem.isNull())
-    d->_tasks.insert(newItem.id(), newItem);
-  recomputeId();
-}
-
-void SchedulerConfig::changeTaskGroup(TaskGroup newItem, TaskGroup oldItem) {
-  SchedulerConfigData *d = data();
-  if (!d)
-    return;
-  d->_tasksGroups.remove(oldItem.id());
-  if (!newItem.isNull())
-    d->_tasksGroups.insert(newItem.id(), newItem);
-  recomputeId();
-}
-
-void SchedulerConfig::changeCluster(Cluster newItem, Cluster oldItem) {
-  SchedulerConfigData *d = data();
-  if (!d)
-    return;
-  d->_clusters.remove(oldItem.id());
-  if (!newItem.isNull())
-    d->_clusters.insert(newItem.id(), newItem);
-  recomputeId();
-}
-
-void SchedulerConfig::changeHost(Host newItem, Host oldItem) {
-  SchedulerConfigData *d = data();
-  if (!d)
-    return;
-  d->_hosts.remove(oldItem.id());
-  if (!newItem.isNull())
-    d->_hosts.insert(newItem.id(), newItem);
-  recomputeId();
+  if (idQualifier == "task") {
+    Task &actualNewItem = reinterpret_cast<Task&>(newItem);
+    d->_tasks.remove(oldItem.id());
+    if (!newItem.isNull())
+      d->_tasks.insert(newItem.id(), actualNewItem);
+    recomputeId();
+  } else if (idQualifier == "taskgroup") {
+      TaskGroup &actualNewItem = reinterpret_cast<TaskGroup&>(newItem);
+      d->_tasksGroups.remove(oldItem.id());
+      if (!newItem.isNull())
+        d->_tasksGroups.insert(newItem.id(), actualNewItem);
+      recomputeId();
+  } else if (idQualifier == "cluster") {
+    Cluster &actualNewItem = reinterpret_cast<Cluster&>(newItem);
+    d->_clusters.remove(oldItem.id());
+    if (!newItem.isNull())
+      d->_clusters.insert(newItem.id(), actualNewItem);
+    recomputeId();
+  } else if (idQualifier == "host") {
+    Host &actualNewItem = reinterpret_cast<Host&>(newItem);
+    d->_hosts.remove(oldItem.id());
+    if (!newItem.isNull())
+      d->_hosts.insert(newItem.id(), actualNewItem);
+    recomputeId();
+  } else {
+    qDebug() << "unsupported item type in SchedulerConfig::changeItem:"
+             << idQualifier;
+  }
 }
 
 QString SchedulerConfig::recomputeId() const {

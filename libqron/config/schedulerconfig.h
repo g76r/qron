@@ -77,11 +77,8 @@ public:
   qint64 writeAsPf(QIODevice *device) const;
   PfNode toPfNode() const;
   void copyLiveAttributesFromOldTasks(QHash<QString,Task> oldTasks);
-  void changeTask(Task newItem, Task oldItem);
-  void changeTaskGroup(TaskGroup newItem, TaskGroup oldItem);
-  void changeCluster(Cluster newItem, Cluster oldItem);
-  void changeHost(Host newItem, Host oldItem);
-  // TODO change methods for other objects
+  void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
+                  QString idQualifier);
   void applyLogConfig() const;
 
 private:
