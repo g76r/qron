@@ -15,13 +15,12 @@
 #define ACTION_P_H
 
 #include "action.h"
-#include <QPointer>
 #include "sched/scheduler.h"
 #include "config/eventsubscription.h"
 
 class LIBQRONSHARED_EXPORT ActionData : public QSharedData {
 public:
-  QPointer<Scheduler> _scheduler;
+  Scheduler *_scheduler;
   QStringList _commentsList;
   explicit ActionData(Scheduler *scheduler = 0) : _scheduler(scheduler) { }
   virtual ~ActionData();

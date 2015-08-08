@@ -21,7 +21,7 @@ class LIBQRONSHARED_EXPORT ExecAlertChannel : public AlertChannel {
   Q_OBJECT
   Q_DISABLE_COPY(ExecAlertChannel)
 public:
-  ExecAlertChannel(QPointer<Alerter> alerter);
+  ExecAlertChannel(Alerter *alerter);
 
 protected:
   void doNotifyAlert(Alert alert);

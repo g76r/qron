@@ -24,8 +24,7 @@ public:
     Q_UNUSED(subscription)
     if (_scheduler && !_alert.isEmpty()) {
       TaskInstancePseudoParamsProvider ppp = instance.pseudoParams();
-      _scheduler.data()->alerter()
-          ->emitAlert(eventContext.evaluate(_alert, &ppp));
+      _scheduler->alerter()->emitAlert(eventContext.evaluate(_alert, &ppp));
     }
   }
   QString toString() const {

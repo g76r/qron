@@ -370,11 +370,11 @@ void Alerter::notifyChannels(Alert newAlert) {
     ;
   }
   foreach (AlertSubscription sub, alertSubscriptions(newAlert.id())) {
-    QPointer<AlertChannel> channel = _channels.value(sub.channelName());
+    AlertChannel *channel = _channels.value(sub.channelName());
     if (channel) { // should never be false
       ++_totalChannelsNotificationsCounter;
       newAlert.setSubscription(sub);
-      channel.data()->notifyAlert(newAlert);
+      channel->notifyAlert(newAlert);
     }
   }
   emit alertNotified(newAlert);

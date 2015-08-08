@@ -17,7 +17,7 @@
 #include <QMetaType>
 #include "alerter.h"
 
-AlertChannel::AlertChannel(QPointer<Alerter> alerter)
+AlertChannel::AlertChannel(Alerter *alerter)
   : _thread(new QThread), _alerter(alerter) {
   connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
   connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));

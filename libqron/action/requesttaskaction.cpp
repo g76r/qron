@@ -46,10 +46,10 @@ public:
         id = eventContext.evaluate(_id, &ppp);
         QString idIfLocalToGroup = parentInstance.task().taskGroup().id()
             +"."+_id;
-        if (_scheduler.data()->taskExists(idIfLocalToGroup))
+        if (_scheduler->taskExists(idIfLocalToGroup))
           id = idIfLocalToGroup;
       }
-      QList<TaskInstance> instances = _scheduler.data()->syncRequestTask(
+      QList<TaskInstance> instances = _scheduler->syncRequestTask(
           id, evaluatedOverrindingParams(eventContext, parentInstance), _force,
           parentInstance);
       if (instances.isEmpty())

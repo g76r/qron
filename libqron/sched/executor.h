@@ -17,7 +17,6 @@
 #include <QObject>
 #include "taskinstance.h"
 #include "config/host.h"
-#include <QPointer>
 #include <QProcess>
 #include <QNetworkReply>
 #include <QTimer>
@@ -67,7 +66,7 @@ signals:
   /** Signal emited whenever a task is no longer running or queued:
     * when finished on failure, finished on success, or cannot be started
     * because of a failure on start. */
-  void taskInstanceFinished(TaskInstance instance, QPointer<Executor> executor);
+  void taskInstanceFinished(TaskInstance instance, Executor *executor);
 
 private slots:
   void processError(QProcess::ProcessError error);

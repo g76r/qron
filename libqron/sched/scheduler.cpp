@@ -679,7 +679,7 @@ nexthost:;
 }
 
 void Scheduler::taskInstanceFinishing(TaskInstance instance,
-                                      QPointer<Executor> executor) {
+                                      Executor *executor) {
   Task requestedTask = instance.task();
   QString taskId = requestedTask.id();
   // configured and requested tasks are different if config was reloaded
@@ -687,11 +687,11 @@ void Scheduler::taskInstanceFinishing(TaskInstance instance,
   Task configuredTask(_config.tasks().value(taskId));
   configuredTask.fetchAndAddInstancesCount(-1);
   if (executor) {
-    Executor *e = executor.data();
-    if (e->isTemporary())
-      e->deleteLater(); // deleteLater() because it lives in its own thread
+    // deleteLater() because it lives in its own thread
+    if (executor->isTemporary())
+      executor->deleteLater();
     else
-      _availableExecutors.append(e);
+      _availableExecutors.append(executor);
   }
   _runningTasks.remove(instance);
   QHash<QString,qint64> taskResources = requestedTask.resources();

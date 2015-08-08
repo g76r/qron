@@ -41,8 +41,8 @@ public:
       foreach (QString key, _noticeParams.keys())
         noticeParams.setValue(
               key, eventContext.evaluate(_noticeParams.value(key), &ppp));
-      _scheduler.data()
-          ->postNotice(eventContext.evaluate(_notice, &ppp), noticeParams);
+      _scheduler->postNotice(eventContext.evaluate(_notice, &ppp),
+                             noticeParams);
     }
   }
   void trigger(EventSubscription subscription, ParamSet eventContext) const {

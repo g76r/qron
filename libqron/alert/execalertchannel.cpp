@@ -13,7 +13,7 @@
  */
 #include "execalertchannel.h"
 
-ExecAlertChannel::ExecAlertChannel(QPointer<Alerter> alerter)
+ExecAlertChannel::ExecAlertChannel(Alerter *alerter)
   : AlertChannel(alerter) {
 }
 

@@ -185,7 +185,7 @@ signals:
   void noticePosted(QString notice, ParamSet params);
 
 private slots:
-  void taskInstanceFinishing(TaskInstance instance, QPointer<Executor> executor);
+  void taskInstanceFinishing(TaskInstance instance, Executor *executor);
   void periodicChecks();
   /** Fire expired triggers for a given task. */
   void checkTriggersForTask(QVariant taskId);

@@ -16,7 +16,6 @@
 
 #include "libqron_global.h"
 #include <QSharedDataPointer>
-#include <QPointer>
 #include <QString>
 #include <QRegularExpression>
 #include "util/paramset.h"

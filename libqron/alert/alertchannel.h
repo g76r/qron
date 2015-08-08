@@ -15,7 +15,6 @@
 #define ALERTCHANNEL_H
 
 #include <QObject>
-#include <QPointer>
 #include "alert.h"
 #include "config/alerterconfig.h"
 
@@ -33,11 +32,11 @@ class LIBQRONSHARED_EXPORT AlertChannel : public QObject {
 
 protected:
   QThread *_thread;
-  QPointer<Alerter> _alerter;
+  Alerter *_alerter;
 
 public:
   // can't have a parent because it lives it its own thread
-  AlertChannel(QPointer<Alerter> alerter);
+  AlertChannel(Alerter *alerter);
   /** Asynchronously call implementation of doNotifyAlert() within dedicated
    * thread.
    * This method is thread-safe. */
