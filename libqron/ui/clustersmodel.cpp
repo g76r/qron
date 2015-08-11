@@ -22,18 +22,19 @@
 class HostReference : public SharedUiItem {
   class HostReferenceData : public SharedUiItemData {
   public:
-    QString _cluster, _host;
+    QString _id, _cluster, _host;
 
     HostReferenceData() { }
     HostReferenceData(QString cluster, QString host)
-      : _cluster(cluster), _host(host) { }
-    QString id() const { return _host; }
-    QString idQualifier() const { return "hostreference"; }
+      : _id(cluster+"~"+host), _cluster(cluster), _host(host) { }
+    QString id() const { return _id; }
+    QString idQualifier() const { return QStringLiteral("hostreference"); }
     int uiSectionCount() const { return 1; }
     QVariant uiData(int section, int role) const {
       return section == 0 && role == Qt::DisplayRole ? _host : QVariant(); }
     QVariant uiHeaderData(int section, int role) const {
-      return section == 0 && role == Qt::DisplayRole ? "Host" : QVariant(); }
+      return section == 0 && role == Qt::DisplayRole
+          ? QStringLiteral("Host") : QVariant(); }
   };
 
 public:
@@ -54,9 +55,7 @@ private:
 
 ClustersModel::ClustersModel(QObject *parent)
   : SharedUiItemsTreeModel(parent) {
-  QStringList clustersQualifiers { "cluster", "hostreference" };
   setHeaderDataFromTemplate(Cluster(PfNode("template")));
-  setChangeItemQualifierFilter(clustersQualifiers);
 }
 
 void ClustersModel::changeItem(
@@ -145,9 +144,14 @@ bool ClustersModel::dropMimeData(
   QStringList oldHostsIds, droppedHostsIds, newHostsIds;
   foreach (const Host &host, oldCluster.hosts())
     oldHostsIds << host.id();
-  foreach (const QByteArray &qualifiedId, idsArrays)
-    droppedHostsIds += QString::fromUtf8(
-          qualifiedId.mid(qualifiedId.indexOf(':')+1));
+  foreach (const QByteArray &qualifiedId, idsArrays) {
+    QByteArray hostId;
+    if (qualifiedId.contains('~'))
+      hostId = qualifiedId.mid(qualifiedId.indexOf('~')+1);
+    else
+      hostId = qualifiedId.mid(qualifiedId.indexOf(':')+1);
+    droppedHostsIds += QString::fromUtf8(hostId);
+  }
   int oldIndex = 0;
   for (; oldIndex < targetRow && oldIndex < oldHostsIds.size(); ++oldIndex) {
     const QString &id = oldHostsIds[oldIndex];
