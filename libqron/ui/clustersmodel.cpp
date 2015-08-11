@@ -178,6 +178,7 @@ bool ClustersModel::dropMimeData(
   }
   Cluster newCluster = oldCluster;
   newCluster.setHosts(newHosts);
-  documentManager()->changeItem(newCluster, oldCluster);
+  documentManager()->changeItem(newCluster, oldCluster,
+                                QStringLiteral("cluster"));
   return true;
 }
