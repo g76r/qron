@@ -525,7 +525,7 @@ void SchedulerConfig::changeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   SchedulerConfigData *d = data();
   if (!d)
-    return;
+    setData(d = new SchedulerConfigData());
   if (idQualifier == "task") {
     Task &actualNewItem = reinterpret_cast<Task&>(newItem);
     d->_tasks.remove(oldItem.id());
