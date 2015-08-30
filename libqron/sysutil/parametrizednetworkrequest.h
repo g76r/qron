@@ -26,6 +26,8 @@
  * - "user" and "password" to set HTTP basic authentication
  * - "proto" to set network protocol (default: http)
  * - "port" to set TCP port number (overrinding the one specified in the url)
+ * - "payload" to set the reuqest payload/body
+ * - "content-type" to set payload (and header) content type
  */
 class ParametrizedNetworkRequest : public QNetworkRequest {
   QString _logTask, _logExecId;
