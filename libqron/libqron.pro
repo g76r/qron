@@ -40,6 +40,12 @@ unix {
   OBJECTS_DIR = ../build-libqron-unix/obj
   RCC_DIR = ../build-libqron-unix/rcc
   MOC_DIR = ../build-libqron-unix/moc
+
+  #autodoc.commands = (grep -v ^INPUT.= ../autodoc/Doxyfile; echo "INPUT = $(SOURCES) $(HEADERS)") | doxygen -
+  #autodoc.target = ../autodoc/html/index.html
+  #autodoc.depends = $(SOURCES) $(HEADERS)
+  #QMAKE_EXTRA_TARGETS += autodoc
+  #PRE_TARGETDEPS += $$autodoc.target
 }
 
 contains(QT_VERSION, ^4\\..*) {

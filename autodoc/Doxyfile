@@ -25,7 +25,7 @@ DOXYFILE_ENCODING      = UTF-8
 # The PROJECT_NAME tag is a single word (or a sequence of words surrounded 
 # by quotes) that should identify the project.
 
-PROJECT_NAME           = "Qron scheduler library (libqron)"
+PROJECT_NAME           = "Qron Main Module (Daemon and Library)"
 
 # The PROJECT_NUMBER tag can be used to enter a project or revision number. 
 # This could be handy for archiving the generated documentation or 
@@ -37,7 +37,7 @@ PROJECT_NUMBER         =
 # for a project that appears at the top of each page and should give viewer
 # a quick idea about the purpose of the project. Keep the description short.
 
-PROJECT_BRIEF          = "Qron scheduler library (libqron)"
+PROJECT_BRIEF          = "Qron Main Module (Daemon and Library)"
 
 # With the PROJECT_LOGO tag one can specify an logo or icon that is 
 # included in the documentation. The maximum height of the logo should not 
@@ -612,7 +612,7 @@ WARN_LOGFILE           =
 # directories like "/usr/src/myproject". Separate the files or directories 
 # with spaces.
 
-INPUT                  = ../libqron_global.h ../config ../sched ../configmgt ../action ../alert ../sysutil ../trigger ../ui ../../libqtssu/modelview ../../libqtssu/textview ../../libqtssu/util ../../libqtssu/mail ../../libqtssu/log ../../libqtssu/httpd ../../libqtssu/csv ../../libqtssu/auth
+INPUT                  = ../daemon ../libqron
 
 # This tag can be used to specify the character encoding of the source files 
 # that doxygen parses. Internally doxygen uses the UTF-8 encoding, which is 
@@ -1493,18 +1493,19 @@ SKIP_FUNCTION_MACROS   = YES
 # If a tag file is not located in the directory in which doxygen 
 # is run, you must also specify the path to the tagfile here.
 
-TAGFILES               = 
+#TAGFILES               = /usr/share/qt4/doc/html/qt.tags
+TAGFILES		= ../libqtssu/autodoc/libqtssu.tags=../../libqtssu/autodoc/html /usr/share/qt5/doc/qtcore/qtcore.tags=http://doc.qt.io/qt-5/ /usr/share/qt5/doc/qtnetwork/qtnetwork.tags=http://doc.qt.io/qt-5/
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create 
 # a tag file that is based on the input files it reads.
 
-GENERATE_TAGFILE       = 
+GENERATE_TAGFILE       = qron.tags
 
 # If the ALLEXTERNALS tag is set to YES all external classes will be listed 
 # in the class index. If set to NO only the inherited external classes 
 # will be listed.
 
-ALLEXTERNALS           = YES
+ALLEXTERNALS           = NO
 
 # If the EXTERNAL_GROUPS tag is set to YES all external groups will be listed 
 # in the modules index. If set to NO, only the current project's groups will 
