@@ -1025,33 +1025,15 @@ bool Task::setUiData(int section, const QVariant &value, QString *errorString,
 bool TaskData::setUiData(int section, const QVariant &value,
                          QString *errorString, int role,
                          const SharedUiItemDocumentManager *dm) {
-  if (!dm) {
-    if (errorString)
-      *errorString = "cannot set ui data without document manager";
-    return false;
-  }
-  if (role != Qt::EditRole) {
-    if (errorString)
-      *errorString = "cannot set other role than EditRole";
-    return false;
-  }
+  Q_ASSERT(dm != 0);
+  Q_ASSERT(errorString != 0);
   QString s = value.toString().trimmed(), s2;
   switch(section) {
   case 0:
-    if (value.toString().isEmpty()) {
-      if (errorString)
-        *errorString = "id cannot be empty";
-      return false;
-    }
     s = ConfigUtils::sanitizeId(s, ConfigUtils::LocalId);
     if (!_workflowTaskId.isEmpty())
       s = _workflowTaskId.mid(_workflowTaskId.lastIndexOf('.')+1)+":"+s;
     s2 = _group.id()+"."+s;
-    if (!dm->itemById("task", s2).isNull()) {
-      if (errorString)
-        *errorString = "New id is already used by another task: "+s;
-      return false;
-    }
     _localId = s;
     _id = s2;
     if (_mean == Task::Workflow) {
@@ -1118,7 +1100,8 @@ bool TaskData::setUiData(int section, const QVariant &value,
     return true;
   }
   case 5:
-    _target = ConfigUtils::sanitizeId(value.toString(), ConfigUtils::FullyQualifiedId);
+    _target = ConfigUtils::sanitizeId(
+          value.toString(), ConfigUtils::FullyQualifiedId);
     return true;
   case 8: {
     QHash<QString,qint64> resources;
@@ -1130,10 +1113,7 @@ bool TaskData::setUiData(int section, const QVariant &value,
     return false;
   }
   }
-  if (errorString)
-    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not ui-editable";
-  return false;
+  return SharedUiItemData::setUiData(section, value, errorString, role, dm);
 }
 
 Qt::ItemFlags TaskData::uiFlags(int section) const {
