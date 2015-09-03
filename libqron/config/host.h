@@ -37,9 +37,8 @@ public:
   QHash<QString, qint64> resources() const;
   void detach();
   PfNode toPfNode() const;
-  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
-                 int role = Qt::EditRole,
-                 const SharedUiItemDocumentManager *dm = 0);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 SharedUiItemDocumentTransaction *transaction, int role);
 
 private:
   HostData *data();

@@ -46,9 +46,8 @@ public:
   QString balancingAsString() const { return balancingAsString(balancing()); }
   void setId(QString id);
   PfNode toPfNode() const;
-  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
-                 int role = Qt::EditRole,
-                 const SharedUiItemDocumentManager *dm = 0);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 SharedUiItemDocumentTransaction *transaction, int role);
   void setHosts(QList<Host> hosts);
 
 private:

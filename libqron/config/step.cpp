@@ -53,7 +53,7 @@ public:
   QString id() const { return _id; }
   QString idQualifier() const { return "step"; }
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role, const SharedUiItemDocumentManager *dm);
+                 SharedUiItemDocumentTransaction *transaction, int role);
   Qt::ItemFlags uiFlags(int section) const;
   void setWorkflowId(QString workflowId);
 };
@@ -299,12 +299,12 @@ int StepData::uiSectionCount() const {
   return sizeof _uiHeaderNames / sizeof *_uiHeaderNames;
 }
 
-bool Step::setUiData(
-    int section, const QVariant &value, QString *errorString,
-    int role, const SharedUiItemDocumentManager *dm) {
+bool Step::setUiData(int section, const QVariant &value, QString *errorString,
+                     SharedUiItemDocumentTransaction *transaction,
+    int role) {
   if (isNull())
     return false;
-  return data()->setUiData(section, value, errorString, role, dm);
+  return data()->setUiData(section, value, errorString, transaction, role);
 }
 
 void Step::setSubtask(Task subtask) {
@@ -314,18 +314,10 @@ void Step::setSubtask(Task subtask) {
 }
 
 bool StepData::setUiData(
-    int section, const QVariant &value, QString *errorString, int role,
-    const SharedUiItemDocumentManager *dm) {
-  if (!dm) {
-    if (errorString)
-      *errorString = "cannot set ui data without document manager";
-    return false;
-  }
-  if (role != Qt::EditRole) {
-    if (errorString)
-      *errorString = "cannot set other role than EditRole";
-    return false;
-  }
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
+  Q_ASSERT(transaction != 0);
+  Q_ASSERT(errorString != 0);
   QString s = value.toString().trimmed(), s2;
   switch(section) {
   case 1:
@@ -337,14 +329,9 @@ bool StepData::setUiData(
     s = s.mid(_workflowId.size()+1);
     // falling into next case
   case 0:
-    if (value.toString().isEmpty()) {
-      if (errorString)
-        *errorString = "id cannot be empty";
-      return false;
-    }
     s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
     s2 = _workflowId+":"+s;
-    if (!dm->itemById("step", s2).isNull()) {
+    if (!transaction->itemById("step", s2).isNull()) {
       if (errorString)
         *errorString = "New id is already used by another step: "+s;
       return false;
@@ -371,10 +358,8 @@ bool StepData::setUiData(
     // TODO trigger expression
     ;
   }
-  if (errorString)
-    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not ui-editable";
-  return false;
+  return SharedUiItemData::setUiData(section, value, errorString, transaction,
+                                     role);
 }
 
 void Step::setWorkflowId(QString workflowId) {

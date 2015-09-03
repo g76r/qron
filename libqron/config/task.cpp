@@ -167,7 +167,7 @@ public:
   bool triggersHaveCalendar() const;
   QVariant uiData(int section, int role) const;
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role, const SharedUiItemDocumentManager *dm);
+                 SharedUiItemDocumentTransaction *transaction, int role);
   Qt::ItemFlags uiFlags(int section) const;
   QVariant uiHeaderData(int section, int role) const;
   int uiSectionCount() const;
@@ -1015,17 +1015,18 @@ void Task::setWorkflowTask(Task workflowTask) {
   }
 }
 
-bool Task::setUiData(int section, const QVariant &value, QString *errorString,
-                     int role, const SharedUiItemDocumentManager *dm) {
+bool Task::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
   if (isNull())
     return false;
-  return data()->setUiData(section, value, errorString, role, dm);
+  return data()->setUiData(section, value, errorString, transaction, role);
 }
 
-bool TaskData::setUiData(int section, const QVariant &value,
-                         QString *errorString, int role,
-                         const SharedUiItemDocumentManager *dm) {
-  Q_ASSERT(dm != 0);
+bool TaskData::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
+  Q_ASSERT(transaction != 0);
   Q_ASSERT(errorString != 0);
   QString s = value.toString().trimmed(), s2;
   switch(section) {
@@ -1061,14 +1062,15 @@ bool TaskData::setUiData(int section, const QVariant &value,
     }
     return true;
   case 1: {
-    SharedUiItem group = dm->itemById("taskgroup", s);
+    SharedUiItem group = transaction->itemById("taskgroup", s);
     if (group.isNull()) {
       if (errorString)
         *errorString = "No group with such id: \""+s+"\"";
       return false;
     }
     if (!_workflowTaskId.isEmpty()) {
-      SharedUiItem workflowTaskItem = dm->itemById("task", _workflowTaskId);
+      SharedUiItem workflowTaskItem =
+          transaction->itemById("task", _workflowTaskId);
       if (!workflowTaskItem.isNull()) {
         Task workflowTask = reinterpret_cast<Task&>(workflowTaskItem);
         if (s != workflowTask.taskGroup().id()) {
@@ -1080,7 +1082,8 @@ bool TaskData::setUiData(int section, const QVariant &value,
         }
       }
     }
-    _group = reinterpret_cast<TaskGroup&>(group);
+    _group = static_cast<TaskGroup&>(group);
+    _id = _group.id()+"."+_localId;
     return true;
   }
   case 2:
@@ -1113,7 +1116,8 @@ bool TaskData::setUiData(int section, const QVariant &value,
     return false;
   }
   }
-  return SharedUiItemData::setUiData(section, value, errorString, role, dm);
+  return SharedUiItemData::setUiData(section, value, errorString, transaction,
+                                     role);
 }
 
 Qt::ItemFlags TaskData::uiFlags(int section) const {

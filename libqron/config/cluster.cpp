@@ -40,7 +40,7 @@ public:
   QString id() const { return _id; }
   QString idQualifier() const { return "cluster"; }
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role, const SharedUiItemDocumentManager *dm);
+                 SharedUiItemDocumentTransaction *transaction, int role);
   Qt::ItemFlags uiFlags(int section) const;
 };
 
@@ -113,34 +113,16 @@ QVariant ClusterData::uiData(int section, int role) const {
   return QVariant();
 }
 
-bool ClusterData::setUiData(int section, const QVariant &value,
-                            QString *errorString, int role,
-                            const SharedUiItemDocumentManager *dm) {
-  if (!dm) {
-    if (errorString)
-      *errorString = "cannot set ui data without document manager";
-    return false;
-  }
-  if (role != Qt::EditRole) {
-    if (errorString)
-      *errorString = "cannot set other role than EditRole";
-    return false;
-  }
+bool ClusterData::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
+  Q_ASSERT(transaction != 0);
+  Q_ASSERT(errorString != 0);
   QString s = value.toString().trimmed();
   switch(section) {
   case 0:
-    if (s.isEmpty()) {
-      if (errorString)
-        *errorString = "id cannot be empty";
-      return false;
-    }
     s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
-    if (!dm->itemById("cluster", s).isNull()) {
-      if (errorString)
-        *errorString = "New id is already used by another cluster: "+s;
-      return false;
-    }
-    if (!dm->itemById("host", s).isNull()) {
+    if (!transaction->itemById("host", s).isNull()) {
       if (errorString)
         *errorString = "New id is already used by a host: "+s;
       return false;
@@ -164,10 +146,8 @@ bool ClusterData::setUiData(int section, const QVariant &value,
     _label = s.trimmed();
     return true;
   }
-  if (errorString)
-    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not ui-editable";
-  return false;
+  return SharedUiItemData::setUiData(section, value, errorString, transaction,
+                                     role);
 }
 
 Qt::ItemFlags ClusterData::uiFlags(int section) const {
@@ -181,14 +161,14 @@ Qt::ItemFlags ClusterData::uiFlags(int section) const {
   return flags;
 }
 
-bool Cluster::setUiData(int section, const QVariant &value,
-                        QString *errorString, int role,
-                        const SharedUiItemDocumentManager *dm) {
+bool Cluster::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
   if (isNull())
     return false;
   detach<ClusterData>();
   return ((ClusterData*)data())
-      ->setUiData(section, value, errorString, role, dm);
+      ->setUiData(section, value, errorString, transaction, role);
 }
 
 QVariant ClusterData::uiHeaderData(int section, int role) const {

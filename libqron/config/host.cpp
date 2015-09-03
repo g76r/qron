@@ -40,7 +40,7 @@ public:
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "host"; }
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role, const SharedUiItemDocumentManager *dm);
+                 SharedUiItemDocumentTransaction *transaction, int role);
   Qt::ItemFlags uiFlags(int section) const;
 };
 
@@ -102,44 +102,25 @@ QVariant HostData::uiData(int section, int role) const {
 }
 
 bool Host::setUiData(int section, const QVariant &value, QString *errorString,
-                     int role, const SharedUiItemDocumentManager *dm) {
+                     SharedUiItemDocumentTransaction *transaction, int role) {
   if (isNull())
     return false;
   detach();
   return ((HostData*)data())
-      ->setUiData(section, value, errorString, role, dm);
+      ->setUiData(section, value, errorString, transaction, role);
 }
 
-bool HostData::setUiData(int section, const QVariant &value,
-                         QString *errorString, int role,
-                         const SharedUiItemDocumentManager *dm) {
-  if (!dm) {
-    if (errorString)
-      *errorString = "cannot set ui data without document manager";
-    return false;
-  }
-  if (role != Qt::EditRole) {
-    if (errorString)
-      *errorString = "cannot set other role than EditRole";
-    return false;
-  }
+bool HostData::setUiData(
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
+  Q_ASSERT(transaction != 0);
+  Q_ASSERT(errorString != 0);
   QString s = value.toString().trimmed();
   switch(section) {
   case 0:
-    if (s.isEmpty()) {
-      if (errorString)
-        *errorString = "id cannot be empty";
-      return false;
-    }
     s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
-    if (!dm->itemById("cluster", s).isNull()) {
-      if (errorString)
-        *errorString = "New id is already used by a cluster: "+s;
-      return false;
-    }
-    if (!dm->itemById("host", s).isNull()) {
-      if (errorString)
-        *errorString = "New id is already used by another host: "+s;
+    if (!transaction->itemById("cluster", s).isNull()) {
+      *errorString = "New id is already used by a cluster: "+s;
       return false;
     }
     _id = s;
@@ -150,7 +131,7 @@ bool HostData::setUiData(int section, const QVariant &value,
   case 2: {
     QHash<QString,qint64> resources;
     if (QronUiUtils::resourcesFromString(value.toString(), &resources,
-                                            errorString)) {
+                                         errorString)) {
       _resources = resources;
       return true;
     }
@@ -160,10 +141,8 @@ bool HostData::setUiData(int section, const QVariant &value,
     _label = s.trimmed();
     return true;
   }
-  if (errorString)
-    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not ui-editable";
-  return false;
+  return SharedUiItemData::setUiData(section, value, errorString, transaction,
+                                     role);
 }
 
 Qt::ItemFlags HostData::uiFlags(int section) const {

@@ -44,7 +44,7 @@ public:
   //void setId(QString id) { _id = id; }
   QString idQualifier() const { return "taskgroup"; }
   bool setUiData(int section, const QVariant &value, QString *errorString,
-                 int role, const SharedUiItemDocumentManager *dm);
+                 SharedUiItemDocumentTransaction *transaction, int role);
   Qt::ItemFlags uiFlags(int section) const;
 
 };
@@ -219,25 +219,17 @@ PfNode TaskGroup::toPfNode() const {
 
 bool TaskGroup::setUiData(
     int section, const QVariant &value, QString *errorString,
-    int role, const SharedUiItemDocumentManager *dm) {
+    SharedUiItemDocumentTransaction *transaction, int role) {
   if (isNull())
     return false;
-  return data()->setUiData(section, value, errorString, role, dm);
+  return data()->setUiData(section, value, errorString, transaction, role);
 }
 
 bool TaskGroupData::setUiData(
-    int section, const QVariant &value, QString *errorString, int role,
-    const SharedUiItemDocumentManager *dm) {
-  if (!dm) {
-    if (errorString)
-      *errorString = "cannot set ui data without document manager";
-    return false;
-  }
-  if (role != Qt::EditRole) {
-    if (errorString)
-      *errorString = "cannot set other role than EditRole";
-    return false;
-  }
+    int section, const QVariant &value, QString *errorString,
+    SharedUiItemDocumentTransaction *transaction, int role) {
+  Q_ASSERT(transaction != 0);
+  Q_ASSERT(errorString != 0);
   QString s = value.toString().trimmed();
   switch(section) {
   case 1: // changing parent group id is changing the begining of id itself
@@ -248,17 +240,7 @@ bool TaskGroupData::setUiData(
     // falling into next case
   case 0:
   case 11:
-    if (value.toString().isEmpty()) {
-      if (errorString)
-        *errorString = "id cannot be empty";
-      return false;
-    }
     s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
-    if (!dm->itemById("taskgroup", s).isNull()) {
-      if (errorString)
-        *errorString = "New id is already used by another taskgroup: "+s;
-      return false;
-    }
     _id = s;
     return true;
   case 2:
@@ -267,10 +249,8 @@ bool TaskGroupData::setUiData(
       _label = QString();
     return true;
   }
-  if (errorString)
-    *errorString = "field \""+uiHeaderData(section, Qt::DisplayRole).toString()
-      +"\" is not ui-editable";
-  return false;
+  return SharedUiItemData::setUiData(section, value, errorString, transaction,
+                                     role);
 }
 
 Qt::ItemFlags TaskGroupData::uiFlags(int section) const {

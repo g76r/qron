@@ -63,9 +63,8 @@ public:
   QList<EventSubscription> onreadyEventSubscriptions() const;
   void appendOnReadyStep(Scheduler *scheduler, QString localStepId);
   PfNode toPfNode() const;
-  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
-                 int role = Qt::EditRole,
-                 const SharedUiItemDocumentManager *dm = 0);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 SharedUiItemDocumentTransaction *transaction, int role);
   void setSubtask(Task subtask);
 
 private:

@@ -190,9 +190,8 @@ public:
   /** to be called when activating a new configuration, to keep live attributes
    * such as lastReturnCode() or enabled() */
   void copyLiveAttributesFromOldTask(Task oldTask);
-  bool setUiData(int section, const QVariant &value, QString *errorString = 0,
-                 int role = Qt::EditRole,
-                 const SharedUiItemDocumentManager *dm = 0);
+  bool setUiData(int section, const QVariant &value, QString *errorString,
+                 SharedUiItemDocumentTransaction *transaction, int role);
   void changeWorkflowTransition(WorkflowTransition newItem,
                                 WorkflowTransition oldItem);
   void changeStep(Step newItem, Step oldItem);
