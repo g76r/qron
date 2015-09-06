@@ -122,11 +122,6 @@ bool ClusterData::setUiData(
   switch(section) {
   case 0:
     s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
-    if (!transaction->itemById("host", s).isNull()) {
-      if (errorString)
-        *errorString = "New id is already used by a host: "+s;
-      return false;
-    }
     _id = s;
     return true;
     //case 1:
@@ -136,7 +131,7 @@ bool ClusterData::setUiData(
         = Cluster::balancingFromString(value.toString().trimmed().toLower());
     if (balancing == Cluster::UnknownBalancing) {
       if (errorString)
-        *errorString = "unsupported balancing value: '"+value.toString()+"'";
+        *errorString = "Unsupported balancing value: '"+value.toString()+"'";
       return false;
     }
     _balancing = balancing;

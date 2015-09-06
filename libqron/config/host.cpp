@@ -119,10 +119,6 @@ bool HostData::setUiData(
   switch(section) {
   case 0:
     s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
-    if (!transaction->itemById("cluster", s).isNull()) {
-      *errorString = "New id is already used by a cluster: "+s;
-      return false;
-    }
     _id = s;
     return true;
   case 1:

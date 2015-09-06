@@ -1064,8 +1064,7 @@ bool TaskData::setUiData(
   case 1: {
     SharedUiItem group = transaction->itemById("taskgroup", s);
     if (group.isNull()) {
-      if (errorString)
-        *errorString = "No group with such id: \""+s+"\"";
+      *errorString = "No group with such id: \""+s+"\"";
       return false;
     }
     if (!_workflowTaskId.isEmpty()) {
@@ -1074,12 +1073,14 @@ bool TaskData::setUiData(
       if (!workflowTaskItem.isNull()) {
         Task workflowTask = reinterpret_cast<Task&>(workflowTaskItem);
         if (s != workflowTask.taskGroup().id()) {
-          if (errorString)
-            *errorString = "Cannot make a subtask belong to another group than "
-                           "its parent task's group: \""+s+"\" instead of \""
+          *errorString = "Cannot make a subtask belong to another group than "
+                         "its parent task's group: \""+s+"\" instead of \""
               +workflowTask.taskGroup().id()+"\"";
           return false;
         }
+      } else {
+        *errorString = "No workflow task with such id: \""+s+"\"";
+        return false;
       }
     }
     _group = static_cast<TaskGroup&>(group);
@@ -1115,6 +1116,16 @@ bool TaskData::setUiData(
     }
     return false;
   }
+  case 31:
+    _workflowTaskId = ConfigUtils::sanitizeId(
+          value.toString(), ConfigUtils::FullyQualifiedId);
+    if (_workflowTaskId.isEmpty())
+      _localId = _localId.mid(_localId.indexOf(':')+1);
+    else
+      _localId = _workflowTaskId.mid(_workflowTaskId.lastIndexOf('.')+1)+":"
+          + _localId.mid(_localId.indexOf(':')+1);
+    _id = _group.id()+"."+_localId;
+    return true;
   }
   return SharedUiItemData::setUiData(section, value, errorString, transaction,
                                      role);
