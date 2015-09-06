@@ -175,6 +175,7 @@ public:
   void setId(QString id) { _id = id; }
   QString idQualifier() const { return "task"; }
   PfNode toPfNode() const;
+  void setWorkflowTask(Task workflowTask);
 };
 
 Task::Task() {
@@ -999,20 +1000,25 @@ QVariant TaskData::uiData(int section, int role) const {
 }
 
 void Task::setWorkflowTask(Task workflowTask) {
-  if (!isNull()) {
-    TaskData *d = data();
-    QString workflowTaskId = workflowTask.id();
-    d->_workflowTaskId = workflowTaskId;
-    d->_localId = workflowTaskId.mid(workflowTaskId.lastIndexOf('.')+1)+":"
-        +d->_localId.mid(d->_localId.indexOf(':')+1);
-    if (workflowTask.isNull()) {
-      d->_setenv.setParent(d->_group.setenv());
-      d->_unsetenv.setParent(d->_group.unsetenv());
-    } else {
-      d->_setenv.setParent(workflowTask.setenv());
-      d->_unsetenv.setParent(workflowTask.unsetenv());
-    }
+  TaskData *d = data();
+  if (d)
+    d->setWorkflowTask(workflowTask);
+}
+
+void TaskData::setWorkflowTask(Task workflowTask) {
+  QString workflowTaskId = workflowTask.id();
+  if (workflowTask.isNull()) {
+    _setenv.setParent(_group.setenv());
+    _unsetenv.setParent(_group.unsetenv());
+  } else {
+    _group = workflowTask.taskGroup();
+    _setenv.setParent(workflowTask.setenv());
+    _unsetenv.setParent(workflowTask.unsetenv());
   }
+  _workflowTaskId = workflowTaskId;
+  _localId = workflowTaskId.mid(workflowTaskId.lastIndexOf('.')+1)+":"
+      +_localId.mid(_localId.indexOf(':')+1);
+  _id = _group.id()+"."+_localId;
 }
 
 bool Task::setUiData(
@@ -1116,16 +1122,12 @@ bool TaskData::setUiData(
     }
     return false;
   }
-  case 31:
-    _workflowTaskId = ConfigUtils::sanitizeId(
-          value.toString(), ConfigUtils::FullyQualifiedId);
-    if (_workflowTaskId.isEmpty())
-      _localId = _localId.mid(_localId.indexOf(':')+1);
-    else
-      _localId = _workflowTaskId.mid(_workflowTaskId.lastIndexOf('.')+1)+":"
-          + _localId.mid(_localId.indexOf(':')+1);
-    _id = _group.id()+"."+_localId;
+  case 31: {
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
+    SharedUiItem workflowTask = transaction->itemById("task", s);
+    setWorkflowTask(static_cast<Task&>(workflowTask));
     return true;
+  }
   }
   return SharedUiItemData::setUiData(section, value, errorString, transaction,
                                      role);
