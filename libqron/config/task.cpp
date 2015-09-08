@@ -176,6 +176,7 @@ public:
   QString idQualifier() const { return "task"; }
   PfNode toPfNode() const;
   void setWorkflowTask(Task workflowTask);
+  void setTaskGroup(TaskGroup taskGroup);
 };
 
 Task::Task() {
@@ -535,8 +536,14 @@ TaskGroup Task::taskGroup() const {
 }
 
 void Task::setTaskGroup(TaskGroup taskGroup) {
-  if (!isNull())
-    data()->_group = taskGroup;
+  TaskData *d = data();
+  if (d)
+    d->setTaskGroup(taskGroup);
+}
+
+void TaskData::setTaskGroup(TaskGroup taskGroup) {
+  _group = taskGroup;
+  _id = _group.id()+"."+_localId;
 }
 
 QHash<QString, qint64> Task::resources() const {
@@ -1068,29 +1075,13 @@ bool TaskData::setUiData(
     }
     return true;
   case 1: {
+    s = ConfigUtils::sanitizeId(s, ConfigUtils::FullyQualifiedId);
     SharedUiItem group = transaction->itemById("taskgroup", s);
     if (group.isNull()) {
       *errorString = "No group with such id: \""+s+"\"";
       return false;
     }
-    if (!_workflowTaskId.isEmpty()) {
-      SharedUiItem workflowTaskItem =
-          transaction->itemById("task", _workflowTaskId);
-      if (!workflowTaskItem.isNull()) {
-        Task workflowTask = reinterpret_cast<Task&>(workflowTaskItem);
-        if (s != workflowTask.taskGroup().id()) {
-          *errorString = "Cannot make a subtask belong to another group than "
-                         "its parent task's group: \""+s+"\" instead of \""
-              +workflowTask.taskGroup().id()+"\"";
-          return false;
-        }
-      } else {
-        *errorString = "No workflow task with such id: \""+s+"\"";
-        return false;
-      }
-    }
-    _group = static_cast<TaskGroup&>(group);
-    _id = _group.id()+"."+_localId;
+    setTaskGroup(static_cast<TaskGroup&>(group));
     return true;
   }
   case 2:
