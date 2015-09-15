@@ -223,6 +223,7 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
       break;
     case Alert::Raised:
     case Alert::Dropping:
+      newAlert.setCancellationDate(QDateTime::currentDateTime());
       actionCancel(&newAlert);
       break;
     }
@@ -369,6 +370,7 @@ void Alerter::notifyChannels(Alert newAlert) {
   default: // should never happen
     ;
   }
+  Alert newAlertWithoutSubscription = newAlert;
   foreach (AlertSubscription sub, alertSubscriptions(newAlert.id())) {
     AlertChannel *channel = _channels.value(sub.channelName());
     if (channel) { // should never be false
@@ -377,7 +379,7 @@ void Alerter::notifyChannels(Alert newAlert) {
       channel->notifyAlert(newAlert);
     }
   }
-  emit alertNotified(newAlert);
+  emit alertNotified(newAlertWithoutSubscription);
 }
 
 void Alerter::notifyGridboards(Alert newAlert) {
