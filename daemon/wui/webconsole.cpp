@@ -30,12 +30,9 @@
 #include "alert/alert.h"
 #include "alert/gridboard.h"
 
-#define CONFIG_TABLES_MAXROWS 500
-#define RAISED_ALERTS_MAXROWS 500
-#define TASK_INSTANCE_MAXROWS 500
-#define UNFINISHED_TASK_INSTANCE_MAXROWS 1000
-#define LOG_MAXROWS 500
 #define SHORT_LOG_MAXROWS 100
+#define SHORT_LOG_ROWSPERPAGE 10
+#define UNFINISHED_TASK_INSTANCE_MAXROWS 1000
 #define SVG_BELONG_TO_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><a xlink:title=\"%1\"><text x=\"0\" y=\"15\">This task belongs to workflow \"%1\".</text></a></svg>"
 #define SVG_NOT_A_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">This task is not a workflow.</text></svg>"
 
@@ -96,8 +93,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _gridboardsModel = new SharedUiItemsTableModel(this);
   _gridboardsModel->setHeaderDataFromTemplate(
         Gridboard(nodeWithValidPattern, Gridboard(), ParamSet()));
-  _taskInstancesHistoryModel =
-      new TaskInstancesModel(this, TASK_INSTANCE_MAXROWS);
+  _taskInstancesHistoryModel = new TaskInstancesModel(this);
   _unfinishedTaskInstancetModel =
       new TaskInstancesModel(this, UNFINISHED_TASK_INSTANCE_MAXROWS, false);
   _tasksModel = new TasksModel(this);
@@ -115,32 +111,29 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new CalendarsModel(this);
   _stepsModel= new StepsModel(this);
-  _warningLogModel = new LogModel(this, Log::Warning, LOG_MAXROWS);
-  _infoLogModel = new LogModel(this, Log::Info, LOG_MAXROWS);
-  _auditLogModel = new LogModel(this, Log::Info, LOG_MAXROWS, "AUDIT ");
+  _warningLogModel = new LogModel(this, Log::Warning);
+  _infoLogModel = new LogModel(this, Log::Info);
+  _auditLogModel = new LogModel(this, Log::Info, "AUDIT ");
   _configsModel = new ConfigsModel(this);
   _configHistoryModel = new ConfigHistoryModel(this);
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
-  _htmlHostsListView =
-      new HtmlTableView(this, "hostslist", CONFIG_TABLES_MAXROWS);
+  _htmlHostsListView = new HtmlTableView(this, "hostslist");
   _htmlHostsListView->setModel(_hostsModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   ((HtmlItemDelegate*)_htmlHostsListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-hdd\"></i>&nbsp;")
       ->setPrefixForColumnHeader(2, "<i class=\"icon-fast-food\"></i>&nbsp;");
   _wuiHandler->addView(_htmlHostsListView);
-  _htmlClustersListView =
-    new HtmlTableView(this, "clusterslist", CONFIG_TABLES_MAXROWS);
+  _htmlClustersListView = new HtmlTableView(this, "clusterslist");
   _htmlClustersListView->setModel(_clustersModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
   ((HtmlItemDelegate*)_htmlClustersListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-shuffle\"></i>&nbsp;")
       ->setPrefixForColumnHeader(1, "<i class=\"icon-hdd\"></i>&nbsp;");
   _wuiHandler->addView(_htmlClustersListView);
-  _htmlFreeResourcesView =
-    new HtmlTableView(this, "freeresources", CONFIG_TABLES_MAXROWS);
+  _htmlFreeResourcesView = new HtmlTableView(this, "freeresources");
   _htmlFreeResourcesView->setModel(_freeResourcesModel);
   _htmlFreeResourcesView->setRowHeaders();
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
@@ -150,8 +143,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
                               "<i class=\"icon-hdd\"></i>&nbsp;");
   _wuiHandler->addView(_htmlFreeResourcesView);
-  _htmlResourcesLwmView =
-    new HtmlTableView(this, "resourceslwm", CONFIG_TABLES_MAXROWS);
+  _htmlResourcesLwmView = new HtmlTableView(this, "resourceslwm");
   _htmlResourcesLwmView->setModel(_resourcesLwmModel);
   _htmlResourcesLwmView->setRowHeaders();
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
@@ -162,7 +154,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                               "<i class=\"icon-hdd\"></i>&nbsp;");
   _wuiHandler->addView(_htmlResourcesLwmView);
   _htmlResourcesConsumptionView =
-    new HtmlTableView(this, "resourcesconsumption", CONFIG_TABLES_MAXROWS);
+      new HtmlTableView(this, "resourcesconsumption");
   _htmlResourcesConsumptionView->setModel(_resourcesConsumptionModel);
   _htmlResourcesConsumptionView->setRowHeaders();
   _htmlResourcesConsumptionView
@@ -191,8 +183,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertParamsView = new HtmlTableView(this, "alertparams");
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _wuiHandler->addView(_htmlAlertParamsView);
-  _htmlRaisableAlertsView =
-      new HtmlTableView(this, "raisablealerts", RAISED_ALERTS_MAXROWS);
+  _htmlRaisableAlertsView = new HtmlTableView(this, "raisablealerts");
   _htmlRaisableAlertsView->setModel(_sortedRaisableAlertsModel);
   _htmlRaisableAlertsView->setEmptyPlaceholder("(no alert)");
   cols.clear();
@@ -216,18 +207,18 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlAlertItemDelegate*)_htmlRaisableAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   _wuiHandler->addView(_htmlRaisableAlertsView);
-  _htmlRaisedView =
-    new HtmlTableView(this, "raisedalerts", RAISED_ALERTS_MAXROWS, 10);
-  _htmlRaisedView->setModel(_sortedRaisedAlertModel);
-  _htmlRaisedView->setEmptyPlaceholder("(no alert)");
+  _htmlRaisedAlertsView = new HtmlTableView(this, "raisedalerts");
+  _htmlRaisedAlertsView->setRowsPerPage(10);
+  _htmlRaisedAlertsView->setModel(_sortedRaisedAlertModel);
+  _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
   cols.clear();
   cols << 0 << 2 << 4 << 5;
-  _htmlRaisedView->setColumnIndexes(cols);
-  _htmlRaisedView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedView, true));
-  ((HtmlAlertItemDelegate*)_htmlRaisedView->itemDelegate())
+  _htmlRaisedAlertsView->setColumnIndexes(cols);
+  _htmlRaisedAlertsView->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlRaisedAlertsView, true));
+  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
-  _wuiHandler->addView(_htmlRaisedView);
+  _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlLastEmittedAlertsView =
       new HtmlTableView(this, "lastemittedalerts",
                         _lastEmittedAlertsModel->maxrows());
@@ -241,8 +232,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << _lastEmittedAlertsModel->timestampColumn() << 7 << 5;
   _htmlLastEmittedAlertsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlLastEmittedAlertsView);
-  _htmlAlertSubscriptionsView =
-      new HtmlTableView(this, "alertsubscriptions", CONFIG_TABLES_MAXROWS);
+  _htmlAlertSubscriptionsView = new HtmlTableView(this, "alertsubscriptions");
   _htmlAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
   QHash<QString,QString> alertSubscriptionsIcons;
   alertSubscriptionsIcons.insert("stop", "<i class=\"icon-stop\"></i>&nbsp;");
@@ -253,8 +243,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 1 << 2 << 3 << 4 << 5 << 12;
   _htmlAlertSubscriptionsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlAlertSubscriptionsView);
-  _htmlAlertSettingsView =
-      new HtmlTableView(this, "alertsettings", CONFIG_TABLES_MAXROWS);
+  _htmlAlertSettingsView = new HtmlTableView(this, "alertsettings");
   _htmlAlertSettingsView->setModel(_alertSettingsModel);
   ((HtmlItemDelegate*)_htmlAlertSettingsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;");
@@ -262,8 +251,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 1 << 2;
   _htmlAlertSettingsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlAlertSettingsView);
-  _htmlGridboardsView =
-      new HtmlTableView(this, "gridboards", CONFIG_TABLES_MAXROWS);
+  _htmlGridboardsView = new HtmlTableView(this, "gridboards");
   _htmlGridboardsView->setModel(_gridboardsModel);
   ((HtmlItemDelegate*)_htmlGridboardsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
@@ -273,7 +261,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   cols << 1 << 2 << 3;
   _htmlGridboardsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlGridboardsView);
-  _htmlWarningLogView = new HtmlTableView(this, "warninglog", LOG_MAXROWS, 100);
+  _htmlWarningLogView = new HtmlTableView(this, "warninglog");
   _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   QHash<QString,QString> logTrClasses;
@@ -284,8 +272,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView->setItemDelegate(
         new HtmlLogEntryItemDelegate(_htmlWarningLogView));
   _wuiHandler->addView(_htmlWarningLogView);
-  _htmlWarningLogView10 =
-      new HtmlTableView(this, "warninglog10", SHORT_LOG_MAXROWS, 10);
+  _htmlWarningLogView10 = new HtmlTableView(
+        this, "warninglog10", SHORT_LOG_MAXROWS, SHORT_LOG_ROWSPERPAGE);
   _htmlWarningLogView10->setModel(_warningLogModel);
   _htmlWarningLogView10->setEllipsePlaceholder("(see log page for more entries)");
   _htmlWarningLogView10->setEmptyPlaceholder("(empty log)");
@@ -293,13 +281,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView10->setItemDelegate(
         new HtmlLogEntryItemDelegate(_htmlWarningLogView10));
   _wuiHandler->addView(_htmlWarningLogView10);
-  _htmlInfoLogView = new HtmlTableView(this, "infolog", LOG_MAXROWS, 100);
+  _htmlInfoLogView = new HtmlTableView(this, "infolog");
   _htmlInfoLogView->setModel(_infoLogModel);
   _htmlInfoLogView->setTrClass("%1", 4, logTrClasses);
   _htmlInfoLogView->setItemDelegate(
         new HtmlLogEntryItemDelegate(_htmlInfoLogView));
   _wuiHandler->addView(_htmlInfoLogView);
-  _htmlAuditLogView = new HtmlTableView(this, "auditlog", LOG_MAXROWS, 40);
+  _htmlAuditLogView = new HtmlTableView(this, "auditlog");
   _htmlAuditLogView->setModel(_auditLogModel);
   _htmlAuditLogView->setTrClass("%1", 4, logTrClasses);
   HtmlLogEntryItemDelegate *htmlLogEntryItemDelegate =
@@ -325,9 +313,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
                           _htmlTaskInstancesView20));
   _wuiHandler->addView(_htmlTaskInstancesView20);
-  _htmlTaskInstancesView =
-      new HtmlTableView(this, "taskinstances",
-                        _taskInstancesHistoryModel->maxrows(), 100);
+  _htmlTaskInstancesView = new HtmlTableView(
+        this, "taskinstances", _taskInstancesHistoryModel->maxrows());
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task)");
@@ -337,8 +324,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(_htmlTaskInstancesView));
   _wuiHandler->addView(_htmlTaskInstancesView);
-  _htmlTasksScheduleView =
-      new HtmlTableView(this, "tasksschedule", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksScheduleView = new HtmlTableView(this, "tasksschedule");
   _htmlTasksScheduleView->setModel(_mainTasksModel);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
@@ -348,8 +334,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksScheduleView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksScheduleView));
   _wuiHandler->addView(_htmlTasksScheduleView);
-  _htmlTasksConfigView =
-      new HtmlTableView(this, "tasksconfig", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksConfigView = new HtmlTableView(this, "tasksconfig");
   _htmlTasksConfigView->setModel(_tasksModel);
   _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
@@ -359,8 +344,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksConfigView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksConfigView));
   _wuiHandler->addView(_htmlTasksConfigView);
-  _htmlTasksParamsView =
-      new HtmlTableView(this, "tasksparams", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksParamsView = new HtmlTableView(this, "tasksparams");
   _htmlTasksParamsView->setModel(_tasksModel);
   _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
@@ -371,13 +355,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
         new HtmlTaskItemDelegate(_htmlTasksParamsView));
   _wuiHandler->addView(_htmlTasksParamsView);
   _htmlTasksListView = // note that this view is only used in /rest urls
-      new HtmlTableView(this, "taskslist", CONFIG_TABLES_MAXROWS, 100);
+      new HtmlTableView(this, "taskslist");
   _htmlTasksListView->setModel(_tasksModel);
   _htmlTasksListView->setEmptyPlaceholder("(no task in configuration)");
   _htmlTasksListView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksListView));
-  _htmlTasksEventsView =
-      new HtmlTableView(this, "tasksevents", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksEventsView = new HtmlTableView(this, "tasksevents");
   _htmlTasksEventsView->setModel(_mainTasksModel);
   _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
   cols.clear();
@@ -386,8 +369,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksEventsView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksEventsView));
   _wuiHandler->addView(_htmlTasksEventsView);
-  _htmlSchedulerEventsView =
-      new HtmlTableView(this, "schedulerevents", CONFIG_TABLES_MAXROWS, 100);
+  _htmlSchedulerEventsView = new HtmlTableView(this, "schedulerevents");
   ((HtmlItemDelegate*)_htmlSchedulerEventsView->itemDelegate())
       ->setPrefixForColumnHeader(0, "<i class=\"icon-play\"></i>&nbsp;")
       ->setPrefixForColumnHeader(1, "<i class=\"icon-refresh\"></i>&nbsp;")
@@ -410,8 +392,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlLastPostedNoticesView20->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i>&nbsp;");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
-  _htmlTaskGroupsView =
-      new HtmlTableView(this, "taskgroups", CONFIG_TABLES_MAXROWS);
+  _htmlTaskGroupsView = new HtmlTableView(this, "taskgroups");
   _htmlTaskGroupsView->setModel(_taskGroupsModel);
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
   cols.clear();
@@ -420,8 +401,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlTaskGroupsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsView);
-  _htmlTaskGroupsEventsView =
-      new HtmlTableView(this, "taskgroupsevents", CONFIG_TABLES_MAXROWS);
+  _htmlTaskGroupsEventsView = new HtmlTableView(this, "taskgroupsevents");
   _htmlTaskGroupsEventsView->setModel(_taskGroupsModel);
   _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
   cols.clear();
@@ -437,8 +417,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertChannelsView->setModel(_alertChannelsModel);
   _htmlAlertChannelsView->setRowHeaders();
   _wuiHandler->addView(_htmlAlertChannelsView);
-  _htmlTasksResourcesView =
-      new HtmlTableView(this, "tasksresources", CONFIG_TABLES_MAXROWS);
+  _htmlTasksResourcesView = new HtmlTableView(this, "tasksresources");
   _htmlTasksResourcesView->setModel(_tasksModel);
   _htmlTasksResourcesView->setEmptyPlaceholder("(no task)");
   cols.clear();
@@ -447,8 +426,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksResourcesView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksResourcesView));
   _wuiHandler->addView(_htmlTasksResourcesView);
-  _htmlTasksAlertsView =
-      new HtmlTableView(this, "tasksalerts", CONFIG_TABLES_MAXROWS, 100);
+  _htmlTasksAlertsView = new HtmlTableView(this, "tasksalerts");
   _htmlTasksAlertsView->setModel(_tasksModel);
   _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
   cols.clear();
@@ -457,8 +435,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksAlertsView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksAlertsView));
   _wuiHandler->addView(_htmlTasksAlertsView);
-  _htmlLogFilesView =
-      new HtmlTableView(this, "logfiles", CONFIG_TABLES_MAXROWS);
+  _htmlLogFilesView = new HtmlTableView(this, "logfiles");
   _htmlLogFilesView->setModel(_logConfigurationModel);
   _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
   QHash<QString,QString> bufferLogFileIcons;
@@ -467,14 +444,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(0, "<i class=\"icon-file-text\"></i>&nbsp;")
       ->setPrefixForColumn(2, "%1", 2, bufferLogFileIcons);
   _wuiHandler->addView(_htmlLogFilesView);
-  _htmlCalendarsView =
-      new HtmlTableView(this, "calendars", CONFIG_TABLES_MAXROWS);
+  _htmlCalendarsView = new HtmlTableView(this, "calendars");
   _htmlCalendarsView->setModel(_calendarsModel);
   _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
   ((HtmlItemDelegate*)_htmlCalendarsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-calendar\"></i>&nbsp;");
   _wuiHandler->addView(_htmlCalendarsView);
-  _htmlStepsView = new HtmlTableView(this, "steps", CONFIG_TABLES_MAXROWS);
+  _htmlStepsView = new HtmlTableView(this, "steps");
   _htmlStepsView->setModel(_stepsModel);
   _htmlStepsView->setEmptyPlaceholder("(no workflow step)");
   cols.clear();
@@ -483,15 +459,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlStepsView->enableRowAnchor(0);
   _htmlStepsView->setItemDelegate(new HtmlStepItemDelegate(_htmlStepsView));
   _wuiHandler->addView(_htmlStepsView);
-  _htmlConfigsView = new HtmlTableView(this, "configs", CONFIG_TABLES_MAXROWS);
+  _htmlConfigsView = new HtmlTableView(this, "configs");
   _htmlConfigsView->setModel(_configsModel);
   _htmlConfigsView->setEmptyPlaceholder("(no config)");
   _htmlConfigsDelegate =
       new HtmlSchedulerConfigItemDelegate(0, 2, 3, _htmlConfigsView);
   _htmlConfigsView->setItemDelegate(_htmlConfigsDelegate);
   _wuiHandler->addView(_htmlConfigsView);
-  _htmlConfigHistoryView = new HtmlTableView(this, "confighistory",
-                                             CONFIG_TABLES_MAXROWS);
+  _htmlConfigHistoryView = new HtmlTableView(this, "confighistory");
   _htmlConfigHistoryView->setModel(_configHistoryModel);
   _htmlConfigHistoryView->setEmptyPlaceholder("(empty history)");
   cols.clear();
@@ -505,61 +480,61 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // CSV views
   CsvTableView::setDefaultFieldQuote('"');
   CsvTableView::setDefaultReplacementChar(' ');
-  _csvHostsListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvHostsListView = new CsvTableView(this);
   _csvHostsListView->setModel(_hostsModel);
-  _csvClustersListView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvClustersListView = new CsvTableView(this);
   _csvClustersListView->setModel(_clustersModel);
-  _csvFreeResourcesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvFreeResourcesView = new CsvTableView(this);
   _csvFreeResourcesView->setModel(_freeResourcesModel);
   _csvFreeResourcesView->setRowHeaders();
-  _csvResourcesLwmView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvResourcesLwmView = new CsvTableView(this);
   _csvResourcesLwmView->setModel(_resourcesLwmModel);
   _csvResourcesLwmView->setRowHeaders();
-  _csvResourcesConsumptionView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvResourcesConsumptionView = new CsvTableView(this);
   _csvResourcesConsumptionView->setModel(_resourcesConsumptionModel);
   _csvResourcesConsumptionView->setRowHeaders();
-  _csvGlobalParamsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGlobalParamsView = new CsvTableView(this);
   _csvGlobalParamsView->setModel(_globalParamsModel);
-  _csvGlobalSetenvView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGlobalSetenvView = new CsvTableView(this);
   _csvGlobalSetenvView->setModel(_globalSetenvModel);
-  _csvGlobalUnsetenvView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGlobalUnsetenvView = new CsvTableView(this);
   _csvGlobalUnsetenvView->setModel(_globalUnsetenvModel);
-  _csvAlertParamsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvAlertParamsView = new CsvTableView(this);
   _csvAlertParamsView->setModel(_alertParamsModel);
-  _csvRaisableAlertsView = new CsvTableView(this, RAISED_ALERTS_MAXROWS);
+  _csvRaisableAlertsView = new CsvTableView(this);
   _csvRaisableAlertsView->setModel(_sortedRaisableAlertsModel);
   _csvLastEmittedAlertsView =
       new CsvTableView(this, _lastEmittedAlertsModel->maxrows());
   _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
-  _csvAlertSubscriptionsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvAlertSubscriptionsView = new CsvTableView(this);
   _csvAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
-  _csvAlertSettingsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvAlertSettingsView = new CsvTableView(this);
   _csvAlertSettingsView->setModel(_alertSettingsModel);
-  _csvGridboardsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvGridboardsView = new CsvTableView(this);
   _csvGridboardsView->setModel(_gridboardsModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
   _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =
         new CsvTableView(this, _taskInstancesHistoryModel->maxrows());
   _csvTaskInstancesView->setModel(_taskInstancesHistoryModel);
-  _csvTasksView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvTasksView = new CsvTableView(this);
   _csvTasksView->setModel(_tasksModel);
-  _csvSchedulerEventsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvSchedulerEventsView = new CsvTableView(this);
   _csvSchedulerEventsView->setModel(_schedulerEventsModel);
   _csvLastPostedNoticesView =
       new CsvTableView(this, _lastPostedNoticesModel->maxrows());
   _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
-  _csvTaskGroupsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvTaskGroupsView = new CsvTableView(this);
   _csvTaskGroupsView->setModel(_taskGroupsModel);
-  _csvLogFilesView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvLogFilesView = new CsvTableView(this);
   _csvLogFilesView->setModel(_logConfigurationModel);
-  _csvCalendarsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvCalendarsView = new CsvTableView(this);
   _csvCalendarsView->setModel(_calendarsModel);
-  _csvStepsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvStepsView = new CsvTableView(this);
   _csvStepsView->setModel(_stepsModel);
-  _csvConfigsView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvConfigsView = new CsvTableView(this);
   _csvConfigsView->setModel(_configsModel);
-  _csvConfigHistoryView = new CsvTableView(this, CONFIG_TABLES_MAXROWS);
+  _csvConfigHistoryView = new CsvTableView(this);
   _csvConfigHistoryView->setModel(_configHistoryModel);
 
   // other views
@@ -1693,6 +1668,25 @@ void WebConsole::globalParamsChanged(ParamSet globalParams) {
       globalParams.rawValue("webconsole.customactions.instanceslist");
   _unfinishedTaskInstancetModel->setCustomActions(customactions_instanceslist);
   _taskInstancesHistoryModel->setCustomActions(customactions_instanceslist);
+  int rowsPerPage = globalParams.valueAsInt(
+        "webconsole.htmltables.rowsperpage", 100);
+  int cachedRows = globalParams.valueAsInt(
+        "webconsole.htmltables.cachedrows", 500);
+  foreach (QObject *child, children()) {
+    auto *htmlView = qobject_cast<HtmlTableView*>(child);
+    auto *csvView = qobject_cast<CsvTableView*>(child);
+    if (htmlView) {
+      if (htmlView != _htmlWarningLogView10
+          && htmlView != _htmlTaskInstancesView20
+          && htmlView != _htmlLastPostedNoticesView20
+          && htmlView != _htmlRaisedAlertsView)
+        htmlView->setRowsPerPage(rowsPerPage);
+      htmlView->setCachedRows(cachedRows);
+    }
+    if (csvView) {
+      csvView->setCachedRows(cachedRows);
+    }
+  }
 }
 
 void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
