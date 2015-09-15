@@ -362,6 +362,7 @@ void Alerter::notifyChannels(Alert newAlert) {
   default: // should never happen
     ;
   }
+  Alert newAlertWithoutSubscription = newAlert;
   foreach (AlertSubscription sub, alertSubscriptions(newAlert.id())) {
     QPointer<AlertChannel> channel = _channels.value(sub.channelName());
     if (channel) { // should never be false
@@ -370,7 +371,7 @@ void Alerter::notifyChannels(Alert newAlert) {
       channel.data()->notifyAlert(newAlert);
     }
   }
-  emit alertNotified(newAlert);
+  emit alertNotified(newAlertWithoutSubscription);
 }
 
 void Alerter::notifyGridboards(Alert newAlert) {
