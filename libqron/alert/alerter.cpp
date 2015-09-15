@@ -223,6 +223,7 @@ void Alerter::doCancelAlert(QString alertId, bool immediately) {
       break;
     case Alert::Raised:
     case Alert::Dropping:
+      newAlert.setCancellationDate(QDateTime::currentDateTime());
       actionCancel(&newAlert);
       break;
     }

@@ -283,9 +283,11 @@ void MailAlertChannel::processQueue(QVariant address) {
         html.append("<li>(none)\n");
       } else {
         foreach (Alert alert, queue->_cancellations) {
-          s = alert.riseDate().toString("yyyy-MM-dd hh:mm:ss,zzz");
+          s = alert.cancellationDate().toString("yyyy-MM-dd hh:mm:ss,zzz");
           s.append(" ").append(alert.subscription().cancelMessage(alert))
-              .append("\r\n");
+              .append(" (raised on ").append(
+                alert.riseDate().toString("yyyy-MM-dd hh:mm:ss,zzz"))
+              .append(")\r\n");
           text.append(s);
           QString style =
               _config.params()
