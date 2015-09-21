@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -15,7 +15,7 @@
 #define CALENDAR_H
 
 #include "libqron_global.h"
-#include <QSharedDataPointer>
+#include "modelview/shareduiitem.h"
 #include <QDate>
 #include "pf/pfnode.h"
 
@@ -25,30 +25,31 @@ class CalendarData;
  * Used with CronTrigger to handle special arbitrary days such as public
  * holidays.
  * @see CronTrigger */
-class LIBQRONSHARED_EXPORT Calendar {
-  QSharedDataPointer<CalendarData> d;
+class LIBQRONSHARED_EXPORT Calendar : public SharedUiItem {
 
 public:
-  Calendar();
-  Calendar(const Calendar &);
+  Calendar() : SharedUiItem() { }
+  Calendar(const Calendar &other) : SharedUiItem(other) { }
   Calendar(PfNode node);
-  Calendar &operator=(const Calendar &);
-  ~Calendar();
+  Calendar &operator=(const Calendar &other) {
+    SharedUiItem::operator=(other); return *this; }
   Calendar &append(QDate begin, QDate end, bool include);
   inline Calendar &append(QDate date, bool include) {
     return append(date, date, include); }
   inline Calendar &append(bool include) {
     return append(QDate(), QDate(), include); }
   bool isIncluded(QDate date) const;
-  bool isNull() const;
-  void clear();
   /** e.g. (calendar name) or (calendar(include 2014-01-01..2018-12-31)) */
   PfNode toPfNode(bool useNameOnlyIfSet = false) const;
   /** Enumerate rules in a human readable fashion
     * e.g. "include 2014-01-01..2018-12-31, exclude 2014-04-01" */
   QString toCommaSeparatedRulesString() const;
-  /** @return QString() iff anonymous */
   QString name() const;
+
+private:
+  const CalendarData *data() const {
+    return (const CalendarData*)SharedUiItem::data(); }
+  CalendarData *data();
 };
 
 #endif // CALENDAR_H

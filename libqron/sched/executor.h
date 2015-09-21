@@ -58,6 +58,7 @@ public:
   /** This method is thread-safe. */
   void activateWorkflowTransition(WorkflowTransition transition,
                                   ParamSet eventContext);
+  void noticePosted(QString notice, ParamSet params);
 
 signals:
   /** There is no guarantee that taskStarted() is emited, taskFinished() can
@@ -76,7 +77,6 @@ private slots:
   void readyReadStandardOutput();
   void replyError(QNetworkReply::NetworkError error);
   void replyFinished();
-  void noticePosted(QString notice, ParamSet params);
   void workflowCronTriggered(QVariant sourceLocalId);
 
 private:

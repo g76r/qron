@@ -34,7 +34,6 @@
 #include "auth/usersdatabase.h"
 #include "httpd/graphvizimagehttphandler.h"
 #include "ui/logfilesmodel.h"
-#include "ui/calendarsmodel.h"
 #include <QSortFilterProxyModel>
 #include "ui/stepsmodel.h"
 #include "ui/htmlstepitemdelegate.h"
@@ -77,9 +76,11 @@ class WebConsole : public HttpHandler {
   QSortFilterProxyModel *_mainTasksModel, *_subtasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
   TaskGroupsModel *_taskGroupsModel;
+  QSortFilterProxyModel *_sortedTaskGroupsModel;
   TextMatrixModel *_alertChannelsModel;
   LogFilesModel *_logConfigurationModel;
-  CalendarsModel *_calendarsModel;
+  SharedUiItemsTableModel *_calendarsModel;
+  QSortFilterProxyModel *_sortedCalendarsModel;
   StepsModel *_stepsModel;
   LogModel *_warningLogModel, *_infoLogModel, *_auditLogModel;
   ConfigsModel *_configsModel;

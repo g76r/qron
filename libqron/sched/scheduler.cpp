@@ -35,7 +35,9 @@
 
 #define REEVALUATE_QUEUED_REQUEST_EVENT (QEvent::Type(QEvent::User+1))
 
-Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
+static SharedUiItem nullItem;
+
+Scheduler::Scheduler() : QronConfigDocumentManager(0), _thread(new QThread()),
   _alerter(new Alerter), _authenticator(new InMemoryAuthenticator(this)),
   _usersDatabase(new InMemoryUsersDatabase(this)),
   _firstConfigurationLoad(true),
@@ -44,33 +46,17 @@ Scheduler::Scheduler() : QObject(0), _thread(new QThread()),
   _queuedTasksHwm(0),
   _accessControlFilesWatcher(new QFileSystemWatcher(this)) {
   _thread->setObjectName("SchedulerThread");
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  connect(this, &Scheduler::destroyed, _thread, &QThread::quit);
+  connect(_thread, &QThread::finished, _thread, &QThread::deleteLater);
   _thread->start();
-  qRegisterMetaType<Task>("Task");
-  qRegisterMetaType<WorkflowTransition>("WorkflowTransition");
   qRegisterMetaType<TaskInstance>("TaskInstance");
   qRegisterMetaType<QList<TaskInstance> >("QList<TaskInstance>");
-  qRegisterMetaType<Host>("Host");
-  qRegisterMetaType<LogFile>("LogFile");
-  qRegisterMetaType<QPointer<Executor> >("QPointer<Executor>");
-  qRegisterMetaType<QList<EventSubscription> >("QList<EventSubscription>");
-  qRegisterMetaType<QHash<QString,Task> >("QHash<QString,Task>");
-  qRegisterMetaType<QHash<QString,TaskGroup> >("QHash<QString,TaskGroup>");
-  qRegisterMetaType<QHash<QString,QHash<QString,qint64> > >("QHash<QString,QHash<QString,qint64> >");
-  qRegisterMetaType<QHash<QString,Cluster> >("QHash<QString,Cluster>");
-  qRegisterMetaType<QHash<QString,Host> >("QHash<QString,Host>");
-  qRegisterMetaType<QHash<QString,qint64> >("QHash<QString,qint64>");
-  qRegisterMetaType<QList<LogFile> >("QList<LogFile>");
-  qRegisterMetaType<QHash<QString,Calendar> >("QHash<QString,Calendar>");
-  qRegisterMetaType<SchedulerConfig>("SchedulerConfig");
-  qRegisterMetaType<AlerterConfig>("AlerterConfig");
-  qRegisterMetaType<AccessControlConfig>("AccessControlConfig");
+  qRegisterMetaType<QHash<QString,QHash<QString,qint64>>>("QHash<QString,QHash<QString,qint64>>");
   QTimer *timer = new QTimer(this);
-  connect(timer, SIGNAL(timeout()), this, SLOT(periodicChecks()));
+  connect(timer, &QTimer::timeout, this, &Scheduler::periodicChecks);
   timer->start(60000);
-  connect(_accessControlFilesWatcher, SIGNAL(fileChanged(QString)),
-          this, SLOT(reloadAccessControlConfig()));
+  connect(_accessControlFilesWatcher, &QFileSystemWatcher::fileChanged,
+          this, &Scheduler::reloadAccessControlConfig);
   moveToThread(_thread);
 }
 
@@ -79,18 +65,20 @@ Scheduler::~Scheduler() {
   //_alerter->deleteLater(); // TODO delete alerter only when last executor is deleted
 }
 
-void Scheduler::configChanged(QString configId, SchedulerConfig config) {
-  Q_UNUSED(configId)
-  emit logConfigurationChanged(config.logfiles());
-  int executorsToAdd = config.maxtotaltaskinstances()
-      - _config.maxtotaltaskinstances();
+void Scheduler::activateConfig(
+    QString newConfigId, SchedulerConfig newConfig) {
+  Q_UNUSED(newConfigId)
+  SchedulerConfig oldConfig = QronConfigDocumentManager::config();
+  emit logConfigurationChanged(newConfig.logfiles());
+  int executorsToAdd = newConfig.maxtotaltaskinstances()
+      - oldConfig.maxtotaltaskinstances();
   if (executorsToAdd < 0) {
     if (-executorsToAdd > _availableExecutors.size()) {
       Log::warning() << "cannot set maxtotaltaskinstances down to "
-                     << config.maxtotaltaskinstances()
+                     << newConfig.maxtotaltaskinstances()
                      << " because there are too "
                         "currently many busy executors, setting it to "
-                     << config.maxtotaltaskinstances()
+                     << newConfig.maxtotaltaskinstances()
                         - (executorsToAdd - _availableExecutors.size())
                      << " instead";
       // TODO mark some executors as temporary to make them disappear later
@@ -99,44 +87,40 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
     }
     Log::debug() << "removing " << -executorsToAdd << " executors to reach "
                     "maxtotaltaskinstances of "
-                 << config.maxtotaltaskinstances();
+                 << newConfig.maxtotaltaskinstances();
     for (int i = 0; i < -executorsToAdd; ++i)
       _availableExecutors.takeFirst()->deleteLater();
   } else if (executorsToAdd > 0) {
     Log::debug() << "adding " << executorsToAdd << " executors to reach "
                     "maxtotaltaskinstances of "
-                 << config.maxtotaltaskinstances();
+                 << newConfig.maxtotaltaskinstances();
     for (int i = 0; i < executorsToAdd; ++i) {
-      Executor *e = new Executor(_alerter);
-      connect(e, SIGNAL(taskInstanceFinished(TaskInstance,QPointer<Executor>)),
-              this, SLOT(taskInstanceFinishing(TaskInstance,QPointer<Executor>)));
-      connect(e, SIGNAL(taskInstanceStarted(TaskInstance)),
-              this, SIGNAL(taskInstanceStarted(TaskInstance)));
-      connect(this, SIGNAL(noticePosted(QString,ParamSet)),
-              e, SLOT(noticePosted(QString,ParamSet)));
-      _availableExecutors.append(e);
+      Executor *executor = new Executor(_alerter);
+      connect(executor, &Executor::taskInstanceFinished,
+              this, &Scheduler::taskInstanceFinishing);
+      connect(executor, &Executor::taskInstanceStarted,
+              [this](TaskInstance instance) {
+        emit itemChanged(instance, nullItem, QStringLiteral("taskinstance"));
+      });
+      connect(this, &Scheduler::noticePosted,
+              executor, &Executor::noticePosted);
+      _availableExecutors.append(executor);
     }
   } else {
     Log::debug() << "keep maxtotaltaskinstances of "
-                 << config.maxtotaltaskinstances();
+                 << newConfig.maxtotaltaskinstances();
   }
-  config.copyLiveAttributesFromOldTasks(_config.tasks());
-  _config = config;
-  _alerter->setConfig(_config.alerterConfig());
+  newConfig.copyLiveAttributesFromOldTasks(oldConfig.tasks());
+  setConfig(newConfig);
+  _alerter->setConfig(newConfig.alerterConfig());
+  reloadAccessControlConfig();
   QMetaObject::invokeMethod(this, "checkTriggersForAllTasks",
                             Qt::QueuedConnection);
-  reloadAccessControlConfig();
-  emit globalParamsChanged(_config.globalParams());
-  emit globalSetenvChanged(_config.setenv());
-  emit globalUnsetenvChanged(_config.unsetenv());
-  emit accessControlConfigurationChanged(
-        !_config.accessControlConfig().isEmpty());
-  emit configChanged(_config); // must be last signal but hostsResourcesAvailabilityChanged()
   foreach (const QString &host, _consumedResources.keys()) {
     const QHash<QString,qint64> &hostConsumedResources
         = _consumedResources[host];
     QHash<QString,qint64> hostAvailableResources
-        = _config.hosts().value(host).resources();
+        = newConfig.hosts().value(host).resources();
     foreach (const QString &kind, hostConsumedResources.keys())
       hostAvailableResources.insert(kind, hostAvailableResources.value(kind)
                                     - hostConsumedResources.value(kind));
@@ -147,7 +131,7 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
   for (int i = 0; i < _queuedRequests.size(); ++i) {
     TaskInstance &r = _queuedRequests[i];
     QString taskId = r.task().id();
-    Task t = _config.tasks().value(taskId);
+    Task t = newConfig.tasks().value(taskId);
     if (t.isNull()) {
       Log::warning(taskId, r.idAsLong())
           << "canceling queued task while reloading configuration because this "
@@ -156,8 +140,7 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
       r.setSuccess(false);
       r.setEndDatetime();
       // LATER maybe these signals should be emited asynchronously
-      emit taskInstanceFinished(r);
-      emit taskChanged(r.task());
+      emit itemChanged(r, r, QStringLiteral("taskinstance"));
       _queuedRequests.removeAt(i--);
     } else {
       Log::info(taskId, r.idAsLong())
@@ -170,15 +153,15 @@ void Scheduler::configChanged(QString configId, SchedulerConfig config) {
   if (_firstConfigurationLoad) {
     _firstConfigurationLoad = false;
     Log::info() << "starting scheduler";
-    foreach(EventSubscription sub, _config.onschedulerstart())
+    foreach(EventSubscription sub, newConfig.onschedulerstart())
       sub.triggerActions();
   }
-  foreach(EventSubscription sub, _config.onconfigload())
+  foreach(EventSubscription sub, newConfig.onconfigload())
     sub.triggerActions();
 }
 
 void Scheduler::reloadAccessControlConfig() {
-  _config.accessControlConfig().applyConfiguration(
+  config().accessControlConfig().applyConfiguration(
         _authenticator, _usersDatabase, _accessControlFilesWatcher);
 }
 
@@ -211,8 +194,8 @@ void Scheduler::asyncRequestTask(const QString taskId,
 QList<TaskInstance> Scheduler::doRequestTask(
     QString taskId, ParamSet overridingParams, bool force,
     TaskInstance callerTask) {
-  Task task = _config.tasks().value(taskId);
-  Cluster cluster = _config.clusters().value(task.target());
+  Task task = config().tasks().value(taskId);
+  Cluster cluster = config().clusters().value(task.target());
   if (task.isNull()) {
     Log::error() << "requested task not found: " << taskId << overridingParams
                  << force;
@@ -262,7 +245,8 @@ QList<TaskInstance> Scheduler::doRequestTask(
   }
   if (!requests.isEmpty()) {
     reevaluateQueuedRequests();
-    emit taskChanged(task);
+    // FIXME not sure it is needed
+    emit itemChanged(task, task, QStringLiteral("task"));
   }
   return requests;
 }
@@ -292,15 +276,15 @@ TaskInstance Scheduler::enqueueRequest(
         r2.setReturnCode(-1);
         r2.setSuccess(false);
         r2.setEndDatetime();
-        emit taskInstanceFinished(r2);
+        emit itemChanged(r2, r2, QStringLiteral("taskinstance"));
         _queuedRequests.removeAt(i--);
       }
     }
   }
-  if (_queuedRequests.size() >= _config.maxqueuedrequests()) {
+  if (_queuedRequests.size() >= config().maxqueuedrequests()) {
     Log::error(taskId, request.idAsLong())
         << "cannot queue task because maxqueuedrequests is already reached ("
-        << _config.maxqueuedrequests() << ")";
+        << config().maxqueuedrequests() << ")";
     _alerter->raiseAlert("scheduler.maxqueuedrequests.reached");
     return TaskInstance();
   }
@@ -313,7 +297,7 @@ TaskInstance Scheduler::enqueueRequest(
   _queuedRequests.append(request);
   if (_queuedRequests.size() > _queuedTasksHwm)
     _queuedTasksHwm = _queuedRequests.size();
-  emit taskInstanceQueued(request);
+  emit itemChanged(request, request, QStringLiteral("taskinstance"));
   return request;
 }
 
@@ -337,7 +321,7 @@ TaskInstance Scheduler::doCancelRequest(quint64 id) {
       r2.setReturnCode(-1);
       r2.setSuccess(false);
       r2.setEndDatetime();
-      emit taskInstanceFinished(r2);
+      emit itemChanged(r2, r2, QStringLiteral("taskinstance"));
       _queuedRequests.removeAt(i);
       if (r2.task().instancesCount() < r2.task().maxInstances())
         _alerter->cancelAlert("task.maxinstancesreached."+taskId);
@@ -381,7 +365,7 @@ TaskInstance Scheduler::doAbortTask(quint64 id) {
 
 void Scheduler::checkTriggersForTask(QVariant taskId) {
   //Log::debug() << "Scheduler::checkTriggersForTask " << taskId;
-  Task task = _config.tasks().value(taskId.toString());
+  Task task = config().tasks().value(taskId.toString());
   foreach (const CronTrigger trigger, task.cronTriggers())
     checkTrigger(trigger, task, taskId.toString());
 }
@@ -389,7 +373,7 @@ void Scheduler::checkTriggersForTask(QVariant taskId) {
 void Scheduler::checkTriggersForAllTasks() {
   //Log::debug() << "Scheduler::checkTriggersForAllTasks ";
   QList<Task> tasksWithoutTimeTrigger;
-  foreach (Task task, _config.tasks().values()) {
+  foreach (Task task, config().tasks().values()) {
     QString taskId = task.id();
     foreach (const CronTrigger trigger, task.cronTriggers())
       checkTrigger(trigger, task, taskId);
@@ -400,7 +384,7 @@ void Scheduler::checkTriggersForAllTasks() {
   }
   // LATER if this is usefull only to remove next exec time when reloading config w/o time trigger, this should be called in reloadConfig
   foreach (const Task task, tasksWithoutTimeTrigger)
-    emit taskChanged(task);
+    emit itemChanged(task, task, QStringLiteral("task"));
 }
 
 bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString taskId) {
@@ -414,7 +398,7 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString taskId) {
     ParamSet overridingParams;
     foreach (QString key, trigger.overridingParams().keys())
       overridingParams
-          .setValue(key, _config.globalParams()
+          .setValue(key, config().globalParams()
                     .value(trigger.overridingParams().rawValue(key)));
     QList<TaskInstance> requests = syncRequestTask(taskId, overridingParams);
     if (!requests.isEmpty())
@@ -453,7 +437,7 @@ bool Scheduler::checkTrigger(CronTrigger trigger, Task task, QString taskId) {
   } else {
     task.setNextScheduledExecution(QDateTime());
   }
-  emit taskChanged(task);
+  emit itemChanged(task, task, QStringLiteral("task"));
   return fired;
 }
 
@@ -462,9 +446,9 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
     Log::warning() << "cannot post a null/empty notice";
     return;
   }
-  QHash<QString,Task> tasks = _config.tasks();
+  QHash<QString,Task> tasks = config().tasks();
   if (params.parent().isNull())
-    params.setParent(_config.globalParams());
+    params.setParent(config().globalParams());
   Log::debug() << "posting notice ^" << notice << " with params " << params;
   foreach (Task task, tasks.values()) {
     foreach (NoticeTrigger trigger, task.noticeTriggers()) {
@@ -493,7 +477,7 @@ void Scheduler::postNotice(QString notice, ParamSet params) {
   }
   emit noticePosted(notice, params);
   params.setValue("!notice", notice);
-  foreach (EventSubscription sub, _config.onnotice())
+  foreach (EventSubscription sub, config().onnotice())
     sub.triggerActions(params);
 }
 
@@ -528,13 +512,13 @@ void Scheduler::startQueuedTasks() {
             r2.setReturnCode(-1);
             r2.setSuccess(false);
             r2.setEndDatetime();
-            emit taskInstanceFinished(r2);
+            emit itemChanged(r2, r2, QStringLiteral("taskinstance"));
             if (j < i)
               --i;
             _queuedRequests.removeAt(j--);
           }
         }
-        emit taskChanged(r.task());
+        emit itemChanged(r.task(), r.task(), QStringLiteral("task"));
       }
     } else
       ++i;
@@ -581,7 +565,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     target = task.target();
     if (target.isEmpty()) {
       // inherit target from workflow task if any
-      Task workflowTask = _config.tasks().value(task.workflowTaskId());
+      Task workflowTask = config().tasks().value(task.workflowTaskId());
       target = workflowTask.target();
       // silently use "localhost" as target for means not needing a real target
       if (target.isEmpty()) {
@@ -592,9 +576,9 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     }
   }
   QList<Host> hosts;
-  Host host = _config.hosts().value(target);
+  Host host = config().hosts().value(target);
   if (host.isNull())
-    hosts.append(_config.clusters().value(target).hosts());
+    hosts.append(config().clusters().value(target).hosts());
   else
     hosts.append(host);
   if (hosts.isEmpty()) {
@@ -605,7 +589,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     instance.setSuccess(false);
     instance.setEndDatetime();
     task.fetchAndAddInstancesCount(-1);
-    emit taskInstanceFinished(instance);
+    emit itemChanged(instance, instance, QStringLiteral("taskinstance"));
     return true;
   }
   // LATER implement other cluster balancing methods than "first"
@@ -616,7 +600,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
       QHash<QString,qint64> hostConsumedResources
           = _consumedResources.value(h.id());
       QHash<QString,qint64> hostAvailableResources
-          = _config.hosts().value(h.id()).resources();
+          = config().hosts().value(h.id()).resources();
       if (!instance.force()) {
         foreach (QString kind, taskResources.keys()) {
           qint64 alreadyConsumed = hostConsumedResources.value(kind);
@@ -643,7 +627,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     _alerter->cancelAlert("resource.exhausted."+taskId);
     instance.setTarget(h);
     instance.setStartDatetime();
-    foreach (EventSubscription sub, _config.onstart())
+    foreach (EventSubscription sub, config().onstart())
       sub.triggerActions(instance);
     task.triggerStartEvents(instance);
     executor = _availableExecutors.takeFirst();
@@ -651,12 +635,14 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
       // this should only happen with force == true
       executor = new Executor(_alerter);
       executor->setTemporary();
-      connect(executor, SIGNAL(taskInstanceFinished(TaskInstance,QPointer<Executor>)),
-              this, SLOT(taskInstanceFinishing(TaskInstance,QPointer<Executor>)));
-      connect(executor, SIGNAL(taskInstanceStarted(TaskInstance)),
-              this, SIGNAL(taskInstanceStarted(TaskInstance)));
-      connect(this, SIGNAL(noticePosted(QString,ParamSet)),
-              executor, SLOT(noticePosted(QString,ParamSet)));
+      connect(executor, &Executor::taskInstanceFinished,
+              this, &Scheduler::taskInstanceFinishing);
+      connect(executor, &Executor::taskInstanceStarted,
+              [this](TaskInstance instance) {
+        emit itemChanged(instance, nullItem, QStringLiteral("taskinstance"));
+      });
+      connect(this, &Scheduler::noticePosted,
+              executor, &Executor::noticePosted);
     }
     executor->execute(instance);
     ++_execCount;
@@ -684,7 +670,7 @@ void Scheduler::taskInstanceFinishing(TaskInstance instance,
   QString taskId = requestedTask.id();
   // configured and requested tasks are different if config was reloaded
   // meanwhile
-  Task configuredTask(_config.tasks().value(taskId));
+  Task configuredTask = config().tasks().value(taskId);
   configuredTask.fetchAndAddInstancesCount(-1);
   if (executor) {
     // deleteLater() because it lives in its own thread
@@ -698,7 +684,7 @@ void Scheduler::taskInstanceFinishing(TaskInstance instance,
   QHash<QString,qint64> hostConsumedResources =
       _consumedResources.value(instance.target().id());
   QHash<QString,qint64> hostAvailableResources =
-      _config.hosts().value(instance.target().id()).resources();
+      config().hosts().value(instance.target().id()).resources();
   foreach (QString kind, taskResources.keys()) {
     qint64 qty = hostConsumedResources.value(kind)-taskResources.value(kind);
     hostConsumedResources.insert(kind, qty);
@@ -719,14 +705,14 @@ void Scheduler::taskInstanceFinishing(TaskInstance instance,
     configuredTask.setLastTotalMillis(instance.totalMillis());
     configuredTask.setLastTaskInstanceId(instance.idAsLong());
   }
-  emit taskInstanceFinished(instance);
-  emit taskChanged(configuredTask);
+  emit itemChanged(instance, instance, QStringLiteral("taskinstance"));
+  emit itemChanged(configuredTask, configuredTask, QStringLiteral("task"));
   if (instance.success()) {
-    foreach (EventSubscription sub, _config.onsuccess())
+    foreach (EventSubscription sub, config().onsuccess())
       sub.triggerActions(instance);
     configuredTask.triggerSuccessEvents(instance);
   } else {
-    foreach (EventSubscription sub, _config.onfailure())
+    foreach (EventSubscription sub, config().onfailure())
       sub.triggerActions(instance);
     configuredTask.triggerFailureEvents(instance);
   }
@@ -747,33 +733,25 @@ void Scheduler::taskInstanceFinishing(TaskInstance instance,
 }
 
 bool Scheduler::enableTask(QString taskId, bool enable) {
-  Task t = _config.tasks().value(taskId);
+  Task t = config().tasks().value(taskId);
   //Log::fatal() << "enableTask " << taskId << " " << enable << " " << t.id();
   if (t.isNull())
     return false;
   t.setEnabled(enable);
   if (enable)
     reevaluateQueuedRequests();
-  emit taskChanged(t);
+  emit itemChanged(t, t, QStringLiteral("task"));
   return true;
 }
 
 void Scheduler::enableAllTasks(bool enable) {
-  QList<Task> tasks(_config.tasks().values());
+  QList<Task> tasks(config().tasks().values());
   foreach (Task t, tasks) {
     t.setEnabled(enable);
-    emit taskChanged(t);
+    emit itemChanged(t, t, QStringLiteral("task"));
   }
   if (enable)
     reevaluateQueuedRequests();
-}
-
-bool Scheduler::taskExists(QString taskId) {
-  return _config.tasks().contains(taskId);
-}
-
-Task Scheduler::task(QString taskId) {
-  return _config.tasks().value(taskId);
 }
 
 void Scheduler::periodicChecks() {
@@ -790,10 +768,6 @@ void Scheduler::periodicChecks() {
   // if current system time goes back (which btw should never occur on well
   // managed production servers, however it with naive sysops)
   checkTriggersForAllTasks();
-}
-
-Calendar Scheduler::calendarByName(QString name) const {
-  return _config.namedCalendars().value(name);
 }
 
 void Scheduler::activateWorkflowTransition(TaskInstance workflowTaskInstance,

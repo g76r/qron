@@ -88,7 +88,6 @@ SOURCES += \
     config/logfile.cpp \
     ui/logfilesmodel.cpp \
     config/calendar.cpp \
-    ui/calendarsmodel.cpp \
     ui/htmltaskitemdelegate.cpp \
     ui/htmltaskinstanceitemdelegate.cpp \
     ui/htmlalertitemdelegate.cpp \
@@ -120,7 +119,8 @@ SOURCES += \
     sched/noticepseudoparamsprovider.cpp \
     config/alertsettings.cpp \
     config/alertsubscription.cpp \
-    alert/gridboard.cpp
+    alert/gridboard.cpp \
+    config/qronconfigdocumentmanager.cpp
 
 HEADERS += \
     config/task.h \
@@ -158,7 +158,6 @@ HEADERS += \
     config/logfile.h \
     ui/logfilesmodel.h \
     config/calendar.h \
-    ui/calendarsmodel.h \
     ui/htmltaskitemdelegate.h \
     ui/htmltaskinstanceitemdelegate.h \
     ui/htmlalertitemdelegate.h \
@@ -194,4 +193,5 @@ HEADERS += \
     sched/noticepseudoparamsprovider.h \
     config/alertsettings.h \
     config/alertsubscription.h \
-    alert/gridboard.h
+    alert/gridboard.h \
+    config/qronconfigdocumentmanager.h

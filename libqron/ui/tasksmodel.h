@@ -39,10 +39,7 @@ public:
   void setCustomActions(QString customActions) {
     _customActions = customActions; }
 
-public slots:
-  void configReset(SchedulerConfig config);
-
-private slots:
+private:
   void periodicDataRefresh();
 };
 

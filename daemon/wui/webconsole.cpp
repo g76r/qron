@@ -58,7 +58,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
 
   // models
   _hostsModel = new SharedUiItemsTableModel(Host(PfNode("template")), this);
+  _hostsModel->setChangeItemQualifierFilter("host");
   _clustersModel = new ClustersModel(this);
+  _clustersModel->setChangeItemQualifierFilter({"cluster", "host"});
   _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
   _resourcesLwmModel = new HostsResourcesAvailabilityModel(
         this, HostsResourcesAvailabilityModel::LwmOverConfigured);
@@ -94,9 +96,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _gridboardsModel->setHeaderDataFromTemplate(
         Gridboard(nodeWithValidPattern, Gridboard(), ParamSet()));
   _taskInstancesHistoryModel = new TaskInstancesModel(this);
+  _taskInstancesHistoryModel->setChangeItemQualifierFilter("taskinstance");
   _unfinishedTaskInstancetModel =
       new TaskInstancesModel(this, UNFINISHED_TASK_INSTANCE_MAXROWS, false);
+  _unfinishedTaskInstancetModel->setChangeItemQualifierFilter("taskinstance");
   _tasksModel = new TasksModel(this);
+  _tasksModel->setChangeItemQualifierFilter("task");
   _mainTasksModel = new QSortFilterProxyModel(this);
   _mainTasksModel->setFilterKeyColumn(31);
   _mainTasksModel->setFilterRegExp("^$");
@@ -107,9 +112,18 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _subtasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
+  _taskGroupsModel->setChangeItemQualifierFilter("taskgroup");
+  _sortedTaskGroupsModel = new QSortFilterProxyModel(this);
+  _sortedTaskGroupsModel->setSourceModel(_taskGroupsModel);
+  _sortedTaskGroupsModel->sort(0);
   _alertChannelsModel = new TextMatrixModel(this);
   _logConfigurationModel = new LogFilesModel(this);
-  _calendarsModel = new CalendarsModel(this);
+  _calendarsModel = new SharedUiItemsTableModel(this);
+  _calendarsModel->setHeaderDataFromTemplate(Calendar(PfNode("calendar")));
+  _calendarsModel->setChangeItemQualifierFilter("calendar");
+  _sortedCalendarsModel = new QSortFilterProxyModel(this);
+  _sortedCalendarsModel->setSourceModel(_calendarsModel);
+  _sortedCalendarsModel->sort(1);
   _stepsModel= new StepsModel(this);
   _warningLogModel = new LogModel(this, Log::Warning);
   _infoLogModel = new LogModel(this, Log::Info);
@@ -178,7 +192,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlGlobalUnsetenvView->setModel(_globalUnsetenvModel);
   _wuiHandler->addView(_htmlGlobalUnsetenvView);
   cols.clear();
-  cols << 1;
+  cols << 0;
   _htmlGlobalUnsetenvView->setColumnIndexes(cols);
   _htmlAlertParamsView = new HtmlTableView(this, "alertparams");
   _htmlAlertParamsView->setModel(_alertParamsModel);
@@ -393,7 +407,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i>&nbsp;");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
   _htmlTaskGroupsView = new HtmlTableView(this, "taskgroups");
-  _htmlTaskGroupsView->setModel(_taskGroupsModel);
+  _htmlTaskGroupsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
   cols.clear();
   cols << 0 << 2 << 7 << 20 << 21;
@@ -402,7 +416,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsView);
   _htmlTaskGroupsEventsView = new HtmlTableView(this, "taskgroupsevents");
-  _htmlTaskGroupsEventsView->setModel(_taskGroupsModel);
+  _htmlTaskGroupsEventsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
   cols.clear();
   cols << 0 << 14 << 15 << 16;
@@ -445,10 +459,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(2, "%1", 2, bufferLogFileIcons);
   _wuiHandler->addView(_htmlLogFilesView);
   _htmlCalendarsView = new HtmlTableView(this, "calendars");
-  _htmlCalendarsView->setModel(_calendarsModel);
+  _htmlCalendarsView->setModel(_sortedCalendarsModel);
+  cols.clear();
+  cols << 1 << 2;
+  _htmlCalendarsView->setColumnIndexes(cols);
   _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
   ((HtmlItemDelegate*)_htmlCalendarsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-calendar\"></i>&nbsp;");
+      ->setPrefixForColumn(1, "<i class=\"icon-calendar\"></i>&nbsp;");
   _wuiHandler->addView(_htmlCalendarsView);
   _htmlStepsView = new HtmlTableView(this, "steps");
   _htmlStepsView->setModel(_stepsModel);
@@ -525,11 +542,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       new CsvTableView(this, _lastPostedNoticesModel->maxrows());
   _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
   _csvTaskGroupsView = new CsvTableView(this);
-  _csvTaskGroupsView->setModel(_taskGroupsModel);
+  _csvTaskGroupsView->setModel(_sortedTaskGroupsModel);
   _csvLogFilesView = new CsvTableView(this);
   _csvLogFilesView->setModel(_logConfigurationModel);
   _csvCalendarsView = new CsvTableView(this);
-  _csvCalendarsView->setModel(_calendarsModel);
+  _csvCalendarsView->setModel(_sortedCalendarsModel);
   _csvStepsView = new CsvTableView(this);
   _csvStepsView->setModel(_stepsModel);
   _csvConfigsView = new CsvTableView(this);
@@ -551,8 +568,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
 
   // dedicated thread
   _thread->setObjectName("WebConsoleServer");
-  connect(this, SIGNAL(destroyed(QObject*)), _thread, SLOT(quit()));
-  connect(_thread, SIGNAL(finished()), _thread, SLOT(deleteLater()));
+  connect(this, &WebConsole::destroyed, _thread, &QThread::quit);
+  connect(_thread, &QThread::finished, _thread, &QThread::deleteLater);
   _thread->start();
   moveToThread(_thread);
 
@@ -709,7 +726,7 @@ bool WebConsole::handleRequest(
             params.removeValue(key);
         params.removeValue("taskid");
         params.removeValue("event");
-        // FIXME evaluate overriding params within overriding > global context
+        // TODO evaluate overriding params within overriding > global context
         QList<TaskInstance> instances = _scheduler->syncRequestTask(taskId, params);
         if (!instances.isEmpty()) {
           message = "S:Task '"+taskId+"' submitted for execution with id";
@@ -1045,7 +1062,7 @@ bool WebConsole::handleRequest(
     res.output()->write(_htmlStepsView->text().toUtf8().constData());
     return true;
   }
-  if (path == "/rest/html/tasks/events/v1") { // FIXME
+  if (path == "/rest/html/tasks/events/v1") { // TODO events csv
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTasksEventsView->text().toUtf8().constData());
     return true;
@@ -1437,128 +1454,58 @@ bool WebConsole::handleRequest(
 }
 
 void WebConsole::setScheduler(Scheduler *scheduler) {
-  if (_scheduler) {
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _tasksModel, SLOT(configReset(SchedulerConfig)));
-    disconnect(_scheduler, &Scheduler::configItemChanged,
-               _hostsModel, &SharedUiItemsTableModel::changeItem);
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _clustersModel, SLOT(configReset(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _freeResourcesModel, SLOT(configChanged(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
-               _freeResourcesModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _resourcesLwmModel, SLOT(configChanged(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
-               _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
-    disconnect(_scheduler, &Scheduler::taskChanged,
-               _tasksModel, &SharedUiItemsModel::createOrUpdateItem);
-    //    disconnect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
-    //               _globalParamsModel, SLOT(paramsChanged(ParamSet)));
-    disconnect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
-               _globalSetenvModel, SLOT(paramsChanged(ParamSet)));
-    disconnect(_scheduler, SIGNAL(globalUnsetenvChanged(ParamSet)),
-               _globalUnsetenvModel, SLOT(paramsChanged(ParamSet)));
-    disconnect(_scheduler->alerter(), SIGNAL(paramsChanged(ParamSet)),
-               _alertParamsModel, SLOT(paramsChanged(ParamSet)));
-    disconnect(_scheduler->alerter(), &Alerter::alertNotified,
-               _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
-    disconnect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
-               this, SLOT(alerterConfigChanged(AlerterConfig)));
-    disconnect(_scheduler, &Scheduler::taskInstanceQueued,
-               _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
-    disconnect(_scheduler, &Scheduler::taskInstanceStarted,
-               _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
-    disconnect(_scheduler, &Scheduler::taskInstanceFinished,
-               _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
-    disconnect(_scheduler, &Scheduler::taskInstanceQueued,
-               _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
-    disconnect(_scheduler, &Scheduler::taskInstanceStarted,
-               _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
-    disconnect(_scheduler, &Scheduler::taskInstanceFinished,
-               _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _schedulerEventsModel, SLOT(configChanged(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _calendarsModel, SLOT(configChanged(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
-               _lastPostedNoticesModel, SLOT(eventOccured(QString)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _taskGroupsModel, SLOT(configReset(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               this, SLOT(configChanged(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
-               this, SLOT(enableAccessControl(bool)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _resourcesConsumptionModel, SLOT(configChanged(SchedulerConfig)));
-    disconnect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
-               _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
-    disconnect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-               _stepsModel, SLOT(configChanged(SchedulerConfig)));
-  }
   _scheduler = scheduler;
   if (_scheduler) {
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _tasksModel, SLOT(configReset(SchedulerConfig)));
-    connect(_scheduler, &Scheduler::configItemChanged,
+    connect(_scheduler, &Scheduler::itemChanged,
+            _tasksModel, &TasksModel::changeItem);
+    connect(_scheduler, &Scheduler::itemChanged,
             _hostsModel, &SharedUiItemsTableModel::changeItem);
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _clustersModel, SLOT(configReset(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+    connect(_scheduler, &Scheduler::itemChanged,
+            _clustersModel, &ClustersModel::changeItem);
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)), // FIXME
             _freeResourcesModel, SLOT(configChanged(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
-            _freeResourcesModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+    connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
+            _freeResourcesModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)), // FIXME
             _resourcesLwmModel, SLOT(configChanged(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)),
-            _resourcesLwmModel, SLOT(hostsResourcesAvailabilityChanged(QString,QHash<QString,qint64>)));
-    connect(_scheduler, &Scheduler::taskChanged,
-            _tasksModel, &SharedUiItemsModel::createOrUpdateItem);
-    //    connect(_scheduler, SIGNAL(globalParamsChanged(ParamSet)),
-    //            _globalParamsModel, SLOT(paramsChanged(ParamSet)));
-    connect(_scheduler, SIGNAL(globalSetenvChanged(ParamSet)),
-            _globalSetenvModel, SLOT(paramsChanged(ParamSet)));
-    connect(_scheduler, SIGNAL(globalUnsetenvChanged(ParamSet)),
-            _globalUnsetenvModel, SLOT(paramsChanged(ParamSet)));
-    connect(_scheduler->alerter(), SIGNAL(paramsChanged(ParamSet)),
-            _alertParamsModel, SLOT(paramsChanged(ParamSet)));
+    connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
+            _resourcesLwmModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
+    connect(_scheduler, &Scheduler::globalParamsChanged,
+            _globalParamsModel, &ParamSetModel::paramsChanged);
+    connect(_scheduler, &Scheduler::globalSetenvChanged,
+            _globalSetenvModel, &ParamSetModel::paramsChanged);
+    connect(_scheduler, &Scheduler::globalUnsetenvChanged,
+            _globalUnsetenvModel, &ParamSetModel::paramsChanged);
+    connect(_scheduler->alerter(), &Alerter::paramsChanged,
+            _alertParamsModel, &ParamSetModel::paramsChanged);
     connect(_scheduler->alerter(), &Alerter::raisableAlertChanged,
             _raisableAlertsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler->alerter(), &Alerter::alertNotified,
             _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
-    connect(_scheduler->alerter(), SIGNAL(configChanged(AlerterConfig)),
-             this, SLOT(alerterConfigChanged(AlerterConfig)));
-    connect(_scheduler, &Scheduler::taskInstanceQueued,
-            _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
-    connect(_scheduler, &Scheduler::taskInstanceStarted,
-            _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
-    connect(_scheduler, &Scheduler::taskInstanceFinished,
-            _taskInstancesHistoryModel, &SharedUiItemsModel::createOrUpdateItem);
-    connect(_scheduler, &Scheduler::taskInstanceQueued,
-            _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
-    connect(_scheduler, &Scheduler::taskInstanceStarted,
-            _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
-    connect(_scheduler, &Scheduler::taskInstanceFinished,
-            _unfinishedTaskInstancetModel, &SharedUiItemsModel::createOrUpdateItem);
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _schedulerEventsModel, SLOT(configChanged(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _calendarsModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler->alerter(), &Alerter::configChanged,
+            this, &WebConsole::alerterConfigChanged);
+    connect(_scheduler, &Scheduler::itemChanged,
+            _taskInstancesHistoryModel, &SharedUiItemsModel::changeItem);
+    connect(_scheduler, &Scheduler::itemChanged,
+            _unfinishedTaskInstancetModel, &SharedUiItemsModel::changeItem);
+    connect(_scheduler, &Scheduler::globalEventSubscriptionsChanged,
+            _schedulerEventsModel, &SchedulerEventsModel::globalEventSubscriptionsChanged);
+    connect(_scheduler, &Scheduler::itemChanged,
+            _calendarsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
+    connect(_scheduler, &Scheduler::itemChanged,
+            _taskGroupsModel, &TaskGroupsModel::changeItem);
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _taskGroupsModel, SLOT(configReset(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            this, SLOT(configChanged(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
-            this, SLOT(enableAccessControl(bool)));
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
+            this, SLOT(configChanged(SchedulerConfig))); // FIXME
+    connect(_scheduler, &Scheduler::accessControlConfigurationChanged,
+            this, &WebConsole::enableAccessControl);
+    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)), // FIXME
             _resourcesConsumptionModel, SLOT(configChanged(SchedulerConfig)));
-    connect(_scheduler, SIGNAL(logConfigurationChanged(QList<LogFile>)),
-            _logConfigurationModel, SLOT(logConfigurationChanged(QList<LogFile>)));
+    connect(_scheduler, &Scheduler::logConfigurationChanged,
+            _logConfigurationModel, &LogFilesModel::logConfigurationChanged);
     connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _stepsModel, SLOT(configChanged(SchedulerConfig)));
+            _stepsModel, SLOT(configChanged(SchedulerConfig))); // FIXME
   }
 }
 
@@ -1569,40 +1516,6 @@ void WebConsole::setConfigPaths(QString configFilePath,
 }
 
 void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
-  if (_configRepository) {
-    // Configs
-    disconnect(_configRepository, &ConfigRepository::configAdded,
-               _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configAdded);
-    disconnect(_configRepository, &ConfigRepository::configRemoved,
-               _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configRemoved);
-    disconnect(_configRepository, &ConfigRepository::configActivated,
-               _htmlConfigsDelegate, &HtmlSchedulerConfigItemDelegate::configActivated);
-    disconnect(_configRepository, &ConfigRepository::configAdded,
-               _configsModel, &ConfigsModel::configAdded);
-    disconnect(_configRepository, &ConfigRepository::configRemoved,
-               _configsModel, &ConfigsModel::configRemoved);
-    disconnect(_configRepository, &ConfigRepository::configActivated,
-               _configsModel, &ConfigsModel::configActivated);
-    disconnect(_configRepository, &ConfigRepository::configActivated,
-               _htmlConfigsView, &HtmlTableView::invalidateCache); // needed for isActive and actions columns
-    // Config History
-    disconnect(_configRepository, SIGNAL(historyReset(QList<ConfigHistoryEntry>)),
-               _configHistoryModel, SLOT(historyReset(QList<ConfigHistoryEntry>)));
-    disconnect(_configRepository, SIGNAL(historyEntryAppended(ConfigHistoryEntry)),
-               _configHistoryModel, SLOT(historyEntryAppended(ConfigHistoryEntry)));
-    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-               _htmlConfigHistoryDelegate, SLOT(configActivated(QString)));
-    disconnect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
-               _htmlConfigHistoryDelegate, SLOT(configAdded(QString)));
-    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
-               _htmlConfigHistoryDelegate, SLOT(configRemoved(QString)));
-    disconnect(_configRepository, SIGNAL(configRemoved(QString)),
-               _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for config id link removal
-    disconnect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-               _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for actions column
-    // Data clearing
-    _configsModel->removeItems(0, _configsModel->rowCount());
-  }
   _configRepository = configRepository;
   _configUploadHandler->setConfigRepository(_configRepository);
   if (_configRepository) {
@@ -1622,20 +1535,20 @@ void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
     connect(_configRepository, &ConfigRepository::configActivated,
             _htmlConfigsView, &HtmlTableView::invalidateCache); // needed for isActive and actions columns
     // Config History
-    connect(_configRepository, SIGNAL(historyReset(QList<ConfigHistoryEntry>)),
-            _configHistoryModel, SLOT(historyReset(QList<ConfigHistoryEntry>)));
-    connect(_configRepository, SIGNAL(historyEntryAppended(ConfigHistoryEntry)),
-            _configHistoryModel, SLOT(historyEntryAppended(ConfigHistoryEntry)));
-    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-            _htmlConfigHistoryDelegate, SLOT(configActivated(QString)));
-    connect(_configRepository, SIGNAL(configAdded(QString,SchedulerConfig)),
-            _htmlConfigHistoryDelegate, SLOT(configAdded(QString)));
-    connect(_configRepository, SIGNAL(configRemoved(QString)),
-            _htmlConfigHistoryDelegate, SLOT(configRemoved(QString)));
-    connect(_configRepository, SIGNAL(configRemoved(QString)),
-            _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for config id link removal
-    connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-            _htmlConfigHistoryView, SLOT(invalidateCache())); // needed for actions column
+    connect(_configRepository, &ConfigRepository::historyReset,
+            _configHistoryModel, &ConfigHistoryModel::historyReset);
+    connect(_configRepository, &ConfigRepository::historyEntryAppended,
+            _configHistoryModel, &ConfigHistoryModel::historyEntryAppended);
+    connect(_configRepository, &ConfigRepository::configActivated,
+            _htmlConfigHistoryDelegate, &HtmlSchedulerConfigItemDelegate::configActivated);
+    connect(_configRepository, &ConfigRepository::configAdded,
+            _htmlConfigHistoryDelegate, &HtmlSchedulerConfigItemDelegate::configAdded);
+    connect(_configRepository, &ConfigRepository::configRemoved,
+            _htmlConfigHistoryDelegate, &HtmlSchedulerConfigItemDelegate::configRemoved);
+    connect(_configRepository, &ConfigRepository::configRemoved,
+            _htmlConfigHistoryView, &HtmlTableView::invalidateCache); // needed for config id link removal
+    connect(_configRepository, &ConfigRepository::configActivated,
+            _htmlConfigHistoryView, &HtmlTableView::invalidateCache); // needed for actions column
   }
 }
 

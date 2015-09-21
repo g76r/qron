@@ -33,18 +33,17 @@
 #include "auth/inmemoryusersdatabase.h"
 #include <QFileSystemWatcher>
 #include "config/logfile.h"
-#include "config/schedulerconfig.h"
+#include "config/qronconfigdocumentmanager.h"
 
 class QThread;
 class CronTrigger;
 
 /** Core qron scheduler class.
  * Mainly responsible for configuration, queueing and event handling. */
-class LIBQRONSHARED_EXPORT Scheduler : public QObject {
+class LIBQRONSHARED_EXPORT Scheduler : public QronConfigDocumentManager {
   Q_OBJECT
   Q_DISABLE_COPY(Scheduler)
   QThread *_thread;
-  SchedulerConfig _config;
   QList<TaskInstance> _queuedRequests;
   QHash<TaskInstance,Executor*> _runningTasks;
   QList<Executor*> _availableExecutors;
@@ -56,7 +55,7 @@ class LIBQRONSHARED_EXPORT Scheduler : public QObject {
   qint64 _execCount, _runningTasksHwm, _queuedTasksHwm;
   QFileSystemWatcher *_accessControlFilesWatcher;
   PfNode _accessControlNode;
-  QHash<QString, QHash<QString,qint64> > _consumedResources; // <host, <resource, quantity> >
+  QHash<QString, QHash<QString,qint64>> _consumedResources; // <host,<resource,quantity>>
 
 public:
   Scheduler();
@@ -73,18 +72,6 @@ public:
   qint64 execCount() const { return _execCount; }
   qint64 runningTasksHwm() const { return _runningTasksHwm; }
   qint64 queuedTasksHwm() const { return _queuedTasksHwm; }
-  int tasksCount() const { return _config.tasks().count(); }
-  int tasksGroupsCount() const { return _config.tasksGroups().count(); }
-  int maxtotaltaskinstances() const { return _config.maxtotaltaskinstances(); }
-  int maxqueuedrequests() const { return _config.maxqueuedrequests(); }
-  Calendar calendarByName(QString name) const;
-  QHash<QString,Calendar> namedCalendars() const {
-    return _config.namedCalendars(); }
-  ParamSet globalParams() const { return _config.globalParams(); }
-  /** This method is threadsafe */
-  bool taskExists(QString taskId);
-  /** This method is threadsafe */
-  Task task(QString taskId);
   /** This method is threadsafe */
   void activateWorkflowTransition(
       TaskInstance workflowTaskInstance, WorkflowTransition transition,
@@ -154,47 +141,22 @@ public slots:
     * This method is threadsafe */
   void enableAllTasks(bool enable);
   //LATER enableAllTasksWithinGroup
+  /** Activate a new configuration. */
+  void activateConfig(QString newConfigId, SchedulerConfig newConfig);
 
 signals:
-  void logConfigurationChanged(QList<LogFile> logfiles);
-  void globalParamsChanged(ParamSet globalParams);
-  void globalSetenvChanged(ParamSet globalSetenv);
-  void globalUnsetenvChanged(ParamSet globalUnsetenv);
-  void hostsResourcesAvailabilityChanged(QString host,
-                                         QHash<QString,qint64> resources);
-  void accessControlConfigurationChanged(bool enabled);
-  /** Emitted when config (re)load is complete, after all other config reload
-   * signals: globalXxxChanged(), accessControlConfigurationChanged(),
-   * hostResourceAllocationChanged, etc. */
-  void configChanged(SchedulerConfig);
-  // FIXME emit this instead of configChanged
-  void configItemChanged(SharedUiItem newItem, SharedUiItem oldItem,
-                         QString idQualifier);
-  /** There is no guarantee that taskInstanceQueued() is emited,
-   * taskInstanceStarted() or taskInstanceFinished() can be emited witout
-   * previous taskInstanceQueued(). */
-  void taskInstanceQueued(TaskInstance instance);
-  /** There is no guarantee that taskInstanceStarted() is emited,
-   * taskInstanceFinished() can be emited witout previous
-   * taskInstanceStarted(). */
-  void taskInstanceStarted(TaskInstance instance);
-  void taskInstanceFinished(TaskInstance instance);
-  /** Called whenever a task or taskinstance of this task changes: queued,
-   * started, finished, disabled, enabled... */
-  void taskChanged(Task instance);
+  void hostsResourcesAvailabilityChanged(
+      QString host, QHash<QString,qint64> resources);
   void noticePosted(QString notice, ParamSet params);
 
-private slots:
+private:
   void taskInstanceFinishing(TaskInstance instance, Executor *executor);
   void periodicChecks();
   /** Fire expired triggers for a given task. */
-  void checkTriggersForTask(QVariant taskId);
+  Q_INVOKABLE void checkTriggersForTask(QVariant taskId);
   /** Fire expired triggers for all tasks. */
-  void checkTriggersForAllTasks();
+  Q_INVOKABLE void checkTriggersForAllTasks();
   void reloadAccessControlConfig();
-  void configChanged(QString configId, SchedulerConfig config);
-
-private:
   /** Reevaluate queued requests and start any task that can be started.
     * @see reevaluateQueuedRequests() */
   void startQueuedTasks();

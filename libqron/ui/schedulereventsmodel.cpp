@@ -71,13 +71,18 @@ QVariant SchedulerEventsModel::headerData(
   return QVariant();
 }
 
-void SchedulerEventsModel::configChanged(SchedulerConfig config) {
-  _onstart = config.onstart();
-  _onsuccess = config.onsuccess();
-  _onfailure = config.onfailure();
-  _onlog = config.onlog();
-  _onnotice = config.onnotice();
-  _onschedulerstart = config.onschedulerstart();
-  _onconfigload = config.onconfigload();
+void SchedulerEventsModel::globalEventSubscriptionsChanged(
+    QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,
+    QList<EventSubscription> onfailure, QList<EventSubscription> onlog,
+    QList<EventSubscription> onnotice,
+    QList<EventSubscription> onschedulerstart,
+    QList<EventSubscription> onconfigload) {
+  _onstart = onstart;
+  _onsuccess = onsuccess;
+  _onfailure = onfailure;
+  _onlog = onlog;
+  _onnotice = onnotice;
+  _onschedulerstart = onschedulerstart;
+  _onconfigload = onconfigload;
   emit dataChanged(createIndex(0, 0), createIndex(0, COLUMNS-1));
 }

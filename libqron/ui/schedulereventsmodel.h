@@ -34,7 +34,12 @@ public:
   QVariant headerData(int section, Qt::Orientation orientation, int role) const;
 
 public slots:
-  void configChanged(SchedulerConfig config);
+  void globalEventSubscriptionsChanged(
+      QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,
+      QList<EventSubscription> onfailure, QList<EventSubscription> onlog,
+      QList<EventSubscription> onnotice,
+      QList<EventSubscription> onschedulerstart,
+      QList<EventSubscription> onconfigload);
 };
 
 #endif // SCHEDULEREVENTSMODEL_H

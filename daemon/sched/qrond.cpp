@@ -1,4 +1,4 @@
-/* Copyright 2013-2014 Hallowyn and others.
+/* Copyright 2013-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -41,14 +41,14 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _httpAuthHandler = new BasicAuthHttpHandler;
   _httpAuthHandler->setAuthenticator(_scheduler->authenticator(), false);
   _httpAuthHandler->setAuthIsMandatory(false);
-  connect(_scheduler, SIGNAL(accessControlConfigurationChanged(bool)),
-          _httpAuthHandler, SLOT(setAuthIsMandatory(bool)));
+  connect(_scheduler, &Scheduler::accessControlConfigurationChanged,
+          _httpAuthHandler, &BasicAuthHttpHandler::setAuthIsMandatory);
   _webconsole->setUsersDatabase(_scheduler->usersDatabase(), false);
   pipeline->appendHandler(_httpAuthHandler);
   pipeline->appendHandler(_webconsole);
   _httpd->appendHandler(pipeline);
-  connect(_configRepository, SIGNAL(configActivated(QString,SchedulerConfig)),
-          _scheduler, SLOT(configChanged(QString,SchedulerConfig)));
+  connect(_configRepository, &LocalConfigRepository::configActivated,
+          _scheduler, &Scheduler::activateConfig);
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
   //        _httpd, SLOT(deleteLater()));
   //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),

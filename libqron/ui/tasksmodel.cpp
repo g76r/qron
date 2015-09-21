@@ -25,7 +25,7 @@ TasksModel::TasksModel(QObject *parent)
   : SharedUiItemsTableModel(parent) {
   setHeaderDataFromTemplate(Task::templateTask());
   QTimer *timer = new QTimer(this);
-  connect(timer, SIGNAL(timeout()), this, SLOT(periodicDataRefresh()));
+  connect(timer, &QTimer::timeout, this, &TasksModel::periodicDataRefresh);
   timer->start(PERIODIC_REFRESH_INTERVAL);
 }
 
@@ -44,12 +44,6 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
     }
   }
   return SharedUiItemsModel::data(index, role);
-}
-
-void TasksModel::configReset(SchedulerConfig config) {
-  QList<Task> tasks = config.tasks().values();
-  qSort(tasks);
-  setItems(_tasks = tasks);
 }
 
 void TasksModel::periodicDataRefresh() {
