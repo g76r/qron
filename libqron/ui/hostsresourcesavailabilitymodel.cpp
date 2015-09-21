@@ -1,4 +1,4 @@
-/* Copyright 2012-2014 Hallowyn and others.
+/* Copyright 2012-2015 Hallowyn and others.
  * This file is part of qron, see <http://qron.hallowyn.com/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -62,32 +62,44 @@ void HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged(
   }
 }
 
-void HostsResourcesAvailabilityModel::configChanged(SchedulerConfig config) {
-  _configured.clear();
-  foreach (QString host, config.hosts().keys()) {
-    QHash<QString,qint64> hostResources
-        = config.hosts().value(host).resources();
-    _configured.insert(host, hostResources);
-    foreach (QString kind, hostResources.keys()) {
-      QString configured = QString::number(hostResources.value(kind));
-      switch (_mode) {
-      case Free:
-      case Configured:
-      case LowWaterMark:
-        setCellValue(host, kind, configured);
-        break;
-      case Allocated:
-        setCellValue(host, kind, "0");
-        break;
-      case FreeOverConfigured:
-      case LwmOverConfigured:
-        setCellValue(host, kind, configured+" / "+configured);
-        break;
-      case AllocatedOverConfigured:
-        setCellValue(host, kind, "0 / "+configured);
-        break;
+void HostsResourcesAvailabilityModel::changeItem(
+    SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
+  if (idQualifier == QStringLiteral("host")) {
+    QString newId = newItem.id(), oldId = oldItem.id();
+    if (newItem.isNull() || newId != oldId) {
+      _configured.remove(oldId);
+      _lwm.remove(oldId);
+      removeRow(oldId);
+      // TODO remove no longer referenced resource kind column
+    }
+    if (!newItem.isNull()) {
+      auto &newHost = static_cast<const Host&>(newItem);
+      QHash<QString,qint64> hostResources = newHost.resources();
+      _configured.insert(newId, hostResources);
+      foreach (QString kind, hostResources.keys()) {
+        QString configured = QString::number(hostResources.value(kind));
+        switch (_mode) {
+        case Free:
+        case Configured:
+        case LowWaterMark:
+          setCellValue(newId, kind, configured);
+          break;
+        case Allocated:
+          setCellValue(newId, kind, "0");
+          break;
+        case FreeOverConfigured:
+        case LwmOverConfigured:
+          setCellValue(newId, kind, configured+" / "+configured);
+          break;
+        case AllocatedOverConfigured:
+          setCellValue(newId, kind, "0 / "+configured);
+          break;
+        }
+        QHash<QString,qint64> &resources = _lwm[newId];
+        qint64 i = configured.toLongLong();
+        if (!resources.contains(kind) || resources.value(kind) > i)
+          resources.insert(kind, i);
       }
     }
   }
-  _lwm = _configured;
 }

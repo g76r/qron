@@ -1462,12 +1462,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _hostsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler, &Scheduler::itemChanged,
             _clustersModel, &ClustersModel::changeItem);
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)), // FIXME
-            _freeResourcesModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, &Scheduler::itemChanged,
+            _freeResourcesModel, &HostsResourcesAvailabilityModel::changeItem);
     connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
             _freeResourcesModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)), // FIXME
-            _resourcesLwmModel, SLOT(configChanged(SchedulerConfig)));
+    connect(_scheduler, &Scheduler::itemChanged,
+            _resourcesLwmModel, &HostsResourcesAvailabilityModel::changeItem);
     connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
             _resourcesLwmModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
     connect(_scheduler, &Scheduler::globalParamsChanged,

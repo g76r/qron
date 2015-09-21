@@ -21,7 +21,8 @@
  * one host per line.
  * Can display either configured qunatities or allocated or free or free /
  * configured or allocated / configured. */
-class LIBQRONSHARED_EXPORT HostsResourcesAvailabilityModel : public TextMatrixModel {
+class LIBQRONSHARED_EXPORT HostsResourcesAvailabilityModel
+    : public TextMatrixModel {
   Q_OBJECT
   Q_DISABLE_COPY(HostsResourcesAvailabilityModel)
 public:
@@ -35,11 +36,10 @@ public:
   explicit HostsResourcesAvailabilityModel(
       QObject *parent = 0, HostsResourcesAvailabilityModel::Mode mode
       = HostsResourcesAvailabilityModel::FreeOverConfigured);
-
-public slots:
-  void configChanged(SchedulerConfig config);
-  void hostsResourcesAvailabilityChanged(QString host,
-                                         QHash<QString,qint64> resources);
+  void changeItem(
+      SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier);
+  void hostsResourcesAvailabilityChanged(
+      QString host, QHash<QString,qint64> resources);
 };
 
 #endif // HOSTSRESOURCESAVAILABILITYMODEL_H

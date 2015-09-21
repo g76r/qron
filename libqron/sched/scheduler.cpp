@@ -51,6 +51,7 @@ Scheduler::Scheduler() : QronConfigDocumentManager(0), _thread(new QThread()),
   _thread->start();
   qRegisterMetaType<TaskInstance>("TaskInstance");
   qRegisterMetaType<QList<TaskInstance> >("QList<TaskInstance>");
+  // TODO not sure this is needed:
   qRegisterMetaType<QHash<QString,QHash<QString,qint64>>>("QHash<QString,QHash<QString,qint64>>");
   QTimer *timer = new QTimer(this);
   connect(timer, &QTimer::timeout, this, &Scheduler::periodicChecks);
