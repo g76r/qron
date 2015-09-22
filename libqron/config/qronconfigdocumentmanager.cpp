@@ -42,6 +42,162 @@ Q_CONSTRUCTOR_FUNCTION(staticInit)
 
 QronConfigDocumentManager::QronConfigDocumentManager(QObject *parent)
   : SharedUiItemDocumentManager(parent) {
+  registerItemType(
+        "taskgroup", &TaskGroup::setUiData, [this](QString id) -> SharedUiItem {
+    return TaskGroup(PfNode("taskgroup", id), _config.globalParams(),
+                     _config.setenv(), _config.unsetenv(), 0);
+  });
+  addChangeItemTrigger(
+        "taskgroup", AfterUpdate,
+        [](SharedUiItemDocumentTransaction *transaction,
+        SharedUiItem *newItem, SharedUiItem oldItem,
+        QString idQualifier, QString *errorString) {
+    Q_UNUSED(oldItem)
+    Q_UNUSED(idQualifier)
+    TaskGroup *newGroup = static_cast<TaskGroup*>(newItem);
+    if (newItem->id() != oldItem.id()) {
+      SharedUiItemList<> taskItems =
+          transaction->foreignKeySources("task", 1, oldItem.id());
+      foreach (SharedUiItem oldTaskItem, taskItems) {
+        Task oldTask = static_cast<Task&>(oldTaskItem);
+        if (oldTask.workflowTaskId().isEmpty()) {
+          Task newTask = oldTask;
+          newTask.setTaskGroup(*newGroup);
+          // update standalone and workflow first, workflows task will update subtasks
+          if (!transaction->changeItem(newTask, oldTask, "task", errorString))
+            return false;
+        }
+      }
+    }
+    return true;
+  });
+  registerItemType(
+        "task", &Task::setUiData,
+        [this](SharedUiItemDocumentTransaction *transaction, QString id,
+        QString *errorString) -> SharedUiItem {
+    Q_UNUSED(transaction)
+    Q_UNUSED(id)
+    *errorString = "Cannot create task outside GUI";
+    return SharedUiItem();
+  });
+  addForeignKey("task", 1, "taskgroup", 0, NoAction, Cascade);
+  addForeignKey("task", 31, "task", 11, NoAction, Cascade); // workflowtaskid
+  addChangeItemTrigger(
+        "task", AfterUpdate|AfterDelete,
+        [](SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+        SharedUiItem oldItem, QString idQualifier, QString *errorString) {
+    Q_UNUSED(oldItem)
+    Q_UNUSED(idQualifier)
+    qDebug() << "trigger1" << newItem->id();
+    Task *newTask = static_cast<Task*>(newItem);
+    Task &oldTask = static_cast<Task&>(oldItem);
+    if (newTask->mean() != Task::Workflow && oldTask.mean() == Task::Workflow) {
+      foreach (SharedUiItem oldTask,
+               transaction->foreignKeySources("task", 31, oldItem.id())) {
+        // when a task is no longer a workflow, delete all its subtasks (tasks which have it as their workflowtaskid)
+        if (!transaction->changeItem(
+              SharedUiItem(), oldTask, "task", errorString))
+          return false;
+      }
+    }
+    if (newTask->mean() == Task::Workflow) { // implicitely: !newTask->isNull()
+      foreach (SharedUiItem oldSubTask,
+               transaction->foreignKeySources("task", 31, oldItem.id())) {
+        Task newSubTask = static_cast<Task&>(oldSubTask);
+        newSubTask.setWorkflowTask(*newTask);
+        // when a task is a workflow, update its subtasks
+        if (!transaction->changeItem(newSubTask, oldSubTask, "task",
+                                     errorString))
+          return false;
+      }
+    }
+    return true;
+  });
+  registerItemType(
+        "host", &Host::setUiData,
+        [](QString id) -> SharedUiItem { return Host(PfNode("host", id)); });
+  addChangeItemTrigger(
+        "host", BeforeUpdate|BeforeCreate,
+        [](SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+        SharedUiItem oldItem, QString idQualifier, QString *errorString) {
+    Q_UNUSED(oldItem)
+    Q_UNUSED(idQualifier)
+    if (!transaction->itemById("cluster", newItem->id()).isNull()) {
+      *errorString = "Host id already used by a cluster: "+newItem->id();
+      return false;
+    }
+    return true;
+  });
+  addChangeItemTrigger(
+        "host", AfterUpdate|AfterDelete,
+        [](SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+        SharedUiItem oldItem, QString idQualifier, QString *errorString) {
+    Q_UNUSED(idQualifier)
+    // cannot be a fk because target can reference either a host or a cluster
+    foreach (const SharedUiItem &oldTaskItem,
+             transaction->foreignKeySources("task", 5, oldItem.id())) {
+      const Task &oldTask = static_cast<const Task&>(oldTaskItem);
+      Task newTask = oldTask;
+      newTask.setTarget(newItem->id());
+      if (!transaction->changeItem(newTask, oldTask, "task", errorString))
+        return false;
+    }
+    // on host change, upgrade every cluster it belongs to
+    foreach (const SharedUiItem &oldClusterItem,
+             transaction->itemsByIdQualifier("cluster")) {
+      auto &oldCluster = static_cast<const Cluster &>(oldClusterItem);
+      SharedUiItemList<Host> hosts = oldCluster.hosts();
+      for (int i = 0; i < hosts.size(); ++i) {
+        if(hosts[i] == oldItem) {
+          Cluster newCluster = oldCluster;
+          if (newItem->isNull())
+            hosts.removeAt(i);
+          else
+            hosts[i] = static_cast<Host&>(*newItem);
+          newCluster.setHosts(hosts);
+          if (!transaction->changeItem(newCluster, oldCluster, "cluster",
+                                       errorString))
+            return false;
+          break;
+        }
+      }
+    }
+    return true;
+  });
+  registerItemType(
+        "cluster", &Cluster::setUiData, [](QString id) -> SharedUiItem {
+    return Cluster(PfNode("cluster", id));
+  });
+  addChangeItemTrigger(
+        "cluster", BeforeUpdate|BeforeCreate,
+        [](SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+        SharedUiItem oldItem, QString idQualifier, QString *errorString) {
+    Q_UNUSED(oldItem)
+    Q_UNUSED(idQualifier)
+    if (!transaction->itemById("host", newItem->id()).isNull()) {
+      *errorString = "Cluster id already used by a host: "+newItem->id();
+      return false;
+    }
+    return true;
+  });
+  addChangeItemTrigger(
+        "cluster", AfterUpdate|AfterDelete,
+        [](SharedUiItemDocumentTransaction *transaction, SharedUiItem *newItem,
+        SharedUiItem oldItem, QString idQualifier, QString *errorString) {
+    Q_UNUSED(oldItem)
+    Q_UNUSED(idQualifier)
+    // cannot be a fk because target can reference either a host or a cluster
+    foreach (const SharedUiItem &oldTaskItem,
+             transaction->foreignKeySources("task", 5, oldItem.id())) {
+      const Task &oldTask = static_cast<const Task&>(oldTaskItem);
+      Task newTask = oldTask;
+      newTask.setTarget(newItem->id());
+      if (!transaction->changeItem(newTask, oldTask, "task", errorString))
+        return false;
+    }
+    return true;
+  });
+  // TODO register other items kinds
 }
 
 SharedUiItem QronConfigDocumentManager::itemById(
