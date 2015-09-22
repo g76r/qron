@@ -1,5 +1,5 @@
 /* Copyright 2012-2015 Hallowyn and others.
- * This file is part of qron, see <http://qron.hallowyn.com/>.
+ * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
  * the Free Software Foundation, either version 3 of the License, or
