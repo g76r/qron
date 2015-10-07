@@ -240,7 +240,10 @@ SharedUiItemList<SharedUiItem> QronConfigDocumentManager
     // LATER is it right to return only *named* calendars ?
     return SharedUiItemList<Calendar>(_config.namedCalendars().values());
   } else if (idQualifier == "step") {
-    // TODO
+    SharedUiItemList<Step> steps;
+    foreach (const Task &task, _config.tasks())
+      steps.append(task.steps().values());
+    return steps;
   } else if (idQualifier == "workflowtransition") {
     // TODO
   }
@@ -251,19 +254,39 @@ static SharedUiItem nullItem;
 
 template<class T>
 void inline QronConfigDocumentManager::emitSignalForItemTypeChanges(
-    QHash<QString,T> newItems, QHash<QString,T> oldItems, QString idQualifier,
-    bool sortNewItems) {
+    QHash<QString,T> newItems, QHash<QString,T> oldItems, QString idQualifier) {
   foreach (const T &oldItem, oldItems)
     if (!newItems.contains(oldItem.id()))
       emit itemChanged(nullItem, oldItem, idQualifier);
-  if (sortNewItems) {
-    QList<T> newList = newItems.values();
-    qSort(newList);
-    foreach (const T &newItem, newList)
-      emit itemChanged(newItem, oldItems.value(newItem.id()), idQualifier);
-  } else {
-    foreach (const T &newItem, newItems)
-      emit itemChanged(newItem, oldItems.value(newItem.id()), idQualifier);
+  foreach (const T &newItem, newItems)
+    emit itemChanged(newItem, oldItems.value(newItem.id()), idQualifier);
+}
+
+template<>
+void inline QronConfigDocumentManager::emitSignalForItemTypeChanges<Task>(
+    QHash<QString,Task> newItems, QHash<QString,Task> oldItems,
+    QString idQualifier) {
+  foreach (const Task &oldItem, oldItems) {
+    if (!newItems.contains(oldItem.id())) {
+      emit itemChanged(nullItem, oldItem, idQualifier);
+    }
+    QHash<QString,Step> newSteps = newItems.value(oldItem.id()).steps();
+    foreach(const Step &oldStep, oldItem.steps()) {
+      if (!newSteps.contains(oldStep.id()))
+        emit itemChanged(nullItem, oldStep, QStringLiteral("step"));
+    }
+  }
+  QList<Task> newList = newItems.values();
+  // sorting tasks by id ensure that workflows are changed before their subtasks
+  qSort(newList);
+  foreach (const Task &newItem, newList) {
+    const Task &oldItem = oldItems.value(newItem.id());
+    emit itemChanged(newItem, oldItem, idQualifier);
+    QHash<QString,Step> oldSteps = oldItem.steps();
+    foreach(const Step &newStep, newItem.steps()) {
+      emit itemChanged(newStep, oldSteps.value(newStep.id()),
+                       QStringLiteral("step"));
+    }
   }
 }
 
@@ -285,9 +308,8 @@ void QronConfigDocumentManager::setConfig(SchedulerConfig newConfig) {
   emitSignalForItemTypeChanges(
         newConfig.tasksGroups(), oldConfig.tasksGroups(),
         QStringLiteral("taskgroup"));
-  // sorting tasks by id ensure that workflows are changed before their subtasks
   emitSignalForItemTypeChanges(
-        newConfig.tasks(), oldConfig.tasks(), QStringLiteral("task"), true);
+        newConfig.tasks(), oldConfig.tasks(), QStringLiteral("task"));
   // TODO also implement for other items
   emit globalEventSubscriptionsChanged(
         newConfig.onstart(), newConfig.onsuccess(), newConfig.onfailure(),

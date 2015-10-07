@@ -35,7 +35,6 @@
 #include "httpd/graphvizimagehttphandler.h"
 #include "ui/logfilesmodel.h"
 #include <QSortFilterProxyModel>
-#include "ui/stepsmodel.h"
 #include "ui/htmlstepitemdelegate.h"
 #include "configuploadhandler.h"
 #include "configmgt/configrepository.h"
@@ -81,7 +80,8 @@ class WebConsole : public HttpHandler {
   LogFilesModel *_logConfigurationModel;
   SharedUiItemsTableModel *_calendarsModel;
   QSortFilterProxyModel *_sortedCalendarsModel;
-  StepsModel *_stepsModel;
+  SharedUiItemsTableModel *_stepsModel;
+  QSortFilterProxyModel *_sortedStepsModel;
   LogModel *_warningLogModel, *_infoLogModel, *_auditLogModel;
   ConfigsModel *_configsModel;
   ConfigHistoryModel *_configHistoryModel;

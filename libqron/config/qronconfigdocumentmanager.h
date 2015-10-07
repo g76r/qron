@@ -71,8 +71,8 @@ protected:
 private:
   template<class T>
   void inline emitSignalForItemTypeChanges(
-      QHash<QString,T> newItems, QHash<QString,T> oldItems, QString idQualifier,
-      bool sortNewItems = false);
+      QHash<QString,T> newItems, QHash<QString,T> oldItems,
+      QString idQualifier);
 };
 
 #endif // QRONCONFIGDOCUMENTMANAGER_H

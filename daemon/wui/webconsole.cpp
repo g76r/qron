@@ -29,6 +29,7 @@
 #include "ui/htmllogentryitemdelegate.h"
 #include "alert/alert.h"
 #include "alert/gridboard.h"
+#include "config/step.h"
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -124,7 +125,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedCalendarsModel = new QSortFilterProxyModel(this);
   _sortedCalendarsModel->setSourceModel(_calendarsModel);
   _sortedCalendarsModel->sort(1);
-  _stepsModel= new StepsModel(this);
+  _stepsModel= new SharedUiItemsTableModel(this);
+  _stepsModel->setHeaderDataFromTemplate(
+        Step(PfNode("start"), 0, TaskGroup(), QString(),
+             QHash<QString,Calendar>()));
+  _stepsModel->setChangeItemQualifierFilter("step");
+  _sortedStepsModel = new QSortFilterProxyModel(this);
+  _sortedStepsModel->setSourceModel(_stepsModel);
   _warningLogModel = new LogModel(this, Log::Warning);
   _infoLogModel = new LogModel(this, Log::Info);
   _auditLogModel = new LogModel(this, Log::Info, "AUDIT ");
@@ -468,7 +475,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(1, "<i class=\"icon-calendar\"></i>&nbsp;");
   _wuiHandler->addView(_htmlCalendarsView);
   _htmlStepsView = new HtmlTableView(this, "steps");
-  _htmlStepsView->setModel(_stepsModel);
+  _htmlStepsView->setModel(_sortedStepsModel);
   _htmlStepsView->setEmptyPlaceholder("(no workflow step)");
   cols.clear();
   cols << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9;
@@ -548,7 +555,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvCalendarsView = new CsvTableView(this);
   _csvCalendarsView->setModel(_sortedCalendarsModel);
   _csvStepsView = new CsvTableView(this);
-  _csvStepsView->setModel(_stepsModel);
+  _csvStepsView->setModel(_sortedStepsModel);
   _csvConfigsView = new CsvTableView(this);
   _csvConfigsView->setModel(_configsModel);
   _csvConfigHistoryView = new CsvTableView(this);
@@ -1504,8 +1511,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourcesConsumptionModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, &Scheduler::logConfigurationChanged,
             _logConfigurationModel, &LogFilesModel::logConfigurationChanged);
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            _stepsModel, SLOT(configChanged(SchedulerConfig))); // FIXME
+    connect(_scheduler, &Scheduler::itemChanged,
+            _stepsModel, &SharedUiItemsTableModel::changeItem);
   }
 }
 

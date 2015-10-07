@@ -98,7 +98,6 @@ SOURCES += \
     action/endaction.cpp \
     trigger/trigger.cpp \
     trigger/noticetrigger.cpp \
-    ui/stepsmodel.cpp \
     ui/htmlstepitemdelegate.cpp \
     config/schedulerconfig.cpp \
     config/alerterconfig.cpp \
@@ -170,7 +169,6 @@ HEADERS += \
     trigger/trigger_p.h \
     trigger/noticetrigger.h \
     ui/graphviz_styles.h \
-    ui/stepsmodel.h \
     ui/htmlstepitemdelegate.h \
     config/schedulerconfig.h \
     config/alerterconfig.h \
