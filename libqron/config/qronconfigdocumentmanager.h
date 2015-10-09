@@ -50,9 +50,12 @@ public:
 
 signals:
   void logConfigurationChanged(QList<LogFile> logfiles);
-  void globalParamsChanged(ParamSet globalParams);
-  void globalSetenvChanged(ParamSet globalSetenv);
-  void globalUnsetenvChanged(ParamSet globalUnsetenv);
+  void globalParamsChanged(
+      ParamSet newParams, ParamSet oldParams, QString setId);
+  void globalSetenvsChanged(
+      ParamSet newSetenvs, ParamSet oldSetenvs, QString setId);
+  void globalUnsetenvsChanged(
+      ParamSet newUnsetenvs, ParamSet oldUnsetenvs, QString setId);
   void accessControlConfigurationChanged(bool enabled);
   void globalEventSubscriptionsChanged(
       QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,

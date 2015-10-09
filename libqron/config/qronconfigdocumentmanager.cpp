@@ -293,9 +293,12 @@ void inline QronConfigDocumentManager::emitSignalForItemTypeChanges<Task>(
 void QronConfigDocumentManager::setConfig(SchedulerConfig newConfig) {
   SchedulerConfig oldConfig = _config;
   _config = newConfig;
-  emit globalParamsChanged(newConfig.globalParams());
-  emit globalSetenvChanged(newConfig.setenv());
-  emit globalUnsetenvChanged(newConfig.unsetenv());
+  emit globalParamsChanged(newConfig.globalParams(), oldConfig.globalParams(),
+                           QStringLiteral("globalparams"));
+  emit globalSetenvsChanged(newConfig.setenv(), oldConfig.setenv(),
+                           QStringLiteral("globalsetenvs"));
+  emit globalUnsetenvsChanged(newConfig.unsetenv(), oldConfig.unsetenv(),
+                             QStringLiteral("globalunsetenvs"));
   emit accessControlConfigurationChanged(
         !newConfig.accessControlConfig().isEmpty());
   emitSignalForItemTypeChanges(

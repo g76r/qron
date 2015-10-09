@@ -1479,9 +1479,11 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourcesLwmModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
     connect(_scheduler, &Scheduler::globalParamsChanged,
             _globalParamsModel, &ParamSetModel::paramsChanged);
-    connect(_scheduler, &Scheduler::globalSetenvChanged,
+    connect(_scheduler, &Scheduler::globalParamsChanged,
+            this, &WebConsole::globalParamsChanged);
+    connect(_scheduler, &Scheduler::globalSetenvsChanged,
             _globalSetenvModel, &ParamSetModel::paramsChanged);
-    connect(_scheduler, &Scheduler::globalUnsetenvChanged,
+    connect(_scheduler, &Scheduler::globalUnsetenvsChanged,
             _globalUnsetenvModel, &ParamSetModel::paramsChanged);
     connect(_scheduler->alerter(), &Alerter::paramsChanged,
             _alertParamsModel, &ParamSetModel::paramsChanged);
@@ -1633,7 +1635,6 @@ void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
 }
 
 void WebConsole::computeDiagrams(SchedulerConfig config) {
-  globalParamsChanged(config.globalParams()); // FIXME update directly from dm
   QHash<QString,QString> diagrams
       = GraphvizDiagramsBuilder::configDiagrams(config);
   _tasksDeploymentDiagram->setSource(diagrams.value("tasksDeploymentDiagram"));
