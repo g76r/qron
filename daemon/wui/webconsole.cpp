@@ -1503,12 +1503,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
     connect(_scheduler, &Scheduler::itemChanged,
             _taskGroupsModel, &TaskGroupsModel::changeItem);
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)),
-            this, SLOT(configChanged(SchedulerConfig))); // FIXME
     connect(_scheduler, &Scheduler::accessControlConfigurationChanged,
             this, &WebConsole::enableAccessControl);
-    connect(_scheduler, SIGNAL(configChanged(SchedulerConfig)), // FIXME
-            _resourcesConsumptionModel, SLOT(configChanged(SchedulerConfig)));
     connect(_scheduler, &Scheduler::logConfigurationChanged,
             _logConfigurationModel, &LogFilesModel::logConfigurationChanged);
     connect(_scheduler, &Scheduler::itemChanged,
@@ -1556,6 +1552,11 @@ void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
             _htmlConfigHistoryView, &HtmlTableView::invalidateCache); // needed for config id link removal
     connect(_configRepository, &ConfigRepository::configActivated,
             _htmlConfigHistoryView, &HtmlTableView::invalidateCache); // needed for actions column
+    // Other models and views
+    connect(_configRepository, &ConfigRepository::configActivated,
+            this, &WebConsole::computeDiagrams);
+    connect(_configRepository, &ConfigRepository::configActivated,
+            _resourcesConsumptionModel, &ResourcesConsumptionModel::configActivated);
   }
 }
 
@@ -1631,8 +1632,8 @@ void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
   }
 }
 
-void WebConsole::configChanged(SchedulerConfig config) {
-  globalParamsChanged(config.globalParams());
+void WebConsole::computeDiagrams(SchedulerConfig config) {
+  globalParamsChanged(config.globalParams()); // FIXME update directly from dm
   QHash<QString,QString> diagrams
       = GraphvizDiagramsBuilder::configDiagrams(config);
   _tasksDeploymentDiagram->setSource(diagrams.value("tasksDeploymentDiagram"));

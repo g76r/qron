@@ -35,7 +35,7 @@ public:
   ResourcesConsumptionModel(QObject *parent = 0);
 
 public slots:
-  void configChanged(SchedulerConfig config);
+  void configActivated(SchedulerConfig config);
 };
 
 #endif // RESOURCESCONSUMPTIONMODEL_H

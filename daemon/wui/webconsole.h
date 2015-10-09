@@ -142,7 +142,7 @@ public slots:
 
 private slots:
   void globalParamsChanged(ParamSet globalParams);
-  void configChanged(SchedulerConfig config);
+  void computeDiagrams(SchedulerConfig config);
   void alerterConfigChanged(AlerterConfig config);
 
 private:

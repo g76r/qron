@@ -56,8 +56,8 @@ QString HtmlSchedulerConfigItemDelegate::text(const QModelIndex &index) const {
   return text;
 }
 
-void HtmlSchedulerConfigItemDelegate::configActivated(QString configId) {
-  _activeConfigId = configId;
+void HtmlSchedulerConfigItemDelegate::configActivated(SchedulerConfig config) {
+  _activeConfigId = config.id();
 }
 
 void HtmlSchedulerConfigItemDelegate::configAdded(QString id) {

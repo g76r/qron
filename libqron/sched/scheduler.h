@@ -142,7 +142,7 @@ public slots:
   void enableAllTasks(bool enable);
   //LATER enableAllTasksWithinGroup
   /** Activate a new configuration. */
-  void activateConfig(QString newConfigId, SchedulerConfig newConfig);
+  void activateConfig(SchedulerConfig newConfig);
 
 signals:
   void hostsResourcesAvailabilityChanged(

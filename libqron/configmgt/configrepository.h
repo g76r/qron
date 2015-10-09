@@ -62,7 +62,7 @@ public:
   virtual bool removeConfig(QString id) = 0;
 
 signals:
-  void configActivated(QString id, SchedulerConfig config);
+  void configActivated(SchedulerConfig config);
   void configAdded(QString id, SchedulerConfig config);
   void configRemoved(QString id);
   void historyReset(QList<ConfigHistoryEntry> history);

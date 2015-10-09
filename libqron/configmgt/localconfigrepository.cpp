@@ -143,7 +143,7 @@ void LocalConfigRepository::openRepository(QString basePath) {
   if (_configs.contains(activeConfigId)) {
     SchedulerConfig config = _configs.value(_activeConfigId = activeConfigId);
     config.applyLogConfig();
-    emit configActivated(_activeConfigId, config);
+    emit configActivated(config);
   } else {
     Log::error() << "active configuration does not exist: " << activeConfigId;
   }
@@ -220,7 +220,7 @@ bool LocalConfigRepository::activateConfig(QString id) {
   recordInHistory("activateConfig", id);
   _activeConfigId = id;
   config.applyLogConfig();
-  emit configActivated(_activeConfigId, config);
+  emit configActivated(config);
   return true;
 }
 

@@ -30,7 +30,7 @@ public:
 public slots:
   void configAdded(QString id, SchedulerConfig config);
   void configRemoved(QString id);
-  void configActivated(QString id);
+  void configActivated(SchedulerConfig config);
 };
 
 #endif // CONFIGMODEL_H

@@ -66,9 +66,7 @@ Scheduler::~Scheduler() {
   //_alerter->deleteLater(); // TODO delete alerter only when last executor is deleted
 }
 
-void Scheduler::activateConfig(
-    QString newConfigId, SchedulerConfig newConfig) {
-  Q_UNUSED(newConfigId)
+void Scheduler::activateConfig(SchedulerConfig newConfig) {
   SchedulerConfig oldConfig = QronConfigDocumentManager::config();
   emit logConfigurationChanged(newConfig.logfiles());
   int executorsToAdd = newConfig.maxtotaltaskinstances()

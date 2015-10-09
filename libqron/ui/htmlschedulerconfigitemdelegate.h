@@ -17,6 +17,7 @@
 #include "libqron_global.h"
 #include "textview/htmlitemdelegate.h"
 #include <QSet>
+#include "config/schedulerconfig.h"
 
 /** Specific item delegate for scheduler config. */
 class LIBQRONSHARED_EXPORT HtmlSchedulerConfigItemDelegate
@@ -33,7 +34,7 @@ public:
   QString text(const QModelIndex &index) const;
 
 public slots:
-  void configActivated(QString configId);
+  void configActivated(SchedulerConfig config);
   void configAdded(QString id);
   void configRemoved(QString id);
 };

@@ -19,7 +19,7 @@ ResourcesConsumptionModel::ResourcesConsumptionModel(QObject *parent)
 
 #define MINIMUM_CAPTION "Theorical lowest availability for host"
 
-void ResourcesConsumptionModel::configChanged(SchedulerConfig config) {
+void ResourcesConsumptionModel::configActivated(SchedulerConfig config) {
   QList<Task> tasks = config.tasks().values();
   QHash<QString,Cluster> clusters = config.clusters();
   QList<Host> hosts = config.hosts().values();

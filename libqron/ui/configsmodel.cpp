@@ -35,9 +35,9 @@ void ConfigsModel::configRemoved(QString id) {
   }
 }
 
-void ConfigsModel::configActivated(QString id) {
-  QSet<QString> ids { id, _activeConfigId };
-  _activeConfigId = id;
+void ConfigsModel::configActivated(SchedulerConfig config) {
+  QSet<QString> ids { config.id(), _activeConfigId };
+  _activeConfigId = config.id();
   for (int i = 0; i < rowCount(); ++i) {
     if (ids.contains(itemAt(i).id())) {
       emit dataChanged(index(i, 0), index(i, columnCount()-1));
