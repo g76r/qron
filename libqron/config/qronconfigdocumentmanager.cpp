@@ -293,12 +293,12 @@ void inline QronConfigDocumentManager::emitSignalForItemTypeChanges<Task>(
 void QronConfigDocumentManager::setConfig(SchedulerConfig newConfig) {
   SchedulerConfig oldConfig = _config;
   _config = newConfig;
-  emit globalParamsChanged(newConfig.globalParams(), oldConfig.globalParams(),
-                           QStringLiteral("globalparams"));
-  emit globalSetenvsChanged(newConfig.setenv(), oldConfig.setenv(),
-                           QStringLiteral("globalsetenvs"));
-  emit globalUnsetenvsChanged(newConfig.unsetenv(), oldConfig.unsetenv(),
-                             QStringLiteral("globalunsetenvs"));
+  emit paramsChanged(newConfig.globalParams(), oldConfig.globalParams(),
+                     QStringLiteral("globalparams"));
+  emit paramsChanged(newConfig.setenv(), oldConfig.setenv(),
+                     QStringLiteral("globalsetenvs"));
+  emit paramsChanged(newConfig.unsetenv(), oldConfig.unsetenv(),
+                     QStringLiteral("globalunsetenvs"));
   emit accessControlConfigurationChanged(
         !newConfig.accessControlConfig().isEmpty());
   emitSignalForItemTypeChanges(
@@ -360,4 +360,10 @@ void QronConfigDocumentManager::commitChangeItem(
            << newItem.qualifiedId() << oldItem.qualifiedId();
            //<< _config.toPfNode().toString();
   SharedUiItemDocumentManager::commitChangeItem(newItem, oldItem, idQualifier);
+}
+
+void QronConfigDocumentManager::changeParams(
+    ParamSet newParams, ParamSet oldParams, QString setId) {
+  _config.changeParams(newParams, oldParams, setId);
+  emit paramsChanged(newParams, oldParams, setId);
 }

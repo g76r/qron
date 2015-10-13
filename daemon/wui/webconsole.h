@@ -141,7 +141,7 @@ public slots:
   void enableAccessControl(bool enabled);
 
 private slots:
-  void globalParamsChanged(ParamSet globalParams);
+  void paramsChanged(ParamSet newParams, ParamSet oldParams, QString setId);
   void computeDiagrams(SchedulerConfig config);
   void alerterConfigChanged(AlerterConfig config);
 

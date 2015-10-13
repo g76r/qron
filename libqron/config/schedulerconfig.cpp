@@ -556,6 +556,25 @@ void SchedulerConfig::changeItem(
   }
 }
 
+void SchedulerConfig::changeParams(
+    ParamSet newParams, ParamSet oldParams, QString setId) {
+  Q_UNUSED(oldParams)
+  SchedulerConfigData *d = data();
+  if (!d)
+    setData(d = new SchedulerConfigData());
+  if (setId == QStringLiteral("globalparams")) {
+    d->_globalParams = newParams;
+  } else if (setId == QStringLiteral("globalsetenvs")) {
+    d->_setenv = newParams;
+  } else if (setId == QStringLiteral("globalunsetenvs")) {
+    d->_unsetenv = newParams;
+  } else {
+    qWarning() << "SchedulerConfig::changeParams() called with "
+                  "unknown paramsetid:" << setId;
+  }
+  recomputeId();
+}
+
 QString SchedulerConfig::recomputeId() const {
   const SchedulerConfigData *d = data();
   if (!d)

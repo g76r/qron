@@ -191,9 +191,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlResourcesConsumptionView);
   _htmlGlobalParamsView = new HtmlTableView(this, "globalparams");
   _htmlGlobalParamsView->setModel(_globalParamsModel);
+  cols.clear();
+  cols << 0 << 1;
+  _htmlGlobalParamsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlGlobalParamsView);
   _htmlGlobalSetenvView = new HtmlTableView(this, "globalsetenv");
   _htmlGlobalSetenvView->setModel(_globalSetenvModel);
+  cols.clear();
+  cols << 0 << 1;
+  _htmlGlobalSetenvView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlGlobalSetenvView);
   _htmlGlobalUnsetenvView = new HtmlTableView(this, "globalunsetenv");
   _htmlGlobalUnsetenvView->setModel(_globalUnsetenvModel);
@@ -1477,16 +1483,22 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _resourcesLwmModel, &HostsResourcesAvailabilityModel::changeItem);
     connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
             _resourcesLwmModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
-    connect(_scheduler, &Scheduler::globalParamsChanged,
-            _globalParamsModel, &ParamSetModel::paramsChanged);
-    connect(_scheduler, &Scheduler::globalParamsChanged,
-            this, &WebConsole::globalParamsChanged);
-    connect(_scheduler, &Scheduler::globalSetenvsChanged,
-            _globalSetenvModel, &ParamSetModel::paramsChanged);
-    connect(_scheduler, &Scheduler::globalUnsetenvsChanged,
-            _globalUnsetenvModel, &ParamSetModel::paramsChanged);
+    _globalParamsModel->connectToDocumentManager<QronConfigDocumentManager>(
+          _scheduler, _scheduler->globalParams(), "globalparams", "globalparam",
+          &QronConfigDocumentManager::paramsChanged,
+          &QronConfigDocumentManager::changeParams);
+    _globalSetenvModel->connectToDocumentManager<QronConfigDocumentManager>(
+          _scheduler, _scheduler->globalSetenvs(), "globalsetenvs",
+          "globalsetenv", &QronConfigDocumentManager::paramsChanged,
+          &QronConfigDocumentManager::changeParams);
+    _globalUnsetenvModel->connectToDocumentManager<QronConfigDocumentManager>(
+          _scheduler, _scheduler->globalUnsetenvs(), "globalunsetenvs",
+          "globalunsetenv", &QronConfigDocumentManager::paramsChanged,
+          &QronConfigDocumentManager::changeParams);
+    connect(_scheduler, &Scheduler::paramsChanged,
+            this, &WebConsole::paramsChanged);
     connect(_scheduler->alerter(), &Alerter::paramsChanged,
-            _alertParamsModel, &ParamSetModel::paramsChanged);
+            _alertParamsModel, &ParamSetModel::changeParams);
     connect(_scheduler->alerter(), &Alerter::raisableAlertChanged,
             _raisableAlertsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler->alerter(), &Alerter::alertNotified,
@@ -1571,29 +1583,33 @@ void WebConsole::enableAccessControl(bool enabled) {
   _accessControlEnabled = enabled;
 }
 
-void WebConsole::globalParamsChanged(ParamSet globalParams) {
-  QString s = globalParams.rawValue("webconsole.showaudituser.regexp");
+void WebConsole::paramsChanged(
+    ParamSet newParams, ParamSet oldParams, QString setId) {
+  Q_UNUSED(oldParams)
+  if (setId != QStringLiteral("globalparams"))
+    return;
+  QString s = newParams.rawValue("webconsole.showaudituser.regexp");
   _showAuditUser = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
-  s = globalParams.rawValue("webconsole.hideaudituser.regexp");
+  s = newParams.rawValue("webconsole.hideaudituser.regexp");
   _hideAuditUser = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
-  s = globalParams.rawValue("webconsole.showauditevent.regexp");
+  s = newParams.rawValue("webconsole.showauditevent.regexp");
   _showAuditEvent = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
-  s = globalParams.rawValue("webconsole.hideauditevent.regexp");
+  s = newParams.rawValue("webconsole.hideauditevent.regexp");
   _hideAuditEvent = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
   QString customactions_taskslist =
-      globalParams.rawValue("webconsole.customactions.taskslist");
+      newParams.rawValue("webconsole.customactions.taskslist");
   _tasksModel->setCustomActions(customactions_taskslist);
   QString customactions_instanceslist =
-      globalParams.rawValue("webconsole.customactions.instanceslist");
+      newParams.rawValue("webconsole.customactions.instanceslist");
   _unfinishedTaskInstancetModel->setCustomActions(customactions_instanceslist);
   _taskInstancesHistoryModel->setCustomActions(customactions_instanceslist);
-  int rowsPerPage = globalParams.valueAsInt(
+  int rowsPerPage = newParams.valueAsInt(
         "webconsole.htmltables.rowsperpage", 100);
-  int cachedRows = globalParams.valueAsInt(
+  int cachedRows = newParams.valueAsInt(
         "webconsole.htmltables.cachedrows", 500);
   foreach (QObject *child, children()) {
     auto *htmlView = qobject_cast<HtmlTableView*>(child);

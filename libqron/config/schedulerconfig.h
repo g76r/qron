@@ -79,6 +79,7 @@ public:
   void copyLiveAttributesFromOldTasks(QHash<QString,Task> oldTasks);
   void changeItem(SharedUiItem newItem, SharedUiItem oldItem,
                   QString idQualifier);
+  void changeParams(ParamSet newParams, ParamSet oldParams, QString setId);
   void applyLogConfig() const;
 
 private:

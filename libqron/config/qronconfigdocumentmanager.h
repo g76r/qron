@@ -43,19 +43,17 @@ public:
   Calendar calendarByName(QString name) const {
     return _config.namedCalendars().value(name); }
   ParamSet globalParams() const { return _config.globalParams(); }
+  ParamSet globalSetenvs() const { return _config.setenv(); }
+  ParamSet globalUnsetenvs() const { return _config.unsetenv(); }
   /** This method is threadsafe */
   bool taskExists(QString taskId) { return _config.tasks().contains(taskId); }
   /** This method is threadsafe */
   Task task(QString taskId) { return _config.tasks().value(taskId); }
+  void changeParams(ParamSet newParams, ParamSet oldParams, QString setId);
 
 signals:
   void logConfigurationChanged(QList<LogFile> logfiles);
-  void globalParamsChanged(
-      ParamSet newParams, ParamSet oldParams, QString setId);
-  void globalSetenvsChanged(
-      ParamSet newSetenvs, ParamSet oldSetenvs, QString setId);
-  void globalUnsetenvsChanged(
-      ParamSet newUnsetenvs, ParamSet oldUnsetenvs, QString setId);
+  void paramsChanged(ParamSet newParams, ParamSet oldParams, QString setId);
   void accessControlConfigurationChanged(bool enabled);
   void globalEventSubscriptionsChanged(
       QList<EventSubscription> onstart, QList<EventSubscription> onsuccess,

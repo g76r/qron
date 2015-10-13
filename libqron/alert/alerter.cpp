@@ -116,6 +116,7 @@ void Alerter::setConfig(AlerterConfig config) {
 }
 
 void Alerter::doSetConfig(AlerterConfig config) {
+  AlerterConfig oldConfig = _config;
   _rulesCacheHwm = qMax(_rulesCacheHwm, qMax(_alertSubscriptionsCache.size(),
                                              _alertSettingsCache.size()));
   _rulesCacheSize = 0;
@@ -124,7 +125,7 @@ void Alerter::doSetConfig(AlerterConfig config) {
   _config = config;
   _gridboards = config.gridboards(); // LATER merge with current data
   // LATER recompute visibilityDate and cancellationDate in raisableAlerts and emittedAlerts
-  emit paramsChanged(_config.params());
+  emit paramsChanged(_config.params(), oldConfig.params(), "alertparams");
   emit configChanged(_config);
 }
 

@@ -259,7 +259,7 @@ signals:
   /** Config parameters changed.
    * Convenience signal emited just before configChanged(). */
   // LATER remove and use lambdas instead of convenience signals
-  void paramsChanged(ParamSet params);
+  void paramsChanged(ParamSet newParams, ParamSet oldParams, QString setId);
   /** Configuration has changed. */
   void configChanged(AlerterConfig config);
 
