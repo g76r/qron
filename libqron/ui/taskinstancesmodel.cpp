@@ -31,7 +31,7 @@ QVariant TaskInstancesModel::data(const QModelIndex &index, int role) const {
       if (!_customActions.isEmpty()) {
         SharedUiItem sui = itemAt(index.row());
         //qDebug() << "TaskInstancesModel::data(8, DisplayRole)" << index.row() << sui.qualifiedId();
-        if (sui.idQualifier() == "taskinstance") {
+        if (sui.idQualifier() == QStringLiteral("taskinstance")) {
           TaskInstance &ti = reinterpret_cast<TaskInstance&>(sui);
           TaskInstancePseudoParamsProvider ppp = ti.pseudoParams();
           return ti.params().evaluate(_customActions, &ppp);
