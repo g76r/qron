@@ -98,10 +98,7 @@ void Scheduler::activateConfig(SchedulerConfig newConfig) {
       connect(executor, &Executor::taskInstanceFinished,
               this, &Scheduler::taskInstanceFinishing);
       connect(executor, &Executor::taskInstanceStarted,
-              [this](TaskInstance instance) {
-        // FIXME replace this lambda w/ a Scheduler slot, to secure shutdown sequence and thread safety (the signal mustnt be executed by an executor thread)
-        emit itemChanged(instance, nullItem, QStringLiteral("taskinstance"));
-      });
+              this, &Scheduler::propagateTaskInstanceChange);
       connect(this, &Scheduler::noticePosted,
               executor, &Executor::noticePosted);
       _availableExecutors.append(executor);
@@ -639,10 +636,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
       connect(executor, &Executor::taskInstanceFinished,
               this, &Scheduler::taskInstanceFinishing);
       connect(executor, &Executor::taskInstanceStarted,
-              [this](TaskInstance instance) {
-        // FIXME replace this lambda w/ a Scheduler slot, to secure shutdown sequence and thread safety (the signal mustnt be executed by an executor thread)
-        emit itemChanged(instance, nullItem, QStringLiteral("taskinstance"));
-      });
+              this, &Scheduler::propagateTaskInstanceChange);
       connect(this, &Scheduler::noticePosted,
               executor, &Executor::noticePosted);
     }
@@ -793,4 +787,8 @@ void Scheduler::doActivateWorkflowTransition(TaskInstance workflowTaskInstance,
                     "workflow " << workflowTaskInstance.task().id()
                  << "/" << workflowTaskInstance.id() << ": "
                  << transition.id();
+}
+
+void Scheduler::propagateTaskInstanceChange(TaskInstance instance) {
+  emit itemChanged(instance, nullItem, QStringLiteral("taskinstance"));
 }

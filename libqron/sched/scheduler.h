@@ -178,6 +178,7 @@ private:
   Q_INVOKABLE void doActivateWorkflowTransition(
       TaskInstance workflowTaskInstance, WorkflowTransition transition,
       ParamSet eventContext);
+  void propagateTaskInstanceChange(TaskInstance instance);
 };
 
 #endif // SCHEDULER_H
