@@ -568,7 +568,7 @@ void Executor::doAbort() {
         << "http task abort requested";
     _reply->abort();
   } else if (_instance.task().mean() == Task::Workflow) {
-    // FIXME should abort running subtasks ? or let finishWorkflow do it ?
+    // TODO should abort running subtasks ? or let finishWorkflow do it ?
     finishWorkflow(false, -1);
   } else {
     Log::warning(_instance.task().id(), _instance.idAsLong())

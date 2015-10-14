@@ -451,7 +451,7 @@ Task::Task(PfNode node, Scheduler *scheduler, TaskGroup taskGroup,
   // e.g. reparenting _setenv
   foreach (Step step, d->_steps) {
     Task subtask = step.subtask();
-    // FIXME should probably call changeStep() or changeSubtask()
+    // TODO should probably call changeStep() or changeSubtask()
     if (!subtask.isNull()) {
       subtask.setWorkflowTask(*this);
       step.setSubtask(subtask);
@@ -1055,7 +1055,7 @@ bool TaskData::setUiData(
       QMultiHash<QString,WorkflowTransition> newTransitions;
       foreach (const QString &sourceLocalId,
                _transitionsBySourceLocalId.uniqueKeys()) {
-        foreach (WorkflowTransition newTransition, // FIXME must iterate in reverse order to preserve QMultiHash insertion order
+        foreach (WorkflowTransition newTransition, // TODO must iterate in reverse order to preserve QMultiHash insertion order
                  _transitionsBySourceLocalId.values(sourceLocalId)) {
           newTransition.setWorkflowId(_id);
           newTransitions.insert(sourceLocalId, newTransition);
@@ -1069,8 +1069,7 @@ bool TaskData::setUiData(
         newSteps.insert(newStep.id(), newStep);
       }
       _steps = newSteps;
-      // update diagram
-      // FIXME
+      // TODO update diagram in Task::setUiData()
       //d->_graphvizWorkflowDiagram = GraphvizDiagramsBuilder::workflowTaskDiagram(*this);
     }
     return true;
@@ -1301,19 +1300,17 @@ QStringList Task::validMeanStrings() {
 
 void Task::changeWorkflowTransition(WorkflowTransition newItem,
                                     WorkflowTransition oldItem) {
-  // FIXME
+  // TODO implement
   // probably strongly related to changeStep
 }
 
 void Task::changeStep(Step newItem, Step oldItem) {
-  // FIXME
+  // TODO implement
   // probably strongly related to changeWorkflowTransition
   // must probably also manage triggers collections (since triggers are steps)
   if (!oldItem.isNull()) {
-    // FIXME
   }
   if (!newItem.isNull()) {
-    // FIXME
   }
 }
 

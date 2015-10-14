@@ -18,7 +18,10 @@
 #include "config/schedulerconfig.h"
 #include "eventsubscription.h"
 
-// FIXME doc
+/** Document manager for scheduler config
+ * @see SharedUiItemDocumentManager
+ * @see SchedulerConfig
+ */
 class LIBQRONSHARED_EXPORT QronConfigDocumentManager
     : public SharedUiItemDocumentManager {
   Q_OBJECT

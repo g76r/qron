@@ -341,9 +341,8 @@ bool QronConfigDocumentManager::prepareChangeItem(
   // TODO implement more item types
   if (reason.isNull()) {
     storeItemChange(transaction, newItem, oldItem, idQualifier);
-    // FIXME mute
-    qDebug() << "QronConfigDocumentManager::prepareChangeItem succeeded:"
-             << idQualifier << newItem.id() << oldId;
+    //qDebug() << "QronConfigDocumentManager::prepareChangeItem succeeded:"
+    //         << idQualifier << newItem.id() << oldId;
     return true;
   } else {
     if (errorString)
@@ -355,10 +354,8 @@ bool QronConfigDocumentManager::prepareChangeItem(
 void QronConfigDocumentManager::commitChangeItem(
     SharedUiItem newItem, SharedUiItem oldItem, QString idQualifier) {
   _config.changeItem(newItem, oldItem, idQualifier);
-  // FIXME mute
-  qDebug() << "QronConfigDocumentManager::commitChangeItem done"
-           << newItem.qualifiedId() << oldItem.qualifiedId();
-           //<< _config.toPfNode().toString();
+  //qDebug() << "QronConfigDocumentManager::commitChangeItem done"
+  //         << newItem.qualifiedId() << oldItem.qualifiedId();
   SharedUiItemDocumentManager::commitChangeItem(newItem, oldItem, idQualifier);
 }
 

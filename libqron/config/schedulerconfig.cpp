@@ -47,7 +47,7 @@ public:
   QString _eventType;
   QString _contextLabel;
   Task _contextTask;
-  // FIXME clarify "contextLabel" and "contextTask" names, contextTask is useless since only its id is used (and contextLabel=id)
+  // TODO clarify "contextLabel" and "contextTask" names, contextTask is useless since only its id is used (and contextLabel=id)
   RequestTaskActionLink(Action action, QString eventType, QString contextLabel,
                         Task contextTask)
     : _action(action), _eventType(eventType), _contextLabel(contextLabel),
@@ -118,7 +118,7 @@ static inline void recordTaskActionLinks(
     PfNode parentNode, QString childName,
     QList<RequestTaskActionLink> *requestTaskActionLinks,
     QString contextLabel, Task contextTask = Task()) {
-  // FIXME clarify "contextLabel" and "contextTask" names
+  // TODO clarify "contextLabel" and "contextTask" names
   QStringList ignoredChildren;
   ignoredChildren << "cron" << "notice";
   foreach (PfNode listnode, parentNode.childrenByName(childName)) {
@@ -269,10 +269,10 @@ SchedulerConfigData::SchedulerConfigData(PfNode root, Scheduler *scheduler,
     recordTaskActionLinks(node, "onfailure", &requestTaskActionLinks,
                           task.id(), task);
     recordTaskActionLinks(node, "onfinish", &requestTaskActionLinks,
-                          task.id(), task); // FIXME rather use a QStringList than a QString for childname
+                          task.id(), task); // TODO rather use a QStringList than a QString for childname
     if (task.mean() == Task::Workflow) {
       recordTaskActionLinks(node, "ontrigger", &requestTaskActionLinks,
-                            task.id(), task); // FIXME check that this is consistent
+                            task.id(), task); // TODO check that this is consistent
       foreach(PfNode child, node.childrenByName("subtask")) {
         recordTaskActionLinks(node, "onstart", &requestTaskActionLinks,
                               task.id()+":"+child.contentAsString(),
@@ -588,8 +588,6 @@ QString SchedulerConfig::recomputeId() const {
   buf.seek(0);
   hash.addData(&buf);
   d->_id = hash.result().toHex();
-  //qDebug() << "SchedulerConfig::recomputeId()" << d->_id << buf.size()
-  //         << QString::fromUtf8(data); // FIXME
   return d->_id;
 }
 
