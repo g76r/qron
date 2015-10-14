@@ -48,6 +48,10 @@ QVariant TasksModel::data(const QModelIndex &index, int role) const {
 
 void TasksModel::periodicDataRefresh() {
   int size = _tasks.size();
-  if (size)
+  if (size) {
+    // Simulate "Next Execution" change to make views recompute their "soon to
+    // be executed" indicator, which can change status even when the next
+    // execution timestamp does not change.
     emit dataChanged(index(0, 10), index(size-1, 10));
+  }
 }
