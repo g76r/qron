@@ -99,6 +99,7 @@ void Scheduler::activateConfig(SchedulerConfig newConfig) {
               this, &Scheduler::taskInstanceFinishing);
       connect(executor, &Executor::taskInstanceStarted,
               [this](TaskInstance instance) {
+        // FIXME replace this lambda w/ a Scheduler slot, to secure shutdown sequence and thread safety (the signal mustnt be executed by an executor thread)
         emit itemChanged(instance, nullItem, QStringLiteral("taskinstance"));
       });
       connect(this, &Scheduler::noticePosted,
@@ -588,6 +589,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     instance.setSuccess(false);
     instance.setEndDatetime();
     task.fetchAndAddInstancesCount(-1);
+    // FIXME update task for last execution attributes and emit itemChanged for task
     emit itemChanged(instance, instance, QStringLiteral("taskinstance"));
     return true;
   }
@@ -638,6 +640,7 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
               this, &Scheduler::taskInstanceFinishing);
       connect(executor, &Executor::taskInstanceStarted,
               [this](TaskInstance instance) {
+        // FIXME replace this lambda w/ a Scheduler slot, to secure shutdown sequence and thread safety (the signal mustnt be executed by an executor thread)
         emit itemChanged(instance, nullItem, QStringLiteral("taskinstance"));
       });
       connect(this, &Scheduler::noticePosted,
