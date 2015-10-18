@@ -7,4 +7,8 @@
 [submodule "libqtssu"]
 	path = libqtssu
 	url = git://github.com/g76r/libqtssu.git
-        pushURL = git@github.com:g76r/libqtpf.git
+        pushURL = git@github.com:g76r/libqtssu.git
+[submodule "libqron"]
+        path = libqron
+        url = git://github.com/g76r/libqron.git
+        pushURL = git@github.com:g76r/libqron.git
