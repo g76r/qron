@@ -242,8 +242,6 @@ QList<TaskInstance> Scheduler::doRequestTask(
   }
   if (!requests.isEmpty()) {
     reevaluateQueuedRequests();
-    // FIXME not sure it is needed
-    emit itemChanged(task, task, QStringLiteral("task"));
   }
   return requests;
 }
