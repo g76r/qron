@@ -584,8 +584,13 @@ bool Scheduler::startQueuedTask(TaskInstance instance) {
     instance.setSuccess(false);
     instance.setEndDatetime();
     task.fetchAndAddInstancesCount(-1);
-    // FIXME update task for last execution attributes and emit itemChanged for task
+    task.setLastExecution(QDateTime::currentDateTime());
+    task.setLastSuccessful(false);
+    task.setLastReturnCode(-1);
+    task.setLastTotalMillis(0);
+    task.setLastTaskInstanceId(instance.idAsLong());
     emit itemChanged(instance, instance, QStringLiteral("taskinstance"));
+    emit itemChanged(task, task, QStringLiteral("task"));
     return true;
   }
   // LATER implement other cluster balancing methods than "first"
