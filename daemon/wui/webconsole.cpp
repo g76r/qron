@@ -59,9 +59,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
 
   // models
   _hostsModel = new SharedUiItemsTableModel(Host(PfNode("template")), this);
-  _hostsModel->setChangeItemQualifierFilter("host");
+  _hostsModel->setItemQualifierFilter("host");
   _clustersModel = new ClustersModel(this);
-  _clustersModel->setChangeItemQualifierFilter({"cluster", "host"});
+  _clustersModel->setItemQualifierFilter({"cluster", "host"});
   _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
   _resourcesLwmModel = new HostsResourcesAvailabilityModel(
         this, HostsResourcesAvailabilityModel::LwmOverConfigured);
@@ -97,12 +97,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _gridboardsModel->setHeaderDataFromTemplate(
         Gridboard(nodeWithValidPattern, Gridboard(), ParamSet()));
   _taskInstancesHistoryModel = new TaskInstancesModel(this);
-  _taskInstancesHistoryModel->setChangeItemQualifierFilter("taskinstance");
+  _taskInstancesHistoryModel->setItemQualifierFilter("taskinstance");
   _unfinishedTaskInstancetModel =
       new TaskInstancesModel(this, UNFINISHED_TASK_INSTANCE_MAXROWS, false);
-  _unfinishedTaskInstancetModel->setChangeItemQualifierFilter("taskinstance");
+  _unfinishedTaskInstancetModel->setItemQualifierFilter("taskinstance");
   _tasksModel = new TasksModel(this);
-  _tasksModel->setChangeItemQualifierFilter("task");
+  _tasksModel->setItemQualifierFilter("task");
   _mainTasksModel = new QSortFilterProxyModel(this);
   _mainTasksModel->setFilterKeyColumn(31);
   _mainTasksModel->setFilterRegExp("^$");
@@ -113,7 +113,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _subtasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
-  _taskGroupsModel->setChangeItemQualifierFilter("taskgroup");
+  _taskGroupsModel->setItemQualifierFilter("taskgroup");
   _sortedTaskGroupsModel = new QSortFilterProxyModel(this);
   _sortedTaskGroupsModel->setSourceModel(_taskGroupsModel);
   _sortedTaskGroupsModel->sort(0);
@@ -121,7 +121,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new SharedUiItemsTableModel(this);
   _calendarsModel->setHeaderDataFromTemplate(Calendar(PfNode("calendar")));
-  _calendarsModel->setChangeItemQualifierFilter("calendar");
+  _calendarsModel->setItemQualifierFilter("calendar");
   _sortedCalendarsModel = new QSortFilterProxyModel(this);
   _sortedCalendarsModel->setSourceModel(_calendarsModel);
   _sortedCalendarsModel->sort(1);
@@ -129,7 +129,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _stepsModel->setHeaderDataFromTemplate(
         Step(PfNode("start"), 0, TaskGroup(), QString(),
              QHash<QString,Calendar>()));
-  _stepsModel->setChangeItemQualifierFilter("step");
+  _stepsModel->setItemQualifierFilter("step");
   _sortedStepsModel = new QSortFilterProxyModel(this);
   _sortedStepsModel->setSourceModel(_stepsModel);
   _warningLogModel = new LogModel(this, Log::Warning);
