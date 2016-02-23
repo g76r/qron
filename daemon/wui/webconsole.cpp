@@ -708,7 +708,7 @@ bool WebConsole::handleRequest(
   while (path.size() && path.at(path.size()-1) == '/')
     path.chop(1);
   if (path.isEmpty()) {
-    res.redirect("console/index.html");
+    res.redirect("console/index.html", HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
   if (_accessControlEnabled
