@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -589,9 +589,20 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // unparenting models that must not be deleted automaticaly when deleting
   // this
   // note that they must be children until there to be moved to the right thread
+  /* LATER with 3 following lines, works on linux Qt 5.4.2 64bits but not on Win Qt 5.5.1 32bits
+ASSERT failure in QCoreApplication::sendEvent: "Cannot send events to objects
+ owned by a different thread. Current thread d227b98.
+ Receiver '' (of type 'WebConsole') was created in thread d233478",
+ file kernel\qcoreapplication.cpp, line 553
+This application has requested the Runtime to terminate it in an unusual way.
+Please contact the application's support team for more information.
+QWaitCondition: Destroyed while threads are still waiting
+   */
+#ifndef Q_OS_WIN
   _warningLogModel->setParent(0);
   _infoLogModel->setParent(0);
   _auditLogModel->setParent(0);
+#endif
   // LATER find a safe way to delete logmodels asynchronously without crashing log framework
 }
 
