@@ -42,8 +42,7 @@ static PfNode nodeWithValidPattern =
     .setAttribute("dimension", "dummy");
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
-  _configRepository(0),
-  _usersDatabase(0), _ownUsersDatabase(false), _accessControlEnabled(false) {
+  _configRepository(0), _authorizer(0) {
   QList<int> cols;
 
   // HTTP handlers
@@ -572,13 +571,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
   _wuiHandler->addView("now", _clockView);
 
-  // access control
-  _authorizer = new InMemoryRulesAuthorizer(this);
-  _authorizer->allow("", "/console/(css|jsp|js)/.*") // anyone for static rsrc
-      .allow("operate", "/(rest|console)/do") // operate for operation
-      .deny("", "/(rest|console)/do") // nobody else
-      .allow("read"); // read for everything else
-
   // dedicated thread
   _thread->setObjectName("WebConsoleServer");
   connect(this, &WebConsole::destroyed, _thread, &QThread::quit);
@@ -711,10 +703,9 @@ bool WebConsole::handleRequest(
     res.redirect("console/index.html", HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
-  if (_accessControlEnabled
-      && !_authorizer->authorize(
-        processingContext.paramValue("userid").toString(), path)) {
-    res.setStatus(403);
+  QString userid = processingContext.paramValue("userid").toString();
+  if (_authorizer && !_authorizer->authorize(userid, path)) {
+    res.setStatus(HttpResponse::HTTP_Forbidden);
     QUrl url(req.url());
     url.setPath("/console/adhoc.html");
     url.setQuery(QString());
@@ -1015,7 +1006,7 @@ bool WebConsole::handleRequest(
   }
   if (path.startsWith("/console")) {
     QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
-    if (queryItems.size()) {
+    if (queryItems.size()) { // FIXME and not static
       // if there are query parameters in url, transform them into cookies
       // LATER this mechanism should be generic/framework (in libqtssu)
       QListIterator<QPair<QString,QString> > it(queryItems);
@@ -1585,13 +1576,25 @@ void WebConsole::setConfigRepository(ConfigRepository *configRepository) {
   }
 }
 
-void WebConsole::setUsersDatabase(UsersDatabase *usersDatabase,
-                                  bool takeOwnership) {
-  _authorizer->setUsersDatabase(usersDatabase, takeOwnership);
+void WebConsole::setAuthorizer(InMemoryRulesAuthorizer *authorizer) {
+  _authorizer = authorizer;
+  enableAccessControl(false);
 }
 
 void WebConsole::enableAccessControl(bool enabled) {
-  _accessControlEnabled = enabled;
+  if (!_authorizer)
+    return;
+  // LATER this is not transactional and thus may issue 403's during conf reload
+  if (enabled) {
+    _authorizer->clearRules()
+        .allow("", "/console/(css|jsp|js)/.*") // anyone for static resources
+        .allow("operate", "/(rest|console)/do") // operate for operation
+        .deny("", "/(rest|console)/do") // nobody else
+        .allow("read"); // read for everything else
+  } else {
+    _authorizer->clearRules()
+        .allow(); // anyone for anything
+  }
 }
 
 void WebConsole::paramsChanged(

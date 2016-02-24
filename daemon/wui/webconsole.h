@@ -1,4 +1,4 @@
-/* Copyright 2012-2015 Hallowyn and others.
+/* Copyright 2012-2016 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -121,7 +121,6 @@ class WebConsole : public HttpHandler {
   QString _configFilePath, _configRepoPath;
   InMemoryRulesAuthorizer *_authorizer;
   UsersDatabase *_usersDatabase;
-  bool _ownUsersDatabase, _accessControlEnabled;
   AtomicValue<QRegularExpression> _showAuditEvent, _hideAuditEvent,
   _showAuditUser, _hideAuditUser;
   AtomicValue<AlerterConfig> _alerterConfig;
@@ -135,7 +134,7 @@ public:
   void setScheduler(Scheduler *scheduler);
   void setConfigPaths(QString configFilePath, QString configRepoPath);
   void setConfigRepository(ConfigRepository *configRepository);
-  void setUsersDatabase(UsersDatabase *usersDatabase, bool takeOwnership);
+  void setAuthorizer(InMemoryRulesAuthorizer *authorizer);
 
 public slots:
   void enableAccessControl(bool enabled);

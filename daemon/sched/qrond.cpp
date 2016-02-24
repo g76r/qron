@@ -1,4 +1,4 @@
-/* Copyright 2013-2015 Hallowyn and others.
+/* Copyright 2013-2016 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -33,17 +33,17 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _scheduler(new Scheduler),
   _httpd(new HttpServer(8, 32)), // LATER should be configurable
   _httpAuthRealm("qron"),
+  _authorizer(new InMemoryRulesAuthorizer(this)),
   _configRepository(new LocalConfigRepository(this, _scheduler)),
   _webconsole(new WebConsole) {
   _webconsole->setScheduler(_scheduler);
   _webconsole->setConfigRepository(_configRepository);
   PipelineHttpHandler *pipeline = new PipelineHttpHandler;
   _httpAuthHandler = new BasicAuthHttpHandler;
-  _httpAuthHandler->setAuthenticator(_scheduler->authenticator(), false);
-  _httpAuthHandler->setAuthIsMandatory(false);
-  connect(_scheduler, &Scheduler::accessControlConfigurationChanged,
-          _httpAuthHandler, &BasicAuthHttpHandler::setAuthIsMandatory);
-  _webconsole->setUsersDatabase(_scheduler->usersDatabase(), false);
+  _httpAuthHandler->setAuthenticator(_scheduler->authenticator());
+  _authorizer->setUsersDatabase(_scheduler->usersDatabase());
+  _httpAuthHandler->setAuthorizer(_authorizer);
+  _webconsole->setAuthorizer(_authorizer);
   pipeline->appendHandler(_httpAuthHandler);
   pipeline->appendHandler(_webconsole);
   _httpd->appendHandler(pipeline);
