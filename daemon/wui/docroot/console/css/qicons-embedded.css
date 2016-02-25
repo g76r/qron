@@ -1,8 +1,8 @@
 @font-face {
   font-family: 'qicons';
-  src: url('../font/qicons.eot?14970187');
-  src: url('../font/qicons.eot?14970187#iefix') format('embedded-opentype'),
-       url('../font/qicons.svg?14970187#qicons') format('svg');
+  src: url('../font/qicons.eot');
+  src: url('../font/qicons.eot') format('embedded-opentype'),
+       url('../font/qicons.svg') format('svg');
   font-weight: normal;
   font-style: normal;
 }
@@ -17,7 +17,7 @@
 @media screen and (-webkit-min-device-pixel-ratio:0) {
   @font-face {
     font-family: 'qicons';
-    src: url('../font/qicons.svg?14970187#qicons') format('svg');
+    src: url('../font/qicons.svg') format('svg');
   }
 }
 */
