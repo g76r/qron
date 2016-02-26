@@ -37,7 +37,7 @@
             <tr><th>Task group id</th><td><?value:1?></td></tr>
             <tr><th>Workflow Task (for subtasks)</th><td><?=%{=ifneq:%31::<a href="taskdoc.html?taskid=%31">%31</a>}?></td></th>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
-            <tr><th>Triggers (scheduling)</th><td><?value:28:?></td></tr>
+            <tr><th>Triggers (scheduling)</th><td><?=%{=switch:%28::%{=switch,%31,,<span class="icon-circle-empty"></span>&nbsp;no trigger,}}?></td></tr>
             <tr><th>Minimum expected duration</th><td><?value:23:?></td></tr>
             <tr><th>Maximum expected duration</th><td><?value:24:?></td></tr>
             <tr><th>Maximum duration before abort</th><td><?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?></td></tr>
