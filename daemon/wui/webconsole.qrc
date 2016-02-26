@@ -1,5 +1,6 @@
 <RCC>
     <qresource prefix="/">
+        <file>docroot/console/test.html</file>
         <file>docroot/console/index.html</file>
         <file>docroot/console/header.html</file>
         <file>docroot/console/common-scripts.html</file>

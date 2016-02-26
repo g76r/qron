@@ -1587,9 +1587,10 @@ void WebConsole::enableAccessControl(bool enabled) {
   // LATER this is not transactional and thus may issue 403's during conf reload
   if (enabled) {
     _authorizer->clearRules()
-        .allow("", "/console/(css|jsp|js)/.*") // anyone for static resources
-        .allow("operate", "/(rest|console)/do") // operate for operation
-        .deny("", "/(rest|console)/do") // nobody else
+        .allow("", "^/console/(css|jsp|js)/.*") // anyone for static resources
+        .allow("", "^/console/test\\.html$") // anyone for test page
+        .allow("operate", "^/(rest|console)/do") // operate for operation
+        .deny("", "^/(rest|console)/do") // nobody else
         .allow("read"); // read for everything else
   } else {
     _authorizer->clearRules()
