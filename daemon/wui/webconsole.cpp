@@ -1062,6 +1062,7 @@ bool WebConsole::handleRequest(
     return true;
   }
   if (path == "/rest/html/tasks/list/v1") {
+    // LATER for this one and all other raw rest view write: send Content-Length, and avoid sending data with HEAD method
     res.setContentType("text/html;charset=UTF-8");
     res.output()->write(_htmlTasksListView->text().toUtf8().constData());
     return true;
