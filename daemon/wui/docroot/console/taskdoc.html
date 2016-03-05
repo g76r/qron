@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2014 Hallowyn and others.
+ Copyright 2012-2016 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -22,7 +22,7 @@
           <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
           <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
           <a class="btn btn-info" href="../rest/txt/log/all/v1?regexp=^[^ ]* <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
-          <?rawvalue:webconsole.customactions.taskdetail:?>
+          <?=%{rawvalue:webconsole.customactions.taskdetail}?>
           <p>All durations and delays are in seconds.
         </div>
       </div>
@@ -91,7 +91,7 @@
         <div class="col-md-12">
           <h3>Raw Task Configuration</h3>
           <p><a class="btn btn-primary" target="_blank" href="../rest/pf/task/config/v1?taskid=<?value:11?>"><i class="icon-file"></i> PF</a>
-          <pre><?=%{=rawvalue:pfconfig:h}?></pre>
+          <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
         </div>
       </div>
 
