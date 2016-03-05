@@ -1555,12 +1555,9 @@ bool WebConsole::handleRequest(
 void WebConsole::setScheduler(Scheduler *scheduler) {
   _scheduler = scheduler;
   if (_scheduler) {
-    connect(_scheduler, &Scheduler::itemChanged,
-            _tasksModel, &TasksModel::changeItem);
-    connect(_scheduler, &Scheduler::itemChanged,
-            _hostsModel, &SharedUiItemsTableModel::changeItem);
-    connect(_scheduler, &Scheduler::itemChanged,
-            _clustersModel, &ClustersModel::changeItem);
+    _tasksModel->setDocumentManager(scheduler);
+    _hostsModel->setDocumentManager(scheduler);
+    _clustersModel->setDocumentManager(scheduler);
     connect(_scheduler, &Scheduler::itemChanged,
             _freeResourcesModel, &HostsResourcesAvailabilityModel::changeItem);
     connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
@@ -1591,24 +1588,19 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
     connect(_scheduler->alerter(), &Alerter::configChanged,
             this, &WebConsole::alerterConfigChanged);
-    connect(_scheduler, &Scheduler::itemChanged,
-            _taskInstancesHistoryModel, &SharedUiItemsModel::changeItem);
-    connect(_scheduler, &Scheduler::itemChanged,
-            _unfinishedTaskInstancetModel, &SharedUiItemsModel::changeItem);
+    _taskInstancesHistoryModel->setDocumentManager(scheduler);
+    _unfinishedTaskInstancetModel->setDocumentManager(scheduler);
+    _calendarsModel->setDocumentManager(scheduler);
+    _taskGroupsModel->setDocumentManager(scheduler);
+    _stepsModel->setDocumentManager(scheduler);
     connect(_scheduler, &Scheduler::globalEventSubscriptionsChanged,
             _schedulerEventsModel, &SchedulerEventsModel::globalEventSubscriptionsChanged);
-    connect(_scheduler, &Scheduler::itemChanged,
-            _calendarsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
             _lastPostedNoticesModel, SLOT(eventOccured(QString)));
-    connect(_scheduler, &Scheduler::itemChanged,
-            _taskGroupsModel, &TaskGroupsModel::changeItem);
     connect(_scheduler, &Scheduler::accessControlConfigurationChanged,
             this, &WebConsole::enableAccessControl);
     connect(_scheduler, &Scheduler::logConfigurationChanged,
             _logConfigurationModel, &LogFilesModel::logConfigurationChanged);
-    connect(_scheduler, &Scheduler::itemChanged,
-            _stepsModel, &SharedUiItemsTableModel::changeItem);
   }
 }
 
