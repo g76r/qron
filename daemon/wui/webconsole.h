@@ -135,6 +135,106 @@ public:
   void setConfigPaths(QString configFilePath, QString configRepoPath);
   void setConfigRepository(ConfigRepository *configRepository);
   void setAuthorizer(InMemoryRulesAuthorizer *authorizer);
+  Scheduler *scheduler() const { return _scheduler; }
+  ConfigRepository *configRepository() const { return _configRepository; }
+  GraphvizImageHttpHandler *tasksDeploymentDiagram() const {
+    return _tasksDeploymentDiagram; }
+  GraphvizImageHttpHandler *tasksTriggerDiagram() const {
+    return _tasksTriggerDiagram; }
+  TemplatingHttpHandler *wuiHandler() const { return _wuiHandler; }
+  ConfigUploadHandler *configUploadHandler() const {
+    return _configUploadHandler; }
+  QRegularExpression showAuditEvent() const { return _showAuditEvent; }
+  QRegularExpression hideAuditEvent() const { return _hideAuditEvent; }
+  QRegularExpression showAuditUser() const { return _showAuditUser; }
+  QRegularExpression hideAuditUser() const { return _hideAuditUser; }
+  AlerterConfig alerterConfig() const { return _alerterConfig; }
+  CsvTableView *csvHostsListView() const { return _csvHostsListView; }
+  CsvTableView *csvClustersListView() const { return _csvClustersListView; }
+  CsvTableView *csvFreeResourcesView() const { return _csvFreeResourcesView; }
+  CsvTableView *csvResourcesLwmView() const { return _csvResourcesLwmView; }
+  CsvTableView *csvResourcesConsumptionView() const {
+    return _csvResourcesConsumptionView; }
+  CsvTableView *csvGlobalParamsView() const { return _csvGlobalParamsView; }
+  CsvTableView *csvGlobalSetenvView() const { return _csvGlobalSetenvView; }
+  CsvTableView *csvGlobalUnsetenvView() const { return _csvGlobalUnsetenvView; }
+  CsvTableView *csvAlertParamsView() const { return _csvAlertParamsView; }
+  CsvTableView *csvRaisableAlertsView() const { return _csvRaisableAlertsView; }
+  CsvTableView *csvLastEmittedAlertsView() const {
+    return _csvLastEmittedAlertsView; }
+  CsvTableView *csvAlertSubscriptionsView() const {
+    return _csvAlertSubscriptionsView; }
+  CsvTableView *csvAlertSettingsView() const { return _csvAlertSettingsView; }
+  CsvTableView *csvGridboardsView() const { return _csvGridboardsView; }
+  CsvTableView *csvLogView() const { return _csvLogView; }
+  CsvTableView *csvTaskInstancesView() const { return _csvTaskInstancesView; }
+  CsvTableView *csvTasksView() const { return _csvTasksView; }
+  CsvTableView *csvSchedulerEventsView() const {
+    return _csvSchedulerEventsView; }
+  CsvTableView *csvLastPostedNoticesView() const {
+    return _csvLastPostedNoticesView; }
+  CsvTableView *csvTaskGroupsView() const { return _csvTaskGroupsView; }
+  CsvTableView *csvLogFilesView() const { return _csvLogFilesView; }
+  CsvTableView *csvCalendarsView() const { return _csvCalendarsView; }
+  CsvTableView *csvStepsView() const { return _csvStepsView; }
+  CsvTableView *csvConfigsView() const { return _csvConfigsView; }
+  CsvTableView *csvConfigHistoryView() const { return _csvConfigHistoryView; }
+  HtmlTableView *htmlHostsListView() const { return _htmlHostsListView; }
+  HtmlTableView *htmlClustersListView() const { return _htmlClustersListView; }
+  HtmlTableView *htmlFreeResourcesView() const {
+    return _htmlFreeResourcesView; }
+  HtmlTableView *htmlResourcesLwmView() const { return _htmlResourcesLwmView; }
+  HtmlTableView *htmlResourcesConsumptionView() const {
+    return _htmlResourcesConsumptionView; }
+  HtmlTableView *htmlGlobalParamsView() const { return _htmlGlobalParamsView; }
+  HtmlTableView *htmlGlobalSetenvView() const { return _htmlGlobalSetenvView; }
+  HtmlTableView *htmlGlobalUnsetenvView() const {
+    return _htmlGlobalUnsetenvView; }
+  HtmlTableView *htmlAlertParamsView() const { return _htmlAlertParamsView; }
+  HtmlTableView *htmlRaisableAlertsView() const {
+    return _htmlRaisableAlertsView; }
+  HtmlTableView *htmlRaisedAlertsView() const { return _htmlRaisedAlertsView; }
+  HtmlTableView *htmlLastEmittedAlertsView() const {
+    return _htmlLastEmittedAlertsView; }
+  HtmlTableView *htmlAlertSubscriptionsView() const {
+    return _htmlAlertSubscriptionsView; }
+  HtmlTableView *htmlAlertSettingsView() const {
+    return _htmlAlertSettingsView; }
+  HtmlTableView *htmlGridboardsView() const { return _htmlGridboardsView; }
+  HtmlTableView *htmlWarningLogView() const { return _htmlWarningLogView; }
+  HtmlTableView *htmlWarningLogView10() const { return _htmlWarningLogView10; }
+  HtmlTableView *htmlInfoLogView() const { return _htmlInfoLogView; }
+  HtmlTableView *htmlAuditLogView() const { return _htmlAuditLogView; }
+  HtmlTableView *htmlTaskInstancesView() const {
+    return _htmlTaskInstancesView; }
+  HtmlTableView *htmlTaskInstancesView20() const {
+    return _htmlTaskInstancesView20; }
+  HtmlTableView *htmlTasksScheduleView() const {
+    return _htmlTasksScheduleView; }
+  HtmlTableView *htmlTasksConfigView() const { return _htmlTasksConfigView; }
+  HtmlTableView *htmlTasksParamsView() const { return _htmlTasksParamsView; }
+  HtmlTableView *htmlTasksListView() const { return _htmlTasksListView; }
+  HtmlTableView *htmlTasksEventsView() const { return _htmlTasksEventsView; }
+  HtmlTableView *htmlSchedulerEventsView() const {
+    return _htmlSchedulerEventsView; }
+  HtmlTableView *htmlLastPostedNoticesView20() const {
+    return _htmlLastPostedNoticesView20; }
+  HtmlTableView *htmlTaskGroupsView() const {
+    return _htmlTaskGroupsView; }
+  HtmlTableView *htmlTaskGroupsEventsView() const {
+    return _htmlTaskGroupsEventsView; }
+  HtmlTableView *htmlAlertChannelsView() const {
+    return _htmlAlertChannelsView; }
+  HtmlTableView *htmlTasksResourcesView() const {
+    return _htmlTasksResourcesView; }
+  HtmlTableView *htmlTasksAlertsView() const { return _htmlTasksAlertsView; }
+  HtmlTableView *htmlLogFilesView() const { return _htmlLogFilesView; }
+  HtmlTableView *htmlCalendarsView() const { return _htmlCalendarsView; }
+  HtmlTableView *htmlStepsView() const { return _htmlStepsView; }
+  HtmlTableView *htmlConfigsView() const { return _htmlConfigsView; }
+  HtmlTableView *htmlConfigHistoryView() const {
+    return _htmlConfigHistoryView; }
+
 
 public slots:
   void enableAccessControl(bool enabled);
@@ -143,15 +243,6 @@ private slots:
   void paramsChanged(ParamSet newParams, ParamSet oldParams, QString setId);
   void computeDiagrams(SchedulerConfig config);
   void alerterConfigChanged(AlerterConfig config);
-
-private:
-  static void copyFilteredFiles(QStringList paths, QIODevice *output,
-                               QString pattern, bool useRegexp);
-  static void copyFilteredFile(QString path, QIODevice *output,
-                               QString pattern, bool useRegexp) {
-    QStringList paths;
-    paths.append(path);
-    copyFilteredFiles(paths, output, pattern, useRegexp); }
 };
 
 #endif // WEBCONSOLE_H

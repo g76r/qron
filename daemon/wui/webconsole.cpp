@@ -30,6 +30,8 @@
 #include "alert/alert.h"
 #include "alert/gridboard.h"
 #include "config/step.h"
+#include "util/stringmap.h"
+#include <functional>
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -614,6 +616,7 @@ public:
   QVariant paramValue(const QString key, const QVariant defaultValue,
                       QSet<QString> alreadyEvaluated) const {
     Q_UNUSED(alreadyEvaluated)
+    // TODO switch to StringMap
     if (key.startsWith("scheduler.")) {
       if (!_console || !_console->_scheduler) // should never happen
         return defaultValue;
@@ -688,179 +691,231 @@ public:
   }
 };
 
-bool WebConsole::handleRequest(
-    HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *originalProcessingContext) {
-  QString path = req.url().path();
-  ParamsProviderMerger processingContext(*originalProcessingContext);
-  WebConsoleParamsProvider webconsoleParams(this);
-  processingContext.append(&webconsoleParams);
-  if (_scheduler)
-    processingContext.append(_scheduler->globalParams());
-  while (path.size() && path.at(path.size()-1) == '/')
-    path.chop(1);
-  if (path.isEmpty()) {
-    res.redirect("console/index.html", HttpResponse::HTTP_Moved_Permanently);
-    return true;
-  }
-  QString userid = processingContext.paramValue("userid").toString();
-  if (_authorizer && !_authorizer->authorize(userid, path)) {
-    res.setStatus(HttpResponse::HTTP_Forbidden);
-    QUrl url(req.url());
-    url.setPath("/console/adhoc.html");
-    url.setQuery(QString());
-    req.overrideUrl(url);
-    processingContext.overrideParamValue(
-          "content", "<h2>Permission denied</h2>");
-    res.clearCookie("message", "/");
-    _wuiHandler->handleRequest(req, res, &processingContext);
-    return true;
-  }
-  //Log::fatal() << "hit: " << req.url().toString();
-  if (path == "/console/do" || path == "/rest/do" ) {
-    QString event = req.param("event");
-    QString taskId = req.param("taskid");
-    QString alertId = req.param("alertid");
-    QString gridboardId = req.param("gridboardid");
-    if (alertId.isNull()) // LATER remove this backward compatibility trick
-      alertId = req.param("alert");
-    QString configId = req.param("configid");
-    quint64 taskInstanceId = req.param("taskinstanceid").toULongLong();
-    QList<quint64> auditInstanceIds;
-    QString referer = req.header("Referer");
-    QString redirect = req.base64Cookie("redirect", referer);
-    QString message;
-    QString userid = processingContext.paramValue("userid").toString();
-    if (_scheduler) {
-      if (event == "requestTask") {
-        // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
-        ParamSet params(req.paramsAsParamSet());
-        // TODO handle null values rather than replacing empty with nulls
-        foreach (QString key, params.keys())
-          if (params.value(key).isEmpty())
-            params.removeValue(key);
-        params.removeValue("taskid");
-        params.removeValue("event");
-        // TODO evaluate overriding params within overriding > global context
-        QList<TaskInstance> instances = _scheduler->syncRequestTask(taskId, params);
-        if (!instances.isEmpty()) {
-          message = "S:Task '"+taskId+"' submitted for execution with id";
-          foreach (TaskInstance request, instances) {
-              message.append(' ').append(QString::number(request.idAsLong()));
-              auditInstanceIds << request.idAsLong();
-          }
-          message.append('.');
-        } else
-          message = "E:Execution request of task '"+taskId
-              +"' failed (see logs for more information).";
-      } else if (event == "cancelRequest") {
-        TaskInstance instance = _scheduler->cancelRequest(taskInstanceId);
-        if (!instance.isNull()) {
-          message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
-          taskId = instance.task().id();
-        } else
-          message = "E:Cannot cancel request "+QString::number(taskInstanceId)+".";
-      } else if (event == "abortTask") {
-        TaskInstance instance = _scheduler->abortTask(taskInstanceId);
-        if (!instance.isNull()) {
-          message = "S:Task "+QString::number(taskInstanceId)+" aborted.";
-          taskId = instance.task().id();
-        } else
-          message = "E:Cannot abort task "+QString::number(taskInstanceId)+".";
-      } else if (event == "enableTask") {
-        bool enable = req.param("enable") == "true";
-        if (_scheduler->enableTask(taskId, enable))
-          message = "S:Task '"+taskId+"' "+(enable?"enabled":"disabled")+".";
-        else
-          message = "E:Task '"+taskId+"' not found.";
-      } else if (event == "cancelAlert") {
-        if (req.param("immediately") == "true")
-          _scheduler->alerter()->cancelAlertImmediately(alertId);
-        else
-          _scheduler->alerter()->cancelAlert(alertId);
-        message = "S:Canceled alert '"+alertId+"'.";
-      } else if (event == "raiseAlert") {
-        if (req.param("immediately") == "true")
-          _scheduler->alerter()->raiseAlertImmediately(alertId);
-        else
-          _scheduler->alerter()->raiseAlert(alertId);
-        message = "S:Raised alert '"+alertId+"'.";
-      } else if (event == "emitAlert") {
-        _scheduler->alerter()->emitAlert(alertId);
-        message = "S:Emitted alert '"+alertId+"'.";
-      } else if (event == "clearGridboard") {
-        _scheduler->alerter()->clearGridboard(gridboardId);
-        message = "S:Cleared gridboard '"+gridboardId+"'.";
-      } else if (event=="enableAllTasks") {
-        bool enable = req.param("enable") == "true";
-        _scheduler->enableAllTasks(enable);
-        message = QString("S:Asked for ")+(enable?"enabling":"disabling")
-            +" all tasks at once.";
-        // wait to make it less probable that the page displays before effect
-        QThread::usleep(500000);
-      } else if (event=="reloadConfig") {
-        // TODO should not display reload button when no config file is defined
-        bool ok = Qrond::instance()->loadConfig();
-        message = ok ? "S:Configuration reloaded."
-                     : "E:Cannot reload configuration.";
-        // wait to make it less probable that the page displays before effect
-        QThread::usleep(1000000);
-      } else if (event=="removeConfig") {
-        bool ok = _configRepository->removeConfig(configId);
-        message = ok ? "S:Configuration removed."
-                     : "E:Cannot remove configuration.";
-      } else if (event=="activateConfig") {
-        bool ok = _configRepository->activateConfig(configId);
-        message = ok ? "S:Configuration activated."
-                     : "E:Cannot activate configuration.";
-        // wait to make it less probable that the page displays before effect
-        QThread::usleep(1000000);
-      } else
-        message = "E:Internal error: unknown event '"+event+"'.";
-    } else
-      message = "E:Scheduler is not available.";
-    if (message.startsWith("E:") || message.startsWith("W:"))
-      res.setStatus(500); // LATER use more return codes
 
-    if (event.contains(_showAuditEvent) // empty regexps match any string
-        && (_hideAuditEvent.data().pattern().isEmpty()
-            || !event.contains(_hideAuditEvent))
-        && userid.contains(_showAuditUser)
-        && (_hideAuditUser.data().pattern().isEmpty()
-            || !userid.contains(_hideAuditUser))) {
-      if (auditInstanceIds.isEmpty())
-        auditInstanceIds << taskInstanceId;
-      // LATER add source IP address(es) to audit
-      foreach (quint64 auditInstanceId, auditInstanceIds)
-        Log::info(taskId, auditInstanceId)
-            << "AUDIT action: '" << event
-            << ((res.status() < 300 && res.status() >=200)
-                ? "' result: success" : "' result: failure")
-            << " actor: '" << userid
-            << "' address: { " << req.clientAdresses().join(", ")
-            << " } params: " << req.paramsAsParamSet().toString(false)
-            << " response message: " << message;
-    }
-    if (!redirect.isEmpty()) {
-      res.setBase64SessionCookie("message", message, "/");
-      res.clearCookie("redirect", "/");
-      res.redirect(redirect);
+static bool writeHtmlView(HtmlTableView *view, HttpRequest req,
+                          HttpResponse res) {
+  QByteArray data = view->text().toUtf8();
+  res.setContentType("text/html;charset=UTF-8");
+  res.setContentLength(data.size());
+  if (req.method() != HttpRequest::HEAD)
+    res.output()->write(data);
+  return true;
+}
+
+static bool writeCsvView(CsvTableView *view, HttpRequest req,
+                         HttpResponse res) {
+  QByteArray data = view->text().toUtf8();
+  res.setContentType("text/csv;charset=UTF-8");
+  res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+  res.setContentLength(data.size());
+  if (req.method() != HttpRequest::HEAD)
+    res.output()->write(data);
+  return true;
+}
+
+static bool writeSvgImage(QByteArray data, HttpRequest req,
+                          HttpResponse res) {
+  res.setContentType("image/svg+xml");
+  res.setContentLength(data.size());
+  if (req.method() != HttpRequest::HEAD)
+    res.output()->write(data);
+  return true;
+}
+
+static bool writePlainText(QByteArray data, HttpRequest req,
+                           HttpResponse res) {
+  res.setContentType("text/plain;charset=UTF-8");
+  res.setContentLength(data.size());
+  if (req.method() != HttpRequest::HEAD)
+    res.output()->write(data);
+  return true;
+}
+
+/*static bool writePlainText(QString text, HttpRequest req,
+                           HttpResponse res) {
+  return writePlainText(text.toUtf8(), req, res);
+}*/
+
+static void copyFilteredFiles(QStringList paths, QIODevice *output,
+                             QString pattern, bool useRegexp) {
+  foreach (const QString path, paths) {
+    QFile file(path);
+    if (file.open(QIODevice::ReadOnly)) {
+      if (pattern.isEmpty())
+        IOUtils::copy(output, &file);
+      else
+        IOUtils::grepWithContinuation(
+              output, &file,
+              QRegExp(pattern, Qt::CaseSensitive,
+                      useRegexp ? QRegExp::RegExp2
+                                : QRegExp::FixedString),
+              "  ");
     } else {
-      res.setContentType("text/plain;charset=UTF-8");
-      message.append("\n");
-      res.output()->write(message.toUtf8());
+      Log::warning() << "web console cannot open log file " << path
+                     << " : error #" << file.error() << " : "
+                     << file.errorString();
     }
-    return true;
   }
-  if (path == "/console/confirm") {
-    QString event = req.param("event");
-    QString taskId = req.param("taskid");
-    QString gridboardId = req.param("gridboardid");
-    QString taskInstanceId = req.param("taskinstanceid");
-    QString configId = req.param("configid");
-    QString referer = req.header("Referer", "index.html");
-    QString message;
-    if (_scheduler) {
+}
+
+static void copyFilteredFile(QString path, QIODevice *output,
+                             QString pattern, bool useRegexp) {
+  QStringList paths;
+  paths.append(path);
+  copyFilteredFiles(paths, output, pattern, useRegexp);
+}
+
+static StringMap<
+std::function<bool(WebConsole *, HttpRequest, HttpResponse,
+                   ParamsProviderMerger *)>> _handlers {
+{ { "/console/do", "/rest/do" }, [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+  QString event = req.param("event");
+  QString taskId = req.param("taskid");
+  QString alertId = req.param("alertid");
+  QString gridboardId = req.param("gridboardid");
+  if (alertId.isNull()) // LATER remove this backward compatibility trick
+    alertId = req.param("alert");
+  QString configId = req.param("configid");
+  quint64 taskInstanceId = req.param("taskinstanceid").toULongLong();
+  QList<quint64> auditInstanceIds;
+  QString referer = req.header("Referer");
+  QString redirect = req.base64Cookie("redirect", referer);
+  QString message;
+  QString userid = processingContext->paramValue("userid").toString();
+  if (event == "requestTask") {
+    // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
+    ParamSet params(req.paramsAsParamSet());
+    // TODO handle null values rather than replacing empty with nulls
+    foreach (QString key, params.keys())
+      if (params.value(key).isEmpty())
+        params.removeValue(key);
+    params.removeValue("taskid");
+    params.removeValue("event");
+    // TODO evaluate overriding params within overriding > global context
+    QList<TaskInstance> instances = webconsole->scheduler()
+        ->syncRequestTask(taskId, params);
+    if (!instances.isEmpty()) {
+      message = "S:Task '"+taskId+"' submitted for execution with id";
+      foreach (TaskInstance request, instances) {
+        message.append(' ').append(QString::number(request.idAsLong()));
+        auditInstanceIds << request.idAsLong();
+      }
+      message.append('.');
+    } else
+      message = "E:Execution request of task '"+taskId
+          +"' failed (see logs for more information).";
+  } else if (event == "cancelRequest") {
+    TaskInstance instance = webconsole->scheduler()
+        ->cancelRequest(taskInstanceId);
+    if (!instance.isNull()) {
+      message = "S:Task request "+QString::number(taskInstanceId)
+          +" canceled.";
+      taskId = instance.task().id();
+    } else
+      message = "E:Cannot cancel request "+QString::number(taskInstanceId)
+          +".";
+  } else if (event == "abortTask") {
+    TaskInstance instance = webconsole->scheduler()
+        ->abortTask(taskInstanceId);
+    if (!instance.isNull()) {
+      message = "S:Task "+QString::number(taskInstanceId)+" aborted.";
+      taskId = instance.task().id();
+    } else
+      message = "E:Cannot abort task "+QString::number(taskInstanceId)+".";
+  } else if (event == "enableTask") {
+    bool enable = req.param("enable") == "true";
+    if (webconsole->scheduler()->enableTask(taskId, enable))
+      message = "S:Task '"+taskId+"' "+(enable?"enabled":"disabled")+".";
+    else
+      message = "E:Task '"+taskId+"' not found.";
+  } else if (event == "cancelAlert") {
+    if (req.param("immediately") == "true")
+      webconsole->scheduler()->alerter()->cancelAlertImmediately(alertId);
+    else
+      webconsole->scheduler()->alerter()->cancelAlert(alertId);
+    message = "S:Canceled alert '"+alertId+"'.";
+  } else if (event == "raiseAlert") {
+    if (req.param("immediately") == "true")
+      webconsole->scheduler()->alerter()->raiseAlertImmediately(alertId);
+    else
+      webconsole->scheduler()->alerter()->raiseAlert(alertId);
+    message = "S:Raised alert '"+alertId+"'.";
+  } else if (event == "emitAlert") {
+    webconsole->scheduler()->alerter()->emitAlert(alertId);
+    message = "S:Emitted alert '"+alertId+"'.";
+  } else if (event == "clearGridboard") {
+    webconsole->scheduler()->alerter()->clearGridboard(gridboardId);
+    message = "S:Cleared gridboard '"+gridboardId+"'.";
+  } else if (event=="enableAllTasks") {
+    bool enable = req.param("enable") == "true";
+    webconsole->scheduler()->enableAllTasks(enable);
+    message = QString("S:Asked for ")+(enable?"enabling":"disabling")
+        +" all tasks at once.";
+    // wait to make it less probable that the page displays before effect
+    QThread::usleep(500000);
+  } else if (event=="reloadConfig") {
+    // TODO should not display reload button when no config file is defined
+    bool ok = Qrond::instance()->loadConfig();
+    message = ok ? "S:Configuration reloaded."
+                 : "E:Cannot reload configuration.";
+    // wait to make it less probable that the page displays before effect
+    QThread::usleep(1000000);
+  } else if (event=="removeConfig") {
+    bool ok = webconsole->configRepository()->removeConfig(configId);
+    message = ok ? "S:Configuration removed."
+                 : "E:Cannot remove configuration.";
+  } else if (event=="activateConfig") {
+    bool ok = webconsole->configRepository()->activateConfig(configId);
+    message = ok ? "S:Configuration activated."
+                 : "E:Cannot activate configuration.";
+    // wait to make it less probable that the page displays before effect
+    QThread::usleep(1000000);
+  } else
+    message = "E:Internal error: unknown event '"+event+"'.";
+  if (message.startsWith("E:") || message.startsWith("W:"))
+    res.setStatus(500); // LATER use more return codes
+  if (event.contains(webconsole->showAuditEvent()) // empty regexps match any string
+      && (webconsole->hideAuditEvent().pattern().isEmpty()
+          || !event.contains(webconsole->hideAuditEvent()))
+      && userid.contains(webconsole->showAuditUser())
+      && (webconsole->hideAuditUser().pattern().isEmpty()
+          || !userid.contains(webconsole->hideAuditUser()))) {
+    if (auditInstanceIds.isEmpty())
+      auditInstanceIds << taskInstanceId;
+    // LATER add source IP address(es) to audit
+    foreach (quint64 auditInstanceId, auditInstanceIds)
+      Log::info(taskId, auditInstanceId)
+          << "AUDIT action: '" << event
+          << ((res.status() < 300 && res.status() >=200)
+              ? "' result: success" : "' result: failure")
+          << " actor: '" << userid
+          << "' address: { " << req.clientAdresses().join(", ")
+          << " } params: " << req.paramsAsParamSet().toString(false)
+          << " response message: " << message;
+  }
+  if (!redirect.isEmpty()) {
+    res.setBase64SessionCookie("message", message, "/");
+    res.clearCookie("redirect", "/");
+    res.redirect(redirect);
+  } else {
+    res.setContentType("text/plain;charset=UTF-8");
+    message.append("\n");
+    res.output()->write(message.toUtf8());
+  }
+  return true;
+} },
+{ "/console/confirm", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      QString event = req.param("event");
+      QString taskId = req.param("taskid");
+      QString gridboardId = req.param("gridboardid");
+      QString taskInstanceId = req.param("taskinstanceid");
+      QString configId = req.param("configid");
+      QString referer = req.header("Referer", "index.html");
+      QString message;
       if (event == "abortTask") {
         message = "abort task "+taskInstanceId;
       } else if (event == "cancelRequest") {
@@ -885,472 +940,497 @@ bool WebConsole::handleRequest(
         message = event;
       }
       message = "<div class=\"well\">"
-          "<h4 class=\"text-center\">Are you sure you want to "+message
+                "<h4 class=\"text-center\">Are you sure you want to "+message
           +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
-          "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
+           "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
           +"\">Yes, sure</a> <a class=\"btn\" href=\""+referer+"\">Cancel</a>"
-          "</div>";
+                                                               "</div>";
       res.setBase64SessionCookie("redirect", referer, "/");
       QUrl url(req.url());
       url.setPath("/console/adhoc.html");
       url.setQuery(QString());
       req.overrideUrl(url);
-      processingContext.overrideParamValue("content", message);
+      processingContext->overrideParamValue("content", message);
       res.clearCookie("message", "/");
-      _wuiHandler->handleRequest(req, res, &processingContext);
+      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
-    } else {
-      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                 "/");
-      res.redirect(referer);
-    }
-  }
-  if (path == "/console/requestform") {
-    QString taskId = req.param("taskid");
-    QString referer = req.header("Referer", "index.html");
-    QString redirect = req.base64Cookie("redirect", referer);
-    if (_scheduler) {
-      Task task(_scheduler->task(taskId));
+} },
+{ "/console/requestform", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      QString taskId = req.param("taskid");
+      QString referer = req.header("Referer", "index.html");
+      QString redirect = req.base64Cookie("redirect", referer);
+      Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
         QUrl url(req.url());
         // LATER requestform.html instead of adhoc.html, after finding a way to handle foreach loop
         url.setPath("/console/adhoc.html");
         req.overrideUrl(url);
         QString form = "<div class=\"well\">\n"
-            "<h4 class=\"text-center\">About to start task "+taskId+"</h4>\n";
+                       "<h4 class=\"text-center\">About to start task "+taskId+"</h4>\n";
         if (task.label() != task.id())
           form +="<h4 class=\"text-center\">("+task.label()+")</h4>\n";
         form += "<p>\n";
         if (task.requestFormFields().size())
           form += "<p class=\"text-center\">Task parameters can be defined in "
-              "the following form:";
+                  "the following form:";
         form += "<p><form action=\"do\">";
         foreach (RequestFormField rff, task.requestFormFields())
           form.append(rff.toHtmlFormFragment());
         form += "<input type=\"hidden\" name=\"taskid\" value=\""+taskId+"\">\n"
-            "<input type=\"hidden\" name=\"event\" value=\"requestTask\">\n"
-            "<div><p><p class=\"text-center\">"
-            "<button type=\"submit\" class=\"btn btn-danger\">"
-            "Request task execution</button>\n"
-            "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
-            "</form>\n"
-            "</div>\n";
-        processingContext.overrideParamValue("content", form);
+                "<input type=\"hidden\" name=\"event\" value=\"requestTask\">\n"
+                "<div><p><p class=\"text-center\">"
+                "<button type=\"submit\" class=\"btn btn-danger\">"
+                "Request task execution</button>\n"
+                "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
+                "</form>\n"
+                "</div>\n";
+        processingContext->overrideParamValue("content", form);
         res.setBase64SessionCookie("redirect", redirect, "/");
         res.clearCookie("message", "/");
-        _wuiHandler->handleRequest(req, res, &processingContext);
+        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
         return true;
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
         res.redirect(referer);
       }
-    } else {
-      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                 "/");
-      res.redirect(referer);
-    }
-  }
-  if (path == "/console/taskdoc.html") {
-    QString taskId = req.param("taskid");
-    QString referer = req.header("Referer", "index.html");
-    if (_scheduler) {
-      Task task(_scheduler->task(taskId));
+      return true;
+    } },
+{ "/console/taskdoc.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      QString taskId = req.param("taskid");
+      QString referer = req.header("Referer", "index.html");
+      Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
-        processingContext.overrideParamValue(
+        processingContext->overrideParamValue(
               "pfconfig", QString::fromUtf8(
                 task.toPfNode().toPf(PfOptions().setShouldIndent()
                                      .setShouldWriteContentBeforeSubnodes()
                                      .setShouldIgnoreComment(false))));
         TaskPseudoParamsProvider tppp = task.pseudoParams();
         SharedUiItemParamsProvider itemAsParams(task);
-        processingContext.append(&tppp);
-        processingContext.append(&itemAsParams);
+        processingContext->append(&tppp);
+        processingContext->append(&itemAsParams);
         res.clearCookie("message", "/");
-        _wuiHandler->handleRequest(req, res, &processingContext);
+        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
         res.redirect(referer);
       }
-    } else {
-      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                 "/");
-      res.redirect(referer);
-    }
-    return true;
-  }
-  if (path == "/console/gridboard.html") {
-    QString gridboardId = req.param("gridboardid");
-    QString referer = req.header("Referer", "index.html");
-    if (_scheduler) {
-      Gridboard gridboard(_scheduler->alerter()->gridboard(gridboardId));
+      return true;
+} },
+{ "/console/gridboard.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      QString gridboardId = req.param("gridboardid");
+      QString referer = req.header("Referer", "index.html");
+      Gridboard gridboard(webconsole->scheduler()->alerter()
+                          ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
         SharedUiItemParamsProvider itemAsParams(gridboard);
-        processingContext.append(&itemAsParams);
-        processingContext.overrideParamValue("gridboard.data",
+        processingContext->append(&itemAsParams);
+        processingContext->overrideParamValue("gridboard.data",
                                               gridboard.toHtml());
         res.clearCookie("message", "/");
-        _wuiHandler->handleRequest(req, res, &processingContext);
+        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       } else {
         res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
                                    +"' not found.", "/");
         res.redirect(referer);
       }
-    } else {
-      res.setBase64SessionCookie("message", "E:Scheduler is not available.",
-                                 "/");
-      res.redirect(referer);
-    }
-    return true;
-  }
-  if (path.startsWith("/console")) {
-    QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
-    if (queryItems.size()) { // FIXME and not static
-      // if there are query parameters in url, transform them into cookies
-      // LATER this mechanism should be generic/framework (in libqtssu)
-      QListIterator<QPair<QString,QString> > it(queryItems);
-      QString anchor;
-      while (it.hasNext()) {
-        const QPair<QString,QString> &p(it.next());
-        if (p.first == "anchor")
-          anchor = p.second;
-        else
-          res.setBase64SessionCookie(p.first, p.second, "/");
-      }
-      QString s = req.url().path();
-      int i = s.lastIndexOf('/');
-      if (i != -1)
-        s = s.mid(i+1);
-      if (!anchor.isEmpty())
-        s.append('#').append(anchor);
-      res.redirect(s);
-    } else {
-      SharedUiItemParamsProvider alerterConfigAsParams(_alerterConfig);
-      if (path.startsWith("/console/alerts.html")) {
-        processingContext.append(&alerterConfigAsParams);
-      }
-      res.clearCookie("message", "/");
-      _wuiHandler->handleRequest(req, res, &processingContext);
-    }
-    return true;
-  }
-  // LATER optimize resource selection (avoid if/if/if)
-  if (path == "/rest/pf/task/config/v1") {
-    QString taskId = req.param("taskid");
-    if (_scheduler) {
-      Task task(_scheduler->task(taskId));
-      if (!task.isNull()) {
-        res.output()->write(task.toPfNode().toPf(
-                              PfOptions().setShouldIndent()
-                              .setShouldWriteContentBeforeSubnodes()
-                              .setShouldIgnoreComment(false)));
+      return true;
+} },
+{ "/console/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
+      if (queryItems.size()) { // FIXME and not static
+        // if there are query parameters in url, transform them into cookies
+        // LATER this mechanism should be generic/framework (in libqtssu)
+        QListIterator<QPair<QString,QString> > it(queryItems);
+        QString anchor;
+        while (it.hasNext()) {
+          const QPair<QString,QString> &p(it.next());
+          if (p.first == "anchor")
+            anchor = p.second;
+          else
+            res.setBase64SessionCookie(p.first, p.second, "/");
+        }
+        QString s = req.url().path();
+        int i = s.lastIndexOf('/');
+        if (i != -1)
+          s = s.mid(i+1);
+        if (!anchor.isEmpty())
+          s.append('#').append(anchor);
+        res.redirect(s);
       } else {
+        SharedUiItemParamsProvider alerterConfigAsParams(
+              webconsole->alerterConfig());
+        if (req.url().path().endsWith("/console/alerts.html")) {
+          processingContext->append(&alerterConfigAsParams);
+        }
+        res.clearCookie("message", "/");
+        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      }
+      return true;
+}, true },
+{ "/rest/pf/task/config/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger*) {
+      QString taskId = req.param("taskid");
+      Task task(webconsole->scheduler()->task(taskId));
+      if (task.isNull()) {
         res.setStatus(404);
         res.output()->write("Task not found.");
+        return true;
       }
-    } else {
-      res.setStatus(500);
-      res.output()->write("Scheduler is not available.");
-    }
-    return true;
-  }
-  if (path == "/rest/csv/tasks/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvTasksView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/tasks/list/v1") {
-    // LATER for this one and all other raw rest view write: send Content-Length, and avoid sending data with HEAD method
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTasksListView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/steps/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvStepsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/steps/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlStepsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/tasks/events/v1") { // TODO events csv
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTasksEventsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/hosts/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvHostsListView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/hosts/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlHostsListView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/clusters/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvClustersListView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/clusters/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlClustersListView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/resources/free/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvFreeResourcesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/resources/free/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlFreeResourcesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/resources/lwm/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvResourcesLwmView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/resources/lwm/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlResourcesLwmView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/resources/consumption/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvResourcesConsumptionView
-                        ->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/resources/consumption/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlResourcesConsumptionView
-                        ->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/params/global/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvGlobalParamsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/params/global/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlGlobalParamsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/setenv/global/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvGlobalSetenvView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/setenv/global/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlGlobalSetenvView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/unsetenv/global/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvGlobalUnsetenvView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/unsetenv/global/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlGlobalUnsetenvView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/alerts/params/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvAlertParamsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/alerts/params/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlAlertParamsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/alerts/raisable/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvRaisableAlertsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/alerts/raisable/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlRaisableAlertsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/alerts/emitted/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvLastEmittedAlertsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/alerts/emitted/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlLastEmittedAlertsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/alerts/subscriptions/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvAlertSubscriptionsView->text().toUtf8()
-                        .constData());
-    return true;
-  }
-  if (path == "/rest/html/alerts/subscriptions/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlAlertSubscriptionsView->text().toUtf8()
-                        .constData());
-    return true;
-  }
-  if (path == "/rest/csv/alerts/settings/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvAlertSettingsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/alerts/settings/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlAlertSettingsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/gridboards/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvGridboardsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/gridboards/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlGridboardsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/gridboard/render/v1") {
-    if (_scheduler) {
+      return writePlainText(task.toPfNode().toPf(
+                              PfOptions().setShouldIndent()
+                              .setShouldWriteContentBeforeSubnodes()
+                              .setShouldIgnoreComment(false)), req, res);
+} },
+{ "/rest/csv/tasks/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger*) {
+      return writeCsvView(webconsole->csvTasksView(), req, res);
+} },
+{ "/rest/html/tasks/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger*) {
+      return writeHtmlView(webconsole->htmlTasksListView(), req, res);
+} },
+{ "/rest/csv/steps/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvStepsView(), req, res);
+} },
+{ "/rest/html/steps/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlStepsView(), req, res);
+} },
+// LATER { "/rest/csv/tasks/events/v1", [](
+//    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+//    ParamsProviderMerger *) {
+//      return writeCsvView(webconsole->csvTasksEventsView(), req, res);
+//} },
+{ "/rest/html/tasks/events/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlTasksEventsView(), req, res);
+} },
+{ "/rest/csv/hosts/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvHostsListView(), req, res);
+} },
+{ "/rest/html/hosts/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlHostsListView(), req, res);
+} },
+{ "/rest/csv/clusters/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvClustersListView(), req, res);
+} },
+{ "/rest/html/clusters/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlClustersListView(), req, res);
+} },
+{ "/rest/csv/resources/free/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvFreeResourcesView(), req, res);
+} },
+{ "/rest/html/resources/free/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlFreeResourcesView(), req, res);
+} },
+{ "/rest/csv/resources/lwm/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvResourcesLwmView(), req, res);
+} },
+{ "/rest/html/resources/lwm/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlResourcesLwmView(), req, res);
+} },
+{ "/rest/csv/resources/consumption/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvResourcesConsumptionView(), req, res);
+} },
+{ "/rest/html/resources/consumption/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlResourcesConsumptionView(), req, res);
+} },
+{ "/rest/csv/params/global/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvGlobalParamsView(), req, res);
+} },
+{ "/rest/html/params/global/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlGlobalParamsView(), req, res);
+} },
+{ "/rest/csv/setenv/global/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvGlobalSetenvView(), req, res);
+} },
+{ "/rest/html/setenv/global/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlGlobalSetenvView(), req, res);
+} },
+{ "/rest/csv/unsetenv/global/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvGlobalUnsetenvView(), req, res);
+} },
+{ "/rest/html/unsetenv/global/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlGlobalUnsetenvView(), req, res);
+} },
+{ "/rest/csv/alerts/params/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvAlertParamsView(), req, res);
+} },
+{ "/rest/html/alerts/params/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlAlertParamsView(), req, res);
+} },
+{ "/rest/csv/alerts/raisable/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvRaisableAlertsView(), req, res);
+} },
+{ "/rest/html/alerts/raisable/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlRaisableAlertsView(), req, res);
+} },
+{ "/rest/csv/alerts/emitted/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvLastEmittedAlertsView(), req, res);
+} },
+{ "/rest/html/alerts/emitted/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlLastEmittedAlertsView(), req, res);
+} },
+{ "/rest/csv/alerts/subscriptions/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvAlertSubscriptionsView(), req, res);
+} },
+{ "/rest/html/alerts/subscriptions/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlAlertSubscriptionsView(), req, res);
+} },
+{ "/rest/csv/alerts/settings/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvAlertSettingsView(), req, res);
+} },
+{ "/rest/html/alerts/settings/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlAlertSettingsView(), req, res);
+} },
+{ "/rest/csv/gridboards/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvGridboardsView(), req, res);
+} },
+{ "/rest/html/gridboards/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlGridboardsView(), req, res);
+} },
+{ "/rest/html/gridboard/render/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
       QString gridboardid = req.param(QStringLiteral("gridboardid"));
-      Gridboard gridboard = _scheduler->alerter()->gridboard(gridboardid);
+      Gridboard gridboard = webconsole->scheduler()->alerter()
+          ->gridboard(gridboardid);
       res.setContentType("text/html;charset=UTF-8");
       res.output()->write(gridboard.toHtml().toUtf8().constData());
-    } else {
-      res.setStatus(500);
-      res.output()->write("No scheduler.");
-    }
-    return true;
-  }
-  if (path == "/rest/csv/log/info/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvLogView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/log/info/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlInfoLogView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/txt/log/current/v1") {
-    QString path(Log::pathToLastFullestLog());
-    if (path.isEmpty()) {
-      res.setStatus(404);
-      res.output()->write("No log file found.");
-    } else {
-      res.setContentType("text/plain;charset=UTF-8");
-      QString filter = req.param("filter"), regexp = req.param("regexp");
-      copyFilteredFile(path, res.output(), regexp.isEmpty() ? filter : regexp,
-                       !regexp.isEmpty());
-    }
-    return true;
-  }
-  if (path == "/rest/txt/log/all/v1") {
-    QStringList paths(Log::pathsToFullestLogs());
-    if (paths.isEmpty()) {
-      res.setStatus(404);
-      res.output()->write("No log file found.");
-    } else {
-      res.setContentType("text/plain;charset=UTF-8");
-      QString filter = req.param("filter"), regexp = req.param("regexp");
-      copyFilteredFiles(paths, res.output(), regexp.isEmpty() ? filter : regexp,
-                       !regexp.isEmpty());
-    }
-    return true;
-  }
-  if (path == "/rest/csv/taskinstances/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvTaskInstancesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/taskinstances/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTaskInstancesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/scheduler/events/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvSchedulerEventsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/scheduler/events/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlSchedulerEventsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/notices/lastposted/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvLastPostedNoticesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/notices/lastposted/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlLastPostedNoticesView20->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/taskgroups/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvTaskGroupsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/taskgroups/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTaskGroupsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/taskgroups/events/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlTaskGroupsEventsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/svg/tasks/deploy/v1") {
-    return _tasksDeploymentDiagram->handleRequest(req, res, &processingContext);
-  }
-  if (path == "/rest/dot/tasks/deploy/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_tasksDeploymentDiagram->source(0).toUtf8());
-    return true;
-  }
-  if (path == "/rest/svg/tasks/workflow/v1") {
-    // LATER this rendering should be pooled
-    if (_scheduler) {
-      Task task = _scheduler->task(req.param("taskid"));
+      return true;
+} },
+{ "/rest/csv/configs/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvConfigsView(), req, res);
+} },
+{ "/rest/html/configs/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlConfigsView(), req, res);
+} },
+{ "/rest/csv/config/history/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvConfigHistoryView(), req, res);
+} },
+{ "/rest/html/config/history/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlConfigHistoryView(), req, res);
+} },
+{ "/rest/csv/log/files/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvLogFilesView(), req, res);
+} },
+{ "/rest/html/log/files/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlLogFilesView(), req, res);
+} },
+{ "/rest/csv/calendars/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvCalendarsView(), req, res);
+} },
+{ "/rest/html/calendars/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlCalendarsView(), req, res);
+} },
+{ "/rest/csv/taskinstances/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
+} },
+{ "/rest/html/taskinstances/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
+} },
+{ "/rest/csv/scheduler/events/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvSchedulerEventsView(), req, res);
+} },
+{ "/rest/html/scheduler/events/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlSchedulerEventsView(), req, res);
+} },
+{ "/rest/csv/notices/lastposted/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvLastPostedNoticesView(), req, res);
+} },
+{ "/rest/html/notices/lastposted/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlLastPostedNoticesView20(), req, res);
+} },
+{ "/rest/csv/taskgroups/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvTaskGroupsView(), req, res);
+} },
+{ "/rest/html/taskgroups/list/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlTaskGroupsView(), req, res);
+} },
+// LATER { "/rest/csv/taskgroups/events/v1", [](
+//    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+//    ParamsProviderMerger *) {
+//      return writeCsvView(webconsole->csvTaskGroupsEventsView(), req, res);
+//} },
+{ "/rest/html/taskgroups/events/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlTaskGroupsEventsView(), req, res);
+} },
+{ "/rest/csv/log/info/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->csvLogView(), req, res);
+} },
+{ "/rest/html/log/info/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->htmlInfoLogView(), req, res);
+} },
+{ "/rest/txt/log/current/v1", [](
+    WebConsole *, HttpRequest req, HttpResponse res, ParamsProviderMerger *) {
+      QString path(Log::pathToLastFullestLog());
+      if (path.isEmpty()) {
+        res.setStatus(404);
+        res.output()->write("No log file found.");
+      } else {
+        res.setContentType("text/plain;charset=UTF-8");
+        QString filter = req.param("filter"), regexp = req.param("regexp");
+        copyFilteredFile(path, res.output(), regexp.isEmpty() ? filter : regexp,
+                         !regexp.isEmpty());
+      }
+      return true;
+} },
+{ "/rest/txt/log/all/v1", [](
+    WebConsole *, HttpRequest req, HttpResponse res, ParamsProviderMerger *) {
+      QStringList paths(Log::pathsToFullestLogs());
+      if (paths.isEmpty()) {
+        res.setStatus(404);
+        res.output()->write("No log file found.");
+      } else {
+        res.setContentType("text/plain;charset=UTF-8");
+        QString filter = req.param("filter"), regexp = req.param("regexp");
+        copyFilteredFiles(paths, res.output(),
+                          regexp.isEmpty() ? filter : regexp,
+                          !regexp.isEmpty());
+      }
+      return true;
+} },
+{ "/rest/svg/tasks/deploy/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      return webconsole->tasksDeploymentDiagram()
+          ->handleRequest(req, res, processingContext);
+} },
+{ "/rest/dot/tasks/deploy/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writePlainText(webconsole->tasksDeploymentDiagram()
+                            ->source(0).toUtf8(), req, res);
+} },
+{ "/rest/svg/tasks/trigger/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      return webconsole->tasksTriggerDiagram()
+          ->handleRequest(req, res, processingContext);
+} },
+{ "/rest/dot/tasks/trigger/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writePlainText(webconsole->tasksTriggerDiagram()
+                            ->source(0).toUtf8(), req, res);
+} },
+{ "/rest/svg/tasks/workflow/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      // LATER this rendering should be pooled
+      Task task = webconsole->scheduler()->task(req.param("taskid"));
       //if (!task.workflowTaskId().isEmpty())
       //  task = _scheduler->task(task.workflowTaskId());
       QString gv = task.graphvizWorkflowDiagram();
@@ -1358,112 +1438,115 @@ bool WebConsole::handleRequest(
         GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
         h->setImageFormat(GraphvizImageHttpHandler::Svg);
         h->setSource(gv);
-        h->handleRequest(req, res, &processingContext);
-        h->deleteLater();
+        h->handleRequest(req, res, processingContext);
+        h->deleteLater(); // LATER why deleting *later* ?
         return true;
       }
       if (!task.workflowTaskId().isEmpty()) {
-        res.setContentType("image/svg+xml");
-        res.output()->write(QString(SVG_BELONG_TO_WORKFLOW)
-                            .arg(task.workflowTaskId()).toUtf8());
-        return true;
+        return writeSvgImage(QString(SVG_BELONG_TO_WORKFLOW)
+                             .arg(task.workflowTaskId()).toUtf8(), req, res);
       }
-    }
-    res.setContentType("image/svg+xml");
-    res.output()->write(SVG_NOT_A_WORKFLOW);
-    return true;
-  }
-  if (path == "/rest/dot/tasks/workflow/v1") {
-    if (_scheduler) {
-      Task task = _scheduler->task(req.param("taskid"));
+      return writeSvgImage(SVG_NOT_A_WORKFLOW, req, res);
+} },
+{ "/rest/dot/tasks/workflow/v1", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      Task task = webconsole->scheduler()->task(req.param("taskid"));
       QString gv = task.graphvizWorkflowDiagram();
       if (!gv.isEmpty()) {
-        res.setContentType("text/html;charset=UTF-8");
+        res.setContentType("text/plain;charset=UTF-8");
         res.output()->write(gv.toUtf8());
         return true;
       }
-    }
-    res.setStatus(404);
-    res.output()->write("No such workflow.");
-    return true;
-  }
-  if (path == "/rest/svg/tasks/trigger/v1") {
-    return _tasksTriggerDiagram->handleRequest(req, res, &processingContext);
-  }
-  if (path == "/rest/dot/tasks/trigger/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_tasksTriggerDiagram->source(0).toUtf8());
-    return true;
-  }
-  if (path == "/rest/pf/config/v1") {
-    if (req.method() == HttpRequest::POST
-        || req.method() == HttpRequest::PUT)
-      _configUploadHandler->handleRequest(req, res, &processingContext);
-    else {
-      if (_configRepository) {
-        QString configid = req.param("configid").trimmed();
-        SchedulerConfig config
-            = (configid == "current") ? _configRepository->activeConfig()
-                                      : _configRepository->config(configid);
-        if (config.isNull()) {
-          res.setStatus(404);
-          res.output()->write("no config found with this id\n");
-        } else
-          config.toPfNode() // LATER remove indentation
-              .writePf(res.output(), PfOptions().setShouldIndent()
-                       .setShouldWriteContentBeforeSubnodes()
-                       .setShouldIgnoreComment(false));
-      } else {
-        res.setStatus(500);
-        res.output()->write("no config repository is set\n");
+      res.setStatus(404);
+      res.output()->write("No such workflow.");
+      return true;
+} },
+{ "/rest/pf/config/v1", []( // LATER should becom /rest/pf/scheduler/config/v1
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+      if (req.method() == HttpRequest::POST
+          || req.method() == HttpRequest::PUT)
+        webconsole->configUploadHandler()
+            ->handleRequest(req, res, processingContext);
+      else {
+        if (webconsole->configRepository()) {
+          QString configid = req.param("configid").trimmed();
+          SchedulerConfig config
+              = (configid == "current")
+              ? webconsole->configRepository()->activeConfig()
+              : webconsole->configRepository()->config(configid);
+          if (config.isNull()) {
+            res.setStatus(404);
+            res.output()->write("no config found with this id\n");
+          } else
+            res.setContentType("text/plain;charset=UTF-8");
+            config.toPfNode() // LATER remove indentation
+                .writePf(res.output(), PfOptions().setShouldIndent()
+                         .setShouldWriteContentBeforeSubnodes()
+                         .setShouldIgnoreComment(false));
+        } else {
+          res.setStatus(500);
+          res.output()->write("no config repository is set\n");
+        }
       }
-    }
+      return true;
+} }
+};
+
+/*
+{ "", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeCsvView(webconsole->(), req, res);
+} },
+{ "", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      return writeHtmlView(webconsole->(), req, res);
+} },
+
+{ "", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext) {
+} },
+*/
+
+bool WebConsole::handleRequest(
+    HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *originalProcessingContext) {
+  QString path = req.url().path();
+  ParamsProviderMerger processingContext(*originalProcessingContext);
+  WebConsoleParamsProvider webconsoleParams(this);
+  processingContext.append(&webconsoleParams);
+  if (!_scheduler) {
+    res.setStatus(500);
+    res.output()->write("Scheduler is not available.");
     return true;
   }
-  if (path == "/rest/csv/configs/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvConfigsView->text().toUtf8().constData());
+  processingContext.append(_scheduler->globalParams());
+  while (path.size() && path.at(path.size()-1) == '/')
+    path.chop(1);
+  if (path.isEmpty()) {
+    res.redirect("console/index.html", HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
-  if (path == "/rest/html/configs/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlConfigsView->text().toUtf8().constData());
+  QString userid = processingContext.paramValue("userid").toString();
+  if (_authorizer && !_authorizer->authorize(userid, path)) {
+    res.setStatus(HttpResponse::HTTP_Forbidden);
+    QUrl url(req.url());
+    url.setPath("/console/adhoc.html");
+    url.setQuery(QString());
+    req.overrideUrl(url);
+    processingContext.overrideParamValue(
+          "content", "<h2>Permission denied</h2>");
+    res.clearCookie("message", "/");
+    _wuiHandler->handleRequest(req, res, &processingContext);
     return true;
   }
-  if (path == "/rest/csv/config/history/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvConfigHistoryView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/config/history/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlConfigHistoryView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/log/files/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvLogFilesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/log/files/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlLogFilesView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/csv/calendars/list/v1") {
-    res.setContentType("text/csv;charset=UTF-8");
-    res.setHeader("Content-Disposition", "attachment; filename=table.csv");
-    res.output()->write(_csvCalendarsView->text().toUtf8().constData());
-    return true;
-  }
-  if (path == "/rest/html/calendars/list/v1") {
-    res.setContentType("text/html;charset=UTF-8");
-    res.output()->write(_htmlCalendarsView->text().toUtf8().constData());
-    return true;
-  }
+  auto handler = _handlers.value(path);
+  if (handler)
+    return handler(this, req, res, &processingContext);
   res.setStatus(404);
   res.output()->write("Not found.");
   return true;
@@ -1591,6 +1674,7 @@ void WebConsole::enableAccessControl(bool enabled) {
         .allow("", "^/console/(css|jsp|js)/.*") // anyone for static resources
         .allow("", "^/console/test\\.html$") // anyone for test page
         .allow("operate", "^/(rest|console)/do") // operate for operation
+        // TODO uploading a config should need more than "read" (even if it's less dangerous than activating a config)
         .deny("", "^/(rest|console)/do") // nobody else
         .allow("read"); // read for everything else
   } else {
@@ -1640,28 +1724,6 @@ void WebConsole::paramsChanged(
     }
     if (csvView) {
       csvView->setCachedRows(cachedRows);
-    }
-  }
-}
-
-void WebConsole::copyFilteredFiles(QStringList paths, QIODevice *output,
-                                   QString pattern, bool useRegexp) {
-  foreach (const QString path, paths) {
-    QFile file(path);
-    if (file.open(QIODevice::ReadOnly)) {
-      if (pattern.isEmpty())
-        IOUtils::copy(output, &file);
-      else
-        IOUtils::grepWithContinuation(
-              output, &file,
-              QRegExp(pattern, Qt::CaseSensitive,
-                      useRegexp ? QRegExp::RegExp2
-                                : QRegExp::FixedString),
-              "  ");
-    } else {
-      Log::warning() << "web console cannot open log file " << path
-                     << " : error #" << file.error() << " : "
-                     << file.errorString();
     }
   }
 }
