@@ -3,23 +3,15 @@
  - ssh and local execution means: changed space escaping syntax in config
    file's task command (now a backslash protects a space in command line
    tokenization), arguments split can now be protected by backslash, e.g.:
-
-```
-    (command echo 1\\ 2) # only one argument: "1 2"
-    (command echo '1\ 2') # same
-    (command echo "1\\ 2") # same
-```
+        - ```(command echo 1\\ 2) # only one argument: "1 2"```
+        - ```(command echo '1\ 2') # same```
+        - ```(command echo "1\\ 2") # same```
  - config file format: changed double quote escaping syntax in config file
    (backslashes are no longer protected by double quotes)
  - http execution mean and http alerts: it is now possible to follow http
    redirects (although not enabled by default)
  - requesttask action can now dynamicaly override task params, e.g.:
-
-```
-    (task foo
-      (onsuccess (requesttask bar (params overriden myvalue)))
-    )
-```
+        - ```(task foo(onsuccess(requesttask bar(params myparam myvalue))))```
 
 * Minor improvements and fixes
  - html exports: better html entities compatiblity: apos -> #39 and
