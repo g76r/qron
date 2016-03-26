@@ -1,13 +1,14 @@
 # From 1.8.5 to 1.8.6
-* New features and notable improvements
+* New features and notable changes
  - ssh and local execution means: changed space escaping syntax in config
    file's task command (now a backslash protects a space in command line
    tokenization), arguments split can now be protected by backslash, e.g.:
         - ```(command echo 1\\ 2) # only one argument: "1 2"```
         - ```(command echo '1\ 2') # same```
         - ```(command echo "1\\ 2") # same```
- - config file format: changed double quote escaping syntax in config file
-   (backslashes are no longer protected by double quotes)
+ - config file format: backslashes are no longer protected by double quotes,
+   enabling such syntax that was not possible before:
+   ```"foo \"bar\" \n\u20aC"```
  - http execution mean and http alerts: it is now possible to follow http
    redirects (although not enabled by default)
  - requesttask action can now dynamicaly override task params, e.g.:
