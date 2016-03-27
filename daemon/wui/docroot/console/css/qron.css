@@ -21,12 +21,12 @@ span[class^="label"],span[class*=" label"] a {
   color: black;
 }
 .manual-sidebar .nav .nav {
-  /*display: none;*/
+  display: none;
   padding-bottom: 10px;
 }
-/*.manual-sidebar .nav .active ul {
+.manual-sidebar .nav .active ul {
   display: block;
-}*/
+}
 .manual-sidebar .nav .nav a {
   padding-left: 28px;
 }
@@ -36,4 +36,6 @@ span[class^="label"],span[class*=" label"] a {
   /*border-right: 2px solid #286090;
   background-color: #5bc0de;*/
 }
-
+.anchorjs-link:hover {
+  text-decoration: none;
+}

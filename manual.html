@@ -19,141 +19,214 @@
         <div class="col-md-3">
           <nav class="hidden-print hidden-xs hidden-sm affix manual-sidebar" id="navbar-manual">
             <p><ul class="nav">
+              <li><a href="#introduction">Introduction</a></li>
               <li><a href="#concepts">Concepts</a></li>
-              <li><a href="#hierarchy">Tasks Hierarchy</a>
+              <li><a href="#tasks-hierarchy">Tasks Hierarchy</a>
                 <ul class="nav">
-                  <li><a href="#taskgroups">Task Groups</a></li>
+                  <li><a href="#task-groups">Task Groups</a></li>
                   <li><a href="#tasks">Tasks</a></li>
+                  <li><a href="#workflows-and-subtasks">Wokflows and Subtasks</a></li>
                 </ul>
-              <li>
-              <li><a href="#events">Events</a></li>
+              </li>
+              <li><a href="#infrastructure">Infrastructure</a></li>
+              <li><a href="#logs">Logs</a></li>
+              <li><a href="#alerts">Alerts</a>
+                <ul class="nav">
+                  <li><a href="#raisable-alerts">Raisable Alerts</a></li>
+                  <li><a href="#emitted-alerts">Emitted Alerts</a></li>
+                  <li><a href="#alerts-subscriptions">Subscriptions</a></li>
+                  <li><a href="#alerts-fine-tuning">Fine Tuning</a></li>
+                  <li><a href="#gridboards">Gridboards</a></li>
+                </ul>
+              </li>
+              <li><a href="#events">Events</a>
+                <ul class="nav">
+                  <li><a href="#task-level-events">Task-Level Events</a></li>
+                  <li><a href="#scheduler-level-events">Scheduler-Level Events</a></li>
+                  <li><a href="#notices">Notices</a></li>
+                </ul>
+              </li>
+              <li><a href="#resources">Resources</a></li>
               <li><a href="#parameters">Parameters</a></li>
+              <li><a href="#configuration-management">Configuration Management</a></li>
               <li><a href="#wui">Web User Interface</a>
                 <ul class="nav">
                   <li><a href="#wui-views">Views</a></li>
                   <li><a href="#wui-customization">Customization</a></li>
                 </ul>
-              <li>
+              </li>
+              <li><a href="#appendices">Appendices</a>
+                <ul class="nav">
+                  <li><a href="#appendices-config-format">Config File Format</a></li>
+                </ul>
+              </li>
             </ul>
           </nav>
         </div>
-        <div class="col-md-9" data-spy="scroll" data-target="navbar-manual" data-offset="0">
-          <div class="manual-section" id="concepts">
-            <h2>Concepts</h2>
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-          </div>
-          <div class="manual-section" id="hierarchy">
-            <h2>Tasks Hierarchy</h2>
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-          </div>
-          <div class="manual-section" id="taskgroups">
-            <h2>Task Groups</h2>
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-          </div>
-          <div class="manual-section" id="tasks">
-            <h2>Tasks</h2>
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-          </div>
-          <div class="manual-section" id="events">
-            <h2>Events</h2>
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-          </div>
-          <div class="manual-section" id="parameters">
-            <h2>Parameters</h2>
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-            <p>foo
-          </div>
+        <div class="col-md-9 user-manual" data-spy="scroll" data-target="navbar-manual" data-offset="0">
+
+<h1 id="introduction">Qron User Manual</h1>
+
+<p>This page is <a href="http://qron.eu/">qron</a> user manual.
+
+<p>It is available both in qron web user interface (embeded in qron daemon)
+and on the Internet here:
+<a href="http://qron.eu/manual/">http://qron.eu/manual/</a>.
+
+<h2>Concepts</h2>
+
+<p>Qron is a task scheduler, that is, a software controlling execution of
+non-interactive application components such as large batches planned once a
+day, automatic processing of incoming messages every minute, or any
+processing triggered by an event not directly issued by a human being.
+
+<p>This implies <a href="#hierarchy">defining tasks</a>, the way they are
+<a href="#triggers">triggered</a>, the properties of the
+<a href="#infrastructure">infrastructure</a> on which they run, alongside
+with <a href="#alerts">alert means</a> to notify about anything wrong
+or suspect.
+
+<h2>Tasks Hierarchy</h2>
+
+<p>Tasks are grouped within taskgroups in a tree hierarchy.
+
+<h2>Task Groups</h2>
+
+<p>Tasks are grouped within taskgroups which make the configuration
+more clear in a documentation point of view (when used to group tasks
+e.g. by application or module) and/or by factorizing some task
+properties (such as <a href="#parameters">paremeters</a> and
+<a href="#events">events</a>).
+
+<p>A taskgroup consist of its id (which is its only mandatory
+field), plus optional fields: a human readable <tt>label</tt>
+and task properties that are inherited by any task belonging
+to the group.
+
+<p>There is only one level of taskgroups (a taskgroup cannot
+belong to another taskgroup) however dots in taskgroups id
+are processed as a hierarchical separator by qron user interfaces
+to display a multi-level tree.
+
+<p>Sample configuration file fragments:
+<pre>
+(taskgroup app1.biz.batch
+  (label business batches for application app1)
+)
+</pre>
+<pre>
+(taskgroup app2.tech
+  (label technical tasks for application app2)
+  (param db_password mysecret)
+  (setenv ORACLE_SID ORCL)
+)
+</pre>
+<pre>
+(taskgroup minimalgroup)
+</pre>
+
+<h2>Tasks</h2>
+
+<p>Task is qron's most important configuration element. It carries almost
+every information needed to schedule and execute a task and often some of
+the event and alerting configuration is done task by task.
+
+<h3>Task Description</h3>
+
+<p>A task is described by its id and its parent <tt>taskgroup</tt>.
+It should also have a human readable <tt>label</tt> and some additional
+documentation <tt>info</tt>.
+
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (label "build PDF reports about customers")
+  (info "see http://intranet/app1/ReportingBatches")
+)
+</pre>
+<pre>
+(task oracle-statistics
+  (taskgroup app2.tech)
+  (label recompute statistics for db ORCL)
+)
+</pre>
+<pre>
+(task minimaltask(taskgroup minimalgroup))
+</pre>
+
+<h3>Task Execution Properties</h3>
+
+<p>Task execution is defined by 3 properties:
+<ul>
+  <li><tt>mean</tt>: describes the mean used to execute the task, among the following:
+  <ul>
+    <li><tt>local</tt>: spawn a process local to the qron daemon, on the same
+    host
+    <li><tt>ssh</tt>: establish an SSH connection to the target host to
+    execute the task
+    <li><tt>http</tt>: perform an HTTP request
+    <li><tt>workflow</tt>: start a workflow consisting of one or several
+    subtasks conditionaly linked together with transitions, each of them having
+    their own execution properties, see <a href="#workflows">workflows</a>
+    section below
+    <li><tt>donothing</tt>: do not execute anything, but still trigger events,
+    pretending the execution to be successful (i.e. <tt>onsuccess</tt> actions
+    will be triggered, not <tt>onfailure</tt> ones)
+  </ul>
+  <li><tt>target</tt>: defines which <tt>host</tt> or <tt>cluster</tt> will be
+    choosen to execute the task, defaults to <tt>localhost</tt>, see
+    <a href="#infrastructure">infrastructure</a> section for more details
+  <li><tt>command</tt>: interpreted depending on the execution mean:
+  <ul>
+    <li><tt>local</tt> and <tt>ssh</tt> means: command line, spaces being
+    interpreted as command arguments separators but if they are protected
+    by backslashes
+    <li><tt>http</tt> mean: path and query string
+    <li><tt>workflow</tt> and <tt>donothing</tt> means: not applicable, should
+    be omitted
+  </ul> 
+</ul>
+
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (mean ssh)
+  (target server1)
+  (command /opt/app1/bin/build_reports.sh --customers)
+)
+</pre>
+<pre>
+(task process-last-orders
+  (taskgroup app1.biz.queuing)
+  (mean http)
+  (target server4)
+  (command /pollers/last-orders/?from=-5minutes)
+  (param method POST) # defaults to GET
+  (param user scheduler) # set up a "Authorization: Basic" header
+  (param password mysecret)
+)
+</pre>
+
+<h3>Workflows And Subtasks</h2>
+
+<h2>Events</h2>
+
+<h2>Parameters</h2>
+
         </div>
       </div>
     </div>
 
 <?include:common-scripts.html?>
-<script>$('body').scrollspy({ target: '#navbar-manual' })</script>
+<script>
+anchors.add('.user-manual h2, .user-manual h3');
+/*var paragraphAnchors = new AnchorJS({
+  placement: 'left',
+  icon: '¶'
+});
+paragraphAnchors.add('.user-manual p');*/
+$('body').scrollspy({ target: '#navbar-manual' });
+</script>
 <?include:footer.html?>
