@@ -17,3 +17,23 @@ span[class^="label"],span[class*=" label"] a {
   margin-bottom: 16px;
   border-radius: 10px;
 }
+.manual-sidebar .nav a {
+  color: black;
+}
+.manual-sidebar .nav .nav {
+  /*display: none;*/
+  padding-bottom: 10px;
+}
+/*.manual-sidebar .nav .active ul {
+  display: block;
+}*/
+.manual-sidebar .nav .nav a {
+  padding-left: 28px;
+}
+.manual-sidebar .active > a {
+  color: #286090;
+  border-left: 2px solid #286090;
+  /*border-right: 2px solid #286090;
+  background-color: #5bc0de;*/
+}
+
