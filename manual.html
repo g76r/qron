@@ -39,27 +39,27 @@
                   <li><a href="#gridboards">Gridboards</a></li>
                 </ul>
               </li>
-              <li><a href="#events">Events</a>
-                <ul class="nav">
-                  <li><a href="#task-level-events">Task-Level Events</a></li>
-                  <li><a href="#scheduler-level-events">Scheduler-Level Events</a></li>
-                  <li><a href="#notices">Notices</a></li>
-                </ul>
+              <li><a href="#events-and-actions">Events and Actions</a>
+              <ul class="nav">
+                <li><a href="#task-level-events">Task-Level Events</a>
+                <li><a href="#scheduler-level-events">Scheduler-Level Events</a>
+                <li><a href="#actions">Actions</a>
+                <li><a href="#notices">Notices</a>
+              </ul>
               </li>
-              <li><a href="#resources">Resources</a></li>
-              <li><a href="#parameters">Parameters</a></li>
-              <li><a href="#configuration-management">Configuration Management</a></li>
+              <li><a href="#resources">Resources</a>
+              <li><a href="#parameters">Parameters</a>
+              <li><a href="#configuration-management">Configuration Management</a>
               <li><a href="#wui">Web User Interface</a>
-                <ul class="nav">
-                  <li><a href="#wui-views">Views</a></li>
-                  <li><a href="#wui-customization">Customization</a></li>
-                </ul>
-              </li>
+              <ul class="nav">
+                <li><a href="#wui-views">Views</a>
+                <li><a href="#wui-customization">Customization</a>
+              </ul>
               <li><a href="#appendices">Appendices</a>
-                <ul class="nav">
-                  <li><a href="#appendices-config-format">Config File Format</a></li>
-                </ul>
-              </li>
+              <ul class="nav">
+                <li><a href="#configuration-file-format">Configuration File Format</a>
+                <li><a href="#configuration-examples">Configuration Examples</a>
+              </ul>
             </ul>
           </nav>
         </div>
@@ -89,6 +89,7 @@ or suspect.
 <h2>Tasks Hierarchy</h2>
 
 <p>Tasks are grouped within taskgroups in a tree hierarchy.
+In addition, workflow tasks have subtasks.
 
 <h3>Task Groups</h3>
 
@@ -101,7 +102,10 @@ properties (such as <a href="#parameters">paremeters</a> and
 <p>A taskgroup consist of its id (which is its only mandatory
 field), plus optional fields: a human readable <tt>label</tt>
 and task properties that are inherited by any task belonging
-to the group.
+to the group. The task properties that can be defined at the
+taskgroup level are <a href="#tasks-parameters"><tt>params</tt></a>,
+<a href="#tasks-setenvs"><tt>setenv</tt> and <tt>unsetenv</tt></a>
+and <a href="#tasks-events-and-actions">events subscriptions</a>.
 
 <p>There is only one level of taskgroups (a taskgroup cannot
 belong to another taskgroup) however dots in taskgroups id
@@ -363,7 +367,29 @@ elements: <tt>setenv</tt> and <tt>unsetenv</tt>.
 )
 </pre>
 
-<h4>Tasks Events and Actions</h4>
+<h4>Tasks Events Subscriptions</h4>
+
+<p>Several task-level events can be used to define actions at task (or
+taskgroup) level. See <a href="#task-level-events">Task-Level Events</a>
+section below for more details.
+
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (onsuccess
+    # sending UDP packets to statsd server, see https://github.com/etsy/statsd
+    (requesturl "task.%!taskid.ok:1|c" (address udp://127.0.0.1:8125))
+    (requesturl (address udp://127.0.0.1:8125) "task.%!taskid.time:%!totalms|ms")
+    # add a custom debug log for task success
+    (log(severity debug) task success! *%!tasklocalid*)
+  )
+  (onfailure
+    # sending UDP packets to statsd
+    (requesturl(address udp://127.0.0.1:8125) "task.%!taskid.ko:1|c")
+  )
+)
+</pre>
 
 <h4>Tasks Monitoring</h4>
 
@@ -376,11 +402,113 @@ maxdurationbeforeabort
 
 <h4>Tasks Request Forms</h4>
 
-<h3>Workflows And Subtasks</h2>
+<h3>Workflows and Subtasks</h2>
 
-<h2>Events</h2>
+<h2>Events and Actions</h2>
+
+<p>Some events can be subscribed at <a href="#task-level-events">task level</a>
+or <a href="#scheduler-level-events">scheduler level</a> to make the scheduler
+perform one or several <a href="#actions">actions</a>. Events and actions are
+described below.
+
+<h3>Task-Level Events</h3>
+
+<p>At task (and taskgroup) level, the following events can be subscribed:
+<ul>
+<li><tt>onstart</tt>: occurs just before a task begin to run
+<li><tt>onsuccess</tt>: occurs just after a task finished with a successful
+status
+<li><tt>onfailure</tt>: occurs just after a task finished with a failure
+status
+<li><tt>onfinish</tt>: short for <tt>onsuccess</tt> and <tt>onfailure</tt>
+</ul>
+
+<p>Sample configuration file fragment:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (onsuccess
+    # sending UDP packets to statsd server, see https://github.com/etsy/statsd
+    (requesturl "task.%!taskid.ok:1|c" (address udp://127.0.0.1:8125))
+    (requesturl (address udp://127.0.0.1:8125) "task.%!taskid.time:%!totalms|ms")
+    # add a custom debug log for task success
+    (log(severity debug) task success! *%!tasklocalid*)
+  )
+  (onfailure
+    # sending UDP packets to statsd
+    (requesturl(address udp://127.0.0.1:8125) "task.%!taskid.ko:1|c")
+  )
+)
+</pre>
+
+<h3>Scheduler-Level Events</h3>
+
+<p>At scheduler (global) level, the following events can be subscribed:
+<ul>
+<li><tt>onschedulerstart</tt>: occurs when qron daemon starts
+<li><tt>onconfigload</tt>: occurs whenever qron daemon activate a new
+configuration, including at startup
+<li><tt>onnotice</tt>: occurs whenever a <a href="#notices">notice</a> is
+posted
+<li><tt>onlog</tt>: occurs whenever a log entry is recorded, this event is
+obviously only availlable for debuging purposes, using it on real-world
+live systems is not advisable
+<li>every <a href="#task-level-events">task-level events</a> can also be
+subscribed at scheduler level, they will be applicable to every task
+</ul>
+
+<p>Sample configuration file fragment:
+<pre>
+(config
+  # emit an alert to warn of a configuration (re)load
+  (onconfigload (emitalert config.reload))
+  # send UDP packets to statsd server on every task success or failure,
+  # see https://github.com/etsy/statsd
+  (onsuccess
+    (requesturl "task.%!taskid.ok:1|c" (address udp://127.0.0.1:8125))
+    (requesturl (address udp://127.0.0.1:8125) "task.%!taskid.time:%!totalms|ms")
+  )
+  (onfailure
+    (requesturl(address udp://127.0.0.1:8125) "task.%!taskid.ko:1|c")
+  )
+)
+</pre>
+
+<h3>Actions</h3>
+
+<p>Here are the actions that can be performed when an <tt>event</tt> occurs:
+<ul>
+<li><tt>postnotice</tt>: post a <a href="#notices">notice</a>
+<li><tt>raisealert</tt>: raise a <a href="#raisable-alerts">raisable alert</a>
+<li><tt>cancelalert</tt>: cancel a raisable alert
+<li><tt>emitalert</tt>: emit an <a href="#emitted-alerts">emitted alert</a>
+<li><tt>requesttask</tt>: request task execution
+<li><tt>requesturl</tt>: request a network action by url, currently only UDP
+and HTTP are supported
+<li><tt>log</tt>: add an entry to <a href="#logs">centralized log</a>
+<li><tt>step</tt>: activate another step, only available within a
+<a href="#workflows-and-subtasks">workflow task</a>
+<li><tt>end</tt>: ends the workflow, only available within a workflow task
+</ul>
+
+<p>Sample configuration file fragments:
+<pre>
+TODO
+</pre>
+<pre>
+TODO
+</pre>
+<pre>
+TODO
+</pre>
+
+<h3>Notices</h3>
+
+<p>
 
 <h2>Parameters</h2>
+
+<p>
 
         </div>
       </div>
