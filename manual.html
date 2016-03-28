@@ -90,7 +90,7 @@ or suspect.
 
 <p>Tasks are grouped within taskgroups in a tree hierarchy.
 
-<h2>Task Groups</h2>
+<h3>Task Groups</h3>
 
 <p>Tasks are grouped within taskgroups which make the configuration
 more clear in a documentation point of view (when used to group tasks
@@ -125,13 +125,13 @@ to display a multi-level tree.
 (taskgroup minimalgroup)
 </pre>
 
-<h2>Tasks</h2>
+<h3>Tasks</h3>
 
 <p>Task is qron's most important configuration element. It carries almost
 every information needed to schedule and execute a task and often some of
 the event and alerting configuration is done task by task.
 
-<h3>Task Description</h3>
+<h4>Task Description</h4>
 
 <p>A task is described by its id and its parent <tt>taskgroup</tt>.
 It should also have a human readable <tt>label</tt> and some additional
@@ -155,7 +155,7 @@ documentation <tt>info</tt>.
 (task minimaltask(taskgroup minimalgroup))
 </pre>
 
-<h3>Task Execution Properties</h3>
+<h4>Task Execution Properties</h4>
 
 <p>Task execution is defined by 3 properties:
 <ul>
@@ -168,8 +168,8 @@ documentation <tt>info</tt>.
     <li><tt>http</tt>: perform an HTTP request
     <li><tt>workflow</tt>: start a workflow consisting of one or several
     subtasks conditionaly linked together with transitions, each of them having
-    their own execution properties, see <a href="#workflows">workflows</a>
-    section below
+    their own execution properties, see
+    <a href="#workflows-and-subtasks">workflows</a> section below
     <li><tt>donothing</tt>: do not execute anything, but still trigger events,
     pretending the execution to be successful (i.e. <tt>onsuccess</tt> actions
     will be triggered, not <tt>onfailure</tt> ones)
@@ -209,6 +209,173 @@ documentation <tt>info</tt>.
 )
 </pre>
 
+<h4>Tasks Triggers and Constraints</h4>
+
+<p>Tasks are queued for execution when triggered, and one can defined one or
+several triggers among:
+<ul>
+<li><tt>cron</tt>: time trigger in the form of Unix' cron pattern with precision
+down to second, e.g.
+  <ul>
+  <li><tt>* * * * * *</tt>: every seconds
+  <li><tt>13 6 7 * * 1</tt>: every monday (1) at 07:06:13 in the morning 
+  <li><tt>/15 * 8-20 * * *</tt>: every 15 seconds from 8 a.m. to 8 p.m.
+  </ul>
+<li><tt>notice</tt>: event trigger that happen when a given
+<a href="#notices">notice event</a> occurs
+<li><tt>filechange</tt>: not yet implented, but will be able to trigger task
+execution on local or remote file change or creation
+<li>REST API: a task can be triggered by REST API
+<a href="#requesttask-call"><tt>requesttask</tt> call</a>
+<li><tt>requesttask</tt> event: a task can be triggered by occurrence of a
+<a href="#events"><tt>requesttask</tt> event</a>
+</ul>
+
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (trigger(cron 0 0 23 * * 1-6)) # 23:00 mon-sat
+)
+</pre>
+<pre>
+(task process-last-orders
+  (taskgroup app1.biz.queuing)
+  (trigger
+    (cron /15 * 8-20 * * *) # every 15 seconds daily
+    (cron 0 0 22 * * * # once in the evening
+      (param mode nightly) # overriding parameter 'mode'
+    )
+    (notice process-last-orders-now) # on event
+  )
+)
+</pre>
+
+<p>However, when a task is queued for execution, it will be executed only when
+no constraint disable the task from running. Contraints are of several types:
+<ul>
+<li><tt>maxinstances</tt>: a given task is only allowed to be run
+<tt>maxinstances</tt> times at a time, which defaults to 1
+<li><tt>resources</tt>: if a given task is declared to need some
+<tt>resources</tt> it can only run on its target <tt>host</tt> if it has
+enough resources available, resources can be seen as semaphores, and can be
+used for mutual exclusion across tasks
+</ul>
+
+<p>Sample configuration file fragments:
+<pre>
+(task process-customer-request
+  (taskgroup app1.biz.queuing)
+  (maxinstances 16) # code is multiexec-safe and is faster when parallelized
+)
+</pre>
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (target report-server)
+  (resource memory 2048) # avoid too many memory consummers on the server
+  (resource reports-semaphore 1) # avoid two report batches running at a time
+)
+(host report-server
+  (hostname server4.acme.com)
+  (resource memory 8192)
+  (resource reports-semaphore 1)
+)
+</pre>
+
+<p>To avoid queued tasks to stack in big number, by default when a task is
+queued, every other queued task with the same id is canceled.
+This behavior can be disabled using <tt>discardaliasesonstart</tt> but most
+of the time should not since it make it possible to fill the tasks queue.
+
+<h4>Tasks Parameters</h4>
+
+<p>Tasks have free text parameters defined by <tt>param</tt> configuration
+element. They can be used for any custom parameters and are evaluated
+with <tt>%</tt> evaluation character in many other configuration items.
+
+<p>The whole system for parameters evaluation and inheritance is discussed in
+deep in <a href="#parameters">parameters</a> section below alonside with
+special parameters name that have an effect qron behavior (parameters such as
+<tt>ssh.options</tt> when using ssh execution mean).
+
+<p>Parameters can be overriden at task request, being it in trigger definition,
+in REST API or in web user interface using
+<a href="#tasks-request-forms">request forms</a>.
+
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (mean ssh)
+  (target server1)
+  (command /opt/app1/bin/build_reports.sh --customers --from %from)
+  (param from -2days) # regular param value
+  (trigger
+    (cron 0 0 23 * * 1-6)
+    (cron 0 0 23 * * 0 (param from -8days)) # different param on sunday
+  )
+  (requestform
+    (field from # can be overriden when the task is started from the web ui
+      (label data depth) # ui label
+      (placeholder -2days) # ui placeholder/hint
+      (format "-[0-9]+days") # server side validation regexp
+    )
+  )
+)
+</pre>
+
+<h4>Tasks Setenvs</h4>
+
+<p>Depending on the execution <tt>mean</tt>, there can be out of band
+parameters, transmitted by another way than the <tt>command</tt> itself.
+For <tt>local</tt> and <tt>ssh</tt> means this is possible through
+environment variables (hence the name <tt>setenv</tt>).
+For <tt>http</tt> mean this is possible through custom HTTP headers.
+
+<p>These out of band parameters are defined and removed using two configuration
+elements: <tt>setenv</tt> and <tt>unsetenv</tt>.
+
+<p>TODO: explain how default envionment is set, according to execution mean.
+
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (mean ssh)
+  (target server1)
+  (command /opt/app1/bin/build_reports.sh --customers)
+  (setenv ORACLE_SID ORCL)
+)
+</pre>
+
+<pre>
+(task process-last-orders
+  (taskgroup app1.biz.queuing)
+  (mean http)
+  (target server4)
+  (command /pollers/last-orders/?from=-5minutes)
+  (setenv X-TaskInstanceId %!taskinstanceid)
+  (setenv Authorization Basic AhjsqduYez=)
+  #in fact it's often easier to set Authorization header this way:
+  #(param user scheduler) # set up a "Authorization: Basic" header
+  #(param password mysecret)
+)
+</pre>
+
+<h4>Tasks Events and Actions</h4>
+
+<h4>Tasks Monitoring</h4>
+
+automatic alerts
+alerts subscriptions
+
+minexpectedduration
+maxexpectedduration
+maxdurationbeforeabort
+
+<h4>Tasks Request Forms</h4>
+
 <h3>Workflows And Subtasks</h2>
 
 <h2>Events</h2>
@@ -221,7 +388,7 @@ documentation <tt>info</tt>.
 
 <?include:common-scripts.html?>
 <script>
-anchors.add('.user-manual h2, .user-manual h3');
+anchors.add('.user-manual h2, .user-manual h3, .user-manual h4, .user-manual h5');
 /*var paragraphAnchors = new AnchorJS({
   placement: 'left',
   icon: '¶'

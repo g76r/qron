@@ -39,3 +39,9 @@ span[class^="label"],span[class*=" label"] a {
 .anchorjs-link:hover {
   text-decoration: none;
 }
+.user-manual ul ul {
+  list-style-type: square;
+}
+.user-manual li {
+  padding-bottom: 6px;
+}
