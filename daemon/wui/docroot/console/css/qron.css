@@ -30,6 +30,9 @@ span[class^="label"],span[class*=" label"] a {
 .manual-sidebar .nav .nav a {
   padding-left: 28px;
 }
+.manual-sidebar .nav .nav .nav a {
+  padding-left: 56px;
+}
 .manual-sidebar .active > a {
   color: #286090;
   border-left: 2px solid #286090;

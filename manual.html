@@ -19,26 +19,34 @@
         <div class="col-md-3">
           <nav class="hidden-print hidden-xs hidden-sm affix manual-sidebar" id="navbar-manual">
             <p><ul class="nav">
-              <li><a href="#introduction">Introduction</a></li>
-              <li><a href="#concepts">Concepts</a></li>
+              <li><a href="#introduction">Introduction</a>
+              <li><a href="#concepts">Concepts</a>
               <li><a href="#tasks-hierarchy">Tasks Hierarchy</a>
+              <ul class="nav">
+                <li><a href="#task-groups">Task Groups</a>
+                <li><a href="#tasks">Tasks</a>
                 <ul class="nav">
-                  <li><a href="#task-groups">Task Groups</a></li>
-                  <li><a href="#tasks">Tasks</a></li>
-                  <li><a href="#workflows-and-subtasks">Wokflows and Subtasks</a></li>
+                  <li><a href="#tasks-description">Description</a>
+                  <li><a href="#tasks-execution-properties">Execution Properties</a>
+                  <li><a href="#tasks-triggers-and-constraints">Triggers and Constraints</a>
+                  <li><a href="#tasks-parameters">Parameters</a>
+                  <li><a href="#tasks-setenvs">Setenvs</a>
+                  <li><a href="#tasks-events-subscriptions">Events Subscriptions</a>
+                  <li><a href="#tasks-monitoring">Monitoring</a>
+                  <li><a href="#tasks-request-forms">Request Forms</a>
                 </ul>
-              </li>
-              <li><a href="#infrastructure">Infrastructure</a></li>
-              <li><a href="#logs">Logs</a></li>
+                <li><a href="#workflows-and-subtasks">Wokflows and Subtasks</a>
+              </ul>
+              <li><a href="#infrastructure">Infrastructure</a>
+              <li><a href="#logs">Logs</a>
               <li><a href="#alerts">Alerts</a>
-                <ul class="nav">
-                  <li><a href="#raisable-alerts">Raisable Alerts</a></li>
-                  <li><a href="#emitted-alerts">Emitted Alerts</a></li>
-                  <li><a href="#alerts-subscriptions">Subscriptions</a></li>
-                  <li><a href="#alerts-fine-tuning">Fine Tuning</a></li>
-                  <li><a href="#gridboards">Gridboards</a></li>
-                </ul>
-              </li>
+              <ul class="nav">
+                <li><a href="#raisable-alerts">Raisable Alerts</a>
+                <li><a href="#emitted-alerts">Emitted Alerts</a>
+                <li><a href="#alerts-subscriptions">Subscriptions</a>
+                <li><a href="#alerts-fine-tuning">Fine Tuning</a>
+                <li><a href="#gridboards">Gridboards</a>
+              </ul>
               <li><a href="#events-and-actions">Events and Actions</a>
               <ul class="nav">
                 <li><a href="#task-level-events">Task-Level Events</a>
@@ -46,7 +54,6 @@
                 <li><a href="#actions">Actions</a>
                 <li><a href="#notices">Notices</a>
               </ul>
-              </li>
               <li><a href="#resources">Resources</a>
               <li><a href="#parameters">Parameters</a>
               <li><a href="#configuration-management">Configuration Management</a>
@@ -135,7 +142,7 @@ to display a multi-level tree.
 every information needed to schedule and execute a task and often some of
 the event and alerting configuration is done task by task.
 
-<h4>Task Description</h4>
+<h4>Tasks Description</h4>
 
 <p>A task is described by its id and its parent <tt>taskgroup</tt>.
 It should also have a human readable <tt>label</tt> and some additional
@@ -159,7 +166,7 @@ documentation <tt>info</tt>.
 (task minimaltask(taskgroup minimalgroup))
 </pre>
 
-<h4>Task Execution Properties</h4>
+<h4>Tasks Execution Properties</h4>
 
 <p>Task execution is defined by 3 properties:
 <ul>
