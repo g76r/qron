@@ -38,14 +38,19 @@
                 <li><a href="#workflows-and-subtasks">Wokflows and Subtasks</a>
               </ul>
               <li><a href="#infrastructure">Infrastructure</a>
+              <ul class="nav">
+                <li><a href="#hosts">Hosts</a>
+                <li><a href="#clusters">Clusters</a>
+              </ul>
               <li><a href="#logs">Logs</a>
               <li><a href="#alerts">Alerts</a>
               <ul class="nav">
                 <li><a href="#raisable-alerts">Raisable Alerts</a>
                 <li><a href="#emitted-alerts">Emitted Alerts</a>
                 <li><a href="#alerts-subscriptions">Subscriptions</a>
-                <li><a href="#alerts-fine-tuning">Fine Tuning</a>
+                <li><a href="#automatic-alerts">Automatic Alerts</a>
                 <li><a href="#gridboards">Gridboards</a>
+                <li><a href="#alerts-fine-tuning">Fine Tuning</a>
               </ul>
               <li><a href="#events-and-actions">Events and Actions</a>
               <ul class="nav">
@@ -57,6 +62,11 @@
               <li><a href="#resources">Resources</a>
               <li><a href="#parameters">Parameters</a>
               <li><a href="#configuration-management">Configuration Management</a>
+              <li><a href="#operations">Operations</a>
+              <ul class="nav">
+                <li><a href="#task-instances-statuses">Task Instances Statuses</a>
+                <li><a href="#actions-performed-by-an-operator">Actions Performed by an Operator</a>
+              </ul>
               <li><a href="#wui">Web User Interface</a>
               <ul class="nav">
                 <li><a href="#wui-views">Views</a>
@@ -400,16 +410,76 @@ section below for more details.
 
 <h4>Tasks Monitoring</h4>
 
-automatic alerts
-alerts subscriptions
+<p>Whenever a task has a suspect behavior, the scheduler emit an
+<a href="#automatic-alerts">automatic alert</a>. For instance when a task
+finishes with a failure status.
 
-minexpectedduration
-maxexpectedduration
-maxdurationbeforeabort
+<p>It's often a good idea to send by e-mail (or any other mean) the automatic
+alerts for all or most of the tasks in order to be notified of an issue.
+See <a href="#alerts-subscriptions">alerts subscriptions</a> section below.
+
+<p>More automatic alerts are available when setting the following task
+parameters:
+<ul>
+<li><tt>minexpectedduration</tt>: minimum expected task duration in seconds, an
+alert will be raised otherwise, with the pattern <tt>task.tooshort.%!taskid</tt>.
+<li><tt>maxexpectedduration</tt>: maximum expected task duration in seconds, an
+alert will be raised otherwise, with the pattern <tt>task.toolong.%!taskid</tt>.
+<li><tt>maxdurationbeforeabort</tt>: duration above which the scheduler will
+<a href="#actions-performed-by-an-operator">abort</a> a running task,
+this is useful for certain kind of tasks that should better be killed that take
+too much time (a nightly purge that can disrupt normal daily processing, a
+periodic task running every minutes that should rather be killed when frozen
+after 3 minutes rather than keep disable next executions forever, etc.) but is
+dangerous in many other cases since aborting is quite hard (kill for local and
+ssh execution means, close for http execution mean).
+</ul>
+
+<p>Task duration is the time elapsed between the queuing of a task request and
+the finishing of its execution.
+
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (minexpectedduration 10) # below 10" there is a issue with data selected
+  (maxexpectedduration 3600) # 1 hour
+)
+</pre>
+<pre>
+(task process-last-orders
+  (taskgroup app1.biz.queuing)
+  (trigger(cron /30 * 8-20 * * *)) # twice a minute
+  (maxexpectedduration 20)
+  (maxdurationbeforeabort 300) # 5 minutes
+)
+</pre>
 
 <h4>Tasks Request Forms</h4>
 
 <h3>Workflows and Subtasks</h2>
+
+<h2>Infrastructure</h2>
+
+<h3>Hosts</h3>
+
+<h3>Clusters</h3>
+
+<h2>Logs</h2>
+
+<h2>Alerts</h2>
+
+<h3>Raisable Alerts</h3>
+
+<h3>Emitted Alerts</h3>
+
+<h3 id="alerts-subscriptions">Subscriptions</h3>
+
+<h3>Automatic Alerts</h3>
+
+<h3>Gridboards</h3>
+
+<h3 id="alerts-fine-tuning">Fine Tuning</h3>
 
 <h2>Events and Actions</h2>
 
@@ -513,7 +583,32 @@ TODO
 
 <p>
 
+<h2>Resources</h2>
+
 <h2>Parameters</h2>
+
+<h2>Configuration Management</h2>
+
+<h2>Operations</h2>
+
+<h3>Task Instances Statuses</h3>
+
+<h3>Actions Performed by an Operator</h3>
+
+<h4>Reloading Configuration</h4>
+
+<h4>Requesting a Task Execution</h4>
+
+<h4>Canceling a Task Request</h4>
+
+<h4>Aborting a Task Execution</h4>
+
+<h4>Disabling a Task</h4>
+
+<h2 id="wui">Web User Interface</h2>
+
+<h2>Appendices</h2>
+
 
 <p>
 
