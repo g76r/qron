@@ -51,6 +51,7 @@
                 <li><a href="#automatic-alerts">Automatic Alerts</a>
                 <li><a href="#gridboards">Gridboards</a>
                 <li><a href="#alerts-fine-tuning">Fine Tuning</a>
+                <li><a href="#custom-alerts">Custom Alerts</a>
               </ul>
               <li><a href="#events-and-actions">Events and Actions</a>
               <ul class="nav">
@@ -338,7 +339,7 @@ in REST API or in web user interface using
   )
   (requestform
     (field from # can be overriden when the task is started from the web ui
-      (label data depth) # ui label
+      (label Data depth) # ui label
       (placeholder -2days) # ui placeholder/hint
       (format "-[0-9]+days") # server side validation regexp
     )
@@ -457,6 +458,47 @@ the finishing of its execution.
 
 <h4>Tasks Request Forms</h4>
 
+<p>When a user task execution request is submited interactively through the
+<a href="#wui">web user interface</a> (or, when it will be available, the
+desktop/phone user interface) it is possible to display a custom
+form to ask the user which <a href="#tasks-parameters">parameters</a> he
+would like to override.
+
+<p>A request form is described in the configuration file using a
+<tt>requestform</tt> element within a task declaration. It contains one
+<tt>field</tt> elements per form field, which itself can contain
+the following optional elements:
+<ul>
+<li><tt>label</tt>: user interface label (field title)
+<li><tt>placeholder</tt>: user interface hint (<tt>placeholder</tt> attribute
+of <tt>input</tt> HTML element)
+<li><tt>suggestion</tt>: default value
+<li><tt>format</tt>: validation regular expression (for the web user interface,
+the validation is enforced server-side)
+</ul>
+
+<p>Sample configuration file fragment:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (command "/opt/app1/bin/build_reports.sh --customers --from %from
+     %{=switch:%dryrun:true:--dryrun:}")
+  (param from -2days) # regular param value
+  (requestform
+    (field from # can be overriden when the task is started from the web ui
+      (label Data depth) # ui label
+      (placeholder -2days) # ui placeholder/hint
+      (format "-[0-9]+days") # server side validation regexp
+    )
+    (field dryrun
+      (label Dry run)
+      (suggestion false) # default value in ui form
+      (format "true|false")
+    )
+  )
+)
+</pre>
+
 <h3>Workflows and Subtasks</h2>
 
 <h2>Infrastructure</h2>
@@ -480,6 +522,10 @@ the finishing of its execution.
 <h3>Gridboards</h3>
 
 <h3 id="alerts-fine-tuning">Fine Tuning</h3>
+
+<h3>Custom Alerts</h3>
+
+TODO: custom alerts through events and actions, but also from outside qron using the REST API
 
 <h2>Events and Actions</h2>
 
@@ -528,7 +574,7 @@ configuration, including at startup
 <li><tt>onnotice</tt>: occurs whenever a <a href="#notices">notice</a> is
 posted
 <li><tt>onlog</tt>: occurs whenever a log entry is recorded, this event is
-obviously only availlable for debuging purposes, using it on real-world
+obviously only available for debuging purposes, using it on real-world
 live systems is not advisable
 <li>every <a href="#task-level-events">task-level events</a> can also be
 subscribed at scheduler level, they will be applicable to every task
