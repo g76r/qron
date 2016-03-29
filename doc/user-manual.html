@@ -85,11 +85,12 @@
 
 <h1 id="introduction">Qron User Manual</h1>
 
-<p>This page is <a href="http://qron.eu/">qron</a> user manual.
+<p>This web page is the user manual of <a href="http://qron.eu/">qron</a> free
+scheduler.
 
 <p>It is available both in qron web user interface (embeded in qron daemon)
 and on the Internet here:
-<a href="http://qron.eu/manual/">http://qron.eu/manual/</a>.
+<a href="http://qron.eu/user-manual/master/">http://qron.eu/user-manual/master</a>.
 
 <h2>Concepts</h2>
 
@@ -98,11 +99,11 @@ non-interactive application components such as large batches planned once a
 day, automatic processing of incoming messages every minute, or any
 processing triggered by an event not directly issued by a human being.
 
-<p>This implies <a href="#hierarchy">defining tasks</a>, the way they are
-<a href="#triggers">triggered</a>, the properties of the
+<p>This implies <a href="#tasks-hierarchy">defining tasks</a>, the way they are
+<a href="#tasks-triggers-and-constraints">triggered</a>, the properties of the
 <a href="#infrastructure">infrastructure</a> on which they run, alongside
-with <a href="#alerts">alert means</a> to notify about anything wrong
-or suspect.
+with <a href="#logs">centralized logs</a> and <a href="#alerts">alert means</a>
+to notify about anything wrong or suspect.
 
 <h2>Tasks Hierarchy</h2>
 
@@ -233,6 +234,21 @@ documentation <tt>info</tt>.
   (param method POST) # defaults to GET
   (param user scheduler) # set up a "Authorization: Basic" header
   (param password mysecret)
+)
+</pre>
+<pre>
+(task remove-old-files
+  (taskgroup app1.tech)
+  (mean ssh)
+  (target server1)
+  (command bash -c '
+# shell script right in qron config file
+set -e
+for DIR in %directories; do
+  find $DIR -mtime +60 -delete
+done
+')
+  (param directories /opt/app1/files /opt/app1/backup /tmp/app1)
 )
 </pre>
 
