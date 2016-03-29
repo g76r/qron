@@ -22,10 +22,12 @@
         <file>docroot/console/adhoc.html</file>
         <file>docroot/console/taskdoc.html</file>
         <file>docroot/console/gridboard.html</file>
-        <file>docroot/console/manual.html</file>
         <file>docroot/console/doc/alerts_statuses.svg</file>
         <file>docroot/console/img/work_eu.png</file>
         <file>docroot/console/img/work_na.png</file>
+        <file>docroot/console/user-manual.html</file>
+        <file>docroot/console/img/deployment-diagram-sample.svg</file>
+        <file>docroot/console/img/trigger-diagram-sample.svg</file>
         <file>docroot/console/css/qicons-codes.css</file>
         <file>docroot/console/css/qicons.css</file>
         <file>docroot/console/css/qicons-embedded.css</file>
