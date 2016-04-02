@@ -302,7 +302,8 @@ no constraint disable the task from running. Contraints are of several types:
 <li><tt>resources</tt>: if a given task is declared to need some
 <tt>resources</tt> it can only run on its target <tt>host</tt> if it has
 enough resources available, resources can be seen as semaphores, and can be
-used for mutual exclusion across tasks
+used for mutual exclusion across tasks, see <a href="#resources">resources</a>
+section below.
 </ul>
 
 <p>Sample configuration file fragments:
@@ -524,7 +525,7 @@ the validation is enforced server-side)
 
 <h2>Infrastructure</h2>
 
-<p>TODO
+<p>Tasks are executed on hosts, optionaly grouped by clusters.
 
 <p>Sample deployment diagram with 5 tasks deployed on 1 cluster and 3 hosts:
 <img class="img-responsive center-block"
@@ -533,7 +534,62 @@ title="Sample deployment diagram with 5 tasks deployed on 1 cluster and 3 hosts"
 
 <h3>Hosts</h3>
 
+<p>A <tt>host</tt> is an execution target for tasks.
+It must have an <tt>id</tt> and, for most execution means, a <tt>hostname</tt>
+(which default value is the <tt>id</tt>).
+A host can also carry an optional human readable <tt>label</tt> and
+<tt>resources</tt> that are consummed by tasks that need them, see
+<a href="#resources">resources</a> section below
+
+<p>The same <tt>host</tt> can be used by several execution <tt>means</tt>,
+for instance one can defines http and ssh tasks with the same host as target
+provided both means can use the same hostname to reach the host.
+
+<p>There must always be a host named <tt>localhost</tt>. If it's not declared
+in configuratio file, qron will pretend it is declared with no other
+property than its id.
+
+<p>Sample configuration file fragments:
+<pre>
+(host server1
+  (hostname server1.mycompany.com)
+  (resource memory 8192)
+)
+</pre>
+<pre>
+(host localhost)
+</pre>
+
 <h3>Clusters</h3>
+
+<p>A <tt>cluster</tt> defines an execution target consisting of a list of
+<tt>hosts</tt> and a <tt>balancing</tt> method to choose the actual target
+host among them. It must have an <tt>id</tt>, which cannot be identical to
+one of the hosts id, and can have a human readable <tt>label</tt>.
+
+<p>Following <tt>balancing</tt> methods are supported:
+<ul>
+<li><tt>first</tt>: use first available host within cluster (currently host
+availability check is not yet implemented, therefore this balancing method
+always choose first host in the list and is useless)
+<li><tt>each</tt>: when requesting the task once, it is actually executed
+on every host within the cluster
+</ul>
+
+<p>Sample configuration file fragments:
+<pre>
+(cluster unix-servers
+  (hosts server1 server2 server3)
+  (balancing each)
+)
+(task remove-old-files-on-every-unix-server
+  (taskgroup app1.tech)
+  (mean ssh)
+  (target unix-servers)
+  (command find /opt/app1/files -mtime +60 -delete)
+  (maxinstances 3) # allow parallel execution on 3 hosts
+)
+</pre>
 
 <h2>Logs</h2>
 
