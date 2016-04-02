@@ -43,6 +43,11 @@
                 <li><a href="#clusters">Clusters</a>
               </ul>
               <li><a href="#logs">Logs</a>
+              <ul class="nav">
+                <li><a href="#logs-configuration">Configuration</a>
+                <li><a href="#centralizing-logging-of-tasks-stderr">Centralizing Logging of Tasks Stderr</a>
+                <li><a href="#logs-rotation">Logs Rotation</a>
+              </ul>
               <li><a href="#alerts">Alerts</a>
               <ul class="nav">
                 <li><a href="#raisable-alerts">Raisable Alerts</a>
@@ -62,6 +67,11 @@
               </ul>
               <li><a href="#resources">Resources</a>
               <li><a href="#parameters">Parameters</a>
+              <ul class="nav">
+                <li><a href="#hierarchical-inheritance-of-parameters">Hierarchical Inheritance</a>
+                <li><a href="#percent-evaluation">%-Evaluation</a>
+                <li><a href="#special-parameters">Special Parameters</a>
+              </ul>
               <li><a href="#configuration-management">Configuration Management</a>
               <li><a href="#operations">Operations</a>
               <ul class="nav">
@@ -273,6 +283,8 @@ execution on local or remote file change or creation
 <li><tt>requesttask</tt> event: a task can be triggered by occurrence of a
 <a href="#events"><tt>requesttask</tt> event</a>
 </ul>
+
+TODO: calendars
 
 <p>Sample configuration file fragments:
 <pre>
@@ -593,6 +605,129 @@ on every host within the cluster
 
 <h2>Logs</h2>
 
+<p>Qron by itself logs information related to tasks scheduling and exectution,
+configuration changes, web ui user interaction, etc.
+In addition it also logs error messages from tasks themselves when the
+execution mean make it possible, which is a simple way to centralize tasks
+logs.
+
+<h3>Logs Configuration</h3>
+
+<p>Several log files can be defined in the configuration file with <tt>log</tt>
+element, which must have following properties:
+<ul>
+<li><tt>file</tt>: path to the log file, which is
+<a href="#percent-evaluation">%-evaluated</a> and thus can vary depending on
+the date <li><tt>level</tt>: minimal severity level to log, among
+<tt>debug</tt>, <tt>info</tt>, <tt>warning</tt>, <tt>error</tt> and
+<tt>fatal</tt>
+</ul>
+
+<p>The <tt>log</tt> element can also have a <tt>unbuffered</tt> flag to disable
+write buffers.
+
+<p>Sample configuration file fragments:
+<pre>
+(log(level debug)(file "/var/log/qron/debug-%{=date:yyyyMMdd}.log"))
+(log(level info)(file "/var/log/qron/info-%{=date:yyyyMMdd}.log"))
+</pre>
+<pre>
+(log(level debug)(file "/tmp/qron-debug.log")(unbuffered))
+</pre>
+
+<h3>Centralizing Logging of Tasks Stderr</h3>
+
+<p>Qron automatically records in its logs the standard error stream of tasks
+executed using <tt>local</tt> mean, and (by default) both the standard error
+and standard output streams of tasks executed using <tt>ssh</tt> mean.
+
+<p>This feature enable centralizing tasks error streams in qron log. However
+not all task logs should be recorded that way. For instance if a 4 hours-long
+huge Java batch logging millions of debug lines send them to its stderr,
+qron logs will be no longer readable since they will be filled with crap.
+One should take care of that when designing batches, or their wrapper shell
+script.
+Or logging can be disabled for a given task or taskgroup using parmeters
+described below.
+
+<p>Loging of tasks output is modified by several
+<a href="#special-parameters">special task parameters</a>:
+<ul>
+<li><tt><a href="#param-stderrfilter">stderrfilter</a></tt>: regular
+expression to filter out task output, for instance:
+  <ul>
+  <li><tt>.*</tt> will drop any data
+  <li><tt>^Connection to [^ ]* closed.$</tt> will drop an ennoying ssh
+  log line
+  </ul>
+<li><tt><a href="#param-ssh.disablepty">ssh.disablepty</a></tt>: when
+disabling pty allocation of a task
+executed through <tt>ssh</tt> mean, standard output will no longer be
+merged with standard error and only the later will be recorded in qron
+log (this is not the only effect of disabling pty allocation, see
+<a href="#param-ssh.disablepty">special parameters</a> section for more
+information
+<li><tt><a href="#param-ssh.options">ssh.options</a></tt>: this more
+general parameter can also, among other things, disable pty allocation
+</ul>
+
+<h3>Logs Rotation</h3>
+
+<p>Qron do not rotate, compress or purge its logfiles, however it reopens
+them periodicaly (every minute) which make several log rotation patterns
+easy to implement.
+One of the following should be choosen, or even a mix of them.
+
+<h4>Timestamped Logs File Names</h4>
+
+<p>Defining log files with a timestamp in the name ensure that qron will
+stop writing in a log 1 minute after the timestamp changes. Therefore old
+log files can be compressed or archived by any external mean (e.g.
+logrotate daemon or a task scheduled by qron itself) without need of
+signaling qron to reopen its log files.
+
+<p>Sample configuration file fragment:
+<pre>
+(log(level debug)(file "/var/log/qron/debug-%{=date:yyyyMMdd}.log"))
+(log(level info)(file "/var/log/qron/info-%{=date:yyyyMMdd}.log"))
+(taskgroup qron.tech)
+(task logs-compress
+  (taskgroup qron.tech)
+  (mean local)
+  (command 'find /var/log/qron -name "*.log" -mtime +1 -exec bzip2 {} \\;')
+  (trigger(cron 0 2 0 * * *))
+)
+(task logs-purge
+  (taskgroup qron.tech)
+  (mean local)
+  (command 'find /var/log/qron -mtime +365 -delete')
+  (trigger(cron 0 2 0 * * *))
+)
+</pre>
+
+<h4>Numbered Log Files Names</h4>
+
+<p>When scheduling a small amount of tasks, on can prefer to have a
+numbered log files scheme. The example below show it with a
+weekly rotation and compression processed by logrotate.
+
+<p>Sample configuration file fragment:
+<pre>
+(log(level info)(file /var/log/qron.log))
+</pre>
+
+<p>Along with a logrotate configuration file like this one:
+<pre>
+/var/log/qron.log {
+    weekly
+    rotate 52
+    missingok
+    notifempty
+    compress
+    delaycompress
+}
+</pre>
+
 <h2>Alerts</h2>
 
 <h3>Raisable Alerts</h3>
@@ -716,6 +851,12 @@ TODO
 <h2>Resources</h2>
 
 <h2>Parameters</h2>
+
+<h3>Hierarchical Inheritance of Parameters</h3>
+
+<h3 id="percent-evaluation">%-Evaluation</h3>
+
+<h3>Special Parameters</h3>
 
 <h2>Configuration Management</h2>
 
