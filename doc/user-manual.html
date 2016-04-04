@@ -457,9 +457,13 @@ See <a href="#alerts-subscriptions">alerts subscriptions</a> section below.
 parameters:
 <ul>
 <li><tt>minexpectedduration</tt>: minimum expected task duration in seconds, an
-alert will be raised otherwise, with the pattern <tt>task.tooshort.%!taskid</tt>.
+alert will be raised otherwise, with the pattern
+<tt>task.tooshort.%!taskid</tt>, the alert is raised when the task finishes.
 <li><tt>maxexpectedduration</tt>: maximum expected task duration in seconds, an
-alert will be raised otherwise, with the pattern <tt>task.toolong.%!taskid</tt>.
+alert will be raised otherwise, with the pattern
+<tt>task.toolong.%!taskid</tt>, the alert is raised as soon as the task is
+running longer than maxexpectedduration (although the detection may take up to
+1 minute it won't wait for the task finishing).
 <li><tt>maxdurationbeforeabort</tt>: duration above which the scheduler will
 <a href="#actions-performed-by-an-operator">abort</a> a running task,
 this is useful for certain kind of tasks that should better be killed that take
