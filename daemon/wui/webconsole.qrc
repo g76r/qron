@@ -31,6 +31,9 @@
         <file>docroot/console/img/gridboards-tasks-sample.png</file>
         <file>docroot/console/img/gridboards-ping-sample.png</file>
         <file>docroot/console/img/gridboards-service_x_instance-sample.png</file>
+        <file>docroot/console/img/alerts_statuses.svg</file>
+        <file>docroot/console/img/paramset_hierarchy.svg</file>
+        <file>docroot/console/img/paramset_hierarchy_caption.svg</file>
         <file>docroot/console/css/qicons-codes.css</file>
         <file>docroot/console/css/qicons.css</file>
         <file>docroot/console/css/qicons-embedded.css</file>

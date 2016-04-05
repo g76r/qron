@@ -19,7 +19,7 @@
         <div class="col-md-3">
           <nav class="hidden-print hidden-xs hidden-sm affix manual-sidebar" id="navbar-manual">
             <p><ul class="nav">
-              <li><a href="#introduction">Introduction</a>
+              <li><a href="#">Introduction</a>
               <li><a href="#concepts">Concepts</a>
               <li><a href="#tasks-hierarchy">Tasks Hierarchy</a>
               <ul class="nav">
@@ -50,8 +50,9 @@
               </ul>
               <li><a href="#alerts">Alerts</a>
               <ul class="nav">
-                <li><a href="#raisable-alerts">Raisable Alerts</a>
-                <li><a href="#emitted-alerts">Emitted Alerts</a>
+                <li><a href="#stateful-alerts">Stateful Alerts</a>
+                <li><a href="#one-shot-alerts">One-Shot Alerts</a>
+                <li><a href="#alert-channels">Alert Channels</a>
                 <li><a href="#alerts-subscriptions">Subscriptions</a>
                 <li><a href="#automatic-alerts">Automatic Alerts</a>
                 <li><a href="#gridboards">Gridboards</a>
@@ -68,7 +69,7 @@
               <li><a href="#resources">Resources</a>
               <li><a href="#parameters">Parameters</a>
               <ul class="nav">
-                <li><a href="#hierarchical-inheritance-of-parameters">Hierarchical Inheritance</a>
+                <li><a href="#hierarchical-inheritance-of-parameters-set">Hierarchical Inheritance</a>
                 <li><a href="#percent-evaluation">%-Evaluation</a>
                 <li><a href="#special-parameters">Special Parameters</a>
               </ul>
@@ -94,7 +95,7 @@
         </div>
         <div class="col-md-9 user-manual" data-spy="scroll" data-target="navbar-manual" data-offset="0">
 
-<h1 id="introduction">Qron User Manual</h1>
+<h1>Qron User Manual</h1>
 
 <p>This web page is the user manual of <a href="http://qron.eu/">qron</a> free
 scheduler.
@@ -285,7 +286,7 @@ execution on local or remote file change or creation
 <a href="#events"><tt>requesttask</tt> event</a>
 </ul>
 
-TODO: calendars
+<p>TODO: calendars
 
 <p>Sample configuration file fragments:
 <pre>
@@ -735,7 +736,91 @@ weekly rotation and compression processed by logrotate.
 
 <h2>Alerts</h2>
 
-<h3>Raisable Alerts</h3>
+<p>There are two kinds of alerts:
+<ul>
+<li><tt>stateful</tt> alerts, which are <tt>emitted</tt> when <tt>raised</tt>
+and <tt>canceled</tt> but also periodically <tt>reminded</tt> if still raised
+<li><tt>one-shot</tt> alerts which are <tt>emitted</tt> immediatly each time
+they occur: they are de-duplicated to avoid spam but are not subject to
+raise/cancel/remind mechanisms.
+</ul>
+
+<p>Whenever possible, <tt>stateful</tt> alerts should be prefered, however
+there are cases where one wants to be alerted of the occurrence of a abnormal
+or rare event rather than of an abnormal condition. In these cases
+<tt>one-shot</tt> alerts are well suited.
+
+<p>Both alerts kind are UTF-8 characters strings, there are no technical
+constraints on their format, however the
+<a href="#alerts-subscriptions">subscriptions</a>
+mechanisms will be easier to use if the alert strings follow a hierarchical
+dot naming convention, e.g. <tt>task.failure.$TASKGROUP.$TASK</tt> or
+<tt>myapp.mycustomalert</tt>.
+
+<h3>Stateful Alerts</h3>
+
+<p>At first glance, stateful alerts have 3 statuses: <tt>nonexistent</tt>,
+<tt>raised</tt> and <tt>canceled</tt>.
+However, if an alert is constantly raised and canceled,
+without protection it would be a huge source of spam/noise and there would be
+no benefit to handle alerts as stateful. Therefore the alert engine implements
+grace delays before actually raising or canceling an alert, and there are a few
+more statuses and transitions than the most intuitive ones. They are described
+below.
+
+<p>Alerts State Diagram:
+<img class="img-responsive center-block"
+src="img/alerts_statuses.svg"
+title="Alerts State Diagram" />
+
+<p>Alerts statuses:
+<ul>
+<li><tt>nonexistent</tt>: the alert string is not known to the alert engine
+<li><tt>rising</tt>: the alert has been asked for rising since less than the
+<tt>rise delay</tt>
+<li><tt>mayrise</tt>: the alert has been asked for cancellation while it was
+rising, and <tt>mayrise delay</tt> has not yet been reached
+<li><tt>raised</tt>: the alert was rising and rising delay has been reached, or
+the alert has been asked for immediate rising
+<li><tt>dropping</tt>: the alert has been asked for cancellation while it was raised, and <tt>drop delay</tt> has not yet been reached
+<li><tt>canceled</tt>: the alert was dropping and drop delay has been reached,
+or the alert has been asked for immediate cancellation
+</ul>
+
+<p>Alerts status transitions:
+<ul>
+<li><tt>raiseAlert()</tt>: turn a <tt>dropping</tt> alert into <tt>raised</tt>
+and any other alert into <tt>rising</tt>
+<li><tt>cancelAlert()</tt>: turn a <tt>rising</tt> alert into <tt>mayrise</tt>
+and a <tt>raised</tt> alert into <tt>dropping</tt>
+<li><tt>raiseImmediatlyAlert()</tt>: turn any alert into <tt>raised</tt>
+<li><tt>cancelImmediatlyAlert()</tt>: turn <tt>rising</tt> and <tt>mayrise</tt>
+alerts into <tt>nonexistent</tt>, and turn <tt>raised</tt> and <tt>dropping</tt>
+alerts into <tt>canceled</tt>
+<li><tt>rise delay</tt> timeout: turn <tt>rising</tt> and <tt>mayrise</tt>
+alerts into <tt>raised</tt>
+<li><tt>mayrise delay</tt> timeout: turn <tt>mayrise</tt> alerts into
+<tt>nonexistent</tt>
+<li><tt>drop delay</tt> timeout: turn <tt>dropping</tt> alerts into
+<tt>canceled</tt>
+<li><tt>canceled</tt> alerts will immediatly become <tt>nonexistent</tt> again,
+as soon as cancel notifications are emitted
+</ul>
+
+<p>Induced effects:
+<ul>
+<li>When an alert becomes <tt>raised</tt> and was neither <tt>raised</tt> nor
+<tt>dropping</tt> before, an alert is <tt>emitted</tt> for all matching
+<a href="#alerts-subscriptions"><tt>subscriptions</tt></a>.
+<li>When an alert becomes <tt>canceled</tt>, an alert cancellation is
+emitted for all matching subscriptions.
+<li>When an alert stays <tt>raised</tt> or <tt>dropping</tt> for a long time,
+some <a href="#alert-channels">alert channels</a> (most notabily the mail
+channel) will notify subscribers with alert <tt>reminders</tt>.
+</ul>
+
+<p>See <a href="#alerts-fine-tuning">alerts fine tuning</a> section below
+for delays default values and advices on their tuning when needed.
 
 <h3>Emitted Alerts</h3>
 
@@ -980,7 +1065,21 @@ TODO
 
 <h2>Parameters</h2>
 
-<h3>Hierarchical Inheritance of Parameters</h3>
+<h3>Hierarchical Inheritance of Parameters Sets</h3>
+
+<p>TODO
+
+<p>Parameters Sets Hierarchy:
+<img class="img-responsive center-block"
+src="img/paramset_hierarchy.svg"
+title="Parameters Sets Hierarchy" />
+
+<p>Caption:
+<img class="img-responsive center-block" style="width: 50%; margin-left: 0;"
+src="img/paramset_hierarchy_caption.svg"
+title="Parameters Sets Hierarchy Caption" />
+<!-- LATER: ensure same scaling than main diagram, via JS, rather than
+  arbitrary set width to 50% -->
 
 <h3 id="percent-evaluation">%-Evaluation</h3>
 
