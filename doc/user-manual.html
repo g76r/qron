@@ -930,10 +930,12 @@ second one as columns, using one of the following syntaxes:
   <li><tt>gridboard.tdclass.ok</tt>: HTML table cell class for canceled alerts,
   defaults to an empty string
   <li><tt>gridboard.tdclass.warning</tt>: HTML table cell class for canceled
-  alerts not canceled for longer than the <tt>warningdelay</tt> or in unknown
-  status, defaults to <tt>warning</tt>
+  alerts not canceled for longer than the <tt>warningdelay</tt>, defaults to
+  <tt>warning</tt>
   <li><tt>gridboard.tdclass.error</tt>: HTML table cell class for raised
   alerts, defaults to  <tt>danger</tt>
+  <li><tt>gridboard.tdclass.unknown</tt>: HTML table cell class in unknown
+  status (most likely never raised nor canceled), defaults to an empty string
   <li><tt>gridboard.rowformat</tt>: custom format for row headers (i.e. first
   dimension values), this is a <a href="#percent-evaluation">%-expression</a>
   where <tt>%1</tt> is replaced with the actual dimension value, defaults to
