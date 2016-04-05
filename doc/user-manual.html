@@ -46,6 +46,7 @@
               <ul class="nav">
                 <li><a href="#logs-configuration">Configuration</a>
                 <li><a href="#centralizing-logging-of-tasks-stderr">Centralizing Logging of Tasks Stderr</a>
+                <li><a href="#logs-format">Logs Format</a>
                 <li><a href="#logs-rotation">Logs Rotation</a>
               </ul>
               <li><a href="#alerts">Alerts</a>
@@ -676,6 +677,46 @@ information
 <li><tt><a href="#param-ssh.options">ssh.options</a></tt>: this more
 general parameter can also, among other things, disable pty allocation
 </ul>
+
+<h3>Logs Format</h3>
+
+<p>Qron log files are formatted with lines ended with the newline character
+(<tt>0x0a</tt>), each line complying to either of these two formats:
+<ul>
+<li>First record lines immediatly start with a timestamp (in other words,
+their first character is a digit, likely to be a <tt>2</tt>):
+<pre>timestamp taskid/taskinstanceid sourcefile:sourceline severity message</pre>
+<li>Continuation lines start with two spaces (<tt>0x20</tt>):
+<pre>  message_continuation</pre>
+</ul>
+
+<p>Log records fields are defined this way:
+<ul>
+<li><tt>timestamp</tt>: <a href="https://en.wikipedia.org/wiki/ISO_8601">ISO
+8601</a> timestamp, currently from year to milliseconds, with or without
+timezone (currently the timestamp is recorded using local timezone but without
+explicit timezone specification, this may change in the future)
+<li><tt>taskid</tt>: either the taskid if the record is related to a specific
+task, or the name of the logging thread (e.g. SchedulerThread or AlerterThread)
+<li><tt>taskinstanceid</tt>: either the taskinstanceid if the record is
+related to a specific task instance execution, or 0
+<li><tt>sourcefile</tt>: source code file name if known/relevant, otherwise an
+empty string
+<li><tt>sourceline</tt>: source code line number or label if known/relevant,
+otherwise an empty string
+<li><tt>severity</tt>: record severity, currently among:
+DEBUG INFO WARNING ERROR FATAL (this may change in the future but will stay an
+alphanumeric identifier without spaces)
+<li><tt>message</tt>: any text, encoded as UTF-8, if newlines are contained
+in the message, it is continued on the next lines, with two extra space
+characters (<tt>0x20</tt>) at the begining of the continuation lines
+</ul>
+
+For instance:
+<pre>
+2016-04-05T13:57:42,003 gridboard.failing/201604051357420004 : INFO starting task 'gridboard.failing' through mean 'local' after 1 ms in queue
+2016-04-05T13:57:40,421 SchedulerThread/0 : INFO starting scheduler
+</pre>
 
 <h3>Logs Rotation</h3>
 
