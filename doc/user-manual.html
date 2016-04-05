@@ -863,7 +863,25 @@ channel) will notify subscribers with alert <tt>reminders</tt>.
 <p>See <a href="#alerts-fine-tuning">alerts fine tuning</a> section below
 for delays default values and advices on their tuning when needed.
 
-<h3>Emitted Alerts</h3>
+<h3>One-Shot Alerts</h3>
+
+<p>One-shot alerts have no state. They are (almost) immediately emitted each
+time they are required to.
+
+<p>To avoid noise/spam, only the first emission request during
+<tt>duplicate emit delay</tt> interval triggers an immediate alert emission,
+the following ones are counted and only one other alert will be actually
+emitted after the delay expires.
+
+<p>The emission counter is displayed by
+<a href="#alert-channels">alert channels</a> in a appropriate way, by default
+they will suffix the alert string with an <tt>x</tt> and the counter value,
+e.g.: <tt>scheduler.config.load x 3</tt>.
+
+<p>See <a href="#alerts-fine-tuning">alerts fine tuning</a> section below
+for delays default values and advices on their tuning when needed.
+
+<h3>Alert Channels</h3>
 
 <h3 id="alerts-subscriptions">Subscriptions</h3>
 
@@ -993,12 +1011,11 @@ title="Rendering sample of 'Hosts Ping Statuses' gridboard" />
 src="img/gridboards-service_x_instance-sample.png"
 title="Rendering sample of 'Application Services x Deployed Instances' gridboard" />
 
-
-<h3 id="alerts-fine-tuning">Fine Tuning</h3>
-
 <h3>Custom Alerts</h3>
 
 TODO: custom alerts through events and actions, but also from outside qron using the <a href="#rest-api">REST API</a>
+
+<h3 id="alerts-fine-tuning">Fine Tuning</h3>
 
 <h2>Events and Actions</h2>
 
