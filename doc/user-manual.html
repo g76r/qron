@@ -56,9 +56,9 @@
                 <li><a href="#alert-channels">Alert Channels</a>
                 <li><a href="#alerts-subscriptions">Subscriptions</a>
                 <li><a href="#automatic-alerts">Automatic Alerts</a>
+                <li><a href="#custom-alerts">Custom Alerts</a>
                 <li><a href="#gridboards">Gridboards</a>
                 <li><a href="#alerts-fine-tuning">Fine Tuning</a>
-                <li><a href="#custom-alerts">Custom Alerts</a>
               </ul>
               <li><a href="#events-and-actions">Events and Actions</a>
               <ul class="nav">
@@ -82,6 +82,7 @@
               </ul>
               <li><a href="#wui">Web User Interface</a>
               <ul class="nav">
+                <li><a href="#wui-description">Description</a>
                 <li><a href="#wui-views">Views</a>
                 <li><a href="#wui-customization">Customization</a>
               </ul>
@@ -90,6 +91,7 @@
               <ul class="nav">
                 <li><a href="#configuration-file-format">Configuration File Format</a>
                 <li><a href="#configuration-examples">Configuration Examples</a>
+                <li><a href="#linux-integration">Linux Integration</a>
               </ul>
             </ul>
           </nav>
@@ -117,6 +119,22 @@ processing triggered by an event not directly issued by a human being.
 <a href="#infrastructure">infrastructure</a> on which they run, alongside
 with <a href="#logs">centralized logs</a> and <a href="#alerts">alert means</a>
 to notify about anything wrong or suspect.
+
+<p>Often, scheduling tasks will also need a powerful parameters system with
+<a href="#hierarchical-inheritance-of-parameters-sets">hierarchical
+inheritance</a> and <a href="#percent-evaluation">evaluation language</a>,
+handling scheduling <a href="#tasks-triggers-and-constraints">constraints</a>
+such as <a href="#resources">resources</a> and
+<a href="#calendars">calendars</a>, or a customizable
+<a href="#events-and-actions">event-driven model</a>.
+
+<p>Monitoring and operating the scheduler can be done through the
+<a href="#wui">responsive-design web user interface</a> and (coming soon)
+desktop and phone/tablet apps.
+
+<p>Integrating with other IT tools and custom extensions is possible through
+<a href="#rest-api">REST API</a> and <a href="#linux-integration">standard
+operating system integration</a>.
 
 <h2>Tasks Hierarchy</h2>
 
@@ -798,6 +816,10 @@ mechanisms will be easier to use if the alert strings follow a hierarchical
 dot naming convention, e.g. <tt>task.failure.$TASKGROUP.$TASK</tt> or
 <tt>myapp.mycustomalert</tt>.
 
+<p>Alerts are notified through <a href="#alert-channels">alert channels</a>
+and can be displayed on <a href="#wui">web ui</a>, especially using
+<a href="#gridboards">gridboards</a>.
+
 <h3>Stateful Alerts</h3>
 
 <p>At first glance, stateful alerts have 3 statuses: <tt>nonexistent</tt>,
@@ -886,6 +908,10 @@ for delays default values and advices on their tuning when needed.
 <h3 id="alerts-subscriptions">Subscriptions</h3>
 
 <h3>Automatic Alerts</h3>
+
+<h3>Custom Alerts</h3>
+
+TODO: custom alerts through events and actions, but also from outside qron using the <a href="#rest-api">REST API</a>
 
 <h3>Gridboards</h3>
 
@@ -1012,10 +1038,6 @@ title="Rendering sample of 'Hosts Ping Statuses' gridboard" />
 <img class="img-responsive center-block"
 src="img/gridboards-service_x_instance-sample.png"
 title="Rendering sample of 'Application Services x Deployed Instances' gridboard" />
-
-<h3>Custom Alerts</h3>
-
-TODO: custom alerts through events and actions, but also from outside qron using the <a href="#rest-api">REST API</a>
 
 <h3 id="alerts-fine-tuning">Fine Tuning</h3>
 
@@ -1164,6 +1186,18 @@ title="Parameters Sets Hierarchy Caption" />
 <h4>Disabling a Task</h4>
 
 <h2 id="wui">Web User Interface</h2>
+
+<h3 id="#wui-description">Description</h3>
+
+<p> TODO incl. responsive-design and bootstrap-based
+
+<h3 id="#wui-views">Views</h3>
+
+<p> TODO concept and description of every view
+
+<h3 id="#wui-customization">Customization</h3>
+
+<p> TODO through parameters
 
 <h2>REST API</h2>
 
