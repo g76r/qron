@@ -83,6 +83,7 @@
                 <li><a href="#wui-views">Views</a>
                 <li><a href="#wui-customization">Customization</a>
               </ul>
+              <li><a href="#rest-api">REST API</a>
               <li><a href="#appendices">Appendices</a>
               <ul class="nav">
                 <li><a href="#configuration-file-format">Configuration File Format</a>
@@ -278,7 +279,7 @@ down to second, e.g.
 <a href="#notices">notice event</a> occurs
 <li><tt>filechange</tt>: not yet implented, but will be able to trigger task
 execution on local or remote file change or creation
-<li>REST API: a task can be triggered by REST API
+<li>REST API: a task can be triggered by <a href="#rest-api">REST API</a>
 <a href="#requesttask-call"><tt>requesttask</tt> call</a>
 <li><tt>requesttask</tt> event: a task can be triggered by occurrence of a
 <a href="#events"><tt>requesttask</tt> event</a>
@@ -356,7 +357,7 @@ special parameters name that have an effect qron behavior (parameters such as
 <tt>ssh.options</tt> when using ssh execution mean).
 
 <p>Parameters can be overriden at task request, being it in trigger definition,
-in REST API or in web user interface using
+in <a href="#rest-api">REST API</a> or in web user interface using
 <a href="#tasks-request-forms">request forms</a>.
 
 <p>Sample configuration file fragments:
@@ -744,11 +745,134 @@ weekly rotation and compression processed by logrotate.
 
 <h3>Gridboards</h3>
 
+<p>Provided they follow a name convention that can be expressed using regular
+expression capture groups, some alerts can be arranged as tables of statuses
+named gridboards.
+
+<p>A gridboard is described by its id and several properties among the
+following:
+<ul>
+<li><tt>pattern</tt>: alert pattern to be processed by this gridboard, must be
+a <a href="https://en.wikipedia.org/wiki/Regular_expression">regular expression
+with named capture groups</a>, e.g.
+<tt>^task\.(?&lt;status&gt;[^\.]+)\.(?&lt;taskid&gt;.+)$</tt>
+<li><tt>dimension</tt>: declare a dimension, first one being displayed as rows,
+second one as columns, using one of the following syntaxes:
+  <ul>
+  <li>just the capture group name declared in the pattern, e.g.
+  <tt>(dimension taskid)</tt>
+  <li>a dimension name and a <a href="#percent-evaluation">%-expression</a>,
+  e.g. <tt>(dimension TaskId %taskid)</tt> (note that the regular expression
+  capture groups are visible in the %-evaluation context which make it possible
+  to use a capture group name or number as a % key)
+  <li>the second dimension is not mandatory, if omitted, the gridboard will be
+  built as if there was a second dimension declared with
+  <tt>(dimension status status)</tt>, i.e. only one column, named "status".
+  </ul>
+<li><tt>label</tt>
+<li><tt>info</tt>
+<li><tt>warningdelay</tt> default 0
+<li><tt>param</tt> gridboard parameters, used in
+  <a href="#percent-evaluation">%-evaluation</a> performed within the context
+  of this gridboard; in addition some parameters can be used to customize
+  HTML rendering of the gridboard:
+  <ul>
+  <li><tt>gridboard.tableclass</tt>: HTML table class, defaults to
+  <tt>table table-condensed table-hover</tt>
+  <li><tt>gridboard.divclass</tt>: HTML div class for whole gridbard, defaults
+  to <tt>row gridboard-status</tt>
+  <li><tt>gridboard.componentclass</tt>: HTML div class for each gridboard
+  component, defaults to <tt>gridboard-component</tt>
+  <li><tt>gridboard.tdclass.ok</tt>: HTML table cell class for canceled alerts,
+  defaults to an empty string
+  <li><tt>gridboard.tdclass.warning</tt>: HTML table cell class for canceled
+  alerts not canceled for longer than the <tt>warningdelay</tt> or in unknown
+  status, defaults to <tt>warning</tt>
+  <li><tt>gridboard.tdclass.error</tt>: HTML table cell class for raised
+  alerts, defaults to  <tt>danger</tt>
+  <li><tt>gridboard.rowformat</tt>: custom format for row headers (i.e. first
+  dimension values), this is a <a href="#percent-evaluation">%-expression</a>
+  where <tt>%1</tt> is replaced with the actual dimension value, defaults to
+  <tt>%1</tt>, example below
+  <li><tt>gridboard.columnformat</tt>: same as <tt>gridboard.rowformat</tt>
+  for the second dimension
+  </ul>
+</ul>
+
+<p>For instance it is possible to set up a gridboard relying on
+<a href="#automatic-alerts">automatic alerts</a> to display one task per
+row and several columns and, for each task, if it has failed recently,
+if it has been too long or too short recently, etc. using this configuration:
+
+<pre>
+(gridboard tasks
+  (label Tasks Alerts)
+  # match qron's automatic alerts about tasks: failure, toolong, tooshort...
+  (pattern "^task\.(?&lt;status&gt;[^\.]+)\.(?&lt;taskid&gt;.+)$")
+  (dimension taskid)
+  (dimension status)
+  # add an HTML link to the task page to the taskid in row headers
+  (param gridboard.rowformat
+    '&lt;a href="taskdoc.html?taskid=%1"&gt;%1&lt;/a&gt;')
+)
+</pre>
+
+<p>An example of the HTML rendering of this gridboard would be:
+<img class="img-responsive center-block"
+src="img/gridboards-tasks-sample.png"
+title="Rendering sample of 'Tasks Alerts' gridboard" />
+
+<p>Apart from setting up a gridboard to display default automatic alerts
+raised by qron, it is also possible to use this feature with some
+<a href="#custom-alerts">custom alerts</a>, being them raised using the
+<a href="#actions">alert-related actions</a> or from any external source
+using the <a href="#rest-api">REST API</a>.
+
+<p>Here are some examples of dashboards associated to host and application
+servers supervision probes:
+
+<pre>
+(gridboard ping
+  (label Hosts Ping Statuses)
+  # match alerts of the form host.down.ping.$HOST
+  (pattern "^host\.down\.ping\.(?<host>[^\.]+)")
+  # first and only dimension is the host
+  (dimension host)
+  # implicitely there is a second dimension, always equal to "status"
+  (warningdelay 120) # shown as warning after 2 minutes w/o ping status
+)
+</pre>
+
+<p>An example of the HTML rendering of this gridboard would be:
+<img class="img-responsive center-block"
+src="img/gridboards-tasks-sample.png"
+title="Rendering sample of 'Hosts Ping Statuses' gridboard" />
+
+<pre>
+(gridboard service_x_instance
+  (label Application Services x Deployed Instances)
+  # match alerts of the form host.down.http.$HOST.$PORT.$PATH
+  (pattern "^host\.down\.http\.(?<host>[^\.]+)\.(?<port>[0-9]+)\.(?<path>.+)$")
+  # first dimension is the service, identified by its http path
+  (dimension service %path))
+  # second dimension is the instance, identified by %host:%port, with special
+  # processing on %host to remove everything after first dash
+  (dimension instance %{=sub:%host:/-.*//}:%port)
+  (warningdelay 300) # shown as warning after 2 minutes w/o http status
+)
+</pre>
+
+<p>An example of the HTML rendering of this gridboard would be:
+<img class="img-responsive center-block"
+src="img/gridboards-service_x_instance-sample.png"
+title="Rendering sample of 'Application Services x Deployed Instances' gridboard" />
+
+
 <h3 id="alerts-fine-tuning">Fine Tuning</h3>
 
 <h3>Custom Alerts</h3>
 
-TODO: custom alerts through events and actions, but also from outside qron using the REST API
+TODO: custom alerts through events and actions, but also from outside qron using the <a href="#rest-api">REST API</a>
 
 <h2>Events and Actions</h2>
 
@@ -881,6 +1005,8 @@ TODO
 <h4>Disabling a Task</h4>
 
 <h2 id="wui">Web User Interface</h2>
+
+<h2>REST API</h2>
 
 <h2>Appendices</h2>
 
