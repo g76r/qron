@@ -39,7 +39,7 @@ span[class^="label"],span[class*=" label"] a {
   /*border-right: 2px solid #286090;
   background-color: #5bc0de;*/
 }
-.anchorjs-link:hover {
+.anchorjs-link:hover, .anchorjs-link:focus {
   text-decoration: none;
 }
 .user-manual ul ul {
@@ -47,4 +47,11 @@ span[class^="label"],span[class*=" label"] a {
 }
 .user-manual li {
   padding-bottom: 6px;
+}
+a.help {
+  text-decoration: none;
+}
+a.help span {
+  font-size: 12pt;
+  vertical-align: top;
 }

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2014 Hallowyn and others.
+ Copyright 2012-2016 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -17,31 +17,10 @@
 
       <div class="row">
         <div class="col-md-12">
-          <p>There are two kinds of alerts: raisable alerts, which are emitted
-          when raised and canceled and simpler one shot alerts which are emitted
-          directly and are only de-duplicated to avoid spam.
-          <p>The first table displays raisable alerts, including a
-          visibility timestamp if the alert is not yet raised and
-          cancellation timestamp if the alert as been canceled but the cancellation
-          has not already been notified to subscribers (rising and
-          cancellation are not immediatly notified to avoid alerts flip/flop
-          spam).
-          <p>The second table displays every alert (raisable or one shot) along with
-          its emission timestamp. Note that alerts with a human recipient
-          (e.g. e-mail) are aggregated and throttled and therefore may be
-          actually sent to their recipient a few time after if other alerts
-          have already been emitted recently (e.g. by default e-mails are sent
-          at most every 10 minutes).
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
-          <h2>Current Raisable Alerts</h2>
+          <h2>Current Stateful<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> Alerts</h2>
           <form class="form-inline" action="do" type="GET">
           <a class="btn btn-primary" href="../rest/csv/alerts/raisable/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/alerts/raisable/list/v1"><i class="icon-file-html"></i> HTML</a>
-          <a class="btn btn-info" role="button" data-toggle="collapse" href="#collapseExample" aria-expanded="false"
-              aria-controls="collapseExample">Show State Diagram</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="raiseAlert" />
@@ -49,15 +28,13 @@
               <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Raise alert</button>
           </span>
           </form>
-          <div class="collapse" id="collapseExample">
-            <p><img src="doc/alerts_statuses.svg" alt="Alerts State Diagram" class="img-responsive">
-          </div>
           <p><?view:raisablealerts?>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
           <h2>Recently Emitted Alerts</h2>
+          <p>The table shows both stateful<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> alerts when they are actually emitted and one-shot<a class="help" href="user-manual.html#one-shot-alerts"><span class="icon-help-circled"/></a> alerts.
           <form class="form-inline" action="do" type="GET">
           <a class="btn btn-primary" href="../rest/csv/alerts/emitted/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/alerts/emitted/v1"><i class="icon-file-html"></i> HTML</a>
@@ -65,7 +42,7 @@
           <span class="pull-right">
               <input name="event" type="hidden" value="emitAlert" />
               <input class="input-large" name="alert" type="text" placeholder="alert name" />
-              <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Emit alert</button>
+              <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Emit one-shot alert</button>
           </span>
           </form>
           <p><?view:lastemittedalerts?>
@@ -73,10 +50,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Gridboards</h2>
-          <p>Provided they follow a name convention that can be expressed using
-           a regular expression, some alerts can be arranged as tables of
-           statuses named gridboards.
+          <h2>Gridboards<a class="help" href="user-manual.html#gridboards"><span class="icon-help-circled"/></a></h2>
           <p><a class="btn btn-primary" href="../rest/csv/gridboards/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/gridboards/list/v1"><i class="icon-file-html"></i> HTML</a>
           <p><?view:gridboards?>
@@ -84,7 +58,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Alerts Subscriptions</h2>
+          <h2>Alerts Subscriptions<a class="help" href="user-manual.html#alerts-subscriptions"><span class="icon-help-circled"/></a></h2>
           <p>For every emitted alert, subscriptions are evaluated from top to bottom.
            If several subsctiptions match an alert, it is emitted several times, one
            per matching subscription.
@@ -97,7 +71,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Tasks Parameters Related to Alerting</h2>
+          <h2>Tasks Parameters Related to Alerting<a class="help" href="user-manual.html#alerts-fine-tuning"><span class="icon-help-circled"/></a></h2>
           <p>Durations and delays are in seconds.
           <p><a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
@@ -107,7 +81,7 @@
       </div>
       <div class="row">
         <div class="col-md-8">
-          <h2>Alert Parameters</h2>
+          <h2>Alert Parameters<a class="help" href="user-manual.html#alerts-fine-tuning"><span class="icon-help-circled"/></a></h2>
           <p>Following parameters are shared among the whole alerting system,
           some maybe useful only for one alert channel, other maybe used by all
           of them, and their value are inherited by alert subscriptions (i.e.
@@ -118,14 +92,14 @@
           <p><?view:alertparams?>
         </div>
         <div class="col-md-4 hidden-xs hidden-sm">
-          <h2>Alert Channels</h2>
+          <h2>Alert Channels<a class="help" href="user-manual.html#alert-channels"><span class="icon-help-circled"/></a></h2>
           <p>Following channels can be used in alert subscriptions.
           <p><?view:alertchannels?>
         </div>
       </div>
       <div class="row">
         <div class="col-md-8">
-          <h2>Alert-based Settings</h2>
+          <h2>Alert-based Settings<a class="help" href="user-manual.html#alerts-fine-tuning"><span class="icon-help-circled"/></a></h2>
           <p>For every emitted alert, some global alerts settings can be
            overriden with the following settings.
            Settings are evaluated from top to bottom. If several settings
@@ -136,7 +110,7 @@
           <p><?view:alertsettings?>
         </div>
         <div class="col-md-4">
-          <h2>Global Settings</h2>
+          <h2>Global Settings<a class="help" href="user-manual.html#alerts-fine-tuning"><span class="icon-help-circled"/></a></h2>
           <p>These settings are used by default if not overriden by alert pattern.
           Delays are in seconds.
           <p><table class="table table-condensed table-hover">
@@ -174,4 +148,7 @@
      </div>
 
 <?include:common-scripts.html?>
+<script>
+anchors.add('h2');
+</script>
 <?include:footer.html?>
