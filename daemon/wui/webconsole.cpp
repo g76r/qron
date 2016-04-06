@@ -62,7 +62,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _hostsModel = new SharedUiItemsTableModel(Host(PfNode("template")), this);
   _hostsModel->setItemQualifierFilter("host");
   _clustersModel = new ClustersModel(this);
-  _clustersModel->setItemQualifierFilter({"cluster", "host"});
+  _clustersModel->setItemQualifierFilter({"cluster", "hostreference"});
   _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
   _resourcesLwmModel = new HostsResourcesAvailabilityModel(
         this, HostsResourcesAvailabilityModel::LwmOverConfigured);
