@@ -617,8 +617,20 @@ on every host within the cluster
 
 <p>Sample configuration file fragments:
 <pre>
-(cluster unix-servers
+(cluster app-servers
   (hosts server1 server2 server3)
+  (balancing roundrobin) # this can be omitted since this is the default
+)
+(task process-last-orders
+  (taskgroup app1.biz.queuing)
+  (mean http)
+  (target app-servers)
+  (command /pollers/last-orders/?from=-5minutes)
+)
+</pre>
+<pre>
+(cluster unix-servers
+  (hosts server4 server5 server6)
   (balancing each)
 )
 (task remove-old-files-on-every-unix-server
