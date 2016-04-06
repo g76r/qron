@@ -600,15 +600,17 @@ property than its id.
 <h3>Clusters</h3>
 
 <p>A <tt>cluster</tt> defines an execution target consisting of a list of
-<tt>hosts</tt> and a <tt>balancing</tt> method to choose the actual target
+<tt>hosts</tt> and a <tt>balancing</tt> method to choose the actual execution
 host among them. It must have an <tt>id</tt>, which cannot be identical to
 one of the hosts id, and can have a human readable <tt>label</tt>.
 
 <p>Following <tt>balancing</tt> methods are supported:
 <ul>
-<li><tt>first</tt>: use first available host within cluster (currently host
-availability check is not yet implemented, therefore this balancing method
-always choose first host in the list and is useless)
+<li><tt>first</tt>: choose first host (in configuration order) with enough
+resources
+<li><tt>random</tt>: choose a random host among those with enough resources
+<li><tt>roundrobin</tt>: choose clusters hosts one after another, skipping
+hosts without enough resources, this is the default balancing method
 <li><tt>each</tt>: when requesting the task once, it is actually executed
 on every host within the cluster
 </ul>
