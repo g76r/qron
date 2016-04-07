@@ -22,4 +22,4 @@ re: clean all
 
 user-manual/index.html: user-manual.html header.html common-scripts.html footer.html
 	cat $< | awk '/<?include:/{sub(".*<\\?include:","");sub("\\?>.*","");system("cat " $$0);next}{print $$0}' > $@
-	[ ! -e $(PUBLISHING_DIRECTORY) ] || mkdir $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default} && rsync -avrLk --delete --delete-after $$(dirname $@)/. $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default}/.
+	[ ! -e $(PUBLISHING_DIRECTORY) ] || mkdir -p $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default} && rsync -avrLk --delete --delete-after $$(dirname $@)/. $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default}/.
