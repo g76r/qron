@@ -1,5 +1,5 @@
-TARGETS=user-manual/index.html
-PUBLISHING_DIRECTORY=/publishing/qron/user-manual
+TARGETS=doc/user-manual.html
+PUBLISHING_DIRECTORY=/publishing/qron/doc
 
 .PHONY: default all clean re
 
@@ -20,6 +20,6 @@ clean:
 
 re: clean all
 
-user-manual/index.html: user-manual.html header.html common-scripts.html footer.html
+doc/user-manual.html: user-manual.html header.html common-scripts.html footer.html
 	cat $< | awk '/<?include:/{sub(".*<\\?include:","");sub("\\?>.*","");system("cat " $$0);next}{print $$0}' > $@
-	[ ! -e $(PUBLISHING_DIRECTORY) ] || mkdir -p $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default} && rsync -avrLk --delete --delete-after $$(dirname $@)/. $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default}/.
+	if [ -e $(PUBLISHING_DIRECTORY) ]; then mkdir -p $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default} && rsync -avrLk --delete --delete-after $$(dirname $@)/. $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default}/.; fi
