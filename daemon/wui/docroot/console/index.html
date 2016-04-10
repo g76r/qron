@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2014 Hallowyn and others.
+ Copyright 2012-2016 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -31,7 +31,7 @@
           </table>
         </div>
         <div class="col-md-8">
-          <h2>Currently Raised Alerts</h2>
+          <h2>Currently Raised<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> Alerts</h2>
           <p><a class="btn btn-primary" href="../rest/csv/alerts/raisable/list/v1"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/html/alerts/raisable/list/v1"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="alerts.html">Alerts page &raquo;</a>
@@ -79,6 +79,7 @@
 
 <?include:common-scripts.html?>
     <script>
+anchors.add('h2');
 var tasksschedule_rows = $('table#tasksschedule tbody tr');
 function tasksschedule_filter() {
   tasksschedule_rows.each(function() {

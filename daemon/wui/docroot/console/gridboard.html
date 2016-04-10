@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2015 Hallowyn and others.
+ Copyright 2015-2016 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -17,14 +17,14 @@
 
       <div class="row">
         <div class="col-md-12">
-          <h2>Gridboard: <?value:1?></h2>
+          <h1>Gridboard: <?value:1?></h1>
           <p><a class="btn btn-danger" href="confirm?event=clearGridboard&gridboardid=<?value:0?>"><i class="icon-trash"></i> Clear gridboard</a>
           <a class="btn btn-info" href="alerts.html">Alerts page &raquo;</a>
         </div>
       </div>
       <div class="row">
         <div class="col-md-8">
-          <h2>Gridboard Description</h2>
+          <h2>Gridboard Description<a class="help" href="user-manual.html#gridboards"><span class="icon-help-circled"/></a></h2>
           <p><table class="table table-condensed table-hover">
           <tr><th>Id</th><td><?value:0:?></td></tr>
           <tr><th>Label</th><td><?value:1:?></td></tr>
@@ -52,7 +52,7 @@
       </div>
       <div class="row">
         <div class="col-md-8">
-          <h2>Gridboard Settings</h2>
+          <h2>Gridboard Settings<a class="help" href="user-manual.html#gridboards"><span class="icon-help-circled"/></a></h2>
           <p><table class="table table-condensed table-hover">
           <tr><th>Pattern</th><td><?value:2:?></td></tr>
           <tr><th>Dimensions</th><td><?value:3:?></td></tr>
@@ -68,4 +68,7 @@
       </div>
 
 <?include:common-scripts.html?>
+    <script>
+anchors.add('h2');
+    </script>
 <?include:footer.html?>

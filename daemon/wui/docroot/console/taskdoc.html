@@ -17,7 +17,7 @@
 
       <div class="row">
         <div class="col-md-12">
-          <h2>Task <?value:11?></h2>
+          <h1>Task <?value:11?></h1>
           <p><a class="btn btn-danger" href="requestform?taskid=<?value:11?>"><i class="icon-play"></i> Request task execution</a>
           <a class="btn btn-danger" href="do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
           <a class="btn btn-warning" href="do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
@@ -28,7 +28,7 @@
       </div>
       <div class="row">
         <div class="col-md-8">
-          <h3>Task Description</h3>
+          <h2>Task Description<a class="help" href="user-manual.html#tasks-description"><span class="icon-help-circled"/></a></h2>
           <p><a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="index.html">Overview page &raquo;</a>
           <p><table class="table table-condensed table-hover">
@@ -44,7 +44,7 @@
           </table>
         </div>
         <div class="col-md-4">
-          <h3>Task Status</h3>
+          <h2>Task Status</h2>
           <p><a class="btn invisible" href="#">&nbsp;</a>
           <p><table class="table table-condensed table-hover">
              <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="icon-block"></i>&nbsp;false}?></td></tr>
@@ -59,7 +59,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h3>Task Parameters and Resources</h3>
+          <h2>Task Parameters<a class="help" href="user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a> and Resources<a class="help" href="user-manual.html#resources"><span class="icon-help-circled"/></a></h2>
           <p><a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="resources.html">Resources page &raquo;</a>
           <p><table class="table table-condensed table-hover">
@@ -80,7 +80,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h3>Task Workflow Diagram</h3>
+          <h2>Task Workflow<a class="help" href="user-manual.html#workflows-and-subtasks"><span class="icon-help-circled"/></a> Diagram</h2>
           <p><a class="btn btn-primary" href="../rest/svg/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> SVG</a>
           <a class="btn btn-primary" href="../rest/dot/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> DOT</a>
           <div id="workflowDiagram" style="display: table; margin: 0 auto;">
@@ -90,7 +90,7 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h3>Raw Task Configuration</h3>
+          <h2>Raw Task Configuration</h2>
           <p><a class="btn btn-primary" target="_blank" href="../rest/pf/task/config/v1?taskid=<?value:11?>"><i class="icon-file"></i> PF</a>
           <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
         </div>
@@ -98,6 +98,7 @@
 
 <?include:common-scripts.html?>
     <script type="text/javascript">
+anchors.add('h2');
 $(document).ready(function(){
   $('#workflowDiagram').load('../rest/svg/tasks/workflow/v1?taskid=<?value:11?>', function() {
     $("a").not("[xlink\\:title='']").each(function() {
