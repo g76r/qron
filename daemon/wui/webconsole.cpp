@@ -30,7 +30,7 @@
 #include "alert/alert.h"
 #include "alert/gridboard.h"
 #include "config/step.h"
-#include "util/stringmap.h"
+#include "util/radixtree.h"
 #include <functional>
 
 #define SHORT_LOG_MAXROWS 100
@@ -765,7 +765,7 @@ static void copyFilteredFile(QString path, QIODevice *output,
   copyFilteredFiles(paths, output, pattern, useRegexp);
 }
 
-static StringMap<
+static RadixTree<
 std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                    ParamsProviderMerger *)>> _handlers {
 { { "/console/do", "/rest/do" }, [](
@@ -1512,7 +1512,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 } },
 */
 
-StringMap<QString> _staticRedirects {
+RadixTree<QString> _staticRedirects {
   { { "/", "/console" }, "console/overview.html" },
   { { "/console/", "/console/index.html"}, "overview.html" },
   { "/console/infra.html", "infrastructure.html" },
