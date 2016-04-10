@@ -1677,13 +1677,18 @@ void WebConsole::enableAccessControl(bool enabled) {
     return;
   // LATER this is not transactional and thus may issue 403's during conf reload
   if (enabled) {
+    // TODO uploading a config should need more than "read" (even if it's less dangerous than activating a config)
     _authorizer->clearRules()
-        .allow("", "^/console/(css|jsp|js)/.*") // anyone for static resources
-        .allow("", "^/console/test\\.html$") // anyone for test page
-        .allow("operate", "^/(rest|console)/do") // operate for operation
-        // TODO uploading a config should need more than "read" (even if it's less dangerous than activating a config)
-        .deny("", "^/(rest|console)/do") // nobody else
-        .allow("read"); // read for everything else
+        // anyone for static resources
+        .allow("", "^/console/(css|jsp|js|img)/.*")
+        // anyone for test page and user manual
+        .allow("", "^/console/(test|user-manual)\\.html$")
+        // operate for operation
+        .allow("operate", "^/(rest|console)/do")
+        // nobody else on operation uris
+        .deny("", "^/(rest|console)/do")
+        // read for everything else
+        .allow("read");
   } else {
     _authorizer->clearRules()
         .allow(); // anyone for anything
