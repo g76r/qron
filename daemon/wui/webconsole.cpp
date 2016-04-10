@@ -1512,6 +1512,22 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 } },
 */
 
+StringMap<QString> _staticRedirects {
+  { { "/", "/console" }, "console/overview.html" },
+  { { "/console/", "/console/index.html"}, "overview.html" },
+  { "/console/infra.html", "infrastructure.html" },
+  { "/console/log.html", "logs.html" },
+};
+
+/*QHash<QString,QString> _staticRedirects {
+  { "/", "console/overview.html" },
+  { "/console", "console/overview.html" },
+  { "/console/", "overview.html" },
+  { "/console/index.html", "overview.html" },
+  { "/console/infra.html", "infrastructure.html" },
+  { "/console/log.html", "logs.html" },
+};*/
+
 bool WebConsole::handleRequest(
     HttpRequest req, HttpResponse res,
     ParamsProviderMerger *originalProcessingContext) {
@@ -1524,13 +1540,12 @@ bool WebConsole::handleRequest(
     res.output()->write("Scheduler is not available.");
     return true;
   }
-  processingContext.append(_scheduler->globalParams());
-  while (path.size() && path.at(path.size()-1) == '/')
-    path.chop(1);
-  if (path.isEmpty()) {
-    res.redirect("console/index.html", HttpResponse::HTTP_Moved_Permanently);
+  auto staticRedirect = _staticRedirects.value(path);
+  if (!staticRedirect.isEmpty()) {
+    res.redirect(staticRedirect, HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
+  processingContext.append(_scheduler->globalParams());
   QString userid = processingContext.paramValue("userid").toString();
   if (_authorizer && !_authorizer->authorize(userid, path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);

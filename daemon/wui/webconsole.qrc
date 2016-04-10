@@ -1,7 +1,7 @@
 <RCC>
     <qresource prefix="/">
         <file>docroot/console/test.html</file>
-        <file>docroot/console/index.html</file>
+        <file>docroot/console/overview.html</file>
         <file>docroot/console/header.html</file>
         <file>docroot/console/common-scripts.html</file>
         <file>docroot/console/footer.html</file>
@@ -13,8 +13,8 @@
         <file>docroot/console/resources.html</file>
         <file>docroot/console/alerts.html</file>
         <file>docroot/console/tasks.html</file>
-        <file>docroot/console/log.html</file>
-        <file>docroot/console/infra.html</file>
+        <file>docroot/console/logs.html</file>
+        <file>docroot/console/infrastructure.html</file>
         <file>docroot/console/events.html</file>
         <file>docroot/console/schedule.html</file>
         <file>docroot/console/config.html</file>
