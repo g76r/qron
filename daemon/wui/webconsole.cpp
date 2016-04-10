@@ -1012,8 +1012,8 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                                      .setShouldIgnoreComment(false))));
         TaskPseudoParamsProvider tppp = task.pseudoParams();
         SharedUiItemParamsProvider itemAsParams(task);
-        processingContext->append(&tppp);
-        processingContext->append(&itemAsParams);
+        processingContext->prepend(&tppp);
+        processingContext->prepend(&itemAsParams);
         res.clearCookie("message", "/");
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       } else {
