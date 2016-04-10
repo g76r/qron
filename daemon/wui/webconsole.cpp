@@ -32,6 +32,7 @@
 #include "config/step.h"
 #include "util/radixtree.h"
 #include <functional>
+#include "util/characterseparatedexpression.h"
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -283,7 +284,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlGridboardsView->setModel(_gridboardsModel);
   ((HtmlItemDelegate*)_htmlGridboardsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
-                              "<a href=\"gridboard.html?gridboardid=%1\">", 0)
+                              "<a href=\"gridboard/%1\">", 0)
       ->setSuffixForColumn(1, "</a>");
   cols.clear();
   cols << 1 << 2 << 3;
@@ -998,10 +999,25 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       }
       return true;
     } },
-{ "/console/taskdoc.html", [](
+{ "/console/taskdoc.html", []( // LATER remove
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      QString taskId = req.param("taskid");
+      QString referer = req.header("Referer", "index.html");
+      Task task(webconsole->scheduler()->task(taskId));
+      if (!task.isNull()) {
+        res.redirect("task/"+taskId);
+      } else {
+        res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
+                                   "/");
+        res.redirect(referer);
+      }
+      return true;
+} },
+{ "/console/task/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
-      QString taskId = req.param("taskid");
+      QString taskId = req.url().path().mid(14); // LATER matchedLength
       QString referer = req.header("Referer", "index.html");
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
@@ -1015,6 +1031,10 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         processingContext->prepend(&tppp);
         processingContext->prepend(&itemAsParams);
         res.clearCookie("message", "/");
+        QUrl url(req.url());
+        url.setPath("/console/task.html");
+        url.setQuery(QString());
+        req.overrideUrl(url);
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
@@ -1022,11 +1042,27 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         res.redirect(referer);
       }
       return true;
+}, true },
+{ "/console/gridboard.html", []( // LATER remove
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *) {
+      QString gridboardId = req.param("gridboardid");
+      QString referer = req.header("Referer", "index.html");
+      Gridboard gridboard(webconsole->scheduler()->alerter()
+                          ->gridboard(gridboardId));
+      if (!gridboard.isNull()) {
+        res.redirect("gridboard/"+gridboardId);
+      } else {
+        res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
+                                   +"' not found.", "/");
+        res.redirect(referer);
+      }
+      return true;
 } },
-{ "/console/gridboard.html", [](
+{ "/console/gridboard/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
-      QString gridboardId = req.param("gridboardid");
+      QString gridboardId = req.url().path().mid(19);
       QString referer = req.header("Referer", "index.html");
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
@@ -1036,6 +1072,10 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         processingContext->overrideParamValue("gridboard.data",
                                               gridboard.toHtml());
         res.clearCookie("message", "/");
+        QUrl url(req.url());
+        url.setPath("/console/gridboard.html");
+        url.setQuery(QString());
+        req.overrideUrl(url);
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       } else {
         res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
@@ -1043,7 +1083,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         res.redirect(referer);
       }
       return true;
-} },
+}, true },
 { "/console/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
@@ -1560,8 +1600,9 @@ bool WebConsole::handleRequest(
     return true;
   }
   auto handler = _handlers.value(path);
-  if (handler)
+  if (handler) {
     return handler(this, req, res, &processingContext);
+  }
   res.setStatus(404);
   res.output()->write("Not found.");
   return true;

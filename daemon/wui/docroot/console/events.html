@@ -121,7 +121,7 @@ steps_filter();
 $(document).ready(function(){
   $('#tasksTriggerDiagram').load('../rest/svg/tasks/trigger/v1', function() {
     $("a").not("[xlink\\:title='']").each(function() {
-      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?taskid='+$(this).attr('xlink:title'));
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href','task/'+$(this).attr('xlink:title'));
     });
   });
 });

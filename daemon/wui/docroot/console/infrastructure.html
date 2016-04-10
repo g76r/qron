@@ -57,7 +57,7 @@ anchors.add('h2');
 $(document).ready(function(){
   $('#tasksDeploymentDiagram').load('../rest/svg/tasks/deploy/v1', function() {
     $("a").not("[xlink\\:title='']").each(function() {
-      this.setAttributeNS('http://www.w3.org/1999/xlink','href','taskdoc.html?taskid='+$(this).attr('xlink:title'));
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href','task/'+$(this).attr('xlink:title'));
     });
   });
 });
