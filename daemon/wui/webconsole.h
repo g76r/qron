@@ -24,7 +24,6 @@
 #include "ui/clustersmodel.h"
 #include "util/paramsetmodel.h"
 #include "ui/lastoccuredtexteventsmodel.h"
-#include "textview/clockview.h"
 #include "log/logmodel.h"
 #include "ui/taskinstancesmodel.h"
 #include "ui/tasksmodel.h"
@@ -104,7 +103,6 @@ class WebConsole : public HttpHandler {
   *_htmlConfigsView, *_htmlConfigHistoryView;
   HtmlSchedulerConfigItemDelegate *_htmlConfigsDelegate,
   *_htmlConfigHistoryDelegate;
-  ClockView *_clockView;
   CsvTableView *_csvHostsListView,
   *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
@@ -234,7 +232,8 @@ public:
   HtmlTableView *htmlConfigsView() const { return _htmlConfigsView; }
   HtmlTableView *htmlConfigHistoryView() const {
     return _htmlConfigHistoryView; }
-
+  QString configFilePath() const { return _configFilePath; }
+  QString configRepoPath() const { return _configRepoPath; }
 
 public slots:
   void enableAccessControl(bool enabled);

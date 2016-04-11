@@ -39,6 +39,8 @@
 #define UNFINISHED_TASK_INSTANCE_MAXROWS 1000
 #define SVG_BELONG_TO_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><a xlink:title=\"%1\"><text x=\"0\" y=\"15\">This task belongs to workflow \"%1\".</text></a></svg>"
 #define SVG_NOT_A_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">This task is not a workflow.</text></svg>"
+#define ISO8601 QStringLiteral("yyyy-MM-dd hh:mm:ss")
+
 
 static PfNode nodeWithValidPattern =
     PfNode("dummy", "dummy").setAttribute("pattern", ".*")
@@ -569,11 +571,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvConfigHistoryView = new CsvTableView(this);
   _csvConfigHistoryView->setModel(_configHistoryModel);
 
-  // other views
-  _clockView = new ClockView(this);
-  _clockView->setFormat("yyyy-MM-dd hh:mm:ss,zzz");
-  _wuiHandler->addView("now", _clockView);
-
   // dedicated thread
   _thread->setObjectName("WebConsoleServer");
   connect(this, &WebConsole::destroyed, _thread, &QThread::quit);
@@ -609,86 +606,111 @@ bool WebConsole::acceptRequest(HttpRequest req) {
   return true;
 }
 
+static QHash<QString,
+std::function<QVariant(const WebConsole *, const QString &key)>> _consoleParams {
+{ "scheduler.startdate", [](const WebConsole *console, const QString &) {
+  // LATER use %=date syntax
+  return console->scheduler()->startdate().toString(ISO8601);
+} },
+{ "scheduler.uptime", [](const WebConsole *console, const QString &) {
+  return TimeFormats::toCoarseHumanReadableTimeInterval(
+        console->scheduler()->startdate().msecsTo(QDateTime::currentDateTime()));
+} },
+{ "scheduler.configdate", [](const WebConsole *console, const QString &) {
+  // LATER use %=date syntax
+  return console->scheduler()->configdate().toString(ISO8601);
+} },
+{ "scheduler.execcount", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->execCount();
+} },
+{ "scheduler.runningtaskshwm", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->runningTasksHwm();
+} },
+{ "scheduler.queuedtaskshwm", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->queuedTasksHwm();
+} },
+{ "scheduler.taskscount", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->tasksCount();
+} },
+{ "scheduler.taskgroupscount", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->taskGroupsCount();
+} },
+{ "scheduler.maxtotaltaskinstances", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->maxtotaltaskinstances();
+} },
+{ "scheduler.maxqueuedrequests", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->maxqueuedrequests();
+} },
+{ "alerter.rulescachesize", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->rulesCacheSize();
+} },
+{ "alerter.rulescachehwm", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->rulesCacheHwm();
+} },
+{ "alerter.alertsettingscount", [](const WebConsole *console, const QString &) {
+  return console->alerterConfig().alertSettings().size();
+} },
+{ "alerter.alertsubscriptionscount", [](const WebConsole *console, const QString &) {
+  return console->alerterConfig().alertSubscriptions().size();
+} },
+{ "alerter.raiserequestscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->raiseRequestsCounter();
+} },
+{ "alerter.raiseimmediaterequestscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->raiseImmediateRequestsCounter();
+} },
+{ "alerter.raisenotificationscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->raiseNotificationsCounter();
+} },
+{ "alerter.cancelrequestscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->cancelRequestsCounter();
+} },
+{ "alerter.cancelimmediaterequestscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->cancelImmediateRequestsCounter();
+} },
+{ "alerter.cancelnotificationscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->cancelNotificationsCounter();
+} },
+{ "alerter.emitrequestscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->emitRequestsCounter();
+} },
+{ "alerter.emitnotificationscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->emitNotificationsCounter();
+} },
+{ "alerter.totalchannelsnotificationscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->totalChannelsNotificationsCounter();
+} },
+{ "alerter.deduplicatingalertscount", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->deduplicatingAlertsCount();
+} },
+{ "alerter.deduplicatingalertshwm", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->deduplicatingAlertsHwm();
+} },
+{ "gridboards.evaluationscounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->gridboardsEvaluationsCounter();
+} },
+{ "gridboards.updatescounter", [](const WebConsole *console, const QString &) {
+  return console->scheduler()->alerter()->gridboardsUpdatesCounter();
+} },
+{ "configrepository.configfilepath", [](const WebConsole *console, const QString &) {
+  return console->configFilePath();
+} },
+{ "configrepository.configrepopath", [](const WebConsole *console, const QString &) {
+  return console->configRepoPath();
+} },
+};
+
 class WebConsoleParamsProvider : public ParamsProvider {
   WebConsole *_console;
 
 public:
   WebConsoleParamsProvider(WebConsole *console) : _console(console) { }
   QVariant paramValue(const QString key, const QVariant defaultValue,
-                      QSet<QString> alreadyEvaluated) const {
-    Q_UNUSED(alreadyEvaluated)
-    // TODO switch to StringMap
-    if (key.startsWith("scheduler.")) {
-      if (!_console || !_console->_scheduler) // should never happen
-        return defaultValue;
-      if (key == "scheduler.startdate") // LATER use %=date syntax
-        return _console->_scheduler->startdate()
-            .toString("yyyy-MM-dd hh:mm:ss");
-      if (key == "scheduler.uptime")
-        return TimeFormats::toCoarseHumanReadableTimeInterval(
-              _console->_scheduler->startdate()
-              .msecsTo(QDateTime::currentDateTime()));
-      if (key == "scheduler.configdate") // LATER use %=date syntax
-        return _console->_scheduler->configdate()
-            .toString("yyyy-MM-dd hh:mm:ss");
-      if (key == "scheduler.execcount")
-        return _console->_scheduler->execCount();
-      if (key == "scheduler.runningtaskshwm")
-        return _console->_scheduler->runningTasksHwm();
-      if (key == "scheduler.queuedtaskshwm")
-        return _console->_scheduler->queuedTasksHwm();
-      if (key == "scheduler.taskscount")
-        return _console->_scheduler->tasksCount();
-      if (key == "scheduler.tasksgroupscount")
-        return _console->_scheduler->tasksGroupsCount();
-      if (key == "scheduler.maxtotaltaskinstances")
-        return _console->_scheduler->maxtotaltaskinstances();
-      if (key == "scheduler.maxqueuedrequests")
-        return _console->_scheduler->maxqueuedrequests();
-    } else if (key.startsWith("alerter.")) {
-      if (key == "alerter.rulescachesize")
-        return _console->_scheduler->alerter()->rulesCacheSize();
-      if (key == "alerter.rulescachehwm")
-        return _console->_scheduler->alerter()->rulesCacheHwm();
-      if (key == "alerter.alertsettingscount")
-        return _console->_alerterConfig.data().alertSettings().size();
-      if (key == "alerter.alertsubscriptionscount")
-        return _console->_alerterConfig.data().alertSubscriptions().size();
-      if (key == "alerter.raiserequestscounter")
-        return _console->_scheduler->alerter()->raiseRequestsCounter();
-      if (key == "alerter.raiseimmediaterequestscounter")
-        return _console->_scheduler->alerter()->raiseImmediateRequestsCounter();
-      if (key == "alerter.raisenotificationscounter")
-        return _console->_scheduler->alerter()->raiseNotificationsCounter();
-      if (key == "alerter.cancelrequestscounter")
-        return _console->_scheduler->alerter()->cancelRequestsCounter();
-      if (key == "alerter.cancelimmediaterequestscounter")
-        return _console->_scheduler->alerter()->cancelImmediateRequestsCounter();
-      if (key == "alerter.cancelnotificationscounter")
-        return _console->_scheduler->alerter()->cancelNotificationsCounter();
-      if (key == "alerter.emitrequestscounter")
-        return _console->_scheduler->alerter()->emitRequestsCounter();
-      if (key == "alerter.emitnotificationscounter")
-        return _console->_scheduler->alerter()->emitNotificationsCounter();
-      if (key == "alerter.totalchannelsnotificationscounter")
-        return _console->_scheduler->alerter()
-            ->totalChannelsNotificationsCounter();
-      if (key == "alerter.deduplicatingalertscount")
-        return _console->_scheduler->alerter()->deduplicatingAlertsCount();
-      if (key == "alerter.deduplicatingalertshwm")
-        return _console->_scheduler->alerter()->deduplicatingAlertsHwm();
-    } else if (key.startsWith("gridboards.")) {
-      if (key == "gridboards.evaluationscounter")
-        return _console->_scheduler->alerter()->gridboardsEvaluationsCounter();
-      if (key == "gridboards.updatescounter")
-        return _console->_scheduler->alerter()->gridboardsUpdatesCounter();
-    } else if (key.startsWith("configrepository.")) {
-      if (key == "configrepository.configfilepath")
-        return _console->_configFilePath;
-      if (key == "configrepository.configrepopath")
-        return _console->_configRepoPath;
-    }
-    return defaultValue;
+                      QSet<QString>) const {
+    if (!_console || !_console->_scheduler) // should never happen
+      return defaultValue;
+    auto handler = _consoleParams.value(key);
+    return handler ? handler(_console, key) : defaultValue;
   }
 };
 
