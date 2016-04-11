@@ -34,11 +34,11 @@
 #include "httpd/graphvizimagehttphandler.h"
 #include "ui/logfilesmodel.h"
 #include <QSortFilterProxyModel>
-#include "ui/htmlstepitemdelegate.h"
+#include "htmlstepitemdelegate.h"
 #include "configuploadhandler.h"
 #include "configmgt/configrepository.h"
 #include "ui/configsmodel.h"
-#include "ui/htmlschedulerconfigitemdelegate.h"
+#include "htmlschedulerconfigitemdelegate.h"
 #include "ui/confighistorymodel.h"
 #include "thread/atomicvalue.h"
 #include <QRegularExpression>
