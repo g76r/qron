@@ -1,5 +1,7 @@
 # From 1.8.5 to 1.8.6
 * New features and notable changes
+ - a user manual is now available embeded within web ui and online on the
+   Internet, here: http://qron.eu/doc/master/user-manual.html
  - ssh and local execution means: changed space escaping syntax in config
    file's task command (now a backslash protects a space in command line
    tokenization), arguments split can now be protected by backslash, e.g.:
@@ -9,12 +11,21 @@
  - config file format: backslashes are no longer protected by double quotes,
    enabling such syntax that was not possible before:
    ```"foo \"bar\" \n\u20aC"```
+ - clusters have learned two balancing methods: ```random``` and
+   ```roundrobin``` (which is now the default one, instead of ```first```)
  - http execution mean and http alerts: it is now possible to follow http
-   redirects (although not enabled by default)
+   redirects (although not enabled by default), to log reply content even
+   on success, and to validate reply content against a regexp to decide if
+   the call was successful regardless the status code
  - requesttask action can now dynamicaly override task params, e.g.:
         - ```(task foo(onsuccess(requesttask bar(params myparam myvalue))))```
+ - changed and rationalized many web console uris, e.g.:
+        - /console/taskdoc.html?taskid=%1 -> /console/task/%1
+        - /console/index.html -> /console/overview.html
 
 * Minor improvements and fixes
+ - wui: added nice anchors using AnchorJS and links to the user manual all
+   over the wui
  - html exports: better html entities compatiblity: apos -> #39 and
    quote -> #34 this is more portable since apos is not in HTML4 and MS
    Excel did not import it when copy'n pasting
@@ -50,7 +61,8 @@
    (mainly QList), for SharedUiItem derived objects (most of qron data classes)
    and PfNode
  - enhanced performances in params evaluation function and http path analyzer
-   by switching from if/else/if blocks to radix tree lambda methods collection
+   by switching from if/else/if blocks to hashmaps and radix tree lambda
+   methods containers
  - switched most regular expression to richer Perl syntax with a more performant
    engine (switched from Qt's QRegExp to QRegularExpression which is powered by
    PCRE), see [QRegExp](http://doc.qt.io/qt-5/qregexp.html),
