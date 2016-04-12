@@ -74,15 +74,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _globalSetenvModel = new ParamSetModel(this);
   _globalUnsetenvModel = new ParamSetModel(this);
   _alertParamsModel = new ParamSetModel(this);
-  _raisableAlertsModel = new SharedUiItemsTableModel(this);
-  _raisableAlertsModel->setHeaderDataFromTemplate(Alert("template"));
-  _raisableAlertsModel->setDefaultInsertionPoint(
+  _statefulAlertsModel = new SharedUiItemsTableModel(this);
+  _statefulAlertsModel->setHeaderDataFromTemplate(Alert("template"));
+  _statefulAlertsModel->setDefaultInsertionPoint(
         SharedUiItemsTableModel::FirstItem);
-  _sortedRaisableAlertsModel = new QSortFilterProxyModel(this);
-  _sortedRaisableAlertsModel->setSourceModel(_raisableAlertsModel);
-  _sortedRaisableAlertsModel->sort(0);
+  _sortedStatefulAlertsModel = new QSortFilterProxyModel(this);
+  _sortedStatefulAlertsModel->setSourceModel(_statefulAlertsModel);
+  _sortedStatefulAlertsModel->sort(0);
   _sortedRaisedAlertModel = new QSortFilterProxyModel(this);
-  _sortedRaisedAlertModel->setSourceModel(_raisableAlertsModel);
+  _sortedRaisedAlertModel->setSourceModel(_statefulAlertsModel);
   _sortedRaisedAlertModel->sort(0);
   _sortedRaisedAlertModel->setFilterKeyColumn(1);
   _sortedRaisedAlertModel->setFilterRegExp("raised|dropping");
@@ -214,12 +214,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertParamsView = new HtmlTableView(this, "alertparams");
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _wuiHandler->addView(_htmlAlertParamsView);
-  _htmlRaisableAlertsView = new HtmlTableView(this, "raisablealerts");
-  _htmlRaisableAlertsView->setModel(_sortedRaisableAlertsModel);
-  _htmlRaisableAlertsView->setEmptyPlaceholder("(no alert)");
+  _htmlStatefulAlertsView = new HtmlTableView(this, "statefulalerts");
+  _htmlStatefulAlertsView->setModel(_sortedStatefulAlertsModel);
+  _htmlStatefulAlertsView->setEmptyPlaceholder("(no alert)");
   cols.clear();
   cols << 0 << 2 << 3 << 4 << 5;
-  _htmlRaisableAlertsView->setColumnIndexes(cols);
+  _htmlStatefulAlertsView->setColumnIndexes(cols);
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
                      "<i class=\"icon-bell\"></i>&nbsp;");
@@ -233,11 +233,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                      "<i class=\"icon-bell\"></i>&nbsp;");
   alertsIcons.insert(Alert::statusToString(Alert::Canceled),
                      "<i class=\"icon-check\"></i>&nbsp;");
-  _htmlRaisableAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisableAlertsView, true));
-  ((HtmlAlertItemDelegate*)_htmlRaisableAlertsView->itemDelegate())
+  _htmlStatefulAlertsView->setItemDelegate(
+        new HtmlAlertItemDelegate(_htmlStatefulAlertsView, true));
+  ((HtmlAlertItemDelegate*)_htmlStatefulAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
-  _wuiHandler->addView(_htmlRaisableAlertsView);
+  _wuiHandler->addView(_htmlStatefulAlertsView);
   _htmlRaisedAlertsView = new HtmlTableView(this, "raisedalerts");
   _htmlRaisedAlertsView->setRowsPerPage(10);
   _htmlRaisedAlertsView->setModel(_sortedRaisedAlertModel);
@@ -535,8 +535,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvGlobalUnsetenvView->setModel(_globalUnsetenvModel);
   _csvAlertParamsView = new CsvTableView(this);
   _csvAlertParamsView->setModel(_alertParamsModel);
-  _csvRaisableAlertsView = new CsvTableView(this);
-  _csvRaisableAlertsView->setModel(_sortedRaisableAlertsModel);
+  _csvStatefulAlertsView = new CsvTableView(this);
+  _csvStatefulAlertsView->setModel(_sortedStatefulAlertsModel);
   _csvLastEmittedAlertsView =
       new CsvTableView(this, _lastEmittedAlertsModel->maxrows());
   _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
@@ -1275,15 +1275,15 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     ParamsProviderMerger *) {
       return writeHtmlView(webconsole->htmlAlertParamsView(), req, res);
 } },
-{ "/rest/csv/alerts/raisable/list/v1", [](
+{ "/rest/csv/alerts/stateful/list/v1", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvRaisableAlertsView(), req, res);
+      return writeCsvView(webconsole->csvStatefulAlertsView(), req, res);
 } },
-{ "/rest/html/alerts/raisable/list/v1", [](
+{ "/rest/html/alerts/stateful/list/v1", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlRaisableAlertsView(), req, res);
+      return writeHtmlView(webconsole->htmlStatefulAlertsView(), req, res);
 } },
 { "/rest/csv/alerts/emitted/v1", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -1660,8 +1660,8 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
             this, &WebConsole::paramsChanged);
     connect(_scheduler->alerter(), &Alerter::paramsChanged,
             _alertParamsModel, &ParamSetModel::changeParams);
-    connect(_scheduler->alerter(), &Alerter::raisableAlertChanged,
-            _raisableAlertsModel, &SharedUiItemsTableModel::changeItem);
+    connect(_scheduler->alerter(), &Alerter::statefulAlertChanged,
+            _statefulAlertsModel, &SharedUiItemsTableModel::changeItem);
     connect(_scheduler->alerter(), &Alerter::alertNotified,
             _lastEmittedAlertsModel, &SharedUiItemsLogModel::logItem);
     connect(_scheduler->alerter(), &Alerter::configChanged,
