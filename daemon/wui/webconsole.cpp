@@ -982,7 +982,6 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
       QString taskId = req.url().path().mid(23); // LATER matchedLength
-      qDebug() << "/console/tasks/request/" << taskId;
       QString referer = req.header("Referer", "index.html");
       QString redirect = req.base64Cookie("redirect", referer);
       Task task(webconsole->scheduler()->task(taskId));
@@ -1042,7 +1041,6 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
       QString taskId = req.url().path().mid(15); // LATER matchedLength
-      qDebug() << "/console/tasks/" << taskId;
       QString referer = req.header("Referer", "index.html");
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
