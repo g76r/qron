@@ -40,12 +40,12 @@ QString HtmlStepItemDelegate::text(const QModelIndex &index) const {
     break;
   }
   case 3:
-    text.prepend("<a href=\"task/"+text+"\">");
+    text.prepend("<a href=\"tasks/"+text+"\">");
     text.append("</a>");
     break;
   case 4:
     if (!text.isEmpty()) {
-      text.prepend("<a href=\"task/"+text+"\">");
+      text.prepend("<a href=\"tasks/"+text+"\">");
       text.append("</a>");
     }
     break;

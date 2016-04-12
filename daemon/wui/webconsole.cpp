@@ -286,7 +286,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlGridboardsView->setModel(_gridboardsModel);
   ((HtmlItemDelegate*)_htmlGridboardsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
-                              "<a href=\"gridboard/%1\">", 0)
+                              "<a href=\"gridboards/%1\">", 0)
       ->setSuffixForColumn(1, "</a>");
   cols.clear();
   cols << 1 << 2 << 3;
@@ -978,16 +978,18 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
 } },
-{ "/console/requestform", [](
+{ "/console/tasks/request/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
-      QString taskId = req.param("taskid");
+      QString taskId = req.url().path().mid(23); // LATER matchedLength
+      qDebug() << "/console/tasks/request/" << taskId;
       QString referer = req.header("Referer", "index.html");
       QString redirect = req.base64Cookie("redirect", referer);
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
         QUrl url(req.url());
         // LATER requestform.html instead of adhoc.html, after finding a way to handle foreach loop
+        processingContext->overrideParamValue("rootprefix", "../../");
         url.setPath("/console/adhoc.html");
         req.overrideUrl(url);
         QString form = "<div class=\"well\">\n"
@@ -998,7 +1000,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         if (task.requestFormFields().size())
           form += "<p class=\"text-center\">Task parameters can be defined in "
                   "the following form:";
-        form += "<p><form action=\"do\">";
+        form += "<p><form action=\"../../do\">";
         foreach (RequestFormField rff, task.requestFormFields())
           form.append(rff.toHtmlFormFragment());
         form += "<input type=\"hidden\" name=\"taskid\" value=\""+taskId+"\">\n"
@@ -1020,7 +1022,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         res.redirect(referer);
       }
       return true;
-    } },
+}, true },
 { "/console/taskdoc.html", []( // LATER remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *) {
@@ -1028,7 +1030,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       QString referer = req.header("Referer", "index.html");
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
-        res.redirect("task/"+taskId);
+        res.redirect("tasks/"+taskId);
       } else {
         res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
                                    "/");
@@ -1036,10 +1038,11 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       }
       return true;
 } },
-{ "/console/task/", [](
+{ "/console/tasks/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
-      QString taskId = req.url().path().mid(14); // LATER matchedLength
+      QString taskId = req.url().path().mid(15); // LATER matchedLength
+      qDebug() << "/console/tasks/" << taskId;
       QString referer = req.header("Referer", "index.html");
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
@@ -1073,7 +1076,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
-        res.redirect("gridboard/"+gridboardId);
+        res.redirect("gridboards/"+gridboardId);
       } else {
         res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
                                    +"' not found.", "/");
@@ -1081,10 +1084,10 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       }
       return true;
 } },
-{ "/console/gridboard/", [](
+{ "/console/gridboards/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext) {
-      QString gridboardId = req.url().path().mid(19);
+      QString gridboardId = req.url().path().mid(20);
       QString referer = req.header("Referer", "index.html");
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
@@ -1325,7 +1328,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     ParamsProviderMerger *) {
       return writeHtmlView(webconsole->htmlGridboardsView(), req, res);
 } },
-{ "/rest/html/gridboard/render/v1", [](
+{ "/rest/html/gridboards/render/v1", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *) {
       QString gridboardid = req.param(QStringLiteral("gridboardid"));
@@ -1604,6 +1607,7 @@ bool WebConsole::handleRequest(
   }
   auto staticRedirect = _staticRedirects.value(path);
   if (!staticRedirect.isEmpty()) {
+    _handlers.dumpContent();
     res.redirect(staticRedirect, HttpResponse::HTTP_Moved_Permanently);
     return true;
   }

@@ -21,7 +21,7 @@ HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
   instancesStatusIcons.insert("failure", "<i class=\"icon-minus-circled\"></i>&nbsp;");
   instancesStatusIcons.insert("canceled", "<i class=\"icon-cancel\"></i>&nbsp;");
   setPrefixForColumn(1, "<i class=\"icon-cog\"></i>&nbsp;"
-                     "<a href=\"task/%1\">", 1);
+                     "<a href=\"tasks/%1\">", 1);
   setSuffixForColumn(1, "</a>");
   setPrefixForColumn(2, "%1", 2, instancesStatusIcons);
 }
@@ -46,7 +46,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                  "<i class=\"icon-file-text\"></i></a></span> "
                  /* detail page */
                  "<span class=\"label label-info\" title=\""
-                 "Detailed task info\"><a href=\"task/"
+                 "Detailed task info\"><a href=\"tasks/"
                  +taskId+"\"><i class=\"icon-cog\"></i></a></span> ");
     if (status == "queued")
       text.prepend(/* cancel */
@@ -69,7 +69,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
       text.prepend(/* reexec */
                    "<span class=\"label label-danger\" "
                    "title=\"Request execution of same task\"><a href=\""
-                   "requestform?taskid="+taskId+"\">"
+                   "tasks/requestform/"+taskId+"\">"
                    "<i class=\"icon-repeat\"></i></a></span> ");
     break;
   }

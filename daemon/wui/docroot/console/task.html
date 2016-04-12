@@ -19,7 +19,7 @@
       <div class="row">
         <div class="col-md-12">
           <h1>Task <?value:11?></h1>
-          <p><a class="btn btn-danger" href="../requestform?taskid=<?value:11?>"><i class="icon-play"></i> Request task execution</a>
+          <p><a class="btn btn-danger" href="request/<?value:11?>"><i class="icon-play"></i> Request task execution</a>
           <a class="btn btn-danger" href="../do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
           <a class="btn btn-warning" href="../do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
           <a class="btn btn-info" href="../../rest/txt/log/all/v1?regexp=^[^ ]* <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>

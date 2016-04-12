@@ -31,7 +31,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   case 11: {
     QString mean = index.model()->index(index.row(), 3, index.parent()).data()
         .toString();
-    text.prepend("<a href=\"task/"
+    text.prepend("<a href=\"tasks/"
                  +index.model()->index(index.row(), 11, index.parent()).data()
                  .toString()+
                  "\">");
@@ -79,9 +79,8 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     text = index.data().toString(); // disable truncating and HTML encoding
     text.prepend(/* requestTask */ QString() +
                  "<span class=\"label label-danger\" "
-                 "title=\"Request execution\"><a href=\"requestform?"
-                 "taskid="+taskId+"\"><i class=\"icon-play\"></i></a>"
-                 "</span> "
+                 "title=\"Request execution\"><a href=\"tasks/request/"
+                 +taskId+"\"><i class=\"icon-play\"></i></a></span> "
                  /* {enable,disable}Task */
                  "<span class=\"label label-"+(enabled?"danger":"warning")
                  +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
@@ -95,7 +94,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
                  "</i></a></span> "
                  /* detail page */
                  "<span class=\"label label-info\" "
-                 "title=\"Detailed task info\"><a href=\"task/"
+                 "title=\"Detailed task info\"><a href=\"tasks/"
                  +taskId+"\"><i class=\"icon-cog\"></i></a></span> ");
     break;
   }

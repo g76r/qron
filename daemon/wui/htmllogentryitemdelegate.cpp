@@ -24,7 +24,7 @@ QString HtmlLogEntryItemDelegate::text(const QModelIndex &index) const {
   switch (index.column()) {
   case 1:
     if (text.contains('.')) {
-      text.prepend("<a href=\"task/"+text+"\">");
+      text.prepend("<a href=\"tasks/"+text+"\">");
       text.append("</a>");
     }
     break;

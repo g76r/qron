@@ -58,7 +58,7 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
             "</span>"
             /* detail page */
             " <span class=\"label label-info\" title=\"Detailed task info\">"
-            "<a href=\"task/"+match.captured(1)+"\">"
+            "<a href=\"tasks/"+match.captured(1)+"\">"
             "<i class=\"icon-cog\"></i></a></span>");
     }
   }
