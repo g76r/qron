@@ -19,9 +19,9 @@
         <div class="col-md-12">
           <h2>Currently Available Resources</h2>
           <p>The table below shows resources currently available for every host depending on tasks currently running.
-          <p><a class="btn btn-primary" href="../rest/csv/resources/free/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/resources/free/v1"><i class="icon-file-html"></i> HTML</a>
-          <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
+          <p><a class="btn btn-primary" href="../rest/v1/resources/free_resources_by_host.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/resources/free_resources_by_host.html"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-info" href="infrastructure.html">Infrastructure page &raquo;</a>
           <p><?view:freeresources?>
         </div>
       </div>
@@ -29,9 +29,9 @@
         <div class="col-md-12">
           <h2>Least Available Resources Since Startup</h2>
           <p>The table below shows the least level (low water mark) of available resources for every host since qron startup.
-          <p><a class="btn btn-primary" href="../rest/csv/resources/lwm/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/resources/lwm/v1"><i class="icon-file-html"></i> HTML</a>
-          <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
+          <p><a class="btn btn-primary" href="../rest/v1/resources/lwm_resources_by_host.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/resources/lwm_resources_by_host.html"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-info" href="infrastructure.html">Infrastructure page &raquo;</a>
           <p><?view:resourceslwm?>
         </div>
       </div>
@@ -42,10 +42,10 @@
           to current configuration of tasks and hosts. First line displays
           the minimal possible availability per host if all tasks were running
           at the same time, in most cases this is not likely to be reached.
-          <p><a class="btn btn-primary" href="../rest/csv/resources/consumption/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/resources/consumption/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/resources/consumption_matrix.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/resources/consumption_matrix.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
-          <a class="btn btn-info" href="infra.html">Infrastructure page &raquo;</a>
+          <a class="btn btn-info" href="infrastructure.html">Infrastructure page &raquo;</a>
           <p><?view:resourcesconsumption?>
         </div>
       </div>

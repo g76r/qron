@@ -31,9 +31,9 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Configuration Repository</h2>
-          <form class="form-inline" action="../rest/pf/config/v1" method="POST">
-          <p><a class="btn btn-primary" href="../rest/csv/configs/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/configs/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <form class="form-inline" action="../rest/v1/configs/" method="POST">
+          <p><a class="btn btn-primary" href="../rest/v1/configs/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/configs/list.html"><i class="icon-file-html"></i> HTML</a>
           <!-- LATER support config upload (needs some JS or server-side handling of encoding and errors
           <span class="pull-right">
               <input class="input-large" name="file" type="file" placeholder="config file" />
@@ -46,8 +46,8 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Configuration Activation History</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/config/history/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/config/history/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/configs/history.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/configs/history.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:confighistory?>
         </div>
       </div>

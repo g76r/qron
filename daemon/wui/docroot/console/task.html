@@ -22,7 +22,7 @@
           <p><a class="btn btn-danger" href="request/<?value:11?>"><i class="icon-play"></i> Request task execution</a>
           <a class="btn btn-danger" href="../do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
           <a class="btn btn-warning" href="../do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
-          <a class="btn btn-info" href="../../rest/txt/log/all/v1?regexp=^[^ ]* <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
+          <a class="btn btn-info" href="../../rest/v1/logs/entries.txt?regexp=[^ ] <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
           <?=%{webconsole.customactions.taskdetail}?>
           <p>All durations and delays are in seconds.
         </div>
@@ -51,7 +51,7 @@
              <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="icon-block"></i>&nbsp;false}?></td></tr>
              <tr><th>Last execution status</th><td><?value:19:?></td></tr>
              <tr><th>Last execution duration</th><td><?value:26:?></td></tr>
-             <tr><th>Last execution instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="../../rest/txt/log/all/v1?filter=%11/%32"><i class="icon-file-text"></i></a></span>}?></td></tr>
+             <tr><th>Last execution instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="../../rest/v1/logs/entries.txt?filter=%11/%32"><i class="icon-file-text"></i></a></span>}?></td></tr>
              <tr><th>Next execution</th><td><?value:10:?></td></tr>
              <tr><th>Currently running instances</th><td><?=%{=ifneq:%13:0:<i class="icon-play"></i>&nbsp;%13:%13}?>/<?value:12:?></td></tr>
              <tr><th>Executions count</th><td><?value:34:?></td></tr>
@@ -82,17 +82,17 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Task Workflow<a class="help" href="../user-manual.html#workflows-and-subtasks"><span class="icon-help-circled"/></a> Diagram</h2>
-          <p><a class="btn btn-primary" href="../../rest/svg/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> SVG</a>
-          <a class="btn btn-primary" href="../../rest/dot/tasks/workflow/v1?taskid=<?value:11?>"><i class="icon-file"></i> DOT</a>
+          <p><a class="btn btn-primary" href="../../rest/v1/tasks/<?value:11?>/workflow.svg"><i class="icon-file"></i> SVG</a>
+          <a class="btn btn-primary" href="../../rest/v1/tasks/<?value:11?>/workflow.dot"><i class="icon-file"></i> DOT</a>
           <div id="workflowDiagram" style="display: table; margin: 0 auto;">
-            <noscript><img src="../../rest/svg/tasks/workflow/v1?taskid=<?value:11?>" alt="Task Workflow Diagram" class="img-responsive"/></noscript>
+            <noscript><img src="../../rest/v1/tasks/<?value:11?>/workflow.svg" alt="Task Workflow Diagram" class="img-responsive"/></noscript>
           </div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
           <h2>Raw Task Configuration</h2>
-          <p><a class="btn btn-primary" target="_blank" href="../../rest/pf/task/config/v1?taskid=<?value:11?>"><i class="icon-file"></i> PF</a>
+          <p><a class="btn btn-primary" href="../../rest/v1/tasks/<?value:11?>/config.pf"><i class="icon-file"></i> PF</a>
           <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
         </div>
       </div>
@@ -101,7 +101,7 @@
     <script type="text/javascript">
 anchors.add('h2');
 $(document).ready(function(){
-  $('#workflowDiagram').load('../../rest/svg/tasks/workflow/v1?taskid=<?value:11?>', function() {
+  $('#workflowDiagram').load('../../rest/v1/tasks/<?value:11?>/workflow.svg', function() {
     $("a").not("[xlink\\:title='']").each(function() {
       this.setAttributeNS('http://www.w3.org/1999/xlink','href','./'+$(this).attr('xlink:title'));
     });

@@ -40,11 +40,15 @@
 #define SVG_BELONG_TO_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><a xlink:title=\"%1\"><text x=\"0\" y=\"15\">This task belongs to workflow \"%1\".</text></a></svg>"
 #define SVG_NOT_A_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">This task is not a workflow.</text></svg>"
 #define ISO8601 QStringLiteral("yyyy-MM-dd hh:mm:ss")
-
+//#define GRAPHVIZ_MIME_TYPE "text/vnd.graphviz;charset=UTF-8"
+#define GRAPHVIZ_MIME_TYPE "text/plain;charset=UTF-8"
 
 static PfNode nodeWithValidPattern =
     PfNode("dummy", "dummy").setAttribute("pattern", ".*")
     .setAttribute("dimension", "dummy");
+
+static QRegularExpression htmlSuffixRe("\\.html$");
+static QRegularExpression pfSuffixRe("\\.pf$");
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0), _authorizer(0) {
@@ -714,6 +718,14 @@ public:
   }
 };
 
+static bool enforceMethods(int methodsMask, HttpRequest req,
+                             HttpResponse res) {
+  if (req.method() & methodsMask)
+    return true;
+  res.setStatus(HttpResponse::HTTP_Method_Not_Allowed);
+  res.output()->write("Method not allowed for this resource.");
+  return false;
+}
 
 static bool writeHtmlView(HtmlTableView *view, HttpRequest req,
                           HttpResponse res) {
@@ -729,7 +741,7 @@ static bool writeCsvView(CsvTableView *view, HttpRequest req,
                          HttpResponse res) {
   QByteArray data = view->text().toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
-  res.setHeader("Content-Disposition", "attachment; filename=table.csv");
+  res.setHeader("Content-Disposition", "attachment"); // FIXME filename=table.csv");
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
@@ -746,21 +758,22 @@ static bool writeSvgImage(QByteArray data, HttpRequest req,
 }
 
 static bool writePlainText(QByteArray data, HttpRequest req,
-                           HttpResponse res) {
-  res.setContentType("text/plain;charset=UTF-8");
+                           HttpResponse res,
+                           QString contentType = "text/plain;charset=UTF-8") {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+    return true;
+  res.setContentType(contentType);
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
   return true;
 }
 
-/*static bool writePlainText(QString text, HttpRequest req,
-                           HttpResponse res) {
-  return writePlainText(text.toUtf8(), req, res);
-}*/
-
 static void copyFilteredFiles(QStringList paths, QIODevice *output,
-                             QString pattern, bool useRegexp) {
+                              QString pattern, bool useRegexp) {
+  // LATER handle HEAD differently and write Content-Length header
+  // LATER switch to QRegularExpression (and use QRE::escape() for non-regexp)
+  // LATER have a regexp cache
   foreach (const QString path, paths) {
     QFile file(path);
     if (file.open(QIODevice::ReadOnly)) {
@@ -781,19 +794,15 @@ static void copyFilteredFiles(QStringList paths, QIODevice *output,
   }
 }
 
-static void copyFilteredFile(QString path, QIODevice *output,
-                             QString pattern, bool useRegexp) {
-  QStringList paths;
-  paths.append(path);
-  copyFilteredFiles(paths, output, pattern, useRegexp);
-}
-
 static RadixTree<
 std::function<bool(WebConsole *, HttpRequest, HttpResponse,
-                   ParamsProviderMerger *)>> _handlers {
+                   ParamsProviderMerger *, int matchedLength)>> _handlers {
 { { "/console/do", "/rest/do" }, [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
+    ParamsProviderMerger *processingContext, int) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
+                      |HttpRequest::PUT, req, res))
+    return true;
   QString event = req.param("event");
   QString taskId = req.param("taskid");
   QString alertId = req.param("alertid");
@@ -931,7 +940,10 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 } },
 { "/console/confirm", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
+    ParamsProviderMerger *processingContext, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
+                          req, res))
+        return true;
       QString event = req.param("event");
       QString taskId = req.param("taskid");
       QString gridboardId = req.param("gridboardid");
@@ -980,10 +992,12 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 } },
 { "/console/tasks/request/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-      QString taskId = req.url().path().mid(23); // LATER matchedLength
-      QString referer = req.header("Referer", "index.html");
-      QString redirect = req.base64Cookie("redirect", referer);
+    ParamsProviderMerger *processingContext, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
+                          req, res))
+        return true;
+      QString taskId = req.url().path().mid(matchedLength);
+      QString referer = req.header("Referer", "../../overview.html");
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
         QUrl url(req.url());
@@ -1011,7 +1025,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                 "</form>\n"
                 "</div>\n";
         processingContext->overrideParamValue("content", form);
-        res.setBase64SessionCookie("redirect", redirect, "/");
+        res.setBase64SessionCookie("redirect", referer, "/");
         res.clearCookie("message", "/");
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
         return true;
@@ -1024,7 +1038,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 }, true },
 { "/console/taskdoc.html", []( // LATER remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
       QString taskId = req.param("taskid");
       QString referer = req.header("Referer", "index.html");
       Task task(webconsole->scheduler()->task(taskId));
@@ -1039,36 +1053,91 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 } },
 { "/console/tasks/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-      QString taskId = req.url().path().mid(15); // LATER matchedLength
+    ParamsProviderMerger *processingContext, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
+      QString taskId = elements.value(0);
       QString referer = req.header("Referer", "index.html");
       Task task(webconsole->scheduler()->task(taskId));
-      if (!task.isNull()) {
-        processingContext->overrideParamValue(
-              "pfconfig", QString::fromUtf8(
-                task.toPfNode().toPf(PfOptions().setShouldIndent()
-                                     .setShouldWriteContentBeforeSubnodes()
-                                     .setShouldIgnoreComment(false))));
-        TaskPseudoParamsProvider tppp = task.pseudoParams();
-        SharedUiItemParamsProvider itemAsParams(task);
-        processingContext->prepend(&tppp);
-        processingContext->prepend(&itemAsParams);
-        res.clearCookie("message", "/");
-        QUrl url(req.url());
-        url.setPath("/console/task.html");
-        url.setQuery(QString());
-        req.overrideUrl(url);
-        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-      } else {
-        res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
-                                   "/");
-        res.redirect(referer);
+      if (task.isNull()) {
+        if (referer.isEmpty()) {
+          res.setStatus(404);
+          res.output()->write("Task not found.");
+        } else {
+          res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
+                                     "/");
+          res.redirect(referer);
+        }
+        return true;
       }
+      processingContext->overrideParamValue(
+            "pfconfig", QString::fromUtf8(
+              task.toPfNode().toPf(PfOptions().setShouldIndent()
+                                   .setShouldWriteContentBeforeSubnodes()
+                                   .setShouldIgnoreComment(false))));
+      TaskPseudoParamsProvider tppp = task.pseudoParams();
+      SharedUiItemParamsProvider itemAsParams(task);
+      processingContext->prepend(&tppp);
+      processingContext->prepend(&itemAsParams);
+      res.clearCookie("message", "/");
+      QUrl url(req.url());
+      url.setPath("/console/task.html");
+      url.setQuery(QString());
+      req.overrideUrl(url);
+      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
+}, true },
+{ "/rest/v1/tasks/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
+      QString taskId = elements.value(0);
+      QString subItem = elements.value(1);
+      Task task(webconsole->scheduler()->task(taskId));
+      if (task.isNull()) {
+        res.setStatus(404);
+        res.output()->write("Task not found.");
+        return true;
+      }
+      if (subItem == "workflow.svg") {
+        // LATER this rendering should be pooled
+        QString gv = task.graphvizWorkflowDiagram();
+        if (!gv.isEmpty()) {
+          GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
+          h->setImageFormat(GraphvizImageHttpHandler::Svg);
+          h->setSource(gv);
+          h->handleRequest(req, res, processingContext);
+          h->deleteLater(); // LATER why deleting *later* ?
+          return true;
+        }
+        if (!task.workflowTaskId().isEmpty()) {
+          return writeSvgImage(QString(SVG_BELONG_TO_WORKFLOW)
+                               .arg(task.workflowTaskId()).toUtf8(), req, res);
+        }
+        return writeSvgImage(SVG_NOT_A_WORKFLOW, req, res);
+      }
+      if (subItem == "workflow.dot") {
+        QString gv = task.graphvizWorkflowDiagram();
+        if (!gv.isEmpty())
+          return writePlainText(gv.toUtf8(), req, res, GRAPHVIZ_MIME_TYPE);
+        res.setStatus(404);
+        res.output()->write("No such workflow.");
+        return true;
+      }
+      if (subItem == "config.pf") {
+        return writePlainText(task.toPfNode().toPf(
+                                PfOptions().setShouldIndent()
+                                .setShouldWriteContentBeforeSubnodes()
+                                .setShouldIgnoreComment(false)), req, res);
+      }
+      return false;
 }, true },
 { "/console/gridboard.html", []( // LATER remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
       QString gridboardId = req.param("gridboardid");
       QString referer = req.header("Referer", "index.html");
       Gridboard gridboard(webconsole->scheduler()->alerter()
@@ -1084,8 +1153,11 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 } },
 { "/console/gridboards/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-      QString gridboardId = req.url().path().mid(20);
+    ParamsProviderMerger *processingContext, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
+                          req, res))
+        return true;
+      QString gridboardId = req.url().path().mid(matchedLength);
       QString referer = req.header("Referer", "index.html");
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
@@ -1109,7 +1181,10 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 }, true },
 { "/console/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
+    ParamsProviderMerger *processingContext, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
+                          req, res))
+        return true;
       QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
       if (queryItems.size()) { // FIXME and not static
         // if there are query parameters in url, transform them into cookies
@@ -1141,400 +1216,314 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       }
       return true;
 }, true },
-{ "/rest/pf/task/config/v1", [](
+{ "/rest/v1/taskgroups/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger*) {
-      QString taskId = req.param("taskid");
-      Task task(webconsole->scheduler()->task(taskId));
-      if (task.isNull()) {
-        res.setStatus(404);
-        res.output()->write("Task not found.");
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      }
-      return writePlainText(task.toPfNode().toPf(
-                              PfOptions().setShouldIndent()
-                              .setShouldWriteContentBeforeSubnodes()
-                              .setShouldIgnoreComment(false)), req, res);
+      // LATER handle fields comma enumeration for real
+      QString fields = req.param(QStringLiteral("fields")).trimmed();
+      // LATER return writeCsvView(webconsole->csvTaskGroupsEventsView(), req, res);
+      return writeCsvView(webconsole->csvTaskGroupsView(), req, res);
 } },
-{ "/rest/csv/tasks/list/v1", [](
+{ "/rest/v1/taskgroups/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger*) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      // LATER handle fields comma enumeration for real
+      QString fields = req.param(QStringLiteral("fields")).trimmed();
+      if (fields == QStringLiteral("id,onstart,onsuccess,onfailure"))
+        return writeHtmlView(webconsole->htmlTaskGroupsEventsView(), req, res);
+      return writeHtmlView(webconsole->htmlTaskGroupsView(), req, res);
+} },
+{ "/rest/v1/tasks/list.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger*, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      // LATER handle fields comma enumeration for real
+      QString fields = req.param(QStringLiteral("fields")).trimmed();
+      // LATER if (fields == QStringLiteral("id,triggers,onstart,onsuccess,onfailure"))
+      //  return writeHtmlView(webconsole->csvTasksEventsView(), req, res);
       return writeCsvView(webconsole->csvTasksView(), req, res);
 } },
-{ "/rest/html/tasks/list/v1", [](
+{ "/rest/v1/tasks/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger*) {
+    ParamsProviderMerger*, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      // LATER handle fields comma enumeration for real
+      QString fields = req.param(QStringLiteral("fields")).trimmed();
+      if (fields == QStringLiteral("id,triggers,onstart,onsuccess,onfailure"))
+        return writeHtmlView(webconsole->htmlTasksEventsView(), req, res);
       return writeHtmlView(webconsole->htmlTasksListView(), req, res);
 } },
-{ "/rest/csv/steps/list/v1", [](
+{ "/rest/v1/steps/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvStepsView(), req, res);
 } },
-{ "/rest/html/steps/list/v1", [](
+{ "/rest/v1/steps/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlStepsView(), req, res);
 } },
-// LATER { "/rest/csv/tasks/events/v1", [](
-//    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-//    ParamsProviderMerger *) {
-//      return writeCsvView(webconsole->csvTasksEventsView(), req, res);
-//} },
-{ "/rest/html/tasks/events/v1", [](
+{ "/rest/v1/hosts/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlTasksEventsView(), req, res);
-} },
-{ "/rest/csv/hosts/list/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvHostsListView(), req, res);
 } },
-{ "/rest/html/hosts/list/v1", [](
+{ "/rest/v1/hosts/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlHostsListView(), req, res);
 } },
-{ "/rest/csv/clusters/list/v1", [](
+{ "/rest/v1/clusters/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvClustersListView(), req, res);
 } },
-{ "/rest/html/clusters/list/v1", [](
+{ "/rest/v1/clusters/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlClustersListView(), req, res);
 } },
-{ "/rest/csv/resources/free/v1", [](
+{ "/rest/v1/resources/free_resources_by_host.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvFreeResourcesView(), req, res);
 } },
-{ "/rest/html/resources/free/v1", [](
+{ "/rest/v1/resources/free_resources_by_host.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlFreeResourcesView(), req, res);
 } },
-{ "/rest/csv/resources/lwm/v1", [](
+{ "/rest/v1/resources/lwm_resources_by_host.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvResourcesLwmView(), req, res);
 } },
-{ "/rest/html/resources/lwm/v1", [](
+{ "/rest/v1/resources/lwm_resources_by_host.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlResourcesLwmView(), req, res);
 } },
-{ "/rest/csv/resources/consumption/v1", [](
+{ "/rest/v1/resources/consumption_matrix.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvResourcesConsumptionView(), req, res);
 } },
-{ "/rest/html/resources/consumption/v1", [](
+{ "/rest/v1/resources/consumption_matrix.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlResourcesConsumptionView(), req, res);
 } },
-{ "/rest/csv/params/global/list/v1", [](
+{ "/rest/v1/global_params/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvGlobalParamsView(), req, res);
 } },
-{ "/rest/html/params/global/list/v1", [](
+{ "/rest/v1/global_params/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlGlobalParamsView(), req, res);
 } },
-{ "/rest/csv/setenv/global/list/v1", [](
+{ "/rest/v1/global_setenvs/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvGlobalSetenvView(), req, res);
 } },
-{ "/rest/html/setenv/global/list/v1", [](
+{ "/rest/v1/global_setenvs/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlGlobalSetenvView(), req, res);
 } },
-{ "/rest/csv/unsetenv/global/list/v1", [](
+{ "/rest/v1/global_unsetenvs/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvGlobalUnsetenvView(), req, res);
 } },
-{ "/rest/html/unsetenv/global/list/v1", [](
+{ "/rest/v1/global_unsetenvs/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlGlobalUnsetenvView(), req, res);
 } },
-{ "/rest/csv/alerts/params/v1", [](
+{ "/rest/v1/alert_params/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvAlertParamsView(), req, res);
 } },
-{ "/rest/html/alerts/params/v1", [](
+{ "/rest/v1/alert_params/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlAlertParamsView(), req, res);
 } },
-{ "/rest/csv/alerts/stateful/list/v1", [](
+{ "/rest/v1/alerts/stateful_list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvStatefulAlertsView(), req, res);
 } },
-{ "/rest/html/alerts/stateful/list/v1", [](
+{ "/rest/v1/alerts/stateful_list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlStatefulAlertsView(), req, res);
 } },
-{ "/rest/csv/alerts/emitted/v1", [](
+{ "/rest/v1/alerts/last_emitted.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvLastEmittedAlertsView(), req, res);
 } },
-{ "/rest/html/alerts/emitted/v1", [](
+{ "/rest/v1/alerts/last_emitted.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlLastEmittedAlertsView(), req, res);
 } },
-{ "/rest/csv/alerts/subscriptions/v1", [](
+{ "/rest/v1/alerts_subscriptions/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvAlertSubscriptionsView(), req, res);
 } },
-{ "/rest/html/alerts/subscriptions/v1", [](
+{ "/rest/v1/alerts_subscriptions/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlAlertSubscriptionsView(), req, res);
 } },
-{ "/rest/csv/alerts/settings/v1", [](
+{ "/rest/v1/alerts_settings/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvAlertSettingsView(), req, res);
 } },
-{ "/rest/html/alerts/settings/v1", [](
+{ "/rest/v1/alerts_settings/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlAlertSettingsView(), req, res);
 } },
-{ "/rest/csv/gridboards/list/v1", [](
+{ "/rest/v1/gridboards/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvGridboardsView(), req, res);
 } },
-{ "/rest/html/gridboards/list/v1", [](
+{ "/rest/v1/gridboards/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlGridboardsView(), req, res);
 } },
-{ "/rest/html/gridboards/render/v1", [](
+{ "/rest/v1/gridboards/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      QString gridboardid = req.param(QStringLiteral("gridboardid"));
+    ParamsProviderMerger *, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      QString gridboardid = req.url().path().mid(matchedLength)
+          .replace(htmlSuffixRe, QString());
       Gridboard gridboard = webconsole->scheduler()->alerter()
           ->gridboard(gridboardid);
       res.setContentType("text/html;charset=UTF-8");
       res.output()->write(gridboard.toHtml().toUtf8().constData());
       return true;
-} },
-{ "/rest/csv/configs/list/v1", [](
+}, true },
+{ "/rest/v1/configs/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvConfigsView(), req, res);
 } },
-{ "/rest/html/configs/list/v1", [](
+{ "/rest/v1/configs/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlConfigsView(), req, res);
 } },
-{ "/rest/csv/config/history/v1", [](
+{ "/rest/v1/configs/history.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeCsvView(webconsole->csvConfigHistoryView(), req, res);
 } },
-{ "/rest/html/config/history/v1", [](
+{ "/rest/v1/configs/history.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
       return writeHtmlView(webconsole->htmlConfigHistoryView(), req, res);
 } },
-{ "/rest/csv/log/files/v1", [](
+{ "/rest/v1/configs/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvLogFilesView(), req, res);
-} },
-{ "/rest/html/log/files/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlLogFilesView(), req, res);
-} },
-{ "/rest/csv/calendars/list/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvCalendarsView(), req, res);
-} },
-{ "/rest/html/calendars/list/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlCalendarsView(), req, res);
-} },
-{ "/rest/csv/taskinstances/list/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
-} },
-{ "/rest/html/taskinstances/list/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
-} },
-{ "/rest/csv/scheduler/events/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvSchedulerEventsView(), req, res);
-} },
-{ "/rest/html/scheduler/events/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlSchedulerEventsView(), req, res);
-} },
-{ "/rest/csv/notices/lastposted/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvLastPostedNoticesView(), req, res);
-} },
-{ "/rest/html/notices/lastposted/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlLastPostedNoticesView20(), req, res);
-} },
-{ "/rest/csv/taskgroups/list/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvTaskGroupsView(), req, res);
-} },
-{ "/rest/html/taskgroups/list/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlTaskGroupsView(), req, res);
-} },
-// LATER { "/rest/csv/taskgroups/events/v1", [](
-//    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-//    ParamsProviderMerger *) {
-//      return writeCsvView(webconsole->csvTaskGroupsEventsView(), req, res);
-//} },
-{ "/rest/html/taskgroups/events/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlTaskGroupsEventsView(), req, res);
-} },
-{ "/rest/csv/log/info/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->csvLogView(), req, res);
-} },
-{ "/rest/html/log/info/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->htmlInfoLogView(), req, res);
-} },
-{ "/rest/txt/log/current/v1", [](
-    WebConsole *, HttpRequest req, HttpResponse res, ParamsProviderMerger *) {
-      QString path(Log::pathToLastFullestLog());
-      if (path.isEmpty()) {
-        res.setStatus(404);
-        res.output()->write("No log file found.");
-      } else {
-        res.setContentType("text/plain;charset=UTF-8");
-        QString filter = req.param("filter"), regexp = req.param("regexp");
-        copyFilteredFile(path, res.output(), regexp.isEmpty() ? filter : regexp,
-                         !regexp.isEmpty());
-      }
-      return true;
-} },
-{ "/rest/txt/log/all/v1", [](
-    WebConsole *, HttpRequest req, HttpResponse res, ParamsProviderMerger *) {
-      QStringList paths(Log::pathsToFullestLogs());
-      if (paths.isEmpty()) {
-        res.setStatus(404);
-        res.output()->write("No log file found.");
-      } else {
-        res.setContentType("text/plain;charset=UTF-8");
-        QString filter = req.param("filter"), regexp = req.param("regexp");
-        copyFilteredFiles(paths, res.output(),
-                          regexp.isEmpty() ? filter : regexp,
-                          !regexp.isEmpty());
-      }
-      return true;
-} },
-{ "/rest/svg/tasks/deploy/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-      return webconsole->tasksDeploymentDiagram()
-          ->handleRequest(req, res, processingContext);
-} },
-{ "/rest/dot/tasks/deploy/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writePlainText(webconsole->tasksDeploymentDiagram()
-                            ->source(0).toUtf8(), req, res);
-} },
-{ "/rest/svg/tasks/trigger/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-      return webconsole->tasksTriggerDiagram()
-          ->handleRequest(req, res, processingContext);
-} },
-{ "/rest/dot/tasks/trigger/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writePlainText(webconsole->tasksTriggerDiagram()
-                            ->source(0).toUtf8(), req, res);
-} },
-{ "/rest/svg/tasks/workflow/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-      // LATER this rendering should be pooled
-      Task task = webconsole->scheduler()->task(req.param("taskid"));
-      //if (!task.workflowTaskId().isEmpty())
-      //  task = _scheduler->task(task.workflowTaskId());
-      QString gv = task.graphvizWorkflowDiagram();
-      if (!gv.isEmpty()) {
-        GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
-        h->setImageFormat(GraphvizImageHttpHandler::Svg);
-        h->setSource(gv);
-        h->handleRequest(req, res, processingContext);
-        h->deleteLater(); // LATER why deleting *later* ?
+    ParamsProviderMerger *processingContext, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
+                          |HttpRequest::PUT, req, res))
         return true;
-      }
-      if (!task.workflowTaskId().isEmpty()) {
-        return writeSvgImage(QString(SVG_BELONG_TO_WORKFLOW)
-                             .arg(task.workflowTaskId()).toUtf8(), req, res);
-      }
-      return writeSvgImage(SVG_NOT_A_WORKFLOW, req, res);
-} },
-{ "/rest/dot/tasks/workflow/v1", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      Task task = webconsole->scheduler()->task(req.param("taskid"));
-      QString gv = task.graphvizWorkflowDiagram();
-      if (!gv.isEmpty()) {
-        res.setContentType("text/plain;charset=UTF-8");
-        res.output()->write(gv.toUtf8());
-        return true;
-      }
-      res.setStatus(404);
-      res.output()->write("No such workflow.");
-      return true;
-} },
-{ "/rest/pf/config/v1", []( // LATER should becom /rest/pf/scheduler/config/v1
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
       if (req.method() == HttpRequest::POST
           || req.method() == HttpRequest::PUT)
         webconsole->configUploadHandler()
             ->handleRequest(req, res, processingContext);
       else {
         if (webconsole->configRepository()) {
-          QString configid = req.param("configid").trimmed();
+          QString configid = req.url().path().mid(matchedLength)
+              .replace(pfSuffixRe, QString());
           SchedulerConfig config
               = (configid == "current")
               ? webconsole->configRepository()->activeConfig()
@@ -1554,42 +1543,155 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         }
       }
       return true;
-} }
+}, true },
+{ "/rest/v1/logs/logfiles.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeCsvView(webconsole->csvLogFilesView(), req, res);
+} },
+{ "/rest/v1/logs/logfiles.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeHtmlView(webconsole->htmlLogFilesView(), req, res);
+} },
+{ "/rest/v1/calendars/list.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeCsvView(webconsole->csvCalendarsView(), req, res);
+} },
+{ "/rest/v1/calendars/list.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeHtmlView(webconsole->htmlCalendarsView(), req, res);
+} },
+{ "/rest/v1/taskinstances/list.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
+} },
+{ "/rest/v1/taskinstances/list.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
+} },
+{ "/rest/v1/scheduler_events/list.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeCsvView(webconsole->csvSchedulerEventsView(), req, res);
+} },
+{ "/rest/v1/scheduler_events/list.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeHtmlView(webconsole->htmlSchedulerEventsView(), req, res);
+} },
+{ "/rest/v1/notices/lastposted.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeCsvView(webconsole->csvLastPostedNoticesView(), req, res);
+} },
+{ "/rest/v1/notices/lastposted.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeHtmlView(webconsole->htmlLastPostedNoticesView20(), req, res);
+} },
+{ "/rest/v1/logs/last_info_entries.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeCsvView(webconsole->csvLogView(), req, res);
+} },
+{ "/rest/v1/logs/last_info_entries.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeHtmlView(webconsole->htmlInfoLogView(), req, res);
+} },
+{ "/rest/v1/logs/entries.txt", [](
+    WebConsole *, HttpRequest req, HttpResponse res, ParamsProviderMerger *,
+    int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      QStringList paths;
+      if (req.param(QStringLiteral("files")) == "current")
+        paths = QStringList(Log::pathToLastFullestLog());
+      else
+        paths = Log::pathsToFullestLogs();
+      if (paths.isEmpty()) {
+        res.setStatus(404);
+        res.output()->write("No log file found.");
+      } else {
+        res.setContentType("text/plain;charset=UTF-8");
+        QString filter = req.param("filter"), regexp = req.param("regexp");
+        copyFilteredFiles(paths, res.output(),
+                          regexp.isEmpty() ? filter : regexp,
+                          !regexp.isEmpty());
+      }
+      return true;
+} },
+{ "/rest/v1/tasks/deployment_diagram.svg", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return webconsole->tasksDeploymentDiagram()
+          ->handleRequest(req, res, processingContext);
+} },
+{ "/rest/v1/tasks/deployment_diagram.dot", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writePlainText(webconsole->tasksDeploymentDiagram()
+                            ->source(0).toUtf8(), req, res,
+                            GRAPHVIZ_MIME_TYPE);
+} },
+{ "/rest/v1/tasks/trigger_diagram.svg", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return webconsole->tasksTriggerDiagram()
+          ->handleRequest(req, res, processingContext);
+} },
+{ "/rest/v1/tasks/trigger_diagram.dot", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writePlainText(webconsole->tasksTriggerDiagram()
+                            ->source(0).toUtf8(), req, res,
+                            GRAPHVIZ_MIME_TYPE);
+} },
 };
-
-/*
-{ "", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeCsvView(webconsole->(), req, res);
-} },
-{ "", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *) {
-      return writeHtmlView(webconsole->(), req, res);
-} },
-
-{ "", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-} },
-*/
 
 RadixTree<QString> _staticRedirects {
   { { "/", "/console" }, "console/overview.html" },
   { { "/console/", "/console/index.html"}, "overview.html" },
-  { "/console/infra.html", "infrastructure.html" },
-  { "/console/log.html", "logs.html" },
+  { "/console/infra.html", "infrastructure.html" }, // LATER remove
+  { "/console/log.html", "logs.html" },  // LATER remove
 };
-
-/*QHash<QString,QString> _staticRedirects {
-  { "/", "console/overview.html" },
-  { "/console", "console/overview.html" },
-  { "/console/", "overview.html" },
-  { "/console/index.html", "overview.html" },
-  { "/console/infra.html", "infrastructure.html" },
-  { "/console/log.html", "logs.html" },
-};*/
 
 bool WebConsole::handleRequest(
     HttpRequest req, HttpResponse res,
@@ -1605,7 +1707,6 @@ bool WebConsole::handleRequest(
   }
   auto staticRedirect = _staticRedirects.value(path);
   if (!staticRedirect.isEmpty()) {
-    _handlers.dumpContent();
     res.redirect(staticRedirect, HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
@@ -1623,9 +1724,12 @@ bool WebConsole::handleRequest(
     _wuiHandler->handleRequest(req, res, &processingContext);
     return true;
   }
-  auto handler = _handlers.value(path);
+  int matchedLength;
+  auto handler = _handlers.value(path, &matchedLength);
+  //_handlers.dumpContent();
+  //qDebug() << "handling" << path << !!handler << matchedLength;
   if (handler) {
-    return handler(this, req, res, &processingContext);
+    return handler(this, req, res, &processingContext, matchedLength);
   }
   res.setStatus(404);
   res.output()->write("Not found.");

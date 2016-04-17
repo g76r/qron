@@ -20,8 +20,8 @@
           <a name="config"></a>
           <h2>Global Events<a class="help" href="user-manual.html#scheduler-level-events"><span class="icon-help-circled"/></a> Configuration</h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/scheduler/events/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/scheduler/events/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/scheduler_events/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/scheduler_events/list.html"><i class="icon-file-html"></i> HTML</a>
 	  <p><?view:schedulerevents?>
 	</div>
       </div>
@@ -30,8 +30,8 @@
           <a name="config"></a>
           <h2>Tasks Groups Events<a class="help" href="user-manual.html#task-level-events"><span class="icon-help-circled"/></a> Configuration</h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/taskgroups/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/taskgroups/events/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/taskgroups/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/taskgroups/list.html?fields=id,onstart,onsuccess,onfailure"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <p><?view:taskgroupsevents?>
         </div>
@@ -43,8 +43,8 @@
           <p>Every task inherits its taskgroup and global events configuration shown above, in addition to its own configuration shown below.
           <p>Only main tasks are shown (for workflows subtasks see <a href="#steps">below</a>).
           <p><form class="form-inline" onSubmit="return false;">
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/events/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.html?fields=id,triggers,onstart,onsuccess,onfailure"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <input class="input-medium search-query" id="filter-tasksevents" type="text" placeholder="Quick search..." />
           </form>
@@ -57,8 +57,8 @@
           <h2>Workflow Steps</h2>
           <p>This table displays every step from every workflow, click on a workflow task to see its steps as a diagram.
           <p><form class="form-inline" onSubmit="return false;">
-          <a class="btn btn-primary" href="../rest/csv/steps/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/steps/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/steps/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/steps/list.html"><i class="icon-file-html"></i> HTML</a>
           <input class="input-medium search-query" id="filter-steps" type="text" placeholder="Quick search..." />
           </form>
           <p><?view:steps?>
@@ -68,19 +68,19 @@
         <div class="col-md-6">
           <h2>Recently Posted Notices<a class="help" href="user-manual.html#notices"><span class="icon-help-circled"/></a></h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/notices/lastposted/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/notices/lastposted/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/notices/lastposted.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/notices/lastposted.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:lastpostednotices20?>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
           <h2>Tasks Trigger Diagram</h2>
-          <p><a class="btn btn-primary" href="../rest/svg/tasks/trigger/v1"><i class="icon-file"></i> SVG</a>
-          <a class="btn btn-primary" href="../rest/dot/tasks/trigger/v1"><i class="icon-file"></i> DOT</a>
+          <p><a class="btn btn-primary" href="../rest/v1/tasks/trigger_diagram.svg"><i class="icon-file"></i> SVG</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/trigger_diagram.dot"><i class="icon-file"></i> DOT</a>
           <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
           <div id="tasksTriggerDiagram" style="display: table; margin: 0 auto;">
-            <noscript><img src="../rest/svg/tasks/trigger/v1" alt="Tasks trigger diagram" class="img-responsive"/></noscript>
+            <noscript><img src="../rest/v1/tasks/trigger_diagram.svg" alt="Tasks Trigger Diagram" class="img-responsive"/></noscript>
           </div>
         </div>
       </div>
@@ -119,7 +119,7 @@ steps_filter();
   </script>
   <script>
 $(document).ready(function(){
-  $('#tasksTriggerDiagram').load('../rest/svg/tasks/trigger/v1', function() {
+  $('#tasksTriggerDiagram').load('../rest/v1/tasks/trigger_diagram.svg', function() {
     $("a").not("[xlink\\:title='']").each(function() {
       this.setAttributeNS('http://www.w3.org/1999/xlink','href','tasks/'+$(this).attr('xlink:title'));
     });

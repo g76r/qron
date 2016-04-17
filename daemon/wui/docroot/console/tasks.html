@@ -20,22 +20,22 @@
           <div class="row">
             <div class="col-sm-6 col-md-12">
               <h2>Global Setenvs<a class="help" href="user-manual.html#tasks-setenvs"><span class="icon-help-circled"/></a></h2>
-              <p><a class="btn btn-primary" href="../rest/csv/setenv/global/list/v1"><i class="icon-file-excel"></i> CSV</a>
-              <a class="btn btn-primary" href="../rest/html/setenv/global/list/v1"><i class="icon-file-html"></i> HTML</a>
+              <p><a class="btn btn-primary" href="../rest/v1/global_setenvs/list.csv"><i class="icon-file-excel"></i> CSV</a>
+              <a class="btn btn-primary" href="../rest/v1/global_setenvs/list.html"><i class="icon-file-html"></i> HTML</a>
               <p><?view:globalsetenv?>
             </div>
             <div class="col-sm-6 col-md-12">
               <h2>Global Unsetenvs<a class="help" href="user-manual.html#tasks-setenvs"><span class="icon-help-circled"/></a></h2>
-              <p><a class="btn btn-primary" href="../rest/csv/unsetenv/global/list/v1"><i class="icon-file-excel"></i> CSV</a>
-              <a class="btn btn-primary" href="../rest/html/unsetenv/global/list/v1"><i class="icon-file-html"></i> HTML</a>
+              <p><a class="btn btn-primary" href="../rest/v1/global_unsetenvs/list.csv"><i class="icon-file-excel"></i> CSV</a>
+              <a class="btn btn-primary" href="../rest/v1/global_unsetenvs/list.html"><i class="icon-file-html"></i> HTML</a>
               <p><?view:globalunsetenv?>
             </div>
           </div>
         </div>
         <div class="col-md-8">
           <h2>Global Parameters<a class="help" href="user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a></h2>
-          <p><a class="btn btn-primary" href="../rest/csv/params/global/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/params/global/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/global_params/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/global_params/list.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:globalparams?>
         </div>
       </div>
@@ -43,8 +43,8 @@
         <div class="col-md-12">
           <h2>Named Calendars<a class="help" href="user-manual.html#calendars"><span class="icon-help-circled"/></a></h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/calendars/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/calendars/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/calendars/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/calendars/list.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:calendars?>
         </div>
       </div>
@@ -52,8 +52,8 @@
         <div class="col-md-12">
           <h2>Tasks Groups<a class="help" href="user-manual.html#task-groups"><span class="icon-help-circled"/></a> Configuration</h2>
           <p>
-          <a class="btn btn-primary" href="../rest/csv/taskgroups/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/taskgroups/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/taskgroups/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/taskgroups/list.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:taskgroups?>
         </div>
       </div>
@@ -62,8 +62,8 @@
           <a name="config"></a>
           <h2>Tasks<a class="help" href="user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a> Execution Configuration</h2>
           <p><form class="form-inline" onSubmit="return false;">
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <a class="btn btn-info" href="resources.html">Resources page &raquo;</a>
           <input class="input-medium search-query" id="filter-tasksconfig" type="text" placeholder="Quick search..." />
@@ -76,8 +76,8 @@
           <a name="config"></a>
           <h2>Tasks Parameters<a class="help" href="user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a> Configuration</h2>
           <p><form class="form-inline" onSubmit="return false;">
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.html"><i class="icon-file-html"></i> HTML</a>
           <input class="input-medium search-query" id="filter-tasksparams" type="text" placeholder="Quick search..." />
           </form>
           <p><?view:tasksparams?>
@@ -88,8 +88,8 @@
           <h2>Tasks Schedule<a class="help" href="user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></h2>
           <p>Only main tasks are shown (workflow subtasks are hidden).
           <p><form class="form-inline" onSubmit="return false;">
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <input class="input-medium search-query" id="filter-tasksschedule" type="text" placeholder="Quick search..." />
           <span class="pull-right">
@@ -104,8 +104,8 @@
         <div class="col-md-12">
           <a name="instances"></a>
           <h2>Last Tasks Executions</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/taskinstances/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/taskinstances/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/taskinstances/list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
           <p><?view:taskinstances?>

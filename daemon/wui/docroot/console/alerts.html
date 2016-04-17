@@ -19,8 +19,8 @@
         <div class="col-md-12">
           <h2>Current Stateful<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> Alerts</h2>
           <form class="form-inline" action="do" type="GET">
-          <a class="btn btn-primary" href="../rest/csv/alerts/stateful/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/stateful/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/alerts/stateful_list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/alerts/stateful_list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="raiseAlert" />
@@ -36,8 +36,8 @@
           <h2>Recently Emitted Alerts</h2>
           <p>The table shows both stateful<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> alerts when they are actually emitted and one-shot<a class="help" href="user-manual.html#one-shot-alerts"><span class="icon-help-circled"/></a> alerts.
           <form class="form-inline" action="do" type="GET">
-          <a class="btn btn-primary" href="../rest/csv/alerts/emitted/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/emitted/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/alerts/last_emitted.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/alerts/last_emitted.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
               <input name="event" type="hidden" value="emitAlert" />
@@ -51,8 +51,8 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Gridboards<a class="help" href="user-manual.html#gridboards"><span class="icon-help-circled"/></a></h2>
-          <p><a class="btn btn-primary" href="../rest/csv/gridboards/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/gridboards/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/gridboards/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/gridboards/list.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:gridboards?>
         </div>
       </div>
@@ -64,8 +64,8 @@
            per matching subscription.
            If a stop subscription matches an alert, next subscriptions are not evaluated
            regardless if they match the alert or not.
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/subscriptions/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/subscriptions/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/alerts_subscriptions/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/alerts_subscriptions/list.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:alertsubscriptions?>
         </div>
       </div>
@@ -87,8 +87,8 @@
           of them, and their value are inherited by alert subscriptions (i.e.
           parameters not overriden on an alert subscription basis are set as the
           following ones).
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/params/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/params/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/alert_params/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/alert_params/list.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:alertparams?>
         </div>
         <div class="col-md-4 hidden-xs hidden-sm">
@@ -105,8 +105,8 @@
            Settings are evaluated from top to bottom. If several settings
            match the alert, the first one is taken into account.
            Delays are in seconds.
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/settings/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/settings/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/alerts_settings/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/alerts_settings/list.html"><i class="icon-file-html"></i> HTML</a>
           <p><?view:alertsettings?>
         </div>
         <div class="col-md-4">

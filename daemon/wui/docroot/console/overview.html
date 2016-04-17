@@ -32,8 +32,8 @@
         </div>
         <div class="col-md-8">
           <h2>Currently Raised<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> Alerts</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/alerts/stateful/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/alerts/stateful/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/alerts/stateful_list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/alerts/stateful_list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="alerts.html">Alerts page &raquo;</a>
           <p><?view:raisedalerts?>
         </div>
@@ -41,8 +41,8 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Currently Running or Queued Tasks</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/taskinstances/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/taskinstances/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/taskinstances/list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html#instances">Tasks page &raquo;</a>
           <p><?view:taskinstances20?>
         </div>
@@ -52,8 +52,8 @@
           <h2>Tasks Schedule</h2>
           <p>Only main tasks are shown (workflow subtasks are hidden).
           <p><form class="form-inline" onSubmit="return false;">
-          <a class="btn btn-primary" href="../rest/csv/tasks/list/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/tasks/list/v1"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/tasks/list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html#config">Tasks page &raquo;</a>
           <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <input class="input-medium search-query" id="filter-tasksschedule" type="text" placeholder="Quick search..." />
@@ -68,9 +68,9 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Last Warnings and Errors</h2>
-          <p><a class="btn btn-primary" href="../rest/csv/log/info/v1"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/html/log/info/v1"><i class="icon-file-html"></i> HTML</a>
-          <a class="btn btn-primary" href="../rest/txt/log/current/v1"><i class="icon-file-text"></i> Current log file</a>
+          <p><a class="btn btn-primary" href="../rest/v1/logs/last_info_entries.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/last_info_entries.html"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/entries.txt?files=current&regexp=+(INFO|WARNING|ERROR|FATAL)+"><i class="icon-file-text"></i> Current log file</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
           <p><?view:warninglog10?>
         </div>

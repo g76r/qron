@@ -20,7 +20,8 @@
  - requesttask action can now dynamicaly override task params, e.g.:
         - ```(task foo(onsuccess(requesttask bar(params myparam myvalue))))```
  - changed and rationalized many web console uris, e.g.:
-        - /console/taskdoc.html?taskid=%1 -> /console/task/%1
+        - /console/taskdoc.html?taskid=%1 -> /console/tasks/%1
+        - /console/requestform?taskid=%1 -> /console/tasks/request/%1
         - /console/index.html -> /console/overview.html
 
 * Minor improvements and fixes
@@ -53,6 +54,10 @@
  - wui: fixed content truncate when too large in several locations: request
    forms (adhoc.html), pf config field (taskdoc.html) and several customization
    fields (css in header.html and custom buttons in taskdoc.html)
+ - changed and rationalized many REST API uris, to have a consistent and more
+   standards compliant scheme, e.g.
+        - /rest/csv/taskgroups/list/v1 -> /rest/v1/taskgroups/list.csv
+        - /rest/svg/tasks/workflow/v1?taskid=%1 -> /rest/v1/tasks/%1/workflow.svg
 
 * Behind-the-curtain improvements
  - wui: several cleanups (removing query string redirect of with cookie values

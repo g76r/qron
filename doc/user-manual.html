@@ -86,7 +86,7 @@
                 <li><a href="#wui-views">Views</a>
                 <li><a href="#wui-customization">Customization</a>
               </ul>
-              <li><a href="#rest-api">REST API</a>
+              <li><a href="#http-api">HTTP API (REST API)</a>
               <li><a href="#appendices">Appendices</a>
               <ul class="nav">
                 <li><a href="#configuration-file-format">Configuration File Format</a>
@@ -133,7 +133,7 @@ such as <a href="#resources">resources</a> and
 desktop and phone/tablet apps.
 
 <p>Integrating with other IT tools and custom extensions is possible through
-<a href="#rest-api">REST API</a> and <a href="#linux-integration">standard
+<a href="#http-api">HTTP API</a> and <a href="#linux-integration">standard
 operating system integration</a>.
 
 <h2>Tasks Hierarchy</h2>
@@ -299,7 +299,7 @@ down to second, e.g.
 <a href="#notices">notice event</a> occurs
 <li><tt>filechange</tt>: not yet implented, but will be able to trigger task
 execution on local or remote file change or creation
-<li>REST API: a task can be triggered by <a href="#rest-api">REST API</a>
+<li>HTTP API: a task can be triggered by <a href="#http-api">HTTP API</a>
 <a href="#requesttask-call"><tt>requesttask</tt> call</a>
 <li><tt>requesttask</tt> event: a task can be triggered by occurrence of a
 <a href="#events"><tt>requesttask</tt> event</a>
@@ -377,7 +377,7 @@ special parameters name that have an effect qron behavior (parameters such as
 <tt>ssh.options</tt> when using ssh execution mean).
 
 <p>Parameters can be overriden at task request, being it in trigger definition,
-in <a href="#rest-api">REST API</a> or in web user interface using
+in <a href="#http-api">HTTP API</a> or in web user interface using
 <a href="#tasks-request-forms">request forms</a>.
 
 <p>Sample configuration file fragments:
@@ -925,7 +925,7 @@ for delays default values and advices on their tuning when needed.
 
 <h3>Custom Alerts</h3>
 
-TODO: custom alerts through events and actions, but also from outside qron using the <a href="#rest-api">REST API</a>
+TODO: custom alerts through events and actions, but also from outside qron using the <a href="#http-api">HTTP API</a>
 
 <h3>Gridboards</h3>
 
@@ -1012,7 +1012,7 @@ title="Rendering sample of 'Tasks Alerts' gridboard" />
 raised by qron, it is also possible to use this feature with some
 <a href="#custom-alerts">custom alerts</a>, being them raised using the
 <a href="#actions">alert-related actions</a> or from any external source
-using the <a href="#rest-api">REST API</a>.
+using the <a href="#http-api">HTTP API</a>.
 
 <p>Here are some examples of dashboards associated to host and application
 servers supervision probes:
@@ -1213,7 +1213,78 @@ title="Parameters Sets Hierarchy Caption" />
 
 <p> TODO through parameters
 
-<h2>REST API</h2>
+<h2 id="http-api">HTTP API (REST API)</h2>
+
+<h3>REST API</h3>
+
+<pre>
+GET /rest/v1/taskgroups/list.csv
+GET /rest/v1/taskgroups/list.html
+GET /rest/v1/tasks/%1/config.pf
+GET /rest/v1/tasks/%1/workflow.svg
+GET /rest/v1/tasks/%1/workflow.dot
+GET /rest/v1/tasks/list.csv
+GET /rest/v1/tasks/list.html
+GET /rest/v1/tasks/deployment_diagram.svg
+GET /rest/v1/tasks/deployment_diagram.dot
+GET /rest/v1/tasks/trigger_diagram.svg
+GET /rest/v1/tasks/trigger_diagram.dot
+GET /rest/v1/steps/list.csv
+GET /rest/v1/steps/list.html
+GET /rest/v1/hosts/list.csv
+GET /rest/v1/hosts/list.html
+GET /rest/v1/clusters/list.csv
+GET /rest/v1/clusters/list.html
+GET /rest/v1/global_params/list.csv
+GET /rest/v1/global_params/list.html
+GET /rest/v1/global_setenvs/list.csv
+GET /rest/v1/global_setenvs/list.html
+GET /rest/v1/global_unsetenvs/list.csv
+GET /rest/v1/global_unsetenvs/list.html
+GET /rest/v1/calendars/list.csv
+GET /rest/v1/calendars/list.html
+GET /rest/v1/taskinstances/list.csv
+GET /rest/v1/taskinstances/list.html
+GET /rest/v1/scheduler_events/list.csv
+GET /rest/v1/scheduler_events/list.html
+GET /rest/v1/notices/lastposted.csv
+GET /rest/v1/notices/lastposted.html
+GET /rest/v1/resources/free_resources_by_host.csv
+GET /rest/v1/resources/free_resources_by_host.html
+GET /rest/v1/resources/lwm_resources_by_host.csv
+GET /rest/v1/resources/lwm_resources_by_host.html
+GET /rest/v1/resources/consumption_matrix.csv
+GET /rest/v1/resources/consumption_matrix.html
+GET /rest/v1/alert_params/list.csv
+GET /rest/v1/alert_params/list.html
+GET /rest/v1/alerts/stateful_list.csv
+GET /rest/v1/alerts/stateful_list.html
+GET /rest/v1/alerts/last_emitted.csv
+GET /rest/v1/alerts/last_emitted.html
+GET /rest/v1/alerts_subscriptions/list.csv
+GET /rest/v1/alerts_subscriptions/list.html
+GET /rest/v1/alerts_settings/list.csv
+GET /rest/v1/alerts_settings/list.html
+GET /rest/v1/gridboards/list.csv
+GET /rest/v1/gridboards/list.html
+GET /rest/v1/gridboards/%1.html
+GET /rest/v1/configs/list.csv
+GET /rest/v1/configs/list.html
+GET /rest/v1/configs/history.csv
+GET /rest/v1/configs/history.html
+GET /rest/v1/configs/%1.pf
+POST /rest/v1/configs/
+GET /rest/v1/logs/logfiles.csv
+GET /rest/v1/logs/logfiles.html
+GGET /rest/v1/logs/last_info_entries.csv
+GET /rest/v1/logs/last_info_entries.html
+GET /rest/v1/logs/entries.txt
+  files
+  filter
+  regexp
+</pre>
+
+<h3>Callable API</h3>
 
 <h2>Appendices</h2>
 

@@ -26,7 +26,7 @@ QString HtmlSchedulerConfigItemDelegate::text(const QModelIndex &index) const {
   int column = index.column();
   if (column == _idColumn) {
     if (_configIds.contains(id)) {
-      text.prepend("<a href=\"../rest/pf/config/v1?configid="+id+"\">");
+      text.prepend("<a href=\"../rest/v1/configs/"+id+".pf\">");
       text.append("</a>");
     }
   } else if (column == _isActiveColumn) {
@@ -35,8 +35,8 @@ QString HtmlSchedulerConfigItemDelegate::text(const QModelIndex &index) const {
   } else if (column == _actionsColumn) {
     if (_configIds.contains(id)) {
       text.prepend("<span class=\"label label-info\" title=\"Download\">"
-                   "<a href=\"../rest/pf/config/v1?configid="+id
-                   +"\"><i class=\"icon-file\"></i></a></span> ");
+                   "<a href=\"../rest/v1/configs/"+id
+                   +".pf\"><i class=\"icon-file\"></i></a></span> ");
       if (id == _activeConfigId)
         text.prepend("<span class=\"label label-default\" title=\""
                      "Cannot remove active config\">"

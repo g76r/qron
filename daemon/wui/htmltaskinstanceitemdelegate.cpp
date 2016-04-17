@@ -41,7 +41,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     text = index.data().toString(); // disable truncating and HTML encoding
     text.prepend(/* log */
                  "<span class=\"label label-info\" title=\"Log\">"
-                 "<a target=\"_blank\" href=\"../rest/txt/log/all/v1?"
+                 "<a target=\"_blank\" href=\"../rest/v1/logs/entries.txt?"
                  "filter=/"+taskInstanceId+" \">"
                  "<i class=\"icon-file-text\"></i></a></span> "
                  /* detail page */
