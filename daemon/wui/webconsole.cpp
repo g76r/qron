@@ -1902,8 +1902,10 @@ void WebConsole::enableAccessControl(bool enabled) {
         .allow("", "^/console/(test|user-manual)\\.html$")
         // operate for operation
         .allow("operate", "^/(rest|console)/do")
-        // nobody else on operation uris
+        .allow("operate", "^/do/.*")
+        // nobody else on operation paths
         .deny("", "^/(rest|console)/do")
+        .deny("", "^/do/.*")
         // read for everything else
         .allow("read");
   } else {
