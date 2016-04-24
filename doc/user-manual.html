@@ -87,6 +87,10 @@
                 <li><a href="#wui-customization">Customization</a>
               </ul>
               <li><a href="#http-api">HTTP API (REST API)</a>
+              <ul class="nav">
+                <li><a href="#rest-api">REST API</a>
+                <li><a href="#do-api">RPC API</a>
+              </ul>
               <li><a href="#appendices">Appendices</a>
               <ul class="nav">
                 <li><a href="#configuration-file-format">Configuration File Format</a>
@@ -559,6 +563,8 @@ the validation is enforced server-side)
 </pre>
 
 <h3>Workflows and Subtasks</h2>
+
+TODO
 
 <h2>Infrastructure</h2>
 
@@ -1055,6 +1061,8 @@ title="Rendering sample of 'Application Services x Deployed Instances' gridboard
 
 <h3 id="alerts-fine-tuning">Fine Tuning</h3>
 
+TODO
+
 <h2>Events and Actions</h2>
 
 <p>Some events can be subscribed at <a href="#task-level-events">task level</a>
@@ -1215,7 +1223,19 @@ title="Parameters Sets Hierarchy Caption" />
 
 <h2 id="http-api">HTTP API (REST API)</h2>
 
+Qron's HTTP API is splitted into a REST API (paths begining with /rest/) and a
+RPC API (paths begining with /do/) which is as simple
+as a REST API but action-oriented rather than data-oriented and does not rely
+on HTTP methods to determine the action as the REST API does.
+
+Whatever HTTP URI whose path is not begining with /do/ or /rest/ is not
+part of the HTTP API, it's only UI and backward compatibility of UI URIs can
+be broken between Qron's versions without notice (they should only be linked
+from within Qron web UI itself).
+
 <h3>REST API</h3>
+
+TODO
 
 <pre>
 GET /rest/v1/taskgroups/list.csv
@@ -1276,7 +1296,7 @@ GET /rest/v1/configs/%1.pf
 POST /rest/v1/configs/
 GET /rest/v1/logs/logfiles.csv
 GET /rest/v1/logs/logfiles.html
-GGET /rest/v1/logs/last_info_entries.csv
+GET /rest/v1/logs/last_info_entries.csv
 GET /rest/v1/logs/last_info_entries.html
 GET /rest/v1/logs/entries.txt
   files
@@ -1284,7 +1304,13 @@ GET /rest/v1/logs/entries.txt
   regexp
 </pre>
 
-<h3>Callable API</h3>
+<h3>RPC API</h3>
+
+TODO
+
+<pre>
+POST|GET /do/v1/tasks/request/%taskid
+</pre>
 
 <h2>Appendices</h2>
 
