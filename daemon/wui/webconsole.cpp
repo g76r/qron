@@ -794,9 +794,81 @@ static void copyFilteredFiles(QStringList paths, QIODevice *output,
   }
 }
 
+static QList<quint64> _noAuditInstanceIds { 0 };
+
+static void apiAuditAndResponse(
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, QString responseMessage,
+    QString auditAction, QString auditTaskId = QString(),
+    QList<quint64> auditInstanceIds = _noAuditInstanceIds) {
+  if (auditInstanceIds.isEmpty()) // should never happen
+    auditInstanceIds = _noAuditInstanceIds;
+  QString userid = processingContext->paramValue(
+        QStringLiteral("userid")).toString();
+  QString referer = req.header(QStringLiteral("Referer"));
+  QString redirect = req.base64Cookie("redirect", referer);
+  if (auditAction.contains(webconsole->showAuditEvent()) // empty regexps match any string
+      && (webconsole->hideAuditEvent().pattern().isEmpty()
+          || !auditAction.contains(webconsole->hideAuditEvent()))
+      && userid.contains(webconsole->showAuditUser())
+      && (webconsole->hideAuditUser().pattern().isEmpty()
+          || !userid.contains(webconsole->hideAuditUser()))) {
+    foreach (quint64 auditInstanceId, auditInstanceIds)
+      Log::info(auditTaskId, auditInstanceId)
+          << "AUDIT action: '" << auditAction
+          << (responseMessage.startsWith('E')
+              ? "' result: failure" : "' result: success")
+          << " actor: '" << userid
+          << "' address: { " << req.clientAdresses().join(", ")
+          << " } params: " << req.paramsAsParamSet().toString(false)
+          << " response message: " << responseMessage;
+  }
+  if (!redirect.isEmpty()) {
+    res.setBase64SessionCookie(QStringLiteral("message"), responseMessage,
+                               QStringLiteral("/"));
+    res.clearCookie(QStringLiteral("redirect"), QStringLiteral("/"));
+    res.redirect(redirect);
+  } else {
+    res.setContentType(QStringLiteral("text/plain;charset=UTF-8"));
+    if (responseMessage.startsWith('E'))
+      res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
+    responseMessage.append('\n');
+    res.output()->write(responseMessage.toUtf8());
+  }
+}
+
 static RadixTree<
 std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                    ParamsProviderMerger *, int matchedLength)>> _handlers {
+{ "/do/v1/tasks/request/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  ParamSet params = req.paramsAsParamSet();
+  // LATER drop parameters that are not defined as overridable in task config
+  foreach (QString key, params.keys())
+    if (params.rawValue(key).isEmpty())
+      params.removeValue(key); // empty values won't override
+  QList<TaskInstance> instances = webconsole->scheduler()
+      ->syncRequestTask(taskId, params);
+  QString message;
+  QList<quint64> taskInstanceIds;
+  if (!instances.isEmpty()) {
+    message = "S:Task '"+taskId+"' submitted for execution with id";
+    foreach (TaskInstance request, instances) {
+      message.append(' ').append(QString::number(request.idAsLong()));
+      taskInstanceIds << request.idAsLong();
+    }
+    message.append('.');
+  } else
+    message = "E:Execution request of task '"+taskId
+        +"' failed (see logs for more information).";
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "requestTask", taskId, taskInstanceIds);
+  return true;
+}, true },
 { { "/console/do", "/rest/do" }, [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
@@ -816,29 +888,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   QString redirect = req.base64Cookie("redirect", referer);
   QString message;
   QString userid = processingContext->paramValue("userid").toString();
-  if (event == "requestTask") {
-    // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
-    ParamSet params(req.paramsAsParamSet());
-    // TODO handle null values rather than replacing empty with nulls
-    foreach (QString key, params.keys())
-      if (params.value(key).isEmpty())
-        params.removeValue(key);
-    params.removeValue("taskid");
-    params.removeValue("event");
-    // TODO evaluate overriding params within overriding > global context
-    QList<TaskInstance> instances = webconsole->scheduler()
-        ->syncRequestTask(taskId, params);
-    if (!instances.isEmpty()) {
-      message = "S:Task '"+taskId+"' submitted for execution with id";
-      foreach (TaskInstance request, instances) {
-        message.append(' ').append(QString::number(request.idAsLong()));
-        auditInstanceIds << request.idAsLong();
-      }
-      message.append('.');
-    } else
-      message = "E:Execution request of task '"+taskId
-          +"' failed (see logs for more information).";
-  } else if (event == "cancelRequest") {
+  if (event == "cancelRequest") {
     TaskInstance instance = webconsole->scheduler()
         ->cancelRequest(taskInstanceId);
     if (!instance.isNull()) {
@@ -916,7 +966,6 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
           || !userid.contains(webconsole->hideAuditUser()))) {
     if (auditInstanceIds.isEmpty())
       auditInstanceIds << taskInstanceId;
-    // LATER add source IP address(es) to audit
     foreach (quint64 auditInstanceId, auditInstanceIds)
       Log::info(taskId, auditInstanceId)
           << "AUDIT action: '" << event
@@ -1013,12 +1062,11 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         if (task.requestFormFields().size())
           form += "<p class=\"text-center\">Task parameters can be defined in "
                   "the following form:";
-        form += "<p><form action=\"../../do\">";
+        form += "<p><form action=\"../../../do/v1/tasks/request/"+taskId
+            +"\" method=\"POST\">";
         foreach (RequestFormField rff, task.requestFormFields())
           form.append(rff.toHtmlFormFragment());
-        form += "<input type=\"hidden\" name=\"taskid\" value=\""+taskId+"\">\n"
-                "<input type=\"hidden\" name=\"event\" value=\"requestTask\">\n"
-                "<div><p><p class=\"text-center\">"
+        form += "<div><p><p class=\"text-center\">"
                 "<button type=\"submit\" class=\"btn btn-danger\">"
                 "Request task execution</button>\n"
                 "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
