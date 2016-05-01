@@ -848,9 +848,11 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   QString taskId = req.url().path().mid(matchedLength);
   ParamSet params = req.paramsAsParamSet();
   // LATER drop parameters that are not defined as overridable in task config
+  // remove empty values so that fields left empty in task request ui form won't
+  // override configurated values
   foreach (QString key, params.keys())
     if (params.rawValue(key).isEmpty())
-      params.removeValue(key); // empty values won't override
+      params.removeValue(key);
   QList<TaskInstance> instances = webconsole->scheduler()
       ->syncRequestTask(taskId, params);
   QString message;
@@ -869,7 +871,21 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                       "requestTask", taskId, taskInstanceIds);
   return true;
 }, true },
-{ { "/console/do", "/rest/do" }, [](
+{ "/do/v1/notices/post/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString notice = req.url().path().mid(matchedLength);
+  ParamSet params = req.paramsAsParamSet();
+  webconsole->scheduler()->postNotice(notice, params);
+  QString message;
+  QList<quint64> taskInstanceIds;
+  message = "S:Notice '"+notice+"' posted.";
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "postNotice");
+  return true;
+}, true },{ { "/console/do", "/rest/do" }, [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
