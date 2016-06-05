@@ -17,14 +17,13 @@ General Public License version 3, see AGPL-3.0.txt file content.
 BUILD INSTRUCTIONS
 ------------------
 
-This program requires Qt >= 5.2.0 to be built.
-Actually Qt 5.0.0 should be enough for building, however there is a bug in Qt
-until 5.2.0 that can lead to random crashes in qron when executing tasks
-through http, therefore we advise to run with Qt 5.2.0 libs or above.
+This program requires at build time:
+* Qt >= 5.6.0 development libs (with QtCore, QtNetwork, QtSql modules)
+* graphviz binaries (to compile some documentation diagrams)
 
-The git repository uses git submodules to handle libqtpf and libqtssu
-dependencies, therefore you should use following steps to clone repository
-and submodules repositories:
+In addition, the git repository uses git submodules to handle libqtpf and
+libqtssu dependencies, therefore you should use following steps to clone
+repository and submodules repositories:
 
 ``` bash
 git clone git://github.com/g76r/qron.git
