@@ -43,6 +43,10 @@ qmake
 make
 ```
 
+When built on Linux, binaries can be found under "linux" directory, with a
+README file explaining how to start the daemon.
+
+
 CONTRIBUTIONS
 -------------
 
