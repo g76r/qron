@@ -18,6 +18,11 @@ TARGET = qrond
 CONFIG += console largefile c++11
 CONFIG -= app_bundle
 
+contains(QT_VERSION, ^4\\..*) {
+  message("Cannot build with Qt version $${QT_VERSION}.")
+  error("Use Qt 5.")
+}
+
 INCLUDEPATH += ../libqtpf ../libqtssu ../libqron
 win32:debug:LIBS += \
   -L../build-libqtpf-windows/debug \
