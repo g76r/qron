@@ -1178,18 +1178,26 @@ TODO
 src="img/paramset_hierarchy.svg"
 title="Parameters Sets Hierarchy" />
 
-<p>Caption:
-<img class="img-responsive center-block" style="width: 50%; margin-left: 0;"
-src="img/paramset_hierarchy_caption.svg"
-title="Parameters Sets Hierarchy Caption" />
-<!-- LATER: ensure same scaling than main diagram, via JS, rather than
-  arbitrary set width to 50% -->
+<div class="row">
+  <div class="col-md-6">
+  </div>
+  <div class="col-md-6">
+    <p>Caption:
+    <img class="img-responsive center-block"
+      src="img/paramset_hierarchy_caption.svg"
+      title="Parameters Sets Hierarchy Caption" />
+    <!-- LATER: ensure same scaling than main diagram, via JS, rather than
+      arbitrary set width to 50% -->
+  </div>
+</div>
 
 <h3 id="percent-evaluation">%-Evaluation</h3>
 
 <h3>Special Parameters</h3>
 
 <h2>Configuration Management</h2>
+
+TODO
 
 <h2>Operations</h2>
 
@@ -1228,99 +1236,250 @@ RPC API (paths begining with /do/) which is as simple
 as a REST API but action-oriented rather than data-oriented and does not rely
 on HTTP methods to determine the action as the REST API does.
 
-Whatever HTTP URI whose path is not begining with /do/ or /rest/ is not
-part of the HTTP API, it's only UI and backward compatibility of UI URIs can
+<p>Whatever HTTP URI whose path is not begining with /do/ or /rest/ is not
+part of the HTTP API, it's only UI. Backward compatibility of UI URIs can
 be broken between Qron's versions without notice (they should only be linked
-from within Qron web UI itself).
+from within Qron web UI itself, not called or referenced by any third party
+tool).
 
 <h3>REST API</h3>
 
-TODO
+<p>REST calls are described in the table below. They complies with the
+following rules:
+<ul>
+<li>HTTP method widespread REST semantics: <tt>GET</tt> is read-only and has
+no side effect, <tt>POST</tt> means create, <tt>PUT</tt> means update
+<li>response content-type is defined in the request path (e.g. ending with
+.html to ask for HTML) not in content-type HTTP headers, to have a more
+natural explicit choice and avoid any kind of out-of-band parameters
+<li>paths always start with <tt>/rest/%version/%collection_name/</tt>, most
+of them are followed by a collection-wide view (e.g. <tt>list.csv</tt>) or
+the object id within the collection (e.g. <tt>2783794.html</tt>).
+<li>reply HTTP statuses can be trusted with their standard meaning, at less
+for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
+401 and 403 used for authentication)
+</ul>
 
-<pre>
-GET /rest/v1/taskgroups/list.csv
-GET /rest/v1/taskgroups/list.html
-GET /rest/v1/tasks/%1/config.pf
-GET /rest/v1/tasks/%1/workflow.svg
-GET /rest/v1/tasks/%1/workflow.dot
-GET /rest/v1/tasks/list.csv
-GET /rest/v1/tasks/list.html
-GET /rest/v1/tasks/deployment_diagram.svg
-GET /rest/v1/tasks/deployment_diagram.dot
-GET /rest/v1/tasks/trigger_diagram.svg
-GET /rest/v1/tasks/trigger_diagram.dot
-GET /rest/v1/steps/list.csv
-GET /rest/v1/steps/list.html
-GET /rest/v1/hosts/list.csv
-GET /rest/v1/hosts/list.html
-GET /rest/v1/clusters/list.csv
-GET /rest/v1/clusters/list.html
-GET /rest/v1/global_params/list.csv
-GET /rest/v1/global_params/list.html
-GET /rest/v1/global_setenvs/list.csv
-GET /rest/v1/global_setenvs/list.html
-GET /rest/v1/global_unsetenvs/list.csv
-GET /rest/v1/global_unsetenvs/list.html
-GET /rest/v1/calendars/list.csv
-GET /rest/v1/calendars/list.html
-GET /rest/v1/taskinstances/list.csv
-GET /rest/v1/taskinstances/list.html
-GET /rest/v1/scheduler_events/list.csv
-GET /rest/v1/scheduler_events/list.html
-GET /rest/v1/notices/lastposted.csv
-GET /rest/v1/notices/lastposted.html
-GET /rest/v1/resources/free_resources_by_host.csv
-GET /rest/v1/resources/free_resources_by_host.html
-GET /rest/v1/resources/lwm_resources_by_host.csv
-GET /rest/v1/resources/lwm_resources_by_host.html
-GET /rest/v1/resources/consumption_matrix.csv
-GET /rest/v1/resources/consumption_matrix.html
-GET /rest/v1/alert_params/list.csv
-GET /rest/v1/alert_params/list.html
-GET /rest/v1/alerts/stateful_list.csv
-GET /rest/v1/alerts/stateful_list.html
-GET /rest/v1/alerts/last_emitted.csv
-GET /rest/v1/alerts/last_emitted.html
-GET /rest/v1/alerts_subscriptions/list.csv
-GET /rest/v1/alerts_subscriptions/list.html
-GET /rest/v1/alerts_settings/list.csv
-GET /rest/v1/alerts_settings/list.html
-GET /rest/v1/gridboards/list.csv
-GET /rest/v1/gridboards/list.html
-GET /rest/v1/gridboards/%1.html
-GET /rest/v1/configs/list.csv
-GET /rest/v1/configs/list.html
-GET /rest/v1/configs/history.csv
-GET /rest/v1/configs/history.html
-GET /rest/v1/configs/%1.pf
-POST /rest/v1/configs/
-GET /rest/v1/logs/logfiles.csv
-GET /rest/v1/logs/logfiles.html
-GET /rest/v1/logs/last_info_entries.csv
-GET /rest/v1/logs/last_info_entries.html
-GET /rest/v1/logs/entries.txt
-  files
-  filter
-  regexp
-</pre>
+<p>The following table describes REST calls:
+<p><table class="table table-condensed table-hover table-striped">
+<tr><th>Call</th><th>Description</th></tr>
+<tr><td><tt>
+<p>GET /rest/v1/taskgroups/list.csv
+<p>GET /rest/v1/taskgroups/list.html
+</tt>
+</td><td>list of task groups</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/tasks/%taskid/config.pf
+</tt>
+</td><td>task %taskid's configuration, in config file format</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/tasks/%taskid/workflow.svg
+<p>GET /rest/v1/tasks/%taskid/workflow.dot
+</tt>
+</td><td>task %taskid's workflow diagram, in SVG or Graphviz dot format</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/tasks/list.csv
+<p>GET /rest/v1/tasks/list.html
+</td><td>list of tasks</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/tasks/deployment_diagram.svg
+<p>GET /rest/v1/tasks/deployment_diagram.dot
+</td><td>deployment diagram (taskgroup to tasks to either cluster or host
+graph), in SVG or Graphviz dot format</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/tasks/trigger_diagram.svg
+<p>GET /rest/v1/tasks/trigger_diagram.dot
+</td><td>trigger diagram (taskgroup to tasks to trigger graph), in SVG or
+Graphviz dot format</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/steps/list.csv
+<p>GET /rest/v1/steps/list.html
+</tt>
+</td><td>list of workflow tasks steps</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/hosts/list.csv
+<p>GET /rest/v1/hosts/list.html
+</tt>
+</td><td>list of hosts</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/clusters/list.csv
+<p>GET /rest/v1/clusters/list.html
+</tt>
+</td><td>list of clusters</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/global_params/list.csv
+<p>GET /rest/v1/global_params/list.html
+</tt>
+</td><td>list of global params</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/global_setenvs/list.csv
+<p>GET /rest/v1/global_setenvs/list.html
+</tt>
+</td><td>list of global setenvs</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/global_unsetenvs/list.csv
+<p>GET /rest/v1/global_unsetenvs/list.html
+</tt>
+</td><td>list of global unsetenvs</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/calendars/list.csv
+<p>GET /rest/v1/calendars/list.html
+</tt>
+</td><td>list of named calendars</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/taskinstances/list.csv
+<p>GET /rest/v1/taskinstances/list.html
+</tt>
+</td><td>list of task instances</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/scheduler_events/list.csv
+<p>GET /rest/v1/scheduler_events/list.html
+</tt>
+</td><td>list of scheduler events subscriptions</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/notices/lastposted.csv
+<p>GET /rest/v1/notices/lastposted.html
+</tt>
+</td><td>list of last posted notices, in reverse chronological order</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/resources/free_resources_by_host.csv
+<p>GET /rest/v1/resources/free_resources_by_host.html
+</tt>
+</td><td>free resources x host matrix</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/resources/lwm_resources_by_host.csv
+<p>GET /rest/v1/resources/lwm_resources_by_host.html
+</tt>
+</td><td>low water mark resources x host matrix</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/resources/consumption_matrix.csv
+<p>GET /rest/v1/resources/consumption_matrix.html
+</tt>
+</td><td>task × host × theorical lowest possible resources availability matrix</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/alert_params/list.csv
+<p>GET /rest/v1/alert_params/list.html
+</tt>
+</td><td>list of alert params</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/alerts/stateful_list.csv
+<p>GET /rest/v1/alerts/stateful_list.html
+</tt>
+</td><td>list of current stateful alerts, with their state and timestamps</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/alerts/last_emitted.csv
+<p>GET /rest/v1/alerts/last_emitted.html
+</tt>
+</td><td>list of recently emitted alerts, last one first</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/alerts_subscriptions/list.csv
+<p>GET /rest/v1/alerts_subscriptions/list.html
+</tt>
+</td><td>list of alerts subscriptions</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/alerts_settings/list.csv
+<p>GET /rest/v1/alerts_settings/list.html
+</tt>
+</td><td>list of alerts settings</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/gridboards/list.csv
+<p>GET /rest/v1/gridboards/list.html
+</tt>
+</td><td>list of gridboards</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/gridboards/%1.html
+</tt>
+</td><td>gridboard %1, rendered as one or several html tables</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/configs/list.csv
+<p>GET /rest/v1/configs/list.html
+</tt>
+</td><td>list of loaded configurations</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/configs/history.csv
+<p>GET /rest/v1/configs/history.html
+</tt>
+</td><td>list of active configurations history, current one first</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/configs/%1.pf
+</tt>
+</td><td>config %1, in config file format</td></tr>
+<tr><td><tt>
+<p>POST /rest/v1/configs/
+</tt>
+</td><td>upload a config, in config file format; uploaded config is not
+activated, it is only loaded (see /do/v1/configs/activate/)
+<p>reply body will be of the form <tt>(id %1)</tt>, %1 being replaced by
+uploaded config id
+<p>reply has <tt>X-Qron-ConfigId</tt> http header set to uploaded config id,
+for clients that would find easier to read headers than body</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/logs/logfiles.csv
+<p>GET /rest/v1/logs/logfiles.html
+</tt>
+</td><td>list of logfiles</td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/logs/entries.txt
+</tt>
+</td><td>last log entries, last one last
+<p>optional parameters:
+<ul>
+<li><tt>files</tt>: if set to <tt>current</tt> only fetch current log files
+entries, ignoring older files (useful with e.g. daily-rotated log files)
+<li><tt>filter</tt>: plain text filter string
+<li><tt>regexp</tt>: regular expression filter
+</ul> </td></tr>
+<tr><td><tt>
+<p>GET /rest/v1/logs/last_info_entries.csv
+<p>GET /rest/v1/logs/last_info_entries.html
+</tt>
+</td><td>last log entries with at less INFO severity level, in csv or html
+table format, last one last</td></tr>
+</table>
 
 <h3>RPC API</h3>
 
-TODO
+<p>RPC calls are described in the table below. They complies with the
+following rules:
+<ul>
+<li>calls are handled with the same meaning regardless which HTTP method
+is used (GET or POST), the meaning is given by the path
+<li>paths always start with <tt>/do/%version/%domain/%action/</tt>, and in
+most cases the domain is a collection_name (e.g. tasks).
+<li>for calls using HTTP params, both URI request string params (GET) and
+body x-www-form-urlencoded  params (POST) are supported, behavior when using
+both at a time is unspecified (don't mix them, this may work in a qron
+version and not in the next one, or not with the same priority/overriding
+implicit rules)
+<li>reply HTTP statuses can be trusted with their standard meaning, at less
+for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
+401 and 403 used for authentication)
+</ul>
 
-<pre>
-POST|GET /do/v1/tasks/request/%taskid
-  post and get params are used as task instance overriding params
-POST|GET /do/v1/notices/post/%notice
-  post and get params are used as notice params
-</pre>
+<p>The following table describes REST calls:
+<p><table class="table table-condensed table-hover table-striped">
+<tr><th>Call</th><th>Description</th></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/tasks/request/%taskid
+</tt>
+</td><td>request execution of task %taskid
+<p>HTTP params are used as task instance overriding params
+</td></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/notices/post/%notice
+</tt>
+</td><td>post %notice notice
+<p>HTTP params are used as notice params
+</td></tr>
+</table>
+
+<p>TODO: document other RPC calls
 
 <h2>Appendices</h2>
 
-
 <p>
 
-        </div>
+</div>
       </div>
     </div>
 
