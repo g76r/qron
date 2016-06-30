@@ -20,6 +20,12 @@ clean:
 
 re: clean all
 
-doc/user-manual.html: user-manual.html header.html common-scripts.html footer.html
+doc/user-manual.html: user-manual.html header.html common-scripts.html footer.html version.txt
 	cat $< | awk '/<?include:/{sub(".*<\\?include:","");sub("\\?>.*","");system("cat " $$0);next}{print $$0}' > $@
 	if [ -e $(PUBLISHING_DIRECTORY) ]; then mkdir -p $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default} && rsync -avrLk --delete --delete-after $$(dirname $@)/. $(PUBLISHING_DIRECTORY)/$${CI_BUILD_REF_NAME:-default}/.; fi
+
+version.txt: FORCE
+	OLD="$$(cat $@ 2> /dev/null)"; NEW="$$(git describe --always)"; if [ "$$OLD" != "$$NEW" ]; then echo $$NEW > $@; fi
+
+FORCE:
+	
