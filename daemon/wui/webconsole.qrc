@@ -1,5 +1,9 @@
 <RCC>
     <qresource prefix="/">
+        <file>docroot/robots.txt</file>
+        <file>docroot/version.txt</file>
+        <file>docroot/console/robots.txt</file>
+        <file>docroot/console/version.txt</file>
         <file>docroot/console/test.html</file>
         <file>docroot/console/overview.html</file>
         <file>docroot/console/header.html</file>

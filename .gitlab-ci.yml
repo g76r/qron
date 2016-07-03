@@ -4,6 +4,7 @@ stages:
 build_main:
   stage: build
   script:
+    - git fetch --tags
     - git submodule update --init
     - qmake
     - make

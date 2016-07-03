@@ -1,4 +1,4 @@
-# Copyright 2012-2015 Hallowyn and others.
+# Copyright 2012-2016 Hallowyn and others.
 # This file is part of qron, see <http://qron.eu/>.
 # Qron is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -17,6 +17,7 @@ QT       -= gui
 TARGET = qrond
 CONFIG += console largefile c++11
 CONFIG -= app_bundle
+TEMPLATE = app
 
 contains(QT_VERSION, ^4\\..*) {
   message("Cannot build with Qt version $${QT_VERSION}.")
@@ -35,7 +36,6 @@ win32:release:LIBS += \
 unix:LIBS += -L../libqtpf -L../libqtssu -L../libqron
 LIBS += -lqtpf -lqtssu -lqron
 
-
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra
@@ -48,12 +48,10 @@ unix {
   MOC_DIR = ../build-daemon-unix/moc
 }
 
-contains(QT_VERSION, ^4\\..*) {
-  message("Cannot build with Qt version $${QT_VERSION}.")
-  error("Use Qt 5.")
+unix {
+  first.commands = @make -f makefile
+  QMAKE_EXTRA_TARGETS += first
 }
-
-TEMPLATE = app
 
 SOURCES += \
     sched/qrond.cpp \
