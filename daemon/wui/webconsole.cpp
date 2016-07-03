@@ -853,6 +853,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   foreach (QString key, params.keys())
     if (params.rawValue(key).isEmpty())
       params.removeValue(key);
+  // LATER should check that mandatory form fields have been set ?
   QList<TaskInstance> instances = webconsole->scheduler()
       ->syncRequestTask(taskId, params);
   QString message;
