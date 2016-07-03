@@ -5,9 +5,11 @@ TARGETS=wui/docroot/version.txt
 default: all
 
 all: $(TARGETS)
+	$(MAKE) -f Makefile all
 
 clean:
-	-rm $(TARGETS)
+	$(MAKE) -f Makefile clean
+	rm -f $(TARGETS)
 
 re: clean all
 

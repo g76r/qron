@@ -48,11 +48,6 @@ unix {
   MOC_DIR = ../build-daemon-unix/moc
 }
 
-unix {
-  first.commands = @make -f makefile
-  QMAKE_EXTRA_TARGETS += first
-}
-
 SOURCES += \
     sched/qrond.cpp \
     wui/webconsole.cpp \
