@@ -14,11 +14,9 @@ PUBLISHING_DIRECTORY=/publishing/qron/doc
 default: all
 
 all: $(TARGETS)
-	$(MAKE) -f Makefile all
 
 clean:
 	rm -f $(TARGETS)
-	$(MAKE) -f Makefile clean
 
 re: clean all
 

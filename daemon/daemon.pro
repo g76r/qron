@@ -48,6 +48,12 @@ unix {
   MOC_DIR = ../build-daemon-unix/moc
 }
 
+unix {
+  ancillary_make.commands = @make -f ancillary.mf all
+  rcc.depends = ancillary_make
+  QMAKE_EXTRA_TARGETS += ancillary_make
+}
+
 SOURCES += \
     sched/qrond.cpp \
     wui/webconsole.cpp \
