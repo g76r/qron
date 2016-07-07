@@ -13,6 +13,13 @@
    ```"foo \"bar\" \n\u20aC"```
  - clusters have learned two balancing methods: ```random``` and
    ```roundrobin``` (which is now the default one, instead of ```first```)
+ - task request form fields can now be declared mandatory, previously all
+   of them were optional
+        - ```(field dryrun(allowedvalues true false)(mandatory))```
+ - task request form fields can now be constrained by an enumeration of
+   allowed values in addition to already available regular expression
+   pattern
+        - ```(field dryrun(suggestion false)(allowedvalues true false))```
  - http execution mean and http alerts: it is now possible to follow http
    redirects (although not enabled by default), to log reply content even
    on success, and to validate reply content against a regexp to decide if
