@@ -741,7 +741,7 @@ static bool writeCsvView(CsvTableView *view, HttpRequest req,
                          HttpResponse res) {
   QByteArray data = view->text().toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
-  res.setHeader("Content-Disposition", "attachment"); // FIXME filename=table.csv");
+  res.setHeader("Content-Disposition", "attachment"); // TODO filename=table.csv");
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
@@ -886,7 +886,8 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
                       "postNotice");
   return true;
-}, true },{ { "/console/do", "/rest/do" }, [](
+}, true },
+{ { "/console/do", "/rest/do" }, [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
@@ -1015,7 +1016,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       QString gridboardId = req.param("gridboardid");
       QString taskInstanceId = req.param("taskinstanceid");
       QString configId = req.param("configid");
-      QString referer = req.header("Referer", "index.html");
+      QString referer = req.header("Referer", "overview.html");
       QString message;
       if (event == "abortTask") {
         message = "abort task "+taskInstanceId;
@@ -1105,7 +1106,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       QString taskId = req.param("taskid");
-      QString referer = req.header("Referer", "index.html");
+      QString referer = req.header("Referer", "overview.html");
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
         res.redirect("tasks/"+taskId);
@@ -1123,7 +1124,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         return true;
       CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
       QString taskId = elements.value(0);
-      QString referer = req.header("Referer", "index.html");
+      QString referer = req.header("Referer", "../overview.html");
       Task task(webconsole->scheduler()->task(taskId));
       if (task.isNull()) {
         if (referer.isEmpty()) {
@@ -1204,7 +1205,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       QString gridboardId = req.param("gridboardid");
-      QString referer = req.header("Referer", "index.html");
+      QString referer = req.header("Referer", "overview.html");
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
@@ -1223,7 +1224,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                           req, res))
         return true;
       QString gridboardId = req.url().path().mid(matchedLength);
-      QString referer = req.header("Referer", "index.html");
+      QString referer = req.header("Referer", "overview.html");
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
