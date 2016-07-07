@@ -1795,14 +1795,8 @@ bool WebConsole::handleRequest(
   QString userid = processingContext.paramValue("userid").toString();
   if (_authorizer && !_authorizer->authorize(userid, path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);
-    QUrl url(req.url());
-    url.setPath("/console/adhoc.html");
-    url.setQuery(QString());
-    req.overrideUrl(url);
-    processingContext.overrideParamValue(
-          "content", "<h2>Permission denied</h2>");
     res.clearCookie("message", "/");
-    _wuiHandler->handleRequest(req, res, &processingContext);
+    res.output()->write("Permission denied.");
     return true;
   }
   int matchedLength;
