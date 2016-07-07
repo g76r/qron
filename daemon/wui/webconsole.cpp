@@ -1252,9 +1252,12 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                           req, res))
         return true;
       QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
-      if (queryItems.size()) { // FIXME and not static
+      if (queryItems.size()) {
         // if there are query parameters in url, transform them into cookies
-        // LATER this mechanism should be generic/framework (in libqtssu)
+        // it is useful for page changes on views
+        // LATER this mechanism should be generic/framework (in libqtssu),
+        // provided it does not applies to any resource (it's a common hack e.g.
+        // to have query strings on font files)
         QListIterator<QPair<QString,QString> > it(queryItems);
         QString anchor;
         while (it.hasNext()) {
@@ -1280,6 +1283,18 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         res.clearCookie("message", "/");
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       }
+      return true;
+}, true },
+{ { "/console/css/", "/console/js/", "/console/font/",
+    "/console/img/" }, [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int) {
+      // less processing for static resources than for general /console/
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
+                          req, res))
+        return true;
+      res.clearCookie("message", "/");
+      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
 }, true },
 { "/rest/v1/taskgroups/list.csv", [](
