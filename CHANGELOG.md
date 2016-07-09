@@ -4,6 +4,12 @@
  - introduced a new task param "command.shell" that make it possible to
    choose another execution shell than the default one for ssh and local
    means
+ - fixed a rather rare case where mayrise alerts were raised, hence
+   improving signal/noise ratio (when both mayrise and rise delays where
+   reached during the same asynchronous state check loop, the alerts was
+   always raised, now it's raised only if rise delay was reached before
+   mayrise delay)
+
 # From 1.8.5 to 1.9.0
 * New features and notable changes
  - a user manual is now available embeded within web ui and online on the
