@@ -1,4 +1,10 @@
-# From 1.8.5 to 1.8.6
+# From 1.9.0 to 1.9.1
+ - fixed severe bug in ssh execution mean command line arguments spliting
+   that disallowed having a full multi-line shell script in config file
+ - introduced a new task param "command.shell" that make it possible to
+   choose another execution shell than the default one for ssh and local
+   means
+# From 1.8.5 to 1.9.0
 * New features and notable changes
  - a user manual is now available embeded within web ui and online on the
    Internet, here: http://qron.eu/doc/master/user-manual.html
