@@ -9,6 +9,7 @@
    reached during the same asynchronous state check loop, the alerts was
    always raised, now it's raised only if rise delay was reached before
    mayrise delay)
+ - fixed linux packaging where libQt5Sql.so.5 was lacking
 
 # From 1.8.5 to 1.9.0
 * New features and notable changes
