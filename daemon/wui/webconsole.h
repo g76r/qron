@@ -44,6 +44,7 @@
 #include <QRegularExpression>
 #include "modelview/shareduiitemslogmodel.h"
 #include <QSortFilterProxyModel>
+#include "net/readonlyresourcescache.h"
 
 class QThread;
 
@@ -122,6 +123,7 @@ class WebConsole : public HttpHandler {
   AtomicValue<QRegularExpression> _showAuditEvent, _hideAuditEvent,
   _showAuditUser, _hideAuditUser;
   AtomicValue<AlerterConfig> _alerterConfig;
+  ReadOnlyResourcesCache *_readOnlyResourcesCache;
 
 public:
   WebConsole();
@@ -234,6 +236,8 @@ public:
     return _htmlConfigHistoryView; }
   QString configFilePath() const { return _configFilePath; }
   QString configRepoPath() const { return _configRepoPath; }
+  ReadOnlyResourcesCache *readOnlyResourcesCache() const {
+    return _readOnlyResourcesCache; }
 
 public slots:
   void enableAccessControl(bool enabled);

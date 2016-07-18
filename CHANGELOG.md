@@ -1,19 +1,25 @@
-# From 1.9.0 to 1.9.1
+# From 1.9.0 to 1.9.1 (2016-07-18)
+* New features and notable changes
  - fixed severe bug in ssh execution mean command line arguments spliting
    that disallowed having a full multi-line shell script in config file
  - introduced a new task param "command.shell" that make it possible to
    choose another execution shell than the default one for ssh and local
    means
+ - fully rewritten request form field's 'allowedvalues' to use csv value
+   list that preserves config file values order, enables setting a display
+   label different from the value; allowedvalues can also be defined in
+   a csv file or network resource (such as http://myapp/myvalues/)
+* Minor improvements and fixes
+ - request form field's 'allowedvalues' now defaults to "" when no default
+   value is set
  - fixed a rather rare case where mayrise alerts were raised, hence
    improving signal/noise ratio (when both mayrise and rise delays where
    reached during the same asynchronous state check loop, the alerts was
    always raised, now it's raised only if rise delay was reached before
    mayrise delay)
  - fixed linux packaging where libQt5Sql.so.5 was lacking
- - request form field's 'allowedvalues' now preserve config file order
-   and defaults to "" when 'suggestion' is not set
 
-# From 1.8.5 to 1.9.0
+# From 1.8.5 to 1.9.0 (2016-07-08)
 * New features and notable changes
  - a user manual is now available embeded within web ui and online on the
    Internet, here: http://qron.eu/doc/master/user-manual.html

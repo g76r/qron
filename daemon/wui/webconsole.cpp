@@ -51,7 +51,8 @@ static QRegularExpression htmlSuffixRe("\\.html$");
 static QRegularExpression pfSuffixRe("\\.pf$");
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
-  _configRepository(0), _authorizer(0) {
+  _configRepository(0), _authorizer(0),
+  _readOnlyResourcesCache(new ReadOnlyResourcesCache(this)) {
   QList<int> cols;
 
   // HTTP handlers
@@ -1083,7 +1084,8 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         form += "<p><form action=\"../../../do/v1/tasks/request/"+taskId
             +"\" method=\"POST\">";
         foreach (RequestFormField rff, task.requestFormFields())
-          form.append(rff.toHtmlFormFragment());
+          form.append(rff.toHtmlFormFragment(
+                        webconsole->readOnlyResourcesCache()));
         form += "<div><p><p class=\"text-center\">"
                 "<button type=\"submit\" class=\"btn btn-danger\">"
                 "Request task execution</button>\n"
