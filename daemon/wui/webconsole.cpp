@@ -907,7 +907,29 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   QString redirect = req.base64Cookie("redirect", referer);
   QString message;
   QString userid = processingContext->paramValue("userid").toString();
-  if (event == "cancelRequest") {
+  if (event == "requestTask") {
+    // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
+    ParamSet params(req.paramsAsParamSet());
+    // TODO handle null values rather than replacing empty with nulls
+    foreach (QString key, params.keys())
+      if (params.value(key).isEmpty())
+        params.removeValue(key);
+    params.removeValue("taskid");
+    params.removeValue("event");
+    // FIXME evaluate overriding params within overriding > global context
+    QList<TaskInstance> instances = webconsole->scheduler()
+        ->syncRequestTask(taskId, params);
+    if (!instances.isEmpty()) {
+      message = "S:Task '"+taskId+"' submitted for execution with id";
+      foreach (TaskInstance request, instances) {
+        message.append(' ').append(QString::number(request.idAsLong()));
+        auditInstanceIds << request.idAsLong();
+      }
+      message.append('.');
+    } else
+      message = "E:Execution request of task '"+taskId
+          +"' failed (see logs for more information).";
+  } else if (event == "cancelRequest") {
     TaskInstance instance = webconsole->scheduler()
         ->cancelRequest(taskInstanceId);
     if (!instance.isNull()) {
