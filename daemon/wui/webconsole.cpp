@@ -1169,10 +1169,12 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         return true;
       }
       processingContext->overrideParamValue(
-            "pfconfig", QString::fromUtf8(
-              task.toPfNode().toPf(PfOptions().setShouldIndent()
-                                   .setShouldWriteContentBeforeSubnodes()
-                                   .setShouldIgnoreComment(false))));
+            "pfconfig",
+            ParamSet::escape(
+              QString::fromUtf8(
+                task.toPfNode().toPf(PfOptions().setShouldIndent()
+                                     .setShouldWriteContentBeforeSubnodes()
+                                     .setShouldIgnoreComment(false)))));
       TaskPseudoParamsProvider tppp = task.pseudoParams();
       SharedUiItemParamsProvider itemAsParams(task);
       processingContext->prepend(&tppp);
