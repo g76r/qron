@@ -1105,12 +1105,19 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                   "the following form:";
         form += "<p><form action=\"../../../do/v1/tasks/request/"+taskId
             +"\" method=\"POST\">";
+        bool errorOccured = false;
         foreach (RequestFormField rff, task.requestFormFields())
-          form.append(rff.toHtmlFormFragment(
-                        webconsole->readOnlyResourcesCache()));
+            form.append(rff.toHtmlFormFragment(
+                            webconsole->readOnlyResourcesCache(),
+                            &errorOccured));
         form += "<div><p><p class=\"text-center\">"
-                "<button type=\"submit\" class=\"btn btn-danger\">"
-                "Request task execution</button>\n"
+                "<button type=\"submit\" class=\"btn ";
+        if (errorOccured)
+            form += "btn-default\" disabled><i class=\"icon-block\"></i> Cannot"
+                    " request task execution";
+        else
+            form += "btn-danger\">Request task execution";
+        form += "</button>\n"
                 "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
                 "</form>\n"
                 "</div>\n";
