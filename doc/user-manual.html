@@ -335,7 +335,7 @@ execution on local or remote file change or creation
 )
 </pre>
 
-<p>However, when a task is queued for execution, it will be executed only when
+<p id="maxinstances">When a task is queued for execution, it will be executed only when
 no constraint disable the task from running. Contraints are of several types:
 <ul>
 <li><tt>maxinstances</tt>: a given task is only allowed to be run
@@ -368,10 +368,31 @@ section below.
 )
 </pre>
 
-<p>To avoid queued tasks to stack in big number, by default when a task is
-queued, every other queued task with the same id is canceled.
-This behavior can be disabled using <tt>discardaliasesonstart</tt> but most
-of the time should not since it make it possible to fill the tasks queue.
+<p id="enqueuepolicy">
+In addition, tasks can be rejected when submitted for queueing, and queued
+tasks can even be automaticaly canceled, according to <tt>enqueuepolicy</tt>,
+which is defined task by task and can have the following values/behaviors:
+<ul>
+<li><tt>enqueueanddiscardqueued</tt>: when a task is queued, every other
+queued task with the same id is canceled, avoiding stacking tasks in big
+numbers when they are slower than expected, this is the default
+<li><tt>enqueueall</tt>: allow boundless stacking of the stack in the queue,
+provided the queue limit is not reached (note that when the queue limit is
+reached, <em>other</em> tasks may be rejected)
+<li><tt>enqueueuntilmaxinstances</tt>: reject task requests when task
+<tt>maxinstances</tt> is already reached by running instances + queued ones,
+this can be convenient for user-requested tasks since it's no longer possible
+to request execution of a task that is already running and is set to
+maxinstances = 1 (which is the default)
+
+</ul>
+<p>Sample configuration file fragments:
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (enqueuepolicy enqueueuntilmaxinstances)
+)
+</pre>
 
 <h4>Tasks Parameters</h4>
 
