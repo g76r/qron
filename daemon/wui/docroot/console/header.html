@@ -3,7 +3,7 @@
     <meta charset="utf-8">
     <meta http-equiv="X-UA-Compatible" content="IE=edge">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-    <title><?=%{=default:webconsole.title:Qron Web Console}?></title>
+    <title><?=%{=default:%{webconsole.title}:Qron Web Console}?></title>
     <link href="<?value:rootprefix:?>css/bootstrap.min.css" rel="stylesheet">
     <link href="<?value:rootprefix:?>css/qicons.css" rel="stylesheet">
     <link href="<?value:rootprefix:?>css/qron.css" rel="stylesheet">
@@ -19,7 +19,7 @@
             <span class="icon-bar"></span>
             <span class="icon-bar"></span>
           </button>
-          <a class="navbar-brand" href="<?=%{=default:webconsole.titlehref:#}?>"><?=%{=default:webconsole.navtitle:webconsole.title:Qron Web Console}?></a>
+          <a class="navbar-brand" href="<?=%{=default:%{webconsole.titlehref}:#}?>"><?=%{=default:%{webconsole.navtitle}:%{webconsole.title}:Qron Web Console}?></a>
         </div>
         <div class="collapse navbar-collapse" id="navbar">
           <ul class="nav navbar-nav">
