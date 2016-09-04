@@ -21,6 +21,8 @@
    ```(name(child)' content')```
  - wui: fixed "Recently Emitted Alerts" view, which used to update first
    emit line instead of logging all of them once after another
+ - config: removed an erroneous warning on config reload
+   "WARNING alert channel 'comment' unknown in alert subscription"
 
 # From 1.9.1 to 1.9.2 (2016-07-21)
 * Bugfixes
