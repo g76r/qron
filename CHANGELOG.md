@@ -1,3 +1,31 @@
+# Since 1.9.2
+* New features and notable changes
+ - scheduler: introducing task enqueuepolicy parameter, which replaces and
+   enhance former discardaliasesonstart
+   see http://qron.eu/doc/master/user-manual.html#enqueuepolicy
+ - alerts: introducing visibilitywindow to e.g. avoid nightly alerts
+   sample config:
+   ```(alerts(settings(pattern myalert)(visibilitywindow * * 8-22 * * *)))```
+* Minor improvements and fixes
+ - wui: when a request form declares an external allowed values list which
+   cannot be fetched (e.g. a remote http list whose http server did not
+   respond), the request form displays a clarified error messages and
+   submitting is disabled
+ - rewritten config file now escapes backslashes within double quotes the
+   right way (the rewritten file was no longer consistent with original since
+   1.9.0)
+ - wui: pf fragment was incorrectly %-evaluated on task details page
+ - wui: it was no longer possible to set custom titles since 1.9.0, fixed
+ - config: fixed a config parser leading space bug
+   e.g. ```(name(child) content)``` was parsed as if it were
+   ```(name(child)' content')```
+ - wui: fixed "Recently Emitted Alerts" view, which used to update first
+   emit line instead of logging all of them once after another
+
+# From 1.9.1 to 1.9.2 (2016-07-21)
+* Bugfixes
+ - restored /rest/do?event=requestTask&taskid= web api entry point
+
 # From 1.9.0 to 1.9.1 (2016-07-18)
 * New features and notable changes
  - fixed severe bug in ssh execution mean command line arguments spliting
