@@ -1,4 +1,6 @@
-# Since 1.9.2
+# Since 1.9.3
+
+# From 1.9.2 to 1.9.3 (2016-09-07)
 * New features and notable changes
  - scheduler: introducing task enqueuepolicy parameter, which replaces and
    enhance former discardaliasesonstart
