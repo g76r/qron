@@ -1,4 +1,8 @@
-# Since 1.9.3
+# Since 1.9.4
+
+# From 1.9.3 to 1.9.4 (2016-09-08)
+* Bugfixes
+ - fixed regression automatic taskinstance date params
 
 # From 1.9.2 to 1.9.3 (2016-09-07)
 * New features and notable changes
