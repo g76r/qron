@@ -1,4 +1,12 @@
-# Since 1.9.4
+# Since 1.9.5
+
+# From 1.9.3 to 1.9.5 (2016-09-12)
+* Bugfixes
+ - fixed enqueueall/enqueueanddiscardqueued queuing policies inversion
+   version 1.9.3 did mess up the two policies, and moreover introduce a
+   regression in default policy
+* Minor improvements
+ - wui: more user manual links from task details page
 
 # From 1.9.3 to 1.9.4 (2016-09-08)
 * Bugfixes
