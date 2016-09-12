@@ -7,6 +7,8 @@
    regression in default policy
 * Minor improvements
  - wui: more user manual links from task details page
+ - wui: added queueing policy to task detail page
+ - wui: fixed taskinstance queued status label
 
 # From 1.9.3 to 1.9.4 (2016-09-08)
 * Bugfixes
