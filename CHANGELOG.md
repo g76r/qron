@@ -1,4 +1,6 @@
 # Since 1.9.5
+* Minor improvements and fixes
+ - wui: added version number on overview and about pages
 
 # From 1.9.3 to 1.9.5 (2016-09-12)
 * Bugfixes
