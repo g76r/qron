@@ -38,8 +38,8 @@
             <tr><th>Task group id</th><td><?value:1?></td></tr>
             <tr><th>Workflow Task (for subtasks)</th><td><?=%{=ifneq!%31!!<a href="./%31">%31</a>}?></td></th>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
-            <tr><th>Triggers (scheduling)</th><td><?=%{=switch:%28::%{=switch,%31,,<span class="icon-circle-empty"></span>&nbsp;no trigger,}}?></td></tr>
-            <tr><th>Minimum expected duration</th><td><?value:23:?></td></tr>
+            <tr><th>Triggers (scheduling)<a class="help" href="../user-manual.html#tasks-triggers-and-constraints"><span class="icon-help-circled"/></a></th><td><?=%{=switch:%28::%{=switch,%31,,<span class="icon-circle-empty"></span>&nbsp;no trigger,}}?></td></tr>
+            <tr><th>Minimum expected duration<a class="help" href="../user-manual.html#tasks-monitoring"><span class="icon-help-circled"/></a></th><td><?value:23:?></td></tr>
             <tr><th>Maximum expected duration</th><td><?value:24:?></td></tr>
             <tr><th>Maximum duration before abort</th><td><?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?></td></tr>
           </table>
@@ -64,16 +64,16 @@
           <p><a class="btn btn-info" href="../tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="../resources.html">Resources page &raquo;</a>
           <p><table class="table table-condensed table-hover">
-            <tr><th>Execution mean</th><td><?value:3:?></td></tr>
+            <tr><th>Execution mean<a class="help" href="../user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:3:?></td></tr>
             <tr><th>Execution target (host or cluster)</th><td><?value:5:?></td></tr>
             <tr><th>Command</th><td><?value:4:?></td></tr>
-            <tr><th>Configuration parameters</th><td><?value:7:?></td></tr>
-            <tr><th>Request-time overridable parameters</th><td><?value:25:?></td></tr>
-            <tr><th>System environment variables set (setenv)</th><td><?value:21:?></td></tr> <!-- TODO also display inherited setenv -->
+            <tr><th>Configuration parameters<a class="help" href="../user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:7:?></td></tr>
+            <tr><th>Request-time overridable parameters<a class="help" href="../user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a></th><td><?value:25:?></td></tr>
+            <tr><th>System environment variables set (setenv)<a class="help" href="../user-manual.html#tasks-setenvs"><span class="icon-help-circled"/></a></th><td><?value:21:?></td></tr> <!-- TODO also display inherited setenv -->
             <tr><th>System environment variables unset (unsetenv)</th><td><?value:22:?></td></tr> <!-- TODO also display inherited setenv -->
-            <tr><th>Consumed resources</th><td><?value:8:?></td></tr>
+            <tr><th>Consumed resources<a class="help" href="../user-manual.html#resources"><span class="icon-help-circled"/></a></th><td><?value:8:?></td></tr>
             <tr><th>Maximum instances count at a time</th><td><?value:12:?></td></tr>
-            <tr><th>Onstart events</th><td><?value:14:?></td></tr>
+            <tr><th>Onstart events<a class="help" href="../user-manual.html#tasks-events-subscriptions"><span class="icon-help-circled"/></a></th><td><?value:14:?></td></tr>
             <tr><th>Onsuccess events</th><td><?value:15:?></td></tr>
             <tr><th>Onfailure events</th><td><?value:16:?></td></tr>
           </table>
