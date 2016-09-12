@@ -376,9 +376,10 @@ which is defined task by task and can have the following values/behaviors:
 <li><tt>enqueueanddiscardqueued</tt>: when a task is queued, every other
 queued task with the same id is canceled, avoiding stacking tasks in big
 numbers when they are slower than expected, this is the default
-<li><tt>enqueueall</tt>: allow boundless stacking of the stack in the queue,
-provided the queue limit is not reached (note that when the queue limit is
-reached, <em>other</em> tasks may be rejected)
+<li><tt>enqueueall</tt>: allow boundless stacking of this task in the queue,
+provided the queue limit is not reached <br/><i class="icon-warning"></i>
+warning: when the queue limit is reached, <em>other</em> tasks may be
+rejected, so this setting is dangerous for the whole tasks schedule
 <li><tt>enqueueuntilmaxinstances</tt>: reject task requests when task
 <tt>maxinstances</tt> is already reached by running instances + queued ones,
 this can be convenient for user-requested tasks since it's no longer possible
