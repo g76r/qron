@@ -1136,16 +1136,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 { "/console/taskdoc.html", []( // LATER remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
-      QString taskId = req.param("taskid");
-      QString referer = req.header("Referer", "overview.html");
-      Task task(webconsole->scheduler()->task(taskId));
-      if (!task.isNull()) {
-        res.redirect("tasks/"+taskId);
-      } else {
-        res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
-                                   "/");
-        res.redirect(referer);
-      }
+      res.redirect("tasks/"+req.param("taskid"));
       return true;
 } },
 { "/console/tasks/", [](
@@ -1237,17 +1228,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
 { "/console/gridboard.html", []( // LATER remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
-      QString gridboardId = req.param("gridboardid");
-      QString referer = req.header("Referer", "overview.html");
-      Gridboard gridboard(webconsole->scheduler()->alerter()
-                          ->gridboard(gridboardId));
-      if (!gridboard.isNull()) {
-        res.redirect("gridboards/"+gridboardId);
-      } else {
-        res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
-                                   +"' not found.", "/");
-        res.redirect(referer);
-      }
+      res.redirect("gridboards/"+req.param("gridboardid"));
       return true;
 } },
 { "/console/gridboards/", [](
