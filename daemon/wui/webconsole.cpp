@@ -1178,7 +1178,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       return true;
 }, true },
 { "/console/taskdoc.html", []( // LATER remove
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    WebConsole *, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       res.redirect("tasks/"+req.param("taskid"));
       return true;
@@ -1270,7 +1270,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       return false;
 }, true },
 { "/console/gridboard.html", []( // LATER remove
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    WebConsole *, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       res.redirect("gridboards/"+req.param("gridboardid"));
       return true;
