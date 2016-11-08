@@ -855,7 +855,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     if (params.rawValue(key).isEmpty())
       params.removeValue(key);
   // LATER should check that mandatory form fields have been set ?
-  QList<TaskInstance> instances = webconsole->scheduler()
+  TaskInstanceList instances = webconsole->scheduler()
       ->syncRequestTask(taskId, params);
   QString message;
   QList<quint64> taskInstanceIds;
@@ -873,6 +873,51 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                       "requestTask", taskId, taskInstanceIds);
   return true;
 }, true },
+{ "/do/v1/tasks/abort_instances/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  QString message;
+  TaskInstanceList instances =
+      webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
+  message = "S:Task instances { "+instances.join(' ')+" } aborted.";
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "postNotice");
+  return true;
+}, true },
+{ "/do/v1/tasks/cancel_requests/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  QString message;
+  TaskInstanceList instances =
+      webconsole->scheduler()->cancelRequestsByTaskId(taskId);
+  message = "S:Task requests { "+instances.join(' ')+" } canceled.";
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "postNotice");
+  return true;
+}, true },
+{ "/do/v1/tasks/cancel_requests_and_abort_instances/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  QString message;
+  TaskInstanceList instances =
+      webconsole->scheduler()->cancelRequestsByTaskId(taskId);
+  message = "S:Task requests { "+instances.join(' ')
+      +" } canceled and task instances { ";
+  instances = webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
+  message += instances.join(' ')+" } aborted.";
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "postNotice");
+  return true;
+}, true },
 { "/do/v1/notices/post/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -882,7 +927,6 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   ParamSet params = req.paramsAsParamSet();
   webconsole->scheduler()->postNotice(notice, params);
   QString message;
-  QList<quint64> taskInstanceIds;
   message = "S:Notice '"+notice+"' posted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
                       "postNotice");
@@ -917,7 +961,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     params.removeValue("taskid");
     params.removeValue("event");
     // FIXME evaluate overriding params within overriding > global context
-    QList<TaskInstance> instances = webconsole->scheduler()
+    TaskInstanceList instances = webconsole->scheduler()
         ->syncRequestTask(taskId, params);
     if (!instances.isEmpty()) {
       message = "S:Task '"+taskId+"' submitted for execution with id";

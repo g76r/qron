@@ -89,7 +89,7 @@
               <li><a href="#http-api">HTTP API (REST API)</a>
               <ul class="nav">
                 <li><a href="#rest-api">REST API</a>
-                <li><a href="#do-api">RPC API</a>
+                <li><a href="#rpc-api">RPC API</a>
               </ul>
               <li><a href="#appendices">Appendices</a>
               <ul class="nav">
@@ -1481,7 +1481,7 @@ for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
 401 and 403 used for authentication)
 </ul>
 
-<p>The following table describes REST calls:
+<p>The following table describes RPC calls:
 <p><table class="table table-condensed table-hover table-striped">
 <tr><th>Call</th><th>Description</th></tr>
 <tr><td><tt>
@@ -1495,6 +1495,22 @@ for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
 </tt>
 </td><td>post %notice notice
 <p>HTTP params are used as notice params
+</td></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/tasks/abort_instances/%taskid
+</tt>
+</td><td>abort all running instances of task %taskid
+</td></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/tasks/cancel_requests/%taskid
+</tt>
+</td><td>cancel all queued requests of task %taskid
+</td></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/tasks/cancel_requests_and_abort_instances/%taskid
+</tt>
+</td><td>cancel all queued requests and abort all running
+instances of task %taskid
 </td></tr>
 </table>
 

@@ -1,8 +1,13 @@
-# Since 1.9.5
+# From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes
+ - wui: added /do/v1/tasks/abort_instances/%taskid
+   /do/tasks/cancel_requests/%taskid and
+   /do/tasks/cancel_requests_and_abort_instances/%taskid
+   api endpoints
  - wui: added version number on overview and about pages
+ - dependencies upgrade (libqtpf, libbqtssu)
 
-# From 1.9.3 to 1.9.5 (2016-09-12)
+# From 1.9.4 to 1.9.5 (2016-09-12)
 * Bugfixes
  - fixed enqueueall/enqueueanddiscardqueued queuing policies inversion
    version 1.9.3 did mess up the two policies, and moreover introduce a
