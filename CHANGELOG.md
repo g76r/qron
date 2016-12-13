@@ -1,8 +1,8 @@
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes
  - wui: added /do/v1/tasks/abort_instances/%taskid
-   /do/tasks/cancel_requests/%taskid and
-   /do/tasks/cancel_requests_and_abort_instances/%taskid
+   /do/v1/tasks/cancel_requests/%taskid and
+   /do/v1/tasks/cancel_requests_and_abort_instances/%taskid
    api endpoints
  - wui: added version number on overview and about pages
  - dependencies upgrade (libqtpf, libbqtssu)
