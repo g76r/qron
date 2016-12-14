@@ -1,3 +1,8 @@
+# Since 1.9.6
+* Minor improvements and fixes
+- wui: all configuration tables are sorted again (as they used to be prior
+  to 1.9.0)
+
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes
  - wui: added /do/v1/tasks/abort_instances/%taskid

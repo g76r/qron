@@ -69,11 +69,21 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // models
   _hostsModel = new SharedUiItemsTableModel(Host(PfNode("template")), this);
   _hostsModel->setItemQualifierFilter("host");
+  _sortedHostsModel = new QSortFilterProxyModel(this);
+  _sortedHostsModel->sort(0);
+  _sortedHostsModel->setSourceModel(_hostsModel);
   _clustersModel = new ClustersModel(this);
   _clustersModel->setItemQualifierFilter({"cluster", "hostreference"});
+  _sortedClustersModel = new QSortFilterProxyModel(this);
+  _sortedClustersModel->sort(0);
+  _sortedClustersModel->setSourceModel(_clustersModel);
   _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
+  _freeResourcesModel->setShouldSortRows();
+  _freeResourcesModel->setShouldSortColumns();
   _resourcesLwmModel = new HostsResourcesAvailabilityModel(
         this, HostsResourcesAvailabilityModel::LwmOverConfigured);
+  _resourcesLwmModel->setShouldSortRows();
+  _resourcesLwmModel->setShouldSortColumns();
   _resourcesConsumptionModel = new ResourcesConsumptionModel(this);
   _globalParamsModel = new ParamSetModel(this);
   _globalSetenvModel = new ParamSetModel(this);
@@ -84,13 +94,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _statefulAlertsModel->setDefaultInsertionPoint(
         SharedUiItemsTableModel::FirstItem);
   _sortedStatefulAlertsModel = new QSortFilterProxyModel(this);
-  _sortedStatefulAlertsModel->setSourceModel(_statefulAlertsModel);
   _sortedStatefulAlertsModel->sort(0);
+  _sortedStatefulAlertsModel->setSourceModel(_statefulAlertsModel);
   _sortedRaisedAlertModel = new QSortFilterProxyModel(this);
-  _sortedRaisedAlertModel->setSourceModel(_statefulAlertsModel);
   _sortedRaisedAlertModel->sort(0);
   _sortedRaisedAlertModel->setFilterKeyColumn(1);
   _sortedRaisedAlertModel->setFilterRegExp("raised|dropping");
+  _sortedRaisedAlertModel->setSourceModel(_statefulAlertsModel);
   _lastEmittedAlertsModel = new SharedUiItemsLogModel(this, 500);
   _lastEmittedAlertsModel->setHeaderDataFromTemplate(
               Alert("template"), Qt::DisplayRole);
@@ -105,6 +115,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _gridboardsModel = new SharedUiItemsTableModel(this);
   _gridboardsModel->setHeaderDataFromTemplate(
         Gridboard(nodeWithValidPattern, Gridboard(), ParamSet()));
+  _sortedGridboardsModel = new QSortFilterProxyModel(this);
+  _sortedGridboardsModel->sort(0);
+  _sortedGridboardsModel->setSourceModel(_gridboardsModel);
   _taskInstancesHistoryModel = new TaskInstancesModel(this);
   _taskInstancesHistoryModel->setItemQualifierFilter("taskinstance");
   _unfinishedTaskInstancetModel =
@@ -115,25 +128,27 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _mainTasksModel = new QSortFilterProxyModel(this);
   _mainTasksModel->setFilterKeyColumn(31);
   _mainTasksModel->setFilterRegExp("^$");
+  _mainTasksModel->sort(11);
   _mainTasksModel->setSourceModel(_tasksModel);
   _subtasksModel = new QSortFilterProxyModel(this);
   _subtasksModel->setFilterKeyColumn(31);
   _subtasksModel->setFilterRegExp(".+");
+  _subtasksModel->sort(11);
   _subtasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
   _taskGroupsModel->setItemQualifierFilter("taskgroup");
   _sortedTaskGroupsModel = new QSortFilterProxyModel(this);
-  _sortedTaskGroupsModel->setSourceModel(_taskGroupsModel);
   _sortedTaskGroupsModel->sort(0);
+  _sortedTaskGroupsModel->setSourceModel(_taskGroupsModel);
   _alertChannelsModel = new TextMatrixModel(this);
   _logConfigurationModel = new LogFilesModel(this);
   _calendarsModel = new SharedUiItemsTableModel(this);
   _calendarsModel->setHeaderDataFromTemplate(Calendar(PfNode("calendar")));
   _calendarsModel->setItemQualifierFilter("calendar");
   _sortedCalendarsModel = new QSortFilterProxyModel(this);
-  _sortedCalendarsModel->setSourceModel(_calendarsModel);
   _sortedCalendarsModel->sort(1);
+  _sortedCalendarsModel->setSourceModel(_calendarsModel);
   _stepsModel= new SharedUiItemsTableModel(this);
   _stepsModel->setHeaderDataFromTemplate(
         Step(PfNode("start"), 0, TaskGroup(), QString(),
@@ -150,14 +165,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
   _htmlHostsListView = new HtmlTableView(this, "hostslist");
-  _htmlHostsListView->setModel(_hostsModel);
+  _htmlHostsListView->setModel(_sortedHostsModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   ((HtmlItemDelegate*)_htmlHostsListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-hdd\"></i>&nbsp;")
       ->setPrefixForColumnHeader(2, "<i class=\"icon-fast-food\"></i>&nbsp;");
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView = new HtmlTableView(this, "clusterslist");
-  _htmlClustersListView->setModel(_clustersModel);
+  _htmlClustersListView->setModel(_sortedClustersModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
   ((HtmlItemDelegate*)_htmlClustersListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-shuffle\"></i>&nbsp;")
@@ -288,7 +303,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertSettingsView->setColumnIndexes(cols);
   _wuiHandler->addView(_htmlAlertSettingsView);
   _htmlGridboardsView = new HtmlTableView(this, "gridboards");
-  _htmlGridboardsView->setModel(_gridboardsModel);
+  _htmlGridboardsView->setModel(_sortedGridboardsModel);
   ((HtmlItemDelegate*)_htmlGridboardsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
                               "<a href=\"gridboards/%1\">", 0)
@@ -520,9 +535,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   CsvTableView::setDefaultFieldQuote('"');
   CsvTableView::setDefaultReplacementChar(' ');
   _csvHostsListView = new CsvTableView(this);
-  _csvHostsListView->setModel(_hostsModel);
+  _csvHostsListView->setModel(_sortedHostsModel);
   _csvClustersListView = new CsvTableView(this);
-  _csvClustersListView->setModel(_clustersModel);
+  _csvClustersListView->setModel(_sortedClustersModel);
   _csvFreeResourcesView = new CsvTableView(this);
   _csvFreeResourcesView->setModel(_freeResourcesModel);
   _csvFreeResourcesView->setRowHeaders();
@@ -550,7 +565,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvAlertSettingsView = new CsvTableView(this);
   _csvAlertSettingsView->setModel(_alertSettingsModel);
   _csvGridboardsView = new CsvTableView(this);
-  _csvGridboardsView->setModel(_gridboardsModel);
+  _csvGridboardsView->setModel(_sortedGridboardsModel);
   _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
   _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =

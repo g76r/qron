@@ -59,7 +59,9 @@ class WebConsole : public HttpHandler {
   Scheduler *_scheduler;
   ConfigRepository *_configRepository;
   SharedUiItemsTableModel *_hostsModel;
+  QSortFilterProxyModel *_sortedHostsModel;
   ClustersModel *_clustersModel;
+  QSortFilterProxyModel *_sortedClustersModel;
   HostsResourcesAvailabilityModel *_freeResourcesModel, *_resourcesLwmModel;
   ResourcesConsumptionModel *_resourcesConsumptionModel;
   ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
@@ -70,6 +72,7 @@ class WebConsole : public HttpHandler {
   SharedUiItemsLogModel *_lastEmittedAlertsModel;
   SharedUiItemsTableModel *_alertSubscriptionsModel, *_alertSettingsModel,
   *_gridboardsModel;
+  QSortFilterProxyModel *_sortedGridboardsModel;
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
   QSortFilterProxyModel *_mainTasksModel, *_subtasksModel;
