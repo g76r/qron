@@ -1,7 +1,10 @@
 # Since 1.9.6
-* Minor improvements and fixes
+* Minor improvements
 - wui: all configuration tables are sorted again (as they used to be prior
   to 1.9.0)
+- code review and fixes after running cppcheck static code analysis code
+  (should not have any effect on program behavior, but only on code
+  readability/maintenability)
 
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes

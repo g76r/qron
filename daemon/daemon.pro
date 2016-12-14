@@ -38,7 +38,7 @@ LIBS += -lqtpf -lqtssu -lqron
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
-QMAKE_CXXFLAGS += -Wextra
+QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual
 #QMAKE_CXXFLAGS += -fno-elide-constructors
 unix:CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 

@@ -255,7 +255,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                      "<i class=\"icon-check\"></i>&nbsp;");
   _htmlStatefulAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlStatefulAlertsView, true));
-  ((HtmlAlertItemDelegate*)_htmlStatefulAlertsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlStatefulAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   _wuiHandler->addView(_htmlStatefulAlertsView);
   _htmlRaisedAlertsView = new HtmlTableView(this, "raisedalerts");
@@ -267,7 +267,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView->setColumnIndexes(cols);
   _htmlRaisedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView, true));
-  ((HtmlAlertItemDelegate*)_htmlRaisedAlertsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlRaisedAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlLastEmittedAlertsView =
@@ -277,7 +277,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastEmittedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlLastEmittedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlLastEmittedAlertsView, false));
-  ((HtmlAlertItemDelegate*)_htmlLastEmittedAlertsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlLastEmittedAlertsView->itemDelegate())
       ->setPrefixForColumn(7, "%1", 1, alertsIcons);
   cols.clear();
   cols << _lastEmittedAlertsModel->timestampColumn() << 7 << 5;
