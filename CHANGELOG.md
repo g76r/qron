@@ -1,4 +1,10 @@
 # Since 1.9.6
+* New features and notable changes
+ - alerts: visibilitywindow now applies to one-shot alerts in addition to
+   stateful ones
+ - alerts: introducing acceptabilitywindow to avoid even more nightly alerts
+   sample config:
+   ```(alerts(settings(pattern myalert)(acceptabilitywindow * * 0-4 * * *)))```
 * Minor improvements
 - wui: all configuration tables are sorted again (as they used to be prior
   to 1.9.0)
