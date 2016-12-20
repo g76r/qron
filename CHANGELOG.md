@@ -6,11 +6,19 @@
    sample config:
    ```(alerts(settings(pattern myalert)(acceptabilitywindow * * 0-4 * * *)))```
 * Minor improvements
-- wui: all configuration tables are sorted again (as they used to be prior
-  to 1.9.0)
-- code review and fixes after running cppcheck static code analysis code
-  (should not have any effect on program behavior, but only on code
-  readability/maintenability)
+ - wui: all configuration tables are sorted again (as they used to be prior
+   to 1.9.0)
+ - code review and fixes after running cppcheck static code analysis code
+   (should not have any effect on program behavior, but only on code
+   readability/maintenability)
+ - wui: searching within log files now work if the log file name patterns uses
+   nested % expression (e.g. /var/log/foobar-%{foo%{bar}}.log)
+ - log: internal Qt traces that are sent to stderr are now timestamped and
+   have the same format than qron's log
+* Behind-the-curtain improvements
+ - switched more regular expression used internaly from Qt4's QRegExp to Qt5's
+   QRegularExpression, which is richer, more performant and will last longer,
+   see 1.9.0 changelog below)
 
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes

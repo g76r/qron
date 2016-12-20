@@ -204,6 +204,7 @@ int main(int argc, char *argv[]) {
   qsrand(time(0));
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
+  Log::wrapQtLogToSamePattern();
   Log::addConsoleLogger(Log::Info, true);
   QStringList args;
   for (int i = 1; i < argc; ++i)
