@@ -77,7 +77,12 @@
               <li><a href="#configuration-management">Configuration Management</a>
               <li><a href="#operations">Operations</a>
               <ul class="nav">
-                <li><a href="#task-instances-statuses">Task Instances Statuses</a>
+                <li><a href="#task-instances-lifecycle">Task Instances Lifecycle</a>
+                <ul class="nav">
+                  <li><a href="#task-instances-statuses">Statuses</a>
+                  <li><a href="#task-instances-timestamps-and-durations">Timestamps and Durations</a>
+                  <li><a href="#task-instances-success-conditions">Success Conditions</a>
+                </ul>
                 <li><a href="#actions-performed-by-an-operator">Actions Performed by an Operator</a>
               </ul>
               <li><a href="#wui">Web User Interface</a>
@@ -506,15 +511,19 @@ See <a href="#alerts-subscriptions">alerts subscriptions</a> section below.
 <p>More automatic alerts are available when setting the following task
 parameters:
 <ul>
-<li><tt>minexpectedduration</tt>: minimum expected task duration in seconds, an
-alert will be raised otherwise, with the pattern
+<li><tt>minexpectedduration</tt>: minimum expected task
+<a href="#task-instances-timestamps-and-durations">running duration</a> in
+seconds, an alert will be raised otherwise, with the pattern
 <tt>task.tooshort.%!taskid</tt>, the alert is raised when the task finishes.
-<li><tt>maxexpectedduration</tt>: maximum expected task duration in seconds, an
-alert will be raised otherwise, with the pattern
+<li><tt>maxexpectedduration</tt>: maximum expected task 
+<a href="#task-instances-timestamps-and-durations">total duration</a> in
+seconds, an alert will be raised otherwise, with the pattern
 <tt>task.toolong.%!taskid</tt>, the alert is raised as soon as the task is
 running longer than maxexpectedduration (although the detection may take up to
 1 minute it won't wait for the task finishing).
-<li><tt>maxdurationbeforeabort</tt>: duration above which the scheduler will
+<li><tt>maxdurationbeforeabort</tt>:
+<a href="#task-instances-timestamps-and-durations">total duration</a> above
+which the scheduler will
 <a href="#actions-performed-by-an-operator">abort</a> a running task,
 this is useful for certain kind of tasks that should better be killed that take
 too much time (a nightly purge that can disrupt normal daily processing, a
@@ -1226,7 +1235,145 @@ TODO
 
 <h2>Operations</h2>
 
-<h3>Task Instances Statuses</h3>
+<h3>Task Instances Lifecycle</h3>
+
+<h4>Task Instances Statuses</h4>
+
+<p>Task Instances State Diagram:
+<img class="img-responsive center-block"
+src="img/taskinstances_statuses.svg"
+title="Task Instances State Diagram" />
+
+<p>Task instances statuses:
+<ul>
+<li><tt>queued</tt>: task execution has been requested and queued but is not
+yet starting, likely because some
+<a href="#tasks-triggers-and-constraints">constraints</a> still disable the
+task to run (not enough <a href="#resources">resources</a> available,
+<tt>maxinstances</tt> already reached by currently running instances, etc.)
+<li><tt>running</tt>: task instance has been started and is not yet ended
+<li><tt>success</tt>: task instance has been ended and
+<a href="#task-instances-success-conditions">success conditions</a> was met
+<li><tt>failure</tt>: task instance has been ended and
+<a href="#task-instances-success-conditions">success conditions</a> was not
+met
+<li><tt>canceled</tt>: task request was canceled before started
+</ul>
+
+<p>Task instances transitions:
+<ul>
+<li><tt>requestTask()</tt>: explicit task request from API or UI
+<li>request by configuration (trigger, action, workflow transition, etc.):
+implicit task request deduced from configuration
+<li>start: when <a href="#tasks-triggers-and-constraints">constraints</a> are
+met, a queued task is started and reaches <tt>running</tt> status
+<li>end: when the underlying process finishes, the task instance is set to
+either <tt>success</tt> or <tt>failure</tt> status depending on
+<a href="#task-instances-success-conditions">success conditions</a>
+<li><tt>cancelTask()</tt>: a <tt>queued</tt> task instance can be canceled
+from API or UI, and then reaches <tt>canceled</tt> status, a <tt>running</tt>
+task can no longer be canceled
+<li>implicit cancellation: task instances can be implicitely canceled when
+several requests are enqueued for the same task, depending on
+<a href="#enqueuepolicy">enqueuepolicy</a>
+<li><tt>abortTask()</tt>: a <tt>running</tt> task instance can be aborted
+from API or UI, triggering the end of the underlying process, depending on
+<a href="#tasks-execution-properties">execution mean</a> (sending kill
+signal for <tt>local</tt> execution mean, closing socket for <tt>http</tt>
+execution mean, etc.), leading to a fast end of the task in conditions that
+are interpreted as a <tt>failure</tt> by default;
+<br/>not all task instances can be aborted (for instance a <tt>ssh</tt> task
+cannot be aborted if pty allocation is explicitly disabled), but most of them
+can;
+<br/>it is possible to define custom
+<a href="#task-instances-success-conditions">success conditions</a>
+in a way that make an aborted task be interpreted as a <tt>success</tt>, but
+default success conditions will always interpret an abort as a failure
+<li>failure on start with some configuration errors: when configuration errors
+are detected in the start process and before the actual task is started,
+a task instance status can be set from <tt>queued</tt> to <tt>failure</tt>
+without even reaching <tt>running</tt>, for instance if the <tt>target</tt> is
+not set or is invalid and the execution mean requires a target
+</ul>
+
+<h4>Task Instances Timestamps and Durations</h4>
+
+A task instance bears several timestamps, set when it reaches different
+steps of its lifecycle.
+Any of them can be null since the corresponding step may not have been
+reached.
+<ul>
+<li><tt>requestdate</tt>: set when the task is created (and immediatly reaches
+<tt>queued</tt> status)
+<li><tt>startdate</tt>: set when the task reaches <tt>running</tt> status,
+which may never happen if the task never starts (if canceled or if an error
+occurs during start process)
+<li><tt>enddate</tt>: set when the task reaches <tt>success</tt>,
+<tt>failure</tt> or <tt>canceled</tt> status; it should always happen at some
+time but can be long, and may even never happen in some abnormal cases (server
+crash, etc.)
+</ul>
+
+Those timestamps can be read from API, UI and used in configuration through
+<a href="#percent-evaluation">%-expressions</a>, e.g.:
+<pre>
+  %!startdate # this task instance start date
+  %{!enddate:yyyy-MM-dd} # end date with format specification
+  %!workflowrequestdate # main task instance (if subtask) request date
+  %{!workflowrequestdate:yyyyMMdd:-1days} # eve of main task request date
+  %{!statdate:ms1970} # this (sub)task start date in milliseconds since 1970
+</pre>
+
+For instance this can be used to set a task param or setenv according to
+the request or start timestamp (but obviously not the end timestamp):
+<pre>
+(task build-reports-customers
+  (taskgroup app1.biz.batch)
+  (trigger(cron 0 0 23 * * 1-6))
+  (param filename /tmp/%{!workflowstartdate:yyyyMMdd}.out)
+  (mean local)
+  (command /opt/myapp/bin/build-reports-customers.sh -o %filename)
+)
+(task build-reports-customers-alternative
+  (taskgroup app1.biz.batch)
+  (trigger(cron 0 0 23 * * 1-6))
+  (setenv FILENAME /tmp/%{!workflowstartdate:yyyyMMdd}.out)
+  (mean local)
+  (command /opt/myapp/bin/build-reports-customers.sh) # the script uses $FILENAME
+)
+</pre>
+
+Several durations are computed from these timestamps.
+Any of them is null if its start or end timestamp is null.
+<ul>
+<li><tt>queued</tt>: <tt>startdate - requestdate</tt>
+<li><tt>running</tt>: <tt>enddate - startdate</tt>
+<li><tt>total</tt>: <tt>enddate - requestdate</tt>
+</ul>
+
+<a href="#tasks-monitoring">Task monitoring features</a>, always use the worst
+case duration to trigger alerts, e.g. <tt>total</tt> duration for
+<tt>maxexpectedduration</tt> and <tt>running</tt> duration for
+<tt>minexpectedduration</tt>.
+
+Like timestamps, durations can also be read from API, UI and used in
+configuration through <a href="#percent-evaluation">%-expressions</a>, e.g.:
+<pre>
+  %!totalms # total duration, in milliseconds
+  %!queueds # time spent in queue, in seconds
+</pre>
+
+For instance this can be used to feed reporting or monitoring systems with
+metrics about tasks durations:
+<pre>
+(onsuccess
+  # sending UDP packets to statsd server, see https://github.com/etsy/statsd
+  (requesturl (address udp://127.0.0.1:8125) "task.%!taskid.time:%!totalms|ms")
+  (requesturl (address udp://127.0.0.1:8125) "task.%!taskid.delay:%!queuedms|ms")
+)
+</pre>
+
+<h4>Task Instances Success Conditions</h4>
 
 <h3>Actions Performed by an Operator</h3>
 

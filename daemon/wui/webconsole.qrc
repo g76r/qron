@@ -26,7 +26,6 @@
         <file>docroot/console/adhoc.html</file>
         <file>docroot/console/task.html</file>
         <file>docroot/console/gridboard.html</file>
-        <file>docroot/console/doc/alerts_statuses.svg</file>
         <file>docroot/console/img/work_eu.png</file>
         <file>docroot/console/img/work_na.png</file>
         <file>docroot/console/user-manual.html</file>
@@ -36,6 +35,7 @@
         <file>docroot/console/img/gridboards-ping-sample.png</file>
         <file>docroot/console/img/gridboards-service_x_instance-sample.png</file>
         <file>docroot/console/img/alerts_statuses.svg</file>
+        <file>docroot/console/img/taskinstances_statuses.svg</file>
         <file>docroot/console/img/paramset_hierarchy.svg</file>
         <file>docroot/console/img/paramset_hierarchy_caption.svg</file>
         <file>docroot/console/css/qicons-codes.css</file>

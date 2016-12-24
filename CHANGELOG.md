@@ -15,10 +15,13 @@
    nested % expression (e.g. /var/log/foobar-%{foo%{bar}}.log)
  - log: internal Qt traces that are sent to stderr are now timestamped and
    have the same format than qron's log
+ - doc: added parts to user manual
 * Behind-the-curtain improvements
  - switched more regular expression used internaly from Qt4's QRegExp to Qt5's
    QRegularExpression, which is richer, more performant and will last longer,
    see 1.9.0 changelog below)
+ - renamed some c++ methods names to improved consistency with status names
+   in documentation (submission -> request, etc.)
 
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes
