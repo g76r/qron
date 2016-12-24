@@ -16,6 +16,7 @@
  - log: internal Qt traces that are sent to stderr are now timestamped and
    have the same format than qron's log
  - doc: added parts to user manual
+ - log: clarified timestamps in ending task info trace
 * Behind-the-curtain improvements
  - switched more regular expression used internaly from Qt4's QRegExp to Qt5's
    QRegularExpression, which is richer, more performant and will last longer,
