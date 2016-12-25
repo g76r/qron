@@ -27,6 +27,8 @@
    see 1.9.0 changelog below)
  - renamed some c++ methods names to improved consistency with status names
    in documentation (submission -> request, etc.)
+ - wui: removed some wui/api endpoints that are no longer used (in do? and
+   confirm? pseudo-pages)
 
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes

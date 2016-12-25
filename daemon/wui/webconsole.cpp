@@ -1191,10 +1191,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         message = "activate configuration "+configId;
       } else if (event == "clearGridboard") {
         message = "clear gridboard "+gridboardId;
-      } else if (event == "requestTask") {
-        message = "request task '"+taskId+"' execution";
-        doPath = "../do/v1/tasks/request/"+taskId;
-        doQuery.removeAllQueryItems("taskid");
       } else {
         message = event;
       }
