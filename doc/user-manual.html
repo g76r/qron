@@ -684,7 +684,7 @@ on every host within the cluster
 
 <h2>Logs</h2>
 
-<p>Qron by itself logs information related to tasks scheduling and exectution,
+<p>Qron logs information related to tasks scheduling and exectution,
 configuration changes, web ui user interaction, etc.
 In addition it also logs error messages from tasks themselves when the
 execution mean make it possible, which is a simple way to centralize tasks
@@ -1620,8 +1620,8 @@ is used (GET or POST), the meaning is given by the path
 most cases the domain is a collection_name (e.g. tasks).
 <li>for calls using HTTP params, both URI request string params (GET) and
 body x-www-form-urlencoded  params (POST) are supported, behavior when using
-both at a time is unspecified (don't mix them, this may work in a qron
-version and not in the next one, or not with the same priority/overriding
+both at a time is unspecified (so don't mix them, this may work in a given
+qron version and not in the next one, or not with the same priority/overriding
 implicit rules)
 <li>reply HTTP statuses can be trusted with their standard meaning, at less
 for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
@@ -1659,9 +1659,23 @@ for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
 </td><td>cancel all queued requests and abort all running
 instances of task %taskid
 </td></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/taskinstances/cancel/%taskinstanceid
+</tt>
+</td><td>cancel a task instance in queued status
+</td></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/taskinstances/cancel_or_abort/%taskinstanceid
+</tt>
+</td><td>abort a running task instance
+</td></tr>
+<tr><td><tt>
+<p>POST|GET /do/v1/taskinstances/cancel_or_abort/%taskinstanceid
+</tt>
+</td><td>cancel task instance if it's is still queued or abort it if it's
+already running
+</td></tr>
 </table>
-
-<p>TODO: document other RPC calls
 
 <h2>Appendices</h2>
 

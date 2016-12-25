@@ -933,6 +933,70 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       "postNotice");
   return true;
 }, true },
+{ "/do/v1/taskinstances/abort/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
+  QString message;
+  TaskInstance instance = webconsole->scheduler()->abortTask(taskInstanceId);
+  if (instance.isNull()) {
+    message = "E:Failed to abort task instance "
+        +QString::number(taskInstanceId)+".";
+    res.setStatus(500);
+  } else {
+    message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
+  }
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "postNotice");
+  return true;
+}, true },
+{ "/do/v1/taskinstances/cancel/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
+  QString message;
+  TaskInstance instance =
+      webconsole->scheduler()->cancelRequest(taskInstanceId);
+  if (instance.isNull()) {
+    message = "E:Failed to cancel task request "
+        +QString::number(taskInstanceId)+".";
+    res.setStatus(500);
+  } else {
+    message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
+  }
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "postNotice");
+  return true;
+}, true },
+{ "/do/v1/taskinstances/cancel_or_abort/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
+  QString message;
+  TaskInstance instance =
+      webconsole->scheduler()->cancelRequest(taskInstanceId);
+  if (instance.isNull()) {
+    instance = webconsole->scheduler()->abortTask(taskInstanceId);
+    if (instance.isNull()) {
+      message = "E:Failed to cancel or abort task instance "
+          +QString::number(taskInstanceId)+".";
+      res.setStatus(500);
+    } else {
+      message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
+    }
+  } else {
+    message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
+  }
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      "postNotice");
+  return true;
+}, true },
 { "/do/v1/notices/post/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -947,7 +1011,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       "postNotice");
   return true;
 }, true },
-{ { "/console/do", "/rest/do" }, [](
+{ { "/console/do", "/rest/do" }, []( // LATER migrate to /do/v1 and remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
@@ -1100,10 +1164,19 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       QString configId = req.param("configid");
       QString referer = req.header("Referer", "overview.html");
       QString message;
+      // LATER remove default "do" doUrl, port every call to /do/v1 API
+      // LATER maybe also remove "/console/confirm" as a whole
+      QString doPath = "do";
+      QUrlQuery doQuery(req.url());
+      doQuery.removeAllQueryItems("event");
       if (event == "abortTask") {
         message = "abort task "+taskInstanceId;
+        doPath = "../do/v1/taskinstances/abort/"+taskInstanceId;
+        doQuery.clear();
       } else if (event == "cancelRequest") {
         message = "cancel request "+taskInstanceId;
+        doPath = "../do/v1/taskinstances/cancel/"+taskInstanceId;
+        doQuery.clear();
       } else if (event == "enableAllTasks") {
         message = QString(req.param("enable") == "true" ? "enable" : "disable")
             + " all tasks";
@@ -1120,15 +1193,17 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         message = "clear gridboard "+gridboardId;
       } else if (event == "requestTask") {
         message = "request task '"+taskId+"' execution";
+        doPath = "../do/v1/tasks/request/"+taskId;
+        doQuery.removeAllQueryItems("taskid");
       } else {
         message = event;
       }
       message = "<div class=\"well\">"
                 "<h4 class=\"text-center\">Are you sure you want to "+message
           +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
-           "href=\"do?"+req.url().toString().remove(QRegExp("^[^\\?]*\\?"))
-          +"\">Yes, sure</a> <a class=\"btn\" href=\""+referer+"\">Cancel</a>"
-                                                               "</div>";
+           "href=\""+doPath+doQuery.toString(QUrl::FullyEncoded)
+          +"\">Yes, sure</a> <a class=\"btn\" href=\""+referer
+          +"\">Cancel</a></div>";
       res.setBase64SessionCookie("redirect", referer, "/");
       QUrl url(req.url());
       url.setPath("/console/adhoc.html");
