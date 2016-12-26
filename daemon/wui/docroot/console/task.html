@@ -13,33 +13,32 @@
  You should have received a copy of the GNU Affero General Public License
  along with qron. If not, see <http://www.gnu.org/licenses/>.
 -->
-<?override:rootprefix:../?>
 <?include:header.html?>
 
       <div class="row">
         <div class="col-md-12">
           <h1>Task <?value:11?></h1>
           <p><a class="btn btn-danger" href="request/<?value:11?>"><i class="icon-play"></i> Request task execution</a>
-          <a class="btn btn-danger" href="../do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
-          <a class="btn btn-warning" href="../do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
-          <a class="btn btn-info" href="../../rest/v1/logs/entries.txt?regexp=[^ ] <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
+          <a class="btn btn-danger" href="<?value:!pathtoroot?>do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
+          <a class="btn btn-warning" href="<?value:!pathtoroot?>do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
+          <a class="btn btn-info" href="<?value:!pathtoroot?>../rest/v1/logs/entries.txt?regexp=[^ ] <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
           <?=%{webconsole.customactions.taskdetail}?>
           <p>All durations and delays are in seconds.
         </div>
       </div>
       <div class="row">
         <div class="col-md-8">
-          <h2>Task Description<a class="help" href="../user-manual.html#tasks-description"><span class="icon-help-circled"/></a></h2>
-          <p><a class="btn btn-info" href="../tasks.html">Tasks page &raquo;</a>
-          <a class="btn btn-info" href="../overview.html">Overview page &raquo;</a>
+          <h2>Task Description<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-description"><span class="icon-help-circled"/></a></h2>
+          <p><a class="btn btn-info" href="<?value:!pathtoroot?>tasks.html">Tasks page &raquo;</a>
+          <a class="btn btn-info" href="<?value:!pathtoroot?>overview.html">Overview page &raquo;</a>
           <p><table class="table table-condensed table-hover">
             <tr><th>Task id (fully qualified with group id)</th><td><?value:11?></td></tr>
             <tr><th>Task label</th><td><?value:2?></td></tr>
             <tr><th>Task group id</th><td><?value:1?></td></tr>
             <tr><th>Workflow Task (for subtasks)</th><td><?=%{=ifneq!%31!!<a href="./%31">%31</a>}?></td></th>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
-            <tr><th>Triggers (scheduling)<a class="help" href="../user-manual.html#tasks-triggers-and-constraints"><span class="icon-help-circled"/></a></th><td><?=%{=switch:%28::%{=switch,%31,,<span class="icon-circle-empty"></span>&nbsp;no trigger,}}?></td></tr>
-            <tr><th>Minimum expected duration<a class="help" href="../user-manual.html#tasks-monitoring"><span class="icon-help-circled"/></a></th><td><?value:23:?></td></tr>
+            <tr><th>Triggers (scheduling)<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-triggers-and-constraints"><span class="icon-help-circled"/></a></th><td><?=%{=switch:%28::%{=switch,%31,,<span class="icon-circle-empty"></span>&nbsp;no trigger,}}?></td></tr>
+            <tr><th>Minimum expected duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-monitoring"><span class="icon-help-circled"/></a></th><td><?value:23:?></td></tr>
             <tr><th>Maximum expected duration</th><td><?value:24:?></td></tr>
             <tr><th>Maximum duration before abort</th><td><?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?></td></tr>
           </table>
@@ -50,8 +49,8 @@
           <p><table class="table table-condensed table-hover">
              <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="icon-block"></i>&nbsp;false}?></td></tr>
              <tr><th>Last exec status</th><td><?value:19:?></td></tr>
-             <tr><th>Last exec total duration<a class="help" href="../user-manual.html#task-instances-timestamps-and-durations"><span class="icon-help-circled"/></a></th><td><?value:26:?></td></tr>
-             <tr><th>Last exec instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="../../rest/v1/logs/entries.txt?filter=%11/%32"><i class="icon-file-text"></i></a></span>}?></td></tr>
+             <tr><th>Last exec total duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#task-instances-timestamps-and-durations"><span class="icon-help-circled"/></a></th><td><?value:26:?></td></tr>
+             <tr><th>Last exec instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="%!pathtoroot../rest/v1/logs/entries.txt?filter=%11/%32"><i class="icon-file-text"></i></a></span>}?></td></tr>
              <tr><th>Next exec</th><td><?value:10:?></td></tr>
              <tr><th>Currently running instances</th><td><?=%{=ifneq:%13:0:<i class="icon-play"></i>&nbsp;%13:%13}?>/<?value:12:?></td></tr>
              <tr><th>Executions count since qron start</th><td><?value:34:?></td></tr>
@@ -60,21 +59,21 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Task Parameters<a class="help" href="../user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a> and Resources<a class="help" href="../user-manual.html#resources"><span class="icon-help-circled"/></a></h2>
-          <p><a class="btn btn-info" href="../tasks.html">Tasks page &raquo;</a>
-          <a class="btn btn-info" href="../resources.html">Resources page &raquo;</a>
+          <h2>Task Parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a> and Resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="icon-help-circled"/></a></h2>
+          <p><a class="btn btn-info" href="<?value:!pathtoroot?>tasks.html">Tasks page &raquo;</a>
+          <a class="btn btn-info" href="<?value:!pathtoroot?>resources.html">Resources page &raquo;</a>
           <p><table class="table table-condensed table-hover">
-            <tr><th>Execution mean<a class="help" href="../user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:3:?></td></tr>
+            <tr><th>Execution mean<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:3:?></td></tr>
             <tr><th>Execution target (host or cluster)</th><td><?value:5:?></td></tr>
             <tr><th>Command</th><td><?value:4:?></td></tr>
-            <tr><th>Configuration parameters<a class="help" href="../user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:7:?></td></tr>
-            <tr><th>Request-time overridable parameters<a class="help" href="../user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a></th><td><?value:25:?></td></tr>
-            <tr><th>System environment variables set (setenv)<a class="help" href="../user-manual.html#tasks-setenvs"><span class="icon-help-circled"/></a></th><td><?value:21:?></td></tr> <!-- TODO also display inherited setenv -->
+            <tr><th>Configuration parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:7:?></td></tr>
+            <tr><th>Request-time overridable parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a></th><td><?value:25:?></td></tr>
+            <tr><th>System environment variables set (setenv)<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-setenvs"><span class="icon-help-circled"/></a></th><td><?value:21:?></td></tr> <!-- TODO also display inherited setenv -->
             <tr><th>System environment variables unset (unsetenv)</th><td><?value:22:?></td></tr> <!-- TODO also display inherited setenv -->
-            <tr><th>Consumed resources<a class="help" href="../user-manual.html#resources"><span class="icon-help-circled"/></a></th><td><?value:8:?></td></tr>
+            <tr><th>Consumed resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="icon-help-circled"/></a></th><td><?value:8:?></td></tr>
             <tr><th>Maximum instances count at a time</th><td><?value:12:?></td></tr>
-            <tr><th>Enqueue policy<a class="help" href="../user-manual.html#enqueuepolicy"><span class="icon-help-circled"/></a></th><td><?value:35:?></td></tr>
-            <tr><th>Onstart events<a class="help" href="../user-manual.html#tasks-events-subscriptions"><span class="icon-help-circled"/></a></th><td><?value:14:?></td></tr>
+            <tr><th>Enqueue policy<a class="help" href="<?value:!pathtoroot?>user-manual.html#enqueuepolicy"><span class="icon-help-circled"/></a></th><td><?value:35:?></td></tr>
+            <tr><th>Onstart events<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-events-subscriptions"><span class="icon-help-circled"/></a></th><td><?value:14:?></td></tr>
             <tr><th>Onsuccess events</th><td><?value:15:?></td></tr>
             <tr><th>Onfailure events</th><td><?value:16:?></td></tr>
           </table>
@@ -82,18 +81,18 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Task Workflow<a class="help" href="../user-manual.html#workflows-and-subtasks"><span class="icon-help-circled"/></a> Diagram</h2>
-          <p><a class="btn btn-primary" href="../../rest/v1/tasks/<?value:11?>/workflow.svg"><i class="icon-file"></i> SVG</a>
-          <a class="btn btn-primary" href="../../rest/v1/tasks/<?value:11?>/workflow.dot"><i class="icon-file"></i> DOT</a>
+          <h2>Task Workflow<a class="help" href="<?value:!pathtoroot?>user-manual.html#workflows-and-subtasks"><span class="icon-help-circled"/></a> Diagram</h2>
+          <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.svg"><i class="icon-file"></i> SVG</a>
+          <a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.dot"><i class="icon-file"></i> DOT</a>
           <div id="workflowDiagram" style="display: table; margin: 0 auto;">
-            <noscript><img src="../../rest/v1/tasks/<?value:11?>/workflow.svg" alt="Task Workflow Diagram" class="img-responsive"/></noscript>
+            <noscript><img src="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.svg" alt="Task Workflow Diagram" class="img-responsive"/></noscript>
           </div>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
           <h2>Raw Task Configuration</h2>
-          <p><a class="btn btn-primary" href="../../rest/v1/tasks/<?value:11?>/config.pf"><i class="icon-file"></i> PF</a>
+          <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/config.pf"><i class="icon-file"></i> PF</a>
           <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
         </div>
       </div>
@@ -102,7 +101,7 @@
     <script type="text/javascript">
 anchors.add('h2');
 $(document).ready(function(){
-  $('#workflowDiagram').load('../../rest/v1/tasks/<?value:11?>/workflow.svg', function() {
+  $('#workflowDiagram').load('<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.svg', function() {
     $("a").not("[xlink\\:title='']").each(function() {
       this.setAttributeNS('http://www.w3.org/1999/xlink','href','./'+$(this).attr('xlink:title'));
     });

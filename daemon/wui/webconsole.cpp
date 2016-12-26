@@ -1205,6 +1205,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       url.setPath("/console/adhoc.html");
       url.setQuery(QString());
       req.overrideUrl(url);
+      ParamsProviderMergerRestorer restorer(processingContext);
       processingContext->overrideParamValue("content", message);
       res.clearCookie("message", "/");
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
@@ -1222,7 +1223,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!task.isNull()) {
         QUrl url(req.url());
         // LATER requestform.html instead of adhoc.html, after finding a way to handle foreach loop
-        processingContext->overrideParamValue("rootprefix", "../../");
         url.setPath("/console/adhoc.html");
         req.overrideUrl(url);
         QString form = "<div class=\"well\">\n"
@@ -1251,9 +1251,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                 "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
                 "</form>\n"
                 "</div>\n";
+        ParamsProviderMergerRestorer restorer(processingContext);
         processingContext->overrideParamValue("content", form);
         res.setBase64SessionCookie("redirect", referer, "/");
         res.clearCookie("message", "/");
+        Log::fatal() << "handleRequest adhoc from /tasks/request: " << processingContext->paramValue("!pathtoroot"); // FIXME
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
         return true;
       } else {
@@ -1289,6 +1291,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         }
         return true;
       }
+      ParamsProviderMergerRestorer restorer(processingContext);
       processingContext->overrideParamValue(
             "pfconfig",
             ParamSet::escape(
@@ -1373,6 +1376,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
         SharedUiItemParamsProvider itemAsParams(gridboard);
+        ParamsProviderMergerRestorer restorer(processingContext);
         processingContext->append(&itemAsParams);
         processingContext->overrideParamValue("gridboard.data",
                                               gridboard.toHtml());
@@ -1421,6 +1425,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       } else {
         SharedUiItemParamsProvider alerterConfigAsParams(
               webconsole->alerterConfig());
+        ParamsProviderMergerRestorer restorer(processingContext);
         if (req.url().path().endsWith("/console/alerts.html")) {
           processingContext->append(&alerterConfigAsParams);
         }
@@ -1920,11 +1925,16 @@ RadixTree<QString> _staticRedirects {
 
 bool WebConsole::handleRequest(
     HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *originalProcessingContext) {
+    ParamsProviderMerger *processingContext) {
+  if (redirectForUrlCleanup(req, res, processingContext))
+    return true;
   QString path = req.url().path();
-  ParamsProviderMerger processingContext(*originalProcessingContext);
+  ParamsProviderMergerRestorer restorer(processingContext);
   WebConsoleParamsProvider webconsoleParams(this);
-  processingContext.append(&webconsoleParams);
+  processingContext->append(&webconsoleParams);
+  // compute !pathtoroot now, to allow overriding url path with html files paths
+  // unrelated to the url and keep !pathtoroot ok
+  _wuiHandler->computePathToRoot(req, processingContext);
   if (!_scheduler) {
     res.setStatus(500);
     res.output()->write("Scheduler is not available.");
@@ -1935,8 +1945,8 @@ bool WebConsole::handleRequest(
     res.redirect(staticRedirect, HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
-  processingContext.append(_scheduler->globalParams());
-  QString userid = processingContext.paramValue("userid").toString();
+  processingContext->append(_scheduler->globalParams());
+  QString userid = processingContext->paramValue("userid").toString();
   if (_authorizer && !_authorizer->authorize(userid, path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);
     res.clearCookie("message", "/");
@@ -1948,7 +1958,7 @@ bool WebConsole::handleRequest(
   //_handlers.dumpContent();
   //qDebug() << "handling" << path << !!handler << matchedLength;
   if (handler) {
-    return handler(this, req, res, &processingContext, matchedLength);
+    return handler(this, req, res, processingContext, matchedLength);
   }
   res.setStatus(404);
   res.output()->write("Not found.");
