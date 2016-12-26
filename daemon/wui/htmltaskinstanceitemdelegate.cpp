@@ -69,7 +69,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
       text.prepend(/* reexec */
                    "<span class=\"label label-danger\" "
                    "title=\"Request execution of same task\"><a href=\""
-                   "tasks/requestform/"+taskId+"\">"
+                   "tasks/request/"+taskId+"\">"
                    "<i class=\"icon-repeat\"></i></a></span> ");
     break;
   }
