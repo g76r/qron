@@ -77,16 +77,16 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     QString taskId = index.model()->index(index.row(), 11, index.parent())
         .data().toString();
     text = index.data().toString(); // disable truncating and HTML encoding
-    text.prepend(/* requestTask */ QString() +
+    text.prepend(/* request task */ QString() +
                  "<span class=\"label label-danger\" "
                  "title=\"Request execution\"><a href=\"tasks/request/"
                  +taskId+"\"><i class=\"icon-play\"></i></a></span> "
-                 /* {enable,disable}Task */
+                 /* {enable,disable} task */
                  "<span class=\"label label-"+(enabled?"danger":"warning")
                  +"\" title=\""+(enabled?"Disable":"Enable")+"\">"
-                 "<a href=\"do?event=enableTask&taskid="+taskId+"&enable="
-                 +(enabled?"false":"true")+"\"><i class=\"icon-block\">"
-                 "</i></a></span> "
+                 // TODO add !pathtoroot, which probably needs context
+                 "<a href=\"../do/v1/tasks/"+(enabled?"disable":"enable")+"/"
+                 +taskId+"\"><i class=\"icon-block\"></i></a></span> "
                  /* log */
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/v1/logs/entries.txt?"

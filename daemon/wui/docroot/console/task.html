@@ -19,8 +19,8 @@
         <div class="col-md-12">
           <h1>Task <?value:11?></h1>
           <p><a class="btn btn-danger" href="request/<?value:11?>"><i class="icon-play"></i> Request task execution</a>
-          <a class="btn btn-danger" href="<?value:!pathtoroot?>do?event=enableTask&amp;enable=false&amp;taskid=<?value:11?>"><i class="icon-block"></i> Disable task</a>
-          <a class="btn btn-warning" href="<?value:!pathtoroot?>do?event=enableTask&amp;enable=true&amp;taskid=<?value:11?>"><i class="icon-block"></i> Enable task</a>
+          <a class="btn btn-danger" href="<?value:!pathtoroot?>../do/v1/tasks/disable/<?value:11?>"><i class="icon-block"></i> Disable task</a>
+          <a class="btn btn-warning" href="<?value:!pathtoroot?>../do/v1/tasks/enable/<?value:11?>"><i class="icon-block"></i> Enable task</a>
           <a class="btn btn-info" href="<?value:!pathtoroot?>../rest/v1/logs/entries.txt?regexp=[^ ] <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
           <?=%{webconsole.customactions.taskdetail}?>
           <p>All durations and delays are in seconds.

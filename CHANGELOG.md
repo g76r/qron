@@ -9,9 +9,9 @@
  - wui: all configuration tables are sorted again (as they used to be prior
    to 1.9.0)
  - wui/api: more actions ported to new more restful url scheme:
-     /do/v1/taskinstances/abort/%taskinstanceid
-     /do/v1/taskinstances/cancel/%taskinstanceid
-     /do/v1/taskinstances/cancel_or_abort/%taskinstanceid
+     /do/v1/taskinstances/{abort,cancel,cancel_or_abort}/%taskinstanceid
+     /do/v1/tasks/{enable_all,disable_all}
+     /do/v1/tasks/{enable,disable}/%taskid
  - code review and fixes after running cppcheck static code analysis code
    (should not have any effect on program behavior, but only on code
    readability/maintenability)

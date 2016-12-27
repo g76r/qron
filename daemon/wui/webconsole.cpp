@@ -846,7 +846,8 @@ static void apiAuditAndResponse(
     res.redirect(redirect);
   } else {
     res.setContentType(QStringLiteral("text/plain;charset=UTF-8"));
-    if (responseMessage.startsWith('E'))
+    if (res.status() == HttpResponse::HTTP_Ok // won't override if already set
+        && responseMessage.startsWith('E'))
       res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
     responseMessage.append('\n');
     res.output()->write(responseMessage.toUtf8());
@@ -885,7 +886,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     message = "E:Execution request of task '"+taskId
         +"' failed (see logs for more information).";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "requestTask", taskId, taskInstanceIds);
+                      req.url().path().left(matchedLength), taskId, instances);
   return true;
 }, true },
 { "/do/v1/tasks/abort_instances/", [](
@@ -899,7 +900,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
   message = "S:Task instances { "+instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "postNotice");
+                      req.url().path().left(matchedLength), taskId, instances);
   return true;
 }, true },
 { "/do/v1/tasks/cancel_requests/", [](
@@ -913,7 +914,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       webconsole->scheduler()->cancelRequestsByTaskId(taskId);
   message = "S:Task requests { "+instances.join(' ')+" } canceled.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "postNotice");
+                      req.url().path().left(matchedLength), taskId, instances);
   return true;
 }, true },
 { "/do/v1/tasks/cancel_requests_and_abort_instances/", [](
@@ -930,7 +931,71 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   instances = webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
   message += instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "postNotice");
+                      req.url().path().left(matchedLength), taskId, instances);
+  return true;
+}, true },
+{ "/do/v1/tasks/enable_all", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  QString message;
+  webconsole->scheduler()->enableAllTasks(true);
+  message = "S:Enabled all tasks.";
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      req.url().path().left(matchedLength), taskId);
+  // wait to make it less probable that the page displays before effect
+  QThread::usleep(500000);
+  return true;
+} },
+{ "/do/v1/tasks/disable_all", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  QString message;
+  webconsole->scheduler()->enableAllTasks(false);
+  message = "S:Disabled all tasks.";
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      req.url().path().left(matchedLength), taskId);
+  // wait to make it less probable that the page displays before effect
+  QThread::usleep(500000);
+  return true;
+} },
+{ "/do/v1/tasks/enable/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  QString message;
+  if (webconsole->scheduler()->enableTask(taskId, true))
+    message = "S:Task '"+taskId+"' enabled.";
+  else {
+    message = "E:Task '"+taskId+"' not found.";
+    res.setStatus(HttpResponse::HTTP_Not_Found);
+  }
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      req.url().path().left(matchedLength), taskId);
+  return true;
+}, true },
+{ "/do/v1/tasks/disable/", [](
+WebConsole *webconsole, HttpRequest req, HttpResponse res,
+ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString taskId = req.url().path().mid(matchedLength);
+  QString message;
+  if (webconsole->scheduler()->enableTask(taskId, false))
+    message = "S:Task '"+taskId+"' disabled.";
+  else {
+    message = "E:Task '"+taskId+"' not found.";
+    res.setStatus(HttpResponse::HTTP_Not_Found);
+  }
+  apiAuditAndResponse(webconsole, req, res, processingContext, message,
+                      req.url().path().left(matchedLength), taskId);
   return true;
 }, true },
 { "/do/v1/taskinstances/abort/", [](
@@ -1168,7 +1233,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       // LATER maybe also remove "/console/confirm" as a whole
       QString doPath = "do";
       QUrlQuery doQuery(req.url());
-      doQuery.removeAllQueryItems("event");
+      // doQuery.removeAllQueryItems("event");
       if (event == "abortTask") {
         message = "abort task "+taskInstanceId;
         doPath = "../do/v1/taskinstances/abort/"+taskInstanceId;
@@ -1180,6 +1245,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       } else if (event == "enableAllTasks") {
         message = QString(req.param("enable") == "true" ? "enable" : "disable")
             + " all tasks";
+        doPath = QStringLiteral("../do/v1/tasks/")
+                                +(req.param("enable") == "true" ? "enable_all" : "disable_all");
       } else if (event == "enableTask") {
         message = QString(req.param("enable") == "true" ? "enable" : "disable")
             + " task '"+taskId+"'";
@@ -1197,7 +1264,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       message = "<div class=\"well\">"
                 "<h4 class=\"text-center\">Are you sure you want to "+message
           +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
-           "href=\""+doPath+doQuery.toString(QUrl::FullyEncoded)
+           "href=\""+doPath+"?"+doQuery.toString(QUrl::FullyEncoded)
           +"\">Yes, sure</a> <a class=\"btn\" href=\""+referer
           +"\">Cancel</a></div>";
       res.setBase64SessionCookie("redirect", referer, "/");
