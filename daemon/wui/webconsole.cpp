@@ -2074,9 +2074,10 @@ bool WebConsole::handleRequest(
   }
   processingContext->append(_scheduler->globalParams());
   QString userid = processingContext->paramValue("userid").toString();
-  if (_authorizer && !_authorizer->authorize(userid, path)) {
+  if (_authorizer && !_authorizer->authorize(userid, req.methodName(), path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);
     res.clearCookie("message", "/");
+    // LATER nicer display
     res.output()->write("Permission denied.");
     return true;
   }
@@ -2202,20 +2203,27 @@ void WebConsole::enableAccessControl(bool enabled) {
     return;
   // LATER this is not transactional and thus may issue 403's during conf reload
   if (enabled) {
-    // TODO uploading a config should need more than "read" (even if it's less dangerous than activating a config)
     _authorizer->clearRules()
         // anyone for static resources
-        .allow("", "^/console/(css|jsp|js|img)/.*")
+        .allow("", "", "^/console/(css|jsp|js|img)/")
         // anyone for test page and user manual
-        .allow("", "^/console/(test|user-manual)\\.html$")
-        // operate for operation
-        .allow("operate", "^/(rest|console)/do")
-        .allow("operate", "^/do/.*")
-        // nobody else on operation paths
-        .deny("", "^/(rest|console)/do")
-        .deny("", "^/do/.*")
-        // read for everything else
-        .allow("read");
+        .allow("", "", "^/console/(test|user-manual)\\.html$")
+        // read for read-only rest calls
+        .allow("read", "^GET|HEAD$", "^/rest/")
+        // operate for operation including other rest calls
+        .allow("operate", "", "^/(rest|console)/(do|confirm)") // LATER keep only /console/confirm/
+        .allow("operate", "", "^/console/tasks/request/")
+        .allow("operate", "", "^/do/")
+        .allow("operate", "", "^/rest/")
+        // nobody else on operation and rest paths
+        .deny("", "", "^/(rest|console)/(do|confirm)") // LATER keep only /console/confirm/
+        .deny("", "", "^/console/tasks/request/")
+        .deny("", "", "^/do/")
+        .deny("", "", "^/rest/")
+        // read for everything else on the console
+        .allow("read", "", "^/console")
+        // deny everything else
+        .deny();
   } else {
     _authorizer->clearRules()
         .allow(); // anyone for anything
