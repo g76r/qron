@@ -18,13 +18,12 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Current Stateful<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> Alerts</h2>
-          <form class="form-inline" action="do" type="GET">
+          <form class="form-inline" action="<?value:!pathtoroot?>../do/v1/alerts/raise/" type="GET">
           <a class="btn btn-primary" href="../rest/v1/alerts/stateful_list.csv"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/v1/alerts/stateful_list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
-              <input name="event" type="hidden" value="raiseAlert" />
-              <input class="input-large" name="alert" type="text" placeholder="alert name" />
+              <input class="input-large" name="alertid" type="text" placeholder="alert name" />
               <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Raise alert</button>
           </span>
           </form>
@@ -35,13 +34,12 @@
         <div class="col-md-12">
           <h2>Recently Emitted Alerts</h2>
           <p>The table shows both stateful<a class="help" href="user-manual.html#stateful-alerts"><span class="icon-help-circled"/></a> alerts when they are actually emitted and one-shot<a class="help" href="user-manual.html#one-shot-alerts"><span class="icon-help-circled"/></a> alerts.
-          <form class="form-inline" action="do" type="GET">
+          <form class="form-inline" action="<?value:!pathtoroot?>../do/v1/alerts/emit/" type="GET">
           <a class="btn btn-primary" href="../rest/v1/alerts/last_emitted.csv"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/v1/alerts/last_emitted.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="events.html">Events page &raquo;</a>
           <span class="pull-right">
-              <input name="event" type="hidden" value="emitAlert" />
-              <input class="input-large" name="alert" type="text" placeholder="alert name" />
+              <input class="input-large" name="alertid" type="text" placeholder="alert name" />
               <button class="btn btn-danger" type="submit" value="submit"><i class="icon-bell"></i> Emit one-shot alert</button>
           </span>
           </form>

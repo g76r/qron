@@ -34,9 +34,9 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
     if (_canRaiseAndCancel)
       text.prepend(/* immediate cancel */
                    "<span class=\"label label-danger\">"
-                   "<a title=\"Cancel alert immediatly\"href=\"do?"
-                   "event=cancelAlert&alertid="+alertId
-                   +"&immediately=true\"><i class=\"icon-check\">"
+                   // TODO add !pathtoroot
+                   "<a title=\"Cancel alert immediatly\"href=\"../do/v1/alerts/"
+                   "cancel_immediately/"+alertId+"\"><i class=\"icon-check\">"
                     "</i></a></span> ");
     if (_canRaiseAndCancel
         && (status == Alert::statusToString(Alert::Rising)
@@ -44,9 +44,9 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
             || status == Alert::statusToString(Alert::Dropping)))
       text.prepend(/* immediate raise */
                    "<span class=\"label label-danger\">"
-                   "<a title=\"Raise alert immediately\"href=\"do?"
-                   "event=raiseAlert&alertid="+alertId
-                   +"&immediately=true\"><i class=\"icon-bell\">"
+                   // TODO add !pathtoroot
+                   "<a title=\"Raise alert immediately\"href=\"../do/v1/alerts/"
+                   "raise_immediately/"+alertId+"\"><i class=\"icon-bell\">"
                     "</i></a></span> ");
     QRegularExpressionMatch match = taskIdInAlertRE.match(alertId);
     if (match.hasMatch()) {

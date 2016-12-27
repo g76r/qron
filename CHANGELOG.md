@@ -12,6 +12,8 @@
      /do/v1/taskinstances/{abort,cancel,cancel_or_abort}/%taskinstanceid
      /do/v1/tasks/{enable_all,disable_all}
      /do/v1/tasks/{enable,disable}/%taskid
+     /do/v1/alerts/{emit}/%alertid
+     /do/v1/alerts/{raise,cancel,raise_immediately,cancel_immediately}/%alertid
  - code review and fixes after running cppcheck static code analysis code
    (should not have any effect on program behavior, but only on code
    readability/maintenability)

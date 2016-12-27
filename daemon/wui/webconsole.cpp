@@ -1076,6 +1076,66 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       "postNotice");
   return true;
 }, true },
+{ "/do/v1/alerts/raise/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString alertid = req.url().path().mid(matchedLength);
+  webconsole->scheduler()->alerter()->raiseAlert(alertid);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      "S:Raised alert '"+alertid+"'.",
+                      req.url().path().left(matchedLength));
+  return true;
+}, true },
+{ "/do/v1/alerts/raise_immediately/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString alertid = req.url().path().mid(matchedLength);
+  webconsole->scheduler()->alerter()->raiseAlertImmediately(alertid);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      "S:Raised alert '"+alertid+"' immediately.",
+                      req.url().path().left(matchedLength));
+  return true;
+}, true },
+{ "/do/v1/alerts/cancel/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString alertid = req.url().path().mid(matchedLength);
+  webconsole->scheduler()->alerter()->cancelAlert(alertid);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      "S:Canceled alert '"+alertid+"'.",
+                      req.url().path().left(matchedLength));
+  return true;
+}, true },
+{ "/do/v1/alerts/cancel_immediately/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString alertid = req.url().path().mid(matchedLength);
+  webconsole->scheduler()->alerter()->cancelAlertImmediately(alertid);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      "S:Canceled alert '"+alertid+"' immediately.",
+                      req.url().path().left(matchedLength));
+  return true;
+}, true },
+{ "/do/v1/alerts/emit/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString alertid = req.url().path().mid(matchedLength);
+  webconsole->scheduler()->alerter()->emitAlert(alertid);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      "S:Emitted alert '"+alertid+"'.",
+                      req.url().path().left(matchedLength));
+  return true;
+}, true },
 { { "/console/do", "/rest/do" }, []( // LATER migrate to /do/v1 and remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
