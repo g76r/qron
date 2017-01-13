@@ -854,6 +854,20 @@ static void apiAuditAndResponse(
   }
 }
 
+// syntaxic sugar for 1-instance-may-even-be-null cases
+static void apiAuditAndResponse(
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, QString responseMessage,
+    QString auditAction, TaskInstance instance) {
+  if (instance.isNull())
+    apiAuditAndResponse(webconsole, req, res, processingContext,
+                        responseMessage, auditAction);
+  else
+    apiAuditAndResponse(webconsole, req, res, processingContext,
+                        responseMessage, auditAction, instance.task().id(),
+                        { instance.idAsLong() });
+}
+
 static RadixTree<
 std::function<bool(WebConsole *, HttpRequest, HttpResponse,
                    ParamsProviderMerger *, int matchedLength)>> _handlers {
@@ -886,7 +900,8 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     message = "E:Execution request of task '"+taskId
         +"' failed (see logs for more information).";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId, instances);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId, instances);
   return true;
 }, true },
 { "/do/v1/tasks/abort_instances/", [](
@@ -900,7 +915,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
   message = "S:Task instances { "+instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId, instances);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId, instances);
   return true;
 }, true },
 { "/do/v1/tasks/cancel_requests/", [](
@@ -914,7 +930,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       webconsole->scheduler()->cancelRequestsByTaskId(taskId);
   message = "S:Task requests { "+instances.join(' ')+" } canceled.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId, instances);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId, instances);
   return true;
 }, true },
 { "/do/v1/tasks/cancel_requests_and_abort_instances/", [](
@@ -931,7 +948,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   instances = webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
   message += instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId, instances);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId, instances);
   return true;
 }, true },
 { "/do/v1/tasks/enable_all", [](
@@ -944,7 +962,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   webconsole->scheduler()->enableAllTasks(true);
   message = "S:Enabled all tasks.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId);
   // wait to make it less probable that the page displays before effect
   QThread::usleep(500000);
   return true;
@@ -959,7 +978,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   webconsole->scheduler()->enableAllTasks(false);
   message = "S:Disabled all tasks.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId);
   // wait to make it less probable that the page displays before effect
   QThread::usleep(500000);
   return true;
@@ -978,7 +998,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     res.setStatus(HttpResponse::HTTP_Not_Found);
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId);
   return true;
 }, true },
 { "/do/v1/tasks/disable/", [](
@@ -995,7 +1016,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     res.setStatus(HttpResponse::HTTP_Not_Found);
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.url().path().left(matchedLength), taskId);
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      taskId);
   return true;
 }, true },
 { "/do/v1/taskinstances/abort/", [](
@@ -1014,7 +1036,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "postNotice");
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
   return true;
 }, true },
 { "/do/v1/taskinstances/cancel/", [](
@@ -1034,7 +1057,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "postNotice");
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      instance);
   return true;
 }, true },
 { "/do/v1/taskinstances/cancel_or_abort/", [](
@@ -1059,7 +1083,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "postNotice");
+                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      instance);
   return true;
 }, true },
 { "/do/v1/notices/post/", [](
@@ -1073,7 +1098,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   QString message;
   message = "S:Notice '"+notice+"' posted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      "postNotice");
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
   return true;
 }, true },
 { "/do/v1/alerts/raise/", [](
@@ -1085,7 +1111,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   webconsole->scheduler()->alerter()->raiseAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Raised alert '"+alertid+"'.",
-                      req.url().path().left(matchedLength));
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
   return true;
 }, true },
 { "/do/v1/alerts/raise_immediately/", [](
@@ -1097,7 +1124,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   webconsole->scheduler()->alerter()->raiseAlertImmediately(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Raised alert '"+alertid+"' immediately.",
-                      req.url().path().left(matchedLength));
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
   return true;
 }, true },
 { "/do/v1/alerts/cancel/", [](
@@ -1109,7 +1137,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   webconsole->scheduler()->alerter()->cancelAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Canceled alert '"+alertid+"'.",
-                      req.url().path().left(matchedLength));
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
   return true;
 }, true },
 { "/do/v1/alerts/cancel_immediately/", [](
@@ -1121,7 +1150,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   webconsole->scheduler()->alerter()->cancelAlertImmediately(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Canceled alert '"+alertid+"' immediately.",
-                      req.url().path().left(matchedLength));
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
   return true;
 }, true },
 { "/do/v1/alerts/emit/", [](
@@ -1133,7 +1163,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   webconsole->scheduler()->alerter()->emitAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Emitted alert '"+alertid+"'.",
-                      req.url().path().left(matchedLength));
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
   return true;
 }, true },
 { { "/console/do", "/rest/do" }, []( // LATER migrate to /do/v1 and remove

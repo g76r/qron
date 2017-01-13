@@ -23,6 +23,9 @@
    have the same format than qron's log
  - doc: added parts to user manual
  - log: clarified timestamps in ending task info trace
+ - log/wui/api: changed audit logs action names to match new restful api paths
+   (and methods) rather than c++ methods names, e.g. "raiseAlert" becomes
+   "GET /do/v1/alerts/raise/"
 * Behind-the-curtain improvements
  - switched more regular expression used internaly from Qt4's QRegExp to Qt5's
    QRegularExpression, which is richer, more performant and will last longer,

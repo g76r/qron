@@ -107,7 +107,7 @@ void Qrond::startup(QStringList args) {
 
 bool Qrond::systemTriggeredLoadConfig(QString actor) {
   bool result = loadConfig();
-  Log::info() << "AUDIT action: 'reloadConfig' "
+  Log::info() << "AUDIT action: 'reload_config_file' "
               << (result ? "result: success" : "result: failure")
               << " actor: '" << actor << "'";
   return result;
