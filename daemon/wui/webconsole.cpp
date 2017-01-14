@@ -50,6 +50,8 @@ static PfNode nodeWithValidPattern =
 static QRegularExpression htmlSuffixRe("\\.html$");
 static QRegularExpression pfSuffixRe("\\.pf$");
 
+static CsvFormatter _csvFormatter(',', "\n", '"', 0, ' ');
+
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0), _authorizer(0),
   _readOnlyResourcesCache(new ReadOnlyResourcesCache(this)) {
@@ -532,8 +534,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlConfigHistoryView);
 
   // CSV views
-  CsvTableView::setDefaultFieldQuote('"');
-  CsvTableView::setDefaultReplacementChar(' ');
+  CsvFormatter::setDefaultFieldQuote('"'); // LATER remove if CsvTableView is no longer used
+  CsvFormatter::setDefaultReplacementChar(' '); // same
   _csvHostsListView = new CsvTableView(this);
   _csvHostsListView->setModel(_sortedHostsModel);
   _csvClustersListView = new CsvTableView(this);
@@ -734,7 +736,7 @@ public:
   }
 };
 
-static bool enforceMethods(int methodsMask, HttpRequest req,
+inline bool enforceMethods(int methodsMask, HttpRequest req,
                              HttpResponse res) {
   if (req.method() & methodsMask)
     return true;
@@ -743,7 +745,7 @@ static bool enforceMethods(int methodsMask, HttpRequest req,
   return false;
 }
 
-static bool writeHtmlView(HtmlTableView *view, HttpRequest req,
+inline bool writeHtmlView(HtmlTableView *view, HttpRequest req,
                           HttpResponse res) {
   QByteArray data = view->text().toUtf8();
   res.setContentType("text/html;charset=UTF-8");
@@ -753,7 +755,7 @@ static bool writeHtmlView(HtmlTableView *view, HttpRequest req,
   return true;
 }
 
-static bool writeCsvView(CsvTableView *view, HttpRequest req,
+inline bool writeCsvView(CsvTableView *view, HttpRequest req,
                          HttpResponse res) {
   QByteArray data = view->text().toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
@@ -762,6 +764,37 @@ static bool writeCsvView(CsvTableView *view, HttpRequest req,
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
   return true;
+}
+
+inline bool writeItemsAsCsv(
+    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+  QByteArray data = _csvFormatter.format(list).toUtf8();
+  res.setContentType("text/csv;charset=UTF-8");
+  res.setHeader("Content-Disposition", "attachment"); // TODO filename=table.csv");
+  res.setContentLength(data.size());
+  if (req.method() != HttpRequest::HEAD)
+    res.output()->write(data);
+  return true;
+}
+
+template <class T>
+inline bool writeItemsAsCsv(
+    QList<T> list, HttpRequest req, HttpResponse res) {
+  return writeItemsAsCsv(SharedUiItemList<>(SharedUiItemList<T>(list)),
+                         req, res);
+}
+
+inline bool sortAndWriteItemsAsCsv(
+    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+  qSort(list);
+  return writeItemsAsCsv(list, req, res);
+}
+
+template <class T>
+inline bool sortAndWriteItemsAsCsv(
+    QList<T> list, HttpRequest req, HttpResponse res) {
+  return sortAndWriteItemsAsCsv(SharedUiItemList<>(SharedUiItemList<T>(list)),
+                                req, res);
 }
 
 static bool writeSvgImage(QByteArray data, HttpRequest req,
@@ -1666,7 +1699,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvHostsListView(), req, res);
+      return sortAndWriteItemsAsCsv(
+            webconsole->scheduler()->config().hosts().values(), req, res);
 } },
 { "/rest/v1/hosts/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -1680,7 +1714,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvClustersListView(), req, res);
+      return sortAndWriteItemsAsCsv(
+            webconsole->scheduler()->config().clusters().values(), req, res);
 } },
 { "/rest/v1/clusters/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,

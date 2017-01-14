@@ -35,6 +35,8 @@
  - wui/api: removed some wui/api endpoints that are no longer used (in do? and
    confirm? pseudo-pages)
  - wui/api: access control supporting new restful url schemes
+ - wui/api: several api endpoints have been migrated from textviews to
+   on-the-fly formatting
 
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes
