@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -96,7 +96,7 @@ class WebConsole : public HttpHandler {
   *_htmlLastEmittedAlertsView, *_htmlAlertSubscriptionsView,
   *_htmlAlertSettingsView, *_htmlGridboardsView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
-  *_htmlTaskInstancesView, *_htmlTaskInstancesView20,
+  *_htmlTaskInstancesView, *_htmlUnfinishedTaskInstancesView,
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
   *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,
@@ -211,7 +211,7 @@ public:
   HtmlTableView *htmlTaskInstancesView() const {
     return _htmlTaskInstancesView; }
   HtmlTableView *htmlTaskInstancesView20() const {
-    return _htmlTaskInstancesView20; }
+    return _htmlUnfinishedTaskInstancesView; }
   HtmlTableView *htmlTasksScheduleView() const {
     return _htmlTasksScheduleView; }
   HtmlTableView *htmlTasksConfigView() const { return _htmlTasksConfigView; }

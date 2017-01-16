@@ -6,6 +6,9 @@
    sample config:
    ```(alerts(settings(pattern myalert)(acceptabilitywindow * * 0-4 * * *)))```
 * Minor improvements
+ - wui/api: introducing (few) filtered api uris, e.g.:
+     /rest/v1/taskinstances/list.csv?status=queued,running
+     /rest/v1/taskinstances/list.html?status=running
  - wui: all configuration tables are sorted again (as they used to be prior
    to 1.9.0)
  - wui/api: more actions ported to new more restful url scheme:

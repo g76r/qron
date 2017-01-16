@@ -1,4 +1,4 @@
-/* Copyright 2012-2016 Hallowyn and others.
+/* Copyright 2012-2017 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -18,9 +18,9 @@
 #include "sched/taskinstance.h"
 #include "sched/qrond.h"
 #include <QCoreApplication>
-#include "util/htmlutils.h"
+#include "format/stringutils.h"
 #include <QUrlQuery>
-#include "util/timeformats.h"
+#include "format/timeformats.h"
 #include "textview/htmlitemdelegate.h"
 #include "htmltaskitemdelegate.h"
 #include "htmltaskinstanceitemdelegate.h"
@@ -33,6 +33,7 @@
 #include "util/radixtree.h"
 #include <functional>
 #include "util/characterseparatedexpression.h"
+#include "format/htmltableformatter.h"
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -46,11 +47,10 @@
 static PfNode nodeWithValidPattern =
     PfNode("dummy", "dummy").setAttribute("pattern", ".*")
     .setAttribute("dimension", "dummy");
-
 static QRegularExpression htmlSuffixRe("\\.html$");
 static QRegularExpression pfSuffixRe("\\.pf$");
-
-static CsvFormatter _csvFormatter(',', "\n", '"', 0, ' ');
+static CsvFormatter _csvFormatter(',', "\n", '"', 0, ' ', -1);
+static HtmlTableFormatter _htmlTableFormatter(-1);
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0), _authorizer(0),
@@ -349,23 +349,23 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAuditLogView->setItemDelegate(htmlLogEntryItemDelegate);
   _wuiHandler->addView(_htmlAuditLogView);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
-  _htmlTaskInstancesView20 =
-      new HtmlTableView(this, "taskinstances20",
-                        _unfinishedTaskInstancetModel->maxrows(), 20);
-  _htmlTaskInstancesView20->setModel(_unfinishedTaskInstancetModel);
+  _htmlUnfinishedTaskInstancesView =
+      new HtmlTableView(this, "unfinishedtaskinstances",
+                        _unfinishedTaskInstancetModel->maxrows(), 200);
+  _htmlUnfinishedTaskInstancesView->setModel(_unfinishedTaskInstancetModel);
   QHash<QString,QString> taskInstancesTrClasses;
   taskInstancesTrClasses.insert("failure", "danger");
   taskInstancesTrClasses.insert("queued", "warning");
   taskInstancesTrClasses.insert("running", "info");
-  _htmlTaskInstancesView20->setTrClass("%1", 2, taskInstancesTrClasses);
-  _htmlTaskInstancesView20->setEmptyPlaceholder("(no running or queued task)");
+  _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
+  _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no running or queued task)");
   cols.clear();
   cols << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8;
-  _htmlTaskInstancesView20->setColumnIndexes(cols);
-  _htmlTaskInstancesView20
+  _htmlUnfinishedTaskInstancesView->setColumnIndexes(cols);
+  _htmlUnfinishedTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
-                          _htmlTaskInstancesView20));
-  _wuiHandler->addView(_htmlTaskInstancesView20);
+                          _htmlUnfinishedTaskInstancesView));
+  _wuiHandler->addView(_htmlUnfinishedTaskInstancesView);
   _htmlTaskInstancesView = new HtmlTableView(
         this, "taskinstances", _taskInstancesHistoryModel->maxrows());
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
@@ -542,13 +542,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvClustersListView->setModel(_sortedClustersModel);
   _csvFreeResourcesView = new CsvTableView(this);
   _csvFreeResourcesView->setModel(_freeResourcesModel);
-  _csvFreeResourcesView->setRowHeaders();
+  _csvFreeResourcesView->enableRowHeaders();
   _csvResourcesLwmView = new CsvTableView(this);
   _csvResourcesLwmView->setModel(_resourcesLwmModel);
-  _csvResourcesLwmView->setRowHeaders();
+  _csvResourcesLwmView->enableRowHeaders();
   _csvResourcesConsumptionView = new CsvTableView(this);
   _csvResourcesConsumptionView->setModel(_resourcesConsumptionModel);
-  _csvResourcesConsumptionView->setRowHeaders();
+  _csvResourcesConsumptionView->enableRowHeaders();
   _csvGlobalParamsView = new CsvTableView(this);
   _csvGlobalParamsView->setModel(_globalParamsModel);
   _csvGlobalSetenvView = new CsvTableView(this);
@@ -768,7 +768,7 @@ inline bool writeCsvView(CsvTableView *view, HttpRequest req,
 
 inline bool writeItemsAsCsv(
     SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
-  QByteArray data = _csvFormatter.format(list).toUtf8();
+  QByteArray data = _csvFormatter.formatTable(list).toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
   res.setHeader("Content-Disposition", "attachment"); // TODO filename=table.csv");
   res.setContentLength(data.size());
@@ -795,6 +795,36 @@ inline bool sortAndWriteItemsAsCsv(
     QList<T> list, HttpRequest req, HttpResponse res) {
   return sortAndWriteItemsAsCsv(SharedUiItemList<>(SharedUiItemList<T>(list)),
                                 req, res);
+}
+
+inline bool writeItemsAsHtmlTable(
+    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+  QByteArray data = _htmlTableFormatter.formatTable(list).toUtf8();
+  res.setContentType("text/html;charset=UTF-8");
+  res.setContentLength(data.size());
+  if (req.method() != HttpRequest::HEAD)
+    res.output()->write(data);
+  return true;
+}
+
+template <class T>
+inline bool writeItemsAsHtmlTable(
+    QList<T> list, HttpRequest req, HttpResponse res) {
+  return writeItemsAsHtmlTable(SharedUiItemList<>(SharedUiItemList<T>(list)),
+                         req, res);
+}
+
+inline bool sortAndWriteItemsAsHtmlTable(
+    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+  qSort(list);
+  return writeItemsAsHtmlTable(list, req, res);
+}
+
+template <class T>
+inline bool sortAndWriteItemsAsHtmlTable(
+    QList<T> list, HttpRequest req, HttpResponse res) {
+  return sortAndWriteItemsAsHtmlTable(
+        SharedUiItemList<>(SharedUiItemList<T>(list)), req, res);
 }
 
 static bool writeSvgImage(QByteArray data, HttpRequest req,
@@ -2000,14 +2030,44 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
+      QString status = req.param(QStringLiteral("status"));
+      if (status.isEmpty())
+        return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
+      if (status == "running")
+        return sortAndWriteItemsAsCsv(
+              webconsole->scheduler()->runningTaskInstances(), req, res);
+      if (status == "queued")
+        return sortAndWriteItemsAsCsv(
+              webconsole->scheduler()->queuedTaskInstances(), req, res);
+      if (status == "queued,running")
+        return sortAndWriteItemsAsCsv(
+              webconsole->scheduler()->queuedOrRunningTaskInstances(), req,
+              res);
+      res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
+      res.output()->write("Filter value not supported.\n");
+      return true;
 } },
 { "/rest/v1/taskinstances/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
+      QString status = req.param(QStringLiteral("status"));
+      if (status.isEmpty())
+        return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
+      if (status == "running")
+        return sortAndWriteItemsAsHtmlTable(
+              webconsole->scheduler()->runningTaskInstances(), req, res);
+      if (status == "queued")
+        return sortAndWriteItemsAsHtmlTable(
+              webconsole->scheduler()->queuedTaskInstances(), req, res);
+      if (status == "queued,running")
+        return sortAndWriteItemsAsHtmlTable(
+              webconsole->scheduler()->queuedOrRunningTaskInstances(), req,
+              res);
+      res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
+      res.output()->write("Filter value not supported.\n");
+      return true;
 } },
 { "/rest/v1/scheduler_events/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2329,7 +2389,7 @@ void WebConsole::paramsChanged(
     auto *csvView = qobject_cast<CsvTableView*>(child);
     if (htmlView) {
       if (htmlView != _htmlWarningLogView10
-          && htmlView != _htmlTaskInstancesView20
+          && htmlView != _htmlUnfinishedTaskInstancesView
           && htmlView != _htmlLastPostedNoticesView20
           && htmlView != _htmlRaisedAlertsView)
         htmlView->setRowsPerPage(rowsPerPage);

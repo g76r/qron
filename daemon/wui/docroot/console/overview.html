@@ -42,10 +42,10 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Currently Running or Queued Tasks</h2>
-          <p><a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/v1/taskinstances/list.html"><i class="icon-file-html"></i> HTML</a>
+          <p><a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv?status=queued,running"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/taskinstances/list.html?status=queued,running"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="tasks.html#instances">Tasks page &raquo;</a>
-          <p><?view:taskinstances20?>
+          <p><?view:unfinishedtaskinstances?>
         </div>
       </div>
       <div class="row">
