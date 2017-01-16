@@ -107,8 +107,7 @@ class WebConsole : public HttpHandler {
   *_htmlConfigsView, *_htmlConfigHistoryView;
   HtmlSchedulerConfigItemDelegate *_htmlConfigsDelegate,
   *_htmlConfigHistoryDelegate;
-  CsvTableView *_csvHostsListView,
-  *_csvClustersListView, *_csvFreeResourcesView, *_csvResourcesLwmView,
+  CsvTableView *_csvFreeResourcesView, *_csvResourcesLwmView,
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvStatefulAlertsView, *_csvLastEmittedAlertsView,
@@ -152,8 +151,6 @@ public:
   QRegularExpression showAuditUser() const { return _showAuditUser; }
   QRegularExpression hideAuditUser() const { return _hideAuditUser; }
   AlerterConfig alerterConfig() const { return _alerterConfig; }
-  CsvTableView *csvHostsListView() const { return _csvHostsListView; }
-  CsvTableView *csvClustersListView() const { return _csvClustersListView; }
   CsvTableView *csvFreeResourcesView() const { return _csvFreeResourcesView; }
   CsvTableView *csvResourcesLwmView() const { return _csvResourcesLwmView; }
   CsvTableView *csvResourcesConsumptionView() const {

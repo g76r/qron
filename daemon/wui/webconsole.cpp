@@ -536,10 +536,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   // CSV views
   CsvFormatter::setDefaultFieldQuote('"'); // LATER remove if CsvTableView is no longer used
   CsvFormatter::setDefaultReplacementChar(' '); // same
-  _csvHostsListView = new CsvTableView(this);
-  _csvHostsListView->setModel(_sortedHostsModel);
-  _csvClustersListView = new CsvTableView(this);
-  _csvClustersListView->setModel(_sortedClustersModel);
   _csvFreeResourcesView = new CsvTableView(this);
   _csvFreeResourcesView->setModel(_freeResourcesModel);
   _csvFreeResourcesView->enableRowHeaders();
