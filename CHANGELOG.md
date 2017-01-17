@@ -17,6 +17,7 @@
      /do/v1/tasks/{enable,disable}/%taskid
      /do/v1/alerts/{emit}/%alertid
      /do/v1/alerts/{raise,cancel,raise_immediately,cancel_immediately}/%alertid
+     /do/v1/configs/reload_config_file
  - code review and fixes after running cppcheck static code analysis code
    (should not have any effect on program behavior, but only on code
    readability/maintenability)

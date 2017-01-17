@@ -1640,50 +1640,49 @@ for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
 <p>The following table describes RPC calls:
 <p><table class="table table-condensed table-hover table-striped">
 <tr><th>Call</th><th>Description</th></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/tasks/request/%taskid
-</tt>
-</td><td>request execution of task %taskid
-<p>HTTP params are used as task instance overriding params
-</td></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/notices/post/%notice
-</tt>
-</td><td>post %notice notice
-<p>HTTP params are used as notice params
-</td></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/tasks/abort_instances/%taskid
-</tt>
-</td><td>abort all running instances of task %taskid
-</td></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/tasks/cancel_requests/%taskid
-</tt>
-</td><td>cancel all queued requests of task %taskid
-</td></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/tasks/cancel_requests_and_abort_instances/%taskid
-</tt>
-</td><td>cancel all queued requests and abort all running
-instances of task %taskid
-</td></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/taskinstances/cancel/%taskinstanceid
-</tt>
-</td><td>cancel a task instance in queued status
-</td></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/taskinstances/cancel_or_abort/%taskinstanceid
-</tt>
-</td><td>abort a running task instance
-</td></tr>
-<tr><td><tt>
-<p>POST|GET /do/v1/taskinstances/cancel_or_abort/%taskinstanceid
-</tt>
+<tr><td><tt><p>POST|GET /do/v1/tasks/request/%taskid</tt>
+</td><td>request execution of a task, HTTP params are used as task
+instance overriding params</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/tasks/abort_instances/%taskid</tt>
+</td><td>abort all running instances of a task</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/tasks/cancel_requests/%taskid</tt>
+</td><td>cancel all queued requests of a task</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/tasks/cancel_requests_and_abort_instances/%taskid</tt>
+</td><td>cancel all queued requests and abort all running instances of a
+task</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/tasks/disable/%taskid</tt>
+</td><td>disable a task from being queued and (if already queued) from
+running</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/tasks/enable/%taskid</tt>
+</td><td>(re-)enable a task</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/tasks/disable_all</tt>
+</td><td>disable all tasks at once</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/tasks/enable_all</tt>
+</td><td>enable all tasks at once</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/taskinstances/cancel/%taskinstanceid</tt>
+</td><td>cancel a queued task instance (a.k.a. a task request)</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/taskinstances/cancel_or_abort/%taskinstanceid</tt>
+</td><td>abort a running task instance</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/taskinstances/cancel_or_abort/%taskinstanceid</tt>
 </td><td>cancel task instance if it's is still queued or abort it if it's
-already running
-</td></tr>
+already running</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/alerts/emit/%alertid</tt>
+</td><td>emit a one-shot alert</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/alerts/raise/%alertid</tt>
+</td><td>raise a stateful alert</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/alerts/raise_immediately/%alertid</tt>
+</td><td>raise immediately (without waiting for rise delay) a stateful
+alert</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/alerts/cancel/%alertid</tt>
+</td><td>cancel a stateful alert</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/alerts/cancel_immediately/%alertid</tt>
+</td><td>cancel immediately (without waiting for cancel delay) a stateful
+alert</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/notices/post/%notice</tt>
+</td><td>post a notice, HTTP params are used as notice params</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/configs/reload_config_file</tt>
+</td><td>reload configuration file and apply new configuration (if a
+configuration file is defined, and its content is valid)</td></tr>
 </table>
 
 <h2>Appendices</h2>

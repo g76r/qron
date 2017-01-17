@@ -1232,6 +1232,23 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       );
   return true;
 }, true },
+{ "/do/v1/configs/reload_config_file", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  bool ok = Qrond::instance()->loadConfig();
+  if (!ok)
+    res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
+  // wait to make it less probable that the page displays before effect
+  QThread::usleep(1000000);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      ok ? "S:Configuration reloaded."
+                         : "E:Cannot reload configuration.",
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
+  return true;
+}, true },
 { { "/console/do", "/rest/do" }, []( // LATER migrate to /do/v1 and remove
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
@@ -1403,11 +1420,13 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             + " all tasks";
         doPath = QStringLiteral("../do/v1/tasks/")
                                 +(req.param("enable") == "true" ? "enable_all" : "disable_all");
-      } else if (event == "enableTask") {
+      } else if (event == "enableTask") { // TODO remove, it's never called
         message = QString(req.param("enable") == "true" ? "enable" : "disable")
             + " task '"+taskId+"'";
       } else if (event == "reloadConfig") {
         message = "reload configuration";
+        doPath = "../do/v1/configs/reload_config_file";
+        doQuery.clear();
       } else if (event == "removeConfig") {
         message = "remove configuration "+configId;
       } else if (event == "activateConfig") {
