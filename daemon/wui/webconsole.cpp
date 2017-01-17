@@ -1240,11 +1240,52 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   bool ok = Qrond::instance()->loadConfig();
   if (!ok)
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
-  // wait to make it less probable that the page displays before effect
-  QThread::usleep(1000000);
+  else
+    // wait to make it less probable that the page displays before effect
+    QThread::usleep(1000000);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       ok ? "S:Configuration reloaded."
                          : "E:Cannot reload configuration.",
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
+  return true;
+}, true },
+{ "/do/v1/configs/activate/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString configid = req.url().path().mid(matchedLength)
+      || req.param("configid");
+  bool ok = webconsole->configRepository()->activateConfig(configid);
+  if (!ok)
+    res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
+  else
+    // wait to make it less probable that the page displays before effect
+    QThread::usleep(1000000);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      ok ? "S:Configuration '"+configid+"' activated."
+                         : "E:Cannot activate configuration '"+configid+"'.",
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
+  return true;
+}, true },
+{ "/do/v1/configs/remove/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString configid = req.url().path().mid(matchedLength)
+      || req.param("configid");
+  bool ok = webconsole->configRepository()->removeConfig(configid);
+  if (!ok)
+    res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
+  else
+    // wait to make it less probable that the page displays before effect
+    QThread::usleep(1000000);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      ok ? "S:Configuration '"+configid+"' removed."
+                         : "E:Cannot remove configuration '"+configid+"'.",
                       req.methodName()+" "+req.url().path().left(matchedLength)
                       );
   return true;
@@ -1429,8 +1470,12 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         doQuery.clear();
       } else if (event == "removeConfig") {
         message = "remove configuration "+configId;
+        doPath = "../do/v1/configs/remove/"+configId;
+        doQuery.clear();
       } else if (event == "activateConfig") {
         message = "activate configuration "+configId;
+        doPath = "../do/v1/configs/activate/"+configId;
+        doQuery.clear();
       } else if (event == "clearGridboard") {
         message = "clear gridboard "+gridboardId;
       } else {

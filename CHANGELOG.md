@@ -18,6 +18,7 @@
      /do/v1/alerts/{emit}/%alertid
      /do/v1/alerts/{raise,cancel,raise_immediately,cancel_immediately}/%alertid
      /do/v1/configs/reload_config_file
+     /do/v1/configs/{activate,remove}/%configid
  - code review and fixes after running cppcheck static code analysis code
    (should not have any effect on program behavior, but only on code
    readability/maintenability)
