@@ -1038,8 +1038,7 @@ if it has been too long or too short recently, etc. using this configuration:
   (dimension taskid)
   (dimension status)
   # add an HTML link to the task page to the taskid in row headers
-  (param gridboard.rowformat
-    '&lt;a href="taskdoc.html?taskid=%1"&gt;%1&lt;/a&gt;')
+  (param gridboard.rowformat '&lt;a href="../tasks/%1"&gt;%1&lt;/a&gt;')
 )
 </pre>
 
@@ -1678,6 +1677,8 @@ alert</td></tr>
 <tr><td><tt><p>POST|GET /do/v1/alerts/cancel_immediately/%alertid</tt>
 </td><td>cancel immediately (without waiting for cancel delay) a stateful
 alert</td></tr>
+<tr><td><tt><p>POST|GET /do/v1/gridboards/clear/%gridboardid</tt>
+</td><td>clear a gridboard</td></tr>
 <tr><td><tt><p>POST|GET /do/v1/notices/post/%notice</tt>
 </td><td>post a notice, HTTP params are used as notice params</td></tr>
 <tr><td><tt><p>POST|GET /do/v1/configs/reload_config_file</tt>

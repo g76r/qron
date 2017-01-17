@@ -1232,6 +1232,20 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       );
   return true;
 }, true },
+{ "/do/v1/gridboards/clear/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  QString gridboardid = req.url().path().mid(matchedLength)
+      || req.param("gridboardid");
+  webconsole->scheduler()->alerter()->clearGridboard(gridboardid);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      "S:Gridboard '"+gridboardid+"' cleared.",
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
+  return true;
+}, true },
 { "/do/v1/configs/reload_config_file", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -1478,6 +1492,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         doQuery.clear();
       } else if (event == "clearGridboard") {
         message = "clear gridboard "+gridboardId;
+        doPath = "../do/v1/gridboards/clear/"+gridboardId;
+        doQuery.clear();
       } else {
         message = event;
       }
