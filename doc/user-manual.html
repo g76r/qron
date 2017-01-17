@@ -1405,7 +1405,8 @@ metrics about tasks durations:
 Qron's HTTP API is splitted into a REST API (paths begining with /rest/) and a
 RPC API (paths begining with /do/) which is as simple
 as a REST API but action-oriented rather than data-oriented and does not rely
-on HTTP methods to determine the action as the REST API does.
+on HTTP methods to determine the action as the REST API does (therefore they
+can be called by not-method-aware HTTP clients such as an HTML link or form).
 
 <p>Whatever HTTP URI whose path is not begining with /do/ or /rest/ is not
 part of the HTTP API, it's only UI. Backward compatibility of UI URIs can
@@ -1689,6 +1690,16 @@ configuration file is defined, and its content is valid)</td></tr>
 <tr><td><tt><p>POST|GET /do/v1/configs/remove/%configid</tt>
 </td><td>remove a configuration from repository</td></tr>
 </table>
+
+<h3>References about HTTP APIs</h3>
+Following documents have been strong source of inspiration for designing
+the REST and RPC API principles:
+<ul>
+<li><a href="https://github.com/WhiteHouse/api-standards">White House's Web API
+Standards</a>
+<li><a href="http://www.vinaysahni.com/best-practices-for-a-pragmatic-restful-api">Vinay
+Sahni's Best Practices for Designing a Pragmatic RESTful API</a>
+</ul>
 
 <h2>Appendices</h2>
 
