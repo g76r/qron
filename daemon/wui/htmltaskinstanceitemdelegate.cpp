@@ -51,16 +51,18 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     if (status == "queued")
       text.prepend(/* cancel */
                    "<span class=\"label label-danger\" title=\"Cancel "
-                   "request\"><a href=\"confirm?event=cancelRequest&"
-                   "taskinstanceid="+taskInstanceId+"\">"
-                   "<i class=\"icon-cancel\"></i></a></span> ");
+                   "request\"><a href=\"confirm/do/v1/taskinstances/cancel/"
+                   +taskInstanceId+"?confirm_message=cancel task request "
+                   +taskInstanceId
+                   +"\"><i class=\"icon-cancel\"></i></a></span> ");
     else if (status == "running") {
       if (abortable)
         text.prepend(/* abort */
                      "<span class=\"label label-danger\" title=\"Abort "
-                     "task\"><a href=\"confirm?event=abortTask&taskinstanceid="
-                     +taskInstanceId+"\"><i class=\"icon-fire\"></i>"
-                     "</a></span> ");
+                     "task\"><a href=\"confirm/do/v1/taskinstances/abort/"
+                     +taskInstanceId+"?confirm_message=abort task instance "
+                     +taskInstanceId+
+                     "\"><i class=\"icon-fire\"></i></a></span> ");
       else
         text.prepend(/* cannot abort */
                      "<span class=\"label\" title=\"Cannot abort task\">"

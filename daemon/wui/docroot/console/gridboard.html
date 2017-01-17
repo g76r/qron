@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2015-2016 Hallowyn and others.
+ Copyright 2015-2017 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -18,7 +18,7 @@
       <div class="row">
         <div class="col-md-12">
           <h1>Gridboard: <?value:1?></h1>
-          <p><a class="btn btn-danger" href="<?value:!pathtoroot?>confirm?event=clearGridboard&gridboardid=<?value:0?>"><i class="icon-trash"></i> Clear gridboard</a>
+          <p><a class="btn btn-danger" href="<?value:!pathtoroot?>confirm/do/v1/gridboards/clear/<?value:0?>?confirm_message=clear gridboard '<?=%{=default:%1:%0}?>'"><i class="icon-trash"></i> Clear gridboard</a>
           <a class="btn btn-info" href="<?value:!pathtoroot?>alerts.html">Alerts page &raquo;</a>
         </div>
       </div>

@@ -1444,7 +1444,45 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   }
   return true;
 } },
-{ "/console/confirm", [](
+{ "/console/confirm/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
+                          req, res))
+        return true;
+      QString path = req.url().path().mid(matchedLength);
+      QString message = req.param("confirm_message") || path;
+      if (path.isEmpty()) {
+        res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
+        res.output()->write("Confirmation page error.\n");
+        return true;
+      }
+      path = processingContext->paramString("!pathtoroot")+"../"+path;
+      QString referer = req.header(
+            "Referer", processingContext->paramString("!pathtoroot"));
+      QUrlQuery query(req.url());
+      query.removeAllQueryItems("confirm_message");
+      QString queryString = query.toString(QUrl::FullyEncoded);
+      message = "<div class=\"well\">"
+                "<h4 class=\"text-center\">Are you sure you want to "+message
+          +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
+           "href=\""+path;
+      if (!queryString.isEmpty())
+        message = message+"?"+queryString;
+      message = message+"\">Yes, sure</a> <a class=\"btn\" href=\""+referer
+          +"\">Cancel</a></div>";
+      res.setBase64SessionCookie("redirect", referer, "/");
+      QUrl url(req.url());
+      url.setPath("/console/adhoc.html");
+      url.setQuery(QString());
+      req.overrideUrl(url);
+      ParamsProviderMergerRestorer restorer(processingContext);
+      processingContext->overrideParamValue("content", message);
+      res.clearCookie("message", "/");
+      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      return true;
+}, true },
+{ "/console/confirm", []( // LATER remove this transitional/compatibility handler
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
@@ -1455,10 +1493,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       QString gridboardId = req.param("gridboardid");
       QString taskInstanceId = req.param("taskinstanceid");
       QString configId = req.param("configid");
-      QString referer = req.header("Referer", "overview.html");
+      QString referer = req.header(
+            "Referer", processingContext->paramString("!pathtoroot"));
       QString message;
-      // LATER remove default "do" doUrl, port every call to /do/v1 API
-      // LATER maybe also remove "/console/confirm" as a whole
       QString doPath = "do";
       QUrlQuery doQuery(req.url());
       // doQuery.removeAllQueryItems("event");
@@ -1475,9 +1512,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             + " all tasks";
         doPath = QStringLiteral("../do/v1/tasks/")
                                 +(req.param("enable") == "true" ? "enable_all" : "disable_all");
-      } else if (event == "enableTask") { // TODO remove, it's never called
+      } else if (event == "enableTask") {
         message = QString(req.param("enable") == "true" ? "enable" : "disable")
             + " task '"+taskId+"'";
+        // there is no transitional doPath= because there are no confirmation
+        // for task enable/disable (this is very likely to be dead code)
       } else if (event == "reloadConfig") {
         message = "reload configuration";
         doPath = "../do/v1/configs/reload_config_file";
@@ -1521,7 +1560,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           req, res))
         return true;
       QString taskId = req.url().path().mid(matchedLength);
-      QString referer = req.header("Referer", "../../overview.html");
+      QString referer = req.header(
+            "Referer", processingContext->paramString("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
         QUrl url(req.url());
@@ -1581,7 +1621,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
       QString taskId = elements.value(0);
-      QString referer = req.header("Referer", "../overview.html");
+      QString referer = req.header(
+            "Referer", processingContext->paramString("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
       if (task.isNull()) {
         if (referer.isEmpty()) {
@@ -1674,7 +1715,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           req, res))
         return true;
       QString gridboardId = req.url().path().mid(matchedLength);
-      QString referer = req.header("Referer", "overview.html");
+      QString referer = req.header(
+            "Referer", processingContext->paramString("!pathtoroot"));
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {

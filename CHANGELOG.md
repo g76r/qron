@@ -44,6 +44,8 @@
  - wui/api: access control supporting new restful url schemes
  - wui/api: several api endpoints have been migrated from textviews to
    on-the-fly formatting
+ - wui: new confirmation url pattern, more restfull:
+   "/confirm/path/to/actual/api/" instead of "/confirm?event=apiCallName"
 
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes
