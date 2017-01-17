@@ -852,20 +852,16 @@ static bool writePlainText(QByteArray data, HttpRequest req,
 static void copyFilteredFiles(QStringList paths, QIODevice *output,
                               QString pattern, bool useRegexp) {
   // LATER handle HEAD differently and write Content-Length header
-  // LATER switch to QRegularExpression (and use QRE::escape() for non-regexp)
-  // LATER have a regexp cache
   foreach (const QString path, paths) {
     QFile file(path);
     if (file.open(QIODevice::ReadOnly)) {
       if (pattern.isEmpty())
         IOUtils::copy(output, &file);
-      else
+      else if (useRegexp)
         IOUtils::grepWithContinuation(
-              output, &file,
-              QRegExp(pattern, Qt::CaseSensitive,
-                      useRegexp ? QRegExp::RegExp2
-                                : QRegExp::FixedString),
-              "  ");
+              output, &file, QRegularExpression(pattern), "  ");
+      else
+        IOUtils::grepWithContinuation(output, &file, pattern, "  ");
     } else {
       Log::warning() << "web console cannot open log file " << path
                      << " : error #" << file.error() << " : "
