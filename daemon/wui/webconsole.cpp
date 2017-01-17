@@ -874,7 +874,7 @@ static void copyFilteredFiles(QStringList paths, QIODevice *output,
   }
 }
 
-static QList<quint64> _noAuditInstanceIds { 0 };
+static const QList<quint64> _noAuditInstanceIds { 0 };
 
 static void apiAuditAndResponse(
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -1304,12 +1304,17 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       );
   return true;
 }, true },
-{ { "/console/do", "/rest/do" }, []( // LATER migrate to /do/v1 and remove
+{ { "/console/do", "/rest/do" }, []( // LATER remove this transitional/compatibility handler
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
                       |HttpRequest::PUT, req, res))
     return true;
+  Log::debug() << "web user interface was called with a deprecated url: "
+               << req.methodName() << " " << req.url().toString()
+               << " Referer: "<< req.header("Referer") << " From: "
+               << req.clientAdresses().join(", ") << " User-Agent: "
+               << req.header("User-Agent");
   QString event = req.param("event");
   QString taskId = req.param("taskid");
   QString alertId = req.param("alertid");
@@ -1488,6 +1493,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
                           req, res))
         return true;
+      Log::debug() << "web user interface was called with a deprecated url: "
+                   << req.methodName() << " " << req.url().toString()
+                   << " Referer: "<< req.header("Referer") << " From: "
+                   << req.clientAdresses().join(", ") << " User-Agent: "
+                   << req.header("User-Agent");
       QString event = req.param("event");
       QString taskId = req.param("taskid");
       QString gridboardId = req.param("gridboardid");
@@ -1608,9 +1618,14 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       }
       return true;
 }, true },
-{ "/console/taskdoc.html", []( // LATER remove
+{ "/console/taskdoc.html", []( // LATER remove this transitional/compatibility handler
     WebConsole *, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
+      Log::debug() << "web user interface was called with a deprecated url: "
+                   << req.methodName() << " " << req.url().toString()
+                   << " Referer: "<< req.header("Referer") << " From: "
+                   << req.clientAdresses().join(", ") << " User-Agent: "
+                   << req.header("User-Agent");
       res.redirect("tasks/"+req.param("taskid"));
       return true;
 } },
@@ -1702,9 +1717,14 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       }
       return false;
 }, true },
-{ "/console/gridboard.html", []( // LATER remove
+{ "/console/gridboard.html", []( // LATER remove this transitional/compatibility handler
     WebConsole *, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
+      Log::debug() << "web user interface was called with a deprecated url: "
+                   << req.methodName() << " " << req.url().toString()
+                   << " Referer: "<< req.header("Referer") << " From: "
+                   << req.clientAdresses().join(", ") << " User-Agent: "
+                   << req.header("User-Agent");
       res.redirect("gridboards/"+req.param("gridboardid"));
       return true;
 } },

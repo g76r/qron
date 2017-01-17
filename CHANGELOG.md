@@ -46,6 +46,8 @@
    on-the-fly formatting
  - wui: new confirmation url pattern, more restfull:
    "/confirm/path/to/actual/api/" instead of "/confirm?event=apiCallName"
+ - wui/api: deprecation debug traces for old wui and api urls (do?, old
+   confirm?, taskdoc.html and gridboard.html)
 
 # From 1.9.5 to 1.9.6 (2016-11-08)
 * Minor improvements and fixes
