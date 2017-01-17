@@ -22,6 +22,7 @@
    readability/maintenability)
  - wui: searching within log files now work if the log file name patterns uses
    nested % expression (e.g. /var/log/foobar-%{foo%{bar}}.log)
+ - wui: added html form to manualy post a notice on events page
  - log: internal Qt traces that are sent to stderr are now timestamped and
    have the same format than qron's log
  - doc: added parts to user manual

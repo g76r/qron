@@ -1156,8 +1156,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString notice = req.url().path().mid(matchedLength);
+  QString notice = req.url().path().mid(matchedLength) || req.param("notice");
   ParamSet params = req.paramsAsParamSet();
+  params.removeValue("notice");
   webconsole->scheduler()->postNotice(notice, params);
   QString message;
   message = "S:Notice '"+notice+"' posted.";
