@@ -1,4 +1,4 @@
-# Since 1.9.6
+# From 1.9.6 to 1.9.7 (2017-01-18)
 * New features and notable changes
  - alerts: visibilitywindow now applies to one-shot alerts in addition to
    stateful ones
