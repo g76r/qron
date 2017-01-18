@@ -1,3 +1,7 @@
+# From 1.9.7 to 1.9.8 (2017-01-18)
+* Minor improvements and bug fixes
+ - wui: fixed a regression in 1.9.7 where static urls needed auth again
+
 # From 1.9.6 to 1.9.7 (2017-01-18)
 * New features and notable changes
  - alerts: visibilitywindow now applies to one-shot alerts in addition to
