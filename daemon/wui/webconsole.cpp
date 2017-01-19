@@ -1604,7 +1604,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         processingContext->overrideParamValue("content", form);
         res.setBase64SessionCookie("redirect", referer, "/");
         res.clearCookie("message", "/");
-        Log::fatal() << "handleRequest adhoc from /tasks/request: " << processingContext->paramValue("!pathtoroot"); // FIXME
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
         return true;
       } else {
