@@ -852,7 +852,7 @@ static bool writePlainText(QByteArray data, HttpRequest req,
 static void copyFilteredFiles(QStringList paths, QIODevice *output,
                               QString pattern, bool useRegexp) {
   // LATER handle HEAD differently and write Content-Length header
-  foreach (const QString path, paths) {
+  for (const QString &path: paths) {
     QFile file(path);
     if (file.open(QIODevice::ReadOnly)) {
       if (pattern.isEmpty())
@@ -889,7 +889,7 @@ static void apiAuditAndResponse(
       && userid.contains(webconsole->showAuditUser())
       && (webconsole->hideAuditUser().pattern().isEmpty()
           || !userid.contains(webconsole->hideAuditUser()))) {
-    foreach (quint64 auditInstanceId, auditInstanceIds)
+    for (quint64 auditInstanceId: auditInstanceIds)
       Log::info(auditTaskId, auditInstanceId)
           << "AUDIT action: '" << auditAction
           << (responseMessage.startsWith('E')
@@ -941,7 +941,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   // LATER drop parameters that are not defined as overridable in task config
   // remove empty values so that fields left empty in task request ui form won't
   // override configurated values
-  foreach (QString key, params.keys())
+  for (const QString &key: params.keys())
     if (params.rawValue(key).isEmpty())
       params.removeValue(key);
   // LATER should check that mandatory form fields have been set ?
@@ -951,7 +951,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   QList<quint64> taskInstanceIds;
   if (!instances.isEmpty()) {
     message = "S:Task '"+taskId+"' submitted for execution with id";
-    foreach (TaskInstance request, instances) {
+    for (const TaskInstance &request: instances) {
       message.append(' ').append(QString::number(request.idAsLong()));
       taskInstanceIds << request.idAsLong();
     }
@@ -1328,7 +1328,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
     ParamSet params(req.paramsAsParamSet());
     // TODO handle null values rather than replacing empty with nulls
-    foreach (QString key, params.keys())
+    for (const QString &key: params.keys())
       if (params.value(key).isEmpty())
         params.removeValue(key);
     params.removeValue("taskid");
@@ -1338,7 +1338,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         ->syncRequestTask(taskId, params);
     if (!instances.isEmpty()) {
       message = "S:Task '"+taskId+"' submitted for execution with id";
-      foreach (TaskInstance request, instances) {
+      for (const TaskInstance &request: instances) {
         message.append(' ').append(QString::number(request.idAsLong()));
         auditInstanceIds << request.idAsLong();
       }
@@ -1424,7 +1424,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           || !userid.contains(webconsole->hideAuditUser()))) {
     if (auditInstanceIds.isEmpty())
       auditInstanceIds << taskInstanceId;
-    foreach (quint64 auditInstanceId, auditInstanceIds)
+    for (quint64 auditInstanceId: auditInstanceIds)
       Log::info(taskId, auditInstanceId)
           << "AUDIT action: '" << event
           << ((res.status() < 300 && res.status() >=200)
@@ -1585,7 +1585,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         form += "<p><form action=\"../../../do/v1/tasks/request/"+taskId
             +"\" method=\"POST\">";
         bool errorOccured = false;
-        foreach (RequestFormField rff, task.requestFormFields())
+        for (const RequestFormField &rff: task.requestFormFields())
             form.append(rff.toHtmlFormFragment(
                             webconsole->readOnlyResourcesCache(),
                             &errorOccured));
@@ -2523,7 +2523,7 @@ void WebConsole::paramsChanged(
         "webconsole.htmltables.rowsperpage", 100);
   int cachedRows = newParams.valueAsInt(
         "webconsole.htmltables.cachedrows", 500);
-  foreach (QObject *child, children()) {
+  for (QObject *child: children()) {
     auto *htmlView = qobject_cast<HtmlTableView*>(child);
     auto *csvView = qobject_cast<CsvTableView*>(child);
     if (htmlView) {
@@ -2553,6 +2553,6 @@ void WebConsole::alerterConfigChanged(AlerterConfig config) {
   _alertSettingsModel->setItems(config.alertSettings());
   _alertChannelsModel->clear();
   _gridboardsModel->setItems((config.gridboards()));
-  foreach (const QString channel, config.channelsNames())
+  for (const QString &channel: config.channelsNames())
     _alertChannelsModel->setCellValue(channel, "enabled", "true");
 }
