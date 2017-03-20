@@ -18,8 +18,17 @@ BUILD INSTRUCTIONS
 ------------------
 
 This program requires at build time:
-* Qt >= 5.6.0 development libs (with QtCore, QtNetwork, QtSql modules)
+* Qt >= 5.6.0 development libs (with QtCore, QtNetwork, QtSql modules);
+  most of the time, the last Qt version shipped with current stable Debian
+  release should work (currently Qt 5.3.2 on Debian 8 Jessie) should work,
+  but some minor features will lack or differ (currently quotes in logs,
+  reliability of rare errors detections, etc.);
 * graphviz binaries (to compile some documentation diagrams)
+
+For instance, on Debian-based Linux distribution, these command should be
+enough to install all compilation prerequisites:
+``` bash
+sudo apt-get install g++ qt5-default qt5-qmake graphviz
 
 In addition, the git repository uses git submodules to handle libqtpf and
 libqtssu dependencies, therefore you should use following steps to clone
@@ -45,7 +54,6 @@ make
 
 When built on Linux, binaries can be found under "linux" directory, with a
 README file explaining how to start the daemon.
-
 
 CONTRIBUTIONS
 -------------
