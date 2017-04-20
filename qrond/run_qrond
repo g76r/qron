@@ -1,0 +1,15 @@
+#!/bin/bash
+
+BUILD_TYPE=release
+TARGET_OS=unknown
+case $(uname) in
+Linux)
+  TARGET_OS=linux
+;;
+esac
+
+export LD_LIBRARY_PATH="../build-qtpf-$TARGET_OS/$BUILD_TYPE:../build-qron-$TARGET_OS/$BUILD_TYPE:../build-p6core-$TARGET_OS/$BUILD_TYPE:$LD_LIBRARY_PATH"
+
+echo LD_LIBRARY_PATH:$LD_LIBRARY_PATH
+
+exec ./qrond "$@"
