@@ -112,7 +112,7 @@ class WebConsole : public HttpHandler {
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvStatefulAlertsView, *_csvLastEmittedAlertsView,
   *_csvAlertSubscriptionsView, *_csvAlertSettingsView, *_csvGridboardsView,
-  *_csvLogView, *_csvTaskInstancesView, *_csvTasksView,
+  *_csvLogView, *_csvTaskInstancesView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView,
   *_csvConfigsView, *_csvConfigHistoryView;
@@ -168,7 +168,6 @@ public:
   CsvTableView *csvGridboardsView() const { return _csvGridboardsView; }
   CsvTableView *csvLogView() const { return _csvLogView; }
   CsvTableView *csvTaskInstancesView() const { return _csvTaskInstancesView; }
-  CsvTableView *csvTasksView() const { return _csvTasksView; }
   CsvTableView *csvSchedulerEventsView() const {
     return _csvSchedulerEventsView; }
   CsvTableView *csvLastPostedNoticesView() const {

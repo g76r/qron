@@ -574,8 +574,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvTaskInstancesView =
         new CsvTableView(this, _taskInstancesHistoryModel->maxrows());
   _csvTaskInstancesView->setModel(_taskInstancesHistoryModel);
-  _csvTasksView = new CsvTableView(this);
-  _csvTasksView->setModel(_tasksModel);
   _csvSchedulerEventsView = new CsvTableView(this);
   _csvSchedulerEventsView->setModel(_schedulerEventsModel);
   _csvLastPostedNoticesView =
@@ -1832,11 +1830,10 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger*, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      // LATER handle fields comma enumeration for real
-      QString fields = req.param(QStringLiteral("fields")).trimmed();
-      // LATER if (fields == QStringLiteral("id,triggers,onstart,onsuccess,onfailure"))
-      //  return writeHtmlView(webconsole->csvTasksEventsView(), req, res);
-      return writeCsvView(webconsole->csvTasksView(), req, res);
+      // LATER handle fields comma enumeration
+      //QString fields = req.param(QStringLiteral("fields")).trimmed();
+      return sortAndWriteItemsAsCsv(
+            webconsole->scheduler()->config().tasks().values(), req, res);
 } },
 { "/rest/v1/tasks/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,

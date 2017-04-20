@@ -1,6 +1,8 @@
 # From 1.9.8 to 1.9.9 (2017-04-20)
 * Minor improvements and bug fixes
  - wui: don't elide command on task detail page
+ - wui/api: migrating some endpoints from textview to on-the-fly formatting
+     /rest/v1/tasks/list.csv by the way this removes the 25-tasks limit
  - portability: backward compatibility down to Qt 5.3 again (Debian 8)
  - doc: misc fixes
 * Behind-the-curtain improvements
