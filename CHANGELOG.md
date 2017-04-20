@@ -1,6 +1,10 @@
 # From 1.9.8 to 1.9.9 (2017-04-20)
 * Minor improvements and bug fixes
-- wui: don't elide command on task detail page
+ - wui: don't elide command on task detail page
+ - portability: backward compatibility down to Qt 5.3 again (Debian 8)
+ - doc: misc fixes
+* Behind-the-curtain improvements
+ - more consistant build procedures across platforms
 
 # From 1.9.7 to 1.9.8 (2017-01-18)
 * Minor improvements and bug fixes

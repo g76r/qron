@@ -1,4 +1,4 @@
-# Copyright 2012-2016 Hallowyn and others.
+# Copyright 2012-2017 Hallowyn and others.
 # This file is part of qron, see <http://qron.eu/>.
 # Qron is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -19,34 +19,38 @@ CONFIG += console largefile c++11
 CONFIG -= app_bundle
 TEMPLATE = app
 
+TARGET_OS=default
+unix: TARGET_OS=unix
+linux: TARGET_OS=linux
+android: TARGET_OS=android
+macx: TARGET_OS=macx
+win32: TARGET_OS=win32
+BUILD_TYPE=unknown
+CONFIG(debug,debug|release): BUILD_TYPE=debug
+CONFIG(release,debug|release): BUILD_TYPE=release
+
 contains(QT_VERSION, ^4\\..*) {
   message("Cannot build with Qt version $${QT_VERSION}.")
   error("Use Qt 5.")
 }
 
-INCLUDEPATH += ../libqtpf ../libqtssu ../libqron
-win32:CONFIG(debug,debug|release):LIBS += \
-  -L../build-libqtpf-windows/debug \
-  -L../build-libqron-windows/debug \
-  -L../build-libqtssu-windows/debug
-win32:CONFIG(release,debug|release):LIBS += \
-  -L../build-libqtpf-windows/release \
-  -L../build-libqron-windows/release \
-  -L../build-libqtssu-windows/release
-unix:LIBS += -L../libqtpf -L../libqtssu -L../libqron
-LIBS += -lqtpf -lqtssu -lqron
-
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual
 #QMAKE_CXXFLAGS += -fno-elide-constructors
-unix:CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
+CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
-unix {
-  OBJECTS_DIR = ../build-daemon-unix/obj
-  RCC_DIR = ../build-daemon-unix/rcc
-  MOC_DIR = ../build-daemon-unix/moc
-}
+OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj
+RCC_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/rcc
+MOC_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/moc
+
+# dependency libs
+INCLUDEPATH += ../libqtpf ../libp6core ../libqron
+LIBS += \
+  -L../build-qtpf-$$TARGET_OS/$$BUILD_TYPE \
+  -L../build-qron-$$TARGET_OS/$$BUILD_TYPE \
+  -L../build-p6core-$$TARGET_OS/$$BUILD_TYPE
+LIBS += -lqtpf -lp6core -lqron
 
 unix {
   ancillary_make.commands = @make -f ancillary.mf all

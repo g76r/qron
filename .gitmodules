@@ -1,14 +1,12 @@
 [submodule "libqtpf"]
 	path = libqtpf
-	#url = git@bitbucket.org:hallowyn/libqtpf.git
-	#url = https://github.com/g76r/libqtpf.git
-	url = git://github.com/g76r/libqtpf.git
-	pushURL = git@github.com:g76r/libqtpf.git
-[submodule "libqtssu"]
-	path = libqtssu
-	url = git://github.com/g76r/libqtssu.git
-        pushURL = git@github.com:g76r/libqtssu.git
+	url = git://gitlab.com/g76r/libqtpf.git
+	pushURL = git@gitlab.com:g76r/libqtpf.git
+[submodule "libp6core"]
+	path = libp6core
+	url = git://gitlab.com/g76r/libp6core.git
+        pushURL = git@gitlab.com:g76r/libp6core.git
 [submodule "libqron"]
         path = libqron
-        url = git://github.com/g76r/libqron.git
-        pushURL = git@github.com:g76r/libqron.git
+        url = git://gitlab.com/g76r/libqron.git
+        pushURL = git@gitlab.com:g76r/libqron.git
