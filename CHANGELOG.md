@@ -1,3 +1,7 @@
+# From 1.9.8 to 1.9.9 (2017-04-20)
+* Minor improvements and bug fixes
+- wui: don't elide command on task detail page
+
 # From 1.9.7 to 1.9.8 (2017-01-18)
 * Minor improvements and bug fixes
  - wui: fixed a regression in 1.9.7 where static urls needed auth again
