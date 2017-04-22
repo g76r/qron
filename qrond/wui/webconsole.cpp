@@ -60,7 +60,6 @@ static inline QString operator||(QString a, QString b) {
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0), _authorizer(0),
   _readOnlyResourcesCache(new ReadOnlyResourcesCache(this)) {
-  QList<int> cols;
 
   // HTTP handlers
   _tasksDeploymentDiagram
@@ -223,31 +222,23 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlResourcesConsumptionView);
   _htmlGlobalParamsView = new HtmlTableView(this, "globalparams");
   _htmlGlobalParamsView->setModel(_globalParamsModel);
-  cols.clear();
-  cols << 0 << 1;
-  _htmlGlobalParamsView->setColumnIndexes(cols);
+  _htmlGlobalParamsView->setColumnIndexes({0,1});
   _wuiHandler->addView(_htmlGlobalParamsView);
   _htmlGlobalSetenvView = new HtmlTableView(this, "globalsetenv");
   _htmlGlobalSetenvView->setModel(_globalSetenvModel);
-  cols.clear();
-  cols << 0 << 1;
-  _htmlGlobalSetenvView->setColumnIndexes(cols);
+  _htmlGlobalSetenvView->setColumnIndexes({0,1});
   _wuiHandler->addView(_htmlGlobalSetenvView);
   _htmlGlobalUnsetenvView = new HtmlTableView(this, "globalunsetenv");
   _htmlGlobalUnsetenvView->setModel(_globalUnsetenvModel);
   _wuiHandler->addView(_htmlGlobalUnsetenvView);
-  cols.clear();
-  cols << 0;
-  _htmlGlobalUnsetenvView->setColumnIndexes(cols);
+  _htmlGlobalUnsetenvView->setColumnIndexes({0});
   _htmlAlertParamsView = new HtmlTableView(this, "alertparams");
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _wuiHandler->addView(_htmlAlertParamsView);
   _htmlStatefulAlertsView = new HtmlTableView(this, "statefulalerts");
   _htmlStatefulAlertsView->setModel(_sortedStatefulAlertsModel);
   _htmlStatefulAlertsView->setEmptyPlaceholder("(no alert)");
-  cols.clear();
-  cols << 0 << 2 << 3 << 4 << 5;
-  _htmlStatefulAlertsView->setColumnIndexes(cols);
+  _htmlStatefulAlertsView->setColumnIndexes({0,2,3,4,5});
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
                      "<i class=\"icon-bell\"></i>&nbsp;");
@@ -270,9 +261,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView->setRowsPerPage(10);
   _htmlRaisedAlertsView->setModel(_sortedRaisedAlertModel);
   _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
-  cols.clear();
-  cols << 0 << 2 << 4 << 5;
-  _htmlRaisedAlertsView->setColumnIndexes(cols);
+  _htmlRaisedAlertsView->setColumnIndexes({0,2,4,5});
   _htmlRaisedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView, true));
   qobject_cast<HtmlItemDelegate*>(_htmlRaisedAlertsView->itemDelegate())
@@ -287,9 +276,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
         new HtmlAlertItemDelegate(_htmlLastEmittedAlertsView, false));
   qobject_cast<HtmlItemDelegate*>(_htmlLastEmittedAlertsView->itemDelegate())
       ->setPrefixForColumn(7, "%1", 1, alertsIcons);
-  cols.clear();
-  cols << _lastEmittedAlertsModel->timestampColumn() << 7 << 5;
-  _htmlLastEmittedAlertsView->setColumnIndexes(cols);
+  _htmlLastEmittedAlertsView->setColumnIndexes(
+        {_lastEmittedAlertsModel->timestampColumn(),7,5});
   _wuiHandler->addView(_htmlLastEmittedAlertsView);
   _htmlAlertSubscriptionsView = new HtmlTableView(this, "alertsubscriptions");
   _htmlAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
@@ -298,17 +286,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlAlertSubscriptionsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;")
       ->setPrefixForColumn(2, "%1", 2, alertSubscriptionsIcons);
-  cols.clear();
-  cols << 1 << 2 << 3 << 4 << 5 << 12;
-  _htmlAlertSubscriptionsView->setColumnIndexes(cols);
+  _htmlAlertSubscriptionsView->setColumnIndexes({1,2,3,4,5,12});
   _wuiHandler->addView(_htmlAlertSubscriptionsView);
   _htmlAlertSettingsView = new HtmlTableView(this, "alertsettings");
   _htmlAlertSettingsView->setModel(_alertSettingsModel);
   ((HtmlItemDelegate*)_htmlAlertSettingsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;");
-  cols.clear();
-  cols << 1 << 2;
-  _htmlAlertSettingsView->setColumnIndexes(cols);
+  _htmlAlertSettingsView->setColumnIndexes({1,2});
   _wuiHandler->addView(_htmlAlertSettingsView);
   _htmlGridboardsView = new HtmlTableView(this, "gridboards");
   _htmlGridboardsView->setModel(_sortedGridboardsModel);
@@ -316,9 +300,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
                               "<a href=\"gridboards/%1\">", 0)
       ->setSuffixForColumn(1, "</a>");
-  cols.clear();
-  cols << 1 << 2 << 3;
-  _htmlGridboardsView->setColumnIndexes(cols);
+  _htmlGridboardsView->setColumnIndexes({1,2,3});
   _wuiHandler->addView(_htmlGridboardsView);
   _htmlWarningLogView = new HtmlTableView(this, "warninglog");
   _htmlWarningLogView->setModel(_warningLogModel);
@@ -365,9 +347,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   taskInstancesTrClasses.insert("running", "info");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no running or queued task)");
-  cols.clear();
-  cols << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8;
-  _htmlUnfinishedTaskInstancesView->setColumnIndexes(cols);
+  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,7,8});
   _htmlUnfinishedTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
                           _htmlUnfinishedTaskInstancesView));
@@ -377,18 +357,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task)");
-  cols.clear();
-  cols << 0 << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8;
-  _htmlTaskInstancesView->setColumnIndexes(cols);
+  _htmlTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,7,8});
   _htmlTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(_htmlTaskInstancesView));
   _wuiHandler->addView(_htmlTaskInstancesView);
   _htmlTasksScheduleView = new HtmlTableView(this, "tasksschedule");
   _htmlTasksScheduleView->setModel(_mainTasksModel);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 11 << 2 << 5 << 6 << 19 << 10 << 17 << 18;
-  _htmlTasksScheduleView->setColumnIndexes(cols);
+  _htmlTasksScheduleView->setColumnIndexes({11,2,5,6,19,10,17,18});
   _htmlTasksScheduleView->enableRowAnchor(11);
   _htmlTasksScheduleView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksScheduleView));
@@ -396,9 +372,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksConfigView = new HtmlTableView(this, "tasksconfig");
   _htmlTasksConfigView->setModel(_tasksModel);
   _htmlTasksConfigView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 1 << 0 << 3 << 5 << 4 << 28 << 8 << 12 << 18;
-  _htmlTasksConfigView->setColumnIndexes(cols);
+  _htmlTasksConfigView->setColumnIndexes({1,0,3,5,4,28,8,12,18});
   _htmlTasksConfigView->enableRowAnchor(11);
   _htmlTasksConfigView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksConfigView));
@@ -406,9 +380,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksParamsView = new HtmlTableView(this, "tasksparams");
   _htmlTasksParamsView->setModel(_tasksModel);
   _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 1 << 0 << 7 << 25 << 21 << 22 << 18;
-  _htmlTasksParamsView->setColumnIndexes(cols);
+  _htmlTasksParamsView->setColumnIndexes({1,0,7,25,21,22,18});
   _htmlTasksParamsView->enableRowAnchor(11);
   _htmlTasksParamsView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksParamsView));
@@ -422,9 +394,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksEventsView = new HtmlTableView(this, "tasksevents");
   _htmlTasksEventsView->setModel(_mainTasksModel);
   _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
-  cols.clear();
-  cols << 11 << 6 << 14 << 15 << 16 << 18;
-  _htmlTasksEventsView->setColumnIndexes(cols);
+  _htmlTasksEventsView->setColumnIndexes({11,6,14,15,16,18});
   _htmlTasksEventsView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksEventsView));
   _wuiHandler->addView(_htmlTasksEventsView);
@@ -445,27 +415,21 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
                         _lastPostedNoticesModel->maxrows(), 20);
   _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
   _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
-  cols.clear();
-  cols << 0 << 1;
-  _htmlLastPostedNoticesView20->setColumnIndexes(cols);
+  _htmlLastPostedNoticesView20->setColumnIndexes({0,1});
   ((HtmlItemDelegate*)_htmlLastPostedNoticesView20->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i>&nbsp;");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
   _htmlTaskGroupsView = new HtmlTableView(this, "taskgroups");
   _htmlTaskGroupsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
-  cols.clear();
-  cols << 0 << 2 << 7 << 20 << 21;
-  _htmlTaskGroupsView->setColumnIndexes(cols);
+  _htmlTaskGroupsView->setColumnIndexes({0,2,7,20,21});
   ((HtmlItemDelegate*)_htmlTaskGroupsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsView);
   _htmlTaskGroupsEventsView = new HtmlTableView(this, "taskgroupsevents");
   _htmlTaskGroupsEventsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
-  cols.clear();
-  cols << 0 << 14 << 15 << 16;
-  _htmlTaskGroupsEventsView->setColumnIndexes(cols);
+  _htmlTaskGroupsEventsView->setColumnIndexes({0,14,15,16});
   ((HtmlItemDelegate*)_htmlTaskGroupsEventsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;")
       ->setPrefixForColumnHeader(14, "<i class=\"icon-play\"></i>&nbsp;")
@@ -479,18 +443,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksResourcesView = new HtmlTableView(this, "tasksresources");
   _htmlTasksResourcesView->setModel(_tasksModel);
   _htmlTasksResourcesView->setEmptyPlaceholder("(no task)");
-  cols.clear();
-  cols << 11 << 17 << 8;
-  _htmlTasksResourcesView->setColumnIndexes(cols);
+  _htmlTasksResourcesView->setColumnIndexes({11,17,8});
   _htmlTasksResourcesView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksResourcesView));
   _wuiHandler->addView(_htmlTasksResourcesView);
   _htmlTasksAlertsView = new HtmlTableView(this, "tasksalerts");
   _htmlTasksAlertsView->setModel(_tasksModel);
   _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
-  cols.clear();
-  cols << 11 << 6 << 23 << 26 << 24 << 27 << 12 << 16 << 18;
-  _htmlTasksAlertsView->setColumnIndexes(cols);
+  _htmlTasksAlertsView->setColumnIndexes({11,6,23,26,24,27,12,16,18});
   _htmlTasksAlertsView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksAlertsView));
   _wuiHandler->addView(_htmlTasksAlertsView);
@@ -502,13 +462,11 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   ((HtmlItemDelegate*)_htmlLogFilesView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-file-text\"></i>&nbsp;")
       ->setPrefixForColumn(3, "%1", 3, bufferLogFileIcons);
-  _htmlLogFilesView->setColumnIndexes(QList<int>{ 1, 2, 3 });
+  _htmlLogFilesView->setColumnIndexes({1,2,3});
   _wuiHandler->addView(_htmlLogFilesView);
   _htmlCalendarsView = new HtmlTableView(this, "calendars");
   _htmlCalendarsView->setModel(_sortedCalendarsModel);
-  cols.clear();
-  cols << 1 << 2;
-  _htmlCalendarsView->setColumnIndexes(cols);
+  _htmlCalendarsView->setColumnIndexes({1,2});
   _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
   ((HtmlItemDelegate*)_htmlCalendarsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-calendar\"></i>&nbsp;");
@@ -516,9 +474,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlStepsView = new HtmlTableView(this, "steps");
   _htmlStepsView->setModel(_sortedStepsModel);
   _htmlStepsView->setEmptyPlaceholder("(no workflow step)");
-  cols.clear();
-  cols << 1 << 2 << 3 << 4 << 5 << 6 << 7 << 8 << 9;
-  _htmlStepsView->setColumnIndexes(cols);
+  _htmlStepsView->setColumnIndexes({1,2,3,4,5,6,7,8,9});
   _htmlStepsView->enableRowAnchor(0);
   _htmlStepsView->setItemDelegate(new HtmlStepItemDelegate(_htmlStepsView));
   _wuiHandler->addView(_htmlStepsView);
@@ -532,9 +488,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlConfigHistoryView = new HtmlTableView(this, "confighistory");
   _htmlConfigHistoryView->setModel(_configHistoryModel);
   _htmlConfigHistoryView->setEmptyPlaceholder("(empty history)");
-  cols.clear();
-  cols << 1 << 2 << 3 << 4;
-  _htmlConfigHistoryView->setColumnIndexes(cols);
+  _htmlConfigHistoryView->setColumnIndexes({1,2,3,4});
   _htmlConfigHistoryDelegate =
       new HtmlSchedulerConfigItemDelegate(3, -1, 4, _htmlConfigsView);
   _htmlConfigHistoryView->setItemDelegate(_htmlConfigHistoryDelegate);
