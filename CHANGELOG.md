@@ -2,12 +2,15 @@
 * Minor improvements and bug fixes
  - wui: don't elide command on task detail page
  - api: disabling pagination on every csv endpoint
- - wui/api: migrating some endpoints from textview to on-the-fly formatting
-     /rest/v1/tasks/list.csv by the way this removes the 25-tasks limit
- - portability: backward compatibility down to Qt 5.3 again (Debian 8)
  - doc: misc fixes
 * Behind-the-curtain improvements
+ - portability: backward compatibility down to Qt 5.3 again (Debian 8)
  - more consistant build procedures across platforms
+ - wui/api: migrating several endpoints from textview to on-the-fly formatting
+     /rest/v1/{tasks,taskgroups,steps}/list.csv
+     /rest/v1/alerts_{subscriptions,settings}/list.csv
+     /rest/v1/{gridboards,calendars}/list.csv
+     /rest/v1/logs/logfiles.csv
 
 # From 1.9.7 to 1.9.8 (2017-01-18)
 * Minor improvements and bug fixes

@@ -32,7 +32,6 @@
 #include "auth/inmemoryrulesauthorizer.h"
 #include "auth/usersdatabase.h"
 #include "httpd/graphvizimagehttphandler.h"
-#include "ui/logfilesmodel.h"
 #include <QSortFilterProxyModel>
 #include "htmlstepitemdelegate.h"
 #include "configuploadhandler.h"
@@ -71,7 +70,7 @@ class WebConsole : public HttpHandler {
   LastOccuredTextEventsModel *_lastPostedNoticesModel; // TODO change to SUILogModel
   SharedUiItemsLogModel *_lastEmittedAlertsModel;
   SharedUiItemsTableModel *_alertSubscriptionsModel, *_alertSettingsModel,
-  *_gridboardsModel;
+  *_gridboardsModel, *_logConfigurationModel;
   QSortFilterProxyModel *_sortedGridboardsModel;
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
@@ -80,7 +79,6 @@ class WebConsole : public HttpHandler {
   TaskGroupsModel *_taskGroupsModel;
   QSortFilterProxyModel *_sortedTaskGroupsModel;
   TextMatrixModel *_alertChannelsModel;
-  LogFilesModel *_logConfigurationModel;
   SharedUiItemsTableModel *_calendarsModel;
   QSortFilterProxyModel *_sortedCalendarsModel;
   SharedUiItemsTableModel *_stepsModel;
@@ -111,10 +109,9 @@ class WebConsole : public HttpHandler {
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvStatefulAlertsView, *_csvLastEmittedAlertsView,
-  *_csvAlertSubscriptionsView, *_csvAlertSettingsView, *_csvGridboardsView,
+  *_csvGridboardsView,
   *_csvLogView, *_csvTaskInstancesView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
-  *_csvTaskGroupsView, *_csvLogFilesView, *_csvCalendarsView, *_csvStepsView,
   *_csvConfigsView, *_csvConfigHistoryView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
   TemplatingHttpHandler *_wuiHandler;
@@ -162,9 +159,6 @@ public:
   CsvTableView *csvStatefulAlertsView() const { return _csvStatefulAlertsView; }
   CsvTableView *csvLastEmittedAlertsView() const {
     return _csvLastEmittedAlertsView; }
-  CsvTableView *csvAlertSubscriptionsView() const {
-    return _csvAlertSubscriptionsView; }
-  CsvTableView *csvAlertSettingsView() const { return _csvAlertSettingsView; }
   CsvTableView *csvGridboardsView() const { return _csvGridboardsView; }
   CsvTableView *csvLogView() const { return _csvLogView; }
   CsvTableView *csvTaskInstancesView() const { return _csvTaskInstancesView; }
@@ -172,10 +166,6 @@ public:
     return _csvSchedulerEventsView; }
   CsvTableView *csvLastPostedNoticesView() const {
     return _csvLastPostedNoticesView; }
-  CsvTableView *csvTaskGroupsView() const { return _csvTaskGroupsView; }
-  CsvTableView *csvLogFilesView() const { return _csvLogFilesView; }
-  CsvTableView *csvCalendarsView() const { return _csvCalendarsView; }
-  CsvTableView *csvStepsView() const { return _csvStepsView; }
   CsvTableView *csvConfigsView() const { return _csvConfigsView; }
   CsvTableView *csvConfigHistoryView() const { return _csvConfigHistoryView; }
   HtmlTableView *htmlHostsListView() const { return _htmlHostsListView; }

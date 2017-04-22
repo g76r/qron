@@ -149,7 +149,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedTaskGroupsModel->sort(0);
   _sortedTaskGroupsModel->setSourceModel(_taskGroupsModel);
   _alertChannelsModel = new TextMatrixModel(this);
-  _logConfigurationModel = new LogFilesModel(this);
+  _logConfigurationModel = new SharedUiItemsTableModel(
+        LogFile({ "log", { { "file", "/tmp/foobar" } } }), this);
   _calendarsModel = new SharedUiItemsTableModel(this);
   _calendarsModel->setHeaderDataFromTemplate(Calendar(PfNode("calendar")));
   _calendarsModel->setItemQualifierFilter("calendar");
@@ -499,8 +500,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   QHash<QString,QString> bufferLogFileIcons;
   bufferLogFileIcons.insert("true", "<i class=\"icon-download\"></i>&nbsp;");
   ((HtmlItemDelegate*)_htmlLogFilesView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-file-text\"></i>&nbsp;")
-      ->setPrefixForColumn(2, "%1", 2, bufferLogFileIcons);
+      ->setPrefixForColumn(1, "<i class=\"icon-file-text\"></i>&nbsp;")
+      ->setPrefixForColumn(3, "%1", 3, bufferLogFileIcons);
+  _htmlLogFilesView->setColumnIndexes(QList<int>{ 1, 2, 3 });
   _wuiHandler->addView(_htmlLogFilesView);
   _htmlCalendarsView = new HtmlTableView(this, "calendars");
   _htmlCalendarsView->setModel(_sortedCalendarsModel);
@@ -563,10 +565,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvLastEmittedAlertsView =
       new CsvTableView(this, QString(), _lastEmittedAlertsModel->maxrows());
   _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
-  _csvAlertSubscriptionsView = new CsvTableView(this);
-  _csvAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
-  _csvAlertSettingsView = new CsvTableView(this);
-  _csvAlertSettingsView->setModel(_alertSettingsModel);
   _csvGridboardsView = new CsvTableView(this);
   _csvGridboardsView->setModel(_sortedGridboardsModel);
   _csvLogView =
@@ -580,14 +578,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvLastPostedNoticesView =
       new CsvTableView(this, QString(), _lastPostedNoticesModel->maxrows());
   _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
-  _csvTaskGroupsView = new CsvTableView(this);
-  _csvTaskGroupsView->setModel(_sortedTaskGroupsModel);
-  _csvLogFilesView = new CsvTableView(this);
-  _csvLogFilesView->setModel(_logConfigurationModel);
-  _csvCalendarsView = new CsvTableView(this);
-  _csvCalendarsView->setModel(_sortedCalendarsModel);
-  _csvStepsView = new CsvTableView(this);
-  _csvStepsView->setModel(_sortedStepsModel);
   _csvConfigsView = new CsvTableView(this);
   _csvConfigsView->setModel(_configsModel);
   _csvConfigHistoryView = new CsvTableView(this);
@@ -757,9 +747,10 @@ inline bool writeHtmlView(HtmlTableView *view, HttpRequest req,
 
 inline bool writeCsvView(CsvTableView *view, HttpRequest req,
                          HttpResponse res) {
+  // LATER write on the fly past a certain size
   QByteArray data = view->text().toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
-  res.setHeader("Content-Disposition", "attachment"); // TODO filename=table.csv");
+  res.setHeader("Content-Disposition", "attachment"); // LATER filename=table.csv");
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
@@ -768,9 +759,10 @@ inline bool writeCsvView(CsvTableView *view, HttpRequest req,
 
 inline bool writeItemsAsCsv(
     SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+  // LATER write on the fly past a certain size
   QByteArray data = _csvFormatter.formatTable(list).toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
-  res.setHeader("Content-Disposition", "attachment"); // TODO filename=table.csv");
+  res.setHeader("Content-Disposition", "attachment"); // LATER filename=table.csv");
   res.setContentLength(data.size());
   if (req.method() != HttpRequest::HEAD)
     res.output()->write(data);
@@ -1810,10 +1802,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      // LATER handle fields comma enumeration for real
-      QString fields = req.param(QStringLiteral("fields")).trimmed();
-      // LATER return writeCsvView(webconsole->csvTaskGroupsEventsView(), req, res);
-      return writeCsvView(webconsole->csvTaskGroupsView(), req, res);
+      return sortAndWriteItemsAsCsv(
+            webconsole->scheduler()->config().tasksGroups().values(), req, res);
 } },
 { "/rest/v1/taskgroups/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -1831,8 +1821,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger*, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      // LATER handle fields comma enumeration
-      //QString fields = req.param(QStringLiteral("fields")).trimmed();
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->config().tasks().values(), req, res);
 } },
@@ -1852,7 +1840,12 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvStepsView(), req, res);
+      SchedulerConfig config = webconsole->scheduler()->config();
+      QList<Step> steps;
+      for (const Task &task: config.tasks())
+        for (const Step &step : task.steps())
+          steps.append(step);
+      return sortAndWriteItemsAsCsv(steps, req, res);
 } },
 { "/rest/v1/steps/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2022,7 +2015,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvAlertSubscriptionsView(), req, res);
+      return writeItemsAsCsv(webconsole->scheduler()->config().alerterConfig()
+                             .alertSubscriptions(), req, res);
 } },
 { "/rest/v1/alerts_subscriptions/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2036,7 +2030,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvAlertSettingsView(), req, res);
+      return writeItemsAsCsv(webconsole->scheduler()->config().alerterConfig()
+                             .alertSettings(), req, res);
 } },
 { "/rest/v1/alerts_settings/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2050,7 +2045,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvGridboardsView(), req, res);
+      return sortAndWriteItemsAsCsv(
+            webconsole->scheduler()->config().alerterConfig().gridboards(),
+            req, res);
 } },
 { "/rest/v1/gridboards/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2139,7 +2136,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvLogFilesView(), req, res);
+      return writeItemsAsCsv(
+            webconsole->scheduler()->config().logfiles(), req, res);
 } },
 { "/rest/v1/logs/logfiles.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2153,7 +2151,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvCalendarsView(), req, res);
+      return sortAndWriteItemsAsCsv(
+            webconsole->scheduler()->config().namedCalendars().values(),
+            req, res);
 } },
 { "/rest/v1/calendars/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2399,12 +2399,12 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     _stepsModel->setDocumentManager(scheduler);
     connect(_scheduler, &Scheduler::globalEventSubscriptionsChanged,
             _schedulerEventsModel, &SchedulerEventsModel::globalEventSubscriptionsChanged);
-    connect(_scheduler, SIGNAL(noticePosted(QString,ParamSet)),
-            _lastPostedNoticesModel, SLOT(eventOccured(QString)));
+    connect(_scheduler, &Scheduler::noticePosted,
+            _lastPostedNoticesModel, static_cast<void (LastOccuredTextEventsModel::*)(QString)>(&LastOccuredTextEventsModel::eventOccured));
     connect(_scheduler, &Scheduler::accessControlConfigurationChanged,
             this, &WebConsole::enableAccessControl);
     connect(_scheduler, &Scheduler::logConfigurationChanged,
-            _logConfigurationModel, &LogFilesModel::logConfigurationChanged);
+            _logConfigurationModel, static_cast<void (SharedUiItemsTableModel::*)(QList<SharedUiItem>)>(&SharedUiItemsTableModel::setItems));
   }
 }
 
