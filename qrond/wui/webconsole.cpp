@@ -561,7 +561,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvStatefulAlertsView = new CsvTableView(this);
   _csvStatefulAlertsView->setModel(_sortedStatefulAlertsModel);
   _csvLastEmittedAlertsView =
-      new CsvTableView(this, _lastEmittedAlertsModel->maxrows());
+      new CsvTableView(this, QString(), _lastEmittedAlertsModel->maxrows());
   _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
   _csvAlertSubscriptionsView = new CsvTableView(this);
   _csvAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
@@ -569,15 +569,16 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvAlertSettingsView->setModel(_alertSettingsModel);
   _csvGridboardsView = new CsvTableView(this);
   _csvGridboardsView->setModel(_sortedGridboardsModel);
-  _csvLogView = new CsvTableView(this, _htmlInfoLogView->cachedRows());
+  _csvLogView =
+      new CsvTableView(this, QString(), _htmlInfoLogView->cachedRows());
   _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =
-        new CsvTableView(this, _taskInstancesHistoryModel->maxrows());
+      new CsvTableView(this, QString(), _taskInstancesHistoryModel->maxrows());
   _csvTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _csvSchedulerEventsView = new CsvTableView(this);
   _csvSchedulerEventsView->setModel(_schedulerEventsModel);
   _csvLastPostedNoticesView =
-      new CsvTableView(this, _lastPostedNoticesModel->maxrows());
+      new CsvTableView(this, QString(), _lastPostedNoticesModel->maxrows());
   _csvLastPostedNoticesView->setModel(_lastPostedNoticesModel);
   _csvTaskGroupsView = new CsvTableView(this);
   _csvTaskGroupsView->setModel(_sortedTaskGroupsModel);
