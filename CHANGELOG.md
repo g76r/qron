@@ -1,4 +1,4 @@
-# From 1.9.8 to 1.9.9 (2017-04-22)
+# From 1.9.8 to 1.9.9 (2017-04-24)
 * Minor improvements and bug fixes
  - wui: don't elide command on task detail page
  - api: disabling pagination on every csv endpoint
