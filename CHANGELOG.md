@@ -11,6 +11,7 @@
      /rest/v1/alerts_{subscriptions,settings}/list.csv
      /rest/v1/{gridboards,calendars}/list.csv
      /rest/v1/logs/logfiles.csv
+ - library libqtssu has been renamed to libp6core
 
 # From 1.9.7 to 1.9.8 (2017-01-18)
 * Minor improvements and bug fixes
