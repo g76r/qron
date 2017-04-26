@@ -32,7 +32,7 @@ sudo apt-get install g++ qt5-default qt5-qmake graphviz
 ```
 
 In addition, the git repository uses git submodules to handle libqtpf and
-libqtssu dependencies, therefore you should use following steps to clone
+libp6core dependencies, therefore you should use following steps to clone
 repository and submodules repositories:
 
 ``` bash
