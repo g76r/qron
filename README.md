@@ -28,7 +28,7 @@ This program requires at build time:
 For instance, on Debian-based Linux distribution, these command should be
 enough to install all compilation prerequisites:
 ``` bash
-sudo apt-get install g++ qt5-default qt5-qmake graphviz
+sudo apt-get install git g++ qt5-default qt5-qmake make graphviz
 ```
 
 In addition, the git repository uses git submodules to handle libqtpf and
@@ -36,7 +36,7 @@ libp6core dependencies, therefore you should use following steps to clone
 repository and submodules repositories:
 
 ``` bash
-git clone git://github.com/g76r/qron.git
+git clone https://gitlab.com/g76r/qron.git
 cd qron
 git submodule init
 git submodule update
