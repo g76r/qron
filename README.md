@@ -26,9 +26,10 @@ This program requires at build time:
 * graphviz binaries (to compile some documentation diagrams)
 
 For instance, on Debian-based Linux distribution, these command should be
-enough to install all compilation prerequisites:
+enough to install all compilation prerequisites (at less they are enough
+on Debian Sid in our continuous integration env):
 ``` bash
-sudo apt-get install git g++ qt5-default qt5-qmake make graphviz
+sudo apt-get install git build-essential g++ qt5-default qt5-qmake make graphviz
 ```
 
 In addition, the git repository uses git submodules to handle libqtpf and
