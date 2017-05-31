@@ -1178,6 +1178,7 @@ subscribed at scheduler level, they will be applicable to every task
 <li><tt>requesturl</tt>: request a network action by url, currently only UDP
 and HTTP are supported
 <li><tt>log</tt>: add an entry to <a href="#logs">centralized log</a>
+<li><tt>writefile</tt>: write data to a custom file</a>
 <li><tt>step</tt>: activate another step, only available within a
 <a href="#workflows-and-subtasks">workflow task</a>
 <li><tt>end</tt>: ends the workflow, only available within a workflow task
@@ -1185,13 +1186,66 @@ and HTTP are supported
 
 <p>Sample configuration file fragments:
 <pre>
-TODO
+(config
+  # emit an alert to warn of a configuration (re)load
+  (onconfigload (emitalert config.reload))
+  # send UDP packets to statsd server on every task success or failure,
+  # see https://github.com/etsy/statsd
+  (onsuccess
+    (requesturl "task.%!taskid.ok:1|c" (address udp://127.0.0.1:8125))
+    (requesturl (address udp://127.0.0.1:8125) "task.%!taskid.time:%!totalms|ms")
+  )
+  (onfailure
+    (requesturl(address udp://127.0.0.1:8125) "task.%!taskid.ko:1|c")
+  )
+  # record misc execution data in /var/log/qrond_tasks_statistics_yyyyMMdd.log
+  (onfinish
+    (writefile "%=date task.%!taskid "%!status %!returncode %!queueds %!runnings %!totals\n
+       (path /var/log/qrond_tasks_statistics_%{=date!yyyyMMdd}.log))
+  )
+)
 </pre>
 <pre>
-TODO
+(config
+  (task process1 (taskgroup group1)
+    # raise and cancel an alert shared with both process1 and process2
+    (onfailure (raisealert app1.process_failed))
+    (onsucess (cancelalert app1.process_failed))
+    (command /bin/process1)(mean local)
+  )
+  (task process2 (taskgroup group1)
+    (onfailure (raisealert app1.process_failed))
+    (onsucess (cancelalert app1.process_failed))
+    # write "success" or "failure" in /opt/flags/process2_status
+    (onfinish (writefile "%!status\n" (path /opt/flags/process2_status)
+                 (truncate true)(append false)))
+    (command /bin/process2)(mean local)
+  )
+)
 </pre>
 <pre>
-TODO
+# this example is a kind of small workflow where 'afterreload' is triggered
+# by config reload (which could trigger one 'afterreload' per application if
+# needed) and then 'afterreload_failed' is triggered only if 'afterreload'
+# failed (hence its name)
+(config
+  # posting a notice make it possible to bind it to several task triggers
+  # without specifying the links explicitely
+  (onconfigload (postnotice config_load))
+  (task afterreload (taskgroup group1)
+     (trigger (notice config_load))
+     (command /bin/whatever_script)(mean local)
+     (onfailure (requesttask afterreload_failed))
+  )
+  (task afterreload_failed (taskgroup group1)
+     # there is no need for a trigger, since (requesttask) will request task
+     # execution instead
+     (command /bin/another_script)(mean local)
+  )
+)
+</pre>
+<pre>
+TODO workflow exemple with (step) and (end) actions
 </pre>
 
 <h3>Notices</h3>
