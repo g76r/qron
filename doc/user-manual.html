@@ -1171,16 +1171,74 @@ subscribed at scheduler level, they will be applicable to every task
 <p>Here are the actions that can be performed when an <tt>event</tt> occurs:
 <ul>
 <li><tt>postnotice</tt>: post a <a href="#notices">notice</a>
-<li><tt>raisealert</tt>: raise a <a href="#raisable-alerts">raisable alert</a>
+<ul>
+  <li>takes notice name as its main parameter
+  <li>allow <tt>param</tt> to set notice parameters
+  <li>e.g. <tt>(postnotice file_has_arrived (param path /tmp/foobar)
+                  (param urgent_file true))</tt>
+</ul>
+<li><tt>raisealert</tt>: raise a <a href="#stateful-alerts">stateful alert</a>
+<ul>
+  <li>takes alert name as its main parameter
+  <li>e.g. <tt>(raisealert app.alert.too_many_waiting_customers)</tt>
+</ul>
 <li><tt>cancelalert</tt>: cancel a raisable alert
-<li><tt>emitalert</tt>: emit an <a href="#emitted-alerts">emitted alert</a>
+<ul>
+  <li>takes alert name as its main parameter
+  <li>e.g. <tt>(cancelalert app.alert.too_many_waiting_customers)</tt>
+</ul>
+<li><tt>emitalert</tt>: emit an <a href="#one-shot-alerts">one shot alert</a>
+<ul>
+  <li>takes alert name as its main parameter
+  <li>e.g. <tt>(emitalert app.alert.a_box_has_been_broken)</tt>
+</ul>
 <li><tt>requesttask</tt>: request task execution
+<ul>
+  <li>takes task id as its main parameter, if such task is not found, the id is
+    prefixed with current context's taskgroup, which makes shorter ids when
+    requesting a task from another one within the same group
+  <li>allow <tt>param</tt> to override task parameters
+  <li>e.g. <tt>(requesttask import_customers_file (param path /tmp/foobar))</tt>
+</ul>
 <li><tt>requesturl</tt>: request a network action by url, currently only UDP
 and HTTP are supported
+<ul>
+  <li>takes payload as its main parameter
+  <li>needs an <tt>address</tt> param containing an url
+  <li>http supports following optionnal params: <tt>method</tt> (default: GET),
+      <tt>user</tt> and <tt>password</tt>, <tt>port</tt> (default: 80),
+      <tt>content-type</tt>, <tt>follow-redirect</tt> (default: false),
+      <tt>redirect-max</tt>.
+  <li>udp supports following optionnal params: <tt>connecttimeout</tt>
+      (in seconds, default: 2), <tt>disconnecttimeout</tt> (default: 0.2)
+  <li>e.g. <tt>(requesturl(address udp://127.0.0.1:8125)
+                "task.%!taskid.ok:1|c")</tt>
+  <li>e.g. <tt>(requesturl(address http://monitoring-server/alert)
+     (method POST) "%!taskid failed")</tt>
+</ul>
 <li><tt>log</tt>: add an entry to <a href="#logs">centralized log</a>
+<ul>
+  <li>takes log message as its main parameter
+  <li>supports <tt>severity</tt> optionnal param, defaults to <tt>info</tt>
+  <li>e.g. <tt>(log this is a debug message(severity debug))</tt>
+</ul>
 <li><tt>writefile</tt>: write data to a custom file</a>
+<ul>
+  <li>takes data to write as its main parameter
+  <li>needs a <tt>path</tt> param containing the file path
+  <li>supports following optionnal params: <tt>append</tt> (default: true),
+     <tt>truncate</tt> (default: false), <tt>unique</tt> (to create a unique
+     file name using a suffix or replacing XXXXXX pattern, default: false)
+  <li>e.g. <tt>(writefile(path /var/log/custom.log) "my message\n")</tt>
+  <li>e.g. <tt>(writefile(path /opt/file_transfer/in/file_XXXXXX.data)
+                (unique true) "my message\n")</tt>
+</ul>
 <li><tt>step</tt>: activate another step, only available within a
 <a href="#workflows-and-subtasks">workflow task</a>
+<ul>
+  <li>takes next step id as its main parameter
+  <li>e.g. <tt>(step 2)</tt>
+</ul>
 <li><tt>end</tt>: ends the workflow, only available within a workflow task
 </ul>
 
