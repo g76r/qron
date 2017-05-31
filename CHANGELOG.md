@@ -1,3 +1,11 @@
+# Since 1.9.9
+* Minor improvements and bug fixes
+ - action: added 'writefile' action and fixed 'requesturl' action's params
+    e.g.
+      ```(writefile(path /tmp/custom_file.txt)"%!taskid finished\n")```
+      ```(writefile(path /tmp/custom_file_XXXXXX.txt)(append false)(truncate true)(unique true)"%!taskid\n")```
+      ```(requesturl (address http://localhost/test2)(user bar)(password password)(method post))```
+
 # From 1.9.8 to 1.9.9 (2017-04-24)
 * Minor improvements and bug fixes
  - wui: don't elide command on task detail page
