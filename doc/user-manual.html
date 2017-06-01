@@ -1308,21 +1308,24 @@ TODO workflow exemple with (step) and (end) actions
 
 <h3>Notices</h3>
 
-<p>A notice is a named event that occure when posted by a <tt>postnotice</tt>
+<p>A notice is a named event that occur when posted by a <tt>postnotice</tt>
 <a href="#actions">action</a> or a <tt>/notices/post</tt>
-<a href="#http-api">API call</a>, and to which a
-<a href="#tasks-triggers-and-constraints">notice trigger</a> subscribes.
-The only link between the post event and the trigger is the notice name.
+<a href="#http-api">API call</a>.
+<a href="#tasks-triggers-and-constraints">Notice triggers</a> subscribe to
+them to execute tasks.
+The only link between the post event and the task trigger is the notice name.
 
-<p>This provides a way to provide loose coupling between a detected event
+<p>This mechanism provides loose coupling between a detected event
 and the tasks it triggers, the event or external process which posts the
 notice knowing nothing about the tasks triggered.
 For instance an external file transfer software can notify the scheduler
 of a file being ready with a logical name (the notice name) which will be
 linked to a given task in the scheduler configuration, not elsewhere.
 
-<p>A notice can carry params, which are used as task overriding params when
+<p>A notice can carry parameters, which are used as task overriding params when
 processed by a notice trigger.
+Using them the post events can provide some contextual information to the
+triggered tasks, such as a path to a file, a customer orders batch id, etc.
 
 <h2>Resources</h2>
 
