@@ -1322,8 +1322,8 @@ For instance an external file transfer software can notify the scheduler
 of a file being ready with a logical name (the notice name) which will be
 linked to a given task in the scheduler configuration, not elsewhere.
 
-<p>A notice can carry parameters, which are used as task overriding params when
-processed by a notice trigger.
+<p>A notice can carry parameters, which are used as evaluation context when
+evaluating notice trigger overriding params.
 Using them the post events can provide some contextual information to the
 triggered tasks, such as a path to a file, a customer orders batch id, etc.
 
