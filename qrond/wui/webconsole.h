@@ -43,7 +43,7 @@
 #include <QRegularExpression>
 #include "modelview/shareduiitemslogmodel.h"
 #include <QSortFilterProxyModel>
-#include "net/readonlyresourcescache.h"
+#include "io/readonlyresourcescache.h"
 
 class QThread;
 
