@@ -1,5 +1,7 @@
 # Since 1.9.9
 * Minor improvements and bug fixes
+ - alerts: SMTP network timeout is no longer 2" but 5" by default, and can be
+    set using new alert param ```param mail.smtp.timeout```
  - action: added 'writefile' action and fixed 'requesturl' action's params
     e.g.
       ```(writefile(path /tmp/custom_file.txt)"%!taskid finished\n")```
