@@ -31,7 +31,7 @@ Q_GLOBAL_STATIC(Qrond, qrondInstance)
 Qrond::Qrond(QObject *parent) : QObject(parent),
   _webconsoleAddress(QHostAddress::Any), _webconsolePort(8086),
   _scheduler(new Scheduler),
-  _httpd(new HttpServer(8, 32)), // LATER should be configurable
+  _httpd(new HttpServer(32, 128)), // LATER should be configurable
   _httpAuthRealm("qron"),
   _authorizer(new InMemoryRulesAuthorizer(this)),
   _configRepository(new LocalConfigRepository(this, _scheduler)),

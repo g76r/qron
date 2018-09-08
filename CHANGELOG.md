@@ -9,6 +9,7 @@
       ```(requesturl (address http://localhost/test2)(user bar)(password password)(method post))```
  - notices: minor fixes in !notice pseudo param handling and doc
  - httpd: normalizing header names: foo-bar: -> Foo-Bar:
+ - httpd: 32 workers instead of 8
  - doc: added parts to user manual
 
 # From 1.9.8 to 1.9.9 (2017-04-24)
