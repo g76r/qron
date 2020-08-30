@@ -1,4 +1,4 @@
-# Copyright 2012-2017 Hallowyn and others.
+# Copyright 2012-2018 Hallowyn and others.
 # This file is part of qron, see <http://qron.eu/>.
 # Qron is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -36,13 +36,14 @@ contains(QT_VERSION, ^4\\..*) {
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
-QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual
+QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual -Wno-padded -Wno-old-style-cast
 #QMAKE_CXXFLAGS += -fno-elide-constructors
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
 OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj
 RCC_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/rcc
 MOC_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/moc
+DESTDIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE
 
 # dependency libs
 INCLUDEPATH += ../libqtpf ../libp6core ../libqron
@@ -53,7 +54,7 @@ LIBS += \
 LIBS += -lqtpf -lp6core -lqron
 
 unix {
-  ancillary_make.commands = @make -f ancillary.mf all
+  ancillary_make.commands = cd $$PWD && make -f ancillary.mf all
   rcc.depends = ancillary_make
   QMAKE_EXTRA_TARGETS += ancillary_make
 }
@@ -82,4 +83,3 @@ HEADERS += \
 
 RESOURCES += \
     wui/webconsole.qrc
-

@@ -6,10 +6,14 @@ case $(uname) in
 Linux)
   TARGET_OS=linux
 ;;
+Darwin)
+  TARGET_OS=macx
+;;
 esac
 
 export LD_LIBRARY_PATH="../build-qtpf-$TARGET_OS/$BUILD_TYPE:../build-qron-$TARGET_OS/$BUILD_TYPE:../build-p6core-$TARGET_OS/$BUILD_TYPE:$LD_LIBRARY_PATH"
+export DYLD_LIBRARY_PATH="../build-qtpf-$TARGET_OS/$BUILD_TYPE:../build-qron-$TARGET_OS/$BUILD_TYPE:../build-p6core-$TARGET_OS/$BUILD_TYPE:$DYLD_LIBRARY_PATH"
 
 echo LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 
-exec ./qrond "$@"
+exec ../build-qrond-$TARGET_OS/$BUILD_TYPE/qrond "$@"
