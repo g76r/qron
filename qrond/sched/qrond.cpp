@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2020 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -201,7 +201,6 @@ static void signal_handler(int signal_number) {
 #endif
 
 int main(int argc, char *argv[]) {
-  qsrand(time(0));
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   Log::wrapQtLogToSamePattern();

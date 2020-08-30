@@ -733,7 +733,7 @@ inline bool writeItemsAsCsv(
 
 inline bool sortAndWriteItemsAsCsv(
     SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
-  qSort(list);
+  std::sort(list.begin(), list.end());
   return writeItemsAsCsv(list, req, res);
 }
 
@@ -763,7 +763,7 @@ inline bool writeItemsAsHtmlTable(
 
 inline bool sortAndWriteItemsAsHtmlTable(
     SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
-  qSort(list);
+  std::sort(list.begin(), list.end());
   return writeItemsAsHtmlTable(list, req, res);
 }
 
@@ -2073,12 +2073,13 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           if (config.isNull()) {
             res.setStatus(404);
             res.output()->write("no config found with this id\n");
-          } else
+          } else {
             res.setContentType("text/plain;charset=UTF-8");
             config.toPfNode() // LATER remove indentation
                 .writePf(res.output(), PfOptions().setShouldIndent()
                          .setShouldWriteContentBeforeSubnodes()
                          .setShouldIgnoreComment(false));
+          }
         } else {
           res.setStatus(500);
           res.output()->write("no config repository is set\n");

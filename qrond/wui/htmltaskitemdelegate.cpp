@@ -68,7 +68,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   }
   case 13:
   case 17:
-    if (index.model()->index(index.row(), 13, index.parent()).data() > 0)
+    if (index.model()->index(index.row(), 13, index.parent()).data().toInt() > 0)
       text.prepend("<i class=\"icon-play\"></i>&nbsp;");
     break;
   case 18: {
