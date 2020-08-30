@@ -671,8 +671,9 @@ class WebConsoleParamsProvider : public ParamsProvider {
 
 public:
   WebConsoleParamsProvider(WebConsole *console) : _console(console) { }
-  QVariant paramValue(const QString key, const QVariant defaultValue,
-                      QSet<QString>) const {
+  QVariant paramValue(const QString key, const ParamsProvider *context,
+                      const QVariant defaultValue, QSet<QString>) const {
+    Q_UNUSED(context)
     if (!_console || !_console->_scheduler) // should never happen
       return defaultValue;
     auto handler = _consoleParams.value(key);
