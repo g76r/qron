@@ -1,8 +1,10 @@
 == Qron's pre-compiled linux tar package including dependency libraries ==
 
 Instructions:
+Install dependencies: QtCore, QtNetwork, QtSql
 Start ./qrond in this directory, it's a shell scripts that will start actual
 qrond in bin directory using libraries available in lib directory.
 
 Example:
+$ sudo apt install libqt5core5a libqt5network5 libqt5sql5
 $ ./qrond --config-file qron.conf --http-port 8086
