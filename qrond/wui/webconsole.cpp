@@ -84,12 +84,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedClustersModel->sort(0);
   _sortedClustersModel->setSourceModel(_clustersModel);
   _freeResourcesModel = new HostsResourcesAvailabilityModel(this);
-  _freeResourcesModel->setShouldSortRows();
-  _freeResourcesModel->setShouldSortColumns();
+  _freeResourcesModel->enableRowsSort();
+  _freeResourcesModel->enableColumnsSort();
   _resourcesLwmModel = new HostsResourcesAvailabilityModel(
         this, HostsResourcesAvailabilityModel::LwmOverConfigured);
-  _resourcesLwmModel->setShouldSortRows();
-  _resourcesLwmModel->setShouldSortColumns();
+  _resourcesLwmModel->enableRowsSort();
+  _resourcesLwmModel->enableColumnsSort();
   _resourcesConsumptionModel = new ResourcesConsumptionModel(this);
   _globalParamsModel = new ParamSetModel(this);
   _globalSetenvModel = new ParamSetModel(this);
@@ -187,7 +187,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlClustersListView);
   _htmlFreeResourcesView = new HtmlTableView(this, "freeresources");
   _htmlFreeResourcesView->setModel(_freeResourcesModel);
-  _htmlFreeResourcesView->setRowHeaders();
+  _htmlFreeResourcesView->enableRowHeaders();
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
   ((HtmlItemDelegate*)_htmlFreeResourcesView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
@@ -197,7 +197,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlFreeResourcesView);
   _htmlResourcesLwmView = new HtmlTableView(this, "resourceslwm");
   _htmlResourcesLwmView->setModel(_resourcesLwmModel);
-  _htmlResourcesLwmView->setRowHeaders();
+  _htmlResourcesLwmView->enableRowHeaders();
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
   ((HtmlItemDelegate*)_htmlResourcesLwmView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
@@ -208,7 +208,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesConsumptionView =
       new HtmlTableView(this, "resourcesconsumption");
   _htmlResourcesConsumptionView->setModel(_resourcesConsumptionModel);
-  _htmlResourcesConsumptionView->setRowHeaders();
+  _htmlResourcesConsumptionView->enableRowHeaders();
   _htmlResourcesConsumptionView
       ->setEmptyPlaceholder("(no resource definition)");
   ((HtmlItemDelegate*)_htmlResourcesConsumptionView->itemDelegate())
@@ -438,7 +438,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlTaskGroupsEventsView);
   _htmlAlertChannelsView = new HtmlTableView(this, "alertchannels");
   _htmlAlertChannelsView->setModel(_alertChannelsModel);
-  _htmlAlertChannelsView->setRowHeaders();
+  _htmlAlertChannelsView->enableRowHeaders();
   _wuiHandler->addView(_htmlAlertChannelsView);
   _htmlTasksResourcesView = new HtmlTableView(this, "tasksresources");
   _htmlTasksResourcesView->setModel(_tasksModel);
