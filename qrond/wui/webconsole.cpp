@@ -1656,6 +1656,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                                 .setShouldWriteContentBeforeSubnodes()
                                 .setShouldIgnoreComment(false)), req, res);
       }
+      if (subItem == "list.csv") {
+        return writeItemsAsCsv(task, req, res);
+      }
       return false;
 }, true },
 { "/console/gridboard.html", []( // LATER remove this transitional/compatibility handler
