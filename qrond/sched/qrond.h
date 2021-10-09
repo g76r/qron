@@ -36,6 +36,7 @@ class Qrond : public QObject {
   InMemoryRulesAuthorizer *_authorizer;
   LocalConfigRepository *_configRepository;
   WebConsole *_webconsole;
+  bool _shutingDown = false;
 
 public:
   explicit Qrond(QObject *parent = 0);
@@ -46,6 +47,8 @@ public:
   bool loadConfig();
   /** This method is thread-safe */
   void shutdown(int returnCode);
+  /** This method is thread-safe */
+  void asyncShutdown(int returnCode);
 
 private:
   Q_INVOKABLE bool doLoadConfig();

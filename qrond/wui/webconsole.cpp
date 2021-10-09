@@ -1188,6 +1188,19 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       );
   return true;
 }, true },
+{ "/do/v1/scheduler/shutdown", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+    return true;
+  Qrond::instance()->asyncShutdown(0);
+  apiAuditAndResponse(webconsole, req, res, processingContext,
+                      "S:Shutdown requested.",
+                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      );
+  return true;
+}, true },
+
 { "/do/v1/configs/reload_config_file", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {

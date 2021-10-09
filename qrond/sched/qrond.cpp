@@ -156,19 +156,30 @@ void Qrond::shutdown(int returnCode) {
                               Q_ARG(int, returnCode));
 }
 
+void Qrond::asyncShutdown(int returnCode) {
+  QMetaObject::invokeMethod(this, "doShutdown",
+                            Qt::QueuedConnection,
+                            Q_ARG(int, returnCode));
+}
+
 void Qrond::doShutdown(int returnCode) {
+  if (_shutingDown)
+    return;
+  _shutingDown = true;
   Log::info() << "qrond is shuting down";
-  // TODO wait for running tasks while starting new ones is disabled
+  // wait for running tasks while starting new ones is disabled
+  _scheduler->shutdown();
   // delete HttpServer and Scheduler
   // WebConsole will be deleted since HttpServer connects its deleteLater()
   _httpd->deleteLater(); // cannot be a child because it lives it its own thread
   // give a chance to WebConsole to fully shutdown before Scheduler deletion
-  ::usleep(100000); // TODO remove
+  ::usleep(100000); // TODO replace with lambda connected on destroyed() ?
   _scheduler->deleteLater(); // cant be a child cause it lives it its own thread
   // give a chance for last main loop events, incl. QThread::deleteLater() for
   // HttpServer, Scheduler and children
-  ::usleep(100000); // TODO remove
+  ::usleep(100000); // TODO replace with lambda connected on destroyed() ?
   // shutdown main thread and stop QCoreApplication::exec() in main()
+  Log::debug() << "last log";
   QCoreApplication::exit(returnCode);
   // Qrond instance will be deleted by Q_GLOBAL_STATIC
 }
@@ -217,7 +228,6 @@ int main(int argc, char *argv[]) {
   sigaction(SIGTERM, &action, 0);
   sigaction(SIGINT, &action, 0);
 #endif
-  // LATER truly daemonize on Unix (pidfile...)
   // LATER servicize on Windows
   int rc = a.exec();
 #ifdef Q_OS_UNIX
@@ -226,10 +236,5 @@ int main(int argc, char *argv[]) {
   sigaction(SIGTERM, &action, 0);
   sigaction(SIGINT, &action, 0);
 #endif
-  // TODO may we turn log synchronous rather than call usleep ?
-  ::usleep(100000); // give a chance for last asynchronous log writing
-  // LATER removeLoggers should not be called but rather managed as a singleton in libqtssu
-  // anyway some loggers are not deleted by removeLoggers
-  //Log::removeLoggers();
   return rc;
 }
