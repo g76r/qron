@@ -16,6 +16,6 @@ export DYLD_LIBRARY_PATH="../build-qtpf-$TARGET_OS/$BUILD_TYPE:../build-qron-$TA
 
 echo LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 
-ldd ../build-qrond-$TARGET_OS/$BUILD_TYPE/qrond
+#ldd ../build-qrond-$TARGET_OS/$BUILD_TYPE/qrond
 
 exec ../build-qrond-$TARGET_OS/$BUILD_TYPE/qrond "$@"
