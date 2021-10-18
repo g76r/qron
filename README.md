@@ -18,9 +18,9 @@ BUILD INSTRUCTIONS
 ------------------
 
 This program requires at build time:
-* Qt >= 5.6.0 development libs (with QtCore, QtNetwork, QtSql modules);
+* Qt >= 5.15 development libs (with QtCore, QtNetwork, QtSql modules);
   most of the time, the last Qt version shipped with current stable Debian
-  release (currently Qt 5.3.2 on Debian 8 Jessie) should work,
+  release (currently Qt 5.15.2 on Debian 11 Bullseye) should work,
   but some minor features will lack or differ (currently quotes in logs,
   reliability of rare errors detections, etc.);
 * graphviz binaries (to compile some documentation diagrams)
