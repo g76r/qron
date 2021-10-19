@@ -73,7 +73,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configUploadHandler = new ConfigUploadHandler("", 1, this);
 
   // models
-  _hostsModel = new SharedUiItemsTableModel(Host(PfNode("template")), this);
+  _hostsModel = new SharedUiItemsTableModel(Host(PfNode("host"), ParamSet()),
+                                            this);
   _hostsModel->setItemQualifierFilter("host");
   _sortedHostsModel = new QSortFilterProxyModel(this);
   _sortedHostsModel->sort(0);
