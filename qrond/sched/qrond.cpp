@@ -125,21 +125,26 @@ bool Qrond::loadConfig() {
 }
 
 bool Qrond::doLoadConfig() {
-  bool success = false;
-  if (!_configFilePath.isEmpty()) {
-    Log::info() << "loading configuration from file: " << _configFilePath;
-    // LATER support a config directory like /etc/qron.d rather only one file
-    QFile file(_configFilePath);
-    SchedulerConfig config = _configRepository->parseConfig(&file, true);
-    if (config.isNull()) {
-      Log::error() << "cannot load configuration from file: "
-                   << _configFilePath;
-    } else {
-      _configRepository->addAndActivate(config);
-      success = true;
+  if (_configFilePath.isEmpty())
+    return false;
+  Log::info() << "loading configuration from file: " << _configFilePath;
+  // LATER support a config directory like /etc/qron.d rather only one file
+  QFile file(_configFilePath);
+  SchedulerConfig config = _configRepository->parseConfig(&file, true);
+  if (config.isNull()) {
+    Log::error() << "cannot load configuration from file: "
+                 << _configFilePath;
+    return false;
+  }
+  if (ParamsProvider::environment()
+      ->paramValue("DISABLE_TASKS_ON_START").toBool()) {
+    for (Task &t : config.tasks().values()) {
+      t.setEnabled(false);
+      //emit itemChanged(t, t, QStringLiteral("task"));
     }
   }
-  return success;
+  _configRepository->addAndActivate(config);
+  return true;
 }
 
 void Qrond::systemTriggeredShutdown(int returnCode, QString actor) {
