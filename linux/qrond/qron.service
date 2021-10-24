@@ -1,0 +1,20 @@
+[Unit]
+Description=qron scheduler
+
+[Service]
+#Type=simple
+WorkingDirectory=/opt/qron
+#ExecStart=/bin/bash /opt/qron/qrond --config-file qron.conf
+ExecStart=/opt/qron/bin/qrond --config-file qron.conf
+ExecReload=/bin/kill -s HUP $MAINPID
+ExecStop=/bin/kill -s QUIT $MAINPID
+Restart=on-failure
+RestartSec=5
+User=qron
+Group=qron
+LimitCORE=infinity
+#LimitNOFILE=
+
+[Install]
+WantedBy=multi-user.target
+
