@@ -1,20 +1,20 @@
-FROM debian:11
+FROM debian:11.1-slim
 
 # dependencies
-RUN apt-get -y update && \
-    apt-get -y install libqt5core5a libqt5network5 libqt5sql5-psql libqt5sql5-sqlite graphviz bzip2 && \
-    apt-get clean
+RUN apt-get -y update \
+ && apt-get -y install libqt5core5a libqt5network5 libqt5sql5-psql libqt5sql5-sqlite graphviz \
+ && apt-get clean
 
 # qron
-COPY qrond-linux-amd64.tar.bz2 /
-RUN adduser --disabled-password --gecos "" qron && \
-    mkdir -p /opt/qron && \
-    cd /opt/qron && tar xf /qrond-linux-amd64.tar.bz2 && \
-    chown -R qron:qron /opt/qron && \
-    ls -lR /opt/qron
+ADD qrond-linux-amd64.tar.bz2 /opt/qron
+RUN adduser --disabled-password --gecos "" qron \
+ && chown -R qron:qron /opt/qron \
+ && apt-get -y install bzip2 \
+ && apt-get clean
 
 # debuging utilities used on testing server
-RUN apt-get -y install gdb vim
+RUN apt-get -y install gdb vim tshark \
+ && apt-get clean
 
 # runtime
 USER qron:qron
