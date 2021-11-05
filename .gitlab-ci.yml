@@ -1,7 +1,7 @@
 stages:
 - build
 
-build_main:
+linux:build:
   stage: build
   script:
     - git fetch --tags
@@ -12,6 +12,11 @@ build_main:
     - qt
     - c++
   artifacts:
-    paths:
-      - linux/qrond-linux-amd64.tar.bz2
-      - doc/user-manual.html
+    - name: qrond-linux-amd64-$CI_COMMIT_REF_NAME-.tar.bz2
+      paths: linux/qrond-linux-amd64.tar.bz2
+      when: on_success
+      expire_in: 1 year
+    - name: user-manual-$CI_COMMIT_REF_NAME.html
+      paths: doc/user-manual.html
+      when: on_success
+      expire_in: 1 year
