@@ -9,11 +9,13 @@ RUN apt-get -y update \
 ADD qrond-linux-amd64.tar.bz2 /opt/qron
 RUN adduser --disabled-password --gecos "" qron \
  && chown -R qron:qron /opt/qron \
+ && apt-get update \
  && apt-get -y install bzip2 \
  && apt-get clean
 
 # debuging utilities used on testing server
-RUN apt-get -y install gdb vim tshark \
+RUN apt-get update \
+ && apt-get -y install gdb vim tshark \
  && apt-get clean
 
 # runtime
