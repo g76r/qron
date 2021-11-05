@@ -11,3 +11,7 @@ build_main:
   tags:
     - qt
     - c++
+  artifacts:
+    paths:
+      - linux/qrond-linux-amd64.tar.bz2
+      - doc/user-manual.html
