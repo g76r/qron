@@ -1,16 +1,37 @@
-# Since 1.9.9
+# From 1.9.9 to 1.9.10 (2021-11-07)
 * Minor improvements and bug fixes
  - alerts: SMTP network timeout is no longer 2" but 5" by default, and can be
-    set using new alert param ```param mail.smtp.timeout```
+     set using new alert param ```param mail.smtp.timeout```
  - action: added 'writefile' action and fixed 'requesturl' action's params
-    e.g.
-      ```(writefile(path /tmp/custom_file.txt)"%!taskid finished\n")```
-      ```(writefile(path /tmp/custom_file_XXXXXX.txt)(append false)(truncate true)(unique true)"%!taskid\n")```
-      ```(requesturl (address http://localhost/test2)(user bar)(password password)(method post))```
+     e.g.
+     ```(writefile(path /tmp/custom_file.txt)"%!taskid finished\n")```
+     ```(writefile(path /tmp/custom_file_XXXXXX.txt)(append false)(truncate true)(unique true)"%!taskid\n")```
+     ```(requesturl (address http://localhost/test2)(user bar)(password password)(method post))```
+ - action: added taskinstance params to %-evaluation context of several actions
+     requesturl, writefile, requesttask, postnotice
  - notices: minor fixes in !notice pseudo param handling and doc
  - httpd: normalizing header names: foo-bar: -> Foo-Bar:
+     this is mandatory when used behind an AWS load balancer
+ - http rest api: added GET /rest/v1/tasks/%taskid/list.csv
+ - httpd: CORS support enhancement
  - httpd: 32 workers instead of 8
+ - alerts: renaming for consistency: resource.exhausted.* -> task.resource_exhausted.*
+ - graphviz diagrams improvement
+     display only parent group edges, not every ancestors
+     ignore events and notices declared at task level for layout
+ - config: %=env function to read system environment variables
+ - config: disable all tasks at startup if DISABLE_TASKS_ON_CREATION=y 
  - doc: added parts to user manual
+ - linux packaging:
+     introduced docker image
+     systemd service unit file
+     several additional improvements
+* Bugfixes
+ - rest api: fixed /rest/v1/resources/*.csv which responded almost garbage
+ - fixed %-evaluation infinite loop when param foo is defined as %foo
+* Behind-the-curtain improvements
+ - source-level compatibility with Qt 6, therefore sticking to Qt 5.15 (last Qt 5 LTS)
+ - gitlab-ci: added artifacts
 
 # From 1.9.8 to 1.9.9 (2017-04-24)
 * Minor improvements and bug fixes
