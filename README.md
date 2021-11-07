@@ -14,6 +14,13 @@ LICENSE
 This software is made availlable to you under the terms of the GNU Affero
 General Public License version 3, see AGPL-3.0.txt file content.
 
+BINARY DOWNLOAD AND INSTALL INSTRUCTIONS
+----------------------------------------
+Pre-build tarballs can be found here:
+  http://qron.eu/pkg
+And docker container images are uploaded here:
+  https://hub.docker.com/repository/docker/g76r/qrond
+
 BUILD INSTRUCTIONS
 ------------------
 
