@@ -1,6 +1,6 @@
 SHELL=bash
 PUBLISHING_DIRECTORY=/publishing/qron/pkg
-GIT_DESCRIBE=$(shell git describe --tags 2> /dev/null || echo master)
+GIT_DESCRIBE=$(shell git describe --tags --always 2> /dev/null || echo master)
 GIT_NAME=$${CI_COMMIT_REF_NAME:-$(GIT_DESCRIBE)}
 
 .PHONY: default all targz docker FORCE

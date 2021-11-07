@@ -26,7 +26,7 @@ doc/user-manual.html: user-manual.html header.html common-scripts.html footer.ht
 	if [ -e $(PUBLISHING_DIRECTORY) ]; then mkdir -p $(PUBLISHING_DIRECTORY)/$${CI_COMMIT_REF_NAME:-default} && rsync -avrLk --delete --delete-after $$(dirname $@)/. $(PUBLISHING_DIRECTORY)/$${CI_COMMIT_REF_NAME:-default}/.; fi
 
 version.txt: FORCE
-	OLD="$$(cat $@ 2> /dev/null)"; NEW="$$(git describe --always)"; if [ "$$OLD" != "$$NEW" ]; then echo $$NEW > $@; fi
+	OLD="$$(cat $@ 2> /dev/null)"; NEW="$$(git describe --tags --always)"; if [ "$$OLD" != "$$NEW" ]; then echo $$NEW > $@; fi
 
 FORCE:
 	
