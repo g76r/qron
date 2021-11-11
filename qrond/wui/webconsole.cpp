@@ -1,4 +1,4 @@
-/* Copyright 2012-2017 Hallowyn and others.
+/* Copyright 2012-2021 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,7 +49,7 @@ static PfNode nodeWithValidPattern =
     .setAttribute("dimension", "dummy");
 static QRegularExpression htmlSuffixRe("\\.html$");
 static QRegularExpression pfSuffixRe("\\.pf$");
-static CsvFormatter _csvFormatter(',', "\n", '"', 0, ' ', -1);
+static CsvFormatter _csvFormatter(',', "\n", '"', '\0', ' ', -1);
 static HtmlTableFormatter _htmlTableFormatter(-1);
 
 // syntaxic sugar to define "a||b" as "a" if not empty and "b" otherwise
@@ -106,7 +106,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedRaisedAlertModel = new QSortFilterProxyModel(this);
   _sortedRaisedAlertModel->sort(0);
   _sortedRaisedAlertModel->setFilterKeyColumn(1);
-  _sortedRaisedAlertModel->setFilterRegExp("raised|dropping");
+  _sortedRaisedAlertModel->setFilterRegularExpression("raised|dropping");
   _sortedRaisedAlertModel->setSourceModel(_statefulAlertsModel);
   _lastEmittedAlertsModel = new SharedUiItemsLogModel(this, 500);
   _lastEmittedAlertsModel->setHeaderDataFromTemplate(
@@ -134,12 +134,12 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _tasksModel->setItemQualifierFilter("task");
   _mainTasksModel = new QSortFilterProxyModel(this);
   _mainTasksModel->setFilterKeyColumn(31);
-  _mainTasksModel->setFilterRegExp("^$");
+  _mainTasksModel->setFilterRegularExpression("^$");
   _mainTasksModel->sort(11);
   _mainTasksModel->setSourceModel(_tasksModel);
   _subtasksModel = new QSortFilterProxyModel(this);
   _subtasksModel->setFilterKeyColumn(31);
-  _subtasksModel->setFilterRegExp(".+");
+  _subtasksModel->setFilterRegularExpression(".+");
   _subtasksModel->sort(11);
   _subtasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
@@ -175,14 +175,14 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHostsListView = new HtmlTableView(this, "hostslist");
   _htmlHostsListView->setModel(_sortedHostsModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
-  ((HtmlItemDelegate*)_htmlHostsListView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlHostsListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-hdd\"></i>&nbsp;")
       ->setPrefixForColumnHeader(2, "<i class=\"icon-fast-food\"></i>&nbsp;");
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView = new HtmlTableView(this, "clusterslist");
   _htmlClustersListView->setModel(_sortedClustersModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
-  ((HtmlItemDelegate*)_htmlClustersListView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlClustersListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-shuffle\"></i>&nbsp;")
       ->setPrefixForColumnHeader(1, "<i class=\"icon-hdd\"></i>&nbsp;");
   _wuiHandler->addView(_htmlClustersListView);
@@ -190,7 +190,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlFreeResourcesView->setModel(_freeResourcesModel);
   _htmlFreeResourcesView->enableRowHeaders();
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
-  ((HtmlItemDelegate*)_htmlFreeResourcesView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlFreeResourcesView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
                                  "<i class=\"icon-fast-food\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
@@ -200,7 +200,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesLwmView->setModel(_resourcesLwmModel);
   _htmlResourcesLwmView->enableRowHeaders();
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
-  ((HtmlItemDelegate*)_htmlResourcesLwmView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlResourcesLwmView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
                                  "<i class=\"icon-fast-food\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
@@ -212,7 +212,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesConsumptionView->enableRowHeaders();
   _htmlResourcesConsumptionView
       ->setEmptyPlaceholder("(no resource definition)");
-  ((HtmlItemDelegate*)_htmlResourcesConsumptionView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlResourcesConsumptionView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
                                  "<i class=\"icon-hdd\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
@@ -284,20 +284,20 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
   QHash<QString,QString> alertSubscriptionsIcons;
   alertSubscriptionsIcons.insert("stop", "<i class=\"icon-stop\"></i>&nbsp;");
-  ((HtmlItemDelegate*)_htmlAlertSubscriptionsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlAlertSubscriptionsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;")
       ->setPrefixForColumn(2, "%1", 2, alertSubscriptionsIcons);
   _htmlAlertSubscriptionsView->setColumnIndexes({1,2,3,4,5,12});
   _wuiHandler->addView(_htmlAlertSubscriptionsView);
   _htmlAlertSettingsView = new HtmlTableView(this, "alertsettings");
   _htmlAlertSettingsView->setModel(_alertSettingsModel);
-  ((HtmlItemDelegate*)_htmlAlertSettingsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlAlertSettingsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;");
   _htmlAlertSettingsView->setColumnIndexes({1,2});
   _wuiHandler->addView(_htmlAlertSettingsView);
   _htmlGridboardsView = new HtmlTableView(this, "gridboards");
   _htmlGridboardsView->setModel(_sortedGridboardsModel);
-  ((HtmlItemDelegate*)_htmlGridboardsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlGridboardsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
                               "<a href=\"gridboards/%1\">", 0)
       ->setSuffixForColumn(1, "</a>");
@@ -400,7 +400,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
         new HtmlTaskItemDelegate(_htmlTasksEventsView));
   _wuiHandler->addView(_htmlTasksEventsView);
   _htmlSchedulerEventsView = new HtmlTableView(this, "schedulerevents");
-  ((HtmlItemDelegate*)_htmlSchedulerEventsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlSchedulerEventsView->itemDelegate())
       ->setPrefixForColumnHeader(0, "<i class=\"icon-play\"></i>&nbsp;")
       ->setPrefixForColumnHeader(1, "<i class=\"icon-refresh\"></i>&nbsp;")
       ->setPrefixForColumnHeader(2, "<i class=\"icon-comment\"></i>&nbsp;")
@@ -417,21 +417,21 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastPostedNoticesView20->setModel(_lastPostedNoticesModel);
   _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
   _htmlLastPostedNoticesView20->setColumnIndexes({0,1});
-  ((HtmlItemDelegate*)_htmlLastPostedNoticesView20->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlLastPostedNoticesView20->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i>&nbsp;");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
   _htmlTaskGroupsView = new HtmlTableView(this, "taskgroups");
   _htmlTaskGroupsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
   _htmlTaskGroupsView->setColumnIndexes({0,2,7,20,21});
-  ((HtmlItemDelegate*)_htmlTaskGroupsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlTaskGroupsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsView);
   _htmlTaskGroupsEventsView = new HtmlTableView(this, "taskgroupsevents");
   _htmlTaskGroupsEventsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
   _htmlTaskGroupsEventsView->setColumnIndexes({0,14,15,16});
-  ((HtmlItemDelegate*)_htmlTaskGroupsEventsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlTaskGroupsEventsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;")
       ->setPrefixForColumnHeader(14, "<i class=\"icon-play\"></i>&nbsp;")
       ->setPrefixForColumnHeader(15, "<i class=\"icon-check\"></i>&nbsp;")
@@ -460,7 +460,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
   QHash<QString,QString> bufferLogFileIcons;
   bufferLogFileIcons.insert("true", "<i class=\"icon-download\"></i>&nbsp;");
-  ((HtmlItemDelegate*)_htmlLogFilesView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlLogFilesView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-file-text\"></i>&nbsp;")
       ->setPrefixForColumn(3, "%1", 3, bufferLogFileIcons);
   _htmlLogFilesView->setColumnIndexes({1,2,3});
@@ -469,7 +469,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlCalendarsView->setModel(_sortedCalendarsModel);
   _htmlCalendarsView->setColumnIndexes({1,2});
   _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
-  ((HtmlItemDelegate*)_htmlCalendarsView->itemDelegate())
+  qobject_cast<HtmlItemDelegate*>(_htmlCalendarsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-calendar\"></i>&nbsp;");
   _wuiHandler->addView(_htmlCalendarsView);
   _htmlStepsView = new HtmlTableView(this, "steps");
@@ -673,7 +673,8 @@ class WebConsoleParamsProvider : public ParamsProvider {
 public:
   WebConsoleParamsProvider(WebConsole *console) : _console(console) { }
   QVariant paramValue(const QString key, const ParamsProvider *context,
-                      const QVariant defaultValue, QSet<QString>) const {
+                      const QVariant defaultValue,
+                      QSet<QString>) const override {
     Q_UNUSED(context)
     if (!_console || !_console->_scheduler) // should never happen
       return defaultValue;
@@ -1539,7 +1540,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         if (task.label() != task.id())
           form +="<h4 class=\"text-center\">("+task.label()+")</h4>\n";
         form += "<p>\n";
-        if (task.requestFormFields().size())
+        if (!task.requestFormFields().isEmpty())
           form += "<p class=\"text-center\">Task parameters can be defined in "
                   "the following form:";
         form += "<p><form action=\"../../../do/v1/tasks/request/"+taskId
@@ -1566,11 +1567,10 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         res.clearCookie("message", "/");
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
         return true;
-      } else {
-        res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
-                                   "/");
-        res.redirect(referer);
       }
+      res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
+                                 "/");
+      res.redirect(referer);
       return true;
 }, true },
 { "/console/taskdoc.html", []( // LATER remove this transitional/compatibility handler
@@ -1723,7 +1723,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           req, res))
         return true;
       QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
-      if (queryItems.size()) {
+      if (!queryItems.isEmpty()) {
         // if there are query parameters in url, transform them into cookies
         // it is useful for page changes on views
         // LATER this mechanism should be generic/framework (in libqtssu),
@@ -1739,7 +1739,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             res.setBase64SessionCookie(p.first, p.second, "/");
         }
         QString s = req.url().path();
-        int i = s.lastIndexOf('/');
+        qsizetype i = s.lastIndexOf('/');
         if (i != -1)
           s = s.mid(i+1);
         if (!anchor.isEmpty())

@@ -1,4 +1,4 @@
-# Copyright 2012-2018 Hallowyn and others.
+# Copyright 2012-2021 Hallowyn and others.
 # This file is part of qron, see <http://qron.eu/>.
 # Qron is free software: you can redistribute it and/or modify
 # it under the terms of the GNU Affero General Public License as published by
@@ -11,11 +11,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with qron.  If not, see <http://www.gnu.org/licenses/>.
 
-QT       += core network
+QT       += network
 QT       -= gui
 
 TARGET = qrond
-CONFIG += console largefile c++11
+CONFIG += cmdline largefile c++20 c++17 c++14 c++11
 CONFIG -= app_bundle
 TEMPLATE = app
 
