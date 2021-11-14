@@ -672,9 +672,8 @@ class WebConsoleParamsProvider : public ParamsProvider {
 
 public:
   WebConsoleParamsProvider(WebConsole *console) : _console(console) { }
-  QVariant paramValue(const QString key, const ParamsProvider *context,
-                      const QVariant defaultValue,
-                      QSet<QString>) const override {
+  QVariant paramValue(QString key, const ParamsProvider *context,
+                      QVariant defaultValue, QSet<QString>) const override {
     Q_UNUSED(context)
     if (!_console || !_console->_scheduler) // should never happen
       return defaultValue;
@@ -2373,11 +2372,11 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, &Scheduler::globalEventSubscriptionsChanged,
             _schedulerEventsModel, &SchedulerEventsModel::globalEventSubscriptionsChanged);
     connect(_scheduler, &Scheduler::noticePosted,
-            _lastPostedNoticesModel, static_cast<void (LastOccuredTextEventsModel::*)(QString)>(&LastOccuredTextEventsModel::eventOccured));
+            _lastPostedNoticesModel, &LastOccuredTextEventsModel::eventOccured);
     connect(_scheduler, &Scheduler::accessControlConfigurationChanged,
             this, &WebConsole::enableAccessControl);
     connect(_scheduler, &Scheduler::logConfigurationChanged,
-            _logConfigurationModel, static_cast<void (SharedUiItemsTableModel::*)(QList<SharedUiItem>)>(&SharedUiItemsTableModel::setItems));
+            _logConfigurationModel, &SharedUiItemsTableModel::setItems);
   }
 }
 
