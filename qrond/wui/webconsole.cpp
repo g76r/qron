@@ -2291,9 +2291,11 @@ bool WebConsole::handleRequest(
   if (redirectForUrlCleanup(req, res, processingContext))
     return true;
   QString path = req.url().path();
+  QString userid = processingContext->paramValue("userid").toString();
   ParamsProviderMergerRestorer restorer(processingContext);
   WebConsoleParamsProvider webconsoleParams(this);
   processingContext->append(&webconsoleParams);
+  processingContext->append(_scheduler->globalParams());
   // compute !pathtoroot now, to allow overriding url path with html files paths
   // unrelated to the url and keep !pathtoroot ok
   _wuiHandler->computePathToRoot(req, processingContext);
@@ -2307,8 +2309,6 @@ bool WebConsole::handleRequest(
     res.redirect(staticRedirect, HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
-  processingContext->append(_scheduler->globalParams());
-  QString userid = processingContext->paramValue("userid").toString();
   if (_authorizer && !_authorizer->authorize(userid, req.methodName(), path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);
     res.clearCookie("message", "/");
