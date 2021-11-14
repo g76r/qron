@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2021 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -49,12 +49,12 @@ public:
   void shutdown(int returnCode);
   /** This method is thread-safe */
   void asyncShutdown(int returnCode);
+  bool systemTriggeredLoadConfig(QString actor);
+  void systemTriggeredShutdown(int returnCode, QString actor);
 
 private:
-  Q_INVOKABLE bool doLoadConfig();
-  Q_INVOKABLE void doShutdown(int returnCode);
-  Q_INVOKABLE bool systemTriggeredLoadConfig(QString actor);
-  Q_INVOKABLE void systemTriggeredShutdown(int returnCode, QString actor);
+  bool doLoadConfig();
+  void doShutdown(int returnCode);
 };
 
 #endif // QROND_H

@@ -1,4 +1,4 @@
-/* Copyright 2013-2020 Hallowyn and others.
+/* Copyright 2013-2021 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -100,8 +100,9 @@ void Qrond::startup(QStringList args) {
     Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
     return; // TODO clean up the whole shutdown sequence
-    //QMetaObject::invokeMethod(qrondInstance(), "shutdown",
-    //                          Qt::QueuedConnection, Q_ARG(int, 1));
+    //QMetaObject::invokeMethod(qrondInstance(), [](){
+    //  qrondInstance()->shutdown(1);
+    //  }, Qt::QueuedConnection);
   }
 }
 
@@ -118,9 +119,9 @@ bool Qrond::loadConfig() {
   if (this->thread() == QThread::currentThread())
     result = doLoadConfig();
   else
-    QMetaObject::invokeMethod(this, "doLoadConfig",
-                              Qt::BlockingQueuedConnection,
-                              Q_RETURN_ARG(bool, result));
+    QMetaObject::invokeMethod(this, [this,&result]() {
+      result = doLoadConfig();
+    }, Qt::BlockingQueuedConnection);
   return result;
 }
 
@@ -156,15 +157,15 @@ void Qrond::shutdown(int returnCode) {
   if (this->thread() == QThread::currentThread())
     doShutdown(returnCode);
   else
-    QMetaObject::invokeMethod(this, "doShutdown",
-                              Qt::BlockingQueuedConnection,
-                              Q_ARG(int, returnCode));
+    QMetaObject::invokeMethod(this, [this,returnCode]() {
+      doShutdown(returnCode);
+    }, Qt::BlockingQueuedConnection);
 }
 
 void Qrond::asyncShutdown(int returnCode) {
-  QMetaObject::invokeMethod(this, "doShutdown",
-                            Qt::QueuedConnection,
-                            Q_ARG(int, returnCode));
+  QMetaObject::invokeMethod(this, [this,returnCode]() {
+    doShutdown(returnCode);
+  }, Qt::QueuedConnection);
 }
 
 void Qrond::doShutdown(int returnCode) {
@@ -200,17 +201,16 @@ static void signal_handler(int signal_number) {
     return;
   switch (signal_number) {
   case SIGHUP:    
-    QMetaObject::invokeMethod(qrondInstance(), "systemTriggeredLoadConfig",
-                              Qt::QueuedConnection,
-                              Q_ARG(QString, "signal"));
+    QMetaObject::invokeMethod(qrondInstance(), []() {
+      qrondInstance()->systemTriggeredLoadConfig("signal");
+    }, Qt::QueuedConnection);
     break;
   case SIGTERM:
   case SIGINT:
     shutingDown = true;
-    QMetaObject::invokeMethod(qrondInstance(), "systemTriggeredShutdown",
-                              Qt::QueuedConnection,
-                              Q_ARG(int, 0),
-                              Q_ARG(QString, "signal"));
+    QMetaObject::invokeMethod(qrondInstance(), []() {
+      qrondInstance()->systemTriggeredShutdown(0, "signal");
+    }, Qt::QueuedConnection);
     break;
   }
 }
