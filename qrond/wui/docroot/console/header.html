@@ -10,7 +10,7 @@
     <?=%{webconsole.customhead}?>
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-inverse">
+    <nav class="navbar navbar-default navbar-inverse <?=%{=switch/%{!cookie!hidenav}/true/hidden}?>">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -53,7 +53,7 @@
             <li><a href="<?value:!pathtoroot?>about.html">About</a></li>
           </ul>
           <ul class="nav navbar-nav">
-            <li><a><?=%{=date!hh:mm:ss?></a></li>
+            <li><a><?=%{=date!hh:mm:ss}?></a></li>
           </ul>
         </div>
       </div>
