@@ -2440,7 +2440,7 @@ void WebConsole::enableAccessControl(bool enabled) {
   if (enabled) {
     _authorizer->clearRules()
         // anyone for static resources
-        .allow("", "", "^/console/(css|jsp|js|img)/")
+        .allow("", "", "^/console/(css|jsp|js|img|font)/")
         // anyone for test page and user manual
         .allow("", "", "^/console/(test|user-manual)\\.html$")
         // read for read-only rest calls
