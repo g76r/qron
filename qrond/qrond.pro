@@ -37,7 +37,7 @@ contains(QT_VERSION, ^4\\..*) {
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual -Wno-padded -Wno-old-style-cast \
-  -Wno-deprecated-copy
+  -Wno-deprecated-copy -ggdb
 #QMAKE_CXXFLAGS += -fno-elide-constructors
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
