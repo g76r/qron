@@ -109,8 +109,7 @@ class WebConsole : public HttpHandler {
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
   *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
   *_csvAlertParamsView, *_csvStatefulAlertsView, *_csvLastEmittedAlertsView,
-  *_csvGridboardsView,
-  *_csvLogView, *_csvTaskInstancesView,
+  *_csvGridboardsView, *_csvTaskInstancesView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvConfigsView, *_csvConfigHistoryView;
   GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
@@ -159,7 +158,6 @@ public:
   CsvTableView *csvLastEmittedAlertsView() const {
     return _csvLastEmittedAlertsView; }
   CsvTableView *csvGridboardsView() const { return _csvGridboardsView; }
-  CsvTableView *csvLogView() const { return _csvLogView; }
   CsvTableView *csvTaskInstancesView() const { return _csvTaskInstancesView; }
   CsvTableView *csvSchedulerEventsView() const {
     return _csvSchedulerEventsView; }
@@ -222,6 +220,12 @@ public:
   HtmlTableView *htmlConfigsView() const { return _htmlConfigsView; }
   HtmlTableView *htmlConfigHistoryView() const {
     return _htmlConfigHistoryView; }
+  SharedUiItemList<> infoLogItems() const {
+    return _infoLogModel ? _infoLogModel->items() : SharedUiItemList<>(); }
+  SharedUiItemList<> warningLogItems() const {
+    return _warningLogModel ? _warningLogModel->items() : SharedUiItemList<>();}
+  SharedUiItemList<> auditLogItems() const {
+    return _auditLogModel ? _auditLogModel->items() : SharedUiItemList<>(); }
   QString configFilePath() const { return _configFilePath; }
   QString configRepoPath() const { return _configRepoPath; }
   ReadOnlyResourcesCache *readOnlyResourcesCache() const {

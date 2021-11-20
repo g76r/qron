@@ -524,9 +524,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
   _csvGridboardsView = new CsvTableView(this);
   _csvGridboardsView->setModel(_sortedGridboardsModel);
-  _csvLogView =
-      new CsvTableView(this, QString(), _htmlInfoLogView->cachedRows());
-  _csvLogView->setModel(_infoLogModel);
   _csvTaskInstancesView =
       new CsvTableView(this, QString(), _taskInstancesHistoryModel->maxrows());
   _csvTaskInstancesView->setModel(_taskInstancesHistoryModel);
@@ -2226,12 +2223,21 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       return writeHtmlView(webconsole->htmlLastPostedNoticesView20(), req, res);
 } },
+{ "/rest/v1/logs/last_audit_entries.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeItemsAsCsv(webconsole->auditLogItems(), req, res);
+
+} },
 { "/rest/v1/logs/last_info_entries.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvLogView(), req, res);
+      return writeItemsAsCsv(webconsole->infoLogItems(), req, res);
+
 } },
 { "/rest/v1/logs/last_info_entries.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2239,6 +2245,20 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlInfoLogView(), req, res);
+} },
+{ "/rest/v1/logs/last_warning_entries.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeItemsAsCsv(webconsole->warningLogItems(), req, res);
+} },
+{ "/rest/v1/logs/last_warning_entries.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writeHtmlView(webconsole->htmlWarningLogView(), req, res);
 } },
 { "/rest/v1/logs/entries.txt", [](
     WebConsole *, HttpRequest req, HttpResponse res, ParamsProviderMerger *,

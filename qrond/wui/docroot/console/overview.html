@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2016 Hallowyn and others.
+ Copyright 2012-2021 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -69,9 +69,9 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Last Warnings and Errors</h2>
-          <p><a class="btn btn-primary" href="../rest/v1/logs/last_info_entries.csv"><i class="icon-file-excel"></i> CSV</a>
-          <a class="btn btn-primary" href="../rest/v1/logs/last_info_entries.html"><i class="icon-file-html"></i> HTML</a>
-          <a class="btn btn-primary" href="../rest/v1/logs/entries.txt?files=current&regexp=+(INFO|WARNING|ERROR|FATAL)+"><i class="icon-file-text"></i> Current log file</a>
+          <p><a class="btn btn-primary" href="../rest/v1/logs/last_warning_entries.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/last_warning_entries.html"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/entries.txt?files=current&regexp=+(WARNING|ERROR|FATAL)+"><i class="icon-file-text"></i> Current log file</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
           <p><?view:warninglog10?>
         </div>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2016 Hallowyn and others.
+ Copyright 2012-2021 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -19,8 +19,10 @@
         <div class="col-md-12">
           <a name="warninglog"></a>
           <h2>Last Warnings and Errors Log Entries</h2>
-          <p><a class="btn btn-primary" href="../rest/v1/logs/entries.txt?files=current"><i class="icon-file-text"></i> Current log file</a>
-          <a class="btn btn-primary" href="../rest/v1/logs/entries.txt"><i class="icon-file-text"></i> All log files concatened&nbsp;<span class="label label-warning"><i class="icon icon-warning"></i>&nbsp;maybe huge</span></a>
+          <p><a class="btn btn-primary" href="../rest/v1/logs/last_warning_entries.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/last_warning_entries.html"><i class="icon-file-html"></i> HTML</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/entries.txt?files=current&regexp=+(WARNING|ERROR|FATAL)+"><i class="icon-file-text"></i> Current log file</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/entries.txt?regexp=+(WARNING|ERROR|FATAL)+"><i class="icon-file-text"></i> All log files concatened&nbsp;<span class="label label-warning"><i class="icon icon-warning"></i>&nbsp;maybe huge</span></a>
           <a class="btn btn-info" href="#infolog">Last log entries including infos &raquo;</a>
           <a class="btn btn-info" href="#auditlog">Last audit log entries &raquo;</a>
           <p><?view:warninglog?>
@@ -38,7 +40,8 @@
         <div class="col-md-12">
           <a name="auditlog"></a>
           <h2>Last Audit<a class="help" href="user-manual.html#audit-logs"><span class="icon-help-circled"/></a> Log Entries</h2>
-          <p><a class="btn btn-primary" href="../rest/v1/logs/entries.txt?files=current&filter=INFO%20AUDIT"><i class="icon-file-text"></i> Current log file audit entries</a>
+          <p><a class="btn btn-primary" href="../rest/v1/logs/last_audit_entries.csv"><i class="icon-file-excel"></i> CSV</a>
+          <a class="btn btn-primary" href="../rest/v1/logs/entries.txt?files=current&filter=INFO%20AUDIT"><i class="icon-file-text"></i> Current log file audit entries</a>
           <a class="btn btn-primary" href="../rest/v1/logs/entries.txt?filter=INFO%20AUDIT"><i class="icon-file-text"></i> All log files audit entries&nbsp;<span class="label label-warning"><i class="icon icon-warning"></i>&nbsp;maybe huge</span></a>
           <p><?view:auditlog?>
         </div>
