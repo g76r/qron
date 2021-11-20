@@ -573,18 +573,15 @@ bool WebConsole::acceptRequest(HttpRequest req) {
 }
 
 static QHash<QString,
-std::function<QVariant(const WebConsole *, const QString &key)>> _consoleParams {
+std::function<QVariant(const WebConsole *, const QString &key)>> _serverStats {
 { "scheduler.startdate", [](const WebConsole *console, const QString &) {
-  // LATER use %=date syntax
-  return console->scheduler()->startdate().toString(ISO8601);
+  return console->scheduler()->startdate().toUTC();
 } },
 { "scheduler.uptime", [](const WebConsole *console, const QString &) {
-  return TimeFormats::toCoarseHumanReadableTimeInterval(
-        console->scheduler()->startdate().msecsTo(QDateTime::currentDateTime()));
+  return (double)console->scheduler()->startdate().msecsTo(QDateTime::currentDateTime())*.001;
 } },
 { "scheduler.configdate", [](const WebConsole *console, const QString &) {
-  // LATER use %=date syntax
-  return console->scheduler()->configdate().toString(ISO8601);
+  return console->scheduler()->configdate().toUTC();
 } },
 { "scheduler.execcount", [](const WebConsole *console, const QString &) {
   return console->scheduler()->execCount();
@@ -666,17 +663,17 @@ std::function<QVariant(const WebConsole *, const QString &key)>> _consoleParams 
 } },
 };
 
-class WebConsoleParamsProvider : public ParamsProvider {
+class ServerStatsProvider : public ParamsProvider {
   WebConsole *_console;
 
 public:
-  WebConsoleParamsProvider(WebConsole *console) : _console(console) { }
+  ServerStatsProvider(WebConsole *console) : _console(console) { }
   QVariant paramValue(QString key, const ParamsProvider *context,
                       QVariant defaultValue, QSet<QString>) const override {
     Q_UNUSED(context)
     if (!_console || !_console->_scheduler) // should never happen
       return defaultValue;
-    auto handler = _consoleParams.value(key);
+    auto handler = _serverStats.value(key);
     return handler ? handler(_console, key) : defaultValue;
   }
 };
@@ -2197,8 +2194,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       QJsonObject stats;
-      for (auto key: _consoleParams.keys()) {
-        auto value = _consoleParams.value(key)(webconsole, key);
+      for (auto key: _serverStats.keys()) {
+        auto value = _serverStats.value(key)(webconsole, key);
         JsonFormats::recursive_insert(
               stats, key, QJsonValue::fromVariant(value));
       }
@@ -2333,7 +2330,7 @@ bool WebConsole::handleRequest(
   QString path = req.url().path();
   QString userid = processingContext->paramValue("userid").toString();
   ParamsProviderMergerRestorer restorer(processingContext);
-  WebConsoleParamsProvider webconsoleParams(this);
+  ServerStatsProvider webconsoleParams(this);
   processingContext->append(&webconsoleParams);
   processingContext->append(_scheduler->globalParams());
   // compute !pathtoroot now, to allow overriding url path with html files paths

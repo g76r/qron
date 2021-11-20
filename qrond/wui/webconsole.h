@@ -51,7 +51,7 @@ class QThread;
  * Mainly sets HTML templating and views up and dispatches request between views
  * and event handling. */
 class WebConsole : public HttpHandler {
-  friend class WebConsoleParamsProvider;
+  friend class ServerStatsProvider;
   Q_OBJECT
   Q_DISABLE_COPY(WebConsole)
   QThread *_thread;
