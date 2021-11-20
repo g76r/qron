@@ -34,6 +34,8 @@
 #include <functional>
 #include "util/characterseparatedexpression.h"
 #include "format/htmltableformatter.h"
+#include "format/jsonformats.h"
+#include <QJsonDocument>
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -2191,6 +2193,24 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlSchedulerEventsView(), req, res);
+} },
+{ "/rest/v1/scheduler/stats.json", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      QJsonObject stats;
+      for (auto key: _consoleParams.keys()) {
+        auto value = _consoleParams.value(key)(webconsole, key);
+        JsonFormats::recursive_insert(
+              stats, key, QJsonValue::fromVariant(value));
+      }
+      QByteArray data = QJsonDocument(stats).toJson();
+      res.setContentType("application/json;charset=UTF-8");
+      res.setContentLength(data.size());
+      if (req.method() != HttpRequest::HEAD)
+        res.output()->write(data);
+      return true;
 } },
 { "/rest/v1/notices/lastposted.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
