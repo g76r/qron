@@ -1,6 +1,9 @@
 FROM debian:11.1-slim
+LABEL description="qron free scheduler"
+LABEL org.opencontainers.image.authors="Grégoire Barbier <devel@g76r.eu>"
 
 # server-side Qt, RDBMS and graphviz dependencies
+ARG DEBIAN_FRONTEND=noninteractive
 RUN apt-get -y update \
  && apt-get -y install libqt5core5a libqt5network5 libqt5sql5-psql libqt5sql5-sqlite graphviz
 
@@ -19,6 +22,7 @@ RUN adduser --disabled-password --gecos "" qron \
  && apt-get update \
  && apt-get -y install bzip2
 USER qron:qron
+EXPOSE 8086/tcp
 
 # run attached using e.g.
 # docker run -p 8086:8086/tcp g76r/qrond:master
