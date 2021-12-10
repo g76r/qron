@@ -30,7 +30,7 @@
                   <li><a href="#tasks-execution-properties">Execution Properties</a>
                   <li><a href="#tasks-triggers-and-constraints">Triggers and Constraints</a>
                   <li><a href="#tasks-parameters">Parameters</a>
-                  <li><a href="#tasks-setenvs">Setenvs</a>
+                  <li><a href="#tasks-vars">Vars</a>
                   <li><a href="#tasks-events-subscriptions">Events Subscriptions</a>
                   <li><a href="#tasks-monitoring">Monitoring</a>
                   <li><a href="#tasks-request-forms">Request Forms</a>
@@ -171,7 +171,7 @@ field), plus optional fields: a human readable <tt>label</tt>
 and task properties that are inherited by any task belonging
 to the group. The task properties that can be defined at the
 taskgroup level are <a href="#tasks-parameters"><tt>params</tt></a>,
-<a href="#tasks-setenvs"><tt>setenv</tt> and <tt>unsetenv</tt></a>
+<a href="#tasks-vars"><tt>vars</tt>
 and <a href="#tasks-events-and-actions">events subscriptions</a>.
 
 <p>There is only one level of taskgroups (a taskgroup cannot
@@ -189,7 +189,7 @@ to display a multi-level tree.
 (taskgroup app2.tech
   (label technical tasks for application app2)
   (param db_password mysecret)
-  (setenv ORACLE_SID ORCL)
+  (var ORACLE_SID ORCL)
 )
 </pre>
 <pre>
@@ -436,16 +436,16 @@ in <a href="#http-api">HTTP API</a> or in web user interface using
 )
 </pre>
 
-<h4>Tasks Setenvs</h4>
+<h4>Tasks Vars</h4>
 
 <p>Depending on the execution <tt>mean</tt>, there can be out of band
 parameters, transmitted by another way than the <tt>command</tt> itself.
 For <tt>local</tt> and <tt>ssh</tt> means this is possible through
-environment variables (hence the name <tt>setenv</tt>).
+environment variables (hence the name).
 For <tt>http</tt> mean this is possible through custom HTTP headers.
 
-<p>These out of band parameters are defined and removed using two configuration
-elements: <tt>setenv</tt> and <tt>unsetenv</tt>.
+<p>These out of band parameters are defined using <tt>var</tt> configuration
+element.
 
 <p>TODO: explain how default envionment is set, according to execution mean.
 
@@ -456,7 +456,7 @@ elements: <tt>setenv</tt> and <tt>unsetenv</tt>.
   (mean ssh)
   (target server1)
   (command /opt/app1/bin/build_reports.sh --customers)
-  (setenv ORACLE_SID ORCL)
+  (var ORACLE_SID ORCL)
 )
 </pre>
 
@@ -466,8 +466,8 @@ elements: <tt>setenv</tt> and <tt>unsetenv</tt>.
   (mean http)
   (target server4)
   (command /pollers/last-orders/?from=-5minutes)
-  (setenv X-TaskInstanceId %!taskinstanceid)
-  (setenv Authorization Basic AhjsqduYez=)
+  (var X-TaskInstanceId %!taskinstanceid)
+  (var Authorization Basic AhjsqduYez=)
   #in fact it's often easier to set Authorization header this way:
   #(param user scheduler) # set up a "Authorization: Basic" header
   #(param password mysecret)
@@ -1452,7 +1452,7 @@ Those timestamps can be read from API, UI and used in configuration through
   %{!statdate:ms1970} # this (sub)task start date in milliseconds since 1970
 </pre>
 
-For instance this can be used to set a task param or setenv according to
+For instance this can be used to set a task param or var according to
 the request or start timestamp (but obviously not the end timestamp):
 <pre>
 (task build-reports-customers
@@ -1465,7 +1465,7 @@ the request or start timestamp (but obviously not the end timestamp):
 (task build-reports-customers-alternative
   (taskgroup app1.biz.batch)
   (trigger(cron 0 0 23 * * 1-6))
-  (setenv FILENAME /tmp/%{!workflowstartdate:yyyyMMdd}.out)
+  (var FILENAME /tmp/%{!workflowstartdate:yyyyMMdd}.out)
   (mean local)
   (command /opt/myapp/bin/build-reports-customers.sh) # the script uses $FILENAME
 )
@@ -1617,15 +1617,10 @@ Graphviz dot format</td></tr>
 </tt>
 </td><td>list of global params</td></tr>
 <tr><td><tt>
-<p>GET /rest/v1/global_setenvs/list.csv
-<p>GET /rest/v1/global_setenvs/list.html
+<p>GET /rest/v1/global_vars/list.csv
+<p>GET /rest/v1/global_vars/list.html
 </tt>
-</td><td>list of global setenvs</td></tr>
-<tr><td><tt>
-<p>GET /rest/v1/global_unsetenvs/list.csv
-<p>GET /rest/v1/global_unsetenvs/list.html
-</tt>
-</td><td>list of global unsetenvs</td></tr>
+</td><td>list of global vars</td></tr>
 <tr><td><tt>
 <p>GET /rest/v1/calendars/list.csv
 <p>GET /rest/v1/calendars/list.html

@@ -63,7 +63,7 @@ class WebConsole : public HttpHandler {
   QSortFilterProxyModel *_sortedClustersModel;
   HostsResourcesAvailabilityModel *_freeResourcesModel, *_resourcesLwmModel;
   ResourcesConsumptionModel *_resourcesConsumptionModel;
-  ParamSetModel *_globalParamsModel, *_globalSetenvModel, *_globalUnsetenvModel,
+  ParamSetModel *_globalParamsModel, *_globalVarsModel,
   *_alertParamsModel;
   SharedUiItemsTableModel *_statefulAlertsModel;
   QSortFilterProxyModel *_sortedStatefulAlertsModel, *_sortedRaisedAlertModel;
@@ -89,7 +89,7 @@ class WebConsole : public HttpHandler {
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,
   *_htmlFreeResourcesView, *_htmlResourcesLwmView,
   *_htmlResourcesConsumptionView, *_htmlGlobalParamsView,
-  *_htmlGlobalSetenvView, *_htmlGlobalUnsetenvView, *_htmlAlertParamsView,
+  *_htmlGlobalVarsView, *_htmlAlertParamsView,
   *_htmlStatefulAlertsView, *_htmlRaisedAlertsView,
   *_htmlLastEmittedAlertsView, *_htmlAlertSubscriptionsView,
   *_htmlAlertSettingsView, *_htmlGridboardsView, *_htmlWarningLogView,
@@ -107,7 +107,7 @@ class WebConsole : public HttpHandler {
   *_htmlConfigHistoryDelegate;
   CsvTableView *_csvFreeResourcesView, *_csvResourcesLwmView,
   *_csvResourcesConsumptionView, *_csvGlobalParamsView,
-  *_csvGlobalSetenvView, *_csvGlobalUnsetenvView,
+  *_csvGlobalVarsView,
   *_csvAlertParamsView, *_csvStatefulAlertsView, *_csvLastEmittedAlertsView,
   *_csvGridboardsView, *_csvTaskInstancesView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
@@ -151,8 +151,7 @@ public:
   CsvTableView *csvResourcesConsumptionView() const {
     return _csvResourcesConsumptionView; }
   CsvTableView *csvGlobalParamsView() const { return _csvGlobalParamsView; }
-  CsvTableView *csvGlobalSetenvView() const { return _csvGlobalSetenvView; }
-  CsvTableView *csvGlobalUnsetenvView() const { return _csvGlobalUnsetenvView; }
+  CsvTableView *csvGlobalVarsView() const { return _csvGlobalVarsView; }
   CsvTableView *csvAlertParamsView() const { return _csvAlertParamsView; }
   CsvTableView *csvStatefulAlertsView() const { return _csvStatefulAlertsView; }
   CsvTableView *csvLastEmittedAlertsView() const {
@@ -173,9 +172,7 @@ public:
   HtmlTableView *htmlResourcesConsumptionView() const {
     return _htmlResourcesConsumptionView; }
   HtmlTableView *htmlGlobalParamsView() const { return _htmlGlobalParamsView; }
-  HtmlTableView *htmlGlobalSetenvView() const { return _htmlGlobalSetenvView; }
-  HtmlTableView *htmlGlobalUnsetenvView() const {
-    return _htmlGlobalUnsetenvView; }
+  HtmlTableView *htmlGlobalVarsView() const { return _htmlGlobalVarsView; }
   HtmlTableView *htmlAlertParamsView() const { return _htmlAlertParamsView; }
   HtmlTableView *htmlStatefulAlertsView() const {
     return _htmlStatefulAlertsView; }

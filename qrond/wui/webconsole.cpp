@@ -95,8 +95,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _resourcesLwmModel->enableColumnsSort();
   _resourcesConsumptionModel = new ResourcesConsumptionModel(this);
   _globalParamsModel = new ParamSetModel(this);
-  _globalSetenvModel = new ParamSetModel(this);
-  _globalUnsetenvModel = new ParamSetModel(this);
+  _globalVarsModel = new ParamSetModel(this);
   _alertParamsModel = new ParamSetModel(this);
   _statefulAlertsModel = new SharedUiItemsTableModel(this);
   _statefulAlertsModel->setHeaderDataFromTemplate(Alert("template"));
@@ -227,14 +226,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlGlobalParamsView->setModel(_globalParamsModel);
   _htmlGlobalParamsView->setColumnIndexes({0,1});
   _wuiHandler->addView(_htmlGlobalParamsView);
-  _htmlGlobalSetenvView = new HtmlTableView(this, "globalsetenv");
-  _htmlGlobalSetenvView->setModel(_globalSetenvModel);
-  _htmlGlobalSetenvView->setColumnIndexes({0,1});
-  _wuiHandler->addView(_htmlGlobalSetenvView);
-  _htmlGlobalUnsetenvView = new HtmlTableView(this, "globalunsetenv");
-  _htmlGlobalUnsetenvView->setModel(_globalUnsetenvModel);
-  _wuiHandler->addView(_htmlGlobalUnsetenvView);
-  _htmlGlobalUnsetenvView->setColumnIndexes({0});
+  _htmlGlobalVarsView = new HtmlTableView(this, "globalvars");
+  _htmlGlobalVarsView->setModel(_globalVarsModel);
+  _htmlGlobalVarsView->setColumnIndexes({0,1});
+  _wuiHandler->addView(_htmlGlobalVarsView);
   _htmlAlertParamsView = new HtmlTableView(this, "alertparams");
   _htmlAlertParamsView->setModel(_alertParamsModel);
   _wuiHandler->addView(_htmlAlertParamsView);
@@ -511,10 +506,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _csvResourcesConsumptionView->enableRowHeaders();
   _csvGlobalParamsView = new CsvTableView(this);
   _csvGlobalParamsView->setModel(_globalParamsModel);
-  _csvGlobalSetenvView = new CsvTableView(this);
-  _csvGlobalSetenvView->setModel(_globalSetenvModel);
-  _csvGlobalUnsetenvView = new CsvTableView(this);
-  _csvGlobalUnsetenvView->setModel(_globalUnsetenvModel);
+  _csvGlobalVarsView = new CsvTableView(this);
+  _csvGlobalVarsView->setModel(_globalVarsModel);
   _csvAlertParamsView = new CsvTableView(this);
   _csvAlertParamsView->setModel(_alertParamsModel);
   _csvStatefulAlertsView = new CsvTableView(this);
@@ -1907,33 +1900,19 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       return writeHtmlView(webconsole->htmlGlobalParamsView(), req, res);
 } },
-{ "/rest/v1/global_setenvs/list.csv", [](
+{ "/rest/v1/global_vars/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeCsvView(webconsole->csvGlobalSetenvView(), req, res);
+      return writeCsvView(webconsole->csvGlobalVarsView(), req, res);
 } },
-{ "/rest/v1/global_setenvs/list.html", [](
+{ "/rest/v1/global_vars/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      return writeHtmlView(webconsole->htmlGlobalSetenvView(), req, res);
-} },
-{ "/rest/v1/global_unsetenvs/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
-      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
-        return true;
-      return writeCsvView(webconsole->csvGlobalUnsetenvView(), req, res);
-} },
-{ "/rest/v1/global_unsetenvs/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
-      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
-        return true;
-      return writeHtmlView(webconsole->htmlGlobalUnsetenvView(), req, res);
+      return writeHtmlView(webconsole->htmlGlobalVarsView(), req, res);
 } },
 { "/rest/v1/alert_params/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2087,7 +2066,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             res.output()->write("no config found with this id\n");
           } else {
             res.setContentType("text/plain;charset=UTF-8");
-            config.toPfNode() // LATER remove indentation
+            config.originalPfNode()
                 .writePf(res.output(), PfOptions().setShouldIndent()
                          .setShouldWriteContentBeforeSubnodes()
                          .setShouldIgnoreComment(false));
@@ -2383,13 +2362,9 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
           _scheduler, _scheduler->globalParams(), "globalparams", "globalparam",
           &QronConfigDocumentManager::paramsChanged,
           &QronConfigDocumentManager::changeParams);
-    _globalSetenvModel->connectToDocumentManager<QronConfigDocumentManager>(
-          _scheduler, _scheduler->globalSetenvs(), "globalsetenvs",
-          "globalsetenv", &QronConfigDocumentManager::paramsChanged,
-          &QronConfigDocumentManager::changeParams);
-    _globalUnsetenvModel->connectToDocumentManager<QronConfigDocumentManager>(
-          _scheduler, _scheduler->globalUnsetenvs(), "globalunsetenvs",
-          "globalunsetenv", &QronConfigDocumentManager::paramsChanged,
+    _globalVarsModel->connectToDocumentManager<QronConfigDocumentManager>(
+          _scheduler, _scheduler->globalVars(), "globalvars",
+          "globalvars", &QronConfigDocumentManager::paramsChanged,
           &QronConfigDocumentManager::changeParams);
     connect(_scheduler, &Scheduler::paramsChanged,
             this, &WebConsole::paramsChanged);
