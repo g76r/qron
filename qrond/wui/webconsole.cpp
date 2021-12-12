@@ -1251,153 +1251,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                       );
   return true;
 }, true },
-{ { "/console/do", "/rest/do" }, []( // LATER remove this transitional/compatibility handler
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
-                      |HttpRequest::PUT, req, res))
-    return true;
-  bool disableRedirect = req.header("Prefer")
-      .contains("return=representation", Qt::CaseInsensitive);
-  Log::debug() << "web user interface was called with a deprecated url: "
-               << req.methodName() << " " << req.url().toString()
-               << " Referer: "<< req.header("Referer") << " From: "
-               << req.clientAdresses().join(", ") << " User-Agent: "
-               << req.header("User-Agent");
-  QString event = req.param("event");
-  QString taskId = req.param("taskid");
-  QString alertId = req.param("alertid");
-  QString gridboardId = req.param("gridboardid");
-  if (alertId.isNull()) // LATER remove this backward compatibility trick
-    alertId = req.param("alert");
-  QString configId = req.param("configid");
-  quint64 taskInstanceId = req.param("taskinstanceid").toULongLong();
-  QList<quint64> auditInstanceIds;
-  QString referer = req.header("Referer");
-  QString redirect = req.base64Cookie("redirect", referer);
-  QString message;
-  QString userid = processingContext->paramValue("userid").toString();
-  if (event == "requestTask") {
-    // 192.168.79.76:8086/console/do?event=requestTask&taskid=appli.batch.batch1
-    ParamSet params(req.paramsAsParamSet());
-    // TODO handle null values rather than replacing empty with nulls
-    for (const QString &key: params.keys())
-      if (params.value(key).isEmpty())
-        params.removeValue(key);
-    params.removeValue("taskid");
-    params.removeValue("event");
-    // FIXME evaluate overriding params within overriding > global context
-    TaskInstanceList instances = webconsole->scheduler()
-        ->syncRequestTask(taskId, params);
-    if (!instances.isEmpty()) {
-      message = "S:Task '"+taskId+"' submitted for execution with id";
-      for (const TaskInstance &request: instances) {
-        message.append(' ').append(QString::number(request.idAsLong()));
-        auditInstanceIds << request.idAsLong();
-      }
-      message.append('.');
-    } else
-      message = "E:Execution request of task '"+taskId
-          +"' failed (see logs for more information).";
-  } else if (event == "cancelRequest") {
-    TaskInstance instance = webconsole->scheduler()
-        ->cancelRequest(taskInstanceId);
-    if (!instance.isNull()) {
-      message = "S:Task request "+QString::number(taskInstanceId)
-          +" canceled.";
-      taskId = instance.task().id();
-    } else
-      message = "E:Cannot cancel request "+QString::number(taskInstanceId)
-          +".";
-  } else if (event == "abortTask") {
-    TaskInstance instance = webconsole->scheduler()
-        ->abortTask(taskInstanceId);
-    if (!instance.isNull()) {
-      message = "S:Task "+QString::number(taskInstanceId)+" aborted.";
-      taskId = instance.task().id();
-    } else
-      message = "E:Cannot abort task "+QString::number(taskInstanceId)+".";
-  } else if (event == "enableTask") {
-    bool enable = req.param("enable") == "true";
-    if (webconsole->scheduler()->enableTask(taskId, enable))
-      message = "S:Task '"+taskId+"' "+(enable?"enabled":"disabled")+".";
-    else
-      message = "E:Task '"+taskId+"' not found.";
-  } else if (event == "cancelAlert") {
-    if (req.param("immediately") == "true")
-      webconsole->scheduler()->alerter()->cancelAlertImmediately(alertId);
-    else
-      webconsole->scheduler()->alerter()->cancelAlert(alertId);
-    message = "S:Canceled alert '"+alertId+"'.";
-  } else if (event == "raiseAlert") {
-    if (req.param("immediately") == "true")
-      webconsole->scheduler()->alerter()->raiseAlertImmediately(alertId);
-    else
-      webconsole->scheduler()->alerter()->raiseAlert(alertId);
-    message = "S:Raised alert '"+alertId+"'.";
-  } else if (event == "emitAlert") {
-    webconsole->scheduler()->alerter()->emitAlert(alertId);
-    message = "S:Emitted alert '"+alertId+"'.";
-  } else if (event == "clearGridboard") {
-    webconsole->scheduler()->alerter()->clearGridboard(gridboardId);
-    message = "S:Cleared gridboard '"+gridboardId+"'.";
-  } else if (event=="enableAllTasks") {
-    bool enable = req.param("enable") == "true";
-    webconsole->scheduler()->enableAllTasks(enable);
-    message = QString("S:Asked for ")+(enable?"enabling":"disabling")
-        +" all tasks at once.";
-    // wait to make it less probable that the page displays before effect
-    QThread::usleep(500000);
-  } else if (event=="reloadConfig") {
-    // TODO should not display reload button when no config file is defined
-    bool ok = Qrond::instance()->loadConfig();
-    message = ok ? "S:Configuration reloaded."
-                 : "E:Cannot reload configuration.";
-    // wait to make it less probable that the page displays before effect
-    QThread::usleep(1000000);
-  } else if (event=="removeConfig") {
-    bool ok = webconsole->configRepository()->removeConfig(configId);
-    message = ok ? "S:Configuration removed."
-                 : "E:Cannot remove configuration.";
-  } else if (event=="activateConfig") {
-    bool ok = webconsole->configRepository()->activateConfig(configId);
-    message = ok ? "S:Configuration activated."
-                 : "E:Cannot activate configuration.";
-    // wait to make it less probable that the page displays before effect
-    QThread::usleep(1000000);
-  } else
-    message = "E:Internal error: unknown event '"+event+"'.";
-  if (message.startsWith("E:") || message.startsWith("W:"))
-    res.setStatus(500); // LATER use more return codes
-  if (event.contains(webconsole->showAuditEvent()) // empty regexps match any string
-      && (webconsole->hideAuditEvent().pattern().isEmpty()
-          || !event.contains(webconsole->hideAuditEvent()))
-      && userid.contains(webconsole->showAuditUser())
-      && (webconsole->hideAuditUser().pattern().isEmpty()
-          || !userid.contains(webconsole->hideAuditUser()))) {
-    if (auditInstanceIds.isEmpty())
-      auditInstanceIds << taskInstanceId;
-    for (quint64 auditInstanceId: auditInstanceIds)
-      Log::info(taskId, auditInstanceId)
-          << "AUDIT action: '" << event
-          << ((res.status() < 300 && res.status() >=200)
-              ? "' result: success" : "' result: failure")
-          << " actor: '" << userid
-          << "' address: { " << req.clientAdresses().join(", ")
-          << " } params: " << req.paramsAsParamSet().toString(false)
-          << " response message: " << message;
-  }
-  if (!disableRedirect && !redirect.isEmpty()) {
-    res.setBase64SessionCookie("message", message, "/");
-    res.clearCookie("redirect", "/");
-    res.redirect(redirect);
-  } else {
-    res.setContentType("text/plain;charset=UTF-8");
-    message.append("\n");
-    res.output()->write(message.toUtf8());
-  }
-  return true;
-} },
 { "/console/confirm/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -1436,82 +1289,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
 }, true },
-{ "/console/confirm", []( // LATER remove this transitional/compatibility handler
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int) {
-      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
-                          req, res))
-        return true;
-      Log::debug() << "web user interface was called with a deprecated url: "
-                   << req.methodName() << " " << req.url().toString()
-                   << " Referer: "<< req.header("Referer") << " From: "
-                   << req.clientAdresses().join(", ") << " User-Agent: "
-                   << req.header("User-Agent");
-      QString event = req.param("event");
-      QString taskId = req.param("taskid");
-      QString gridboardId = req.param("gridboardid");
-      QString taskInstanceId = req.param("taskinstanceid");
-      QString configId = req.param("configid");
-      QString referer = req.header(
-            "Referer", processingContext->paramString("!pathtoroot"));
-      QString message;
-      QString doPath = "do";
-      QUrlQuery doQuery(req.url());
-      // doQuery.removeAllQueryItems("event");
-      if (event == "abortTask") {
-        message = "abort task "+taskInstanceId;
-        doPath = "../do/v1/taskinstances/abort/"+taskInstanceId;
-        doQuery.clear();
-      } else if (event == "cancelRequest") {
-        message = "cancel request "+taskInstanceId;
-        doPath = "../do/v1/taskinstances/cancel/"+taskInstanceId;
-        doQuery.clear();
-      } else if (event == "enableAllTasks") {
-        message = QString(req.param("enable") == "true" ? "enable" : "disable")
-            + " all tasks";
-        doPath = QStringLiteral("../do/v1/tasks/")
-                                +(req.param("enable") == "true" ? "enable_all" : "disable_all");
-      } else if (event == "enableTask") {
-        message = QString(req.param("enable") == "true" ? "enable" : "disable")
-            + " task '"+taskId+"'";
-        // there is no transitional doPath= because there are no confirmation
-        // for task enable/disable (this is very likely to be dead code)
-      } else if (event == "reloadConfig") {
-        message = "reload configuration";
-        doPath = "../do/v1/configs/reload_config_file";
-        doQuery.clear();
-      } else if (event == "removeConfig") {
-        message = "remove configuration "+configId;
-        doPath = "../do/v1/configs/remove/"+configId;
-        doQuery.clear();
-      } else if (event == "activateConfig") {
-        message = "activate configuration "+configId;
-        doPath = "../do/v1/configs/activate/"+configId;
-        doQuery.clear();
-      } else if (event == "clearGridboard") {
-        message = "clear gridboard "+gridboardId;
-        doPath = "../do/v1/gridboards/clear/"+gridboardId;
-        doQuery.clear();
-      } else {
-        message = event;
-      }
-      message = "<div class=\"well\">"
-                "<h4 class=\"text-center\">Are you sure you want to "+message
-          +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
-           "href=\""+doPath+"?"+doQuery.toString(QUrl::FullyEncoded)
-          +"\">Yes, sure</a> <a class=\"btn\" href=\""+referer
-          +"\">Cancel</a></div>";
-      res.setBase64SessionCookie("redirect", referer, "/");
-      QUrl url(req.url());
-      url.setPath("/console/adhoc.html");
-      url.setQuery(QString());
-      req.overrideUrl(url);
-      ParamsProviderMergerRestorer restorer(processingContext);
-      processingContext->overrideParamValue("content", message);
-      res.clearCookie("message", "/");
-      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-      return true;
-} },
 { "/console/tasks/request/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -1565,17 +1342,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       res.redirect(referer);
       return true;
 }, true },
-{ "/console/taskdoc.html", []( // LATER remove this transitional/compatibility handler
-    WebConsole *, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
-      Log::debug() << "web user interface was called with a deprecated url: "
-                   << req.methodName() << " " << req.url().toString()
-                   << " Referer: "<< req.header("Referer") << " From: "
-                   << req.clientAdresses().join(", ") << " User-Agent: "
-                   << req.header("User-Agent");
-      res.redirect("tasks/"+req.param("taskid"));
-      return true;
-} },
 { "/console/tasks/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -1667,17 +1433,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       }
       return false;
 }, true },
-{ "/console/gridboard.html", []( // LATER remove this transitional/compatibility handler
-    WebConsole *, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
-      Log::debug() << "web user interface was called with a deprecated url: "
-                   << req.methodName() << " " << req.url().toString()
-                   << " Referer: "<< req.header("Referer") << " From: "
-                   << req.clientAdresses().join(", ") << " User-Agent: "
-                   << req.header("User-Agent");
-      res.redirect("gridboards/"+req.param("gridboardid"));
-      return true;
-} },
 { "/console/gridboards/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -2301,8 +2056,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
 RadixTree<QString> _staticRedirects {
   { { "/", "/console" }, "console/overview.html" },
   { { "/console/", "/console/index.html"}, "overview.html" },
-  { "/console/infra.html", "infrastructure.html" }, // LATER remove
-  { "/console/log.html", "logs.html" },  // LATER remove
 };
 
 bool WebConsole::handleRequest(
@@ -2462,12 +2215,12 @@ void WebConsole::enableAccessControl(bool enabled) {
         // read for read-only rest calls
         .allow("read", "^GET|HEAD$", "^/rest/")
         // operate for operation including other rest calls
-        .allow("operate", "", "^/(rest|console)/(do|confirm)") // LATER keep only /console/confirm/
+        .allow("operate", "", "^/console/confirm/")
         .allow("operate", "", "^/console/tasks/request/")
         .allow("operate", "", "^/do/")
         .allow("operate", "", "^/rest/")
         // nobody else on operation and rest paths
-        .deny("", "", "^/(rest|console)/(do|confirm)") // LATER keep only /console/confirm/
+        .deny("", "", "^/console/confirm/")
         .deny("", "", "^/console/tasks/request/")
         .deny("", "", "^/do/")
         .deny("", "", "^/rest/")
