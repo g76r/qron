@@ -819,6 +819,8 @@ static void apiAuditAndResponse(
         QStringLiteral("userid")).toString();
   QString referer = req.header(QStringLiteral("Referer"));
   QString redirect = req.base64Cookie("redirect", referer);
+  bool disableRedirect = req.header("Prefer")
+      .contains("return=representation", Qt::CaseInsensitive);
   if (auditAction.contains(webconsole->showAuditEvent()) // empty regexps match any string
       && (webconsole->hideAuditEvent().pattern().isEmpty()
           || !auditAction.contains(webconsole->hideAuditEvent()))
@@ -835,7 +837,7 @@ static void apiAuditAndResponse(
           << " } params: " << req.paramsAsParamSet().toString(false)
           << " response message: " << responseMessage;
   }
-  if (!redirect.isEmpty()) {
+  if (!disableRedirect && !redirect.isEmpty()) {
     res.setBase64SessionCookie(QStringLiteral("message"), responseMessage,
                                QStringLiteral("/"));
     res.clearCookie(QStringLiteral("redirect"), QStringLiteral("/"));
@@ -1255,6 +1257,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
                       |HttpRequest::PUT, req, res))
     return true;
+  bool disableRedirect = req.header("Prefer")
+      .contains("return=representation", Qt::CaseInsensitive);
   Log::debug() << "web user interface was called with a deprecated url: "
                << req.methodName() << " " << req.url().toString()
                << " Referer: "<< req.header("Referer") << " From: "
@@ -1383,7 +1387,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           << " } params: " << req.paramsAsParamSet().toString(false)
           << " response message: " << message;
   }
-  if (!redirect.isEmpty()) {
+  if (!disableRedirect && !redirect.isEmpty()) {
     res.setBase64SessionCookie("message", message, "/");
     res.clearCookie("redirect", "/");
     res.redirect(redirect);
