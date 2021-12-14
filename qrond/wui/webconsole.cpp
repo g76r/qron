@@ -36,6 +36,7 @@
 #include "format/htmltableformatter.h"
 #include "format/jsonformats.h"
 #include <QJsonDocument>
+#include "config/requestformfield.h"
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -1368,7 +1369,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             "pfconfig",
             ParamSet::escape(
               QString::fromUtf8(
-                task.toPfNode().toPf(PfOptions().setShouldIndent()
+                task.originalPfNode().toPf(PfOptions().setShouldIndent()
                                      .setShouldWriteContentBeforeSubnodes()
                                      .setShouldIgnoreComment(false)))));
       TaskPseudoParamsProvider tppp = task.pseudoParams();
@@ -1423,7 +1424,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       }
       if (subItem == "config.pf") {
-        return writePlainText(task.toPfNode().toPf(
+        return writePlainText(task.originalPfNode().toPf(
                                 PfOptions().setShouldIndent()
                                 .setShouldWriteContentBeforeSubnodes()
                                 .setShouldIgnoreComment(false)), req, res);
@@ -1522,7 +1523,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
-            webconsole->scheduler()->config().tasksGroups().values(), req, res);
+            webconsole->scheduler()->config().taskgroups().values(), req, res);
 } },
 { "/rest/v1/taskgroups/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
