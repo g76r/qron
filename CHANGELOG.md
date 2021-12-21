@@ -1,3 +1,56 @@
+# From 1.10.0 to 1.10.1 (2021-12-21)
+* Minor improvements
+ - task trigger diagram: taskrequest edges constraint layout (again)
+ - %-evaluation: introduced %=match
+* Bugfixes
+ - fixed 2 bugs introduced by task templates implementation
+  - params were sent to ssh tasks instead of vars
+  - triggers deduced from event subscriptions was no longer visible in
+    wui and api
+
+# From 1.9.10 to 1.10.0 (2021-12-14)
+* New features and notable changes
+ - Based on Qt6, no longer supporting Qt5
+ - config: introducing task templates
+ - adding new docker execution mean
+ - config: taskgroups now inherit from each others
+   e.g. taskgroup foo.bar contains params, event subscriptions, etc. of
+   taskgroup foo (if taskgroup foo exists)
+* Minor improvements and bug fixes
+ - config: renaming setenv to vars and removing unsetenv
+   also: no longer import qron system environement into tasks ones
+ - http api: do not redirect on api calls when setting header
+   "Prefer: return=representation"
+ - http api: introduced /rest/v1/scheduler/stats.json
+ - docker packaging, pushed to public docker hub
+ - removed old (4 years old) compatibility wui and api endpoints
+ - graphviz diagrams: densify diagrams with ranksep=0
+ - alert: made html alert xhtml compliant (or at less close markups)
+   otherwise some simple html renderers (such as teams and its
+   smtp-to-channel gateway) display garbage
+ - %-evaluation: introduced %={sha1,md5,sha256,hex,fromhex,base64,frombase64}
+ - %-evaluation: introduced %=eval %=escape and fixed %=env
+ - linux packaging: integrating Qt-6.2 libs until all distribs provide them
+ - webconsole: fixed support for headers in html templating engine
+   this now works: <?value:!header Host?>
+ - webconsole: hide navbar on hidenav=true parameter or cookie
+ - task trigger diagram: improvement incl. display action params
+* Bugfixes
+ - %-evaluation: fixed %=sub which discarded data after regexp match
+   %{=sub!food!/o/O} used to return "fO" instead of "fOod"
+   whereas %{=sub!food!/o/O/g} correctly returned "fOOd"
+ - webconsole: allow access to /font w/o credentials
+ - http api: fixed last logs endpoints
+   fixed:
+     /rest/v1/logs/last_info_entries.csv
+   added:
+     /rest/v1/logs/last_audit_entries.csv
+     /rest/v1/logs/last_warning_entries.csv
+     /rest/v1/logs/last_warning_entries.html
+* Behind-the-curtain improvements
+ - many code fixes due to warnings from new compilers versions introduced
+   with Qt6
+
 # From 1.9.9 to 1.9.10 (2021-11-07)
 * Minor improvements and bug fixes
  - alerts: SMTP network timeout is no longer 2" but 5" by default, and can be
