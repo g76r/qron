@@ -35,7 +35,6 @@
             <tr><th>Task id (fully qualified with group id)</th><td><?value:11?></td></tr>
             <tr><th>Task label</th><td><?value:2?></td></tr>
             <tr><th>Task group id</th><td><?value:1?></td></tr>
-            <tr><th>Workflow Task (for subtasks)</th><td><?=%{=ifneq!%31!!<a href="./%31">%31</a>}?></td></th>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
             <tr><th>Triggers (scheduling)<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-triggers-and-constraints"><span class="icon-help-circled"/></a></th><td><?=%{=switch:%28::%{=switch,%31,,<span class="icon-circle-empty"></span>&nbsp;no trigger,}}?></td></tr>
             <tr><th>Minimum expected duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-monitoring"><span class="icon-help-circled"/></a></th><td><?value:23:?></td></tr>
@@ -80,16 +79,6 @@
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Task Workflow<a class="help" href="<?value:!pathtoroot?>user-manual.html#workflows-and-subtasks"><span class="icon-help-circled"/></a> Diagram</h2>
-          <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.svg"><i class="icon-file"></i> SVG</a>
-          <a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.dot"><i class="icon-file"></i> DOT</a>
-          <div id="workflowDiagram" style="display: table; margin: 0 auto;">
-            <noscript><img src="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.svg" alt="Task Workflow Diagram" class="img-responsive"/></noscript>
-          </div>
-        </div>
-      </div>
-      <div class="row">
-        <div class="col-md-12">
           <h2>Raw Task Configuration</h2>
           <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/config.pf"><i class="icon-file"></i> PF</a>
           <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
@@ -97,14 +86,4 @@
       </div>
 
 <?include:common-scripts.html?>
-    <script type="text/javascript">
-anchors.add('h2');
-$(document).ready(function(){
-  $('#workflowDiagram').load('<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/workflow.svg', function() {
-    $("a").not("[xlink\\:title='']").each(function() {
-      this.setAttributeNS('http://www.w3.org/1999/xlink','href','./'+$(this).attr('xlink:title'));
-    });
-  });
-});
-    </script>
 <?include:footer.html?>

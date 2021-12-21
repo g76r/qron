@@ -33,7 +33,6 @@
 #include "auth/usersdatabase.h"
 #include "httpd/graphvizimagehttphandler.h"
 #include <QSortFilterProxyModel>
-#include "htmlstepitemdelegate.h"
 #include "configuploadhandler.h"
 #include "configmgt/configrepository.h"
 #include "ui/configsmodel.h"
@@ -74,15 +73,13 @@ class WebConsole : public HttpHandler {
   QSortFilterProxyModel *_sortedGridboardsModel;
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
   TasksModel *_tasksModel;
-  QSortFilterProxyModel *_mainTasksModel, *_subtasksModel;
+  QSortFilterProxyModel *_mainTasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
   TaskGroupsModel *_taskGroupsModel;
   QSortFilterProxyModel *_sortedTaskGroupsModel;
   TextMatrixModel *_alertChannelsModel;
   SharedUiItemsTableModel *_calendarsModel;
   QSortFilterProxyModel *_sortedCalendarsModel;
-  SharedUiItemsTableModel *_stepsModel;
-  QSortFilterProxyModel *_sortedStepsModel;
   LogModel *_warningLogModel, *_infoLogModel, *_auditLogModel;
   ConfigsModel *_configsModel;
   ConfigHistoryModel *_configHistoryModel;
@@ -101,7 +98,7 @@ class WebConsole : public HttpHandler {
   *_htmlLastPostedNoticesView20,
   *_htmlTaskGroupsView, *_htmlTaskGroupsEventsView,
   *_htmlAlertChannelsView, *_htmlTasksResourcesView, *_htmlTasksAlertsView,
-  *_htmlLogFilesView, *_htmlCalendarsView, *_htmlStepsView,
+  *_htmlLogFilesView, *_htmlCalendarsView,
   *_htmlConfigsView, *_htmlConfigHistoryView;
   HtmlSchedulerConfigItemDelegate *_htmlConfigsDelegate,
   *_htmlConfigHistoryDelegate;
@@ -213,7 +210,6 @@ public:
   HtmlTableView *htmlTasksAlertsView() const { return _htmlTasksAlertsView; }
   HtmlTableView *htmlLogFilesView() const { return _htmlLogFilesView; }
   HtmlTableView *htmlCalendarsView() const { return _htmlCalendarsView; }
-  HtmlTableView *htmlStepsView() const { return _htmlStepsView; }
   HtmlTableView *htmlConfigsView() const { return _htmlConfigsView; }
   HtmlTableView *htmlConfigHistoryView() const {
     return _htmlConfigHistoryView; }

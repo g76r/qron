@@ -67,7 +67,6 @@ SOURCES += \
     wui/htmlalertitemdelegate.cpp \
     wui/htmllogentryitemdelegate.cpp \
     wui/htmlschedulerconfigitemdelegate.cpp \
-    wui/htmlstepitemdelegate.cpp \
     wui/htmltaskinstanceitemdelegate.cpp \
     wui/htmltaskitemdelegate.cpp
 
@@ -78,7 +77,6 @@ HEADERS += \
     wui/htmlalertitemdelegate.h \
     wui/htmllogentryitemdelegate.h \
     wui/htmlschedulerconfigitemdelegate.h \
-    wui/htmlstepitemdelegate.h \
     wui/htmltaskinstanceitemdelegate.h \
     wui/htmltaskitemdelegate.h
 

@@ -1,3 +1,9 @@
+# Since 1.10.1
+* New features and notable changes
+ - removed workflows (workflow mean, subtasks, steps, etc.)
+* Minor improvements
+* Bugfixes
+
 # From 1.10.0 to 1.10.1 (2021-12-21)
 * Minor improvements
  - task trigger diagram: taskrequest edges constraint layout (again)
@@ -10,7 +16,7 @@
 
 # From 1.9.10 to 1.10.0 (2021-12-14)
 * New features and notable changes
- - Based on Qt6, no longer supporting Qt5
+ - based on Qt6, no longer supporting Qt5
  - config: introducing task templates
  - adding new docker execution mean
  - config: taskgroups now inherit from each others
@@ -317,3 +323,40 @@
  - reingeniering work in data framework needed by GUI but without notable
    effect on scheduler daemon
  - muted some verbose debug log entries
+
+# From 1.8.4 to 1.8.5 (2015-9-15)
+ - Few maintenance minor changes and bugfixes
+   note: 1.8.4 and 1.8.5 were maintenance releases done in parallel of 1.9.0
+   development
+
+# From 1.8.3 to 1.8.4 (2015-7-26)
+ - Few maintenance minor changes and bugfixes
+   note: 1.8.4 and 1.8.5 were maintenance releases done in parallel of 1.9.0
+   development
+
+# From 1.8.2 to 1.8.3 (2015-7-19)
+ - Few maintenance minor changes and bugfixes
+
+# From 1.8.1 to 1.8.2 (2015-7-15)
+
+# From 1.8.0 to 1.8.1 (2015-7-3)
+
+# From 1.7.2 to 1.8.0 (2015-7-1)
+
+# From to 1.7.2  (2014-11-23)
+
+# From to 1.7.1  (2014-11-13)
+
+# From to 1.7.0  (2014-11-2)
+
+# From to 1.6.1  (2014-1-19)
+
+# From to 1.6.0  (2014-1-9)
+
+# From to 1.5.7 (2013-11-15)
+ - Few maintenance minor changes and bugfixes
+   note: 1.5.7 was a maintenance release done in parallel of 1.6.0
+   development
+
+# From to 1.5.6 (2013-9-4)
+

@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2021 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -24,8 +24,6 @@ HtmlTaskItemDelegate::HtmlTaskItemDelegate(QObject *parent)
 
 QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
-  bool isSubtask = !index.model()->index(index.row(), 31, index.parent())
-      .data().toString().isEmpty();
   switch (index.column()) {
   case 0:
   case 11: {
@@ -35,12 +33,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
                  +index.model()->index(index.row(), 11, index.parent()).data()
                  .toString()+
                  "\">");
-    if (mean == "workflow")
-      text.prepend("<i class=\"icon-workflow\"></i>&nbsp;");
-    else if (isSubtask)
-      text.prepend("<i class=\"icon-cog\"></i>&nbsp;"); // was: icon-puzzle-piece
-    else
-      text.prepend("<i class=\"icon-cog\"></i>&nbsp;");
+    text.prepend("<i class=\"icon-cog\"></i>&nbsp;");
     text.append("</a>");
     break;
   }
@@ -52,7 +45,7 @@ QString HtmlTaskItemDelegate::text(const QModelIndex &index) const {
     bool noTrigger = text.isEmpty();
     if (index.model()->index(index.row(), 30, index.parent()).data().toBool())
       text.prepend("<i class=\"icon-calendar\"></i>&nbsp;");
-    if (noTrigger && !isSubtask)
+    if (noTrigger)
       text.prepend("<i class=\"icon-circle-empty\"></i>&nbsp;no trigger ");
     if (!index.model()->index(index.row(), 29, index.parent()).data().toBool())
       text.prepend("<i class=\"icon-block\"></i>&nbsp;disabled ");

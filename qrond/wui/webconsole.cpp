@@ -29,7 +29,6 @@
 #include "htmllogentryitemdelegate.h"
 #include "alert/alert.h"
 #include "alert/gridboard.h"
-#include "config/step.h"
 #include "util/radixtree.h"
 #include <functional>
 #include "util/characterseparatedexpression.h"
@@ -41,8 +40,6 @@
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
 #define UNFINISHED_TASK_INSTANCE_MAXROWS 1000
-#define SVG_BELONG_TO_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"><a xlink:title=\"%1\"><text x=\"0\" y=\"15\">This task belongs to workflow \"%1\".</text></a></svg>"
-#define SVG_NOT_A_WORKFLOW "<svg height=\"30\" width=\"600\" xmlns=\"http://www.w3.org/2000/svg\" version=\"1.1\"><text x=\"0\" y=\"15\">This task is not a workflow.</text></svg>"
 #define ISO8601 QStringLiteral("yyyy-MM-dd hh:mm:ss")
 //#define GRAPHVIZ_MIME_TYPE "text/vnd.graphviz;charset=UTF-8"
 #define GRAPHVIZ_MIME_TYPE "text/plain;charset=UTF-8"
@@ -139,11 +136,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _mainTasksModel->setFilterRegularExpression("^$");
   _mainTasksModel->sort(11);
   _mainTasksModel->setSourceModel(_tasksModel);
-  _subtasksModel = new QSortFilterProxyModel(this);
-  _subtasksModel->setFilterKeyColumn(31);
-  _subtasksModel->setFilterRegularExpression(".+");
-  _subtasksModel->sort(11);
-  _subtasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
   _taskGroupsModel->setItemQualifierFilter("taskgroup");
@@ -159,13 +151,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedCalendarsModel = new QSortFilterProxyModel(this);
   _sortedCalendarsModel->sort(1);
   _sortedCalendarsModel->setSourceModel(_calendarsModel);
-  _stepsModel= new SharedUiItemsTableModel(this);
-  _stepsModel->setHeaderDataFromTemplate(
-        Step(PfNode("start"), 0, TaskGroup(), QString(),
-             QHash<QString,Calendar>()));
-  _stepsModel->setItemQualifierFilter("step");
-  _sortedStepsModel = new QSortFilterProxyModel(this);
-  _sortedStepsModel->setSourceModel(_stepsModel);
   _warningLogModel = new LogModel(this, Log::Warning);
   _infoLogModel = new LogModel(this, Log::Info);
   _auditLogModel = new LogModel(this, Log::Info, "AUDIT ");
@@ -470,13 +455,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   qobject_cast<HtmlItemDelegate*>(_htmlCalendarsView->itemDelegate())
       ->setPrefixForColumn(1, "<i class=\"icon-calendar\"></i>&nbsp;");
   _wuiHandler->addView(_htmlCalendarsView);
-  _htmlStepsView = new HtmlTableView(this, "steps");
-  _htmlStepsView->setModel(_sortedStepsModel);
-  _htmlStepsView->setEmptyPlaceholder("(no workflow step)");
-  _htmlStepsView->setColumnIndexes({1,2,3,4,5,6,7,8,9});
-  _htmlStepsView->enableRowAnchor(0);
-  _htmlStepsView->setItemDelegate(new HtmlStepItemDelegate(_htmlStepsView));
-  _wuiHandler->addView(_htmlStepsView);
   _htmlConfigsView = new HtmlTableView(this, "configs");
   _htmlConfigsView->setModel(_configsModel);
   _htmlConfigsView->setEmptyPlaceholder("(no config)");
@@ -1386,7 +1364,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
 }, true },
 { "/rest/v1/tasks/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
+    ParamsProviderMerger *, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
@@ -1396,31 +1374,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (task.isNull()) {
         res.setStatus(404);
         res.output()->write("Task not found.");
-        return true;
-      }
-      if (subItem == "workflow.svg") {
-        // LATER this rendering should be pooled
-        QString gv = task.graphvizWorkflowDiagram();
-        if (!gv.isEmpty()) {
-          GraphvizImageHttpHandler *h = new GraphvizImageHttpHandler;
-          h->setImageFormat(GraphvizImageHttpHandler::Svg);
-          h->setSource(gv);
-          h->handleRequest(req, res, processingContext);
-          h->deleteLater(); // LATER why deleting *later* ?
-          return true;
-        }
-        if (!task.workflowTaskId().isEmpty()) {
-          return writeSvgImage(QString(SVG_BELONG_TO_WORKFLOW)
-                               .arg(task.workflowTaskId()).toUtf8(), req, res);
-        }
-        return writeSvgImage(SVG_NOT_A_WORKFLOW, req, res);
-      }
-      if (subItem == "workflow.dot") {
-        QString gv = task.graphvizWorkflowDiagram();
-        if (!gv.isEmpty())
-          return writePlainText(gv.toUtf8(), req, res, GRAPHVIZ_MIME_TYPE);
-        res.setStatus(404);
-        res.output()->write("No such workflow.");
         return true;
       }
       if (subItem == "config.pf") {
@@ -1554,25 +1507,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (fields == QStringLiteral("id,triggers,onstart,onsuccess,onfailure"))
         return writeHtmlView(webconsole->htmlTasksEventsView(), req, res);
       return writeHtmlView(webconsole->htmlTasksListView(), req, res);
-} },
-{ "/rest/v1/steps/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
-      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
-        return true;
-      SchedulerConfig config = webconsole->scheduler()->config();
-      QList<Step> steps;
-      for (const Task &task: config.tasks())
-        for (const Step &step : task.steps())
-          steps.append(step);
-      return sortAndWriteItemsAsCsv(steps, req, res);
-} },
-{ "/rest/v1/steps/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
-      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
-        return true;
-      return writeHtmlView(webconsole->htmlStepsView(), req, res);
 } },
 { "/rest/v1/hosts/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
@@ -2138,7 +2072,6 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     _unfinishedTaskInstancetModel->setDocumentManager(scheduler);
     _calendarsModel->setDocumentManager(scheduler);
     _taskGroupsModel->setDocumentManager(scheduler);
-    _stepsModel->setDocumentManager(scheduler);
     connect(_scheduler, &Scheduler::globalEventSubscriptionsChanged,
             _schedulerEventsModel, &SchedulerEventsModel::globalEventSubscriptionsChanged);
     connect(_scheduler, &Scheduler::noticePosted,

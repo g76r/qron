@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2016 Hallowyn and others.
+ Copyright 2021 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -35,7 +35,6 @@
                   <li><a href="#tasks-monitoring">Monitoring</a>
                   <li><a href="#tasks-request-forms">Request Forms</a>
                 </ul>
-                <li><a href="#workflows-and-subtasks">Wokflows and Subtasks</a>
               </ul>
               <li><a href="#infrastructure">Infrastructure</a>
               <ul class="nav">
@@ -151,7 +150,6 @@ operating system integration</a>.
 <h2>Tasks Hierarchy</h2>
 
 <p>Tasks are grouped within taskgroups in a tree hierarchy.
-In addition, workflow tasks have subtasks.
 
 <p>Sample trigger diagram with 5 tasks within 2 task groups:
 <img class="img-responsive center-block"
@@ -236,11 +234,9 @@ documentation <tt>info</tt>.
     host
     <li><tt>ssh</tt>: establish an SSH connection to the target host to
     execute the task
+    <li><tt>docker</tt>: run a docker container to execute the task, on the same
+    host
     <li><tt>http</tt>: perform an HTTP request
-    <li><tt>workflow</tt>: start a workflow consisting of one or several
-    subtasks conditionaly linked together with transitions, each of them having
-    their own execution properties, see
-    <a href="#workflows-and-subtasks">workflows</a> section below
     <li><tt>donothing</tt>: do not execute anything, but still trigger events,
     pretending the execution to be successful (i.e. <tt>onsuccess</tt> actions
     will be triggered, not <tt>onfailure</tt> ones)
@@ -250,12 +246,11 @@ documentation <tt>info</tt>.
     <a href="#infrastructure">infrastructure</a> section for more details
   <li><tt>command</tt>: interpreted depending on the execution mean:
   <ul>
-    <li><tt>local</tt> and <tt>ssh</tt> means: command line, spaces being
-    interpreted as command arguments separators but if they are protected
-    by backslashes
+    <li><tt>local</tt>, <tt>ssh</tt> and <tt>docker</tt> means: command line,
+    spaces being interpreted as command arguments separators but if they are
+    protected by backslashes
     <li><tt>http</tt> mean: path and query string
-    <li><tt>workflow</tt> and <tt>donothing</tt> means: not applicable, should
-    be omitted
+    <li><tt>donothing</tt> mean: not applicable, should be omitted
   </ul> 
 </ul>
 
@@ -595,10 +590,6 @@ the validation is enforced server-side)
   )
 )
 </pre>
-
-<h3>Workflows and Subtasks</h2>
-
-TODO
 
 <h2>Infrastructure</h2>
 
@@ -1233,13 +1224,6 @@ and HTTP are supported
   <li>e.g. <tt>(writefile(path /opt/file_transfer/in/file_XXXXXX.data)
                 (unique true) "my message\n")</tt>
 </ul>
-<li><tt>step</tt>: activate another step, only available within a
-<a href="#workflows-and-subtasks">workflow task</a>
-<ul>
-  <li>takes next step id as its main parameter
-  <li>e.g. <tt>(step 2)</tt>
-</ul>
-<li><tt>end</tt>: ends the workflow, only available within a workflow task
 </ul>
 
 <p>Sample configuration file fragments:
@@ -1301,9 +1285,6 @@ and HTTP are supported
      (command /bin/another_script)(mean local)
   )
 )
-</pre>
-<pre>
-TODO workflow exemple with (step) and (end) actions
 </pre>
 
 <h3>Notices</h3>
@@ -1391,7 +1372,7 @@ met
 <p>Task instances transitions:
 <ul>
 <li><tt>requestTask()</tt>: explicit task request from API or UI
-<li>request by configuration (trigger, action, workflow transition, etc.):
+<li>request by configuration (trigger, action, etc.):
 implicit task request deduced from configuration
 <li>start: when <a href="#tasks-triggers-and-constraints">constraints</a> are
 met, a queued task is started and reaches <tt>running</tt> status
@@ -1447,9 +1428,9 @@ Those timestamps can be read from API, UI and used in configuration through
 <pre>
   %!startdate # this task instance start date
   %{!enddate:yyyy-MM-dd} # end date with format specification
-  %!workflowrequestdate # main task instance (if subtask) request date
-  %{!workflowrequestdate:yyyyMMdd:-1days} # eve of main task request date
-  %{!statdate:ms1970} # this (sub)task start date in milliseconds since 1970
+  %!requestdate # task instance request date
+  %{!requestdate:yyyyMMdd:-1days} # eve of task request date
+  %{!statdate:ms1970} # this task start date in milliseconds since 1970
 </pre>
 
 For instance this can be used to set a task param or var according to
@@ -1458,14 +1439,14 @@ the request or start timestamp (but obviously not the end timestamp):
 (task build-reports-customers
   (taskgroup app1.biz.batch)
   (trigger(cron 0 0 23 * * 1-6))
-  (param filename /tmp/%{!workflowstartdate:yyyyMMdd}.out)
+  (param filename /tmp/%{!startdate:yyyyMMdd}.out)
   (mean local)
   (command /opt/myapp/bin/build-reports-customers.sh -o %filename)
 )
 (task build-reports-customers-alternative
   (taskgroup app1.biz.batch)
   (trigger(cron 0 0 23 * * 1-6))
-  (var FILENAME /tmp/%{!workflowstartdate:yyyyMMdd}.out)
+  (var FILENAME /tmp/%{!startdate:yyyyMMdd}.out)
   (mean local)
   (command /opt/myapp/bin/build-reports-customers.sh) # the script uses $FILENAME
 )
@@ -1578,11 +1559,6 @@ for the first digit (2xx: success, 4xx: input error, 5xx: server-side error,
 </tt>
 </td><td>task %taskid's configuration, in /rest/v1/tasks/list.csv format</td></tr>
 <tr><td><tt>
-<p>GET /rest/v1/tasks/%taskid/workflow.svg
-<p>GET /rest/v1/tasks/%taskid/workflow.dot
-</tt>
-</td><td>task %taskid's workflow diagram, in SVG or Graphviz dot format</td></tr>
-<tr><td><tt>
 <p>GET /rest/v1/tasks/list.csv
 <p>GET /rest/v1/tasks/list.html
 </td><td>list of tasks</td></tr>
@@ -1596,11 +1572,6 @@ graph), in SVG or Graphviz dot format</td></tr>
 <p>GET /rest/v1/tasks/trigger_diagram.dot
 </td><td>trigger diagram (taskgroup to tasks to trigger graph), in SVG or
 Graphviz dot format</td></tr>
-<tr><td><tt>
-<p>GET /rest/v1/steps/list.csv
-<p>GET /rest/v1/steps/list.html
-</tt>
-</td><td>list of workflow tasks steps</td></tr>
 <tr><td><tt>
 <p>GET /rest/v1/hosts/list.csv
 <p>GET /rest/v1/hosts/list.html
