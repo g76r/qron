@@ -1348,8 +1348,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             ParamSet::escape(
               QString::fromUtf8(
                 task.originalPfNode().toPf(PfOptions().setShouldIndent()
-                                     .setShouldWriteContentBeforeSubnodes()
-                                     .setShouldIgnoreComment(false)))));
+                                     .setShouldWriteContentBeforeSubnodes()))));
       TaskPseudoParamsProvider tppp = task.pseudoParams();
       SharedUiItemParamsProvider itemAsParams(task);
       processingContext->prepend(&tppp);
@@ -1379,8 +1378,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (subItem == "config.pf") {
         return writePlainText(task.originalPfNode().toPf(
                                 PfOptions().setShouldIndent()
-                                .setShouldWriteContentBeforeSubnodes()
-                                .setShouldIgnoreComment(false)), req, res);
+                                .setShouldWriteContentBeforeSubnodes()),
+                              req, res);
       }
       if (subItem == "list.csv") {
         return writeItemsAsCsv(task, req, res);

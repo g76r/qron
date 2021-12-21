@@ -2,6 +2,8 @@
 * New features and notable changes
  - removed workflows (workflow mean, subtasks, steps, etc.)
 * Minor improvements
+ - wui/http api: no longer display comments in task config.pf
+ - clarifying ui title of "Request form overridable params"
 * Bugfixes
 
 # From 1.10.0 to 1.10.1 (2021-12-21)
