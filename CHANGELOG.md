@@ -1,7 +1,15 @@
 # Since 1.10.1
 * New features and notable changes
  - removed workflows (workflow mean, subtasks, steps, etc.)
+ - introduced herds:
+   connecting tasks started through requesttask action to their ancestor
 * Minor improvements
+ - requesttask action new parameter: (lone) to request a task out of the herd
+ - http api: requesttask (/do/v1/tasks/request/) new params:
+   herdid: request a task within an existing (and not yet finished) herd
+   force=true: ignore most conditions to run a queued task (maxinstances...)
+ - http api: requesttask params validated against requestformfield format
+ - wui: new herds view on tasks page
  - wui/http api: no longer display comments in task config.pf
  - clarifying ui title of "Request form overridable params"
 * Bugfixes

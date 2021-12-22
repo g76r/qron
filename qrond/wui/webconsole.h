@@ -71,7 +71,8 @@ class WebConsole : public HttpHandler {
   SharedUiItemsTableModel *_alertSubscriptionsModel, *_alertSettingsModel,
   *_gridboardsModel, *_logConfigurationModel;
   QSortFilterProxyModel *_sortedGridboardsModel;
-  TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancetModel;
+  TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancesModel;
+  QSortFilterProxyModel *_herdsHistoryModel;
   TasksModel *_tasksModel;
   QSortFilterProxyModel *_mainTasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
@@ -91,7 +92,7 @@ class WebConsole : public HttpHandler {
   *_htmlLastEmittedAlertsView, *_htmlAlertSubscriptionsView,
   *_htmlAlertSettingsView, *_htmlGridboardsView, *_htmlWarningLogView,
   *_htmlWarningLogView10, *_htmlInfoLogView, *_htmlAuditLogView,
-  *_htmlTaskInstancesView, *_htmlUnfinishedTaskInstancesView,
+  *_htmlTaskInstancesView, *_htmlUnfinishedTaskInstancesView, *_htmlHerdsView,
   *_htmlTasksScheduleView, *_htmlTasksConfigView, *_htmlTasksParamsView,
   *_htmlTasksListView,
   *_htmlTasksEventsView, *_htmlSchedulerEventsView,

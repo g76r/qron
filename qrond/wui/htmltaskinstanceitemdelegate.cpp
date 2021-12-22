@@ -75,6 +75,16 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                    "<i class=\"icon-repeat\"></i></a></span> ");
     break;
   }
+  case 11: {
+      QStringList idSlashId = text.split(' '), html;
+      for (auto task: idSlashId) {
+        QStringList ids = task.split('/');
+        html.append("<a href=\"tasks/"+ids.at(0)+"\">"+ids.at(0)+"</a>/"
+                    +ids.at(1));
+      }
+      text = html.join(' ');
+      break;
+  }
   }
   return text;
 }

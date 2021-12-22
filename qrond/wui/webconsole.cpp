@@ -39,7 +39,7 @@
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
-#define UNFINISHED_TASK_INSTANCE_MAXROWS 1000
+#define UNFINISHED_TASK_INSTANCE_MAXROWS 10000
 #define ISO8601 QStringLiteral("yyyy-MM-dd hh:mm:ss")
 //#define GRAPHVIZ_MIME_TYPE "text/vnd.graphviz;charset=UTF-8"
 #define GRAPHVIZ_MIME_TYPE "text/plain;charset=UTF-8"
@@ -126,9 +126,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedGridboardsModel->setSourceModel(_gridboardsModel);
   _taskInstancesHistoryModel = new TaskInstancesModel(this);
   _taskInstancesHistoryModel->setItemQualifierFilter("taskinstance");
-  _unfinishedTaskInstancetModel =
+  _unfinishedTaskInstancesModel =
       new TaskInstancesModel(this, UNFINISHED_TASK_INSTANCE_MAXROWS, false);
-  _unfinishedTaskInstancetModel->setItemQualifierFilter("taskinstance");
+  _unfinishedTaskInstancesModel->setItemQualifierFilter("taskinstance");
+  _herdsHistoryModel = new QSortFilterProxyModel(this);
+  _herdsHistoryModel->setFilterKeyColumn(11);
+  _herdsHistoryModel->setFilterRegularExpression(".");
+  _herdsHistoryModel->setSourceModel(_taskInstancesHistoryModel);
   _tasksModel = new TasksModel(this);
   _tasksModel->setItemQualifierFilter("task");
   _mainTasksModel = new QSortFilterProxyModel(this);
@@ -323,8 +327,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   _htmlUnfinishedTaskInstancesView =
       new HtmlTableView(this, "unfinishedtaskinstances",
-                        _unfinishedTaskInstancetModel->maxrows(), 200);
-  _htmlUnfinishedTaskInstancesView->setModel(_unfinishedTaskInstancetModel);
+                        _unfinishedTaskInstancesModel->maxrows(), 200);
+  _htmlUnfinishedTaskInstancesView->setModel(_unfinishedTaskInstancesModel);
   QHash<QString,QString> taskInstancesTrClasses;
   taskInstancesTrClasses.insert("failure", "danger");
   taskInstancesTrClasses.insert("queued", "warning");
@@ -340,11 +344,20 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
         this, "taskinstances", _taskInstancesHistoryModel->maxrows());
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
-  _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task)");
+  _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task instance)");
   _htmlTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,7,8});
   _htmlTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(_htmlTaskInstancesView));
   _wuiHandler->addView(_htmlTaskInstancesView);
+  _htmlHerdsView = new HtmlTableView(this, "herds", 20);
+  _htmlHerdsView->setModel(_herdsHistoryModel);
+  _htmlHerdsView->setTrClass("%1", 2, taskInstancesTrClasses);
+  _htmlHerdsView->setEmptyPlaceholder("(no recent herd)");
+  _htmlHerdsView->setColumnIndexes({10,1,2,3,7,11,8});
+  auto htmlHerdsDelegate = new HtmlTaskInstanceItemDelegate(_htmlHerdsView);
+  htmlHerdsDelegate->setMaxCellContentLength(16384);
+  _htmlHerdsView->setItemDelegate(htmlHerdsDelegate);
+  _wuiHandler->addView(_htmlHerdsView);
   _htmlTasksScheduleView = new HtmlTableView(this, "tasksschedule");
   _htmlTasksScheduleView->setModel(_mainTasksModel);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
@@ -863,7 +876,8 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       params.removeValue(key);
   // LATER should check that mandatory form fields have been set ?
   TaskInstanceList instances = webconsole->scheduler()
-      ->syncRequestTask(taskId, params);
+      ->syncRequestTask(taskId, params, params.valueAsBool("force", false),
+                        params.value("herdid"));
   QString message;
   QList<quint64> taskInstanceIds;
   if (!instances.isEmpty()) {
@@ -2068,7 +2082,7 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler->alerter(), &Alerter::configChanged,
             this, &WebConsole::alerterConfigChanged);
     _taskInstancesHistoryModel->setDocumentManager(scheduler);
-    _unfinishedTaskInstancetModel->setDocumentManager(scheduler);
+    _unfinishedTaskInstancesModel->setDocumentManager(scheduler);
     _calendarsModel->setDocumentManager(scheduler);
     _taskGroupsModel->setDocumentManager(scheduler);
     connect(_scheduler, &Scheduler::globalEventSubscriptionsChanged,
@@ -2189,7 +2203,7 @@ void WebConsole::paramsChanged(
   _tasksModel->setCustomActions(customactions_taskslist);
   QString customactions_instanceslist =
       newParams.rawValue("webconsole.customactions.instanceslist");
-  _unfinishedTaskInstancetModel->setCustomActions(customactions_instanceslist);
+  _unfinishedTaskInstancesModel->setCustomActions(customactions_instanceslist);
   _taskInstancesHistoryModel->setCustomActions(customactions_instanceslist);
   int rowsPerPage = newParams.valueAsInt(
         "webconsole.htmltables.rowsperpage", 100);
