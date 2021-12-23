@@ -28,6 +28,8 @@
    /rest/v1/taskinstances/current/list.{csv,html} new endpoints
  - http api: requesttask params validated against requestformfield format
  - wui: new herds view on tasks page
+ - when target is invalid, set task to failure rather than canceling it
+ - tasks trigger diagram: fixed inversed arrows on global requesttask edges
  - wui/http api: no longer display comments in task config.pf
  - clarifying ui title of "Request form overridable params"
 * Bugfixes
