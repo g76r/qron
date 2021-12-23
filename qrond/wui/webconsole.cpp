@@ -135,11 +135,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _herdsHistoryModel->setSourceModel(_taskInstancesHistoryModel);
   _tasksModel = new TasksModel(this);
   _tasksModel->setItemQualifierFilter("task");
-  _mainTasksModel = new QSortFilterProxyModel(this);
-  _mainTasksModel->setFilterKeyColumn(31);
-  _mainTasksModel->setFilterRegularExpression("^$");
-  _mainTasksModel->sort(11);
-  _mainTasksModel->setSourceModel(_tasksModel);
   _schedulerEventsModel = new SchedulerEventsModel(this);
   _taskGroupsModel = new TaskGroupsModel(this);
   _taskGroupsModel->setItemQualifierFilter("taskgroup");
@@ -359,7 +354,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHerdsView->setItemDelegate(htmlHerdsDelegate);
   _wuiHandler->addView(_htmlHerdsView);
   _htmlTasksScheduleView = new HtmlTableView(this, "tasksschedule");
-  _htmlTasksScheduleView->setModel(_mainTasksModel);
+  _htmlTasksScheduleView->setModel(_tasksModel);
   _htmlTasksScheduleView->setEmptyPlaceholder("(no task in configuration)");
   _htmlTasksScheduleView->setColumnIndexes({11,2,5,6,19,10,17,18});
   _htmlTasksScheduleView->enableRowAnchor(11);
@@ -389,7 +384,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksListView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksListView));
   _htmlTasksEventsView = new HtmlTableView(this, "tasksevents");
-  _htmlTasksEventsView->setModel(_mainTasksModel);
+  _htmlTasksEventsView->setModel(_tasksModel);
   _htmlTasksEventsView->setEmptyPlaceholder("(no task in configuration)");
   _htmlTasksEventsView->setColumnIndexes({11,6,14,15,16,18});
   _htmlTasksEventsView->setItemDelegate(

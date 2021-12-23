@@ -74,7 +74,6 @@ class WebConsole : public HttpHandler {
   TaskInstancesModel *_taskInstancesHistoryModel, *_unfinishedTaskInstancesModel;
   QSortFilterProxyModel *_herdsHistoryModel;
   TasksModel *_tasksModel;
-  QSortFilterProxyModel *_mainTasksModel;
   SchedulerEventsModel *_schedulerEventsModel;
   TaskGroupsModel *_taskGroupsModel;
   QSortFilterProxyModel *_sortedTaskGroupsModel;
