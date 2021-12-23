@@ -328,8 +328,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   taskInstancesTrClasses.insert("failure", "danger");
   taskInstancesTrClasses.insert("queued", "warning");
   taskInstancesTrClasses.insert("running", "info");
+  taskInstancesTrClasses.insert("waiting", "info");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
-  _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no running or queued task)");
+  _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no unfinished task)");
   _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,7,8});
   _htmlUnfinishedTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
@@ -340,7 +341,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task instance)");
-  _htmlTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,7,8});
+  _htmlTaskInstancesView->setColumnIndexes({0,1,2,3,4,12,6,7,8});
   _htmlTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(_htmlTaskInstancesView));
   _wuiHandler->addView(_htmlTaskInstancesView);
@@ -1816,44 +1817,32 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      QString status = req.param(QStringLiteral("status"));
-      if (status.isEmpty())
-        return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
-      if (status == "running")
-        return sortAndWriteItemsAsCsv(
-              webconsole->scheduler()->runningTaskInstances(), req, res);
-      if (status == "queued")
-        return sortAndWriteItemsAsCsv(
-              webconsole->scheduler()->queuedTaskInstances(), req, res);
-      if (status == "queued,running")
-        return sortAndWriteItemsAsCsv(
-              webconsole->scheduler()->queuedOrRunningTaskInstances(), req,
-              res);
-      res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
-      res.output()->write("Filter value not supported.\n");
-      return true;
+      return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
 } },
 { "/rest/v1/taskinstances/list.html", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      QString status = req.param(QStringLiteral("status"));
-      if (status.isEmpty())
-        return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
-      if (status == "running")
-        return sortAndWriteItemsAsHtmlTable(
-              webconsole->scheduler()->runningTaskInstances(), req, res);
-      if (status == "queued")
-        return sortAndWriteItemsAsHtmlTable(
-              webconsole->scheduler()->queuedTaskInstances(), req, res);
-      if (status == "queued,running")
-        return sortAndWriteItemsAsHtmlTable(
-              webconsole->scheduler()->queuedOrRunningTaskInstances(), req,
-              res);
-      res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
-      res.output()->write("Filter value not supported.\n");
-      return true;
+      return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
+} },
+{ "/rest/v1/taskinstances/current/list.csv", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return sortAndWriteItemsAsCsv(
+            webconsole->scheduler()->unfinishedTaskInstances().values(),
+            req, res);
+    } },
+{ "/rest/v1/taskinstances/current/list.html", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *, int) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return sortAndWriteItemsAsHtmlTable(
+            webconsole->scheduler()->unfinishedTaskInstances().values(),
+            req, res);
 } },
 { "/rest/v1/scheduler_events/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,

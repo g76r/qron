@@ -2,12 +2,30 @@
 * New features and notable changes
  - removed workflows (workflow mean, subtasks, steps, etc.)
  - introduced herds:
-   connecting tasks started through requesttask action to their ancestor
+  - connecting tasks started through requesttask action to their ancestor
+    new taskinstances fields: 10 Herd Id, 11 Herded Tasks Instances
+  - herder task (the first one) of a herd waits by default for other tasks
+      before finishing
+    new taskinstance status: waiting
+    everything that was named "end" or "ended" is now either (mostly) "stop"
+      or "stopped", or (when after waiting) "finish" or "finished"
+      a task stops when the process/query/etc. is finished
+      a task finishes when it has nothing left to wait for after stopping
+    new task config element: herdingpolicy { waitand waitor waitown nowait }
+      defaults to waitand (waits and compute success as an and between all
+      herded tasks)
+    new taskinstances fields: 12 Finish Date, 13 Time waiting
 * Minor improvements
+ - !endate taskinstance pseudo param has been renamed to !stopdate
  - requesttask action new parameter: (lone) to request a task out of the herd
  - http api: requesttask (/do/v1/tasks/request/) new params:
    herdid: request a task within an existing (and not yet finished) herd
    force=true: ignore most conditions to run a queued task (maxinstances...)
+ - http api taskslist no longer propose (bugged) status filters but instead
+   a subset of "current" task instances, that is of unfinished task instances
+   plus a few very soon finished tasks instances
+   /rest/v1/taskinstances/list.{csv,html} no longer supports status param
+   /rest/v1/taskinstances/current/list.{csv,html} new endpoints
  - http api: requesttask params validated against requestformfield format
  - wui: new herds view on tasks page
  - wui/http api: no longer display comments in task config.pf
