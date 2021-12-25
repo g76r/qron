@@ -139,11 +139,11 @@ public:
   TemplatingHttpHandler *wuiHandler() const { return _wuiHandler; }
   ConfigUploadHandler *configUploadHandler() const {
     return _configUploadHandler; }
-  QRegularExpression showAuditEvent() const { return _showAuditEvent; }
-  QRegularExpression hideAuditEvent() const { return _hideAuditEvent; }
-  QRegularExpression showAuditUser() const { return _showAuditUser; }
-  QRegularExpression hideAuditUser() const { return _hideAuditUser; }
-  AlerterConfig alerterConfig() const { return _alerterConfig; }
+  QRegularExpression showAuditEvent() const { return _showAuditEvent.data(); }
+  QRegularExpression hideAuditEvent() const { return _hideAuditEvent.data(); }
+  QRegularExpression showAuditUser() const { return _showAuditUser.data(); }
+  QRegularExpression hideAuditUser() const { return _hideAuditUser.data(); }
+  AlerterConfig alerterConfig() const { return _alerterConfig.data(); }
   CsvTableView *csvFreeResourcesView() const { return _csvFreeResourcesView; }
   CsvTableView *csvResourcesLwmView() const { return _csvResourcesLwmView; }
   CsvTableView *csvResourcesConsumptionView() const {
