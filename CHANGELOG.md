@@ -5,7 +5,8 @@
   - connecting tasks started through requesttask action to their ancestor
     new taskinstances fields: 10 Herd Id, 11 Herded Tasks Instances
   - herder task (the first one) of a herd waits by default for other tasks
-      before finishing
+      before finishing and its result (success) is deduced from herded tasks
+      result (by default, again)
     new taskinstance status: waiting
     everything that was named "end" or "ended" is now either (mostly) "stop"
       or "stopped", or (when after waiting) "finish" or "finished"
@@ -33,6 +34,9 @@
  - wui/http api: no longer display comments in task config.pf
  - clarifying ui title of "Request form overridable params"
 * Bugfixes
+ - sub-minute cron timers was randomly fired since Qt introduced coarse timers
+* Behind-the-curtain improvements
+ - switching qrond and all libs to c++20
 
 # From 1.10.0 to 1.10.1 (2021-12-21)
 * Minor improvements
