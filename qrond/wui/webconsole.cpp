@@ -331,7 +331,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   taskInstancesTrClasses.insert("waiting", "info");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no unfinished task)");
-  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,7,8});
+  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,14,8});
   _htmlUnfinishedTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
                           _htmlUnfinishedTaskInstancesView));
@@ -341,7 +341,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task instance)");
-  _htmlTaskInstancesView->setColumnIndexes({0,1,2,3,4,12,6,7,8});
+  _htmlTaskInstancesView->setColumnIndexes({0,1,2,3,4,12,6,14,8});
   _htmlTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(_htmlTaskInstancesView));
   _wuiHandler->addView(_htmlTaskInstancesView);
@@ -349,7 +349,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHerdsView->setModel(_herdsHistoryModel);
   _htmlHerdsView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlHerdsView->setEmptyPlaceholder("(no recent herd)");
-  _htmlHerdsView->setColumnIndexes({10,1,2,3,7,11,8});
+  _htmlHerdsView->setColumnIndexes({10,1,2,3,14,11,8});
   auto htmlHerdsDelegate = new HtmlTaskInstanceItemDelegate(_htmlHerdsView);
   htmlHerdsDelegate->setMaxCellContentLength(16384);
   _htmlHerdsView->setItemDelegate(htmlHerdsDelegate);

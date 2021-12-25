@@ -3,7 +3,8 @@
  - removed workflows (workflow mean, subtasks, steps, etc.)
  - introduced herds:
   - connecting tasks started through requesttask action to their ancestor
-    new taskinstances fields: 10 Herd Id, 11 Herded Tasks Instances
+    new taskinstances fields: 10 Herd Id, 11 Herded Tasks Instances,
+      14 Total time
   - herder task (the first one) of a herd waits by default for other tasks
       before finishing and its result (success) is deduced from herded tasks
       result (by default, again)
@@ -29,6 +30,8 @@
    /rest/v1/taskinstances/current/list.{csv,html} new endpoints
  - http api: requesttask params validated against requestformfield format
  - wui: new herds view on tasks page
+ - wui: Running time (field 7) was replaced with Total time (field 14) on
+   existing task instances views
  - when target is invalid, set task to failure rather than canceling it
  - tasks trigger diagram: fixed inversed arrows on global requesttask edges
  - wui/http api: no longer display comments in task config.pf
