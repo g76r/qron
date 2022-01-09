@@ -899,7 +899,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   QString taskId = req.url().path().mid(matchedLength);
   QString message;
   TaskInstanceList instances =
-      webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
+      webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
   message = "S:Task instances { "+instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
                       req.methodName()+" "+req.url().path().left(matchedLength),
@@ -914,7 +914,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   QString taskId = req.url().path().mid(matchedLength);
   QString message;
   TaskInstanceList instances =
-      webconsole->scheduler()->cancelRequestsByTaskId(taskId);
+      webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
   message = "S:Task requests { "+instances.join(' ')+" } canceled.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
                       req.methodName()+" "+req.url().path().left(matchedLength),
@@ -929,10 +929,10 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   QString taskId = req.url().path().mid(matchedLength);
   QString message;
   TaskInstanceList instances =
-      webconsole->scheduler()->cancelRequestsByTaskId(taskId);
+      webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
   message = "S:Task requests { "+instances.join(' ')
       +" } canceled and task instances { ";
-  instances = webconsole->scheduler()->abortTaskInstancesByTaskId(taskId);
+  instances = webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
   message += instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
                       req.methodName()+" "+req.url().path().left(matchedLength),
@@ -1014,7 +1014,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
   QString message;
-  TaskInstance instance = webconsole->scheduler()->abortTask(taskInstanceId);
+  TaskInstance instance = webconsole->scheduler()->abortTaskInstance(taskInstanceId);
   if (instance.isNull()) {
     message = "E:Failed to abort task instance "
         +QString::number(taskInstanceId)+".";
@@ -1035,7 +1035,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
   QString message;
   TaskInstance instance =
-      webconsole->scheduler()->cancelRequest(taskInstanceId);
+      webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
   if (instance.isNull()) {
     message = "E:Failed to cancel task request "
         +QString::number(taskInstanceId)+".";
@@ -1056,9 +1056,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
   QString message;
   TaskInstance instance =
-      webconsole->scheduler()->cancelRequest(taskInstanceId);
+      webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
   if (instance.isNull()) {
-    instance = webconsole->scheduler()->abortTask(taskInstanceId);
+    instance = webconsole->scheduler()->abortTaskInstance(taskInstanceId);
     if (instance.isNull()) {
       message = "E:Failed to cancel or abort task instance "
           +QString::number(taskInstanceId)+".";

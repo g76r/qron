@@ -13,9 +13,10 @@
       or "stopped", or (when after waiting) "finish" or "finished"
       a task stops when the process/query/etc. is finished
       a task finishes when it has nothing left to wait for after stopping
-    new task config element: herdingpolicy { waitand waitor waitown nowait }
-      defaults to waitand (waits and compute success as an and between all
-      herded tasks)
+    new task config element: herdingpolicy { allsuccess nofailure onesuccess
+      ownstatus nowait }
+      defaults to nofailure (waits and ends on success only if herdered tasks
+      all finished in success or canceled statuses)
     new taskinstances fields: 12 Finish Date, 13 Time waiting
 * Minor improvements
  - !endate taskinstance pseudo param has been renamed to !stopdate
