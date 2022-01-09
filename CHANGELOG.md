@@ -18,6 +18,9 @@
       defaults to nofailure (waits and ends on success only if herdered tasks
       all finished in success or canceled statuses)
     new taskinstances fields: 12 Finish Date, 13 Time waiting
+ - new default enqueue policy: enqueueuntilmaxinstances
+    above max: now create canceled tasks rather than rejecting the request
+    was: enqueueanddiscardqueued
 * Minor improvements
  - !endate taskinstance pseudo param has been renamed to !stopdate
  - requesttask action new parameter: (lone) to request a task out of the herd
