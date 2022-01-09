@@ -1,4 +1,6 @@
-# Since 1.10.1
+# Since 1.11.0
+
+# From 1.10.1 to 1.11.0 (2022-01-09)
 * New features and notable changes
  - removed workflows (workflow mean, subtasks, steps, etc.)
  - introduced herds:
