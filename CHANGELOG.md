@@ -1,8 +1,12 @@
-# Since 1.11.1
+# Since 1.11.2
+
+# From 1.11.1 to 1.11.2 (2022-01-10)
 * Bugfixes
  - herds: onfinish/onsuccess/onfailure requesttask actions were not triggered
    for herded tasks
  - alert: gridboards were no longer updated
+ - wui: "Herded task instances" was not updated in herds view when a new
+   herded task is requested when the herder is waiting
 
 # From 1.11.0 to 1.11.1 (2022-01-10)
 * New features and notable changes
