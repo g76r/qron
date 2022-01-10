@@ -1,4 +1,9 @@
 # Since 1.11.2
+* New features and notable changes
+* Minor improvements
+ - action: support for (requesttask(paramappend)), writing in parent params
+ - action: log action now includes task params in its evaluation context
+* Bugfixes
 
 # From 1.11.1 to 1.11.2 (2022-01-10)
 * Bugfixes
