@@ -1,4 +1,7 @@
 # Since 1.11.1
+* Bugfixes
+ - herds: onfinish/onsuccess/onfailure requesttask actions were not triggered
+   for herded tasks
 
 # From 1.11.0 to 1.11.1 (2022-01-10)
 * New features and notable changes
