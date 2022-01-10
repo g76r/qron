@@ -1,7 +1,11 @@
-# Since 1.11.0
+# Since 1.11.1
+
+# From 1.11.0 to 1.11.1 (2022-01-10)
 * New features and notable changes
-- herds: include onfinish/onsuccess/onfailure requesttask children in herd
-    and wait for them
+ - herds: include onfinish/onsuccess/onfailure requesttask children in herd
+     and wait for them
+* Bugfixes
+ - herds: also wait for herded tasks that began after begining to wait
 
 # From 1.10.1 to 1.11.0 (2022-01-09)
 * New features and notable changes
