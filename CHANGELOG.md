@@ -1,7 +1,20 @@
 # Since 1.11.2
 * New features and notable changes
+ - config: instanceparam new config element on task, tasktemplate, taskgroup
+   and global level: set an instance param of the same name at task
+   instantiation time, evaluating its value only once
+   example (task foo (instanceparam dice "%{=random:6:1}")) will roll the dice
+   only once at task instantiation and keep the value, whereas (param dice
+   "%{=random:6:1}") will roll the dice each time %dice is evaluated
+ - action: support for (requesttask(paramappend key value))
+   parent param "key" is appended (with space and new value) withe "value"
+   which is evaluated in child context (child instance params ans pseudo
+   params like %!taskinstanceid), followed by event and parent context
+   example: (task foo
+               (onstart (requesttask bar (paramappend ids %!taskinstanceid))
+                        (requesttask baz (paramappend ids %!taskinstanceid))
+                        (log bar and baz ids: %ids)))
 * Minor improvements
- - action: support for (requesttask(paramappend)), writing in parent params
  - action: log action now includes task params in its evaluation context
 * Bugfixes
 

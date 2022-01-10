@@ -373,7 +373,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksParamsView = new HtmlTableView(this, "tasksparams");
   _htmlTasksParamsView->setModel(_tasksModel);
   _htmlTasksParamsView->setEmptyPlaceholder("(no task in configuration)");
-  _htmlTasksParamsView->setColumnIndexes({1,0,7,25,21,22,18});
+  _htmlTasksParamsView->setColumnIndexes({1,0,20,7,25,21,22,18});
   _htmlTasksParamsView->enableRowAnchor(11);
   _htmlTasksParamsView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksParamsView));
@@ -415,7 +415,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskGroupsView = new HtmlTableView(this, "taskgroups");
   _htmlTaskGroupsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
-  _htmlTaskGroupsView->setColumnIndexes({0,2,7,20,21});
+  _htmlTaskGroupsView->setColumnIndexes({0,2,7,21,22});
   qobject_cast<HtmlItemDelegate*>(_htmlTaskGroupsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsView);
