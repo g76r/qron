@@ -15,7 +15,7 @@ QT       += network
 QT       -= gui
 
 TARGET = qrond
-CONFIG += cmdline largefile c++2a c++17 c++14 c++11
+CONFIG += cmdline largefile c++17 c++14 c++11
 CONFIG -= app_bundle
 TEMPLATE = app
 

@@ -326,12 +326,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlUnfinishedTaskInstancesView->setModel(_unfinishedTaskInstancesModel);
   QHash<QString,QString> taskInstancesTrClasses;
   taskInstancesTrClasses.insert("failure", "danger");
+  taskInstancesTrClasses.insert("planned", "success");
   taskInstancesTrClasses.insert("queued", "warning");
   taskInstancesTrClasses.insert("running", "info");
   taskInstancesTrClasses.insert("waiting", "info");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no unfinished task)");
-  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,5,6,14,8});
+  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,15,17,18,8});
   _htmlUnfinishedTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
                           _htmlUnfinishedTaskInstancesView));
@@ -872,7 +873,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
       params.removeValue(key);
   // LATER should check that mandatory form fields have been set ?
   TaskInstanceList instances = webconsole->scheduler()
-      ->syncRequestTask(taskId, params, params.valueAsBool("force", false),
+      ->requestTask(taskId, params, params.valueAsBool("force", false),
                         params.value("herdid"));
   QString message;
   QList<quint64> taskInstanceIds;

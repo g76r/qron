@@ -1,11 +1,5 @@
 # Since 1.11.2
 * New features and notable changes
- - config: instanceparam new config element on task, tasktemplate, taskgroup
-   and global level: set an instance param of the same name at task
-   instantiation time, evaluating its value only once
-   example (task foo (instanceparam dice "%{=random:6:1}")) will roll the dice
-   only once at task instantiation and keep the value, whereas (param dice
-   "%{=random:6:1}") will roll the dice each time %dice is evaluated
  - action: support for (requesttask(paramappend key value))
    parent param "key" is appended (with space and new value) withe "value"
    which is evaluated in child context (child instance params ans pseudo
@@ -14,9 +8,89 @@
                (onstart (requesttask bar (paramappend ids %!taskinstanceid))
                         (requesttask baz (paramappend ids %!taskinstanceid))
                         (log bar and baz ids: %ids)))
+ - introducing planned status, plantask action and task queuing conditions
+   planned tasks are created without being queued, and will be queued when
+   a predefined condition is met
+   conditions available so far includes test on status of other tasks in the
+   same herd, making it possible to orchestrate tasks depending from each
+   other in a declarative way (non workflow-like but preconditions based)
+   implicitly, if there is only one queue condition (one "queuewhen" element
+   with only one tasks-related child such as "anyfinished" or "nofailure")
+   a cancel condition is computed to cancel the planned task as soon as the
+   queue condition can no longer be met (for instance "allsuccess" will be
+   transformed in "anynonsuccess" as cancel condition)
+   example:
+     (task shepherd
+       (taskgroup shire)
+       (mean donothing)
+       (onstart
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+             # paramappend is %-evaluated in the sheep context, so it's the
+             # sheep's %!taskinstanceid and the appended param "sheep" is in
+             # the context of the calling task, shepherd, hence making it
+             # possible to maintain a list of child task ids that will be
+             # used below
+                         (paramappend first %!taskinstanceid))
+             # will be queue immediatly because empty queuewhen means true
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(anyfinished %first)) )
+             # will be queue as soon as first sheep ends
+             # because at evaluation time %first will contain the id of first
+             # sheep and only this id
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(anyfinished %thisisempty)))
+             # will be canceled immediatly because condition cannot be met
+             # because %thisisempty contains nothing
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(allsuccess %sheeps)))
+             # will be queue as soon as third is canceled because at this
+             # point the condition can no longer be met
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(allfinished %sheeps)))
+             # will stay planned forever because he waits for himself
+             # since at evaluation time %sheeps evaluates to a list of
+             # all sheeps ids, including this one
+         (requesttask wolf(lone))
+             # plantask can be mixted with requesttask, even if lone (out of
+             # herd)
+       )
+     )
+   supported condition operators are:
+   "allfinished" "anyfinished" "allsuccess" "allfailure" "allcanceled"
+   "nosuccess" "nofailure" "nocanceled" "anysuccess" "anyfailure" "anycanceled"
+   "anynonsuccess" "anynonfailure" "anynoncanceled" "allfinishedanysuccess"
+   "allfinishedanyfailure" "allfinishedanycanceled" "isempty" "isnotempty"
+   "true" "false"
+   %-evaluation is done in the herder task context, hence making it possible to
+   test a dynamically appended list of tasks ids thanks to paramappend
+ - taskinstance field 3 Request date is renamed to Creation date
+ - new taskinstance fields: 15 Queue date, 16 Time planned, 17 Queue condition,
+   18 Cancel condition
+ - wui: columns of the unfinished task instances view (displayed in the middle
+   of overview page) has been changed to be more convenient with new
+   planned status and recently introduced herd mechanism and waiting status
+ - config: instanceparam new config element on task, tasktemplate, taskgroup
+   and global level: set an instance param of the same name at task
+   instantiation time, evaluating its value only once
+   example (task foo (instanceparam dice "%{=random:6:1}")) will roll the dice
+   only once at task instantiation and keep the value, whereas (param dice
+   "%{=random:6:1}") will roll the dice each time %dice is evaluated
+   %-evaluation is done in the context of the task instance
+ - new tasks/tasktemplates/taskgroups field: 22 Instance params
 * Minor improvements
  - action: log action now includes task params in its evaluation context
-* Bugfixes
+ - wui: display task and taskgroup instance params on task page
+ - wui: display applied templates on task page
+ - %-evaluation of overriding params (params passed to a task instance at
+   instantiation time, being it via API or trigger or requesttask action)
+   is now done in full instance context, including parameters, previously
+   only its pseudoparameters (e.g. %!taskid) were available, this is
+   consistant with instanceparam %-evaluation context
+ - wui: new icons for waiting (checkered flag) and planned (calendar) status,
+   new color (green) for planned status. waiting keeps its current color (same
+   blue than running, which is consistent, and easier to see now with the icon)
+* Behind-the-curtain improvements
+ - switching qrond and all libs back to c++17 even if c++20 is available
 
 # From 1.11.1 to 1.11.2 (2022-01-10)
 * Bugfixes
@@ -94,6 +168,7 @@
 * New features and notable changes
  - based on Qt6, no longer supporting Qt5
  - config: introducing task templates
+ - new tasks field: 20 Applied templates
  - adding new docker execution mean
  - config: taskgroups now inherit from each others
    e.g. taskgroup foo.bar contains params, event subscriptions, etc. of

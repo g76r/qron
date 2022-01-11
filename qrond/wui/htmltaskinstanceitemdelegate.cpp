@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2022 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -16,8 +16,10 @@
 HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
   : HtmlItemDelegate(parent) {
   QHash<QString,QString> instancesStatusIcons;
+  instancesStatusIcons.insert("planned", "<i class=\"icon-calendar\"></i>&nbsp;");
   instancesStatusIcons.insert("queued", "<i class=\"icon-inbox\"></i>&nbsp;");
   instancesStatusIcons.insert("running", "<i class=\"icon-play\"></i>&nbsp;");
+  instancesStatusIcons.insert("waiting", "<i class=\"icon-flag-checkered\"></i>&nbsp;");
   instancesStatusIcons.insert("failure", "<i class=\"icon-minus-circled\"></i>&nbsp;");
   instancesStatusIcons.insert("canceled", "<i class=\"icon-cancel\"></i>&nbsp;");
   setPrefixForColumn(1, "<i class=\"icon-cog\"></i>&nbsp;"
@@ -48,7 +50,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                  "<span class=\"label label-info\" title=\""
                  "Detailed task info\"><a href=\"tasks/"
                  +taskId+"\"><i class=\"icon-cog\"></i></a></span> ");
-    if (status == "queued")
+    if (status == "queued" || status == "planned")
       text.prepend(/* cancel */
                    "<span class=\"label label-danger\" title=\"Cancel "
                    "request\"><a href=\"confirm/do/v1/taskinstances/cancel/"
