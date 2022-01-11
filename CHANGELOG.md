@@ -1,4 +1,4 @@
-# Since 1.11.2
+# From 1.11.2 to 1.12.0 (2022-01-11)
 * New features and notable changes
  - action: support for (requesttask(paramappend key value))
    parent param "key" is appended (with space and new value) withe "value"
