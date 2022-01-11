@@ -77,6 +77,8 @@
    "%{=random:6:1}") will roll the dice each time %dice is evaluated
    %-evaluation is done in the context of the task instance
  - new tasks/tasktemplates/taskgroups field: 22 Instance params
+ - herdingpolicy now defaults to allsuccess rather then nofailure
+   hence any canceled child task will be enough to make the herder task fails
 * Minor improvements
  - action: log action now includes task params in its evaluation context
  - wui: display task and taskgroup instance params on task page
