@@ -1,3 +1,72 @@
+# From 1.12.0 to 1.12.1 (2022-01-12)
+* New features and notable changes
+ - introducing onplan event
+   this is convenient to declare tasks that work with or without being
+   the herder
+   example:
+     (task shepherd
+       (taskgroup shire)
+       (mean donothing)
+       (onplan
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+             # paramappend is %-evaluated in the sheep context, so it's the
+             # sheep's %!taskinstanceid and the appended param "sheep" is in
+             # the context of the calling task, shepherd, hence making it
+             # possible to maintain a list of child task ids that will be
+             # used below
+                         (paramappend first %!taskinstanceid))
+             # will be queue immediatly because empty queuewhen means true
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(anyfinished %first)) )
+             # will be queue as soon as first sheep ends
+             # because at evaluation time %first will contain the id of first
+             # sheep and only this id
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(anyfinished %thisisempty)))
+             # will be canceled immediatly because condition cannot be met
+             # because %thisisempty contains nothing
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(allsuccess %sheeps)))
+             # will be queue as soon as third is canceled because at this
+             # point the condition can no longer be met
+         (plantask sheep (paramappend sheeps %!taskinstanceid)
+                         (queuewhen(allfinished %sheeps)))
+             # will stay planned forever because he waits for himself
+             # since at evaluation time %sheeps evaluates to a list of
+             # all sheeps ids, including this one
+       )
+       (onstart
+         (requesttask wolf(lone))
+             # plantask can be mixted with requesttask, even if lone (out of
+             # herd)
+       )
+     )
+ - new tasks/tasktemplates/taskgroups field: 36 On plan
+* Minor
+ - paramappend write in herder params rather than parent params
+ - plantask and requesttask actions now set a %!parenttaskinstanceid
+   overriding param if there is a parenttask, this is the parent task,
+   which may not be the herder task if it's already an herded one
+   this is convenient to declare tasks that work with or without being
+   the herder
+ - conditions: %-evaluation of a condition task instance id list is now
+   done not only in herder context, but in herder context, plus, with
+   lesser priority, the instance context
+   this make it possible to get %!parenttaskinstanceid (see above)
+   and thus define a condition that will match an intermediary
+   parent task finish and also start with no delay if the parent
+   is started standalone and thus is the herder, explanation:
+      (queuewhen(allfinish %!parenttaskinstanceid))
+   is evaluated to a list of the intermediary parent task if any,
+   which runs as soon as its own condition is met and so triggers
+   queueing its child task
+   and on the other hand if the parent is started by its own, it
+   becomes the herder, and thus its id is ignored in the list, since
+   its not in its herded tasks list, so the child is queued immediatly
+ - wui: adding plantask edges in graphviz triggering diagram
+ - wui: coloring edges in graphviz triggering diagram, according to
+   eventtype (onstart: blue, onplan: green...)
+
 # From 1.11.2 to 1.12.0 (2022-01-11)
 * New features and notable changes
  - action: support for (requesttask(paramappend key value))
