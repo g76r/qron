@@ -8,9 +8,14 @@
    are duplicate or not, in addition to the taskid, for instance it can
    be used to avoid canceling tasks that handle different business data
    sets, e.g. (deduplicatecriterion %reportid)
+ - tasks/taskgroups/tasktemplates views columns changes:
+     35 Enqueue policy becomes Max queued instances
+     new 37 Deduplicate criterion
 * Minor improvements
 * Bugfixes
  - instanceparam was fixed in 1.12.2 but not overriding params
+ - planned tasks were not reevaluated at herder stop, which leaded in
+   some cases to dandling planned herded tasks
 
 # From 1.12.1 to 1.12.2 (2022-01-12)
 * Minor improvements
