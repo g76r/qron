@@ -1,4 +1,10 @@
 # Since 1.12.1
+* Minor improvements
+ - default queuewhen condition is now (allfinished %!parenttaskinstanceid)
+   rather than (true), which means "when parent is finished" if parent is
+   an intermediary task or "as soon as herder started" if parent is the
+   herder (because the herder task instance id is not in it's herded
+   task list and is thus ignored by allfinished condition)
 * Bugfixes
  - instanceparam and overriding params where totaly broken by 1.12.1 changes
  - planned tasks must never be enqueued before the herder starts
@@ -48,7 +54,7 @@
        )
      )
  - new tasks/tasktemplates/taskgroups field: 36 On plan
-* Minor
+* Minor improvements
  - paramappend write in herder params rather than parent params
  - plantask and requesttask actions now set a %!parenttaskinstanceid
    overriding param if there is a parenttask, this is the parent task,
