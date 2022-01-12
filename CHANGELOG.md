@@ -1,4 +1,4 @@
-# Since 1.12.2
+# From 1.12.2 to 1.12.3 (2022-01-13):
 * New features and notable changes
  - queuingpolicy replaced with maxqueuedinstances and deduplicatecriterion
    maxqueuedinstances equals maxinstances by default, can be set to
@@ -11,6 +11,64 @@
  - tasks/taskgroups/tasktemplates views columns changes:
      35 Enqueue policy becomes Max queued instances
      new 37 Deduplicate criterion
+ - introducing scatter execution mean
+   example 1:
+     (task work
+       (taskgroup production)
+       (mean local)
+       (command sleep 5)
+       (maxinstances 2)
+       (maxqueuedinstances 1)
+       (deduplicatecriterion %customer)
+     )
+     (task largebatch
+       (taskgroup production)
+       (mean scatter)
+       (param scatter.input john:12 kevin:6 mariah:44 carrie:1 paula:75 john:12 paul:67 john:12)
+       (param scatter.regexp "(?<name>[^:]+):(?<id>.*)")
+       (command work)
+       (var customer %name)
+       (var cid %id)
+       (herdingpolicy nofailure) # canceled subtasks are ok
+     )
+   example 2, with intermediary task and a dynamic task instance id list:
+     (task work
+       (taskgroup production)
+       (apply work)
+       (maxinstances 2)
+       (maxqueuedinstances 1)
+       (deduplicatecriterion %customer)
+     )
+     (task finalwork
+       (taskgroup production)
+       (apply work)
+     )
+     (tasktemplate work
+       (mean local)
+       (command sleep 5)
+     )
+     (task largebatch
+       (taskgroup production)
+       (mean scatter)
+       (param scatter.input john:12 kevin:6 mariah:44 carrie:1 paula:75 john:12 paul:67 john:12)
+       (param scatter.regexp "(?<name>[^:]+):(?<id>.*)")
+       (param scatter.paramappend prerequisites %!taskinstanceid)
+       (command work)
+       (var customer %name)
+       (var cid %id)
+     )
+     (task mixedbatch
+       (taskgroup production)
+       (mean donothing)
+       (onplan
+         (plantask largebatch (paramappend prerequisites %!taskinstanceid))
+         (plantask finalwork (queuewhen (allfinished %prerequisites)))
+             # finalwork will first wait for largebatch
+             # then it will wait for every work task because
+             # meanwhile largebatch append ids to %prerequisites
+       )
+       (herdingpolicy nofailure) # canceled subtasks are ok
+     )
 * Minor improvements
 * Bugfixes
  - instanceparam was fixed in 1.12.2 but not overriding params
