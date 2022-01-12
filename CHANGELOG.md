@@ -1,3 +1,7 @@
+# Since 1.12.1
+* Bugfixes
+ - instanceparam and overriding params where totaly broken by 1.12.1 changes
+
 # From 1.12.0 to 1.12.1 (2022-01-12)
 * New features and notable changes
  - introducing onplan event
