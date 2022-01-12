@@ -1,6 +1,8 @@
 # Since 1.12.1
 * Bugfixes
  - instanceparam and overriding params where totaly broken by 1.12.1 changes
+ - planned tasks must never be enqueued before the herder starts
+   it would allow running tasks regardless resources/locks availability
 
 # From 1.12.0 to 1.12.1 (2022-01-12)
 * New features and notable changes
