@@ -1,4 +1,4 @@
-# Since 1.12.1
+# From 1.12.1 to 1.12.2 (2022-01-12)
 * Minor improvements
  - default queuewhen condition is now (allfinished %!parenttaskinstanceid)
    rather than (true), which means "when parent is finished" if parent is
