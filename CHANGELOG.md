@@ -1,4 +1,14 @@
 # Since 1.12.2
+* New features and notable changes
+ - queuingpolicy replaced with maxqueuedinstances and deduplicatecriterion
+   maxqueuedinstances equals maxinstances by default, can be set to
+   infinite if <= 0, can be set to any number, and is %-evaluated in the
+   taskinstance context
+   if deduplicatecriterion is set, it's used to test if two instances are
+   are duplicate or not, in addition to the taskid, for instance it can
+   be used to avoid canceling tasks that handle different business data
+   sets, e.g. (deduplicatecriterion %reportid)
+* Minor improvements
 * Bugfixes
  - instanceparam was fixed in 1.12.2 but not overriding params
 
