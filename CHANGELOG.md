@@ -1,3 +1,7 @@
+# Since 1.12.2
+* Bugfixes
+ - instanceparam was fixed in 1.12.2 but not overriding params
+
 # From 1.12.1 to 1.12.2 (2022-01-12)
 * Minor improvements
  - default queuewhen condition is now (allfinished %!parenttaskinstanceid)
