@@ -1,3 +1,8 @@
+# Since 1.12.5
+* Bugfix
+ - plantask default queue condition: allfinished -> allsuccess
+   avoid sub-sub-tasks starting when their parent is canceled
+
 # From 1.12.4 to 1.12.5 (2022-01-13):
 * Minor improvements
  - plantask action supports (lone) attribute and can start lone tasks
