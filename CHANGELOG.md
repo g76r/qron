@@ -1,3 +1,9 @@
+# Since 1.12.4
+* Minor improvements
+ - plantask action supports (lone) attribute and can start lone tasks
+   exactly like requesttask does, excepted toward "each" balancing clusters
+   (this last limitation will be fixed later)
+
 # From 1.12.3 to 1.12.4 (2022-01-13):
 * New features and notable changes
  - auto canceling/aborting of herderd tasks, allowing aborting of waiting tasks
