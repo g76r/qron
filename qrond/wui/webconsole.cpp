@@ -39,6 +39,7 @@
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
+#define TASK_INSTANCE_HISTORY_MAXROWS 10000
 #define UNFINISHED_TASK_INSTANCE_MAXROWS 10000
 #define ISO8601 QStringLiteral("yyyy-MM-dd hh:mm:ss")
 //#define GRAPHVIZ_MIME_TYPE "text/vnd.graphviz;charset=UTF-8"
@@ -124,7 +125,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedGridboardsModel = new QSortFilterProxyModel(this);
   _sortedGridboardsModel->sort(0);
   _sortedGridboardsModel->setSourceModel(_gridboardsModel);
-  _taskInstancesHistoryModel = new TaskInstancesModel(this);
+  _taskInstancesHistoryModel =
+      new TaskInstancesModel(this, TASK_INSTANCE_HISTORY_MAXROWS);
   _taskInstancesHistoryModel->setItemQualifierFilter("taskinstance");
   _unfinishedTaskInstancesModel =
       new TaskInstancesModel(this, UNFINISHED_TASK_INSTANCE_MAXROWS, false);
@@ -337,8 +339,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
                           _htmlUnfinishedTaskInstancesView));
   _wuiHandler->addView(_htmlUnfinishedTaskInstancesView);
-  _htmlTaskInstancesView = new HtmlTableView(
-        this, "taskinstances", _taskInstancesHistoryModel->maxrows());
+  _htmlTaskInstancesView = new HtmlTableView(this, "taskinstances");
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task instance)");

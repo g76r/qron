@@ -9,6 +9,8 @@
    !herdtotalms !herdtotals -> !herddurationms !herddurations
    taskinstance view field 14 is renamed Total time -> Duration
  - wui: added Time planned to taskinstances view
+ - wui: keeping 10000 last executed task instances in memory models
+   was 100, and this was fast short on taskinstance views
 
 # From 1.12.3 to 1.12.4 (2022-01-13):
 * New features and notable changes
