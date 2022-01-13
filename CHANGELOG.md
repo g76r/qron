@@ -2,6 +2,7 @@
 * New features and notable changes
  - auto canceling/aborting of herderd tasks, allowing aborting of waiting tasks
 * Minor improvements
+ - wui: added quicksearch on 3 views: unfinishedtasks, herds, recent instances
 
 # From 1.12.2 to 1.12.3 (2022-01-13):
 * New features and notable changes

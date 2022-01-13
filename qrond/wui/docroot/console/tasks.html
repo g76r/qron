@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2021 Hallowyn and others.
+ Copyright 2012-2022 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -97,10 +97,13 @@
         <div class="col-md-12">
           <a name="instances"></a>
           <h2>Last Tasks Executions</h2>
-          <p><a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <p><form class="form-inline" onSubmit="return false;">
+          <a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/v1/taskinstances/list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
+          <input class="input-medium search-query" id="filter-taskinstances" type="text" placeholder="Quick search..." />
+          </form>
           <p><?view:taskinstances?>
         </div>
       </div>
@@ -108,10 +111,13 @@
         <div class="col-md-12">
           <a name="instances"></a>
           <h2>Last Tasks Herds</h2>
-          <p><a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv"><i class="icon-file-excel"></i> CSV</a>
+          <p><form class="form-inline" onSubmit="return false;">
+          <a class="btn btn-primary" href="../rest/v1/taskinstances/list.csv"><i class="icon-file-excel"></i> CSV</a>
           <a class="btn btn-primary" href="../rest/v1/taskinstances/list.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="schedule.html">Schedule page &raquo;</a>
           <a class="btn btn-info" href="log.html">Log page &raquo;</a>
+          <input class="input-medium search-query" id="filter-herds" type="text" placeholder="Quick search..." />
+          </form>
           <p><?view:herds?>
         </div>
       </div>
@@ -161,5 +167,35 @@ function tasksparams_filter() {
 }
 $('#filter-tasksparams').bind('input', function() {tasksparams_filter();});
 tasksparams_filter();
-    </script>
+
+var taskinstances_rows = $('table#taskinstances tbody tr');
+function taskinstances_filter() {
+  taskinstances_rows.each(function() {
+    var filter = $('#filter-taskinstances').val();
+    if ($(this).text().search(filter) >= 0) {
+      $(this).show();
+    } else {
+      $(this).hide();
+    }
+  });
+}
+$('#filter-taskinstances').bind('input', function() {taskinstances_filter();});
+taskinstances_filter();
+
+var herds_rows = $('table#herds tbody tr');
+function herds_filter() {
+  herds_rows.each(function() {
+    var filter = $('#filter-herds').val();
+    if ($(this).text().search(filter) >= 0) {
+      $(this).show();
+    } else {
+      $(this).hide();
+    }
+  });
+}
+$('#filter-herds').bind('input', function() {herds_filter();});
+herds_filter();
+
+
+  </script>
 <?include:footer.html?>
