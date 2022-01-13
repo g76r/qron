@@ -57,7 +57,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                    +taskInstanceId+"?confirm_message=cancel task request "
                    +taskInstanceId
                    +"\"><i class=\"icon-cancel\"></i></a></span> ");
-    else if (status == "running") {
+    else if (status == "running" || status == "waiting") {
       if (abortable)
         text.prepend(/* abort */
                      "<span class=\"label label-danger\" title=\"Abort "

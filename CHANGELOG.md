@@ -1,3 +1,8 @@
+# From 1.12.3 to 1.12.4 (2022-01-13):
+* New features and notable changes
+ - auto canceling/aborting of herderd tasks, allowing aborting of waiting tasks
+* Minor improvements
+
 # From 1.12.2 to 1.12.3 (2022-01-13):
 * New features and notable changes
  - queuingpolicy replaced with maxqueuedinstances and deduplicatecriterion
