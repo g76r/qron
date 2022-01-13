@@ -1,4 +1,4 @@
-# Since 1.12.4
+# From 1.12.4 to 1.12.5 (2022-01-13):
 * Minor improvements
  - plantask action supports (lone) attribute and can start lone tasks
    exactly like requesttask does, excepted toward "each" balancing clusters
