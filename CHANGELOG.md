@@ -3,6 +3,12 @@
  - plantask action supports (lone) attribute and can start lone tasks
    exactly like requesttask does, excepted toward "each" balancing clusters
    (this last limitation will be fixed later)
+ - taskinstance duration is computed since queued, no longer since creation
+   this is important for maxexpectedduration computing to exclude time planned
+   also renamed pseudoparams: !totalms !totals -> !durationms !durations
+   !herdtotalms !herdtotals -> !herddurationms !herddurations
+   taskinstance view field 14 is renamed Total time -> Duration
+ - wui: added Time planned to taskinstances view
 
 # From 1.12.3 to 1.12.4 (2022-01-13):
 * New features and notable changes
