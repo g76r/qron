@@ -1,4 +1,6 @@
 # Since 1.12.5
+* Minor improvements
+ - wui: adding herd id on taskinstance view
 * Bugfix
  - plantask default queue condition: allfinished -> allsuccess
    avoid sub-sub-tasks starting when their parent is canceled

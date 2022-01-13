@@ -343,7 +343,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTaskInstancesView->setModel(_taskInstancesHistoryModel);
   _htmlTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlTaskInstancesView->setEmptyPlaceholder("(no recent task instance)");
-  _htmlTaskInstancesView->setColumnIndexes({0,1,2,3,4,12,16,6,14,8});
+  _htmlTaskInstancesView->setColumnIndexes({0,10,1,2,3,4,12,16,6,14,8});
   _htmlTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(_htmlTaskInstancesView));
   _wuiHandler->addView(_htmlTaskInstancesView);
