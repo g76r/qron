@@ -110,7 +110,8 @@ class WebConsole : public HttpHandler {
   *_csvGridboardsView, *_csvTaskInstancesView,
   *_csvSchedulerEventsView, *_csvLastPostedNoticesView,
   *_csvConfigsView, *_csvConfigHistoryView;
-  GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram;
+  GraphvizImageHttpHandler *_tasksDeploymentDiagram, *_tasksTriggerDiagram,
+      *_tasksResourcesHostsDiagram;
   TemplatingHttpHandler *_wuiHandler;
   ConfigUploadHandler *_configUploadHandler;
   QString _configFilePath, _configRepoPath;
@@ -136,6 +137,8 @@ public:
     return _tasksDeploymentDiagram; }
   GraphvizImageHttpHandler *tasksTriggerDiagram() const {
     return _tasksTriggerDiagram; }
+  GraphvizImageHttpHandler *tasksResourcesHostsDiagram() const {
+    return _tasksResourcesHostsDiagram; }
   TemplatingHttpHandler *wuiHandler() const { return _wuiHandler; }
   ConfigUploadHandler *configUploadHandler() const {
     return _configUploadHandler; }

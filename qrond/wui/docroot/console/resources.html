@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2017 Hallowyn and others.
+ Copyright 2012-2022 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -33,6 +33,17 @@
           <a class="btn btn-primary" href="../rest/v1/resources/lwm_resources_by_host.html"><i class="icon-file-html"></i> HTML</a>
           <a class="btn btn-info" href="infrastructure.html">Infrastructure page &raquo;</a>
           <p><?view:resourceslwm?>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Tasks-Resources-Hosts Diagram</h2>
+          <p><a class="btn btn-primary" href="../rest/v1/resources/tasks_resources_hosts_diagram.svg"><i class="icon-file"></i> SVG</a>
+          <a class="btn btn-primary" href="../rest/v1/resources/tasks_resources_hosts_diagram.dot"><i class="icon-file"></i> DOT</a>
+          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
+          <div id="tasksResourcesHostsDiagram" style="display: table; margin: 0 auto;">
+            <noscript><img src="../rest/v1/resources/tasks_resources_hosts_diagram.svg" alt="Tasks-Resources-Hosts Diagram" class="img-responsive"/></noscript>
+          </div>
         </div>
       </div>
       <div class="row">
@@ -84,5 +95,14 @@
 <?include:common-scripts.html?>
     <script>
 anchors.add('h2');
+    </script>
+    <script>
+  $(document).ready(function(){
+    $('#tasksResourcesHostsDiagram').load('../rest/v1/resources/tasks_resources_hosts_diagram.svg', function() {
+      $("a").not("[xlink\\:title='']").each(function() {
+        this.setAttributeNS('http://www.w3.org/1999/xlink','href','tasks/'+$(this).attr('xlink:title'));
+      });
+    });
+  });
     </script>
 <?include:footer.html?>

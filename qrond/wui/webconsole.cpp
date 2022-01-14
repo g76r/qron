@@ -69,6 +69,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _tasksTriggerDiagram
       = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
   _tasksTriggerDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
+  _tasksResourcesHostsDiagram
+      = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
+  _tasksResourcesHostsDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
   _wuiHandler = new TemplatingHttpHandler(this, "/console", ":docroot/console");
   _wuiHandler->addFilter("\\.html$");
   _configUploadHandler = new ConfigUploadHandler("", 1, this);
@@ -1985,6 +1988,23 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                             ->source(0).toUtf8(), req, res,
                             GRAPHVIZ_MIME_TYPE);
 } },
+{ "/rest/v1/resources/tasks_resources_hosts_diagram.svg", [](
+                                           WebConsole *webconsole, HttpRequest req, HttpResponse res,
+                                           ParamsProviderMerger *processingContext, int) {
+   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+     return true;
+   return webconsole->tasksResourcesHostsDiagram()
+       ->handleRequest(req, res, processingContext);
+ } },
+{ "/rest/v1/resources/tasks_resources_hosts_diagram.dot", [](
+                                           WebConsole *webconsole, HttpRequest req, HttpResponse res,
+                                           ParamsProviderMerger *, int) {
+   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+     return true;
+   return writePlainText(webconsole->tasksResourcesHostsDiagram()
+                             ->source(0).toUtf8(), req, res,
+                         GRAPHVIZ_MIME_TYPE);
+ } },
 };
 
 RadixTree<QString> _staticRedirects {
@@ -2217,6 +2237,8 @@ void WebConsole::computeDiagrams(SchedulerConfig config) {
       = GraphvizDiagramsBuilder::configDiagrams(config);
   _tasksDeploymentDiagram->setSource(diagrams.value("tasksDeploymentDiagram"));
   _tasksTriggerDiagram->setSource(diagrams.value("tasksTriggerDiagram"));
+  _tasksResourcesHostsDiagram->setSource(
+      diagrams.value("tasksResourcesHostsDiagram"));
 }
 
 void WebConsole::alerterConfigChanged(AlerterConfig config) {
