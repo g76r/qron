@@ -3,6 +3,7 @@
  - wui: adding herd id on taskinstance view
  - scatter mean learned "scatter.lone" boolean parameter
  - wui: introducing tasks-resources-hosts graphviz diagram
+ - wui: graphviz diagram are now displayed full-width on large displays
 * Bugfix
  - plantask default queue condition: allfinished -> allsuccess
    avoid sub-sub-tasks starting when their parent is canceled
