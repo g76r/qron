@@ -5,6 +5,8 @@
 * Bugfix
  - plantask default queue condition: allfinished -> allsuccess
    avoid sub-sub-tasks starting when their parent is canceled
+ - scatter.input in scatter execution mean did not evaluate before split
+   (param scatter.input %list) did not split values inside %list
 
 # From 1.12.4 to 1.12.5 (2022-01-13):
 * Minor improvements
