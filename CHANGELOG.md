@@ -9,6 +9,11 @@
    avoid sub-sub-tasks starting when their parent is canceled
  - scatter.input in scatter execution mean did not evaluate before split
    (param scatter.input %list) did not split values inside %list
+ - alerter: alerts in mayrise status were raised in some rare cases
+   (if cancel occurs at the end of rise period, to late for mayrise
+   period to finish before visibility date)
+ - alerter: safer writing to the gridboard circular buffer
+   no longer give 10 ms wait time, and log a warning if buffer full
 
 # From 1.12.4 to 1.12.5 (2022-01-13):
 * Minor improvements
