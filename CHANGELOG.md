@@ -14,6 +14,7 @@
    period to finish before visibility date)
  - alerter: safer writing to the gridboard circular buffer
    no longer give 10 ms wait time, and log a warning if buffer full
+ - fixed duration in stop info log message (was 0 instead of duration)
 
 # From 1.12.4 to 1.12.5 (2022-01-13):
 * Minor improvements
