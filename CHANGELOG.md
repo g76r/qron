@@ -49,6 +49,7 @@
  - alerter: safer writing to the gridboard circular buffer
    no longer give 10 ms wait time, and log a warning if buffer full
  - fixed duration in stop info log message (was 0 instead of duration)
+ - plantask was not %-evaluating task id to plan
 * Behind-the-curtain improvements
  - changed EventSubscription:: and Action::triggerXXX() methods
    using ParamsProviderMerger* instead of ParamSet and no longer rely on
