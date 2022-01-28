@@ -1,10 +1,43 @@
 # Since 1.12.5
+* New features and notable changes
+ - introducing mergestderrintostdout boolean attribute to process stdout data
+   as if it was received on stderr
+   available at task, tasktemplate, taskgroup and root levels
+ - introducing onstderr and onstdout events subscriptions enabling any action
+   when a task writes a line to its standard error and output streams
+   example:
+     (mergestderrintostdout)
+     (onstderr "^info: *(.*)"(log %1(severity I)))
+     (onstderr "error"(log %line(severity W)))
+     (onstderr "hello (?<name>[^ ]+)"(log greetings to %name(severity I)))
+     (onstderr(writefile "%{=date!iso} %!taskid/%!taskinstanceid : ERR %line"\n(path /tmp/qron-%!taskid-%!taskinstanceid.err)))
+     (onstdout(writefile "%{=date!iso} %!taskid/%!taskinstanceid : OUT %line"\n(path /tmp/qron-%!taskid-%!taskinstanceid.out)))
+ - no more implicit logging of tasks stderr, can now be configured this way:
+   (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
+   (onstderr(log stderr: %line(severity W)))
+ - no more implicit task.stderr.%!taskid alert, can now be configured this way:
+   (onstderr(raisealert task.stderr.%!taskid))
+ - special param "stderrfilter" is no more supported, it can now be achieved
+   with stop action in onstderr event subscriptions, this way:
+   (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
 * Minor improvements
+ - task/tasktemplate new fields: 38: Merge stdout into stderr,
+   39: On stderr, 40: On stdout
  - wui: adding herd id on taskinstance view
  - scatter mean learned "scatter.lone" boolean parameter
  - wui: introducing tasks-resources-hosts graphviz diagram
  - wui: graphviz diagram are now displayed full-width on large displays
  - removed requesttask (use plantask instead, keeping backward compatibility)
+ - adding stop action to ignore actions declared after it
+   example:
+     (onstderr "^Connection to [^ ]* closed\\.$"(stop))
+     (onstderr (log stderr: %0 (severity warning)))
+ - adding "iso" shortcut date format name for yyyy-MM-ddThh:mm:ss,zzz
+   example: %{=date!iso}
+ - onplan events subscription is now available at root level (until now it
+   was only available at task, tasktemplate and taskgroup levels)
+ - special parameter "disable.alert.stderr" is no more supported since such
+   alerts are disabled by default
 * Bugfix
  - plantask default queue condition: allfinished -> allsuccess
    avoid sub-sub-tasks starting when their parent is canceled
