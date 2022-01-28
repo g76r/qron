@@ -4,6 +4,7 @@
  - scatter mean learned "scatter.lone" boolean parameter
  - wui: introducing tasks-resources-hosts graphviz diagram
  - wui: graphviz diagram are now displayed full-width on large displays
+ - removed requesttask (use plantask instead, keeping backward compatibility)
 * Bugfix
  - plantask default queue condition: allfinished -> allsuccess
    avoid sub-sub-tasks starting when their parent is canceled
@@ -15,6 +16,11 @@
  - alerter: safer writing to the gridboard circular buffer
    no longer give 10 ms wait time, and log a warning if buffer full
  - fixed duration in stop info log message (was 0 instead of duration)
+* Behind-the-curtain improvements
+ - changed EventSubscription:: and Action::triggerXXX() methods
+   using ParamsProviderMerger* instead of ParamSet and no longer rely on
+   actions implementation to merge instance params and pseudo params
+   into %-evaluation context
 
 # From 1.12.4 to 1.12.5 (2022-01-13):
 * Minor improvements

@@ -228,17 +228,17 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlStatefulAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlStatefulAlertsView->setColumnIndexes({0,2,3,4,5});
   QHash<QString,QString> alertsIcons;
-  alertsIcons.insert(Alert::statusToString(Alert::Nonexistent),
+  alertsIcons.insert(Alert::statusAsString(Alert::Nonexistent),
                      "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert(Alert::statusToString(Alert::Rising),
+  alertsIcons.insert(Alert::statusAsString(Alert::Rising),
                      "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
-  alertsIcons.insert(Alert::statusToString(Alert::MayRise),
+  alertsIcons.insert(Alert::statusAsString(Alert::MayRise),
                      "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
-  alertsIcons.insert(Alert::statusToString(Alert::Raised),
+  alertsIcons.insert(Alert::statusAsString(Alert::Raised),
                      "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert(Alert::statusToString(Alert::Dropping),
+  alertsIcons.insert(Alert::statusAsString(Alert::Dropping),
                      "<i class=\"icon-bell\"></i>&nbsp;");
-  alertsIcons.insert(Alert::statusToString(Alert::Canceled),
+  alertsIcons.insert(Alert::statusAsString(Alert::Canceled),
                      "<i class=\"icon-check\"></i>&nbsp;");
   _htmlStatefulAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlStatefulAlertsView, true));
@@ -558,8 +558,8 @@ bool WebConsole::acceptRequest(HttpRequest req) {
   return true;
 }
 
-static QHash<QString,
-std::function<QVariant(const WebConsole *, const QString &key)>> _serverStats {
+static RadixTree<std::function<QVariant(const WebConsole *, const QString &key)>
+                 > _serverStats {
 { "scheduler.startdate", [](const WebConsole *console, const QString &) {
   return console->scheduler()->startdate().toUTC();
 } },
@@ -661,6 +661,9 @@ public:
       return defaultValue;
     auto handler = _serverStats.value(key);
     return handler ? handler(_console, key) : defaultValue;
+  }
+  QSet<QString> keys() const override {
+    return _serverStats.keys();
   }
 };
 

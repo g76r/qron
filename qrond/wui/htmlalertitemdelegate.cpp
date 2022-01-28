@@ -39,9 +39,9 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
                    "cancel_immediately/"+alertId+"\"><i class=\"icon-check\">"
                     "</i></a></span> ");
     if (_canRaiseAndCancel
-        && (status == Alert::statusToString(Alert::Rising)
-            || status == Alert::statusToString(Alert::MayRise)
-            || status == Alert::statusToString(Alert::Dropping)))
+        && (status == Alert::statusAsString(Alert::Rising)
+            || status == Alert::statusAsString(Alert::MayRise)
+            || status == Alert::statusAsString(Alert::Dropping)))
       text.prepend(/* immediate raise */
                    "<span class=\"label label-danger\">"
                    // TODO add !pathtoroot
