@@ -38,6 +38,7 @@
    was only available at task, tasktemplate and taskgroup levels)
  - special parameter "disable.alert.stderr" is no more supported since such
    alerts are disabled by default
+ - wui: better layout on resources page
 * Bugfix
  - plantask default queue condition: allfinished -> allsuccess
    avoid sub-sub-tasks starting when their parent is canceled
