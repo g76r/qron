@@ -50,6 +50,9 @@
    no longer give 10 ms wait time, and log a warning if buffer full
  - fixed duration in stop info log message (was 0 instead of duration)
  - plantask was not %-evaluating task id to plan
+ - wui: graphviz trigger diagram: analyzing root level events task by task
+   speaking of on{start,success,failure,finish,plan,stderr,stdout} not e.g.
+   onconfigload
 * Behind-the-curtain improvements
  - changed EventSubscription:: and Action::triggerXXX() methods
    using ParamsProviderMerger* instead of ParamSet and no longer rely on
