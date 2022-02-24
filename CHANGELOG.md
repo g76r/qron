@@ -20,6 +20,10 @@
  - special param "stderrfilter" is no more supported, it can now be achieved
    with stop action in onstderr event subscriptions, this way:
    (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
+ - new planning conditions: allstarted anystarted
+ - the default queueon becomes "allstarted %!parenttaskinstanceid" which is far
+   more easy to understand for a naive user than the former "allsuccess
+   %!parenttaskinstanceid"
 * Minor improvements
  - task/tasktemplate new fields: 38: Merge stdout into stderr,
    39: On stderr, 40: On stdout
