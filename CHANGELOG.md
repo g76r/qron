@@ -45,6 +45,7 @@
    alerts are disabled by default
  - new taskinstance pseudoparams: !planneds !plannedms
  - wui: better layout on resources page
+ - wui: gridboards display "ALERT" instead of "ERROR" when an alert is raised
 * Bugfix
  - queued tasks can become hanged/lost when reloading config
    and instance count became false (hence disrupting maxinstances constraint)
