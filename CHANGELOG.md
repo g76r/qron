@@ -63,6 +63,7 @@
  - wui: graphviz trigger diagram: analyzing root level events task by task
    speaking of on{start,success,failure,finish,plan,stderr,stdout} not e.g.
    onconfigload
+ - wui+api: gridboard clear api call and wui button was broken
 * Behind-the-curtain improvements
  - changed EventSubscription:: and Action::triggerXXX() methods
    using ParamsProviderMerger* instead of ParamSet and no longer rely on
