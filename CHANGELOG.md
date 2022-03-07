@@ -24,6 +24,7 @@
  - the default queueon becomes "allstarted %!parenttaskinstanceid" which is far
    more easy to understand for a naive user than the former "allsuccess
    %!parenttaskinstanceid"
+ - new builtin alert task.disabled.%taskid for disabled tasks
 * Minor improvements
  - task/tasktemplate new fields: 38: Merge stdout into stderr,
    39: On stderr, 40: On stdout
