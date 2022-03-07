@@ -45,6 +45,8 @@
  - new taskinstance pseudoparams: !planneds !plannedms
  - wui: better layout on resources page
 * Bugfix
+ - queued tasks can become hanged/lost when reloading config
+   and instance count became false (hence disrupting maxinstances constraint)
  - plantask default queue condition: allfinished -> allsuccess
    avoid sub-sub-tasks starting when their parent is canceled
  - scatter.input in scatter execution mean did not evaluate before split
