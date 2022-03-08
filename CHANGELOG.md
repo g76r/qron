@@ -1,4 +1,4 @@
-# Since 1.12.5
+# From 1.12.5 to 1.13.0 (2022-03-08):
 * New features and notable changes
  - introducing mergestderrintostdout boolean attribute to process stdout data
    as if it was received on stderr
@@ -48,6 +48,7 @@
  - wui: gridboards display "ALERT" instead of "ERROR" when an alert is raised
  - mail alerts: (mail(address)) now takes a space-separated list of addresses
    it used to take a comma-separated list which is inconsistent with other conventions
+ - more good practices in default qron.conf (examples/empty1.conf)
 * Bugfix
  - queued tasks can become hanged/lost when reloading config
    and instance count became false (hence disrupting maxinstances constraint)
@@ -71,6 +72,7 @@
    using ParamsProviderMerger* instead of ParamSet and no longer rely on
    actions implementation to merge instance params and pseudo params
    into %-evaluation context
+ - updated examples/massive2*.conf that are used for endurance testing
 
 # From 1.12.4 to 1.12.5 (2022-01-13):
 * Minor improvements
