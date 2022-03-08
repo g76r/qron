@@ -46,6 +46,8 @@
  - new taskinstance pseudoparams: !planneds !plannedms
  - wui: better layout on resources page
  - wui: gridboards display "ALERT" instead of "ERROR" when an alert is raised
+ - mail alerts: (mail(address)) now takes a space-separated list of addresses
+   it used to take a comma-separated list which is inconsistent with other conventions
 * Bugfix
  - queued tasks can become hanged/lost when reloading config
    and instance count became false (hence disrupting maxinstances constraint)
