@@ -36,9 +36,11 @@ contains(QT_VERSION, ^4\\..*) {
 
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
-QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual -Wno-padded -Wno-old-style-cast \
-  -Wno-deprecated-copy -ggdb
-#QMAKE_CXXFLAGS += -fno-elide-constructors
+QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual \
+  -Wfloat-equal -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
+  -Wduplicated-branches -Wduplicated-cond -Wlogical-op \
+  -Wno-padded -Wno-deprecated-copy \
+  -ggdb
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
 OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj
