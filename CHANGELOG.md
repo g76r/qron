@@ -1,3 +1,11 @@
+# Since 1.13.0:
+* Bugfixes
+ - %=default did not work when receiving only one parameter
+* Behind-the-curtain improvements
+ - fixed concurrency bug in log framework/circular buffer
+ - enhanced/fixed compilation warnings (incl. moving from Qt 6.2 to 6.3)
+ - factorized/cleaned parts of configuration loading code, removing dead code
+
 # From 1.12.5 to 1.13.0 (2022-03-08):
 * New features and notable changes
  - introducing mergestderrintostdout boolean attribute to process stdout data
@@ -49,7 +57,7 @@
  - mail alerts: (mail(address)) now takes a space-separated list of addresses
    it used to take a comma-separated list which is inconsistent with other conventions
  - more good practices in default qron.conf (examples/empty1.conf)
-* Bugfix
+* Bugfixes
  - queued tasks can become hanged/lost when reloading config
    and instance count became false (hence disrupting maxinstances constraint)
  - plantask default queue condition: allfinished -> allsuccess
