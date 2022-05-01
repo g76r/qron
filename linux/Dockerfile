@@ -1,4 +1,5 @@
-FROM debian:11.1-slim
+#FROM debian:11.3-slim
+FROM g76r/qt6-runner:20220501
 LABEL description="qron free scheduler"
 LABEL org.opencontainers.image.authors="Grégoire Barbier <devel@g76r.eu>"
 
@@ -13,7 +14,7 @@ RUN apt-get update \
 
 # qron
 WORKDIR /opt/qron/qrond
-ENV LD_LIBRARY_PATH=/opt/qron/qrond/lib
+ENV LD_LIBRARY_PATH=/opt/qron/qrond/lib:"$LD_LIBRARY_PATH"
 ENTRYPOINT [ "/opt/qron/qrond/bin/qrond" ]
 CMD [ "--config-file", "qron.conf" ]
 ADD qrond-linux-amd64.tar.bz2 /opt/qron
