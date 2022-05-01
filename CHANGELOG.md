@@ -1,4 +1,7 @@
 # Since 1.13.0:
+* Minor improvements
+ - http api: /rest/v1/taskinstances/current/list.{csv,html} are now sorted
+   by task instance id
 * Bugfixes
  - %=default did not work when receiving only one parameter
 * Behind-the-curtain improvements
