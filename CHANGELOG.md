@@ -2,6 +2,7 @@
 * Minor improvements
  - http api: /rest/v1/taskinstances/current/list.{csv,html} are now sorted
    by task instance id
+ - alert: merging gridboards on reload rather than clearing them
 * Bugfixes
  - %=default did not work when receiving only one parameter
 * Behind-the-curtain improvements
