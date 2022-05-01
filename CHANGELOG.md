@@ -1,14 +1,18 @@
-# Since 1.13.0:
+# From 1.13.0 to 1.13.1 (2022-05-01):
 * Minor improvements
  - http api: /rest/v1/taskinstances/current/list.{csv,html} are now sorted
    by task instance id
  - alert: merging gridboards on reload rather than clearing them
 * Bugfixes
+ - replacing task definition on config load for planned tasks, not only
+   queued ones (leaded to inconsistencies in live attributes, including
+   running tasks count)
  - %=default did not work when receiving only one parameter
 * Behind-the-curtain improvements
  - fixed concurrency bug in log framework/circular buffer
  - enhanced/fixed compilation warnings (incl. moving from Qt 6.2 to 6.3)
  - factorized/cleaned parts of configuration loading code, removing dead code
+ - overhauling taskinstances collections in scheduler code
 
 # From 1.12.5 to 1.13.0 (2022-03-08):
 * New features and notable changes
