@@ -335,6 +335,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   taskInstancesTrClasses.insert("queued", "warning");
   taskInstancesTrClasses.insert("running", "info");
   taskInstancesTrClasses.insert("waiting", "info");
+  taskInstancesTrClasses.insert("canceled", "active");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no unfinished task)");
   _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,15,17,18,8});

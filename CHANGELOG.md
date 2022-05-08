@@ -1,8 +1,9 @@
-# From 1.13.0 to 1.13.1 (2022-05-01):
+# From 1.13.0 to 1.13.1 (2022-05-08):
 * Minor improvements
  - http api: /rest/v1/taskinstances/current/list.{csv,html} are now sorted
    by task instance id
  - alert: merging gridboards on reload rather than clearing them
+ - wui: canceled tasks are now in light grey rather than white
 * Bugfixes
  - replacing task definition on config load for planned tasks, not only
    queued ones (leaded to inconsistencies in live attributes, including
