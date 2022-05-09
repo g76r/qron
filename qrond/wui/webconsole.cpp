@@ -331,10 +331,10 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlUnfinishedTaskInstancesView->setModel(_unfinishedTaskInstancesModel);
   QHash<QString,QString> taskInstancesTrClasses;
   taskInstancesTrClasses.insert("failure", "danger");
-  taskInstancesTrClasses.insert("planned", "success");
+  taskInstancesTrClasses.insert("planned", "info");
   taskInstancesTrClasses.insert("queued", "warning");
-  taskInstancesTrClasses.insert("running", "info");
-  taskInstancesTrClasses.insert("waiting", "info");
+  taskInstancesTrClasses.insert("running", "success");
+  taskInstancesTrClasses.insert("waiting", "success");
   taskInstancesTrClasses.insert("canceled", "active");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no unfinished task)");

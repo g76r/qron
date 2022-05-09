@@ -4,6 +4,12 @@
    by task instance id
  - alert: merging gridboards on reload rather than clearing them
  - wui: canceled tasks are now in light grey rather than white
+ - wui: running/waiting tasks are now green and planned blue, this is an
+   inversion, it's fare more obvious for most human that green means running
+   and blue planned (somewhat frozen) than the contrary, the previous color
+   code was historical because planned and waiting status are new, and blue
+   was nice for running to avoid wondering if green is success (white)
+   or running (formerly: blue), but more status means more colors...
 * Bugfixes
  - replacing task definition on config load for planned tasks, not only
    queued ones (leaded to inconsistencies in live attributes, including
