@@ -1,4 +1,4 @@
-# From 1.13.0 to 1.13.1 (2022-05-08):
+# From 1.13.0 to 1.13.1 (2022-05-09):
 * Minor improvements
  - http api: /rest/v1/taskinstances/current/list.{csv,html} are now sorted
    by task instance id
@@ -14,6 +14,9 @@
  - replacing task definition on config load for planned tasks, not only
    queued ones (leaded to inconsistencies in live attributes, including
    running tasks count)
+ - replacing task params (and task groups params, etc.) in queued and planned
+   task instances on reload, only other attributes were replaced (not sure
+   if it's a recent or very old bug)
  - %=default did not work when receiving only one parameter
 * Behind-the-curtain improvements
  - fixed concurrency bug in log framework/circular buffer
