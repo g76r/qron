@@ -1,6 +1,7 @@
 # Since 1.13.1
 * Minor improvements
  - wui: switched to FontAwesome 6 alone, instead of a mix of font icons
+ - wui: updated about page
 
 # From 1.13.0 to 1.13.1 (2022-05-09):
 * Minor improvements
