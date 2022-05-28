@@ -36,7 +36,7 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
                    "<span class=\"label label-danger\">"
                    // TODO add !pathtoroot
                    "<a title=\"Cancel alert immediatly\"href=\"../do/v1/alerts/"
-                   "cancel_immediately/"+alertId+"\"><i class=\"icon-check\">"
+                   "cancel_immediately/"+alertId+"\"><i class=\"fa-solid fa-check\">"
                     "</i></a></span> ");
     if (_canRaiseAndCancel
         && (status == Alert::statusAsString(Alert::Rising)
@@ -46,7 +46,7 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
                    "<span class=\"label label-danger\">"
                    // TODO add !pathtoroot
                    "<a title=\"Raise alert immediately\"href=\"../do/v1/alerts/"
-                   "raise_immediately/"+alertId+"\"><i class=\"icon-bell\">"
+                   "raise_immediately/"+alertId+"\"><i class=\"fa-solid fa-bell\">"
                     "</i></a></span> ");
     QRegularExpressionMatch match = taskIdInAlertRE.match(alertId);
     if (match.hasMatch()) {
@@ -55,11 +55,11 @@ QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
             " <span class=\"label label-info\" title=\"Related tasks log\">"
             "<a target=\"_blank\" href=\"../rest/v1/logs/entries.txt?"
             "regexp=^[^ ]* "+match.captured(1)+"[/:]\">"
-            "<i class=\"icon-file-text\"></i></a></span>"
+            "<i class=\"fa-solid fa-file-lines\"></i></a></span>"
             /* detail page */
             " <span class=\"label label-info\" title=\"Detailed task info\">"
             "<a href=\"tasks/"+match.captured(1)+"\">"
-            "<i class=\"icon-cog\"></i></a></span>");
+            "<i class=\"fa-solid fa-gear\"></i></a></span>");
     }
   }
   return text;

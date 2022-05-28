@@ -31,28 +31,28 @@ QString HtmlSchedulerConfigItemDelegate::text(const QModelIndex &index) const {
     }
   } else if (column == _isActiveColumn) {
     text = (id == _activeConfigId)
-        ? "<i class=\"icon-play\"></i>&nbsp;active" : "-";
+        ? "<i class=\"fa-solid fa-play\"></i>&nbsp;active" : "-";
   } else if (column == _actionsColumn) {
     if (_configIds.contains(id)) {
       text.prepend("<span class=\"label label-info\" title=\"Download\">"
                    "<a href=\"../rest/v1/configs/"+id
-                   +".pf\"><i class=\"icon-file\"></i></a></span> ");
+                   +".pf\"><i class=\"fa-solid fa-file\"></i></a></span> ");
       if (id == _activeConfigId)
         text.prepend("<span class=\"label label-default\" title=\""
                      "Cannot remove active config\">"
-                     "<i class=\"icon-trash\"></i></span> "
+                     "<i class=\"fa-solid fa-trash-can\"></i></span> "
                      "<span class=\"label label-default\" title=\""
                      "Cannot activate active config\">"
-                     "<i class=\"icon-play\"></i></span> ");
+                     "<i class=\"fa-solid fa-play\"></i></span> ");
       else
         text.prepend("<span class=\"label label-danger\" title=\"Remove\">"
                      "<a href=\"confirm/do/v1/configs/remove/"+id
                      +"?confirm_message=remove configuration "+id
-                     +"\"><i class=\"icon-trash\"></i></a></span> "
+                     +"\"><i class=\"fa-solid fa-trash-can\"></i></a></span> "
                       "<span class=\"label label-danger\" title=\"Activate\">"
                       "<a href=\"confirm/do/v1/configs/activate/"+id
                      +"?confirm_message=activate configuration "+id
-                     +"\"><i class=\"icon-play\"></i></a></span> ");
+                     +"\"><i class=\"fa-solid fa-play\"></i></a></span> ");
     }
   }
   return text;

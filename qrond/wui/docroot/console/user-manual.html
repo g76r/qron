@@ -376,7 +376,7 @@ which is defined task by task and can have the following values/behaviors:
 queued task with the same id is canceled, avoiding stacking tasks in big
 numbers when they are slower than expected, this is the default
 <li><tt>enqueueall</tt>: allow boundless stacking of this task in the queue,
-provided the queue limit is not reached <br/><i class="icon-warning"></i>
+provided the queue limit is not reached <br/><i class="fa-solid fa-triangle-exclamation"></i>
 warning: when the queue limit is reached, <em>other</em> tasks may be
 rejected, so this setting is dangerous for the whole tasks schedule
 <li><tt>enqueueuntilmaxinstances</tt>: reject task requests when task

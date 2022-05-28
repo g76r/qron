@@ -32,10 +32,10 @@ QString HtmlLogEntryItemDelegate::text(const QModelIndex &index) const {
     QString severity = index.model()->index(index.row(), 4, index.parent())
         .data().toString();
     if (severity == Log::severityToString(Log::Warning))
-      text.prepend("<i class=\"icon-warning\"></i>&nbsp;");
+      text.prepend("<i class=\"fa-solid fa-triangle-exclamation\"></i>&nbsp;");
     else if (severity == Log::severityToString(Log::Error)
              || severity == Log::severityToString(Log::Fatal))
-      text.prepend("<i class=\"icon-minus-circled\"></i>&nbsp;");
+      text.prepend("<i class=\"fa-solid fa-circle-minus\"></i>&nbsp;");
     break;
   }
   }

@@ -16,13 +16,13 @@
 HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
   : HtmlItemDelegate(parent) {
   QHash<QString,QString> instancesStatusIcons;
-  instancesStatusIcons.insert("planned", "<i class=\"icon-calendar\"></i>&nbsp;");
-  instancesStatusIcons.insert("queued", "<i class=\"icon-inbox\"></i>&nbsp;");
-  instancesStatusIcons.insert("running", "<i class=\"icon-play\"></i>&nbsp;");
-  instancesStatusIcons.insert("waiting", "<i class=\"icon-flag-checkered\"></i>&nbsp;");
-  instancesStatusIcons.insert("failure", "<i class=\"icon-minus-circled\"></i>&nbsp;");
-  instancesStatusIcons.insert("canceled", "<i class=\"icon-cancel\"></i>&nbsp;");
-  setPrefixForColumn(1, "<i class=\"icon-cog\"></i>&nbsp;"
+  instancesStatusIcons.insert("planned", "<i class=\"fa-solid fa-calendar-days\"></i>&nbsp;");
+  instancesStatusIcons.insert("queued", "<i class=\"fa-solid fa-inbox\"></i>&nbsp;");
+  instancesStatusIcons.insert("running", "<i class=\"fa-solid fa-play\"></i>&nbsp;");
+  instancesStatusIcons.insert("waiting", "<i class=\"fa-solid fa-flag-checkered\"></i>&nbsp;");
+  instancesStatusIcons.insert("failure", "<i class=\"fa-solid fa-circle-minus\"></i>&nbsp;");
+  instancesStatusIcons.insert("canceled", "<i class=\"fa-solid fa-xmark\"></i>&nbsp;");
+  setPrefixForColumn(1, "<i class=\"fa-solid fa-gear\"></i>&nbsp;"
                      "<a href=\"tasks/%1\">", 1);
   setSuffixForColumn(1, "</a>");
   setPrefixForColumn(2, "%1", 2, instancesStatusIcons);
@@ -45,18 +45,18 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                  "<span class=\"label label-info\" title=\"Log\">"
                  "<a target=\"_blank\" href=\"../rest/v1/logs/entries.txt?"
                  "filter=/"+taskInstanceId+" \">"
-                 "<i class=\"icon-file-text\"></i></a></span> "
+                 "<i class=\"fa-solid fa-file-lines\"></i></a></span> "
                  /* detail page */
                  "<span class=\"label label-info\" title=\""
                  "Detailed task info\"><a href=\"tasks/"
-                 +taskId+"\"><i class=\"icon-cog\"></i></a></span> ");
+                 +taskId+"\"><i class=\"fa-solid fa-gear\"></i></a></span> ");
     if (status == "queued" || status == "planned")
       text.prepend(/* cancel */
                    "<span class=\"label label-danger\" title=\"Cancel "
                    "request\"><a href=\"confirm/do/v1/taskinstances/cancel/"
                    +taskInstanceId+"?confirm_message=cancel task request "
                    +taskInstanceId
-                   +"\"><i class=\"icon-cancel\"></i></a></span> ");
+                   +"\"><i class=\"fa-solid fa-xmark\"></i></a></span> ");
     else if (status == "running" || status == "waiting") {
       if (abortable)
         text.prepend(/* abort */
@@ -64,17 +64,17 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                      "task\"><a href=\"confirm/do/v1/taskinstances/abort/"
                      +taskInstanceId+"?confirm_message=abort task instance "
                      +taskInstanceId+
-                     "\"><i class=\"icon-fire\"></i></a></span> ");
+                     "\"><i class=\"fa-solid fa-skull-crossbones\"></i></a></span> ");
       else
         text.prepend(/* cannot abort */
                      "<span class=\"label\" title=\"Cannot abort task\">"
-                     "<i class=\"icon-fire\"></i></span> ");
+                     "<i class=\"fa-solid fa-skull-crossbones\"></i></span> ");
     } else
       text.prepend(/* reexec */
                    "<span class=\"label label-danger\" "
                    "title=\"Request execution of same task\"><a href=\""
                    "tasks/request/"+taskId+"\">"
-                   "<i class=\"icon-repeat\"></i></a></span> ");
+                   "<i class=\"fa-solid fa-arrow-rotate-right\"></i></a></span> ");
     break;
   }
   case 11: {

@@ -1,11 +1,11 @@
 span[class^="label"],span[class*=" label"] a {
   color: white; /* have white icons in label spans, which are used as buttons */
 }
-[class^="icon-"], [class*=" icon-"] {
+[class^="fa-"], [class*=" fa-"] {
   width:auto; /* disable fixed width icon */
   display:inline; /* enable &nbsp; before and after icon */
 }
-[class^="icon-"]:before, [class*=" icon-"]:before {
+[class^="fa-"]:before, [class*=" fa-"]:before {
   display:inline; /* enable &nbsp; before and after icon */
 }
 .pagination-frame {

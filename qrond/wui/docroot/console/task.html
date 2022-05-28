@@ -18,17 +18,17 @@
       <div class="row">
         <div class="col-md-12">
           <h1>Task <?value:11?></h1>
-          <p><a class="btn btn-danger" href="request/<?value:11?>"><i class="icon-play"></i> Request task execution</a>
-          <a class="btn btn-danger" href="<?value:!pathtoroot?>../do/v1/tasks/disable/<?value:11?>"><i class="icon-block"></i> Disable task</a>
-          <a class="btn btn-warning" href="<?value:!pathtoroot?>../do/v1/tasks/enable/<?value:11?>"><i class="icon-block"></i> Enable task</a>
-          <a class="btn btn-info" href="<?value:!pathtoroot?>../rest/v1/logs/entries.txt?regexp=[^ ] <?value:11?>[/:]" target="_blank"><i class="icon-file-text"></i> Task log</a>
+          <p><a class="btn btn-danger" href="request/<?value:11?>"><i class="fa-solid fa-play"></i> Request task execution</a>
+          <a class="btn btn-danger" href="<?value:!pathtoroot?>../do/v1/tasks/disable/<?value:11?>"><i class="fa-solid fa-ban"></i> Disable task</a>
+          <a class="btn btn-warning" href="<?value:!pathtoroot?>../do/v1/tasks/enable/<?value:11?>"><i class="fa-solid fa-ban"></i> Enable task</a>
+          <a class="btn btn-info" href="<?value:!pathtoroot?>../rest/v1/logs/entries.txt?regexp=[^ ] <?value:11?>[/:]" target="_blank"><i class="fa-solid fa-file-lines"></i> Task log</a>
           <?=%{webconsole.customactions.taskdetail}?>
           <p>All durations and delays are in seconds.
         </div>
       </div>
       <div class="row">
         <div class="col-md-8">
-          <h2>Task Description<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-description"><span class="icon-help-circled"/></a></h2>
+          <h2>Task Description<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-description"><span class="fa-solid fa-circle-question"/></a></h2>
           <p><a class="btn btn-info" href="<?value:!pathtoroot?>tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="<?value:!pathtoroot?>overview.html">Overview page &raquo;</a>
           <p><table class="table table-condensed table-hover">
@@ -36,42 +36,42 @@
             <tr><th>Task label</th><td><?value:2?></td></tr>
             <tr><th>Task group id</th><td><?value:1?></td></tr>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
-            <tr><th>Triggers (scheduling)<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-triggers-and-constraints"><span class="icon-help-circled"/></a></th><td><?=%{=switch:%28::%{=switch,%31,,<span class="icon-circle-empty"></span>&nbsp;no trigger,}}?></td></tr>
-            <tr><th>Minimum expected duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-monitoring"><span class="icon-help-circled"/></a></th><td><?value:23:?></td></tr>
+            <tr><th>Triggers (scheduling)<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-triggers-and-constraints"><span class="fa-solid fa-circle-question"/></a></th><td><?=%{=switch:%28::%{=switch,%31,,<span class="fa-regular fa-circle"></span>&nbsp;no trigger,}}?></td></tr>
+            <tr><th>Minimum expected duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-monitoring"><span class="fa-solid fa-circle-question"/></a></th><td><?value:23:?></td></tr>
             <tr><th>Maximum expected duration</th><td><?value:24:?></td></tr>
-            <tr><th>Maximum duration before abort</th><td><?=%{=ifneq:%27::<i class="icon-fire"></i>&nbsp;%27:}?></td></tr>
+            <tr><th>Maximum duration before abort</th><td><?=%{=ifneq:%27::<i class="fa-solid fa-skull-crossbones"></i>&nbsp;%27:}?></td></tr>
           </table>
         </div>
         <div class="col-md-4">
           <h2>Task Status</h2>
           <p><a class="btn invisible" href="#">&nbsp;</a>
           <p><table class="table table-condensed table-hover">
-             <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="icon-block"></i>&nbsp;false}?></td></tr>
+             <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="fa-solid fa-ban"></i>&nbsp;false}?></td></tr>
              <tr><th>Last exec status</th><td><?value:19:?></td></tr>
-             <tr><th>Last exec total duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#task-instances-timestamps-and-durations"><span class="icon-help-circled"/></a></th><td><?value:26:?></td></tr>
-             <tr><th>Last exec instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="%!pathtoroot../rest/v1/logs/entries.txt?filter=%11/%32"><i class="icon-file-text"></i></a></span>}?></td></tr>
+             <tr><th>Last exec total duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#task-instances-timestamps-and-durations"><span class="fa-solid fa-circle-question"/></a></th><td><?value:26:?></td></tr>
+             <tr><th>Last exec instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="%!pathtoroot../rest/v1/logs/entries.txt?filter=%11/%32"><i class="fa-solid fa-file-lines"></i></a></span>}?></td></tr>
              <tr><th>Next exec</th><td><?value:10:?></td></tr>
-             <tr><th>Currently running instances</th><td><?=%{=ifneq:%13:0:<i class="icon-play"></i>&nbsp;%13:%13}?>/<?value:12:?></td></tr>
+             <tr><th>Currently running instances</th><td><?=%{=ifneq:%13:0:<i class="fa-solid fa-play"></i>&nbsp;%13:%13}?>/<?value:12:?></td></tr>
              <tr><th>Executions count since qron start</th><td><?value:34:?></td></tr>
           </table>
         </div>
       </div>
       <div class="row">
         <div class="col-md-12">
-          <h2>Task Parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a> and Resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="icon-help-circled"/></a></h2>
+          <h2>Task Parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-parameters"><span class="fa-solid fa-circle-question"/></a> and Resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="fa-solid fa-circle-question"/></a></h2>
           <p><a class="btn btn-info" href="<?value:!pathtoroot?>tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="<?value:!pathtoroot?>resources.html">Resources page &raquo;</a>
           <p><table class="table table-condensed table-hover">
-            <tr><th>Execution mean<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:3:?></td></tr>
+            <tr><th>Execution mean<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="fa-solid fa-circle-question"/></a></th><td><?value:3:?></td></tr>
             <tr><th>Execution target (host or cluster)</th><td><?value:5:?></td></tr>
             <tr><th>Command</th><td><?=%{=htmlencode:%4:un}?></td></tr>
-            <tr><th>Configuration parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="icon-help-circled"/></a></th><td><?value:7:?></td></tr>
-            <tr><th>Request-time overridable parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-parameters"><span class="icon-help-circled"/></a></th><td><?value:25:?></td></tr>
-            <tr><th>Variables<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-vars"><span class="icon-help-circled"/></a></th><td><?value:21:?></td></tr>
-            <tr><th>Consumed resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="icon-help-circled"/></a></th><td><?value:8:?></td></tr>
+            <tr><th>Configuration parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="fa-solid fa-circle-question"/></a></th><td><?value:7:?></td></tr>
+            <tr><th>Request-time overridable parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-parameters"><span class="fa-solid fa-circle-question"/></a></th><td><?value:25:?></td></tr>
+            <tr><th>Variables<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-vars"><span class="fa-solid fa-circle-question"/></a></th><td><?value:21:?></td></tr>
+            <tr><th>Consumed resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="fa-solid fa-circle-question"/></a></th><td><?value:8:?></td></tr>
             <tr><th>Maximum instances count at a time</th><td><?value:12:?></td></tr>
-            <tr><th>Enqueue policy<a class="help" href="<?value:!pathtoroot?>user-manual.html#enqueuepolicy"><span class="icon-help-circled"/></a></th><td><?value:35:?></td></tr>
-            <tr><th>Onstart events<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-events-subscriptions"><span class="icon-help-circled"/></a></th><td><?value:14:?></td></tr>
+            <tr><th>Enqueue policy<a class="help" href="<?value:!pathtoroot?>user-manual.html#enqueuepolicy"><span class="fa-solid fa-circle-question"/></a></th><td><?value:35:?></td></tr>
+            <tr><th>Onstart events<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-events-subscriptions"><span class="fa-solid fa-circle-question"/></a></th><td><?value:14:?></td></tr>
             <tr><th>Onsuccess events</th><td><?value:15:?></td></tr>
             <tr><th>Onfailure events</th><td><?value:16:?></td></tr>
           </table>
@@ -80,7 +80,7 @@
       <div class="row">
         <div class="col-md-12">
           <h2>Raw Task Configuration</h2>
-          <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/config.pf"><i class="icon-file"></i> PF</a>
+          <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:11?>/config.pf"><i class="fa-solid fa-file"></i> PF</a>
           <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
         </div>
       </div>

@@ -167,15 +167,15 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHostsListView->setModel(_sortedHostsModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   qobject_cast<HtmlItemDelegate*>(_htmlHostsListView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-hdd\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(2, "<i class=\"icon-fast-food\"></i>&nbsp;");
+      ->setPrefixForColumn(0, "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(2, "<i class=\"fa-solid fa-wheat-awn\"></i>&nbsp;");
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView = new HtmlTableView(this, "clusterslist");
   _htmlClustersListView->setModel(_sortedClustersModel);
   _htmlClustersListView->setEmptyPlaceholder("(no cluster)");
   qobject_cast<HtmlItemDelegate*>(_htmlClustersListView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-shuffle\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(1, "<i class=\"icon-hdd\"></i>&nbsp;");
+      ->setPrefixForColumn(0, "<i class=\"fa-solid fa-shuffle\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(1, "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;");
   _wuiHandler->addView(_htmlClustersListView);
   _htmlFreeResourcesView = new HtmlTableView(this, "freeresources");
   _htmlFreeResourcesView->setModel(_freeResourcesModel);
@@ -183,9 +183,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
   qobject_cast<HtmlItemDelegate*>(_htmlFreeResourcesView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"icon-fast-food\"></i>&nbsp;")
+                                 "<i class=\"fa-solid fa-wheat-awn\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
-                              "<i class=\"icon-hdd\"></i>&nbsp;");
+                              "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;");
   _wuiHandler->addView(_htmlFreeResourcesView);
   _htmlResourcesLwmView = new HtmlTableView(this, "resourceslwm");
   _htmlResourcesLwmView->setModel(_resourcesLwmModel);
@@ -193,9 +193,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
   qobject_cast<HtmlItemDelegate*>(_htmlResourcesLwmView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"icon-fast-food\"></i>&nbsp;")
+                                 "<i class=\"fa-solid fa-wheat-awn\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
-                              "<i class=\"icon-hdd\"></i>&nbsp;");
+                              "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;");
   _wuiHandler->addView(_htmlResourcesLwmView);
   _htmlResourcesConsumptionView =
       new HtmlTableView(this, "resourcesconsumption");
@@ -205,9 +205,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
       ->setEmptyPlaceholder("(no resource definition)");
   qobject_cast<HtmlItemDelegate*>(_htmlResourcesConsumptionView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"icon-hdd\"></i>&nbsp;")
+                                 "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
-                              "<i class=\"icon-cog\"></i>&nbsp;")
+                              "<i class=\"fa-solid fa-gear\"></i>&nbsp;")
       ->setPrefixForRowHeader(0, "")
       ->setPrefixForRow(0, "<strong>")
       ->setSuffixForRow(0, "</strong>");
@@ -229,17 +229,17 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlStatefulAlertsView->setColumnIndexes({0,2,3,4,5});
   QHash<QString,QString> alertsIcons;
   alertsIcons.insert(Alert::statusAsString(Alert::Nonexistent),
-                     "<i class=\"icon-bell\"></i>&nbsp;");
+                     "<i class=\"fa-solid fa-bell\"></i>&nbsp;");
   alertsIcons.insert(Alert::statusAsString(Alert::Rising),
-                     "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
+                     "<i class=\"fa-regular fa-bell\"></i>&nbsp;<strike>");
   alertsIcons.insert(Alert::statusAsString(Alert::MayRise),
-                     "<i class=\"icon-bell-empty\"></i>&nbsp;<strike>");
+                     "<i class=\"fa-regular fa-bell\"></i>&nbsp;<strike>");
   alertsIcons.insert(Alert::statusAsString(Alert::Raised),
-                     "<i class=\"icon-bell\"></i>&nbsp;");
+                     "<i class=\"fa-solid fa-bell\"></i>&nbsp;");
   alertsIcons.insert(Alert::statusAsString(Alert::Dropping),
-                     "<i class=\"icon-bell\"></i>&nbsp;");
+                     "<i class=\"fa-solid fa-bell\"></i>&nbsp;");
   alertsIcons.insert(Alert::statusAsString(Alert::Canceled),
-                     "<i class=\"icon-check\"></i>&nbsp;");
+                     "<i class=\"fa-solid fa-check\"></i>&nbsp;");
   _htmlStatefulAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlStatefulAlertsView, true));
   qobject_cast<HtmlItemDelegate*>(_htmlStatefulAlertsView->itemDelegate())
@@ -253,7 +253,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView->setItemDelegate(
         new HtmlAlertItemDelegate(_htmlRaisedAlertsView, true));
   qobject_cast<HtmlItemDelegate*>(_htmlRaisedAlertsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-bell\"></i>&nbsp;");
+      ->setPrefixForColumn(0, "<i class=\"fa-solid fa-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsView);
   _htmlLastEmittedAlertsView =
       new HtmlTableView(this, "lastemittedalerts",
@@ -270,22 +270,22 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlAlertSubscriptionsView = new HtmlTableView(this, "alertsubscriptions");
   _htmlAlertSubscriptionsView->setModel(_alertSubscriptionsModel);
   QHash<QString,QString> alertSubscriptionsIcons;
-  alertSubscriptionsIcons.insert("stop", "<i class=\"icon-stop\"></i>&nbsp;");
+  alertSubscriptionsIcons.insert("stop", "<i class=\"fa-solid fa-stop\"></i>&nbsp;");
   qobject_cast<HtmlItemDelegate*>(_htmlAlertSubscriptionsView->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;")
+      ->setPrefixForColumn(1, "<i class=\"fa-solid fa-filter\"></i>&nbsp;")
       ->setPrefixForColumn(2, "%1", 2, alertSubscriptionsIcons);
   _htmlAlertSubscriptionsView->setColumnIndexes({1,2,3,4,5,12});
   _wuiHandler->addView(_htmlAlertSubscriptionsView);
   _htmlAlertSettingsView = new HtmlTableView(this, "alertsettings");
   _htmlAlertSettingsView->setModel(_alertSettingsModel);
   qobject_cast<HtmlItemDelegate*>(_htmlAlertSettingsView->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-filter\"></i>&nbsp;");
+      ->setPrefixForColumn(1, "<i class=\"fa-solid fa-filter\"></i>&nbsp;");
   _htmlAlertSettingsView->setColumnIndexes({1,2});
   _wuiHandler->addView(_htmlAlertSettingsView);
   _htmlGridboardsView = new HtmlTableView(this, "gridboards");
   _htmlGridboardsView->setModel(_sortedGridboardsModel);
   qobject_cast<HtmlItemDelegate*>(_htmlGridboardsView->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-gauge\"></i>&nbsp;"
+      ->setPrefixForColumn(1, "<i class=\"fa-solid fa-table-cells\"></i>&nbsp;"
                               "<a href=\"gridboards/%1\">", 0)
       ->setSuffixForColumn(1, "</a>");
   _htmlGridboardsView->setColumnIndexes({1,2,3});
@@ -399,13 +399,13 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _wuiHandler->addView(_htmlTasksEventsView);
   _htmlSchedulerEventsView = new HtmlTableView(this, "schedulerevents");
   qobject_cast<HtmlItemDelegate*>(_htmlSchedulerEventsView->itemDelegate())
-      ->setPrefixForColumnHeader(0, "<i class=\"icon-play\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(1, "<i class=\"icon-refresh\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(2, "<i class=\"icon-comment\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(3, "<i class=\"icon-file-text\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(4, "<i class=\"icon-play\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(5, "<i class=\"icon-check\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(6, "<i class=\"icon-minus-circled\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(0, "<i class=\"fa-solid fa-play\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(1, "<i class=\"fa-solid fa-arrows-rotate\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(2, "<i class=\"fa-solid fa-comment\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(3, "<i class=\"fa-solid fa-file-lines\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(4, "<i class=\"fa-solid fa-play\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(5, "<i class=\"fa-solid fa-check\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(6, "<i class=\"fa-solid fa-circle-minus\"></i>&nbsp;")
       ->setMaxCellContentLength(2000);
   _htmlSchedulerEventsView->setModel(_schedulerEventsModel);
   _wuiHandler->addView(_htmlSchedulerEventsView);
@@ -416,24 +416,24 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastPostedNoticesView20->setEmptyPlaceholder("(no notice)");
   _htmlLastPostedNoticesView20->setColumnIndexes({0,1});
   qobject_cast<HtmlItemDelegate*>(_htmlLastPostedNoticesView20->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-comment\"></i>&nbsp;");
+      ->setPrefixForColumn(1, "<i class=\"fa-solid fa-comment\"></i>&nbsp;");
   _wuiHandler->addView(_htmlLastPostedNoticesView20);
   _htmlTaskGroupsView = new HtmlTableView(this, "taskgroups");
   _htmlTaskGroupsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsView->setEmptyPlaceholder("(no task group)");
   _htmlTaskGroupsView->setColumnIndexes({0,2,7,21,22});
   qobject_cast<HtmlItemDelegate*>(_htmlTaskGroupsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;");
+      ->setPrefixForColumn(0, "<i class=\"fa-solid fa-gears\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsView);
   _htmlTaskGroupsEventsView = new HtmlTableView(this, "taskgroupsevents");
   _htmlTaskGroupsEventsView->setModel(_sortedTaskGroupsModel);
   _htmlTaskGroupsEventsView->setEmptyPlaceholder("(no task group)");
   _htmlTaskGroupsEventsView->setColumnIndexes({0,14,15,16});
   qobject_cast<HtmlItemDelegate*>(_htmlTaskGroupsEventsView->itemDelegate())
-      ->setPrefixForColumn(0, "<i class=\"icon-cogs\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(14, "<i class=\"icon-play\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(15, "<i class=\"icon-check\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(16, "<i class=\"icon-minus-circled\"></i>&nbsp;");
+      ->setPrefixForColumn(0, "<i class=\"fa-solid fa-gears\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(14, "<i class=\"fa-solid fa-play\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(15, "<i class=\"fa-solid fa-check\"></i>&nbsp;")
+      ->setPrefixForColumnHeader(16, "<i class=\"fa-solid fa-circle-minus\"></i>&nbsp;");
   _wuiHandler->addView(_htmlTaskGroupsEventsView);
   _htmlAlertChannelsView = new HtmlTableView(this, "alertchannels");
   _htmlAlertChannelsView->setModel(_alertChannelsModel);
@@ -457,9 +457,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLogFilesView->setModel(_logConfigurationModel);
   _htmlLogFilesView->setEmptyPlaceholder("(no log file)");
   QHash<QString,QString> bufferLogFileIcons;
-  bufferLogFileIcons.insert("true", "<i class=\"icon-download\"></i>&nbsp;");
+  bufferLogFileIcons.insert("true", "<i class=\"fa-solid fa-download\"></i>&nbsp;");
   qobject_cast<HtmlItemDelegate*>(_htmlLogFilesView->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-file-text\"></i>&nbsp;")
+      ->setPrefixForColumn(1, "<i class=\"fa-solid fa-file-lines\"></i>&nbsp;")
       ->setPrefixForColumn(3, "%1", 3, bufferLogFileIcons);
   _htmlLogFilesView->setColumnIndexes({1,2,3});
   _wuiHandler->addView(_htmlLogFilesView);
@@ -468,7 +468,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlCalendarsView->setColumnIndexes({1,2});
   _htmlCalendarsView->setEmptyPlaceholder("(no named calendar)");
   qobject_cast<HtmlItemDelegate*>(_htmlCalendarsView->itemDelegate())
-      ->setPrefixForColumn(1, "<i class=\"icon-calendar\"></i>&nbsp;");
+      ->setPrefixForColumn(1, "<i class=\"fa-solid fa-calendar-days\"></i>&nbsp;");
   _wuiHandler->addView(_htmlCalendarsView);
   _htmlConfigsView = new HtmlTableView(this, "configs");
   _htmlConfigsView->setModel(_configsModel);
@@ -1320,7 +1320,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         form += "<div><p><p class=\"text-center\">"
                 "<button type=\"submit\" class=\"btn ";
         if (errorOccured)
-            form += "btn-default\" disabled><i class=\"icon-block\"></i> Cannot"
+            form += "btn-default\" disabled><i class=\"fa-solid fa-ban\"></i> Cannot"
                     " request task execution";
         else
             form += "btn-danger\">Request task execution";

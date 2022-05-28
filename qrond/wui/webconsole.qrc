@@ -38,14 +38,10 @@
         <file>docroot/console/img/taskinstances_statuses.svg</file>
         <file>docroot/console/img/paramset_hierarchy.svg</file>
         <file>docroot/console/img/paramset_hierarchy_caption.svg</file>
-        <file>docroot/console/css/qicons-codes.css</file>
-        <file>docroot/console/css/qicons.css</file>
-        <file>docroot/console/css/qicons-embedded.css</file>
-        <file>docroot/console/css/qicons-ie7-codes.css</file>
-        <file>docroot/console/css/qicons-ie7.css</file>
-        <file>docroot/console/font/qicons.eot</file>
-        <file>docroot/console/font/qicons.svg</file>
-        <file>docroot/console/font/qicons.ttf</file>
-        <file>docroot/console/font/qicons.woff</file>
+        <file>docroot/console/css/fontawesome.css</file>
+        <file>docroot/console/css/solid.css</file>
+        <file>docroot/console/css/regular.css</file>
+        <file>docroot/console/webfonts/fa-regular-400.woff2</file>
+        <file>docroot/console/webfonts/fa-solid-900.woff2</file>
     </qresource>
 </RCC>
