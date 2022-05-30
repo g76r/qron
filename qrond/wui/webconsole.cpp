@@ -356,7 +356,8 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHerdsView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlHerdsView->setEmptyPlaceholder("(no recent herd)");
   _htmlHerdsView->setColumnIndexes({10,1,2,3,14,11,8});
-  auto htmlHerdsDelegate = new HtmlTaskInstanceItemDelegate(_htmlHerdsView);
+  auto htmlHerdsDelegate = new HtmlTaskInstanceItemDelegate(
+    _htmlHerdsView, true);
   htmlHerdsDelegate->setMaxCellContentLength(16384);
   _htmlHerdsView->setItemDelegate(htmlHerdsDelegate);
   _wuiHandler->addView(_htmlHerdsView);
@@ -882,7 +883,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   // LATER should check that mandatory form fields have been set ?
   TaskInstanceList instances = webconsole->scheduler()
       ->requestTask(taskId, params, params.valueAsBool("force", false),
-                        params.value("herdid"));
+                    params.value("herdid", "0").toULongLong());
   QString message;
   QList<quint64> taskInstanceIds;
   if (!instances.isEmpty()) {

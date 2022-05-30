@@ -21,8 +21,10 @@ class HtmlTaskInstanceItemDelegate
     : public HtmlItemDelegate {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlTaskInstanceItemDelegate)
+  bool _decorateHerdId;
 public:
-  explicit HtmlTaskInstanceItemDelegate(QObject *parent = 0);
+  explicit HtmlTaskInstanceItemDelegate(
+    QObject *parent, bool decorateHerdId = false);
   QString text(const QModelIndex &index) const;
 };
 

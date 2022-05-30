@@ -1,7 +1,14 @@
-# Since 1.13.1
+# From 1.13.1 to 1.13.2 (2022-05-30):
 * Minor improvements
+ - wui: more/better links to logs on herds and taskinstances views
  - wui: switched to FontAwesome 6 alone, instead of a mix of font icons
  - wui: updated about page
+* Bugfixes
+ - fixed dangling planned tasks on configuration reload
+* Behind-the-curtain improvements
+ - removed any taskinstance reference within taskinstance
+   it was bad design pattern and made impossible to have both herds and
+   configuration switch work together
 
 # From 1.13.0 to 1.13.1 (2022-05-09):
 * Minor improvements

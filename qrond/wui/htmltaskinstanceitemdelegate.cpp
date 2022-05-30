@@ -13,8 +13,9 @@
  */
 #include "htmltaskinstanceitemdelegate.h"
 
-HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
-  : HtmlItemDelegate(parent) {
+HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(
+  QObject *parent, bool decorateHerdId)
+  : HtmlItemDelegate(parent), _decorateHerdId(decorateHerdId) {
   QHash<QString,QString> instancesStatusIcons;
   instancesStatusIcons.insert("planned", "<i class=\"fa-solid fa-calendar-days\"></i>&nbsp;");
   instancesStatusIcons.insert("queued", "<i class=\"fa-solid fa-inbox\"></i>&nbsp;");
@@ -31,6 +32,15 @@ HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(QObject *parent)
 QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
   switch (index.column()) {
+  case 10:
+    if (!_decorateHerdId)
+      break;
+    [[fallthrough]];
+  case 0:
+    text = "<a target=\"_blank\" "
+             "href=\"../rest/v1/logs/entries.txt?filter=/"
+           +text+"\">"+text+"</a>";
+    break;
   case 8: {
     QString taskInstanceId = index.model()->index(
           index.row(), 0, index.parent()).data().toString();
@@ -41,15 +51,6 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     bool abortable = index.model()->index(index.row(), 9, index.parent()).data()
         .toBool();
     text = index.data().toString(); // disable truncating and HTML encoding
-    text.prepend(/* log */
-                 "<span class=\"label label-info\" title=\"Log\">"
-                 "<a target=\"_blank\" href=\"../rest/v1/logs/entries.txt?"
-                 "filter=/"+taskInstanceId+" \">"
-                 "<i class=\"fa-solid fa-file-lines\"></i></a></span> "
-                 /* detail page */
-                 "<span class=\"label label-info\" title=\""
-                 "Detailed task info\"><a href=\"tasks/"
-                 +taskId+"\"><i class=\"fa-solid fa-gear\"></i></a></span> ");
     if (status == "queued" || status == "planned")
       text.prepend(/* cancel */
                    "<span class=\"label label-danger\" title=\"Cancel "
@@ -78,13 +79,24 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     break;
   }
   case 11: {
-      QStringList idSlashId = text.split(' '), html;
+      QStringList idSlashId = text.split(' '), html, tiis;
       for (auto task: idSlashId) {
         QStringList ids = task.split('/');
-        html.append("<a href=\"tasks/"+ids.at(0)+"\">"+ids.at(0)+"</a>/"
-                    +ids.at(1));
+        auto taskid = ids.value(0);
+        auto tii = ids.value(1);
+        html += "<a href=\"tasks/"+taskid+"\">"+taskid+"</a>/"
+                +"<a target=\"_blank\" "
+                  "href=\"../rest/v1/logs/entries.txt?filter=/"
+                +tii+"\">"+tii+"</a>";
+        if (!tii.isEmpty()) [[likely]]
+          tiis << tii;
       }
       text = html.join(' ');
+      if (!tiis.isEmpty()) {
+        text += " <br/><a target=\"_blank\" "
+                "href=\"../rest/v1/logs/entries.txt?regexp=/("
+                + tiis.join('|') +")\">full herd log</a>";
+      }
       break;
   }
   }
