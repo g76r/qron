@@ -1,4 +1,4 @@
-# Since 1.13.2:
+# From 1.13.2 to 1.13.3 (2022-06-06):
 * New features and notable changes
  - background execution mean
    example:
