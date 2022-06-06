@@ -36,6 +36,7 @@
 #include "format/jsonformats.h"
 #include <QJsonDocument>
 #include "config/requestformfield.h"
+#include "alert/alerter.h"
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -338,7 +339,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   taskInstancesTrClasses.insert("canceled", "active");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no unfinished task)");
-  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,4,15,17,18,8});
+  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,15,4,17,18,8});
   _htmlUnfinishedTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
                           _htmlUnfinishedTaskInstancesView));

@@ -1,3 +1,23 @@
+# Since 1.13.2:
+* New features and notable changes
+ - background execution mean
+   example:
+    (mean background)
+    (command '
+       sleep 20 > /dev/null 2>&1 &
+       echo "!qron:(paramappend taskpid $!)(log hello world!)"
+    ')
+    (statuscommand "kill -0 %taskpid > /dev/null")
+    # status command return code: 0=still running 1= succeeded 2+= failed
+    (abortcommand "kill %taskpid")
+* Minor imrpovements
+ - introducing overrideparam and paramappend actions
+* Behind-the-curtain improvements
+ - parsing background tasks commands output to execute actions as if
+   they were event subscriptions, this way:
+   echo "!qron:(paramappend taskpid $!)(log hello world!)"
+   this feature may be reused for something else than background tasks
+
 # From 1.13.1 to 1.13.2 (2022-05-30):
 * Minor improvements
  - wui: more/better links to logs on herds and taskinstances views
