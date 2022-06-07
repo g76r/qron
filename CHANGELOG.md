@@ -1,6 +1,7 @@
 # Since 1.13.3:
 * New features and notable changes
  - introducing exec action
+ - better vars quoting and new pseudoparams %!envvars & %!headervars
 
 # From 1.13.2 to 1.13.3 (2022-06-06):
 * New features and notable changes
