@@ -2,6 +2,9 @@
 * New features and notable changes
  - introducing exec action
  - better vars quoting and new pseudoparams %!envvars & %!headervars
+ - local,ssh,docker: new param command.hardkill to change default behavior
+   default behavior stays true for local and ssh and false for docker but
+   can be overrident task by task
 
 # From 1.13.2 to 1.13.3 (2022-06-06):
 * New features and notable changes
