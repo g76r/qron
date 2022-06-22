@@ -451,7 +451,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlTasksAlertsView = new HtmlTableView(this, "tasksalerts");
   _htmlTasksAlertsView->setModel(_tasksModel);
   _htmlTasksAlertsView->setEmptyPlaceholder("(no task)");
-  _htmlTasksAlertsView->setColumnIndexes({11,6,23,26,24,27,12,16,18});
+  _htmlTasksAlertsView->setColumnIndexes({11,6,23,26,24,27,12,43,44,16,18});
   _htmlTasksAlertsView->setItemDelegate(
         new HtmlTaskItemDelegate(_htmlTasksAlertsView));
   _wuiHandler->addView(_htmlTasksAlertsView);

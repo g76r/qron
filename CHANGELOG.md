@@ -1,3 +1,19 @@
+# From 1.13.4 to 1.13.5 (2022-06-22):
+* New features and notable changes
+  - introducing task retries: re-executing task maxtries-1 times until it does
+    not fails, waiting pausebetweentries seconds before each retry.
+  - new config elements for tasks and tasktemplates: maxtries (default: 1),
+    pausebetweentries (in seconds, default: 0.0, example: .250)
+  - tasks/taskgroups/tasktemplates views columns changes:
+    new 43 Max tries
+    new 44 Pause between tries
+  - new task pseudoparam: %!maxtries
+  - new taskinstances pseudoparams: %!currenttry %!remainingtries
+  - new auto one-shot alert: task.retry.%!taskid, emitted each time a task is
+    retried
+* Minor improvements
+  - wui: added max tries and pause between tries in tasks view on alerts page
+
 # From 1.13.3 to 1.13.4 (2022-06-07):
 * New features and notable changes
  - introducing exec action
@@ -18,7 +34,7 @@
     (statuscommand "kill -0 %taskpid > /dev/null")
     # status command return code: 0=still running 1= succeeded 2+= failed
     (abortcommand "kill %taskpid")
-* Minor imrpovements
+* Minor improvements
  - introducing overrideparam and paramappend actions
 * Behind-the-curtain improvements
  - parsing background tasks commands output to execute actions as if

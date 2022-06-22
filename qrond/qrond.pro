@@ -84,3 +84,5 @@ HEADERS += \
 
 RESOURCES += \
     wui/webconsole.qrc
+
+DISTFILES +=
