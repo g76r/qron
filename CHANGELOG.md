@@ -1,3 +1,9 @@
+# Since 1.13.5:
+* Bugfixes
+  - docker default name now includes %!currenttry
+    now: "%{!taskid}_%{!taskinstanceid}_%{!currenttry}"
+    was: "%{!taskid}_%{!taskinstanceid}"
+
 # From 1.13.4 to 1.13.5 (2022-06-22):
 * New features and notable changes
   - introducing task retries: re-executing task maxtries-1 times until it does
@@ -26,6 +32,7 @@
 * New features and notable changes
  - background execution mean
    example:
+    ```
     (mean background)
     (command '
        sleep 20 > /dev/null 2>&1 &
@@ -34,6 +41,7 @@
     (statuscommand "kill -0 %taskpid > /dev/null")
     # status command return code: 0=still running 1= succeeded 2+= failed
     (abortcommand "kill %taskpid")
+    ```
 * Minor improvements
  - introducing overrideparam and paramappend actions
 * Behind-the-curtain improvements
