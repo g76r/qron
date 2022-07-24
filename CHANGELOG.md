@@ -1,5 +1,9 @@
 # Since 1.13.5:
 * Bugfixes
+  - spaces in request form fields are now supported
+    previously it was supported only when params where send with GET method
+    not POST (i.e. in URI, not body) and even this was no longer working
+    (probably since Qt 6, because of a change in overriden methods priorities)
   - docker default name now includes %!currenttry
     now: "%{!taskid}_%{!taskinstanceid}_%{!currenttry}"
     was: "%{!taskid}_%{!taskinstanceid}"
