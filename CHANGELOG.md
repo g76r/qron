@@ -1,4 +1,4 @@
-# Since 1.13.5:
+# From 1.13.5 to 1.13.6 (2022-07-24):
 * Bugfixes
   - spaces in request form fields are now supported
     previously it was supported only when params where send with GET method
