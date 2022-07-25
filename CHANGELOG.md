@@ -1,3 +1,7 @@
+# From 1.13.6 to 1.13.7 (2022-07-25):
+* Bugfixes
+  - wui: supporting again text view page numbers
+
 # From 1.13.5 to 1.13.6 (2022-07-24):
 * Bugfixes
   - spaces in request form fields are now supported
