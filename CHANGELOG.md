@@ -1,3 +1,11 @@
+# Since 1.13.7
+* New features and notable changes
+ - new % functions in config file
+   %=rpn e.g. `%{=rpn,'0x20,x,+}` returns "33.5" if x is "1.5"
+* Behind-the-curtain improvements
+ - optimizations in regexp handling during %-evaluation
+ - code quality improvements
+
 # From 1.13.6 to 1.13.7 (2022-07-25):
 * Bugfixes
   - wui: supporting again text view page numbers
