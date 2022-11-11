@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn and others.
+/* Copyright 2013-2022 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -191,13 +191,9 @@ void Qrond::doShutdown(int returnCode) {
 }
 
 #ifdef Q_OS_UNIX
-static QMutex signalHandlerMutex;
-static bool shutingDown(false);
-
 static void signal_handler(int signal_number) {
-  //qDebug() << "signal" << signal_number;
-  QMutexLocker ml(&signalHandlerMutex);
-  if (shutingDown)
+  static bool shuting_down = false;
+  if (shuting_down)
     return;
   switch (signal_number) {
   case SIGHUP:    
@@ -207,7 +203,7 @@ static void signal_handler(int signal_number) {
     break;
   case SIGTERM:
   case SIGINT:
-    shutingDown = true;
+    shuting_down = true;
     QMetaObject::invokeMethod(qrondInstance(), []() {
       qrondInstance()->systemTriggeredShutdown(0, "signal");
     }, Qt::QueuedConnection);
@@ -228,18 +224,17 @@ int main(int argc, char *argv[]) {
 #ifdef Q_OS_UNIX
   struct sigaction action;
   memset(&action, 0, sizeof(struct sigaction));
+  sigset_t block_mask;
+  sigaddset (&block_mask, SIGHUP);
+  sigaddset (&block_mask, SIGTERM);
+  sigaddset (&block_mask, SIGINT);
   action.sa_handler = signal_handler;
+  action.sa_mask = block_mask;
   sigaction(SIGHUP, &action, 0);
   sigaction(SIGTERM, &action, 0);
   sigaction(SIGINT, &action, 0);
 #endif
   // LATER servicize on Windows
   int rc = a.exec();
-#ifdef Q_OS_UNIX
-  action.sa_handler = SIG_IGN;
-  sigaction(SIGHUP, &action, 0);
-  sigaction(SIGTERM, &action, 0);
-  sigaction(SIGINT, &action, 0);
-#endif
   return rc;
 }
