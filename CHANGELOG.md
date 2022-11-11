@@ -5,6 +5,7 @@
    %=trim e.g. `%{=trim:%foo}`
 * Minor improvements
  - removed a race condition in unix signal handler
+ - switched to FontAwesome 6 alone in offline doc too
 * Behind-the-curtain improvements
  - optimizations in regexp handling during %-evaluation
  - code quality improvements
