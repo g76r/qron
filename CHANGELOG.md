@@ -6,6 +6,8 @@
 * Minor improvements
  - removed a race condition in unix signal handler
  - switched to FontAwesome 6 alone in offline doc too
+ - resynchronized offline user-manual with online one, the offline
+   manual got stuck in 2021
 * Behind-the-curtain improvements
  - optimizations in regexp handling during %-evaluation
  - code quality improvements
