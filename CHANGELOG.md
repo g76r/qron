@@ -2,6 +2,7 @@
 * New features and notable changes
  - new % functions in config file
    %=rpn e.g. `%{=rpn,'0x20,x,+}` returns "33.5" if x is "1.5"
+   %=trim e.g. `%{=trim:%foo}`
 * Minor improvements
  - removed a race condition in unix signal handler
 * Behind-the-curtain improvements
