@@ -8,7 +8,8 @@
  - switched to FontAwesome 6 alone in offline doc too
  - resynchronized offline user-manual with online one, the offline
    manual got stuck in 2021
- - fixed random crash on shutdown
+ - fixed random crashes on shutdown
+ - fixed potential random bugs in unix signals handling
 * Behind-the-curtain improvements
  - optimizations in regexp handling during %-evaluation
  - code quality improvements

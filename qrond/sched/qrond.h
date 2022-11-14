@@ -1,4 +1,4 @@
-/* Copyright 2013-2021 Hallowyn and others.
+/* Copyright 2013-2022 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -55,6 +55,7 @@ public:
 private:
   bool doLoadConfig();
   void doShutdown(int returnCode);
+  void signalCaught(int signal_number);
 };
 
 #endif // QROND_H

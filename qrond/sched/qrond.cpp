@@ -22,11 +22,17 @@
 #include "httpd/pipelinehttphandler.h"
 #include <stdlib.h>
 #include <time.h>
-#ifdef Q_OS_UNIX
-#include <signal.h>
-#endif
+#include "io/unixsignalmanager.h"
 
-Q_GLOBAL_STATIC(Qrond, qrondInstance)
+static QMutex *_instanceMutex = new QMutex;
+static Qrond *_instance = nullptr;
+
+Qrond *Qrond::instance() {
+  QMutexLocker locker(_instanceMutex);
+  if (!_instance)
+    _instance = new Qrond;
+  return _instance;
+}
 
 Qrond::Qrond(QObject *parent) : QObject(parent),
   _webconsoleAddress(QHostAddress::Any), _webconsolePort(8086),
@@ -49,17 +55,14 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
   _httpd->appendHandler(pipeline);
   connect(_configRepository, &LocalConfigRepository::configActivated,
           _scheduler, &Scheduler::activateConfig);
-  //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
-  //        _httpd, SLOT(deleteLater()));
-  //connect(QCoreApplication::instance(), SIGNAL(aboutToQuit()),
-  //        _scheduler, SLOT(deleteLater()));
+  connect(UnixSignalManager::instance(), &UnixSignalManager::signalCaught,
+          this, &Qrond::signalCaught);
+#ifdef Q_OS_UNIX
+  UnixSignalManager::addToCatchList({ SIGINT, SIGTERM, SIGHUP });
+#endif
 }
 
 Qrond::~Qrond() {
-}
-
-Qrond *Qrond::instance() {
-  return qrondInstance();
 }
 
 void Qrond::startup(QStringList args) {
@@ -99,10 +102,7 @@ void Qrond::startup(QStringList args) {
   if (_configRepository->activeConfigId().isNull()) {
     Log::fatal() << "cannot load configuration";
     Log::fatal() << "qrond is aborting startup sequence";
-    return; // TODO clean up the whole shutdown sequence
-    //QMetaObject::invokeMethod(qrondInstance(), [](){
-    //  qrondInstance()->shutdown(1);
-    //  }, Qt::QueuedConnection);
+    return;
   }
 }
 
@@ -157,9 +157,7 @@ void Qrond::shutdown(int returnCode) {
   if (this->thread() == QThread::currentThread())
     doShutdown(returnCode);
   else
-    QMetaObject::invokeMethod(this, [this,returnCode]() {
-      doShutdown(returnCode);
-    }, Qt::BlockingQueuedConnection);
+    asyncShutdown(returnCode);
 }
 
 void Qrond::asyncShutdown(int returnCode) {
@@ -185,56 +183,43 @@ void Qrond::doShutdown(int returnCode) {
   // HttpServer, Scheduler and children
   ::usleep(100000); // TODO replace with lambda connected on destroyed() ?
   // shutdown main thread and stop QCoreApplication::exec() in main()
-  Log::debug() << "last log";
   QCoreApplication::exit(returnCode);
   // Qrond instance will be deleted by Q_GLOBAL_STATIC
 }
 
-#ifdef Q_OS_UNIX
-static void signal_handler(int signal_number) {
-  static bool shuting_down = false;
-  if (shuting_down)
+void Qrond::signalCaught(int signal_number) {
+  if (_shutingDown)
     return;
   switch (signal_number) {
-  case SIGHUP:    
-    QMetaObject::invokeMethod(qrondInstance(), []() {
-      qrondInstance()->systemTriggeredLoadConfig("signal");
-    }, Qt::QueuedConnection);
-    break;
-  case SIGTERM:
-  case SIGINT:
-    shuting_down = true;
-    QMetaObject::invokeMethod(qrondInstance(), []() {
-      qrondInstance()->systemTriggeredShutdown(0, "signal");
-    }, Qt::QueuedConnection);
-    break;
+#ifdef Q_OS_UNIX
+    case SIGTERM:
+    case SIGINT:
+      systemTriggeredShutdown(0, "signal");
+      break;
+    case SIGHUP:
+      systemTriggeredLoadConfig("signal");
+      break;
+#endif
+    default:
+      Log::warning() << "Qrond received unexpected unix signal: "
+                     << signal_number;
   }
 }
-#endif
 
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
-  QThread::currentThread()->setObjectName("MainThread");
   Log::wrapQtLogToSamePattern();
-  Log::addConsoleLogger(Log::Info, true);
+  Log::addConsoleLogger(Log::Debug, true);
+  QThread::currentThread()->setObjectName("MainThread");
   QStringList args;
   for (int i = 1; i < argc; ++i)
-    args << QString::fromUtf8(argv[i]);
-  qrondInstance()->startup(args);
-#ifdef Q_OS_UNIX
-  struct sigaction action;
-  memset(&action, 0, sizeof(struct sigaction));
-  sigset_t block_mask;
-  sigaddset (&block_mask, SIGHUP);
-  sigaddset (&block_mask, SIGTERM);
-  sigaddset (&block_mask, SIGINT);
-  action.sa_handler = signal_handler;
-  action.sa_mask = block_mask;
-  sigaction(SIGHUP, &action, 0);
-  sigaction(SIGTERM, &action, 0);
-  sigaction(SIGINT, &action, 0);
-#endif
-  // LATER servicize on Windows
+    args << QString::fromLocal8Bit(argv[i]);
+  Qrond::instance()->startup(args);
   int rc = a.exec();
+  Log::info() << "qrond exiting with status " << rc;
+  QThread::usleep(100'000); // let last log entries be written
+  Log::shutdown();
+  QThread::usleep(100'000); // let last log entries be written
+  qInfo() << "qrond exiting with status" << rc;
   return rc;
 }
