@@ -1,4 +1,4 @@
-# Since 1.13.7
+# From 1.13.7 to 1.13.8 (2022-11-23)
 * New features and notable changes
  - new % functions in config file
    %=rpn e.g. `%{=rpn,'0x20,x,+}` returns "33.5" if x is "1.5"
