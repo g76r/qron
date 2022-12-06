@@ -2,6 +2,9 @@
 * Minor improvements
  - performance: less object copies in ParamsProvider descendants
    especially in ParamSet's %-evaluation processing
+ - %=env now %-evaluate env variable values, e.g. FOO=%bar
+* Behind-the-curtain improvements
+ - env variable access fixes: only qgetenv(), converting as local8bit
 
 # From 1.13.7 to 1.13.8 (2022-11-23)
 * New features and notable changes
