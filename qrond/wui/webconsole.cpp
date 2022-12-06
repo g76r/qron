@@ -657,15 +657,16 @@ class ServerStatsProvider : public ParamsProvider {
 
 public:
   ServerStatsProvider(WebConsole *console) : _console(console) { }
-  QVariant paramValue(QString key, const ParamsProvider *context,
-                      QVariant defaultValue, QSet<QString>) const override {
-    Q_UNUSED(context)
+  using ParamsProvider::paramValue;
+  const QVariant paramValue(
+    const QString &key, const ParamsProvider *, const QVariant &defaultValue,
+    QSet<QString>*) const override {
     if (!_console || !_console->_scheduler) // should never happen
       return defaultValue;
     auto handler = _serverStats.value(key);
     return handler ? handler(_console, key) : defaultValue;
   }
-  QSet<QString> keys() const override {
+  const QSet<QString> keys() const override {
     return _serverStats.keys();
   }
 };
@@ -1970,11 +1971,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
 } },
 { "/rest/v1/tasks/deployment_diagram.dot", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    ParamsProviderMerger *ppm, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writePlainText(webconsole->tasksDeploymentDiagram()
-                            ->source(0).toUtf8(), req, res,
+                            ->source(req, ppm).toUtf8(), req, res,
                             GRAPHVIZ_MIME_TYPE);
 } },
 { "/rest/v1/tasks/trigger_diagram.svg", [](
@@ -1987,11 +1988,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
 } },
 { "/rest/v1/tasks/trigger_diagram.dot", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    ParamsProviderMerger *ppm, int) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writePlainText(webconsole->tasksTriggerDiagram()
-                            ->source(0).toUtf8(), req, res,
+                            ->source(req, ppm).toUtf8(), req, res,
                             GRAPHVIZ_MIME_TYPE);
 } },
 { "/rest/v1/resources/tasks_resources_hosts_diagram.svg", [](
@@ -2003,12 +2004,12 @@ ParamsProviderMerger *processingContext, int matchedLength) {
        ->handleRequest(req, res, processingContext);
  } },
 { "/rest/v1/resources/tasks_resources_hosts_diagram.dot", [](
-                                           WebConsole *webconsole, HttpRequest req, HttpResponse res,
-                                           ParamsProviderMerger *, int) {
+       WebConsole *webconsole, HttpRequest req, HttpResponse res,
+       ParamsProviderMerger *ppm, int) {
    if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
      return true;
    return writePlainText(webconsole->tasksResourcesHostsDiagram()
-                             ->source(0).toUtf8(), req, res,
+                             ->source(req, ppm).toUtf8(), req, res,
                          GRAPHVIZ_MIME_TYPE);
  } },
 };
