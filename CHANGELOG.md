@@ -6,6 +6,10 @@
  - %=rpn operators changes: 
    new ~~ operator (cast to integer)
    more standard operators !=~ =~ rather than ~= !~=
+* Bugfixes
+ - webconsole: fixed dates on top left part of overview page
+ - %=date no longer mess up absolute timestamps passed as second param either
+   (but probably nobody use such a combo in its qron config file)
 * Behind-the-curtain improvements
  - env variable access fixes: only qgetenv(), converting as local8bit
 
