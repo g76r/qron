@@ -3,6 +3,9 @@
  - performance: less object copies in ParamsProvider descendants
    especially in ParamSet's %-evaluation processing
  - %=env now %-evaluate env variable values, e.g. FOO=%bar
+ - %=rpn operators changes: 
+   new ~~ operator (cast to integer)
+   more standard operators !=~ =~ rather than ~= !~=
 * Behind-the-curtain improvements
  - env variable access fixes: only qgetenv(), converting as local8bit
 
