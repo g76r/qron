@@ -1,10 +1,13 @@
 # Since 1.13.8
 * Minor improvements
+ - adding %!deduplicatecriterion and %!rawdeduplicatecriterion pseudoparams
+ - support for recursive instance params (instanceparam was %-evaluated with
+   a context including params but not instance params)
  - performance: less object copies in ParamsProvider descendants
    especially in ParamSet's %-evaluation processing
  - %=env now %-evaluate env variable values, e.g. FOO=%bar
  - %=rpn operators changes: 
-   new ~~ operator (cast to integer)
+   new ~~ operator (cast to integer) <? >? ?? ??* ?- !- ?* !*
    more standard operators !=~ =~ rather than ~= !~=
  - logging shutdown trace _before_ shutdown
 * Bugfixes
@@ -13,6 +16,7 @@
    (but probably nobody use such a combo in its qron config file)
 * Behind-the-curtain improvements
  - env variable access fixes: only qgetenv(), converting as local8bit
+ - removed a linux-specific system call in unix signals handling code
 
 # From 1.13.7 to 1.13.8 (2022-11-23)
 * New features and notable changes
