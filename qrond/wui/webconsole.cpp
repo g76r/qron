@@ -1186,11 +1186,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  Qrond::instance()->asyncShutdown(0);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Shutdown requested.",
                       req.methodName()+" "+req.url().path().left(matchedLength)
                       );
+  Qrond::instance()->asyncShutdown(0);
   return true;
 }, true },
 

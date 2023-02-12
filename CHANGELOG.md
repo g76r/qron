@@ -6,6 +6,7 @@
  - %=rpn operators changes: 
    new ~~ operator (cast to integer)
    more standard operators !=~ =~ rather than ~= !~=
+ - logging shutdown trace _before_ shutdown
 * Bugfixes
  - webconsole: fixed dates on top left part of overview page
  - %=date no longer mess up absolute timestamps passed as second param either
