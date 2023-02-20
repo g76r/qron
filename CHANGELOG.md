@@ -1,4 +1,4 @@
-# Since 1.13.8
+# From 1.13.8 to 1.13.9 (2023-02-20)
 * Minor improvements
  - adding %!deduplicatecriterion and %!rawdeduplicatecriterion pseudoparams
  - support for recursive instance params (instanceparam was %-evaluated with
