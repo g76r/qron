@@ -1,3 +1,9 @@
+# Since 1.13.9
+* Minor improvements
+* Bugfixes
+* Behind-the-curtain improvements
+ - switching from c++17 to c++20
+
 # From 1.13.8 to 1.13.9 (2023-02-20)
 * Minor improvements
  - adding %!deduplicatecriterion and %!rawdeduplicatecriterion pseudoparams
