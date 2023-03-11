@@ -1,6 +1,12 @@
 # Since 1.13.9
 * Minor improvements
+ - fixing runningms in end task log entries (was 0 instead of actual value),
+   and making every other xxxxms and xxxs timestamp available as a live
+   value before its final value
+ - a task can now be immediately aborted when waiting for a retry
 * Bugfixes
+ - the scheduler no longer stops when trying to soft kill a task that is
+   waiting for a retry
 * Behind-the-curtain improvements
  - switching from c++17 to c++20
 
