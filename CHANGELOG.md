@@ -1,4 +1,4 @@
-# Since 1.13.9
+# From 1.13.9 to 1.13.10 (2023-03-11)
 * Minor improvements
  - fixing runningms in end task log entries (was 0 instead of actual value),
    and making every other xxxxms and xxxs timestamp available as a live
