@@ -1,5 +1,5 @@
 #FROM debian:11.3-slim
-FROM g76r/qt6-runner:20220501
+FROM g76r/qt6-runner:20230403
 LABEL description="qron free scheduler"
 LABEL org.opencontainers.image.authors="Grégoire Barbier <devel@g76r.eu>"
 
