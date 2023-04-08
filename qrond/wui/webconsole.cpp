@@ -42,7 +42,7 @@
 #define SHORT_LOG_ROWSPERPAGE 10
 #define TASK_INSTANCE_HISTORY_MAXROWS 10000
 #define UNFINISHED_TASK_INSTANCE_MAXROWS 10000
-#define ISO8601 QStringLiteral("yyyy-MM-dd hh:mm:ss")
+#define ISO8601 u"yyyy-MM-dd hh:mm:ss"_s
 //#define GRAPHVIZ_MIME_TYPE "text/vnd.graphviz;charset=UTF-8"
 #define GRAPHVIZ_MIME_TYPE "text/plain;charset=UTF-8"
 
@@ -56,6 +56,9 @@ static HtmlTableFormatter _htmlTableFormatter(-1);
 
 // syntaxic sugar to define "a||b" as "a" if not empty and "b" otherwise
 static inline QString operator||(QString a, QString b) {
+  return a.isEmpty() ? b : a;
+}
+static inline QByteArray operator||(QByteArray a, QByteArray b) {
   return a.isEmpty() ? b : a;
 }
 
@@ -101,7 +104,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _globalVarsModel = new ParamSetModel(this);
   _alertParamsModel = new ParamSetModel(this);
   _statefulAlertsModel = new SharedUiItemsTableModel(this);
-  _statefulAlertsModel->setHeaderDataFromTemplate(Alert("template"));
+  _statefulAlertsModel->setHeaderDataFromTemplate(Alert("template"_ba));
   _statefulAlertsModel->setDefaultInsertionPoint(
         SharedUiItemsTableModel::FirstItem);
   _sortedStatefulAlertsModel = new QSortFilterProxyModel(this);
@@ -114,7 +117,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedRaisedAlertModel->setSourceModel(_statefulAlertsModel);
   _lastEmittedAlertsModel = new SharedUiItemsLogModel(this, 500);
   _lastEmittedAlertsModel->setHeaderDataFromTemplate(
-              Alert("template"), Qt::DisplayRole);
+              Alert("template"_ba), Qt::DisplayRole);
   _lastPostedNoticesModel = new LastOccuredTextEventsModel(this, 200);
   _lastPostedNoticesModel->setEventName("Notice");
   _alertSubscriptionsModel = new SharedUiItemsTableModel(this);
@@ -339,7 +342,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   taskInstancesTrClasses.insert("canceled", "active");
   _htmlUnfinishedTaskInstancesView->setTrClass("%1", 2, taskInstancesTrClasses);
   _htmlUnfinishedTaskInstancesView->setEmptyPlaceholder("(no unfinished task)");
-  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,15,4,17,18,8});
+  _htmlUnfinishedTaskInstancesView->setColumnIndexes({0,1,2,3,15,4,17,19,8});
   _htmlUnfinishedTaskInstancesView
       ->setItemDelegate(new HtmlTaskInstanceItemDelegate(
                           _htmlUnfinishedTaskInstancesView));
@@ -815,9 +818,8 @@ static void apiAuditAndResponse(
     QList<quint64> auditInstanceIds = _noAuditInstanceIds) {
   if (auditInstanceIds.isEmpty()) // should never happen
     auditInstanceIds = _noAuditInstanceIds;
-  QString userid = processingContext->paramValue(
-        QStringLiteral("userid")).toString();
-  QString referer = req.header(QStringLiteral("Referer"));
+  QString userid = processingContext->paramValue("userid"_ba).toString();
+  QString referer = req.header("Referer"_ba);
   QString redirect = req.base64Cookie("redirect", referer);
   bool disableRedirect = req.header("Prefer")
       .contains("return=representation", Qt::CaseInsensitive);
@@ -838,12 +840,11 @@ static void apiAuditAndResponse(
           << " response message: " << responseMessage;
   }
   if (!disableRedirect && !redirect.isEmpty()) {
-    res.setBase64SessionCookie(QStringLiteral("message"), responseMessage,
-                               QStringLiteral("/"));
-    res.clearCookie(QStringLiteral("redirect"), QStringLiteral("/"));
+    res.setBase64SessionCookie("message"_ba, responseMessage, "/"_ba);
+    res.clearCookie("redirect"_ba, "/"_ba);
     res.redirect(redirect);
   } else {
-    res.setContentType(QStringLiteral("text/plain;charset=UTF-8"));
+    res.setContentType("text/plain;charset=UTF-8"_ba);
     if (res.status() == HttpResponse::HTTP_Ok // won't override if already set
         && responseMessage.startsWith('E'))
       res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
@@ -1174,7 +1175,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   QString gridboardid = req.url().path().mid(matchedLength)
       || req.param("gridboardid");
-  webconsole->scheduler()->alerter()->clearGridboard(gridboardid);
+  webconsole->scheduler()->alerter()->clearGridboard(gridboardid.toUtf8());
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Gridboard '"+gridboardid+"' cleared.",
                       req.methodName()+" "+req.url().path().left(matchedLength)
@@ -1219,7 +1220,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   QString configid = req.url().path().mid(matchedLength)
       || req.param("configid");
-  bool ok = webconsole->configRepository()->activateConfig(configid);
+  bool ok = webconsole->configRepository()->activateConfig(configid.toUtf8());
   if (!ok)
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
   else
@@ -1239,7 +1240,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   QString configid = req.url().path().mid(matchedLength)
       || req.param("configid");
-  bool ok = webconsole->configRepository()->removeConfig(configid);
+  bool ok = webconsole->configRepository()->removeConfig(configid.toUtf8());
   if (!ok)
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
   else
@@ -1296,7 +1297,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      QString taskId = req.url().path().mid(matchedLength);
+      auto taskId = req.url().path().mid(matchedLength).toUtf8();
       QString referer = req.header(
             "Referer", processingContext->paramString("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
@@ -1349,7 +1350,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
-      QString taskId = elements.value(0);
+      auto taskId = elements.value(0).toUtf8();
       QString referer = req.header(
             "Referer", processingContext->paramString("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
@@ -1389,7 +1390,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
-      QString taskId = elements.value(0);
+      auto taskId = elements.value(0).toUtf8();
       QString subItem = elements.value(1);
       Task task(webconsole->scheduler()->task(taskId));
       if (task.isNull()) {
@@ -1414,7 +1415,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      QString gridboardId = req.url().path().mid(matchedLength);
+      auto gridboardId = req.url().path().mid(matchedLength).toUtf8();
       QString referer = req.header(
             "Referer", processingContext->paramString("!pathtoroot"));
       Gridboard gridboard(webconsole->scheduler()->alerter()
@@ -1505,8 +1506,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       // LATER handle fields comma enumeration for real
-      QString fields = req.param(QStringLiteral("fields")).trimmed();
-      if (fields == QStringLiteral("id,onstart,onsuccess,onfailure"))
+      QString fields = req.param("fields"_ba).trimmed();
+      if (fields == "id,onstart,onsuccess,onfailure"_ba)
         return writeHtmlView(webconsole->htmlTaskGroupsEventsView(), req, res);
       return writeHtmlView(webconsole->htmlTaskGroupsView(), req, res);
 } },
@@ -1524,8 +1525,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       // LATER handle fields comma enumeration for real
-      QString fields = req.param(QStringLiteral("fields")).trimmed();
-      if (fields == QStringLiteral("id,triggers,onstart,onsuccess,onfailure"))
+      QString fields = req.param("fields"_ba).trimmed();
+      if (fields == "id,triggers,onstart,onsuccess,onfailure"_ba)
         return writeHtmlView(webconsole->htmlTasksEventsView(), req, res);
       return writeHtmlView(webconsole->htmlTasksListView(), req, res);
 } },
@@ -1722,8 +1723,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      QString gridboardid = req.url().path().mid(matchedLength)
-          .replace(htmlSuffixRe, QString());
+      auto gridboardid = req.url().path().mid(matchedLength)
+          .replace(htmlSuffixRe, QString()).toUtf8();
       Gridboard gridboard = webconsole->scheduler()->alerter()
           ->gridboard(gridboardid);
       res.setContentType("text/html;charset=UTF-8");
@@ -1770,8 +1771,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             ->handleRequest(req, res, processingContext);
       else {
         if (webconsole->configRepository()) {
-          QString configid = req.url().path().mid(matchedLength)
-              .replace(pfSuffixRe, QString());
+          auto configid = req.url().path().mid(matchedLength)
+              .replace(pfSuffixRe, QString()).toUtf8();
           SchedulerConfig config
               = (configid == "current")
               ? webconsole->configRepository()->activeConfig()
@@ -1945,7 +1946,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       QStringList paths;
-      if (req.param(QStringLiteral("files")) == "current")
+      if (req.param("files"_ba) == "current"_ba)
         paths = QStringList(Log::pathToLastFullestLog());
       else
         paths = Log::pathsToFullestLogs();
@@ -2077,12 +2078,13 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
             _resourcesLwmModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
     _globalParamsModel->connectToDocumentManager<QronConfigDocumentManager>(
-          _scheduler, _scheduler->globalParams(), "globalparams", "globalparam",
+          _scheduler, _scheduler->globalParams(), "globalparams"_ba,
+          "globalparam"_ba,
           &QronConfigDocumentManager::paramsChanged,
           &QronConfigDocumentManager::changeParams);
     _globalVarsModel->connectToDocumentManager<QronConfigDocumentManager>(
-          _scheduler, _scheduler->globalVars(), "globalvars",
-          "globalvars", &QronConfigDocumentManager::paramsChanged,
+          _scheduler, _scheduler->globalVars(), "globalvars"_ba,
+          "globalvars"_ba, &QronConfigDocumentManager::paramsChanged,
           &QronConfigDocumentManager::changeParams);
     connect(_scheduler, &Scheduler::paramsChanged,
             this, &WebConsole::paramsChanged);
@@ -2195,9 +2197,9 @@ void WebConsole::enableAccessControl(bool enabled) {
 }
 
 void WebConsole::paramsChanged(
-    ParamSet newParams, ParamSet oldParams, QString setId) {
+    ParamSet newParams, ParamSet oldParams, QByteArray setId) {
   Q_UNUSED(oldParams)
-  if (setId != QStringLiteral("globalparams"))
+  if (setId != "globalparams"_ba)
     return;
   QString s = newParams.rawValue("webconsole.showaudituser.regexp");
   _showAuditUser = s.isNull()

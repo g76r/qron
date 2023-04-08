@@ -1,4 +1,4 @@
-/* Copyright 2012-2021 Hallowyn and others.
+/* Copyright 2012-2023 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -232,7 +232,7 @@ public slots:
   void enableAccessControl(bool enabled);
 
 private slots:
-  void paramsChanged(ParamSet newParams, ParamSet oldParams, QString setId);
+  void paramsChanged(ParamSet newParams, ParamSet oldParams, QByteArray setId);
   void computeDiagrams(SchedulerConfig config);
   void alerterConfigChanged(AlerterConfig config);
 };

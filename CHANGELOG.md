@@ -1,3 +1,11 @@
+# Since 1.13.10
+* Minor improvements
+ - wui: deduplicate criterion in place of cancel when on overview page
+* Bugfixes
+* Behind-the-curtain improvements
+ - using QByteArray instead of QString API in libp6core
+ - switching from Qt 6.3 to Qt 6.5 (LTS)
+
 # From 1.13.9 to 1.13.10 (2023-03-11)
 * Minor improvements
  - fixing runningms in end task log entries (was 0 instead of actual value),
