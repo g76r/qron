@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn and others.
+/* Copyright 2013-2023 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -65,7 +65,7 @@ Qrond::Qrond(QObject *parent) : QObject(parent),
 Qrond::~Qrond() {
 }
 
-void Qrond::startup(QStringList args) {
+void Qrond::startup(QByteArrayList args) {
   int n = args.size();
   for (int i =0; i < n; ++i) {
     const QString &arg = args[i];
@@ -211,9 +211,9 @@ int main(int argc, char *argv[]) {
   Log::wrapQtLogToSamePattern();
   Log::addConsoleLogger(Log::Debug, true);
   QThread::currentThread()->setObjectName("MainThread");
-  QStringList args;
+  QByteArrayList args;
   for (int i = 1; i < argc; ++i)
-    args << QString::fromLocal8Bit(argv[i]);
+    args << argv[i];
   Qrond::instance()->startup(args);
   int rc = a.exec();
   Log::info() << "qrond exiting with status " << rc;

@@ -776,9 +776,9 @@ static bool writeSvgImage(QByteArray data, HttpRequest req,
   return true;
 }
 
-static bool writePlainText(QByteArray data, HttpRequest req,
-                           HttpResponse res,
-                           QString contentType = "text/plain;charset=UTF-8") {
+static bool writePlainText(
+    const QByteArray &data, HttpRequest req, HttpResponse res,
+    const QByteArray &contentType = "text/plain;charset=UTF-8"_ba) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
     return true;
   res.setContentType(contentType);
@@ -819,10 +819,10 @@ static void apiAuditAndResponse(
   if (auditInstanceIds.isEmpty()) // should never happen
     auditInstanceIds = _noAuditInstanceIds;
   QString userid = processingContext->paramValue("userid"_ba).toString();
-  QString referer = req.header("Referer"_ba);
-  QString redirect = req.base64Cookie("redirect", referer);
-  bool disableRedirect = req.header("Prefer")
-      .contains("return=representation", Qt::CaseInsensitive);
+  auto referer = req.header("Referer"_ba);
+  auto redirect = req.base64Cookie("redirect"_ba, referer);
+  bool disableRedirect = req.header("Prefer"_ba).toLower()
+      .contains("return=representation");
   if (auditAction.contains(webconsole->showAuditEvent()) // empty regexps match any string
       && (webconsole->hideAuditEvent().pattern().isEmpty()
           || !auditAction.contains(webconsole->hideAuditEvent()))
@@ -1267,8 +1267,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       }
       path = processingContext->paramString("!pathtoroot")+"../"+path;
-      QString referer = req.header(
-            "Referer", processingContext->paramString("!pathtoroot"));
+      auto referer = req.header(
+            "Referer"_ba, processingContext->paramUtf8("!pathtoroot"_ba));
       QUrlQuery query(req.url());
       query.removeAllQueryItems("confirm_message");
       QString queryString = query.toString(QUrl::FullyEncoded);
@@ -1287,7 +1287,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       req.overrideUrl(url);
       ParamsProviderMergerRestorer restorer(processingContext);
       processingContext->overrideParamValue("content", message);
-      res.clearCookie("message", "/");
+      res.clearCookie("message"_ba, "/"_ba);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
 }, true },
@@ -1298,8 +1298,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           req, res))
         return true;
       auto taskId = req.url().path().mid(matchedLength).toUtf8();
-      QString referer = req.header(
-            "Referer", processingContext->paramString("!pathtoroot"));
+      auto referer = req.header(
+            "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
         QUrl url(req.url());
@@ -1335,7 +1335,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         ParamsProviderMergerRestorer restorer(processingContext);
         processingContext->overrideParamValue("content", form);
         res.setBase64SessionCookie("redirect", referer, "/");
-        res.clearCookie("message", "/");
+        res.clearCookie("message"_ba, "/"_ba);
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
         return true;
       }
@@ -1351,8 +1351,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
       auto taskId = elements.value(0).toUtf8();
-      QString referer = req.header(
-            "Referer", processingContext->paramString("!pathtoroot"));
+      auto referer = req.header(
+            "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
       if (task.isNull()) {
         if (referer.isEmpty()) {
@@ -1376,7 +1376,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       SharedUiItemParamsProvider itemAsParams(task);
       processingContext->prepend(&tppp);
       processingContext->prepend(&itemAsParams);
-      res.clearCookie("message", "/");
+      res.clearCookie("message"_ba, "/"_ba);
       QUrl url(req.url());
       url.setPath("/console/task.html");
       url.setQuery(QString());
@@ -1416,8 +1416,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           req, res))
         return true;
       auto gridboardId = req.url().path().mid(matchedLength).toUtf8();
-      QString referer = req.header(
-            "Referer", processingContext->paramString("!pathtoroot"));
+      auto referer = req.header(
+            "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
@@ -1426,7 +1426,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         processingContext->append(&itemAsParams);
         processingContext->overrideParamValue("gridboard.data",
                                               gridboard.toHtml());
-        res.clearCookie("message", "/");
+        res.clearCookie("message"_ba, "/"_ba);
         QUrl url(req.url());
         url.setPath("/console/gridboard.html");
         url.setQuery(QString());
@@ -1475,7 +1475,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         if (req.url().path().endsWith("/console/alerts.html")) {
           processingContext->append(&alerterConfigAsParams);
         }
-        res.clearCookie("message", "/");
+        res.clearCookie("message"_ba, "/"_ba);
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       }
       return true;
@@ -1488,7 +1488,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      res.clearCookie("message", "/");
+      res.clearCookie("message"_ba, "/"_ba);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
 }, true },
@@ -1976,7 +1976,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writePlainText(webconsole->tasksDeploymentDiagram()
-                            ->source(req, ppm).toUtf8(), req, res,
+                            ->source(req, ppm), req, res,
                             GRAPHVIZ_MIME_TYPE);
 } },
 { "/rest/v1/tasks/trigger_diagram.svg", [](
@@ -1993,7 +1993,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writePlainText(webconsole->tasksTriggerDiagram()
-                            ->source(req, ppm).toUtf8(), req, res,
+                            ->source(req, ppm), req, res,
                             GRAPHVIZ_MIME_TYPE);
 } },
 { "/rest/v1/resources/tasks_resources_hosts_diagram.svg", [](
@@ -2010,7 +2010,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
    if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
      return true;
    return writePlainText(webconsole->tasksResourcesHostsDiagram()
-                             ->source(req, ppm).toUtf8(), req, res,
+                             ->source(req, ppm), req, res,
                          GRAPHVIZ_MIME_TYPE);
  } },
 };
@@ -2046,7 +2046,7 @@ bool WebConsole::handleRequest(
   }
   if (_authorizer && !_authorizer->authorize(userid, req.methodName(), path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);
-    res.clearCookie("message", "/");
+    res.clearCookie("message"_ba, "/"_ba);
     // LATER nicer display
     res.output()->write("Permission denied.");
     return true;
@@ -2244,10 +2244,12 @@ void WebConsole::paramsChanged(
 void WebConsole::computeDiagrams(SchedulerConfig config) {
   QHash<QString,QString> diagrams
       = GraphvizDiagramsBuilder::configDiagrams(config);
-  _tasksDeploymentDiagram->setSource(diagrams.value("tasksDeploymentDiagram"));
-  _tasksTriggerDiagram->setSource(diagrams.value("tasksTriggerDiagram"));
+  _tasksDeploymentDiagram->setSource(
+        diagrams.value("tasksDeploymentDiagram").toUtf8());
+  _tasksTriggerDiagram->setSource(
+        diagrams.value("tasksTriggerDiagram").toUtf8());
   _tasksResourcesHostsDiagram->setSource(
-      diagrams.value("tasksResourcesHostsDiagram"));
+      diagrams.value("tasksResourcesHostsDiagram").toUtf8());
 }
 
 void WebConsole::alerterConfigChanged(AlerterConfig config) {
