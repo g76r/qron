@@ -1,10 +1,14 @@
-# Since 1.13.10
+# From 1.13.10 to 1.13.11 (2023-04-16)
 * Minor improvements
  - wui: deduplicate criterion in place of cancel when on overview page
+ - wui: toc shortcuts on top of tasks page
+ - wui: better FonteAwesome support (ttf fonts were lacking)
+ - wui: adding "beat" animation effect on some icons
 * Bugfixes
 * Behind-the-curtain improvements
  - using QByteArray instead of QString API in libp6core
  - switching from Qt 6.3 to Qt 6.5 (LTS)
+ - wui: upgrading FontAwesome from 6.0 to 6.4
 
 # From 1.13.9 to 1.13.10 (2023-03-11)
 * Minor improvements
