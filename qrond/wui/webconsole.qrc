@@ -41,7 +41,14 @@
         <file>docroot/console/css/fontawesome.css</file>
         <file>docroot/console/css/solid.css</file>
         <file>docroot/console/css/regular.css</file>
+        <file>docroot/console/css/brands.css</file>
+        <file>docroot/console/js/fontawesome.js</file>
+        <file>docroot/console/js/solid.js</file>
+        <file>docroot/console/js/regular.js</file>
+        <file>docroot/console/js/brands.js</file>
         <file>docroot/console/webfonts/fa-regular-400.woff2</file>
+        <file>docroot/console/webfonts/fa-regular-400.ttf</file>
         <file>docroot/console/webfonts/fa-solid-900.woff2</file>
+        <file>docroot/console/webfonts/fa-solid-900.ttf</file>
     </qresource>
 </RCC>
