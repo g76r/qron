@@ -172,7 +172,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   qobject_cast<HtmlItemDelegate*>(_htmlHostsListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(2, "<i class=\"fa-solid fa-wheat-awn\"></i>&nbsp;");
+      ->setPrefixForColumnHeader(2, "<i class=\"fa-solid fa-coins\"></i>&nbsp;");
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView = new HtmlTableView(this, "clusterslist");
   _htmlClustersListView->setModel(_sortedClustersModel);
@@ -187,7 +187,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlFreeResourcesView->setEmptyPlaceholder("(no resource definition)");
   qobject_cast<HtmlItemDelegate*>(_htmlFreeResourcesView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"fa-solid fa-wheat-awn\"></i>&nbsp;")
+                                 "<i class=\"fa-solid fa-coins\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
                               "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;");
   _wuiHandler->addView(_htmlFreeResourcesView);
@@ -197,7 +197,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlResourcesLwmView->setEmptyPlaceholder("(no resource definition)");
   qobject_cast<HtmlItemDelegate*>(_htmlResourcesLwmView->itemDelegate())
       ->setPrefixForColumnHeader(HtmlItemDelegate::AllSections,
-                                 "<i class=\"fa-solid fa-wheat-awn\"></i>&nbsp;")
+                                 "<i class=\"fa-solid fa-coins\"></i>&nbsp;")
       ->setPrefixForRowHeader(HtmlItemDelegate::AllSections,
                               "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;");
   _wuiHandler->addView(_htmlResourcesLwmView);

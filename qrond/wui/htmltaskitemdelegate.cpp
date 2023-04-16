@@ -119,7 +119,7 @@ QString HtmlTaskItemDelegate::headerText(
       text.prepend("<i class=\"fa-solid fa-bolt-lightning\"></i>&nbsp;");
       break;
     case 8:
-      text.prepend("<i class=\"fa-solid fa-wheat-awn\"></i>&nbsp;");
+      text.prepend("<i class=\"fa-solid fa-coins\"></i>&nbsp;");
       break;
     case 14:
       text.prepend("<i class=\"fa-solid fa-play\"></i>&nbsp;");
