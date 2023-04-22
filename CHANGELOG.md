@@ -1,4 +1,6 @@
 # From 1.13.11 to 1.13.12 (2023-04-22)
+* Minor improvements
+ - introducing onlast finisher/gather task on scatter mean
 * Bugfixes
  - fixed ambiguities in ParamSet QByteArray/QString/char* API
    which broke alerts default param, including default smtp server
