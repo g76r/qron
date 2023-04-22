@@ -1,16 +1,10 @@
-#FROM debian:11.3-slim
 FROM g76r/qt6-runner:20230403
 LABEL description="qron free scheduler"
 LABEL org.opencontainers.image.authors="Grégoire Barbier <devel@g76r.eu>"
 
 # server-side Qt, RDBMS and graphviz dependencies
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt-get -y update \
- && apt-get -y install libqt5core5a libqt5network5 libqt5sql5-psql libqt5sql5-sqlite graphviz
-
-# debuging and convenience utilities used on testing server
-RUN apt-get update \
- && apt-get -y install gdb vim tshark
+RUN apt update -y && apt upgrade -y && apt install -y graphviz gdb vim tshark bzip2 && apt clean -y
 
 # qron
 WORKDIR /opt/qron/qrond
@@ -19,9 +13,7 @@ ENTRYPOINT [ "/opt/qron/qrond/bin/qrond" ]
 CMD [ "--config-file", "qron.conf" ]
 ADD qrond-linux-amd64.tar.bz2 /opt/qron
 RUN adduser --disabled-password --gecos "" qron \
- && chown -R qron:qron /opt/qron \
- && apt-get update \
- && apt-get -y install bzip2
+ && chown -R qron:qron /opt/qron
 USER qron:qron
 EXPOSE 8086/tcp
 

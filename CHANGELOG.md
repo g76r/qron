@@ -4,6 +4,7 @@
 * Bugfixes
  - fixed ambiguities in ParamSet QByteArray/QString/char* API
    which broke alerts default param, including default smtp server
+ - fixed dockefile and qt libs for docker environment build
 
 # From 1.13.10 to 1.13.11 (2023-04-16)
 * Minor improvements
