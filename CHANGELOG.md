@@ -1,10 +1,14 @@
+# From 1.13.11 to 1.13.12 (2023-04-22)
+* Bugfixes
+ - fixed ambiguities in ParamSet QByteArray/QString/char* API
+   which broke alerts default param, including default smtp server
+
 # From 1.13.10 to 1.13.11 (2023-04-16)
 * Minor improvements
  - wui: deduplicate criterion in place of cancel when on overview page
  - wui: toc shortcuts on top of tasks page
  - wui: better FonteAwesome support (ttf fonts were lacking)
  - wui: adding "beat" animation effect on some icons
-* Bugfixes
 * Behind-the-curtain improvements
  - using QByteArray instead of QString API in libp6core
  - switching from Qt 6.3 to Qt 6.5 (LTS)
