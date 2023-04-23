@@ -3,6 +3,8 @@ stages:
 
 linux:build:
   stage: build
+  variables:
+    DOCKER_BUILD_ENABLED: "false"
   script:
     - git fetch --tags
     - git submodule update --init

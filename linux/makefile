@@ -18,8 +18,8 @@ targz: FORCE
 
 docker: FORCE
 	echo $(GIT_NAME) / $(GIT_DESCRIBE)
-	if which docker > /dev/null 2>&1; then docker build -t qrond . && docker tag qrond $(DOCKER_REGISTRY):$${CI_COMMIT_SHA:-latest} && docker tag qrond $(DOCKER_REGISTRY):$(GIT_NAME) && docker tag qrond $(DOCKER_REGISTRY):latest; fi
-	-if which docker > /dev/null 2>&1; then docker push $(DOCKER_REGISTRY):$${CI_COMMIT_SHA:-latest} && docker push $(DOCKER_REGISTRY):$(GIT_NAME) && docker push $(DOCKER_REGISTRY):latest; fi
+	if [ "$$DOCKER_BUILD_ENABLED" != "false" ]; then docker build -t qrond . && docker tag qrond $(DOCKER_REGISTRY):$${CI_COMMIT_SHA:-latest} && docker tag qrond $(DOCKER_REGISTRY):$(GIT_NAME) && docker tag qrond $(DOCKER_REGISTRY):latest; fi
+	if [ "$$DOCKER_BUILD_ENABLED" != "false" ]; then docker push $(DOCKER_REGISTRY):$${CI_COMMIT_SHA:-latest} && docker push $(DOCKER_REGISTRY):$(GIT_NAME) && docker push $(DOCKER_REGISTRY):latest; fi
 	
 
 FORCE:
