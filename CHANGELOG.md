@@ -1,3 +1,7 @@
+# Since 1.13.12
+* Behind-the-curtain improvements
+ - gitlab ci fixes and clarifying makefiles
+
 # From 1.13.11 to 1.13.12 (2023-04-22)
 * Minor improvements
  - introducing onlast finisher/gather task on scatter mean
