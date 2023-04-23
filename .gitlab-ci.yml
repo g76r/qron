@@ -11,9 +11,3 @@ linux:build:
   tags:
     - qt
     - c++
-  artifacts:
-    paths:
-      - linux/qrond-linux-amd64.tar.bz2
-      - doc/user-manual.html
-    when: on_success
-    expire_in: 1 year
