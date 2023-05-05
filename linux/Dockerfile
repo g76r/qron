@@ -2,9 +2,9 @@ FROM g76r/qt6-runner:20230403
 LABEL description="qron free scheduler"
 LABEL org.opencontainers.image.authors="Grégoire Barbier <devel@g76r.eu>"
 
-# server-side Qt, RDBMS and graphviz dependencies
+# dependencies
 ARG DEBIAN_FRONTEND=noninteractive
-RUN apt update -y && apt upgrade -y && apt install -y graphviz gdb vim tshark bzip2 && apt clean -y
+RUN apt update -y && apt upgrade -y && apt install -y graphviz gdb vim tshark bzip2 libgl1 libglx0 libopengl0 libvulkan1 && apt clean -y
 
 # qron
 WORKDIR /opt/qron/qrond
