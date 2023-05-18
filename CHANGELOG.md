@@ -1,3 +1,9 @@
+# Since 1.13.13
+* New features and notable changes
+ - default deduplicate strategy is now to keep first queued instance
+   previous behaviour can be used with (deduplicatestrategy keeplast) task
+   attribute
+
 # From 1.13.12 to 1.13.13 (2023-05-05)
 * Minor improvements
  - allowing (resource foobar 0) on task definitions to ignore a resource
