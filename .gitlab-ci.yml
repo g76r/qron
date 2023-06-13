@@ -3,7 +3,7 @@ stages:
 
 build:
   stage: build
-  image: g76r/qt6-builder:20230423
+  image: g76r/qt6-builder:20230529
   variables:
     DOCKER_BUILD_ENABLED: "false"
   script:
