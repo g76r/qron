@@ -1243,7 +1243,7 @@ and HTTP are supported
   # record misc execution data in /var/log/qrond_tasks_statistics_yyyyMMdd.log
   (onfinish
     (writefile "%=date task.%!taskid "%!status %!returncode %!queueds %!runnings %!totals\n
-       (path /var/log/qrond_tasks_statistics_%{=date!yyyyMMdd}.log))
+       (path "/var/log/qrond_tasks_statistics_%{=date!yyyyMMdd}.log"))
   )
 )
 </pre>
