@@ -208,6 +208,7 @@ void Qrond::signalCaught(int signal_number) {
 
 int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
+  Log::init();
   Log::wrapQtLogToSamePattern();
   Log::addConsoleLogger(Log::Debug, true);
   QThread::currentThread()->setObjectName("MainThread");

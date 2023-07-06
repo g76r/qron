@@ -1,8 +1,21 @@
-# Since 1.13.13
+# From 1.13.13 to 1.14.0 (2023-07-06)
 * New features and notable changes
  - default deduplicate strategy is now to keep first queued instance
    previous behaviour can be used with (deduplicatestrategy keeplast) task
    attribute
+ - support for externalized parameters through
+   - (externalparams setname(file /path/to/file)) and
+     (externalparams setname(command /opt/bin/foo.sh)) config attributes at
+     root level
+   - %{=ext:setname:key} param substitution function with global named external
+     paramset e.g. (externalparams secret(command /opt/bin/getsecrets.sh))
+   makes it possible to store passwords in secret vaults like hashicorp vault
+   or aws secretsmanager, or in local csv files
+* Behind-the-curtain improvements
+ - building with Qt 6.5.1 image
+ - replaced QHash with QMap for small collections and QCache for caches
+ - removing qRegisterMetaType<>() and qMetaTypeId<>() (which are old Qt
+   constructs)
 
 # From 1.13.12 to 1.13.13 (2023-05-05)
 * Minor improvements
