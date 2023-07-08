@@ -1,3 +1,10 @@
+# Since 1.14.0
+Minor improvements
+- adding again %!totalms %!totals for backward compatibility (qron < 1.12)
+
+Behind-the-curtain improvements
+- building with Debian 12 (bookworm) image
+
 # From 1.13.13 to 1.14.0 (2023-07-06)
 New features and notable changes
 - default deduplicate strategy is now to keep first queued instance
