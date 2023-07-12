@@ -49,12 +49,11 @@ MOC_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/moc
 DESTDIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE
 
 # dependency libs
-INCLUDEPATH += ../libqtpf ../libp6core ../libqron
+INCLUDEPATH += ../libp6core ../libqron
 LIBS += \
-  -L../build-qtpf-$$TARGET_OS/$$BUILD_TYPE \
   -L../build-qron-$$TARGET_OS/$$BUILD_TYPE \
   -L../build-p6core-$$TARGET_OS/$$BUILD_TYPE
-LIBS += -lqtpf -lp6core -lqron
+LIBS += -lp6core -lqron
 
 unix {
   ancillary_make.commands = cd $$PWD && make -f ancillary.mf all

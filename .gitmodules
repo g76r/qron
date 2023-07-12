@@ -1,7 +1,3 @@
-[submodule "libqtpf"]
-	path = libqtpf
-	url = https://gitlab.com/g76r/libqtpf.git
-	pushURL = git@gitlab.com:g76r/libqtpf.git
 [submodule "libp6core"]
 	path = libp6core
 	url = https://gitlab.com/g76r/libp6core.git

@@ -39,8 +39,8 @@ on Debian Sid in our continuous integration env):
 sudo apt-get install git build-essential g++ qt5-default qt5-qmake make graphviz
 ```
 
-In addition, the git repository uses git submodules to handle libqtpf and
-libp6core dependencies, therefore you should use following steps to clone
+In addition, the git repository uses git submodules to handle libp6core and
+libp6gui dependencies, therefore you should use following steps to clone
 repository and submodules repositories:
 
 ``` bash

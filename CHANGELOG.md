@@ -1,9 +1,11 @@
 # Since 1.14.0
 Minor improvements
 - adding again %!totalms %!totals for backward compatibility (qron < 1.12)
+- log entries now have source location info e.g. file.cpp:42:myfunction
 
 Behind-the-curtain improvements
 - building with Debian 12 (bookworm) image
+- merged libqtpf into libp6core
 
 # From 1.13.13 to 1.14.0 (2023-07-06)
 New features and notable changes
