@@ -2,6 +2,9 @@
 Minor improvements
 - adding again %!totalms %!totals for backward compatibility (qron < 1.12)
 - log entries now have source location info e.g. file.cpp:42:myfunction
+- added retrieve_aws_secrets shell script for reading aws secrets as csv
+  which make it usable for external params:
+  ```(externalparams setname(command retrieve_aws_secrets secret_id))```
 
 Behind-the-curtain improvements
 - building with Debian 12 (bookworm) image
