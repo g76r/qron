@@ -1,3 +1,7 @@
+# Since 1.14.1
+Behind-the-curtain improvements
+- building with Qt 6.5.2 image
+
 # From 1.14.0 to 1.14.1 (2023-07-18)
 Minor improvements
 - adding again %!totalms %!totals for backward compatibility (qron < 1.12)
