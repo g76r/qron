@@ -24,7 +24,7 @@ class HtmlAlertItemDelegate : public HtmlItemDelegate {
 
 public:
   explicit HtmlAlertItemDelegate(QObject *parent, bool canRaiseAndCancel);
-  QString text(const QModelIndex &index) const;
+  QString text(const QModelIndex &index) const override;
 };
 
 #endif // HTMLALERTITEMDELEGATE_H

@@ -55,12 +55,25 @@ static CsvFormatter _csvFormatter(',', "\n", '"', '\0', ' ', -1);
 static HtmlTableFormatter _htmlTableFormatter(-1);
 
 // syntaxic sugar to define "a||b" as "a" if not empty and "b" otherwise
-static inline QString operator||(QString a, QString b) {
+static inline Utf8String operator||(const QString &a, const QString &b) {
   return a.isEmpty() ? b : a;
 }
-static inline QByteArray operator||(QByteArray a, QByteArray b) {
+
+static inline Utf8String operator||(const Utf8String &a, const Utf8String &b) {
   return a.isEmpty() ? b : a;
 }
+
+static inline Utf8String operator||(const Utf8String &a, const QString &b) {
+  return a.isEmpty() ? Utf8String(b) : a;
+}
+
+static inline Utf8String operator||(const QString &a, const Utf8String &b) {
+  return a.isEmpty() ? b : Utf8String(a);
+}
+
+//static inline Utf8String operator||(const QByteArray &a, const QByteArray &b) {
+//  return a.isEmpty() ? b : a;
+//}
 
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0), _authorizer(0),
@@ -655,27 +668,21 @@ static RadixTree<std::function<QVariant(const WebConsole *, const QString &key)>
 } },
 };
 
-class ServerStatsProvider : public ParamsProvider {
-  WebConsole *_console;
+QVariant WebConsole::paramRawValue(
+    const Utf8String &key, const QVariant &def,
+    const EvalContext &) const {
+  if (!_scheduler) // should never happen
+    return def;
+  auto handler = _serverStats.value(key);
+  return handler ? handler(this, key) : def;
+}
 
-public:
-  ServerStatsProvider(WebConsole *console) : _console(console) { }
-  using ParamsProvider::paramValue;
-  const QVariant paramValue(
-    const QString &key, const ParamsProvider *, const QVariant &defaultValue,
-    QSet<QString>*) const override {
-    if (!_console || !_console->_scheduler) // should never happen
-      return defaultValue;
-    auto handler = _serverStats.value(key);
-    return handler ? handler(_console, key) : defaultValue;
-  }
-  const QSet<QString> keys() const override {
-    return _serverStats.keys();
-  }
-};
+Utf8StringSet WebConsole::paramKeys(const EvalContext &) const {
+  return _serverStats.keys();
+}
 
-inline bool enforceMethods(int methodsMask, HttpRequest req,
-                             HttpResponse res) {
+inline bool enforceMethods(int methodsMask, const HttpRequest &req,
+                           HttpResponse &res) {
   if (req.method() & methodsMask)
     return true;
   res.setStatus(HttpResponse::HTTP_Method_Not_Allowed);
@@ -683,8 +690,8 @@ inline bool enforceMethods(int methodsMask, HttpRequest req,
   return false;
 }
 
-inline bool writeHtmlView(HtmlTableView *view, HttpRequest req,
-                          HttpResponse res) {
+inline bool writeHtmlView(const HtmlTableView *view, const HttpRequest &req,
+                          HttpResponse &res) {
   QByteArray data = view->text().toUtf8();
   res.setContentType("text/html;charset=UTF-8");
   res.setContentLength(data.size());
@@ -693,10 +700,10 @@ inline bool writeHtmlView(HtmlTableView *view, HttpRequest req,
   return true;
 }
 
-inline bool writeCsvView(CsvTableView *view, HttpRequest req,
-                         HttpResponse res) {
+inline bool writeCsvView(const CsvTableView *view, const HttpRequest &req,
+                         HttpResponse &res) {
   // LATER write on the fly past a certain size
-  QByteArray data = view->text().toUtf8();
+  auto data = view->text().toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
   res.setHeader("Content-Disposition", "attachment"); // LATER filename=table.csv");
   res.setContentLength(data.size());
@@ -706,7 +713,7 @@ inline bool writeCsvView(CsvTableView *view, HttpRequest req,
 }
 
 inline bool writeItemsAsCsv(
-    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+    const SharedUiItemList &list, const HttpRequest &req, HttpResponse &res) {
   // LATER write on the fly past a certain size
   QByteArray data = _csvFormatter.formatTable(list).toUtf8();
   res.setContentType("text/csv;charset=UTF-8");
@@ -717,28 +724,19 @@ inline bool writeItemsAsCsv(
   return true;
 }
 
-template <class T>
-inline bool writeItemsAsCsv(
-    QList<T> list, HttpRequest req, HttpResponse res) {
-  return writeItemsAsCsv(SharedUiItemList<>(SharedUiItemList<T>(list)),
-                         req, res);
+inline bool writeItemAsCsv(
+    const SharedUiItem &item, const HttpRequest &req, HttpResponse &res) {
+  return writeItemsAsCsv(SharedUiItemList({item}), req, res);
 }
 
 inline bool sortAndWriteItemsAsCsv(
-    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+    SharedUiItemList list, const HttpRequest &req, HttpResponse &res) {
   std::sort(list.begin(), list.end());
   return writeItemsAsCsv(list, req, res);
 }
 
-template <class T>
-inline bool sortAndWriteItemsAsCsv(
-    QList<T> list, HttpRequest req, HttpResponse res) {
-  return sortAndWriteItemsAsCsv(SharedUiItemList<>(SharedUiItemList<T>(list)),
-                                req, res);
-}
-
 inline bool writeItemsAsHtmlTable(
-    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+    const SharedUiItemList &list, const HttpRequest &req, HttpResponse &res) {
   QByteArray data = _htmlTableFormatter.formatTable(list).toUtf8();
   res.setContentType("text/html;charset=UTF-8");
   res.setContentLength(data.size());
@@ -747,26 +745,13 @@ inline bool writeItemsAsHtmlTable(
   return true;
 }
 
-template <class T>
-inline bool writeItemsAsHtmlTable(
-    QList<T> list, HttpRequest req, HttpResponse res) {
-  return writeItemsAsHtmlTable(SharedUiItemList<>(SharedUiItemList<T>(list)),
-                         req, res);
-}
-
 inline bool sortAndWriteItemsAsHtmlTable(
-    SharedUiItemList<> list, HttpRequest req, HttpResponse res) {
+    SharedUiItemList list, const HttpRequest &req, HttpResponse &res) {
   std::sort(list.begin(), list.end());
   return writeItemsAsHtmlTable(list, req, res);
 }
 
-template <class T>
-inline bool sortAndWriteItemsAsHtmlTable(
-    QList<T> list, HttpRequest req, HttpResponse res) {
-  return sortAndWriteItemsAsHtmlTable(
-        SharedUiItemList<>(SharedUiItemList<T>(list)), req, res);
-}
-
+#if 0
 static bool writeSvgImage(QByteArray data, HttpRequest req,
                           HttpResponse res) {
   res.setContentType("image/svg+xml");
@@ -775,6 +760,7 @@ static bool writeSvgImage(QByteArray data, HttpRequest req,
     res.output()->write(data);
   return true;
 }
+#endif
 
 static bool writePlainText(
     const QByteArray &data, HttpRequest req, HttpResponse res,
@@ -880,20 +866,20 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   // LATER drop parameters that are not defined as overridable in task config
   // remove empty values so that fields left empty in task request ui form won't
   // override configurated values
-  for (const QString &key: params.keys())
-    if (params.rawValue(key).isEmpty())
+  for (auto key: params.paramKeys())
+    if (params.paramRawUtf8(key).isEmpty())
       params.removeValue(key);
   // LATER should check that mandatory form fields have been set ?
   TaskInstanceList instances = webconsole->scheduler()
-      ->requestTask(taskId, params, params.valueAsBool("force", false),
-                    params.value("herdid", "0").toULongLong());
+      ->requestTask(taskId, params, params.paramBool("force", false),
+                    params.paramNumber<qulonglong>("herdid", 0));
   QString message;
   QList<quint64> taskInstanceIds;
   if (!instances.isEmpty()) {
     message = "S:Task '"+taskId+"' submitted for execution with id";
-    for (const TaskInstance &request: instances) {
-      message.append(' ').append(QString::number(request.idAsLong()));
-      taskInstanceIds << request.idAsLong();
+    for (auto ti: instances.filtered<TaskInstance>("taskinstance")) {
+      message.append(' ').append(ti.id());
+      taskInstanceIds << ti.idAsLong();
     }
     message.append('.');
   } else
@@ -1259,14 +1245,14 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
                           req, res))
         return true;
-      QString path = req.url().path().mid(matchedLength);
-      QString message = req.param("confirm_message") || path;
+      Utf8String path = req.url().path().mid(matchedLength);
+      Utf8String message = req.param("confirm_message") || path;
       if (path.isEmpty()) {
         res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
         res.output()->write("Confirmation page error.\n");
         return true;
       }
-      path = processingContext->paramString("!pathtoroot")+"../"+path;
+      path = processingContext->paramUtf8("!pathtoroot")+"../"+path;
       auto referer = req.header(
             "Referer"_ba, processingContext->paramUtf8("!pathtoroot"_ba));
       QUrlQuery query(req.url());
@@ -1368,14 +1354,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       ParamsProviderMergerRestorer restorer(processingContext);
       processingContext->overrideParamValue(
             "pfconfig",
-            ParamSet::escape(
-              QString::fromUtf8(
-                task.originalPfNode().toPf(PfOptions().setShouldIndent()
-                                     .setShouldWriteContentBeforeSubnodes()))));
-      TaskPseudoParamsProvider tppp = task.pseudoParams();
-      SharedUiItemParamsProvider itemAsParams(task);
-      processingContext->prepend(&tppp);
-      processingContext->prepend(&itemAsParams);
+            PercentEvaluator::escape(
+              task.originalPfNode().toPf(
+                PfOptions().setShouldIndent()
+                .setShouldWriteContentBeforeSubnodes())));
+      processingContext->prepend(&task);
       res.clearCookie("message"_ba, "/"_ba);
       QUrl url(req.url());
       url.setPath("/console/task.html");
@@ -1405,7 +1388,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                               req, res);
       }
       if (subItem == "list.csv") {
-        return writeItemsAsCsv(task, req, res);
+        return writeItemAsCsv(task, req, res);
       }
       return false;
 }, true },
@@ -1421,9 +1404,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
-        SharedUiItemParamsProvider itemAsParams(gridboard);
-        ParamsProviderMergerRestorer restorer(processingContext);
-        processingContext->append(&itemAsParams);
+        processingContext->append(&gridboard);
         processingContext->overrideParamValue("gridboard.data",
                                               gridboard.toHtml());
         res.clearCookie("message"_ba, "/"_ba);
@@ -1432,6 +1413,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         url.setQuery(QString());
         req.overrideUrl(url);
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+        processingContext->pop_back();
       } else {
         res.setBase64SessionCookie("message", "E:Gridboard '"+gridboardId
                                    +"' not found.", "/");
@@ -1459,7 +1441,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           if (p.first == "anchor")
             anchor = p.second;
           else
-            res.setBase64SessionCookie(p.first, p.second, "/");
+            res.setBase64SessionCookie(p.first, p.second.toUtf8(), "/");
         }
         QString s = req.url().path();
         qsizetype i = s.lastIndexOf('/');
@@ -1469,14 +1451,14 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           s.append('#').append(anchor);
         res.redirect(s);
       } else {
-        SharedUiItemParamsProvider alerterConfigAsParams(
-              webconsole->alerterConfig());
-        ParamsProviderMergerRestorer restorer(processingContext);
-        if (req.url().path().endsWith("/console/alerts.html")) {
-          processingContext->append(&alerterConfigAsParams);
-        }
         res.clearCookie("message"_ba, "/"_ba);
-        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+        if (req.url().path().endsWith("/console/alerts.html")) {
+          auto ac = webconsole->alerterConfig();
+          processingContext->append(&ac);
+          webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+          processingContext->pop_back();
+        } else
+          webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       }
       return true;
 }, true },
@@ -2027,9 +2009,7 @@ bool WebConsole::handleRequest(
     return true;
   QString path = req.url().path();
   QString userid = processingContext->paramValue("userid").toString();
-  ParamsProviderMergerRestorer restorer(processingContext);
-  ServerStatsProvider webconsoleParams(this);
-  processingContext->append(&webconsoleParams);
+  processingContext->append(this);
   processingContext->append(_scheduler->globalParams());
   // compute !pathtoroot now, to allow overriding url path with html files paths
   // unrelated to the url and keep !pathtoroot ok
@@ -2201,28 +2181,28 @@ void WebConsole::paramsChanged(
   Q_UNUSED(oldParams)
   if (setId != "globalparams"_ba)
     return;
-  QString s = newParams.rawValue("webconsole.showaudituser.regexp");
+  QString s = newParams.paramRawUtf16("webconsole.showaudituser.regexp");
   _showAuditUser = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
-  s = newParams.rawValue("webconsole.hideaudituser.regexp");
+  s = newParams.paramRawUtf16("webconsole.hideaudituser.regexp");
   _hideAuditUser = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
-  s = newParams.rawValue("webconsole.showauditevent.regexp");
+  s = newParams.paramRawUtf16("webconsole.showauditevent.regexp");
   _showAuditEvent = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
-  s = newParams.rawValue("webconsole.hideauditevent.regexp");
+  s = newParams.paramRawUtf16("webconsole.hideauditevent.regexp");
   _hideAuditEvent = s.isNull()
       ? QRegularExpression() : QRegularExpression(s);
   QString customactions_taskslist =
-      newParams.rawValue("webconsole.customactions.taskslist");
+      newParams.paramRawUtf16("webconsole.customactions.taskslist");
   _tasksModel->setCustomActions(customactions_taskslist);
   QString customactions_instanceslist =
-      newParams.rawValue("webconsole.customactions.instanceslist");
+      newParams.paramRawUtf16("webconsole.customactions.instanceslist");
   _unfinishedTaskInstancesModel->setCustomActions(customactions_instanceslist);
   _taskInstancesHistoryModel->setCustomActions(customactions_instanceslist);
-  int rowsPerPage = newParams.valueAsInt(
+  int rowsPerPage = newParams.paramNumber<int>(
         "webconsole.htmltables.rowsperpage", 100);
-  int cachedRows = newParams.valueAsInt(
+  int cachedRows = newParams.paramNumber<int>(
         "webconsole.htmltables.cachedrows", 500);
   for (QObject *child: children()) {
     auto *htmlView = qobject_cast<HtmlTableView*>(child);
@@ -2258,6 +2238,6 @@ void WebConsole::alerterConfigChanged(AlerterConfig config) {
   _alertSettingsModel->setItems(config.alertSettings());
   _alertChannelsModel->clear();
   _gridboardsModel->setItems((config.gridboards()));
-  for (const QString &channel: config.channelsNames())
+  for (auto channel: config.channelsNames())
     _alertChannelsModel->setCellValue(channel, "enabled", "true");
 }

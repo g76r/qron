@@ -25,7 +25,7 @@ class HtmlTaskInstanceItemDelegate
 public:
   explicit HtmlTaskInstanceItemDelegate(
     QObject *parent, bool decorateHerdId = false);
-  QString text(const QModelIndex &index) const;
+  QString text(const QModelIndex &index) const override;
 };
 
 #endif // HTMLTASKINSTANCEITEMDELEGATE_H

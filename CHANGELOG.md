@@ -1,5 +1,18 @@
 # Since 1.14.1
+New features and notable changes
+
+Minor improvements
+- %-evaluation of overriding parameters in trigger declaration (both cron and
+  notice triggers) now take values from trigger (or notice) itself but also
+  from the whole task-taskgroup-global hierachy
+- removing unused %!envvars and %!headervars implicit parameters
+- removing %=escape function, adding %=integer
+- won't try to build and push docker unless DOCKER_BUILD_ENABLED=1 is set
+- using precompiled header files to speed up compilation
+
 Behind-the-curtain improvements
+- upgraded libp6core which had a deep redesign on framework pieces
+  responsible for parameters, %-evaluation and config item value objects
 - building with Qt 6.5.2 image
 
 # From 1.14.0 to 1.14.1 (2023-07-18)

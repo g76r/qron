@@ -11,11 +11,11 @@
 # You should have received a copy of the GNU Affero General Public License
 # along with qron.  If not, see <http://www.gnu.org/licenses/>.
 
-QT       += network
+QT       += network sql
 QT       -= gui
 
 TARGET = qrond
-CONFIG += cmdline largefile c++17 c++20
+CONFIG += cmdline largefile c++17 c++20 precompile_header force_debug_info
 CONFIG -= app_bundle
 TEMPLATE = app
 
@@ -37,10 +37,12 @@ contains(QT_VERSION, ^4\\..*) {
 exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual \
-  -Wfloat-equal -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
+  -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
   -Wduplicated-branches -Wduplicated-cond -Wlogical-op \
   -Wno-padded -Wno-deprecated-copy -Wsuggest-attribute=noreturn \
+  -Wsuggest-override \
   -ggdb
+# LATER add -Wfloat-equal again when QVariant::value<double>() won't trigger it
 CONFIG(debug,debug|release):QMAKE_CXXFLAGS += -ggdb
 
 OBJECTS_DIR = ../build-$$TARGET-$$TARGET_OS/$$BUILD_TYPE/obj
@@ -61,7 +63,10 @@ unix {
   QMAKE_EXTRA_TARGETS += ancillary_make
 }
 
-SOURCES += \
+PRECOMPILED_HEADER *= \
+    qrond_stable.h
+
+SOURCES *= \
     sched/qrond.cpp \
     wui/webconsole.cpp \
     wui/configuploadhandler.cpp \
@@ -71,7 +76,8 @@ SOURCES += \
     wui/htmltaskinstanceitemdelegate.cpp \
     wui/htmltaskitemdelegate.cpp
 
-HEADERS += \
+HEADERS *= \
+    qrond_stable.h \
     sched/qrond.h \
     wui/webconsole.h \
     wui/configuploadhandler.h \
@@ -81,7 +87,7 @@ HEADERS += \
     wui/htmltaskinstanceitemdelegate.h \
     wui/htmltaskitemdelegate.h
 
-RESOURCES += \
+RESOURCES *= \
     wui/webconsole.qrc
 
 DISTFILES +=

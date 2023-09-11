@@ -23,9 +23,9 @@ class HtmlTaskItemDelegate : public HtmlItemDelegate {
   Q_DISABLE_COPY(HtmlTaskItemDelegate)
 public:
   explicit HtmlTaskItemDelegate(QObject *parent = 0);
-  QString text(const QModelIndex &index) const;
+  QString text(const QModelIndex &index) const override;
   QString headerText(int section, Qt::Orientation orientation,
-                     const QAbstractItemModel *model) const;
+                     const QAbstractItemModel *model) const override;
 };
 
 #endif // HTMLTASKITEMDELEGATE_H

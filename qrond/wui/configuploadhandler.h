@@ -27,7 +27,7 @@ public:
                                int maxSimultaneousUploads, QObject *parent);
   void processUploadedFile(HttpRequest req, HttpResponse res,
                            ParamsProviderMerger *processingContext,
-                           QFile *file);
+                           QFile *file) override;
   ConfigRepository *configRepository() const;
   void setConfigRepository(ConfigRepository *configRepository);
 };

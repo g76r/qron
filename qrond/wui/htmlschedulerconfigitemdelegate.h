@@ -30,7 +30,7 @@ class HtmlSchedulerConfigItemDelegate
 public:
   explicit HtmlSchedulerConfigItemDelegate(
       int idColumn, int isActiveColumn, int actionsColumn, QObject *parent = 0);
-  QString text(const QModelIndex &index) const;
+  QString text(const QModelIndex &index) const override;
 
 public slots:
   void configActivated(SchedulerConfig config);

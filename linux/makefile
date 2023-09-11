@@ -9,7 +9,7 @@ DOCKER_REGISTRY=g76r/qrond
 
 default: all
 
-ifneq ($(DOCKER_BUILD_ENABLED),false)
+ifeq ($(DOCKER_BUILD_ENABLED),1)
 all: targz docker
 else
 all: targz

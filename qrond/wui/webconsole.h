@@ -22,7 +22,7 @@
 #include "ui/hostsresourcesavailabilitymodel.h"
 #include "ui/resourcesconsumptionmodel.h"
 #include "ui/clustersmodel.h"
-#include "util/paramsetmodel.h"
+#include "modelview/paramsetmodel.h"
 #include "ui/lastoccuredtexteventsmodel.h"
 #include "log/logmodel.h"
 #include "ui/taskinstancesmodel.h"
@@ -49,7 +49,7 @@ class QThread;
 /** Central class for qron web console.
  * Mainly sets HTML templating and views up and dispatches request between views
  * and event handling. */
-class WebConsole : public HttpHandler {
+class WebConsole : public HttpHandler, public ParamsProvider {
   friend class ServerStatsProvider;
   Q_OBJECT
   Q_DISABLE_COPY(WebConsole)
@@ -124,9 +124,9 @@ class WebConsole : public HttpHandler {
 public:
   WebConsole();
   ~WebConsole();
-  bool acceptRequest(HttpRequest req);
+  bool acceptRequest(HttpRequest req) override;
   bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext);
+                     ParamsProviderMerger *processingContext) override;
   void setScheduler(Scheduler *scheduler);
   void setConfigPaths(QString configFilePath, QString configRepoPath);
   void setConfigRepository(ConfigRepository *configRepository);
@@ -217,16 +217,19 @@ public:
   HtmlTableView *htmlConfigsView() const { return _htmlConfigsView; }
   HtmlTableView *htmlConfigHistoryView() const {
     return _htmlConfigHistoryView; }
-  SharedUiItemList<> infoLogItems() const {
-    return _infoLogModel ? _infoLogModel->items() : SharedUiItemList<>(); }
-  SharedUiItemList<> warningLogItems() const {
-    return _warningLogModel ? _warningLogModel->items() : SharedUiItemList<>();}
-  SharedUiItemList<> auditLogItems() const {
-    return _auditLogModel ? _auditLogModel->items() : SharedUiItemList<>(); }
+  SharedUiItemList infoLogItems() const {
+    return _infoLogModel ? _infoLogModel->items() : SharedUiItemList(); }
+  SharedUiItemList warningLogItems() const {
+    return _warningLogModel ? _warningLogModel->items() : SharedUiItemList();}
+  SharedUiItemList auditLogItems() const {
+    return _auditLogModel ? _auditLogModel->items() : SharedUiItemList(); }
   QString configFilePath() const { return _configFilePath; }
   QString configRepoPath() const { return _configRepoPath; }
   ReadOnlyResourcesCache *readOnlyResourcesCache() const {
     return _readOnlyResourcesCache; }
+  QVariant paramRawValue(const Utf8String &key, const QVariant &def,
+                         const EvalContext &context) const override;
+  Utf8StringSet paramKeys(const EvalContext &context) const override;
 
 public slots:
   void enableAccessControl(bool enabled);

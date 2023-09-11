@@ -22,7 +22,7 @@ class HtmlLogEntryItemDelegate : public HtmlItemDelegate {
   Q_DISABLE_COPY(HtmlLogEntryItemDelegate)
 public:
   explicit HtmlLogEntryItemDelegate(QObject *parent = 0);
-  QString text(const QModelIndex &index) const;
+  QString text(const QModelIndex &index) const override;
 };
 
 #endif // HTMLLOGENTRYITEMDELEGATE_H
