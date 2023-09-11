@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2023 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -14,7 +14,6 @@
 #ifndef HTMLTASKITEMDELEGATE_H
 #define HTMLTASKITEMDELEGATE_H
 
-#include "libqron_global.h"
 #include "textview/htmlitemdelegate.h"
 
 /** Specific item delegate for tasks. */
