@@ -10,6 +10,11 @@ Minor improvements
 - won't try to build and push docker unless DOCKER_BUILD_ENABLED=1 is set
 - using precompiled header files to speed up compilation
 
+Bug fixes
+- %-evaluating users and passwords in access-control, at activation time
+  until now this was done at config load time, which is too early because
+  it's before external params loading
+
 Behind-the-curtain improvements
 - upgraded libp6core which had a deep redesign on framework pieces
   responsible for parameters, %-evaluation and config item value objects
