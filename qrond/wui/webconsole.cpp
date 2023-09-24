@@ -681,6 +681,10 @@ Utf8StringSet WebConsole::paramKeys(const EvalContext &) const {
   return _serverStats.keys();
 }
 
+Utf8String WebConsole::paramScope() const {
+  return "webconsole"_u8;
+}
+
 inline bool enforceMethods(int methodsMask, const HttpRequest &req,
                            HttpResponse &res) {
   if (req.method() & methodsMask)
@@ -804,10 +808,10 @@ static void apiAuditAndResponse(
     QList<quint64> auditInstanceIds = _noAuditInstanceIds) {
   if (auditInstanceIds.isEmpty()) // should never happen
     auditInstanceIds = _noAuditInstanceIds;
-  QString userid = processingContext->paramValue("userid"_ba).toString();
-  auto referer = req.header("Referer"_ba);
-  auto redirect = req.base64Cookie("redirect"_ba, referer);
-  bool disableRedirect = req.header("Prefer"_ba).toLower()
+  QString userid = processingContext->paramUtf16("userid"_u8);
+  auto referer = req.header("Referer"_u8);
+  auto redirect = req.base64Cookie("redirect"_u8, referer);
+  bool disableRedirect = req.header("Prefer"_u8).toLower()
       .contains("return=representation");
   if (auditAction.contains(webconsole->showAuditEvent()) // empty regexps match any string
       && (webconsole->hideAuditEvent().pattern().isEmpty()
@@ -826,11 +830,11 @@ static void apiAuditAndResponse(
           << " response message: " << responseMessage;
   }
   if (!disableRedirect && !redirect.isEmpty()) {
-    res.setBase64SessionCookie("message"_ba, responseMessage, "/"_ba);
-    res.clearCookie("redirect"_ba, "/"_ba);
+    res.setBase64SessionCookie("message"_u8, responseMessage, "/"_u8);
+    res.clearCookie("redirect"_u8, "/"_u8);
     res.redirect(redirect);
   } else {
-    res.setContentType("text/plain;charset=UTF-8"_ba);
+    res.setContentType("text/plain;charset=UTF-8"_u8);
     if (res.status() == HttpResponse::HTTP_Ok // won't override if already set
         && responseMessage.startsWith('E'))
       res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
@@ -2008,7 +2012,7 @@ bool WebConsole::handleRequest(
   if (redirectForUrlCleanup(req, res, processingContext))
     return true;
   QString path = req.url().path();
-  QString userid = processingContext->paramValue("userid").toString();
+  QString userid = processingContext->paramUtf16("userid"_u8);
   processingContext->append(this);
   processingContext->append(_scheduler->globalParams());
   // compute !pathtoroot now, to allow overriding url path with html files paths

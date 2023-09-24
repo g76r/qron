@@ -137,8 +137,7 @@ bool Qrond::doLoadConfig() {
                  << _configFilePath;
     return false;
   }
-  if (ParamsProvider::environment()
-      ->paramValue("DISABLE_TASKS_ON_CREATION").toBool()) {
+  if (ParamsProvider::environment()->paramBool("DISABLE_TASKS_ON_CREATION")) {
     for (Task &t : config.tasks().values()) {
       t.setEnabled(false);
       //emit itemChanged(t, t, QStringLiteral("task"));

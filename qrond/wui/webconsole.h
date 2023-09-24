@@ -230,6 +230,7 @@ public:
   QVariant paramRawValue(const Utf8String &key, const QVariant &def,
                          const EvalContext &context) const override;
   Utf8StringSet paramKeys(const EvalContext &context) const override;
+  Utf8String paramScope() const override;
 
 public slots:
   void enableAccessControl(bool enabled);
