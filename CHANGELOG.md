@@ -1,5 +1,10 @@
 # Since 1.14.1
 New features and notable changes
+- duration of a taskinstance is now running time + waiting time, wheras it
+  used to be queued time + running time.
+  this change applies to %!durationms %!durations (maxexpectedduration)
+  (minexpectedduration) (maxdurationbeforeabort) and to deprecated but
+  backwardcompatibility availlable %!totalms and %!totals
 
 Minor improvements
 - %-evaluation of overriding parameters in trigger declaration (both cron and
@@ -9,6 +14,10 @@ Minor improvements
 - removing %=escape function, adding %=integer
 - won't try to build and push docker unless DOCKER_BUILD_ENABLED=1 is set
 - using precompiled header files to speed up compilation
+- make taskinstance timestamps (creation, queue, start, stop)
+  visible in the "task stopped" end log message, which is now logged too
+  for donothing mean tasks in addition to all other means
+- added new "herder task finished" log message at the end of waiting time
 
 Bug fixes
 - %-evaluating users and passwords in access-control, at activation time
