@@ -17,7 +17,7 @@ Minor improvements
 - make taskinstance timestamps (creation, queue, start, stop)
   visible in the "task stopped" end log message, which is now logged too
   for donothing mean tasks in addition to all other means
-- added new "herder task finished" log message at the end of waiting time
+- added new "task finished" log message at the end of waiting time
 
 Bug fixes
 - %-evaluating users and passwords in access-control, at activation time
