@@ -872,7 +872,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
   // override configurated values
   for (auto key: params.paramKeys())
     if (params.paramRawUtf8(key).isEmpty())
-      params.removeValue(key);
+      params.erase(key);
   // LATER should check that mandatory form fields have been set ?
   TaskInstanceList instances = webconsole->scheduler()
       ->requestTask(taskId, params, params.paramBool("force", false),
@@ -1084,7 +1084,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   QString notice = req.url().path().mid(matchedLength) || req.param("notice");
   ParamSet params = req.paramsAsParamSet();
-  params.removeValue("notice");
+  params.erase("notice");
   webconsole->scheduler()->postNotice(notice, params);
   QString message;
   message = "S:Notice '"+notice+"' posted.";

@@ -18,6 +18,8 @@ Minor improvements
   visible in the "task stopped" end log message, which is now logged too
   for donothing mean tasks in addition to all other means
 - added new "task finished" log message at the end of waiting time
+- log entries source location is now limited to file:line, the function
+  is no more logged it was too verbose
 
 Bug fixes
 - %-evaluating users and passwords in access-control, at activation time
