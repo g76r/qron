@@ -1,4 +1,4 @@
-# Since 1.14.1
+# From 1.14.1 to 1.15.0 (2023-09-27)
 New features and notable changes
 - duration of a taskinstance is now running time + waiting time, wheras it
   used to be queued time + running time.
