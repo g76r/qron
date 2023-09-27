@@ -1,3 +1,12 @@
+# From 1.15.0 to 1.15.1 (2023-09-28)
+Bug fixes
+- %=default regression fix: was coalescing on null instead of empty
+- notices: fixed regression in notice overriding params
+  both postnotice action and notice trigger
+  (postnotice(param foo %foo)) and (trigger(notice(param foo %foo))) did not
+  take their value from overriding param foo but was empty due too loop
+  detection, overriding params being (wrongly) in %-evaluation context
+
 # From 1.14.1 to 1.15.0 (2023-09-27)
 New features and notable changes
 - duration of a taskinstance is now running time + waiting time, wheras it
