@@ -1,3 +1,11 @@
+# From 1.15.1 to 1.15.2 (2023-)
+Minor improvements
+- adding TaskInstance pseudoparams !parenttaskid and !parenttasklocalid
+- more details in log when cannot set {header,status} after writing data
+
+Bug fixes
+- split after % evaluation options: scatter.input, ssh.options, docker.*
+
 # From 1.15.0 to 1.15.1 (2023-09-28)
 Bug fixes
 - %=default regression fix: was coalescing on null instead of empty
