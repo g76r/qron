@@ -1,4 +1,14 @@
 # From 1.15.1 to 1.15.2 (2023-)
+New features and notable changes
+- it's now possible to log console http hits using env variables, e.g.
+  HTTPD_LOG_POLICY=LogAllHits or HTTPD_LOG_POLICY=LogErrorHits
+  defaults to LogErrorHits, can be muted with HTTPD_LOG_POLICY=LogDisable
+  log format is defined using HTTPD_LOG_FORMAT which defaults to:
+  "HTTP %[http]url %[http]method %[http]status %[http]servicems %[http]clientaddresses"
+  see HttpRequest and HttpResponse doc for available [http] values
+  (the whole http pipeline processing context is availlable, even variables
+  set during the processing)
+
 Minor improvements
 - adding TaskInstance pseudoparams !parenttaskid and !parenttasklocalid
 - more details in log when cannot set {header,status} after writing data
