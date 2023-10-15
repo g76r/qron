@@ -1,4 +1,4 @@
-# From 1.15.1 to 1.15.2 (2023-)
+# From 1.15.1 to 1.15.2 (2023-10-15)
 New features and notable changes
 - it's now possible to log console http hits using env variables, e.g.
   HTTPD_LOG_POLICY=LogAllHits or HTTPD_LOG_POLICY=LogErrorHits
@@ -8,6 +8,8 @@ New features and notable changes
   see HttpRequest and HttpResponse doc for available [http] values
   (the whole http pipeline processing context is availlable, even variables
   set during the processing)
+- alert: removed !alertxxx !xxxdate pseudo params
+  one can use regular section name (same names without leading !) instead
 
 Minor improvements
 - adding TaskInstance pseudoparams !parenttaskid and !parenttasklocalid
@@ -15,6 +17,7 @@ Minor improvements
 
 Bug fixes
 - split after % evaluation options: scatter.input, ssh.options, docker.*
+- pages navigation in html table views was broken since 1.15.0
 
 # From 1.15.0 to 1.15.1 (2023-09-28)
 Bug fixes
