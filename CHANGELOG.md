@@ -1,3 +1,7 @@
+# Sincec 1.15.2
+Bug fixes
+- HTTPD_LOG_POLICY=LogErrorHits no longer logs hits with status 300..399
+
 # From 1.15.1 to 1.15.2 (2023-10-15)
 New features and notable changes
 - it's now possible to log console http hits using env variables, e.g.
