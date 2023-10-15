@@ -1,6 +1,13 @@
 # Sincec 1.15.2
 Bug fixes
 - HTTPD_LOG_POLICY=LogErrorHits no longer logs hits with status 300..399
+- scatter mean: fixed regression in var evaluation
+  (var foo %foo) was empty instead of taking params from context (from
+  params, scatter.regexp...), due too loop detection, vars being (wrongly)
+  in %-evaluation context
+  e.g.:
+  (param scatter.regexp "(?<foo>.*)")
+  (var foo %foo)
 
 # From 1.15.1 to 1.15.2 (2023-10-15)
 New features and notable changes
