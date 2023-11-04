@@ -54,27 +54,6 @@ static QRegularExpression pfSuffixRe("\\.pf$");
 static CsvFormatter _csvFormatter(',', "\n", '"', '\0', ' ', -1);
 static HtmlTableFormatter _htmlTableFormatter(-1);
 
-// syntaxic sugar to define "a||b" as "a" if not empty and "b" otherwise
-static inline Utf8String operator||(const QString &a, const QString &b) {
-  return a.isEmpty() ? b : a;
-}
-
-static inline Utf8String operator||(const Utf8String &a, const Utf8String &b) {
-  return a.isEmpty() ? b : a;
-}
-
-static inline Utf8String operator||(const Utf8String &a, const QString &b) {
-  return a.isEmpty() ? Utf8String(b) : a;
-}
-
-static inline Utf8String operator||(const QString &a, const Utf8String &b) {
-  return a.isEmpty() ? b : Utf8String(a);
-}
-
-//static inline Utf8String operator||(const QByteArray &a, const QByteArray &b) {
-//  return a.isEmpty() ? b : a;
-//}
-
 WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _configRepository(0), _authorizer(0),
   _readOnlyResourcesCache(new ReadOnlyResourcesCache(this)) {
@@ -1082,7 +1061,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString notice = req.url().path().mid(matchedLength) || req.param("notice");
+  QString notice = req.url().path().mid(matchedLength) | req.param("notice");
   ParamSet params = req.paramsAsParamSet();
   params.erase("notice");
   webconsole->scheduler()->postNotice(notice, params);
@@ -1098,7 +1077,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) || req.param("alertid");
+  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
   webconsole->scheduler()->alerter()->raiseAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Raised alert '"+alertid+"'.",
@@ -1111,7 +1090,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) || req.param("alertid");
+  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
   webconsole->scheduler()->alerter()->raiseAlertImmediately(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Raised alert '"+alertid+"' immediately.",
@@ -1124,7 +1103,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) || req.param("alertid");
+  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
   webconsole->scheduler()->alerter()->cancelAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Canceled alert '"+alertid+"'.",
@@ -1137,7 +1116,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) || req.param("alertid");
+  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
   webconsole->scheduler()->alerter()->cancelAlertImmediately(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Canceled alert '"+alertid+"' immediately.",
@@ -1150,7 +1129,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) || req.param("alertid");
+  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
   webconsole->scheduler()->alerter()->emitAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Emitted alert '"+alertid+"'.",
@@ -1164,7 +1143,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
   QString gridboardid = req.url().path().mid(matchedLength)
-      || req.param("gridboardid");
+      | req.param("gridboardid");
   webconsole->scheduler()->alerter()->clearGridboard(gridboardid.toUtf8());
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Gridboard '"+gridboardid+"' cleared.",
@@ -1209,7 +1188,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
   QString configid = req.url().path().mid(matchedLength)
-      || req.param("configid");
+      | req.param("configid");
   bool ok = webconsole->configRepository()->activateConfig(configid.toUtf8());
   if (!ok)
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
@@ -1229,7 +1208,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
   QString configid = req.url().path().mid(matchedLength)
-      || req.param("configid");
+      | req.param("configid");
   bool ok = webconsole->configRepository()->removeConfig(configid.toUtf8());
   if (!ok)
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
@@ -1250,7 +1229,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           req, res))
         return true;
       Utf8String path = req.url().path().mid(matchedLength);
-      Utf8String message = req.param("confirm_message") || path;
+      Utf8String message = req.param("confirm_message") | path;
       if (path.isEmpty()) {
         res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
         res.output()->write("Confirmation page error.\n");
