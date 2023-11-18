@@ -832,7 +832,7 @@ static void apiAuditAndResponse(
                         responseMessage, auditAction);
   else
     apiAuditAndResponse(webconsole, req, res, processingContext,
-                        responseMessage, auditAction, instance.task().id(),
+                        responseMessage, auditAction, instance.taskId(),
                         { instance.idAsLong() });
 }
 
