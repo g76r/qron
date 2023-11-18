@@ -1174,7 +1174,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
   else
     // wait to make it less probable that the page displays before effect
-    QThread::usleep(1000000);
+    QThread::usleep(200'000);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       ok ? "S:Configuration reloaded."
                          : "E:Cannot reload configuration.",
