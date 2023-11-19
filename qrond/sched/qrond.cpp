@@ -170,6 +170,7 @@ void Qrond::doShutdown(int returnCode) {
     return;
   _shutingDown = true;
   Log::info() << "qrond is shuting down";
+  _httpd->close();
   // wait for running tasks while starting new ones is disabled
   _scheduler->shutdown();
   // delete HttpServer and Scheduler
@@ -180,7 +181,7 @@ void Qrond::doShutdown(int returnCode) {
   _scheduler->deleteLater(); // cant be a child cause it lives it its own thread
   // give a chance for last main loop events, incl. QThread::deleteLater() for
   // HttpServer, Scheduler and children
-  ::usleep(100000); // TODO replace with lambda connected on destroyed() ?
+  ::usleep(100'000); // TODO replace with lambda connected on destroyed() ?
   // shutdown main thread and stop QCoreApplication::exec() in main()
   QCoreApplication::exit(returnCode);
   // Qrond instance will be deleted by Q_GLOBAL_STATIC

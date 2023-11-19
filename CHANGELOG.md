@@ -1,5 +1,7 @@
-# Since 1.15.2
+# From 1.15.2 to 1.15.3 (2023-11-19)
 Bug fixes
+- fixed a crash causes when reloading configuration file (related to a race
+  condition in http data views update)
 - HTTPD_LOG_POLICY=LogErrorHits no longer logs hits with status 300..399
 - scatter mean: fixed regression in var evaluation
   (var foo %foo) was empty instead of taking params from context (from
@@ -8,6 +10,8 @@ Bug fixes
   e.g.:
   (param scatter.regexp "(?<foo>.*)")
   (var foo %foo)
+- fixed a crash causes in shutdown sequence (due to a race condition in httpd
+  server own shutdown sequence)
 - config history is no longer infinite (only keep 1000 last config events)
 
 # From 1.15.1 to 1.15.2 (2023-10-15)
