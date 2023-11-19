@@ -1,4 +1,4 @@
-# Sincec 1.15.2
+# Since 1.15.2
 Bug fixes
 - HTTPD_LOG_POLICY=LogErrorHits no longer logs hits with status 300..399
 - scatter mean: fixed regression in var evaluation
@@ -8,6 +8,7 @@ Bug fixes
   e.g.:
   (param scatter.regexp "(?<foo>.*)")
   (var foo %foo)
+- config history is no longer infinite (only keep 1000 last config events)
 
 # From 1.15.1 to 1.15.2 (2023-10-15)
 New features and notable changes

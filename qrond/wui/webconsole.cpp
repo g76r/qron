@@ -41,6 +41,7 @@
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
 #define TASK_INSTANCE_HISTORY_MAXROWS 10000
+#define CONFIG_HISTORY_MAXROWS 1000
 #define UNFINISHED_TASK_INSTANCE_MAXROWS 10000
 #define ISO8601 u"yyyy-MM-dd hh:mm:ss"_s
 //#define GRAPHVIZ_MIME_TYPE "text/vnd.graphviz;charset=UTF-8"
@@ -155,7 +156,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _infoLogModel = new LogModel(this, Log::Info);
   _auditLogModel = new LogModel(this, Log::Info, "AUDIT ");
   _configsModel = new ConfigsModel(this);
-  _configHistoryModel = new ConfigHistoryModel(this);
+  _configHistoryModel = new ConfigHistoryModel(this, CONFIG_HISTORY_MAXROWS);
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
