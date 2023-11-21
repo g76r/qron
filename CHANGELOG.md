@@ -1,3 +1,10 @@
+# From 1.15.3 to 1.15.4 (2023-11-21)
+Bug fixes
+- fixing maxinstances semaphore, which was broken in 1.15.3
+
+Behind-the-curtain improvements
+- more utf8 in an internal API
+
 # From 1.15.2 to 1.15.3 (2023-11-19)
 Bug fixes
 - fixed a crash causes when reloading configuration file (related to a race
