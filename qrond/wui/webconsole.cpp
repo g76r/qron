@@ -2042,13 +2042,13 @@ void WebConsole::setScheduler(Scheduler *scheduler) {
     connect(_scheduler, &Scheduler::hostsResourcesAvailabilityChanged,
             _resourcesLwmModel, &HostsResourcesAvailabilityModel::hostsResourcesAvailabilityChanged);
     _globalParamsModel->connectToDocumentManager<QronConfigDocumentManager>(
-          _scheduler, _scheduler->globalParams(), "globalparams"_ba,
-          "globalparam"_ba,
+          _scheduler, _scheduler->globalParams(), "globalparams"_u8,
+          "globalparam"_u8,
           &QronConfigDocumentManager::paramsChanged,
           &QronConfigDocumentManager::changeParams);
     _globalVarsModel->connectToDocumentManager<QronConfigDocumentManager>(
-          _scheduler, _scheduler->globalVars(), "globalvars"_ba,
-          "globalvars"_ba, &QronConfigDocumentManager::paramsChanged,
+          _scheduler, _scheduler->globalVars(), "globalvars"_u8,
+          "globalvars"_u8, &QronConfigDocumentManager::paramsChanged,
           &QronConfigDocumentManager::changeParams);
     connect(_scheduler, &Scheduler::paramsChanged,
             this, &WebConsole::paramsChanged);
