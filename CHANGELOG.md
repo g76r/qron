@@ -1,3 +1,12 @@
+# Since 1.15.4
+Bug fixes:
+- fixing encoding in alert mails
+
+Behind-the-curtain improvements
+- removing foreach macro (C++ supports range for for years now)
+- removing last Java-ish Qt iterator (only STL-ish iterators and range fors)
+- more utf8 in an internal API
+
 # From 1.15.3 to 1.15.4 (2023-11-21)
 Bug fixes
 - fixing maxinstances semaphore, which was broken in 1.15.3

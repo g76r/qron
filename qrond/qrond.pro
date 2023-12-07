@@ -40,7 +40,7 @@ QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual \
   -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
   -Wduplicated-branches -Wduplicated-cond -Wlogical-op \
   -Wno-padded -Wno-deprecated-copy -Wsuggest-attribute=noreturn \
-  -Wsuggest-override
+  -Wsuggest-override -DQT_NO_JAVA_STYLE_ITERATORS -DQT_NO_FOREACH
 # LATER add -Wfloat-equal again when QVariant::value<double>() won't trigger it
 QMAKE_CXXFLAGS_DEBUG += -ggdb
 QMAKE_CXXFLAGS_RELEASE_WITH_DEBUGINFO += -ggdb

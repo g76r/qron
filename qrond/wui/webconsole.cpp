@@ -1411,17 +1411,15 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      QList<QPair<QString,QString> > queryItems(req.urlQuery().queryItems());
+      auto queryItems = req.urlQuery().queryItems();
       if (!queryItems.isEmpty()) {
         // if there are query parameters in url, transform them into cookies
         // it is useful for page changes on views
         // LATER this mechanism should be generic/framework (in libqtssu),
         // provided it does not applies to any resource (it's a common hack e.g.
         // to have query strings on font files)
-        QListIterator<QPair<QString,QString> > it(queryItems);
         QString anchor;
-        while (it.hasNext()) {
-          const QPair<QString,QString> &p(it.next());
+        for (const QPair<QString,QString> &p: queryItems) {
           if (p.first == "anchor")
             anchor = p.second;
           else
