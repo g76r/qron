@@ -1,4 +1,8 @@
 # Since 1.15.4
+Minor improvements
+- some config error detection (duplicate config files nodes: alerts,
+  access-control, requestform)
+
 Bug fixes:
 - fixing encoding in alert mails
 
