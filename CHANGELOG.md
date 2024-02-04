@@ -1,4 +1,4 @@
-# Since 1.15.4
+# From 1.15.4 to 1.15.5 (2024-02-04)
 Minor improvements
 - some config error detection (duplicate config files nodes: alerts,
   access-control, requestform)
@@ -10,6 +10,7 @@ Behind-the-curtain improvements
 - removing foreach macro (C++ supports range for for years now)
 - removing last Java-ish Qt iterator (only STL-ish iterators and range fors)
 - more utf8 in an internal API
+- upgrading libp6core (mostly utf8 related)
 - switching to Qt 6.5.3
 
 # From 1.15.3 to 1.15.4 (2023-11-21)
