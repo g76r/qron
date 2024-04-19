@@ -1,10 +1,23 @@
+# From 1.15.5 to 1.15.6 (2024-04-19)
+Minor improvements
+- changed RPN syntax in %=rpn
+  previously: %{=rpn,foo,'bar,@} -> "hellobar" if foo holds "hello"
+  now:        %{=rpn,%foo,bar,@} -> "hellobar" if foo holds "hello"
+
+Bug fixes:
+- fixing encoding in alert mails
+- fixing ignored requestformfield (config loading bug)
+- when both tasktemplate and actual task define the same requestformfield,
+  only keep the later one (instead of displaying duplicates on request
+  page)
+
+Behind-the-curtain improvements
+- upgrading libp6core
+
 # From 1.15.4 to 1.15.5 (2024-02-04)
 Minor improvements
 - some config error detection (duplicate config files nodes: alerts,
   access-control, requestform)
-
-Bug fixes:
-- fixing encoding in alert mails
 
 Behind-the-curtain improvements
 - removing foreach macro (C++ supports range for for years now)
