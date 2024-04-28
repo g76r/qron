@@ -1,3 +1,24 @@
+# Since 1.15.6
+New features and notable changes:
+- new event onnostderr which is triggered when a tasks finishes and it
+  never wrote anything to stderr, usefull to simulate pre-1.13.0 task.stderr
+  alerts, this way:
+  (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
+  (onstderr(log stderr: %line(severity W)))
+  (onstderr(raisealert task.stderr.%!taskid))
+  (onnostderr(cancelalert task.stderr.%!taskid))
+
+Bug fixes:
+- renamed mergestderrintostdout to mergestdoutintostderr the name was
+  misleading
+- fixed stdout/stderr behavior for ssh mean tasks so that it's the
+  same than with mergestdoutintostderr (excepted if ssh.disablepty is
+  set to true)
+- alerts dropdelay config element was ignored, mayrise delay was used instead
+
+Behind-the-curtain improvements
+- upgrading libp6core
+
 # From 1.15.5 to 1.15.6 (2024-04-19)
 Minor improvements
 - changed RPN syntax in %=rpn
@@ -354,6 +375,7 @@ New features and notable changes
   (onstderr(log stderr: %line(severity W)))
 - no more implicit task.stderr.%!taskid alert, can now be configured this way:
   (onstderr(raisealert task.stderr.%!taskid))
+  [actually this is not enough, see 1.15.7 version changelog]
 - special param "stderrfilter" is no more supported, it can now be achieved
   with stop action in onstderr event subscriptions, this way:
   (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
