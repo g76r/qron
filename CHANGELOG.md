@@ -1,4 +1,4 @@
-# Since 1.15.6
+# From 1.15.6 to 1.15.7 (2024-05-01)
 New features and notable changes:
 - new event onnostderr which is triggered when a tasks finishes and it
   never wrote anything to stderr, usefull to simulate pre-1.13.0 task.stderr
@@ -17,6 +17,9 @@ Bug fixes:
 - alerts dropdelay config element was ignored, mayrise delay was used instead
 - fixed duplicates log entries and potential crash on conf change
 - queued or planned herded tasks stayed forever with nowait herding policy
+- force tasks on (balancing each) cluster to be standalone
+  otherwise there were inconsistencies and hard to debug locks with
+  maxinstance mechanism
 
 Behind-the-curtain improvements
 - upgrading libp6core
