@@ -15,7 +15,8 @@ Bug fixes:
   same than with mergestdoutintostderr (excepted if ssh.disablepty is
   set to true)
 - alerts dropdelay config element was ignored, mayrise delay was used instead
-- log: fixed duplicates log entries and potential crash on conf change
+- fixed duplicates log entries and potential crash on conf change
+- queued or planned herded tasks stayed forever with nowait herding policy
 
 Behind-the-curtain improvements
 - upgrading libp6core
