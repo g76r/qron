@@ -15,6 +15,7 @@ Bug fixes:
   same than with mergestdoutintostderr (excepted if ssh.disablepty is
   set to true)
 - alerts dropdelay config element was ignored, mayrise delay was used instead
+- log: fixed duplicates log entries and potential crash on conf change
 
 Behind-the-curtain improvements
 - upgrading libp6core
