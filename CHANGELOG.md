@@ -1,3 +1,15 @@
+# Since 1.15.7
+Bug fixes:
+- fixed a bug in config file integer number parser where hexadecimal numbers
+  ending with b or B were misinterpreted (due to support for SI and casual
+  prefix in numbers a final b was interpreted as billion and 0x1b was
+  processed as 0x1000000000 which does not fit in a 64-bytes integer, so
+  considered invalid (and often used as if it were 0)), now 0x1b is evaluated
+  as 27
+
+Behind-the-curtain improvements
+- upgrading libp6core
+
 # From 1.15.6 to 1.15.7 (2024-05-01)
 New features and notable changes:
 - new event onnostderr which is triggered when a tasks finishes and it
