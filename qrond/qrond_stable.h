@@ -56,7 +56,6 @@
 #include "io/ioutils.h"
 #include "thread/atomicvalue.h"
 #include "util/radixtree.h"
-#include "util/characterseparatedexpression.h"
 
 // libqron
 #include "sched/scheduler.h"

@@ -1,4 +1,4 @@
-/* Copyright 2012-2022 Hallowyn and others.
+/* Copyright 2012-2024 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,7 +31,6 @@
 #include "alert/gridboard.h"
 #include "util/radixtree.h"
 #include <functional>
-#include "util/characterseparatedexpression.h"
 #include "format/htmltableformatter.h"
 #include "format/jsonformats.h"
 #include <QJsonDocument>
@@ -1319,8 +1318,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
-      auto taskId = elements.value(0).toUtf8();
+      auto elements = Utf8String(req.url().path())
+                      .split_headed_list(matchedLength-1);
+      auto taskId = elements.value(0);
       auto referer = req.header(
             "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
@@ -1356,9 +1356,10 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      CharacterSeparatedExpression elements(req.url().path(), matchedLength-1);
-      auto taskId = elements.value(0).toUtf8();
-      QString subItem = elements.value(1);
+      auto elements = Utf8String(req.url().path())
+                      .split_headed_list(matchedLength-1);
+      auto taskId = elements.value(0);
+      auto subItem = elements.value(1);
       Task task(webconsole->scheduler()->task(taskId));
       if (task.isNull()) {
         res.setStatus(404);
