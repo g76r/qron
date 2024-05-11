@@ -8,7 +8,7 @@ Bug fixes:
   as 27
 
 Behind-the-curtain improvements
-- upgrading libp6core (mainly %-evaluation optimizations)
+- upgrading libp6core (mainly %-evaluation and utf8 optimizations)
 
 # From 1.15.6 to 1.15.7 (2024-05-01)
 New features and notable changes:
