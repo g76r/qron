@@ -159,12 +159,16 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
 
   // HTML views
   HtmlTableView::setDefaultTableClass("table table-condensed table-hover");
+  QHash<QString,QString> hostIcons;
+  hostIcons.insert("false", "<i class=\"fa-solid fa-circle-minus fa-beat\">"
+                            "</i>&nbsp;");
   _htmlHostsListView = new HtmlTableView(this, "hostslist");
   _htmlHostsListView->setModel(_sortedHostsModel);
   _htmlHostsListView->setEmptyPlaceholder("(no host)");
   qobject_cast<HtmlItemDelegate*>(_htmlHostsListView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa-solid fa-hard-drive\"></i>&nbsp;")
-      ->setPrefixForColumnHeader(2, "<i class=\"fa-solid fa-coins\"></i>&nbsp;");
+      ->setPrefixForColumnHeader(2, "<i class=\"fa-solid fa-coins\"></i>&nbsp;")
+      ->setPrefixForColumn(6, "%1", 6, hostIcons);
   _wuiHandler->addView(_htmlHostsListView);
   _htmlClustersListView = new HtmlTableView(this, "clusterslist");
   _htmlClustersListView->setModel(_sortedClustersModel);

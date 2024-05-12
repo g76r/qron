@@ -1,4 +1,15 @@
 # Since 1.15.7
+New features and notable changes:
+- introducing host ssh healthcheck with new automatic alerts (host.down.**)
+  and cluster skipping down hosts
+  example:
+  (host bilbo
+    (hostname bilbo.shire.com)
+    (sshhealthcheck true) # same as /bin/true with most hosts and shells
+    (healthcheckinterval 120) # 2 minutes (default: 1 minute)
+  )
+  (cluster shire (hosts bilbo frodo))
+
 Bug fixes:
 - fixed a bug in config file integer number parser where hexadecimal numbers
   ending with b or B were misinterpreted (due to support for SI and casual
