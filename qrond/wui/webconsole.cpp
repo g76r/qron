@@ -848,33 +848,30 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  auto taskId = req.path().mid(matchedLength);
   ParamSet params = req.paramsAsParamSet();
-  // LATER drop parameters that are not defined as overridable in task config
   // remove empty values so that fields left empty in task request ui form won't
   // override configurated values
   for (auto key: params.paramKeys())
     if (params.paramRawUtf8(key).isEmpty())
       params.erase(key);
+  // LATER drop parameters that are not defined as overridable in task config
   // LATER should check that mandatory form fields have been set ?
-  TaskInstanceList instances = webconsole->scheduler()
-      ->requestTask(taskId, params, params.paramBool("force", false),
-                    params.paramNumber<qulonglong>("herdid", 0));
+  // or are they already checked by scheduler (I think so)
+  TaskInstance instance =
+      webconsole->scheduler()->planTask(
+        taskId, params, params.paramBool("force"_u8, false),
+        params.paramNumber<quint64>("herdid"_u8, 0), {}, {}, 0, "api"_u8);
   QString message;
-  QList<quint64> taskInstanceIds;
-  if (!instances.isEmpty()) {
-    message = "S:Task '"+taskId+"' submitted for execution with id";
-    for (auto ti: instances.filtered<TaskInstance>("taskinstance")) {
-      message.append(' ').append(ti.id());
-      taskInstanceIds << ti.idAsLong();
-    }
-    message.append('.');
-  } else
+  if (!!instance)
+    message = "S:Task '"+taskId+"' submitted for execution with id "
+              +instance.id()+".";
+  else
     message = "E:Execution request of task '"+taskId
         +"' failed (see logs for more information).";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
-                      taskId, instances);
+                      req.methodName()+" "+req.path().left(matchedLength),
+                      taskId, {instance.idAsLong()});
   return true;
 }, true },
 { "/do/v1/tasks/abort_instances/", [](
@@ -882,13 +879,13 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  auto taskId = req.path().mid(matchedLength);
   QString message;
   TaskInstanceList instances =
       webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
   message = "S:Task instances { "+instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       taskId, instances);
   return true;
 }, true },
@@ -897,13 +894,13 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  auto taskId = req.path().mid(matchedLength);
   QString message;
   TaskInstanceList instances =
       webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
   message = "S:Task requests { "+instances.join(' ')+" } canceled.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       taskId, instances);
   return true;
 }, true },
@@ -912,7 +909,7 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  auto taskId = req.path().mid(matchedLength);
   QString message;
   TaskInstanceList instances =
       webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
@@ -921,7 +918,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   instances = webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
   message += instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       taskId, instances);
   return true;
 }, true },
@@ -930,12 +927,12 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  auto taskId = req.path().mid(matchedLength);
   QString message;
   webconsole->scheduler()->enableAllTasks(true);
   message = "S:Enabled all tasks.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       taskId);
   // wait to make it less probable that the page displays before effect
   QThread::usleep(500000);
@@ -946,12 +943,12 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  auto taskId = req.path().mid(matchedLength);
   QString message;
   webconsole->scheduler()->enableAllTasks(false);
   message = "S:Disabled all tasks.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       taskId);
   // wait to make it less probable that the page displays before effect
   QThread::usleep(500000);
@@ -962,7 +959,7 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  auto taskId = req.path().mid(matchedLength);
   QString message;
   if (webconsole->scheduler()->enableTask(taskId, true))
     message = "S:Task '"+taskId+"' enabled.";
@@ -971,7 +968,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     res.setStatus(HttpResponse::HTTP_Not_Found);
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       taskId);
   return true;
 }, true },
@@ -980,7 +977,7 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString taskId = req.url().path().mid(matchedLength);
+  QString taskId = req.path().mid(matchedLength);
   QString message;
   if (webconsole->scheduler()->enableTask(taskId, false))
     message = "S:Task '"+taskId+"' disabled.";
@@ -989,7 +986,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     res.setStatus(HttpResponse::HTTP_Not_Found);
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       taskId);
   return true;
 }, true },
@@ -998,7 +995,7 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
+  quint64 taskInstanceId = req.path().mid(matchedLength).toLongLong();
   QString message;
   TaskInstance instance = webconsole->scheduler()->abortTaskInstance(taskInstanceId);
   if (instance.isNull()) {
@@ -1009,7 +1006,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1018,7 +1015,7 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
+  quint64 taskInstanceId = req.path().mid(matchedLength).toLongLong();
   QString message;
   TaskInstance instance =
       webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
@@ -1030,7 +1027,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       instance);
   return true;
 }, true },
@@ -1039,7 +1036,7 @@ WebConsole *webconsole, HttpRequest req, HttpResponse res,
 ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  quint64 taskInstanceId = req.url().path().mid(matchedLength).toLongLong();
+  quint64 taskInstanceId = req.path().mid(matchedLength).toLongLong();
   QString message;
   TaskInstance instance =
       webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
@@ -1056,7 +1053,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
   }
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength),
+                      req.methodName()+" "+req.path().left(matchedLength),
                       instance);
   return true;
 }, true },
@@ -1065,14 +1062,14 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString notice = req.url().path().mid(matchedLength) | req.param("notice");
+  QString notice = req.path().mid(matchedLength) | req.param("notice");
   ParamSet params = req.paramsAsParamSet();
   params.erase("notice");
   webconsole->scheduler()->postNotice(notice, params);
   QString message;
   message = "S:Notice '"+notice+"' posted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1081,11 +1078,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
+  auto alertid = req.path().mid(matchedLength) | req.param("alertid"_u8);
   webconsole->scheduler()->alerter()->raiseAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Raised alert '"+alertid+"'.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1094,11 +1091,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
+  auto alertid = req.path().mid(matchedLength) | req.param("alertid"_u8);
   webconsole->scheduler()->alerter()->raiseAlertImmediately(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Raised alert '"+alertid+"' immediately.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1107,11 +1104,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
+  auto alertid = req.path().mid(matchedLength) | req.param("alertid"_u8);
   webconsole->scheduler()->alerter()->cancelAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Canceled alert '"+alertid+"'.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1120,11 +1117,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
+  auto alertid = req.path().mid(matchedLength) | req.param("alertid"_u8);
   webconsole->scheduler()->alerter()->cancelAlertImmediately(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Canceled alert '"+alertid+"' immediately.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1133,11 +1130,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString alertid = req.url().path().mid(matchedLength) | req.param("alertid");
+  auto alertid = req.path().mid(matchedLength) | req.param("alertid"_u8);
   webconsole->scheduler()->alerter()->emitAlert(alertid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Emitted alert '"+alertid+"'.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1146,12 +1143,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString gridboardid = req.url().path().mid(matchedLength)
-      | req.param("gridboardid");
-  webconsole->scheduler()->alerter()->clearGridboard(gridboardid.toUtf8());
+  auto gridboardid = req.path().mid(matchedLength) |req.param("gridboardid"_u8);
+  webconsole->scheduler()->alerter()->clearGridboard(gridboardid);
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Gridboard '"+gridboardid+"' cleared.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1162,7 +1158,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       "S:Shutdown requested.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   Qrond::instance()->asyncShutdown(0);
   return true;
@@ -1182,7 +1178,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       ok ? "S:Configuration reloaded."
                          : "E:Cannot reload configuration.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1191,9 +1187,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString configid = req.url().path().mid(matchedLength)
-      | req.param("configid");
-  bool ok = webconsole->configRepository()->activateConfig(configid.toUtf8());
+  auto configid = req.path().mid(matchedLength) | req.param("configid"_u8);
+  bool ok = webconsole->configRepository()->activateConfig(configid);
   if (!ok)
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
   else
@@ -1202,7 +1197,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       ok ? "S:Configuration '"+configid+"' activated."
                          : "E:Cannot activate configuration '"+configid+"'.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1211,9 +1206,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
   if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
     return true;
-  QString configid = req.url().path().mid(matchedLength)
-      | req.param("configid");
-  bool ok = webconsole->configRepository()->removeConfig(configid.toUtf8());
+  auto configid = req.path().mid(matchedLength) | req.param("configid"_u8);
+  bool ok = webconsole->configRepository()->removeConfig(configid);
   if (!ok)
     res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
   else
@@ -1222,7 +1216,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
   apiAuditAndResponse(webconsole, req, res, processingContext,
                       ok ? "S:Configuration '"+configid+"' removed."
                          : "E:Cannot remove configuration '"+configid+"'.",
-                      req.methodName()+" "+req.url().path().left(matchedLength)
+                      req.methodName()+" "+req.path().left(matchedLength)
                       );
   return true;
 }, true },
@@ -1232,8 +1226,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
                           req, res))
         return true;
-      Utf8String path = req.url().path().mid(matchedLength);
-      Utf8String message = req.param("confirm_message") | path;
+      auto path = req.path().mid(matchedLength);
+      auto message = req.param("confirm_message") | path;
       if (path.isEmpty()) {
         res.setStatus(HttpResponse::HTTP_Internal_Server_Error);
         res.output()->write("Confirmation page error.\n");
@@ -1270,7 +1264,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      auto taskId = req.url().path().mid(matchedLength).toUtf8();
+      auto taskId = req.path().mid(matchedLength);
       auto referer = req.header(
             "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
@@ -1322,8 +1316,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      auto elements = Utf8String(req.url().path())
-                      .split_headed_list(matchedLength-1);
+      auto elements = req.path().split_headed_list(matchedLength-1);
       auto taskId = elements.value(0);
       auto referer = req.header(
             "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
@@ -1360,8 +1353,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      auto elements = Utf8String(req.url().path())
-                      .split_headed_list(matchedLength-1);
+      auto elements = req.path().split_headed_list(matchedLength-1);
       auto taskId = elements.value(0);
       auto subItem = elements.value(1);
       Task task(webconsole->scheduler()->task(taskId));
@@ -1387,7 +1379,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      auto gridboardId = req.url().path().mid(matchedLength).toUtf8();
+      auto gridboardId = req.path().mid(matchedLength);
       auto referer = req.header(
             "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
       Gridboard gridboard(webconsole->scheduler()->alerter()
@@ -1423,14 +1415,14 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         // LATER this mechanism should be generic/framework (in libqtssu),
         // provided it does not applies to any resource (it's a common hack e.g.
         // to have query strings on font files)
-        QString anchor;
+        Utf8String anchor;
         for (const QPair<QString,QString> &p: queryItems) {
           if (p.first == "anchor")
             anchor = p.second;
           else
             res.setBase64SessionCookie(p.first, p.second.toUtf8(), "/");
         }
-        QString s = req.url().path();
+        auto s = req.path();
         qsizetype i = s.lastIndexOf('/');
         if (i != -1)
           s = s.mid(i+1);
@@ -1438,8 +1430,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           s.append('#').append(anchor);
         res.redirect(s);
       } else {
-        res.clearCookie("message"_ba, "/"_ba);
-        if (req.url().path().endsWith("/console/alerts.html")) {
+        res.clearCookie("message"_u8, "/"_u8);
+        if (req.path().endsWith("/console/alerts.html")) {
           auto ac = webconsole->alerterConfig();
           processingContext->append(&ac);
           webconsole->wuiHandler()->handleRequest(req, res, processingContext);
@@ -1692,8 +1684,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     ParamsProviderMerger *, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      auto gridboardid = req.url().path().mid(matchedLength)
-          .replace(htmlSuffixRe, QString()).toUtf8();
+      auto gridboardid = req.path().mid(matchedLength);
+      if (gridboardid.endsWith(".html"))
+        gridboardid.chop(5);
       Gridboard gridboard = webconsole->scheduler()->alerter()
           ->gridboard(gridboardid);
       res.setContentType("text/html;charset=UTF-8");
@@ -1740,8 +1733,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             ->handleRequest(req, res, processingContext);
       else {
         if (webconsole->configRepository()) {
-          auto configid = req.url().path().mid(matchedLength)
-              .replace(pfSuffixRe, QString()).toUtf8();
+          auto configid = req.path().mid(matchedLength);
+          if (configid.endsWith(".pf"))
+            configid.chop(3);
           SchedulerConfig config
               = (configid == "current")
               ? webconsole->configRepository()->activeConfig()
@@ -1826,6 +1820,37 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             webconsole->scheduler()->unfinishedTaskInstances().values(),
             req, res);
 } },
+{ "/rest/v1/taskinstances/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *context, int ml) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      auto referer =
+          req.header("Referer"_u8, context->paramUtf8("!pathtoroot"_u8));
+      auto path = req.path();
+      auto params = path.split_headed_list(ml-1);
+      auto second = params.value(1);
+      if (second == "herd_diagram.dot"_u8) {
+        const auto tii = params.value(0).toNumber<quint64>();
+        const auto gv = GraphvizDiagramsBuilder::herdDiagram(
+                          webconsole->scheduler(), tii);
+        if (gv.isEmpty()) {
+          res.setBase64SessionCookie(
+                "message", "E:TaskInstance "+Utf8String::number(tii) // FIXME
+                +" not found.", "/");
+          res.redirect(referer);
+          return true;
+        }
+        return writePlainText(gv, req, res, GRAPHVIZ_MIME_TYPE);
+        // return writePlainText(webconsole->tasksDeploymentDiagram()
+        //                       ->source(req, ppm), req, res,
+        //                       GRAPHVIZ_MIME_TYPE);
+      }
+      res.setBase64SessionCookie("message", "E:Service '"+path // FIXME
+                                 +"' not found.", "/");
+      res.redirect(referer);
+      return true;
+}, true },
 { "/rest/v1/scheduler_events/list.csv", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *, int) {
@@ -1994,8 +2019,8 @@ bool WebConsole::handleRequest(
     ParamsProviderMerger *processingContext) {
   if (redirectForUrlCleanup(req, res, processingContext))
     return true;
-  QString path = req.url().path();
-  QString userid = processingContext->paramUtf16("userid"_u8);
+  auto path = req.path();
+  auto userid = processingContext->paramUtf8("userid"_u8);
   processingContext->append(this);
   processingContext->append(_scheduler->globalParams());
   // compute !pathtoroot now, to allow overriding url path with html files paths
@@ -2013,7 +2038,7 @@ bool WebConsole::handleRequest(
   }
   if (_authorizer && !_authorizer->authorize(userid, req.methodName(), path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);
-    res.clearCookie("message"_ba, "/"_ba);
+    res.clearCookie("message"_u8, "/"_u8);
     // LATER nicer display
     res.output()->write("Permission denied.");
     return true;

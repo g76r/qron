@@ -9,8 +9,16 @@ New features and notable changes:
     (healthcheckinterval 120) # 2 minutes (default: 1 minute)
   )
   (cluster shire (hosts bilbo frodo))
+- removing support for "each" cluster balancing method, please start
+  batch of tasks on every server using "scatter" mean tasks instead
+- added (unfinished/wip) live herd diagrams to http api:
+    /rest/v1/taskinstances/%1/herd_diagram.dot
+- added 2 new columns to taskinstance list (on API only, they're not
+  shown on the web console): 20 parentid (can be distinct from the herdid),
+  21 cause (e.g.: "onfailure", "cron trigger (0 1 2 3 * *)", "api")
 
 Bug fixes:
+- fixed a crash when a cluster has an invalid balancing method
 - fixed a bug in config file integer number parser where hexadecimal numbers
   ending with b or B were misinterpreted (due to support for SI and casual
   prefix in numbers a final b was interpreted as billion and 0x1b was
@@ -20,6 +28,12 @@ Bug fixes:
 
 Behind-the-curtain improvements
 - upgrading libp6core (mainly %-evaluation and utf8 optimizations)
+- rewritten internal plantask API to associate every task instance with
+  an optionnal parent task (the one calling plantask, for instance through
+  onplan or onsuccess events, it may be the herder or another task from the
+  same herd or from another) and the plan cause (e.g. "onplan",
+  "onfailure", "cron trigger (0 1 2 3 * *)", "api")
+- more internal APIs switched from utf16 to utf8
 
 # From 1.15.6 to 1.15.7 (2024-05-01)
 New features and notable changes:
