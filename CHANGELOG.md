@@ -20,11 +20,10 @@ New features and notable changes:
 Bug fixes:
 - fixed a crash when a cluster has an invalid balancing method
 - fixed a bug in config file integer number parser where hexadecimal numbers
-  ending with b or B were misinterpreted (due to support for SI and casual
-  prefix in numbers a final b was interpreted as billion and 0x1b was
-  processed as 0x1000000000 which does not fit in a 64-bytes integer, so
-  considered invalid (and often used as if it were 0)), now 0x1b is evaluated
-  as 27
+  ending with b or B were misinterpreted (due to support for suffixes in
+  numbers a final b was interpreted as billion and 0x1b was processed as
+  0x1000000000 which does not fit in a 64-bytes integer, so considered
+  invalid (and often used as if it were 0)), now 0x1b is evaluated as 27
 
 Behind-the-curtain improvements
 - upgrading libp6core (mainly %-evaluation and utf8 optimizations)
