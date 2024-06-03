@@ -33,6 +33,7 @@ Behind-the-curtain improvements
   same herd or from another) and the plan cause (e.g. "onplan",
   "onfailure", "cron trigger (0 1 2 3 * *)", "api")
 - more internal APIs switched from utf16 to utf8
+- lacking includes and misc clangd warning removal
 
 # From 1.15.6 to 1.15.7 (2024-05-01)
 New features and notable changes:
