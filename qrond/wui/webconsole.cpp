@@ -1832,7 +1832,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       auto second = params.value(1);
       if (second == "herd_diagram.dot"_u8) {
         const auto tii = params.value(0).toNumber<quint64>();
-        const auto gv = GraphvizDiagramsBuilder::herdDiagram(
+        const auto gv = GraphvizDiagramsBuilder::herdInstanceDiagram(
                           webconsole->scheduler(), tii);
         if (gv.isEmpty()) {
           res.setBase64SessionCookie(

@@ -11,11 +11,12 @@ New features and notable changes:
   (cluster shire (hosts bilbo frodo))
 - removing support for "each" cluster balancing method, please start
   batch of tasks on every server using "scatter" mean tasks instead
-- added (unfinished/wip) live herd diagrams to http api:
+- added live herd diagrams to http api (dot only, svg and png coming soon):
     /rest/v1/taskinstances/%1/herd_diagram.dot
 - added 2 new columns to taskinstance list (on API only, they're not
   shown on the web console): 20 parentid (can be distinct from the herdid),
   21 cause (e.g.: "onfailure", "cron trigger (0 1 2 3 * *)", "api")
+  (this information is also shown on new herd diagram)
 
 Bug fixes:
 - fixed a crash when a cluster has an invalid balancing method
