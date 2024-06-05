@@ -3,16 +3,18 @@ New features and notable changes:
 - introducing host ssh healthcheck with new automatic alerts (host.down.**)
   and cluster skipping down hosts
   example:
+  ```
   (host bilbo
     (hostname bilbo.shire.com)
     (sshhealthcheck true) # same as /bin/true with most hosts and shells
     (healthcheckinterval 120) # 2 minutes (default: 1 minute)
   )
+  ```
   (cluster shire (hosts bilbo frodo))
 - removing support for "each" cluster balancing method, please start
   batch of tasks on every server using "scatter" mean tasks instead
 - added live herd diagrams to http api (dot only, svg and png coming soon):
-    /rest/v1/taskinstances/%1/herd_diagram.dot
+    `/rest/v1/taskinstances/%1/herd_diagram.dot`
 - added 2 new columns to taskinstance list (on API only, they're not
   shown on the web console): 20 parentid (can be distinct from the herdid),
   21 cause (e.g.: "onfailure", "cron trigger (0 1 2 3 * *)", "api")
@@ -23,6 +25,7 @@ New features and notable changes:
   host, e.g. in the following there won't be more than one "sheep" task
   instance running per host at once, so there won't be more than 3 at
   once because only 3 hosts are defined
+  ```
   (taskgroup shire)
   (task sheep
     (taskgroup shire)
@@ -40,6 +43,7 @@ New features and notable changes:
   (host localhost2(hostname localhost))
   (host localhost3(hostname localhost))
   (cluster cluster1(hosts localhost localhost2 localhost3))
+  ```
 
 Bug fixes:
 - fixed a crash when a cluster has an invalid balancing method
