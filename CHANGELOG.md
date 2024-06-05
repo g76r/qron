@@ -1,4 +1,4 @@
-# Since 1.15.7
+# From 1.15.7 to 1.15.8 (2024-06-05)
 New features and notable changes:
 - introducing host ssh healthcheck with new automatic alerts (host.down.**)
   and cluster skipping down hosts
@@ -17,6 +17,29 @@ New features and notable changes:
   shown on the web console): 20 parentid (can be distinct from the herdid),
   21 cause (e.g.: "onfailure", "cron trigger (0 1 2 3 * *)", "api")
   (this information is also shown on new herd diagram)
+- introducing maxperhost task/tasktemplate param
+  automatically create resources on task and every host in order to
+  enforce that a task cannot run above this maximum instances number per
+  host, e.g. in the following there won't be more than one "sheep" task
+  instance running per host at once, so there won't be more than 3 at
+  once because only 3 hosts are defined
+  (taskgroup shire)
+  (task sheep
+    (taskgroup shire)
+    (apply sheep)
+  )
+  (tasktemplate sheep
+    (mean ssh)
+    (target cluster1)
+    (trigger(cron */3 * * * * *))
+    (maxinstances 6)
+    (maxperhost 1)
+    (command "sleep 20")
+  )
+  (host localhost)
+  (host localhost2(hostname localhost))
+  (host localhost3(hostname localhost))
+  (cluster cluster1(hosts localhost localhost2 localhost3))
 
 Bug fixes:
 - fixed a crash when a cluster has an invalid balancing method
