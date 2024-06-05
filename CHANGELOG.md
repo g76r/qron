@@ -9,12 +9,14 @@ New features and notable changes:
     (sshhealthcheck true) # same as /bin/true with most hosts and shells
     (healthcheckinterval 120) # 2 minutes (default: 1 minute)
   )
+  (cluster shire (hosts bilbo frodo)) # will use frodo when bilbo is unavaillable
   ```
-  (cluster shire (hosts bilbo frodo))
 - removing support for "each" cluster balancing method, please start
   batch of tasks on every server using "scatter" mean tasks instead
 - added live herd diagrams to http api (dot only, svg and png coming soon):
-    `/rest/v1/taskinstances/%1/herd_diagram.dot`
+  ```
+  /rest/v1/taskinstances/%1/herd_diagram.dot
+  ```
 - added 2 new columns to taskinstance list (on API only, they're not
   shown on the web console): 20 parentid (can be distinct from the herdid),
   21 cause (e.g.: "onfailure", "cron trigger (0 1 2 3 * *)", "api")
@@ -68,10 +70,12 @@ New features and notable changes:
 - new event onnostderr which is triggered when a tasks finishes and it
   never wrote anything to stderr, usefull to simulate pre-1.13.0 task.stderr
   alerts, this way:
+  ```
   (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
   (onstderr(log stderr: %line(severity W)))
   (onstderr(raisealert task.stderr.%!taskid))
   (onnostderr(cancelalert task.stderr.%!taskid))
+  ```
 
 Bug fixes:
 - renamed mergestderrintostdout to mergestdoutintostderr the name was
@@ -134,8 +138,10 @@ Bug fixes
   params, scatter.regexp...), due too loop detection, vars being (wrongly)
   in %-evaluation context
   e.g.:
+  ```
   (param scatter.regexp "(?<foo>.*)")
   (var foo %foo)
+  ```
 - fixed a crash causes in shutdown sequence (due to a race condition in httpd
   server own shutdown sequence)
 - config history is no longer infinite (only keep 1000 last config events)
