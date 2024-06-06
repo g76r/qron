@@ -1,3 +1,7 @@
+# From 1.15.8 to 1.15.9 (2024-06-06)
+Bug fixes:
+- fixed crash in plantaskaction when evaluating overriding params
+
 # From 1.15.7 to 1.15.8 (2024-06-05)
 New features and notable changes:
 - introducing host ssh healthcheck with new automatic alerts (host.down.**)
