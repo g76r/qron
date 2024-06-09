@@ -20,7 +20,7 @@ HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(
   instancesStatusIcons.insert("planned", "<i class=\"fa-solid fa-calendar-days\"></i>&nbsp;");
   instancesStatusIcons.insert("queued", "<i class=\"fa-solid fa-inbox\"></i>&nbsp;");
   instancesStatusIcons.insert("running", "<i class=\"fa-solid fa-play\"></i>&nbsp;");
-  instancesStatusIcons.insert("waiting", "<i class=\"fa-solid fa-flag-checkered\"></i>&nbsp;");
+  instancesStatusIcons.insert("waiting", "<i class=\"fa-solid fa-hourglass-half\"></i>&nbsp;");
   instancesStatusIcons.insert("failure", "<i class=\"fa-solid fa-circle-minus\"></i>&nbsp;");
   instancesStatusIcons.insert("canceled", "<i class=\"fa-solid fa-xmark\"></i>&nbsp;");
   setPrefixForColumn(1, "<i class=\"fa-solid fa-gear\"></i>&nbsp;"

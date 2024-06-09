@@ -1,8 +1,9 @@
 # Since 1.15.9
 Minor improvements
-- web UI task page now display full pf config including applied templates
+- wui: task page now display full pf config including applied templates
   config, group hierarchy config and global (tasksroot) config (previously
   only task config was displayed, without templates groups and globals)
+- wui: changed waiting task instance icon from flag-checkered to hourglass-half
 
 # From 1.15.8 to 1.15.9 (2024-06-06)
 Bug fixes:
