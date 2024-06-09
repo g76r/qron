@@ -1333,12 +1333,12 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       }
       ParamsProviderMergerRestorer restorer(processingContext);
-      processingContext->overrideParamValue(
-            "pfconfig",
-            PercentEvaluator::escape(
-              task.originalPfNode().toPf(
-                PfOptions().setShouldIndent()
-                .setShouldWriteContentBeforeSubnodes())));
+      Utf8String pfconfig;
+      auto pfoptions = PfOptions{}.setShouldIndent()
+                       .setShouldWriteContentBeforeSubnodes();
+      for (auto node: task.originalPfNodes())
+        pfconfig += PercentEvaluator::escape(node.toPf(pfoptions)) + "\n"_u8;
+      processingContext->overrideParamValue("pfconfig", pfconfig);
       processingContext->prepend(&task);
       res.clearCookie("message"_ba, "/"_ba);
       QUrl url(req.url());
@@ -1363,7 +1363,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       }
       if (subItem == "config.pf") {
-        return writePlainText(task.originalPfNode().toPf(
+        return writePlainText(task.originalPfNodes().value(0).toPf(
                                 PfOptions().setShouldIndent()
                                 .setShouldWriteContentBeforeSubnodes()),
                               req, res);
