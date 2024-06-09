@@ -1,4 +1,10 @@
 # Since 1.15.9
+New features and notable changes:
+- added task instance chronogram to http api:
+  ```
+  /rest/v1/taskinstances/%1/chronogram.svg
+  ```
+
 Minor improvements
 - wui: task page now display full pf config including applied templates
   config, group hierarchy config and global (tasksroot) config (previously

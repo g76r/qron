@@ -45,6 +45,7 @@
 #define ISO8601 u"yyyy-MM-dd hh:mm:ss"_s
 //#define GRAPHVIZ_MIME_TYPE "text/vnd.graphviz;charset=UTF-8"
 #define GRAPHVIZ_MIME_TYPE "text/plain;charset=UTF-8"
+#define SVG_MIME_TYPE "image/svg+xml;charset=UTF-8"
 
 static PfNode nodeWithValidPattern =
     PfNode("dummy", "dummy").setAttribute("pattern", ".*")
@@ -1833,7 +1834,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (second == "herd_diagram.dot"_u8) {
         const auto tii = params.value(0).toNumber<quint64>();
         const auto gv = GraphvizDiagramsBuilder::herdInstanceDiagram(
-                          webconsole->scheduler(), tii);
+                          webconsole->scheduler(), tii, context);
         if (gv.isEmpty()) {
           res.setBase64SessionCookie(
                 "message", "E:TaskInstance "+Utf8String::number(tii) // FIXME
@@ -1845,6 +1846,19 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         // return writePlainText(webconsole->tasksDeploymentDiagram()
         //                       ->source(req, ppm), req, res,
         //                       GRAPHVIZ_MIME_TYPE);
+      }
+      if (second == "chronogram.svg"_u8) {
+        const auto tii = params.value(0).toNumber<quint64>();
+        const auto svg = GraphvizDiagramsBuilder::taskInstanceChronogram(
+                           webconsole->scheduler(), tii, context);
+        if (svg.isEmpty()) {
+          res.setBase64SessionCookie(
+                "message", "E:TaskInstance "+Utf8String::number(tii) // FIXME
+                +" not found.", "/");
+          res.redirect(referer);
+          return true;
+        }
+        return writePlainText(svg, req, res, SVG_MIME_TYPE);
       }
       res.setBase64SessionCookie("message", "E:Service '"+path // FIXME
                                  +"' not found.", "/");
