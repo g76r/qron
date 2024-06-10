@@ -25,7 +25,7 @@
 #include "htmltaskitemdelegate.h"
 #include "htmltaskinstanceitemdelegate.h"
 #include "htmlalertitemdelegate.h"
-#include "ui/graphvizdiagramsbuilder.h"
+#include "ui/diagramsbuilder.h"
 #include "htmllogentryitemdelegate.h"
 #include "alert/alert.h"
 #include "alert/gridboard.h"
@@ -1833,7 +1833,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       auto second = params.value(1);
       if (second == "herd_diagram.dot"_u8) {
         const auto tii = params.value(0).toNumber<quint64>();
-        const auto gv = GraphvizDiagramsBuilder::herdInstanceDiagram(
+        const auto gv = DiagramsBuilder::herdInstanceDiagram(
                           webconsole->scheduler(), tii, context);
         if (gv.isEmpty()) {
           res.setBase64SessionCookie(
@@ -1849,7 +1849,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       }
       if (second == "chronogram.svg"_u8) {
         const auto tii = params.value(0).toNumber<quint64>();
-        const auto svg = GraphvizDiagramsBuilder::taskInstanceChronogram(
+        const auto svg = DiagramsBuilder::taskInstanceChronogram(
                            webconsole->scheduler(), tii, context);
         if (svg.isEmpty()) {
           res.setBase64SessionCookie(
@@ -2249,7 +2249,7 @@ void WebConsole::paramsChanged(
 
 void WebConsole::computeDiagrams(SchedulerConfig config) {
   QHash<QString,QString> diagrams
-      = GraphvizDiagramsBuilder::configDiagrams(config);
+      = DiagramsBuilder::configDiagrams(config);
   _tasksDeploymentDiagram->setSource(
         diagrams.value("tasksDeploymentDiagram").toUtf8());
   _tasksTriggerDiagram->setSource(

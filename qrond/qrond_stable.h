@@ -1,4 +1,4 @@
-/* Copyright 2023 Gregoire Barbier and others.
+/* Copyright 2023-2024 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -73,7 +73,7 @@
 #include "ui/taskgroupsmodel.h"
 #include "ui/configsmodel.h"
 #include "ui/confighistorymodel.h"
-#include "ui/graphvizdiagramsbuilder.h"
+#include "ui/diagramsbuilder.h"
 
 #endif // __cplusplus
 
