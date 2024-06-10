@@ -17,7 +17,7 @@ HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(
   QObject *parent, bool decorateHerdId)
   : HtmlItemDelegate(parent), _decorateHerdId(decorateHerdId) {
   QHash<QString,QString> instancesStatusIcons;
-  instancesStatusIcons.insert("planned", "<i class=\"fa-solid fa-calendar-days\"></i>&nbsp;");
+  instancesStatusIcons.insert("planned", "<i class=\"fa-solid fa-table-cells-large\"></i>&nbsp;");
   instancesStatusIcons.insert("queued", "<i class=\"fa-solid fa-inbox\"></i>&nbsp;");
   instancesStatusIcons.insert("running", "<i class=\"fa-solid fa-play\"></i>&nbsp;");
   instancesStatusIcons.insert("waiting", "<i class=\"fa-solid fa-hourglass-half\"></i>&nbsp;");

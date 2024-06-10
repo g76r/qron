@@ -10,6 +10,7 @@ Minor improvements
   config, group hierarchy config and global (tasksroot) config (previously
   only task config was displayed, without templates groups and globals)
 - wui: changed waiting task instance icon from flag-checkered to hourglass-half
+  and planned task instance icon from calendar to fa-table-cells-large
 
 # From 1.15.8 to 1.15.9 (2024-06-06)
 Bug fixes:
