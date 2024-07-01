@@ -4,6 +4,11 @@ New features and notable changes:
   ```
   /rest/v1/taskinstances/%1/chronogram.svg
   ```
+- added global param webconsole.alertformat to enable decorating alertid on
+  alert views (on overview and alerts pages), e.g.:
+  ```
+  (param webconsole.alertformat '%1%{=match:%1:\.ping\.: <span class="label label-success">ping</span>:}')
+  ```
 
 Minor improvements
 - wui: task page now display full pf config including applied templates

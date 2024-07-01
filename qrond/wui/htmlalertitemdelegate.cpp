@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2024 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -13,9 +13,8 @@
  */
 #include "htmlalertitemdelegate.h"
 #include "alert/alert.h"
+#include "util/paramset.h"
 #include <QRegularExpression>
-
-#define ACTION_COLUMN 5
 
 HtmlAlertItemDelegate::HtmlAlertItemDelegate(
     QObject *parent, bool canRaiseAndCancel)
@@ -26,41 +25,48 @@ static QRegularExpression taskIdInAlertRE{"^task\\.[^\\.]+\\.(.*)$"};
 
 QString HtmlAlertItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
-  if (index.column() == ACTION_COLUMN) {
-    QString alertId = index.model()->index(index.row(), 0, index.parent())
-        .data().toString();
-    QString status = index.model()->index(index.row(), 1, index.parent())
-        .data().toString();
-    if (_canRaiseAndCancel)
-      text.prepend(/* immediate cancel */
-                   "<span class=\"label label-danger\">"
-                   // TODO add !pathtoroot
-                   "<a title=\"Cancel alert immediatly\"href=\"../do/v1/alerts/"
-                   "cancel_immediately/"+alertId+"\"><i class=\"fa-solid fa-check\">"
-                    "</i></a></span> ");
-    if (_canRaiseAndCancel
-        && (status == Alert::statusAsString(Alert::Rising)
-            || status == Alert::statusAsString(Alert::MayRise)
-            || status == Alert::statusAsString(Alert::Dropping)))
-      text.prepend(/* immediate raise */
-                   "<span class=\"label label-danger\">"
-                   // TODO add !pathtoroot
-                   "<a title=\"Raise alert immediately\"href=\"../do/v1/alerts/"
-                   "raise_immediately/"+alertId+"\"><i class=\"fa-solid fa-bell\">"
-                    "</i></a></span> ");
-    QRegularExpressionMatch match = taskIdInAlertRE.match(alertId);
-    if (match.hasMatch()) {
-      text.append(
-            /* related task log */
-            " <span class=\"label label-info\" title=\"Related tasks log\">"
-            "<a target=\"_blank\" href=\"../rest/v1/logs/entries.txt?"
-            "regexp=^[^ ]* "+match.captured(1)+"[/:]\">"
-            "<i class=\"fa-solid fa-file-lines\"></i></a></span>"
-            /* detail page */
-            " <span class=\"label label-info\" title=\"Detailed task info\">"
-            "<a href=\"tasks/"+match.captured(1)+"\">"
-            "<i class=\"fa-solid fa-gear\"></i></a></span>");
+  switch(index.column()) {
+    case 0: { // id
+      if (_alertFormat.isEmpty())
+        return text;
+      ParamSet context({"1"_u8, text}); // provides %1
+      return PercentEvaluator::eval_utf16(_alertFormat, &context);
     }
+    case 5: // action
+      QString alertId = index.model()->index(index.row(), 0, index.parent())
+          .data().toString();
+      QString status = index.model()->index(index.row(), 1, index.parent())
+          .data().toString();
+      if (_canRaiseAndCancel)
+        text.prepend(/* immediate cancel */
+                     "<span class=\"label label-danger\">"
+                     // TODO add !pathtoroot
+                     "<a title=\"Cancel alert immediatly\"href=\"../do/v1/alerts/"
+                     "cancel_immediately/"+alertId+"\"><i class=\"fa-solid fa-check\">"
+                      "</i></a></span> ");
+      if (_canRaiseAndCancel
+          && (status == Alert::statusAsString(Alert::Rising)
+              || status == Alert::statusAsString(Alert::MayRise)
+              || status == Alert::statusAsString(Alert::Dropping)))
+        text.prepend(/* immediate raise */
+                     "<span class=\"label label-danger\">"
+                     // TODO add !pathtoroot
+                     "<a title=\"Raise alert immediately\"href=\"../do/v1/alerts/"
+                     "raise_immediately/"+alertId+"\"><i class=\"fa-solid fa-bell\">"
+                      "</i></a></span> ");
+      QRegularExpressionMatch match = taskIdInAlertRE.match(alertId);
+      if (match.hasMatch()) {
+        text.append(
+              /* related task log */
+              " <span class=\"label label-info\" title=\"Related tasks log\">"
+              "<a target=\"_blank\" href=\"../rest/v1/logs/entries.txt?"
+              "regexp=^[^ ]* "+match.captured(1)+"[/:]\">"
+              "<i class=\"fa-solid fa-file-lines\"></i></a></span>"
+              /* detail page */
+              " <span class=\"label label-info\" title=\"Detailed task info\">"
+              "<a href=\"tasks/"+match.captured(1)+"\">"
+              "<i class=\"fa-solid fa-gear\"></i></a></span>");
+      }
   }
   return text;
 }

@@ -1,4 +1,4 @@
-/* Copyright 2013-2016 Hallowyn and others.
+/* Copyright 2013-2024 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -21,10 +21,13 @@ class HtmlAlertItemDelegate : public HtmlItemDelegate {
   Q_OBJECT
   Q_DISABLE_COPY(HtmlAlertItemDelegate)
   bool _canRaiseAndCancel;
+  Utf8String _alertFormat;
 
 public:
   explicit HtmlAlertItemDelegate(QObject *parent, bool canRaiseAndCancel);
   QString text(const QModelIndex &index) const override;
+  void setAlertFormat(const Utf8String &alertFormat) {
+    _alertFormat = alertFormat; }
 };
 
 #endif // HTMLALERTITEMDELEGATE_H

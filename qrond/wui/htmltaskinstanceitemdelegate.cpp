@@ -1,4 +1,4 @@
-/* Copyright 2013-2022 Hallowyn and others.
+/* Copyright 2013-2024 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -32,16 +32,16 @@ HtmlTaskInstanceItemDelegate::HtmlTaskInstanceItemDelegate(
 QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
   QString text = HtmlItemDelegate::text(index);
   switch (index.column()) {
-  case 10:
+  case 10: // herdid
     if (!_decorateHerdId)
       break;
     [[fallthrough]];
-  case 0:
+  case 0: // taskinstanceid
     text = "<a target=\"_blank\" "
              "href=\"../rest/v1/logs/entries.txt?filter=/"
            +text+"\">"+text+"</a>";
     break;
-  case 8: {
+  case 8: { // actions
     QString taskInstanceId = index.model()->index(
           index.row(), 0, index.parent()).data().toString();
     QString taskId = index.model()->index(index.row(), 1, index.parent()).data()
@@ -78,7 +78,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
                    "<i class=\"fa-solid fa-arrow-rotate-right\"></i></a></span> ");
     break;
   }
-  case 11: {
+  case 11: { // herded task instances
       QStringList idSlashId = text.split(' '), html, tiis;
       for (auto task: idSlashId) {
         QStringList ids = task.split('/');

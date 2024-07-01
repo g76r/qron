@@ -242,7 +242,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   alertsIcons.insert(Alert::statusAsString(Alert::Canceled),
                      "<i class=\"fa-solid fa-check\"></i>&nbsp;");
   _htmlStatefulAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlStatefulAlertsView, true));
+        new HtmlAlertItemDelegate(this, true));
   qobject_cast<HtmlItemDelegate*>(_htmlStatefulAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "%1", 1, alertsIcons);
   _wuiHandler->addView(_htmlStatefulAlertsView);
@@ -252,7 +252,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlRaisedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlRaisedAlertsView->setColumnIndexes({0,2,4,5});
   _htmlRaisedAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlRaisedAlertsView, true));
+        new HtmlAlertItemDelegate(this, true));
   qobject_cast<HtmlItemDelegate*>(_htmlRaisedAlertsView->itemDelegate())
       ->setPrefixForColumn(0, "<i class=\"fa-solid fa-bell\"></i>&nbsp;");
   _wuiHandler->addView(_htmlRaisedAlertsView);
@@ -262,7 +262,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlLastEmittedAlertsView->setModel(_lastEmittedAlertsModel);
   _htmlLastEmittedAlertsView->setEmptyPlaceholder("(no alert)");
   _htmlLastEmittedAlertsView->setItemDelegate(
-        new HtmlAlertItemDelegate(_htmlLastEmittedAlertsView, false));
+        new HtmlAlertItemDelegate(this, false));
   qobject_cast<HtmlItemDelegate*>(_htmlLastEmittedAlertsView->itemDelegate())
       ->setPrefixForColumn(7, "%1", 1, alertsIcons);
   _htmlLastEmittedAlertsView->setColumnIndexes(
@@ -2230,9 +2230,11 @@ void WebConsole::paramsChanged(
         "webconsole.htmltables.rowsperpage", 100);
   int cachedRows = newParams.paramNumber<int>(
         "webconsole.htmltables.cachedrows", 500);
+  auto alertFormat = newParams.paramRawUtf8("webconsole.alertformat");
   for (QObject *child: children()) {
     auto *htmlView = qobject_cast<HtmlTableView*>(child);
     auto *csvView = qobject_cast<CsvTableView*>(child);
+    auto *alertItemDelegate = qobject_cast<HtmlAlertItemDelegate*>(child);
     if (htmlView) {
       if (htmlView != _htmlWarningLogView10
           && htmlView != _htmlUnfinishedTaskInstancesView
@@ -2240,9 +2242,10 @@ void WebConsole::paramsChanged(
           && htmlView != _htmlRaisedAlertsView)
         htmlView->setRowsPerPage(rowsPerPage);
       htmlView->setCachedRows(cachedRows);
-    }
-    if (csvView) {
+    } else if (csvView) {
       csvView->setCachedRows(cachedRows);
+    } else if (alertItemDelegate) {
+      alertItemDelegate->setAlertFormat(alertFormat);
     }
   }
 }
