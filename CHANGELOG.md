@@ -1,5 +1,9 @@
 # Since 1.15.9
 New features and notable changes:
+- added task instance page on web console e.g.
+  ```
+  https://your-host.com/console/taskinstances/202407141827570022
+  ```
 - added task instance chronogram and svg rendered herd diagram to http api:
   ```
   /rest/v1/taskinstances/%1/chronogram.svg
@@ -15,6 +19,8 @@ Minor improvements
 - wui: task page now display full pf config including applied templates
   config, group hierarchy config and global (tasksroot) config (previously
   only task config was displayed, without templates groups and globals)
+- wui: task page gained some usefull fields that were lacking before and linkable
+  anchors on its sections
 - wui: changed waiting task instance icon from flag-checkered to hourglass-half
   and planned task instance icon from calendar to fa-table-cells-large
 

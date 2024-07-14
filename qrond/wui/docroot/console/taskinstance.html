@@ -1,0 +1,107 @@
+<!DOCTYPE html>
+<!--
+ Copyright 2024 Gregoire Barbier and others.
+ This file is part of qron, see <http://qron.eu/>.
+ Qron is free software: you can redistribute it and/or modify
+ it under the terms of the GNU Affero General Public License as published by
+ the Free Software Foundation, either version 3 of the License, or
+ (at your option) any later version.
+ Qron is distributed in the hope that it will be useful,
+ but WITHOUT ANY WARRANTY; without even the implied warranty of
+ MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ GNU Affero General Public License for more details.
+ You should have received a copy of the GNU Affero General Public License
+ along with qron. If not, see <http://www.gnu.org/licenses/>.
+-->
+<?include:header.html?>
+
+      <div class="row">
+        <div class="col-md-12">
+          <h1>Task Instance <?value:0?></h1>
+          <p><?=%{webconsole.customactions.taskinstancedetail}?>
+          <p>All durations and delays are in seconds.
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-6">
+          <h2>Description<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-description"><span class="fa-solid fa-circle-question"/></a></h2>
+          <p><a class="btn btn-info" href="<?value:!pathtoroot?>tasks.html">Tasks page &raquo;</a>
+          <a class="btn btn-info" href="<?value:!pathtoroot?>overview.html">Overview page &raquo;</a>
+          <p><table class="table table-condensed table-hover">
+            <tr><th>Task instance id</th><td><?=%0?></td></tr>
+            <tr><th>Task id</th><td><a href="../tasks/<?=%1?>"><?=%1?></a></td></tr>
+            <tr><th>Status</th><td class="<?=%{=switch:%2:planned:info:queued:warning:running:success:waiting:success:failure:danger:canceled:active:}?>"><?=%2?></td></tr>
+            <tr><th>Herd id</th><td><?=%{=switch:%10:%0:%0:<a href="%10">%10</a>}?></td></tr>
+          </table>
+          <h2>Timeline</h2>
+          <p><a class="btn btn-info" href="<?value:!pathtoroot?>../rest/v1/logs/entries.txt?filter=/<?value:0?> " target="_blank"><i class="fa-solid fa-file-lines"></i> Task Instance log</a>
+          <p><table class="table table-condensed table-hover">
+             <tr><th>Creation date</th><td><?value:3?></td></tr>
+             <tr class="info"><th>Time planned</th><td><?value:16?></td></tr>
+             <tr><th>Queue date</th><td><?value:15?></td></tr>
+             <tr class="warning"><th>Time queued</th><td><?value:6?></td></tr>
+             <tr><th>Start date</th><td><?value:4?></td></tr>
+             <tr class="success"><th>Time running</th><td><?value:7?></td></tr>
+             <tr><th>Stop date</th><td><?value:5?></td></tr>
+             <tr class="success"><th>Time waiting</th><td><?value:13?></td></tr>
+             <tr><th>Duration (running+waiting)</th><td><?value:14?></td></tr>
+             <tr><th>Finish date</th><td><?value:12?></td></tr>
+          </table>
+        </div>
+        <div class="col-md-6">
+          <h2>Scheduling</h2>
+          <p><a class="btn btn-info" href="<?value:!pathtoroot?>events.html">Events page &raquo;</a>
+          <a class="btn btn-info" href="<?value:!pathtoroot?>resources.html">Resources page &raquo;</a>
+          <p><table class="table table-condensed table-hover">
+             <tr><th>Parent id</th><td><?=%{=switch:%20::ø:<a href="%20">%20</a>}?></td></tr>
+             <tr><th>Cause</th><td><?=%21?></td></tr>
+             <tr><th>Queue When</th><td><?=%17?></td></tr>
+             <tr><th>Cancel When</th><td><?=%18?></td></tr>
+             <tr><th>Deduplicate Criterion</th><td><?=%19?></td></tr>
+             <tr><th>Abortable</th><td><?=%9?></td></tr>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Chronogram</h2>
+          <p><a class="btn btn-primary" href="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/chronogram.svg"><i class="fa-solid fa-file"></i> SVG</a>
+          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
+        </div>
+      </div>
+      <div class="container-fluid">
+          <div id="chronogram" style="display: table; margin: 0 auto;">
+            <noscript><img src="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/chronogram.svg?width=1280" alt="Chronogram" class="img-responsive"/></noscript>
+          </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Herd Diagram</h2>
+          <p><a class="btn btn-primary" href="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/herd_diagram.svg"><i class="fa-solid fa-file"></i> SVG</a>
+          <a class="btn btn-primary" href="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/herd_diagram.dot"><i class="fa-solid fa-file"></i> DOT</a>
+          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
+        </div>
+      </div>
+      <div class="container-fluid">
+          <div id="herd_diagram" style="display: table; margin: 0 auto;">
+            <noscript><img src="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/herd_diagram.svg" alt="Tasks Deployment Diagram" class="img-responsive"/></noscript>
+          </div>
+      </div>
+
+<?include:common-scripts.html?>
+<script type="text/javascript">
+anchors.add('h2');
+$(document).ready(function(){
+  $('#chronogram').load('<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/chronogram.svg?width=1280', function() {
+    $("a").not("[xlink\\:title='']").each(function() {
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href',$(this).attr('xlink:title'));
+    });
+  });
+  $('#herd_diagram').load('<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/herd_diagram.svg', function() {
+    $("a").not("[xlink\\:title='']").each(function() {
+      this.setAttributeNS('http://www.w3.org/1999/xlink','href',$(this).attr('xlink:title'));
+    });
+  });
+});
+</script>
+<?include:footer.html?>

@@ -1,6 +1,6 @@
 <!DOCTYPE html>
 <!--
- Copyright 2012-2023 Hallowyn and others.
+ Copyright 2012-2024 Hallowyn and others.
  This file is part of qron, see <http://qron.eu/>.
  Qron is free software: you can redistribute it and/or modify
  it under the terms of the GNU Affero General Public License as published by
@@ -49,7 +49,7 @@
              <tr><th>Enabled</th><td><?=%{=ifneq:%29:true:<i class="fa-solid fa-ban"></i>&nbsp;false}?></td></tr>
              <tr><th>Last exec status</th><td><?value:19:?></td></tr>
              <tr><th>Last exec total duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#task-instances-timestamps-and-durations"><span class="fa-solid fa-circle-question"/></a></th><td><?value:26:?></td></tr>
-             <tr><th>Last exec instance</th><td><?=%{=ifneq:%32::%32&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="%!pathtoroot../rest/v1/logs/entries.txt?filter=%11/%32"><i class="fa-solid fa-file-lines"></i></a></span>}?></td></tr>
+             <tr><th>Last exec instance</th><td><?=%{=switch:%32:::<a href="../taskinstances/%32">%32</a>&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="%!pathtoroot../rest/v1/logs/entries.txt?filter=%11/%32"><i class="fa-solid fa-file-lines"></i></a></span>}?></td></tr>
              <tr><th>Next exec</th><td><?value:10:?></td></tr>
              <tr><th>Currently running instances</th><td><?=%{=ifneq:%13:0:<i class="fa-solid fa-play fa-beat"></i>&nbsp;%13:%13}?>/<?value:12:?></td></tr>
              <tr><th>Executions count since qron start</th><td><?value:34:?></td></tr>
@@ -70,8 +70,11 @@
             <tr><th>Variables<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-vars"><span class="fa-solid fa-circle-question"/></a></th><td><?value:21:?></td></tr>
             <tr><th>Consumed resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="fa-solid fa-circle-question"/></a></th><td><?value:8:?></td></tr>
             <tr><th>Maximum instances count at a time</th><td><?value:12:?></td></tr>
-            <tr><th>Enqueue policy<a class="help" href="<?value:!pathtoroot?>user-manual.html#enqueuepolicy"><span class="fa-solid fa-circle-question"/></a></th><td><?value:35:?></td></tr>
-            <tr><th>Onstart events<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-events-subscriptions"><span class="fa-solid fa-circle-question"/></a></th><td><?value:14:?></td></tr>
+            <tr><th>Maximum tries</th><td><?value:43:?></td></tr>
+            <tr><th>Pause between tries</th><td><?value:44:?></td></tr>
+            <tr><th>Max queued instances</th><td><?value:35:?></td></tr>
+            <tr><th>Onplan events<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-events-subscriptions"><span class="fa-solid fa-circle-question"/></a></th><td><?value:36:?></td></tr>
+            <tr><th>Onstart events</th><td><?value:14:?></td></tr>
             <tr><th>Onsuccess events</th><td><?value:15:?></td></tr>
             <tr><th>Onfailure events</th><td><?value:16:?></td></tr>
           </table>
@@ -86,4 +89,7 @@
       </div>
 
 <?include:common-scripts.html?>
+<script type="text/javascript">
+anchors.add('h2');
+</script>
 <?include:footer.html?>

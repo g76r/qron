@@ -50,5 +50,6 @@
         <file>docroot/console/webfonts/fa-regular-400.ttf</file>
         <file>docroot/console/webfonts/fa-solid-900.woff2</file>
         <file>docroot/console/webfonts/fa-solid-900.ttf</file>
+        <file>docroot/console/taskinstance.html</file>
     </qresource>
 </RCC>
