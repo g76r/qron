@@ -1,8 +1,9 @@
 # Since 1.15.9
 New features and notable changes:
-- added task instance chronogram to http api:
+- added task instance chronogram and svg rendered herd diagram to http api:
   ```
   /rest/v1/taskinstances/%1/chronogram.svg
+  /rest/v1/taskinstances/%1/herd_diagram.svg
   ```
 - added global param webconsole.alertformat to enable decorating alertid on
   alert views (on overview and alerts pages), e.g.:

@@ -36,6 +36,7 @@
 #include <QJsonDocument>
 #include "config/requestformfield.h"
 #include "alert/alerter.h"
+#include "format/graphvizrenderer.h"
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -1374,6 +1375,38 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       }
       return false;
 }, true },
+{ "/console/taskinstances/", [](
+    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    ParamsProviderMerger *processingContext, int matchedLength) {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      auto elements = req.path().split_headed_list(matchedLength-1);
+      auto tii = elements.value(0).toULongLong();
+      auto referer = req.header(
+            "Referer"_u8, processingContext->paramUtf8("!pathtoroot"));
+      auto instance = webconsole->scheduler()->taskInstanceById(tii);
+      if (!instance) {
+        if (referer.isEmpty()) {
+          res.setStatus(404);
+          res.output()->write("Task Instance not found.");
+        } else {
+          res.setBase64SessionCookie(
+                "message", "E:Task Instance '"+Utf8String::number(tii)
+                +"' not found.", "/");
+          res.redirect(referer);
+        }
+        return true;
+      }
+      res.clearCookie("message"_u8, "/"_u8);
+      auto url = req.url();
+      url.setPath("/console/taskinstance.html");
+      url.setQuery(QString());
+      req.overrideUrl(url);
+      processingContext->prepend(&instance);
+      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      processingContext->pop_front();
+      return true;
+}, true },
 { "/console/gridboards/", [](
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
     ParamsProviderMerger *processingContext, int matchedLength) {
@@ -1843,9 +1876,32 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           return true;
         }
         return writePlainText(gv, req, res, GRAPHVIZ_MIME_TYPE);
-        // return writePlainText(webconsole->tasksDeploymentDiagram()
-        //                       ->source(req, ppm), req, res,
-        //                       GRAPHVIZ_MIME_TYPE);
+      }
+      if (second == "herd_diagram.svg"_u8) {
+        const auto tii = params.value(0).toNumber<quint64>();
+        const auto gv = DiagramsBuilder::herdInstanceDiagram(
+                          webconsole->scheduler(), tii, context);
+        if (gv.isEmpty()) {
+          res.setBase64SessionCookie(
+                "message", "E:TaskInstance "+Utf8String::number(tii) // FIXME
+                +" not found.", "/");
+          res.redirect(referer);
+          return true;
+        }
+        GraphvizRenderer gvr(GraphvizRenderer::Svg);
+        auto data = gvr.run(context, gv);
+        if (data.isEmpty()) {
+          res.setBase64SessionCookie(
+                "message", "E:TaskInstance "+Utf8String::number(tii)
+                +" herd diagram could not be rendered.", "/");
+          res.redirect(referer);
+          return true;
+        }
+        res.setContentType(GraphvizRenderer::mime_type(GraphvizRenderer::Svg));
+        res.setContentLength(data.size());
+        if (req.method() != HttpRequest::HEAD)
+          res.output()->write(data);
+        return true;
       }
       if (second == "chronogram.svg"_u8) {
         const auto tii = params.value(0).toNumber<quint64>();
