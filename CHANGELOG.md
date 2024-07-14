@@ -1,9 +1,7 @@
-# Since 1.15.9
+# From 1.15.9 to 1.16.0 (2024-07-14)
 New features and notable changes:
-- added task instance page on web console e.g.
-  ```
-  https://your-host.com/console/taskinstances/202407141827570022
-  ```
+- added task instance page on web console, including chronograms and live herd
+  diagrams
 - added task instance chronogram and svg rendered herd diagram to http api:
   ```
   /rest/v1/taskinstances/%1/chronogram.svg
