@@ -37,9 +37,7 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
       break;
     [[fallthrough]];
   case 0: // taskinstanceid
-    text = "<a target=\"_blank\" "
-             "href=\"../rest/v1/logs/entries.txt?filter=/"
-           +text+"\">"+text+"</a>";
+    text = "<a target=\"_blank\" href=\"taskinstances/"+text+"\">"+text+"</a>";
     break;
   case 8: { // actions
     QString taskInstanceId = index.model()->index(
@@ -51,6 +49,10 @@ QString HtmlTaskInstanceItemDelegate::text(const QModelIndex &index) const {
     bool abortable = index.model()->index(index.row(), 9, index.parent()).data()
         .toBool();
     text = index.data().toString(); // disable truncating and HTML encoding
+    text.prepend(/* log */
+          "<span class=\"label label-info\" title=\"Log\"><a target=\"_blank\" "
+          "href=\"../rest/v1/logs/entries.txt?filter=/"+taskInstanceId
+          +"\"><i class=\"fa-solid fa-file-lines\"></i></a></span>");
     if (status == "queued" || status == "planned")
       text.prepend(/* cancel */
                    "<span class=\"label label-danger\" title=\"Cancel "
