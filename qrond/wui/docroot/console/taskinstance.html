@@ -18,23 +18,24 @@
       <div class="row">
         <div class="col-md-12">
           <h1>Task Instance <?value:0?></h1>
-          <p><?=%{webconsole.customactions.taskinstancedetail}?>
+          <p><a class="btn btn-info" href="<?value:!pathtoroot?>../rest/v1/logs/entries.txt?filter=<?= %1/%0 ?>" target="_blank"><i class="fa-solid fa-file-lines"></i> Task instance log</a>
+          <?=%{webconsole.customactions.taskinstancedetail}?>
           <p>All durations and delays are in seconds.
         </div>
       </div>
       <div class="row">
-        <div class="col-md-6">
+        <div class="col-md-4">
           <h2>Description<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-description"><span class="fa-solid fa-circle-question"/></a></h2>
-          <p><a class="btn btn-info" href="<?value:!pathtoroot?>tasks.html">Tasks page &raquo;</a>
-          <a class="btn btn-info" href="<?value:!pathtoroot?>overview.html">Overview page &raquo;</a>
+          <p><a class="btn btn-info" href="../tasks/<?=%1?>">Task page &raquo;</a>
           <p><table class="table table-condensed table-hover">
             <tr><th>Task instance id</th><td><?=%0?></td></tr>
-            <tr><th>Task id</th><td><a href="../tasks/<?=%1?>"><?=%1?></a></td></tr>
+            <tr><th>Task id</th><td><a href="../tasks/<?=%1?>"><?=%{=sub:%1:/.*\.//}?></a></td></tr>
             <tr><th>Status</th><td class="<?=%{=switch:%2:planned:info:queued:warning:running:success:waiting:success:failure:danger:canceled:active:}?>"><?=%2?></td></tr>
             <tr><th>Herd id</th><td><?=%{=switch:%10:%0:%0:<a href="%10">%10</a>}?></td></tr>
           </table>
           <h2>Timeline</h2>
           <p><a class="btn btn-info" href="<?value:!pathtoroot?>../rest/v1/logs/entries.txt?filter=/<?value:0?> " target="_blank"><i class="fa-solid fa-file-lines"></i> Task Instance log</a>
+          <a class="btn btn-info" href="../tasks/<?=%1?>">Task page &raquo;</a>
           <p><table class="table table-condensed table-hover">
              <tr><th>Creation date</th><td><?value:3?></td></tr>
              <tr class="info"><th>Time planned</th><td><?value:16?></td></tr>
@@ -48,17 +49,29 @@
              <tr><th>Finish date</th><td><?value:12?></td></tr>
           </table>
         </div>
-        <div class="col-md-6">
+        <div class="col-md-8">
           <h2>Scheduling</h2>
-          <p><a class="btn btn-info" href="<?value:!pathtoroot?>events.html">Events page &raquo;</a>
-          <a class="btn btn-info" href="<?value:!pathtoroot?>resources.html">Resources page &raquo;</a>
+          <p><a class="btn btn-info" href="../tasks/<?=%1?>">Task page &raquo;</a>
           <p><table class="table table-condensed table-hover">
-             <tr><th>Parent id</th><td><?=%{=switch:%20::ø:<a href="%20">%20</a>}?></td></tr>
+             <tr><th>Parent</th><td><?=%{=switch:%20::ø:<a href="%20">%20</a>}?></td></tr>
+             <tr><th>Children </th><td><?=%!childrenids</a>?></td></tr>
              <tr><th>Cause</th><td><?=%21?></td></tr>
              <tr><th>Queue When</th><td><?=%17?></td></tr>
              <tr><th>Cancel When</th><td><?=%18?></td></tr>
+             <tr><th>Consumed resources&nbsp;<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="fa-solid fa-circle-question"/></a></th><td><?=%!resources?></td></tr>
+             <tr><th>Maximum instances count at a time</th><td><?=%!maxinstances?></td></tr>
+             <tr><th>Maximum queued instances</th><td><?=%!maxqueuedinstances?></td></tr>
              <tr><th>Deduplicate Criterion</th><td><?=%19?></td></tr>
              <tr><th>Abortable</th><td><?=%9?></td></tr>
+             <tr><th>Execution target</th><td><?=%!target?></td></tr>
+          </table>
+          <h2>Task configuration summary</h2>
+          <p><a class="btn btn-info" href="../tasks/<?=%1?>">Task page &raquo;</a>
+          <p><table class="table table-condensed table-hover">
+            <tr><th>Additional information</th><td><?=%!info?></td></tr>
+            <tr><th>Execution mean&nbsp;<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="fa-solid fa-circle-question"/></a></th><td><?=%!mean?></td></tr>
+            <tr><th>Configured target (host or cluster)</th><td><?=%!configuredtarget?></td></tr>
+            <tr><th>Command</th><td><?=%{=htmlencode:%!command:un}?></td></tr>
           </table>
         </div>
       </div>
@@ -66,7 +79,6 @@
         <div class="col-md-12">
           <h2>Chronogram</h2>
           <p><a class="btn btn-primary" href="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/chronogram.svg"><i class="fa-solid fa-file"></i> SVG</a>
-          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
         </div>
       </div>
       <div class="container-fluid">
@@ -79,13 +91,19 @@
           <h2>Herd Diagram</h2>
           <p><a class="btn btn-primary" href="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/herd_diagram.svg"><i class="fa-solid fa-file"></i> SVG</a>
           <a class="btn btn-primary" href="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/herd_diagram.dot"><i class="fa-solid fa-file"></i> DOT</a>
-          <a class="btn btn-info" href="tasks.html">Tasks page &raquo;</a>
         </div>
       </div>
       <div class="container-fluid">
           <div id="herd_diagram" style="display: table; margin: 0 auto;">
             <noscript><img src="<?=%!pathtoroot?>../rest/v1/taskinstances/<?=%0?>/herd_diagram.svg" alt="Tasks Deployment Diagram" class="img-responsive"/></noscript>
           </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
+          <h2>Raw Task Configuration</h2>
+          <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:1?>/config.pf"><i class="fa-solid fa-file"></i> PF</a>
+          <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
+        </div>
       </div>
 
 <?include:common-scripts.html?>

@@ -23,6 +23,11 @@ Minor improvements
   anchors on its sections
 - wui: changed waiting task instance icon from flag-checkered to hourglass-half
   and planned task instance icon from calendar to fa-table-cells-large
+- task new automatic params: %!maxqueuedinstances %!info %!mean %!command
+  %!resources
+- task instance new automatic params: %!childrenids %!configuredtarget, the
+  later being a passthrough for task %!target
+- many enhancements in herd diagrams, such as including children outside herd
 
 # From 1.15.8 to 1.15.9 (2024-06-06)
 Bug fixes:

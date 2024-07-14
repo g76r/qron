@@ -1334,20 +1334,21 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         }
         return true;
       }
-      ParamsProviderMergerRestorer restorer(processingContext);
-      Utf8String pfconfig;
-      auto pfoptions = PfOptions{}.setShouldIndent()
-                       .setShouldWriteContentBeforeSubnodes();
-      for (auto node: task.originalPfNodes())
-        pfconfig += PercentEvaluator::escape(node.toPf(pfoptions)) + "\n"_u8;
-      processingContext->overrideParamValue("pfconfig", pfconfig);
-      processingContext->prepend(&task);
       res.clearCookie("message"_ba, "/"_ba);
       QUrl url(req.url());
       url.setPath("/console/task.html");
       url.setQuery(QString());
       req.overrideUrl(url);
+      Utf8String pfconfig;
+      auto pfoptions = PfOptions{}.setShouldIndent()
+                       .setShouldWriteContentBeforeSubnodes();
+      for (auto node: task.originalPfNodes())
+        pfconfig += PercentEvaluator::escape(node.toPf(pfoptions)) + "\n"_u8;
+      processingContext->overrideParamValue("pfconfig"_u8, pfconfig);
+      processingContext->prepend(&task);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      processingContext->unoverrideParamValue("pfconfig"_u8);
+      processingContext->pop_front();
       return true;
 }, true },
 { "/rest/v1/tasks/", [](
@@ -1403,7 +1404,14 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       url.setQuery(QString());
       req.overrideUrl(url);
       processingContext->prepend(&instance);
+      Utf8String pfconfig;
+      auto pfoptions = PfOptions{}.setShouldIndent()
+                       .setShouldWriteContentBeforeSubnodes();
+      for (auto node: instance.task().originalPfNodes())
+        pfconfig += PercentEvaluator::escape(node.toPf(pfoptions)) + "\n"_u8;
+      processingContext->overrideParamValue("pfconfig"_u8, pfconfig);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      processingContext->unoverrideParamValue("pfconfig"_u8);
       processingContext->pop_front();
       return true;
 }, true },
