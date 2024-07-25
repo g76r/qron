@@ -2,6 +2,8 @@
 Minor improvements
 - wui: chronograms green line is thick for running tasks (was thin as if it was
   waiting)
+- wui: task instance page minor improvement (task id in title and clickable
+  parentid in scheduling section)
 
 # From 1.15.9 to 1.16.0 (2024-07-14)
 New features and notable changes:
