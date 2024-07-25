@@ -61,15 +61,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _readOnlyResourcesCache(new ReadOnlyResourcesCache(this)) {
 
   // HTTP handlers
-  _tasksDeploymentDiagram
-      = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
-  _tasksDeploymentDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
-  _tasksTriggerDiagram
-      = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
-  _tasksTriggerDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
-  _tasksResourcesHostsDiagram
-      = new GraphvizImageHttpHandler(this, GraphvizImageHttpHandler::OnChange);
-  _tasksResourcesHostsDiagram->setImageFormat(GraphvizImageHttpHandler::Svg);
+  _tasksDeploymentDiagram = new GraphvizImageHttpHandler(this);
+  _tasksTriggerDiagram = new GraphvizImageHttpHandler(this);
+  _tasksResourcesHostsDiagram = new GraphvizImageHttpHandler(this);
   _wuiHandler = new TemplatingHttpHandler(this, "/console", ":docroot/console");
   _wuiHandler->addFilter("\\.html$");
   _configUploadHandler = new ConfigUploadHandler("", 1, this);

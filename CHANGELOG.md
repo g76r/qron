@@ -5,6 +5,9 @@ Minor improvements
 - wui: task instance page minor improvement (task id in title and clickable
   parentid in scheduling section)
 
+Behind-the-curtain improvements
+- migrated GraphvizImageHttpHandler to GraphvizRenderer
+
 # From 1.15.9 to 1.16.0 (2024-07-14)
 New features and notable changes:
 - added task instance page on web console, including chronograms and live herd
