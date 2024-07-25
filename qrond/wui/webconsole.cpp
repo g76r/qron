@@ -37,6 +37,7 @@
 #include "config/requestformfield.h"
 #include "alert/alerter.h"
 #include "format/graphvizrenderer.h"
+#include "httpd/httpworker.h"
 
 #define SHORT_LOG_MAXROWS 100
 #define SHORT_LOG_ROWSPERPAGE 10
@@ -1890,8 +1891,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           res.redirect(referer);
           return true;
         }
-        GraphvizRenderer gvr(GraphvizRenderer::Svg);
-        auto data = gvr.run(context, gv);
+        auto gvr = new GraphvizRenderer(req.worker(), GraphvizRenderer::Svg);
+        auto data = gvr->run(context, gv);
+        gvr->deleteLater();
         if (data.isEmpty()) {
           res.setBase64SessionCookie(
                 "message", "E:TaskInstance "+Utf8String::number(tii)
