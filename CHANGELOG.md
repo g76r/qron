@@ -5,6 +5,11 @@ Minor improvements
 - wui: task instance page minor improvement (task id in title and clickable
   parentid in scheduling section)
 
+Bug fixes:
+- probably fixed crash on configuration reload, hard to be sure because it's not
+  easily reproduced (rare random crash), by fixing at less one race condition
+  in TaskInstance setters/deep copy
+
 Behind-the-curtain improvements
 - migrated GraphvizImageHttpHandler to GraphvizRenderer
 - removed TaskInstanceList (was almost using SUIList anyway)
