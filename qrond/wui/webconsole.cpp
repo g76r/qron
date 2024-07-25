@@ -779,13 +779,13 @@ static void copyFilteredFiles(QStringList paths, QIODevice *output,
   }
 }
 
-static const QList<quint64> _noAuditInstanceIds { 0 };
+static const SharedUiItemList _noAuditInstanceIds { TaskInstance{} };
 
 static void apiAuditAndResponse(
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
+    WebConsole *webconsole, const HttpRequest &req, HttpResponse res,
     ParamsProviderMerger *processingContext, QString responseMessage,
-    QString auditAction, QString auditTaskId = QString(),
-    QList<quint64> auditInstanceIds = _noAuditInstanceIds) {
+    const QString &auditAction, const QString &auditTaskId = QString(),
+    SharedUiItemList auditInstanceIds = _noAuditInstanceIds) {
   if (auditInstanceIds.isEmpty()) // should never happen
     auditInstanceIds = _noAuditInstanceIds;
   QString userid = processingContext->paramUtf16("userid"_u8);
@@ -799,7 +799,8 @@ static void apiAuditAndResponse(
       && userid.contains(webconsole->showAuditUser())
       && (webconsole->hideAuditUser().pattern().isEmpty()
           || !userid.contains(webconsole->hideAuditUser()))) {
-    for (quint64 auditInstanceId: auditInstanceIds)
+    for (const SharedUiItem &sui: auditInstanceIds) {
+      quint64 auditInstanceId = sui.id().toULongLong();
       Log::info(auditTaskId, auditInstanceId)
           << "AUDIT action: '" << auditAction
           << (responseMessage.startsWith('E')
@@ -808,6 +809,7 @@ static void apiAuditAndResponse(
           << "' address: { " << req.clientAdresses().join(", ")
           << " } params: " << req.paramsAsParamSet().toString(false)
           << " response message: " << responseMessage;
+    }
   }
   if (!disableRedirect && !redirect.isEmpty()) {
     res.setBase64SessionCookie("message"_u8, responseMessage, "/"_u8);
@@ -834,7 +836,7 @@ static void apiAuditAndResponse(
   else
     apiAuditAndResponse(webconsole, req, res, processingContext,
                         responseMessage, auditAction, instance.taskId(),
-                        { instance.idAsLong() });
+                        { instance });
 }
 
 static RadixTree<
@@ -868,7 +870,7 @@ std::function<bool(WebConsole *, HttpRequest, HttpResponse,
         +"' failed (see logs for more information).";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
                       req.methodName()+" "+req.path().left(matchedLength),
-                      taskId, {instance.idAsLong()});
+                      taskId, { instance });
   return true;
 }, true },
 { "/do/v1/tasks/abort_instances/", [](
@@ -878,7 +880,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   auto taskId = req.path().mid(matchedLength);
   QString message;
-  TaskInstanceList instances =
+  auto instances =
       webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
   message = "S:Task instances { "+instances.join(' ')+" } aborted.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
@@ -893,7 +895,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   auto taskId = req.path().mid(matchedLength);
   QString message;
-  TaskInstanceList instances =
+  auto instances =
       webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
   message = "S:Task requests { "+instances.join(' ')+" } canceled.";
   apiAuditAndResponse(webconsole, req, res, processingContext, message,
@@ -908,7 +910,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
     return true;
   auto taskId = req.path().mid(matchedLength);
   QString message;
-  TaskInstanceList instances =
+  auto instances =
       webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
   message = "S:Task requests { "+instances.join(' ')
       +" } canceled and task instances { ";
