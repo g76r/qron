@@ -1,3 +1,8 @@
+# Since 1.16.0
+Minor improvements
+- wui: chronograms green line is thick for running tasks (was thin as if it was
+  waiting)
+
 # From 1.15.9 to 1.16.0 (2024-07-14)
 New features and notable changes:
 - added task instance page on web console, including chronograms and live herd
