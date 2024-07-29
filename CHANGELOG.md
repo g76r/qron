@@ -4,6 +4,7 @@ Minor improvements
   waiting)
 - wui: task instance page minor improvement (task id in title and clickable
   parentid in scheduling section)
+- wui: added 10 last executed instances on task page
 
 Bug fixes:
 - probably fixed crash on configuration reload, hard to be sure because it's not

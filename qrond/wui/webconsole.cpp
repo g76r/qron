@@ -1341,10 +1341,25 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                        .setShouldWriteContentBeforeSubnodes();
       for (auto node: task.originalPfNodes())
         pfconfig += PercentEvaluator::escape(node.toPf(pfoptions)) + "\n"_u8;
-      processingContext->overrideParamValue("pfconfig"_u8, pfconfig);
+      ParamSet ps;
+      ps.insert("pfconfig"_u8, pfconfig);
+      Utf8String last_instances;
+      for (auto instance:
+           webconsole->scheduler()->lastInstancesByTaskId(taskId, 10)) {
+        last_instances += instance.id()+' ';
+        ps.insert(instance.id()+":status"_u8, instance.statusAsString());
+        ps.insert(instance.id()+":creation_date"_u8,
+                  instance.creationDatetime().toString());
+        ps.insert(instance.id()+":finish_date"_u8,
+                  instance.finishDatetime().toString());
+        ps.insert(instance.id()+":duration"_u8, instance.durationMillis()/1e3);
+      }
+      last_instances.chop(1);
+      ps.insert("last_instances"_u8,last_instances);
       processingContext->prepend(&task);
+      processingContext->prepend(ps);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-      processingContext->unoverrideParamValue("pfconfig"_u8);
+      processingContext->pop_front();
       processingContext->pop_front();
       return true;
 }, true },

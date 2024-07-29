@@ -58,6 +58,33 @@
       </div>
       <div class="row">
         <div class="col-md-12">
+          <h2>Last Instances</h2>
+          <p><table class="table table-condensed table-hover">
+            <thead>
+              <tr>
+                <th>Task instance id</th>
+                <th>Status</th>
+                <th>Creation date</th>
+                <th>Finish date</th>
+                <th>Duration</th>
+              </tr>
+            </thead>
+            <tbody>
+              <?=%{=sub£%last_instances£§ *(?<tii>[0-9]+) *§
+                  <tr class="%{=switch;%{=eval#%tii:status};planned;info;queued;warning;running;success;waiting;success;failure;danger;canceled;active;}">
+                    <td><a href="../taskinstances/%tii">%tii</a>&nbsp;<span class="label label-info" title="Last task instance log"><a target="_blank" href="%!pathtoroot../rest/v1/logs/entries.txt?filter=%11/%tii"><i class="fa-solid fa-file-lines"></i></a></span></td>
+                    <td>%{=eval#%tii:status}</td>
+                    <td>%{=eval#%tii:creation_date}</td>
+                    <td>%{=eval#%tii:finish_date}</td>
+                    <td>%{=eval#%tii:dur;ation}</td>
+                  </tr>
+                §g}?>
+            </tbody>
+          </table>
+        </div>
+      </div>
+      <div class="row">
+        <div class="col-md-12">
           <h2>Task Parameters<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-parameters"><span class="fa-solid fa-circle-question"/></a> and Resources<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="fa-solid fa-circle-question"/></a></h2>
           <p><a class="btn btn-info" href="<?value:!pathtoroot?>tasks.html">Tasks page &raquo;</a>
           <a class="btn btn-info" href="<?value:!pathtoroot?>resources.html">Resources page &raquo;</a>
