@@ -13,6 +13,7 @@ Bug fixes:
 Behind-the-curtain improvements
 - migrated GraphvizImageHttpHandler to GraphvizRenderer
 - removed TaskInstanceList (was almost using SUIList anyway)
+- better support for ccache+precompiled headers
 
 # From 1.15.9 to 1.16.0 (2024-07-14)
 New features and notable changes:

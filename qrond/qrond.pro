@@ -34,7 +34,8 @@ contains(QT_VERSION, ^4\\..*) {
   error("Use Qt 5.")
 }
 
-exists(/usr/bin/ccache):QMAKE_CXX = ccache g++
+exists(/usr/bin/ccache):QMAKE_CXX = \
+  CCACHE_SLOPPINESS=pch_defines,time_macros ccache $$QMAKE_CXX
 exists(/usr/bin/ccache):QMAKE_CXXFLAGS += -fdiagnostics-color=always
 QMAKE_CXXFLAGS += -Wextra -Woverloaded-virtual \
   -Wdouble-promotion -Wimplicit-fallthrough=5 -Wtrampolines \
