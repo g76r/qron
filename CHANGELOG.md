@@ -9,6 +9,7 @@ Bug fixes:
 - probably fixed crash on configuration reload, hard to be sure because it's not
   easily reproduced (rare random crash), by fixing at less one race condition
   in TaskInstance setters/deep copy
+- fixed %=eval that was no longer working for a while (1 year?)
 
 Behind-the-curtain improvements
 - migrated GraphvizImageHttpHandler to GraphvizRenderer
