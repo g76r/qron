@@ -13,7 +13,14 @@ Bug fixes:
 - probably fixed crash on configuration reload, hard to be sure because it's not
   easily reproduced (rare random crash), by fixing at less one race condition
   in TaskInstance setters/deep copy
+- sub-tasks of "sub-herds" without queue condition to start
+  before their parent even though it has queue conditions
+  yes "sub-herd" is not an actual thing, but let's say it's a task
+  ("sub-herder") with onplan children (sub-tasks) planned within another
+  task (actual herder)
 - fixed %=eval that was no longer working for a while (1 year?)
+- %!parenttasklocalid started with a dot
+- %!taskinstanceid was evaluated as a string rather than an integer
 
 Behind-the-curtain improvements
 - migrated GraphvizImageHttpHandler to GraphvizRenderer
