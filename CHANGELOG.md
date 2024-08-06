@@ -6,6 +6,8 @@ Minor improvements
   parentid in scheduling section)
 - wui: added 10 last executed instances on task page
   (and so removed last exec info from Task object)
+- wui: clickable task names in Triggers (scheduling) fields for triggers from
+  other tasks events (like e.g. onplan)
 
 Bug fixes:
 - probably fixed crash on configuration reload, hard to be sure because it's not

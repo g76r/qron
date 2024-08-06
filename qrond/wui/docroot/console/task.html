@@ -36,7 +36,7 @@
             <tr><th>Task label</th><td><?value:2?></td></tr>
             <tr><th>Task group id</th><td><?value:1?></td></tr>
             <tr><th>Additional information</th><td><?value:33:?></td></tr>
-            <tr><th>Triggers (scheduling)<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-triggers-and-constraints"><span class="fa-solid fa-circle-question"/></a></th><td><?=%{=switch:%28::%{=switch,%31,,<span class="fa-regular fa-circle"></span>&nbsp;no trigger,}}?></td></tr>
+            <tr><th>Triggers (scheduling)<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-triggers-and-constraints"><span class="fa-solid fa-circle-question"/></a></th><td><?=%{=sub:%28:#([*]on[a-z]+)\(([^)]+)\)#%1(<a href="%2">%2</a>)#g:#^$#<span class="fa-regular fa-circle"></span>&nbsp;no trigger#}?></td></tr>
             <tr><th>Minimum expected duration<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-monitoring"><span class="fa-solid fa-circle-question"/></a></th><td><?value:23:?></td></tr>
             <tr><th>Maximum expected duration</th><td><?value:24:?></td></tr>
             <tr><th>Maximum duration before abort</th><td><?=%{=ifneq:%27::<i class="fa-solid fa-skull-crossbones"></i>&nbsp;%27:}?></td></tr>
