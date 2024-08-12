@@ -1,0 +1,19 @@
+Quora assistant says:
+
+"""
+The key differences between herds, flocks, swarms, and other animal groupings are the species involved and the characteristic behaviors and structures of those groups.
+
+A herd typically refers to a group of hoofed, grazing mammals such as cattle, sheep, or deer. Herds are characterized by coordinated movement and a hierarchical social structure, often with a dominant leader animal.
+
+A flock is a group of birds, such as geese, ducks, or sheep. Flocks exhibit coordinated flight or movement patterns and tend to have a loose social structure compared to herds.
+
+A swarm describes a densely packed group of small animals or insects that move together, often in a rapidly changing, cloud-like formation. This is common in species like bees, ants, locusts, and schools of small fish.
+
+A colony refers to a group of social insects like ants, bees, or termites that live together and cooperate to maintain their shared nest or hive. Colonies have a highly structured division of labor.
+
+A pack is a social group of predatory animals such as wolves, wild dogs, or lions that hunt and live together. Packs have a clear dominance hierarchy.
+
+So in summary, the key distinctions are the species involved, the degree of social structure and coordination, and the specific behaviors exhibited by the group. The terms reflect fundamental differences in how various animals aggregate and interact.
+"""
+
+https://www.quora.com/What-are-differences-between-herds-flocks-swarms-etc
