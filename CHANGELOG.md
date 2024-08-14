@@ -26,6 +26,8 @@ Behind-the-curtain improvements
 - migrated GraphvizImageHttpHandler to GraphvizRenderer
 - removed TaskInstanceList (was almost using SUIList anyway)
 - better support for ccache+precompiled headers
+- no longer compiles on GCC 10, GCC >= 11 is now needed (using C++20
+  features that are not supported on GCC 10)
 
 # From 1.15.9 to 1.16.0 (2024-07-14)
 New features and notable changes:
