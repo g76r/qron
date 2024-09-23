@@ -1,8 +1,8 @@
 # Since 1.16.0
 New features and notable changes:
 - introduced host params, making them
-  * override task params (with a lower priority than trigger/notice/api)
-  * usable in host monitor, especially ssh.xxx params like ssh.identity and
+  - override task params (with a lower priority than trigger/notice/api)
+  - usable in host monitor, especially ssh.xxx params like ssh.identity and
     ssh.username
 
 Minor improvements
