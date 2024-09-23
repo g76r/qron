@@ -1,4 +1,10 @@
 # Since 1.16.0
+New features and notable changes:
+- introduced host params, making them
+  * override task params (with a lower priority than trigger/notice/api)
+  * usable in host monitor, especially ssh.xxx params like ssh.identity and
+    ssh.username
+
 Minor improvements
 - wui: chronograms green line is thick for running tasks (was thin as if it was
   waiting)
