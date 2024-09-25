@@ -1,0 +1,192 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<!-- Created with Inkscape (http://www.inkscape.org/) -->
+
+<svg
+   width="163.28128"
+   height="163.28128"
+   id="svg2"
+   sodipodi:version="0.32"
+   inkscape:version="1.1 (c68e22c387, 2021-05-23)"
+   sodipodi:docname="qron.svg"
+   inkscape:output_extension="org.inkscape.output.svg.inkscape"
+   version="1.0"
+   inkscape:export-filename="C:\Users\john\Desktop\hallowyn\logo\hallowyn_smiling_pumpkin_60.png"
+   inkscape:export-xdpi="30.17"
+   inkscape:export-ydpi="30.17"
+   viewBox="0 0 153.07619 153.0762"
+   xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
+   xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
+   xmlns="http://www.w3.org/2000/svg"
+   xmlns:svg="http://www.w3.org/2000/svg"
+   xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
+   xmlns:cc="http://creativecommons.org/ns#"
+   xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <defs
+     id="defs4">
+    <radialGradient
+       id="shine"
+       cx="-12"
+       cy="-12"
+       r="20"
+       fx="-12"
+       fy="-12"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="white"
+         stop-opacity=".7"
+         id="stop6" />
+      <stop
+         offset="1"
+         stop-color="white"
+         stop-opacity="0"
+         id="stop8" />
+    </radialGradient>
+    <radialGradient
+       id="grad"
+       cx="0.5"
+       cy="0.5"
+       r="0.5">
+      <stop
+         offset="0"
+         stop-color="yellow"
+         id="stop11" />
+      <stop
+         offset=".75"
+         stop-color="yellow"
+         id="stop13" />
+      <stop
+         offset=".95"
+         stop-color="#ee0"
+         id="stop15" />
+      <stop
+         offset="1"
+         stop-color="#e8e800"
+         id="stop17" />
+    </radialGradient>
+    <radialGradient
+       id="radialGradient2244"
+       cx="-12"
+       cy="-12"
+       r="20"
+       fx="-12"
+       fy="-12"
+       gradientUnits="userSpaceOnUse">
+      <stop
+         offset="0"
+         stop-color="white"
+         stop-opacity=".7"
+         id="stop2246" />
+      <stop
+         offset="1"
+         stop-color="white"
+         stop-opacity="0"
+         id="stop2248" />
+    </radialGradient>
+    <radialGradient
+       id="radialGradient2234"
+       cx="0.5"
+       cy="0.5"
+       r="0.5">
+      <stop
+         offset="0"
+         stop-color="yellow"
+         id="stop2236" />
+      <stop
+         offset=".75"
+         stop-color="yellow"
+         id="stop2238" />
+      <stop
+         offset=".95"
+         stop-color="#ee0"
+         id="stop2240" />
+      <stop
+         offset="1"
+         stop-color="#e8e800"
+         id="stop2242" />
+    </radialGradient>
+  </defs>
+  <sodipodi:namedview
+     id="base"
+     pagecolor="#ffffff"
+     bordercolor="#666666"
+     borderopacity="1.0"
+     inkscape:pageopacity="0.0"
+     inkscape:pageshadow="2"
+     inkscape:zoom="1.979899"
+     inkscape:cx="93.691648"
+     inkscape:cy="23.486047"
+     inkscape:document-units="px"
+     inkscape:current-layer="layer1"
+     inkscape:window-width="1356"
+     inkscape:window-height="881"
+     inkscape:window-x="1304"
+     inkscape:window-y="1150"
+     showgrid="false"
+     inkscape:window-maximized="0"
+     fit-margin-top="5"
+     fit-margin-left="5"
+     fit-margin-right="5"
+     fit-margin-bottom="5"
+     inkscape:pagecheckerboard="0" />
+  <metadata
+     id="metadata7">
+    <rdf:RDF>
+      <cc:Work
+         rdf:about="">
+        <dc:format>image/svg+xml</dc:format>
+        <dc:type
+           rdf:resource="http://purl.org/dc/dcmitype/StillImage" />
+      </cc:Work>
+    </rdf:RDF>
+  </metadata>
+  <g
+     inkscape:label="Calque 1"
+     inkscape:groupmode="layer"
+     id="layer1"
+     transform="translate(605.96205,-1570.6176)">
+    <ellipse
+       style="fill:#ff7518;fill-opacity:1;stroke-width:3.84258"
+       id="path14951"
+       cx="-540.02356"
+       cy="1635.0266"
+       rx="52.566963"
+       ry="54.57589" />
+    <path
+       style="fill:none;stroke:#000000;stroke-width:5.625;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:0.3"
+       id="path2193-0"
+       d="m -567.58886,1657.0157 c 5.43941,7.7698 16.31822,12.6521 28.19148,12.6521 11.87325,0 22.75208,-4.8823 28.1915,-12.6521 -5.6891,8.8521 -15.86216,13.8362 -28.1915,13.8362 -12.32933,0 -23.44943,-5.4576 -28.19148,-13.8362"
+       inkscape:connector-curvature="0"
+       sodipodi:nodetypes="cscsc" />
+    <ellipse
+       style="fill:#000000;fill-opacity:0.296748;stroke:none;stroke-width:1.7872;stroke-opacity:1"
+       id="ellipse2187-0"
+       cy="1612.7418"
+       cx="-562.49768"
+       ry="5.7075005"
+       rx="5.5962882" />
+    <ellipse
+       transform="scale(-1,1)"
+       id="ellipse4238-4"
+       cy="1612.9785"
+       cx="518.82593"
+       ry="5.7075005"
+       rx="5.5962882"
+       style="fill:#000000;fill-opacity:0.296748;stroke:none;stroke-width:1.7872;stroke-opacity:1" />
+    <g
+       aria-label="Q"
+       id="text4409"
+       style="font-size:180px;line-height:1.25;letter-spacing:0px;word-spacing:0px;stroke-width:0.9375"
+       transform="translate(-73.593749,52.901785)">
+      <path
+         d="m -469.35073,1530.4014 q -5.36132,0 -10.45898,1.7578 -5.00977,1.6699 -9.75586,5.625 -4.6582,3.8672 -8.17383,9.668 -3.42773,5.8007 -5.53711,14.6777 -2.10937,8.8769 -2.10937,19.8633 0,12.5683 3.51562,22.7636 3.51563,10.1954 9.49219,16.6114 5.97656,6.416 13.44727,9.9316 7.4707,3.4277 15.73242,3.4277 15.82031,0 25.57617,-13.0078 9.84375,-13.0957 9.84375,-36.6504 0,-27.3339 -10.98633,-40.957 -10.98633,-13.7109 -30.58594,-13.7109 z m 37.00196,101.6015 10.54687,6.2403 q 9.58008,5.7129 17.49024,9.58 7.99804,3.9551 16.875,6.9434 v 1.0547 q -11.95313,6.3281 -16.96289,10.2832 -8.87696,-5.0098 -19.07227,-12.6563 -10.10742,-7.5585 -22.67578,-14.1503 -9.49219,3.3398 -20.6543,3.3398 -15.55664,0 -28.47656,-6.8555 -12.91992,-6.9433 -20.83008,-20.2148 -7.82226,-13.2715 -7.82226,-30.4981 0,-17.4023 7.4707,-31.7285 7.4707,-14.414 20.47851,-22.6758 13.09571,-8.2617 29.00391,-8.2617 16.17188,0 29.26758,7.2949 13.0957,7.295 20.74219,20.918 7.73437,13.5352 7.73437,31.0254 0,16.2598 -6.06445,29.2676 -6.06446,13.0078 -17.05078,21.0937 z"
+         style="font-family:'Linux Biolinum G';-inkscape-font-specification:'Linux Biolinum G'"
+         id="path14809" />
+    </g>
+    <path
+       style="fill:none;stroke:#000000;stroke-width:7.5;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
+       d="m -543.84523,1609.5266 0.13869,27.0066 29.9111,-0.2539"
+       id="path15164"
+       sodipodi:nodetypes="ccc" />
+  </g>
+</svg>

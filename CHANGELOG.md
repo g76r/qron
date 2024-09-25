@@ -14,6 +14,7 @@ Minor improvements
   (and so removed last exec info from Task object)
 - wui: clickable task names in Triggers (scheduling) fields for triggers from
   other tasks events (like e.g. onplan)
+- added qron pictogram icon files
 
 Bug fixes:
 - probably fixed crash on configuration reload, hard to be sure because it's not
