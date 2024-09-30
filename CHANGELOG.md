@@ -1,9 +1,53 @@
-# Since 1.16.0
+# From 1.16.0 to 1.16.1 (2024-09-30)
 New features and notable changes:
 - introduced host params, making them
   - override task params (with a lower priority than trigger/notice/api)
   - usable in host monitor, especially ssh.xxx params like ssh.identity and
     ssh.username
+- added requestform new (field(format(cause))) config element in order to
+  apply format enforcement selectively to some triggering cause only
+  defaults to "^api|notice"
+  the new (cause) is a regular expression checked against the triggering cause
+  which can be: "api" for api (including wui) triggering, "notice trigger xxx"
+  when triggered by notice xxx, "cron trigger 1 2 3 * * *" when triggered by
+  a cron trigger with "1 2 3 * * *" cron expression (note that it's the same
+  cause than the one displayed on herd diagram edges)
+  this means that requestform field formats are no longer checked for
+  in cron triggers by default. this is an intended fix: format enforcement is
+  for manual input, not on purpose configuration overriding
+  especially: one can define a "year" field with format "^[0-9]{4}$" and also
+  a cron trigger with empty "year" field or "guess_it" as a special "year"
+  value, and this is now the default (if not setting the format cause filter):
+  (task task1
+     (param begin "%{=date:yyyy}")
+     (param end "%{=rpn,%begin,1,+}")
+     (requestform
+        (field begin(format "2[0-9]{3}"(cause .*)))
+        (field end(format "2[0-9]{3}")) # default cause is ^api|notice
+     )
+     (trigger
+       (cron * * * * * *(param begin 1970)) # will be accepted (with end=1971)
+       (cron * * * * * *(param begin 1970)(param end foobar)) # also ok, end is not checked
+       (cron * * * * * *) # will be rejected because begin cause is .* including cron triggers
+       (notice hello(param begin 1970)(param end foobar)) # rejected, end is checked for notice triggers
+     )
+  )
+- requestform field formats are no longer checked versus empty string ("") when
+  the trigger or api does not define them, if they are not defined at all they
+  are checked versus task param instead, for instance this will be accepted
+  whereas it used to be rejected because trigger "lacks" foo overriding:
+  (task task1
+     (param year "%{=date:yyyy}")
+     (trigger
+       (cron * * * * * *) # was rejected until now
+       (cron * * * * * *(param year 1970)) # was already accepted
+     )
+     (requestform
+        (field year(format "2[0-9]{3}"))
+     )
+  )
+- removed broken requestform config features that did not work or did not
+  work consistently for years: (allowedvalues), (mandatory)
 
 Minor improvements
 - wui: chronograms green line is thick for running tasks (was thin as if it was
