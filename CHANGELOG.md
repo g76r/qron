@@ -1,3 +1,8 @@
+# From 1.16.1 to 1.16.2 (2024-10-03)
+Minor improvements
+- wui: adding client side format check on request form fields in addition to
+  server side
+
 # From 1.16.0 to 1.16.1 (2024-09-30)
 New features and notable changes:
 - introduced host params, making them
