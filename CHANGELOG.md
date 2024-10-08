@@ -1,3 +1,7 @@
+# Since 1.16.2
+Behind-the-curtain improvements
+- building with Qt 6.8.0 image
+
 # From 1.16.1 to 1.16.2 (2024-10-03)
 Minor improvements
 - wui: adding client side format check on request form fields in addition to
