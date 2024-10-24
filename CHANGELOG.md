@@ -1,4 +1,18 @@
 # Since 1.16.2
+New features and notable changes:
+- new event onnostderr which is triggered when a tasks finishes and it
+  never wrote anything to stderr, usefull to simulate pre-1.13.0 task.stderr
+  alerts, this way:
+  ```
+  (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
+  (onstderr(log stderr: %line(severity W)))
+  (onstderr(raisealert task.stderr.%!taskid))
+  (onnostderr(cancelalert task.stderr.%!taskid))
+  ```
+- new tasks/taskgroups/tasktemplates views column: 19 "On nostderr"
+- new taskinstance view column: 22 "Had stderr"
+- new taskinstance pseudoparam: %!hadstderr
+
 Behind-the-curtain improvements
 - building with Qt 6.8.0 image
 
@@ -190,17 +204,6 @@ Behind-the-curtain improvements
 - lacking includes and misc clangd warning removal
 
 # From 1.15.6 to 1.15.7 (2024-05-01)
-New features and notable changes:
-- new event onnostderr which is triggered when a tasks finishes and it
-  never wrote anything to stderr, usefull to simulate pre-1.13.0 task.stderr
-  alerts, this way:
-  ```
-  (onstderr "^Connection to [^ ]* closed\\.$"(stop)) # written by ssh client
-  (onstderr(log stderr: %line(severity W)))
-  (onstderr(raisealert task.stderr.%!taskid))
-  (onnostderr(cancelalert task.stderr.%!taskid))
-  ```
-
 Bug fixes:
 - renamed mergestderrintostdout to mergestdoutintostderr the name was
   misleading
