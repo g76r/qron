@@ -16,7 +16,7 @@
     <?=%{webconsole.customhead}?>
   </head>
   <body>
-    <nav class="navbar navbar-default navbar-inverse <?=%{=switch/%{[http]cookie!hidenav}/true/hidden}?>">
+    <nav class="navbar navbar-default navbar-inverse <?=%{=switch🐞%{[http]cookie:hidenav}🐞true🐞hidden}?>">
       <div class="container">
         <div class="navbar-header">
           <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-target="#navbar" aria-expanded="false" aria-controls="navbar">
@@ -65,9 +65,9 @@
       </div>
     </nav>
     <div class="container">
-      <div class="alert alert-block <?=%{=switch:%{=left/%{[http]base64cookie!message}/1}:S:alert-success:I:alert-info:E:alert-danger:hidden}?>">
+      <div class="alert alert-block <?=%{=switch🐞%{=left🌸%{[http]base64cookie:message}🌸1}🐞S🐞alert-success🐞I🐞alert-info🐞E🐞alert-danger🐞hidden}?>">
         <button type="button" class="close" data-dismiss="alert">&times;</button>
-        <h4><?=%{=switch:%{=left/%{[http]base64cookie!message}/1}:S:Success:I:Info:E:Error!:W:Warning!}?></h4>
-        <?=%{=mid:%{[http]base64cookie!message}:2}?>
+        <h4><?=%{=switch🐞%{=left🌸%{[http]base64cookie:message}🌸1}🐞S🐞Success🐞I🐞Info🐞E🐞Error!🐞W🐞Warning!}?></h4>
+        <?=%{=mid🌸%{[http]base64cookie:message}🌸2}?>
       </div>
 <!-- end of header -->

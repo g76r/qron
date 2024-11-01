@@ -1,4 +1,4 @@
-# Since 1.16.2
+# From 1.16.2 to 1.16.3 (2024-11-01)
 New features and notable changes:
 - new event onnostderr which is triggered when a tasks finishes and it
   never wrote anything to stderr, usefull to simulate pre-1.13.0 task.stderr
@@ -13,9 +13,12 @@ New features and notable changes:
 - new taskinstance view column: 22 "Had stderr"
 - new taskinstance pseudoparam: %!hadstderr
 
-Minor improvements
+Minor improvements:
 - event thread optimization (no longer copying every task & taskinstance
   pseudo parameter on every stdout/stderr line)
+
+Bug fixes:
+- wui: top-of-page messages are back
 
 Behind-the-curtain improvements
 - building with Qt 6.8.0 image
