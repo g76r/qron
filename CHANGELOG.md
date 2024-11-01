@@ -13,8 +13,13 @@ New features and notable changes:
 - new taskinstance view column: 22 "Had stderr"
 - new taskinstance pseudoparam: %!hadstderr
 
+Minor improvements
+- event thread optimization (no longer copying every task & taskinstance
+  pseudo parameter on every stdout/stderr line)
+
 Behind-the-curtain improvements
 - building with Qt 6.8.0 image
+- libp6core update
 
 # From 1.16.1 to 1.16.2 (2024-10-03)
 Minor improvements
