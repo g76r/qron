@@ -17,7 +17,7 @@ endif
 
 targz: FORCE
 	rm -f qrond-linux-amd64.tar.bz2
-	strip qrond/{bin,lib}/*
+	strip qrond/lib/* qrond/bin/qrond
 	tar jchf qrond-linux-amd64.tar.bz2 qrond
 	if [ -e $(PUBLISHING_DIRECTORY) ]; then
 	  cp qrond-linux-amd64.tar.bz2 $(PUBLISHING_DIRECTORY)/qrond-linux-amd64-$${CI_COMMIT_REF_NAME:-latest}.tar.bz2
