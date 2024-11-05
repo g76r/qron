@@ -1340,7 +1340,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       auto pfoptions = PfOptions{}.setShouldIndent()
                        .setShouldWriteContentBeforeSubnodes();
       for (auto node: task.originalPfNodes())
-        pfconfig += PercentEvaluator::escape(node.toPf(pfoptions)) + "\n"_u8;
+        pfconfig += node.toPf(pfoptions) + "\n"_ba;
       ParamSet ps;
       ps.insert("pfconfig"_u8, pfconfig);
       Utf8String last_instances;
@@ -1420,7 +1420,7 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       auto pfoptions = PfOptions{}.setShouldIndent()
                        .setShouldWriteContentBeforeSubnodes();
       for (auto node: instance.task().originalPfNodes())
-        pfconfig += PercentEvaluator::escape(node.toPf(pfoptions)) + "\n"_u8;
+        pfconfig += node.toPf(pfoptions) + "\n"_ba;
       processingContext->overrideParamValue("pfconfig"_u8, pfconfig);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       processingContext->unoverrideParamValue("pfconfig"_u8);

@@ -53,25 +53,25 @@
           <h2>Scheduling</h2>
           <p><a class="btn btn-info" href="../tasks/<?=%1?>">Task page &raquo;</a>
           <p><table class="table table-condensed table-hover">
-             <tr><th>Parent</th><td><?=%{=switch:%20::ø:0:ø:<a href="%20">%20</a>}?></td></tr>
-             <tr><th>Children </th><td><?=%!childrenids</a>?></td></tr>
-             <tr><th>Cause</th><td><?=%21?></td></tr>
-             <tr><th>Queue When</th><td><?=%17?></td></tr>
-             <tr><th>Cancel When</th><td><?=%18?></td></tr>
-             <tr><th>Consumed resources&nbsp;<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="fa-solid fa-circle-question"/></a></th><td><?=%!resources?></td></tr>
-             <tr><th>Maximum instances count at a time</th><td><?=%!maxinstances?></td></tr>
-             <tr><th>Maximum queued instances</th><td><?=%!maxqueuedinstances?></td></tr>
-             <tr><th>Deduplicate Criterion</th><td><?=%19?></td></tr>
-             <tr><th>Abortable</th><td><?=%9?></td></tr>
-             <tr><th>Execution target</th><td><?=%!target?></td></tr>
+             <tr><th>Parent</th><td><?=%{=switch:%20:::0::<a href="%20">%20</a>}?></td></tr>
+             <tr><th>Children </th><td><?value:!childrenids:?></td></tr>
+             <tr><th>Cause</th><td><?value:21?></td></tr>
+             <tr><th>Queue When</th><td><?value:17:?></td></tr>
+             <tr><th>Cancel When</th><td><?value:18:?></td></tr>
+             <tr><th>Consumed resources&nbsp;<a class="help" href="<?value:!pathtoroot?>user-manual.html#resources"><span class="fa-solid fa-circle-question"/></a></th><td><?value:!resources:?></td></tr>
+             <tr><th>Maximum instances count at a time</th><td><?value:!maxinstances?></td></tr>
+             <tr><th>Maximum queued instances</th><td><?value:!maxqueuedinstances?></td></tr>
+             <tr><th>Deduplicate Criterion</th><td><?value:19:?></td></tr>
+             <tr><th>Abortable</th><td><?value:9?></td></tr>
+             <tr><th>Execution target</th><td><?value:!target?></td></tr>
           </table>
           <h2>Task configuration summary</h2>
           <p><a class="btn btn-info" href="../tasks/<?=%1?>">Task page &raquo;</a>
           <p><table class="table table-condensed table-hover">
-            <tr><th>Additional information</th><td><?=%!info?></td></tr>
-            <tr><th>Execution mean&nbsp;<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="fa-solid fa-circle-question"/></a></th><td><?=%!mean?></td></tr>
-            <tr><th>Configured target (host or cluster)</th><td><?=%!configuredtarget?></td></tr>
-            <tr><th>Command</th><td><?=%{=htmlencode:%!command:un}?></td></tr>
+            <tr><th>Additional information</th><td><?value:!info:?></td></tr>
+            <tr><th>Execution mean&nbsp;<a class="help" href="<?value:!pathtoroot?>user-manual.html#tasks-execution-properties"><span class="fa-solid fa-circle-question"/></a></th><td><?value:!mean?></td></tr>
+            <tr><th>Configured target (host or cluster)</th><td><?=%{=rawvalue🌳!configuredtarget🌳hun}?></td></tr>
+            <tr><th>Command</th><td><?=%{=rawvalue🌳!command🌳hun}?></td></tr>
           </table>
         </div>
       </div>
@@ -102,7 +102,7 @@
         <div class="col-md-12">
           <h2>Raw Task Configuration</h2>
           <p><a class="btn btn-primary" href="<?value:!pathtoroot?>../rest/v1/tasks/<?value:1?>/config.pf"><i class="fa-solid fa-file"></i> PF</a>
-          <pre><?=%{=htmlencode:%pfconfig:u}?></pre>
+          <pre><?=%{=rawvalue🌳pfconfig🌳hu}?></pre>
         </div>
       </div>
 
