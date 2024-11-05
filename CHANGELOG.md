@@ -1,3 +1,7 @@
+# From 1.16.3 to 1.16.4 (2024-11-05)
+Bug fixes:
+- wui: fixed client side format check in request form with null/empty format
+
 # From 1.16.2 to 1.16.3 (2024-11-01)
 New features and notable changes:
 - new event onnostderr which is triggered when a tasks finishes and it
