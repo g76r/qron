@@ -1,5 +1,6 @@
 # From 1.16.3 to 1.16.4 (2024-11-05)
 Bug fixes:
+- fixed a severe bug (crash) in onstderr/onstdout events handling
 - wui: fixed client side format check in request form with null/empty format
 - wui: % was not escaped in command field on task and taskinstance detail pages
 
