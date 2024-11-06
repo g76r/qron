@@ -1,4 +1,8 @@
-# From 1.16.3 to 1.16.4 (2024-11-05)
+# From 1.16.3 to 1.16.4 (2024-11-06)
+Minor improvements:
+- several minor improvement in events/actions processing, including
+  ParamsProviderMerger and ParamsProviderMergerRestorer
+
 Bug fixes:
 - fixed a severe bug (crash) in onstderr/onstdout events handling
 - wui: fixed client side format check in request form with null/empty format

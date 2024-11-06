@@ -1251,10 +1251,10 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       url.setPath("/console/adhoc.html");
       url.setQuery(QString());
       req.overrideUrl(url);
-      ParamsProviderMergerRestorer restorer(processingContext);
-      processingContext->overrideParamValue("content", message);
+      processingContext->overrideParamValue("content"_u8, message);
       res.clearCookie("message"_ba, "/"_ba);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      processingContext->unoverrideParamValue("content"_u8);
       return true;
 }, true },
 { "/console/tasks/request/", [](
@@ -1298,11 +1298,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                 "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
                 "</form>\n"
                 "</div>\n";
-        ParamsProviderMergerRestorer restorer(processingContext);
-        processingContext->overrideParamValue("content", form);
+        processingContext->overrideParamValue("content"_u8, form);
         res.setBase64SessionCookie("redirect", referer, "/");
         res.clearCookie("message"_ba, "/"_ba);
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+        processingContext->unoverrideParamValue("content"_u8);
         return true;
       }
       res.setBase64SessionCookie("message", "E:Task '"+taskId+"' not found.",
