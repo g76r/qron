@@ -1,3 +1,7 @@
+# Since 1.16.4
+Behind-the-curtain improvements:
+- updated Qt to 6.8.1 (CI and linux packaging)
+
 # From 1.16.3 to 1.16.4 (2024-11-06)
 Minor improvements:
 - several minor improvement in events/actions processing, including

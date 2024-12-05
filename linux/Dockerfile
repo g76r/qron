@@ -1,4 +1,4 @@
-FROM g76r/qt6-runner:20241008
+FROM g76r/qt6-runner:20241203
 LABEL description="qron free scheduler"
 LABEL org.opencontainers.image.authors="Grégoire Barbier <devel@g76r.eu>"
 
