@@ -1,6 +1,8 @@
-# Since 1.16.4
+# From 1.16.4 to 1.16.5 (2024-01-14)
 Behind-the-curtain improvements:
 - updated Qt to 6.8.1 (CI and linux packaging)
+- updated libp6core (there are fixes in the update that can remove theorical
+  crashes)
 
 # From 1.16.3 to 1.16.4 (2024-11-06)
 Minor improvements:
