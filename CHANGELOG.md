@@ -65,6 +65,7 @@ New features and notable changes:
   especially: one can define a "year" field with format "^[0-9]{4}$" and also
   a cron trigger with empty "year" field or "guess_it" as a special "year"
   value, and this is now the default (if not setting the format cause filter):
+  ```
   (task task1
      (param begin "%{=date:yyyy}")
      (param end "%{=rpn,%begin,1,+}")
@@ -79,10 +80,12 @@ New features and notable changes:
        (notice hello(param begin 1970)(param end foobar)) # rejected, end is checked for notice triggers
      )
   )
+  ```
 - requestform field formats are no longer checked versus empty string ("") when
   the trigger or api does not define them, if they are not defined at all they
   are checked versus task param instead, for instance this will be accepted
   whereas it used to be rejected because trigger "lacks" foo overriding:
+  ```
   (task task1
      (param year "%{=date:yyyy}")
      (trigger
@@ -93,6 +96,7 @@ New features and notable changes:
         (field year(format "2[0-9]{3}"))
      )
   )
+  ```
 - removed broken requestform config features that did not work or did not
   work consistently for years: (allowedvalues), (mandatory)
 
