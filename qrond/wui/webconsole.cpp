@@ -1344,8 +1344,11 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       ParamSet ps;
       ps.insert("pfconfig"_u8, pfconfig);
       Utf8String last_instances;
+      int lastinstancesdepth =
+          webconsole->scheduler()->globalParams().paramNumber<int>(
+            "webconsole.htmltables.lastinstancesdepth", 10);
       for (auto instance:
-           webconsole->scheduler()->lastInstancesByTaskId(taskId, 10)) {
+           webconsole->scheduler()->lastInstancesByTaskId(taskId, lastinstancesdepth)) {
         last_instances += instance.id()+' ';
         ps.insert(instance.id()+":status"_u8, instance.statusAsString());
         ps.insert(instance.id()+":creation_date"_u8,

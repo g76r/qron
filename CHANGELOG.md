@@ -1,5 +1,9 @@
 # From 1.16.5 to 1.16.6 (2024-01-20)
-Buf fixes:
+Minor improvements:
+- webconsole: last instances history depth on task page can now be choosen
+  using global param webconsole.htmltables.lastinstancesdepth (default: 10)
+
+Bug fixes:
 - webconsole: fixed last instances duration column on task page
 
 # From 1.16.4 to 1.16.5 (2024-01-14)
