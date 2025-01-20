@@ -51,20 +51,20 @@ New features and notable changes:
   - override task params (with a lower priority than trigger/notice/api)
   - usable in host monitor, especially ssh.xxx params like ssh.identity and
     ssh.username
-- added requestform new (field(format(cause))) config element in order to
+- added requestform new `(field(format(cause)))` config element in order to
   apply format enforcement selectively to some triggering cause only
-  defaults to "^api|notice"
-  the new (cause) is a regular expression checked against the triggering cause
-  which can be: "api" for api (including wui) triggering, "notice trigger xxx"
-  when triggered by notice xxx, "cron trigger 1 2 3 * * *" when triggered by
+  defaults to `api|notice`
+  the new `(cause)` is a regular expression checked against the triggering cause
+  which can be: `api` for api (including wui) triggering, `notice trigger xxx`
+  when triggered by notice xxx, `cron trigger 1 2 3 * * *` when triggered by
   a cron trigger with "1 2 3 * * *" cron expression (note that it's the same
   cause than the one displayed on herd diagram edges)
   this means that requestform field formats are no longer checked for
   in cron triggers by default. this is an intended fix: format enforcement is
   for manual input, not on purpose configuration overriding
-  especially: one can define a "year" field with format "^[0-9]{4}$" and also
+  especially: one can define a "year" field with format `^[0-9]{4}$` and also
   a cron trigger with empty "year" field or "guess_it" as a special "year"
-  value, and this is now the default (if not setting the format cause filter):
+  value, and this is now the default (i.e. with no format cause filter):
   ```
   (task task1
      (param begin "%{=date:yyyy}")
