@@ -1352,7 +1352,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                   instance.creationDatetime().toString());
         ps.insert(instance.id()+":finish_date"_u8,
                   instance.finishDatetime().toString());
-        ps.insert(instance.id()+":duration"_u8, instance.durationMillis()/1e3);
+        if (instance.startDatetime().isValid())
+          ps.insert(instance.id()+":duration"_u8, instance.durationMillis()/1e3);
       }
       last_instances.chop(1);
       ps.insert("last_instances"_u8,last_instances);

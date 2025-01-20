@@ -1,3 +1,7 @@
+# From 1.16.5 to 1.16.6 (2024-01-20)
+Buf fixes:
+- webconsole: fixed last instances duration column on task page
+
 # From 1.16.4 to 1.16.5 (2024-01-14)
 Behind-the-curtain improvements:
 - updated Qt to 6.8.1 (CI and linux packaging)
