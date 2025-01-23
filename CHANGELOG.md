@@ -1,3 +1,7 @@
+# Since 1.16.6
+Minor improvements:
+- wui: user url params instead of cookies for redirection
+
 # From 1.16.5 to 1.16.6 (2024-01-20)
 Minor improvements:
 - webconsole: last instances history depth on task page can now be choosen

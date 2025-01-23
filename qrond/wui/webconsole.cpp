@@ -1,4 +1,4 @@
-/* Copyright 2012-2024 Hallowyn and others.
+/* Copyright 2012-2025 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -790,9 +790,9 @@ static void apiAuditAndResponse(
     auditInstanceIds = _noAuditInstanceIds;
   QString userid = processingContext->paramUtf16("userid"_u8);
   auto referer = req.header("Referer"_u8);
-  auto redirect = req.base64Cookie("redirect"_u8, referer);
+  auto redirect = req.param("redirect"_u8, referer);
   bool disableRedirect = req.header("Prefer"_u8).toLower()
-      .contains("return=representation");
+                         .contains("return=representation");
   if (auditAction.contains(webconsole->showAuditEvent()) // empty regexps match any string
       && (webconsole->hideAuditEvent().pattern().isEmpty()
           || !auditAction.contains(webconsole->hideAuditEvent()))
@@ -813,7 +813,6 @@ static void apiAuditAndResponse(
   }
   if (!disableRedirect && !redirect.isEmpty()) {
     res.setBase64SessionCookie("message"_u8, responseMessage, "/"_u8);
-    res.clearCookie("redirect"_u8, "/"_u8);
     res.redirect(redirect);
   } else {
     res.setContentType("text/plain;charset=UTF-8"_u8);
@@ -1241,18 +1240,16 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       message = "<div class=\"well\">"
                 "<h4 class=\"text-center\">Are you sure you want to "+message
           +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
-           "href=\""+path;
+           "href=\""+path+"?redirect="+PercentEvaluator::escape(referer.toPercentEncoding());
       if (!queryString.isEmpty())
-        message = message+"?"+queryString;
+        message = message+"&"+queryString;
       message = message+"\">Yes, sure</a> <a class=\"btn\" href=\""+referer
-          +"\">Cancel</a></div>";
-      res.setBase64SessionCookie("redirect", referer, "/");
+                +"\">Cancel</a></div>";
       QUrl url(req.url());
       url.setPath("/console/adhoc.html");
       url.setQuery(QString());
       req.overrideUrl(url);
       processingContext->overrideParamValue("content"_u8, message);
-      res.clearCookie("message"_ba, "/"_ba);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       processingContext->unoverrideParamValue("content"_u8);
       return true;
@@ -1281,7 +1278,8 @@ ParamsProviderMerger *processingContext, int matchedLength) {
           form += "<p class=\"text-center\">Task parameters can be defined in "
                   "the following form:";
         form += "<p><form action=\"../../../do/v1/tasks/request/"+taskId
-            +"\" method=\"POST\">";
+                +"?redirect="+PercentEvaluator::escape(referer.toPercentEncoding())
+                +"\" method=\"POST\">";
         bool errorOccured = false;
         for (const RequestFormField &rff: task.requestFormFields())
             form.append(rff.toHtmlFormFragment(
@@ -1299,8 +1297,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                 "</form>\n"
                 "</div>\n";
         processingContext->overrideParamValue("content"_u8, form);
-        res.setBase64SessionCookie("redirect", referer, "/");
-        res.clearCookie("message"_ba, "/"_ba);
         webconsole->wuiHandler()->handleRequest(req, res, processingContext);
         processingContext->unoverrideParamValue("content"_u8);
         return true;
@@ -1331,7 +1327,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         }
         return true;
       }
-      res.clearCookie("message"_ba, "/"_ba);
       QUrl url(req.url());
       url.setPath("/console/task.html");
       url.setQuery(QString());
@@ -1414,7 +1409,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         }
         return true;
       }
-      res.clearCookie("message"_u8, "/"_u8);
       auto url = req.url();
       url.setPath("/console/taskinstance.html");
       url.setQuery(QString());
@@ -1446,7 +1440,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         processingContext->append(&gridboard);
         processingContext->overrideParamValue("gridboard.data",
                                               gridboard.toHtml());
-        res.clearCookie("message"_ba, "/"_ba);
         QUrl url(req.url());
         url.setPath("/console/gridboard.html");
         url.setQuery(QString());
@@ -1466,29 +1459,45 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      auto queryItems = req.urlQuery().queryItems();
-      if (!queryItems.isEmpty()) {
+      auto query_params = req.paramsAsMap();
+      if (!query_params.isEmpty()) {
         // if there are query parameters in url, transform them into cookies
-        // it is useful for page changes on views
-        // LATER this mechanism should be generic/framework (in libqtssu),
-        // provided it does not applies to any resource (it's a common hack e.g.
-        // to have query strings on font files)
-        Utf8String anchor;
-        for (const QPair<QString,QString> &p: queryItems) {
-          if (p.first == "anchor")
-            anchor = p.second;
+        // then refresh-redirect the page
+        // this behavior is used for page changes on views which set their new
+        // page numbers using an http get with parameters in url
+        // special params names:
+        // - "anchor" param is used to set #anchor on redirected page
+        // - "redirect" param must be ignored because it's used by confirmation
+        //   page as a real/standard url parameter
+        // - "userid" param must be ignored because it's overriden (added) by
+        //   auth in the pipeline regardless url params
+        Utf8String anchor, redirect;
+        bool need_redirect = false;
+        for (auto [name, value]: query_params.asKeyValueRange()) {
+          if (name == "redirect") {
+            redirect = value;
+            continue;
+          }
+          if (name == "userid") // FIXME should not be in req params
+            continue;
+          need_redirect = true;
+          if (name == "anchor")
+            anchor = value;
           else
-            res.setBase64SessionCookie(p.first, p.second.toUtf8(), "/");
+            res.setBase64SessionCookie(name, value, "/");
         }
-        auto s = req.path();
-        qsizetype i = s.lastIndexOf('/');
-        if (i != -1)
-          s = s.mid(i+1);
-        if (!anchor.isEmpty())
-          s.append('#').append(anchor);
-        res.redirect(s);
+        if (need_redirect) {
+          auto s = req.path();
+          qsizetype i = s.lastIndexOf('/');
+          if (i != -1)
+            s = s.mid(i+1);
+          if (!redirect.isEmpty())
+            s.append("?redirect="+redirect.toPercentEncoding());
+          if (!anchor.isEmpty())
+            s.append('#').append(anchor);
+          res.redirect(s);
+        }
       } else {
-        res.clearCookie("message"_u8, "/"_u8);
         if (req.path().endsWith("/console/alerts.html")) {
           auto ac = webconsole->alerterConfig();
           processingContext->append(&ac);
@@ -1507,7 +1516,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      res.clearCookie("message"_ba, "/"_ba);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       return true;
 }, true },
@@ -2131,9 +2139,9 @@ bool WebConsole::handleRequest(
     res.redirect(staticRedirect, HttpResponse::HTTP_Moved_Permanently);
     return true;
   }
+  res.clearCookie("message"_u8, "/"_u8);
   if (_authorizer && !_authorizer->authorize(userid, req.methodName(), path)) {
     res.setStatus(HttpResponse::HTTP_Forbidden);
-    res.clearCookie("message"_u8, "/"_u8);
     // LATER nicer display
     res.output()->write("Permission denied.");
     return true;
