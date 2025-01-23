@@ -1,6 +1,9 @@
-# Since 1.16.6
+# From 1.16.6 to 1.16.7 (2024-01-23)
 Minor improvements:
 - wui: user url params instead of cookies for redirection
+
+Behind-the-curtain improvements:
+- updated libp6core with incompatible changes in http api
 
 # From 1.16.5 to 1.16.6 (2024-01-20)
 Minor improvements:
