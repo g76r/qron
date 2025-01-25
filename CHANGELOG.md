@@ -1,3 +1,7 @@
+# Since 1.16.7
+Behind-the-curtain improvements:
+- replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
+
 # From 1.16.6 to 1.16.7 (2024-01-23)
 Minor improvements:
 - wui: user url params instead of cookies for redirection
