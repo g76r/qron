@@ -1347,8 +1347,6 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       ps.insert("last_instances"_u8,last_instances);
       processingContext->prepend(&task);
       processingContext->prepend(ps);
-      Log::fatal() << "/console/tasks" << " " << elements << " " << task.id()
-                   << " " << req.path() << " ";
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       processingContext->pop_front();
       processingContext->pop_front();
