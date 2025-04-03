@@ -35,16 +35,16 @@ void ConfigUploadHandler::processUploadedFile(
   if (!_configRepository) {
     Log::error() << "ConfigUploadHandler::processUploadedFile called with null "
                     "ConfigRepository";
-    res.setStatus(500);
+    res.set_status(HttpResponse::HTTP_Internal_Server_Error);
     return;
   }
   SchedulerConfig config = _configRepository->parseConfig(file, false);
   if (config.isNull()) {
     Log::error() << "cannot process uploaded configuration";
-    res.setStatus(415);
+    res.set_status(HttpResponse::HTTP_Unsupported_Media_Type);
     return;
   }
   _configRepository->addConfig(config);
-  res.setHeader("X-Qron-ConfigId", config.id());
+  res.set_header("X-Qron-ConfigId", config.id());
   res.output()->write(QString("(id %1)\n").arg(config.id()).toUtf8());
 }
