@@ -3,6 +3,7 @@ Behind-the-curtain improvements:
 - replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
 - gitlabci: force git clone
 - updated libp6core
+- updated Qt to 6.8.3 (CI and linux packaging)
 
 # From 1.16.6 to 1.16.7 (2024-01-23)
 Minor improvements:
