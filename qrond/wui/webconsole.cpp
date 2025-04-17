@@ -148,9 +148,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedCalendarsModel = new QSortFilterProxyModel(this);
   _sortedCalendarsModel->sort(1);
   _sortedCalendarsModel->setSourceModel(_calendarsModel);
-  _warningLogModel = new LogModel(this, Log::Warning);
-  _infoLogModel = new LogModel(this, Log::Info);
-  _auditLogModel = new LogModel(this, Log::Info, "AUDIT ");
+  _warningLogModel = new p6::log::LogRecordItemModel(this, Log::Warning);
+  _infoLogModel = new p6::log::LogRecordItemModel(this, Log::Info);
+  _auditLogModel = new p6::log::LogRecordItemModel(this, Log::Info, "AUDIT ");
   _configsModel = new ConfigsModel(this);
   _configHistoryModel = new ConfigHistoryModel(this, CONFIG_HISTORY_MAXROWS);
 
@@ -291,9 +291,9 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _htmlWarningLogView->setModel(_warningLogModel);
   _htmlWarningLogView->setEmptyPlaceholder("(empty log)");
   QHash<QString,QString> logTrClasses;
-  logTrClasses.insert(Log::severityToString(Log::Warning), "warning");
-  logTrClasses.insert(Log::severityToString(Log::Error), "danger");
-  logTrClasses.insert(Log::severityToString(Log::Fatal), "danger");
+  logTrClasses.insert(p6::log::severity_as_text(p6::log::Warning), "warning");
+  logTrClasses.insert(p6::log::severity_as_text(p6::log::Error), "danger");
+  logTrClasses.insert(p6::log::severity_as_text(p6::log::Fatal), "danger");
   _htmlWarningLogView->setTrClass("%1", 4, logTrClasses);
   _htmlWarningLogView->setItemDelegate(
         new HtmlLogEntryItemDelegate(_htmlWarningLogView));
@@ -528,25 +528,6 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   connect(_thread, &QThread::finished, _thread, &QThread::deleteLater);
   _thread->start();
   moveToThread(_thread);
-
-  // unparenting models that must not be deleted automaticaly when deleting
-  // this
-  // note that they must be children until there to be moved to the right thread
-  /* LATER with 3 following lines, works on linux Qt 5.4.2 64bits but not on Win Qt 5.5.1 32bits
-ASSERT failure in QCoreApplication::sendEvent: "Cannot send events to objects
- owned by a different thread. Current thread d227b98.
- Receiver '' (of type 'WebConsole') was created in thread d233478",
- file kernel\qcoreapplication.cpp, line 553
-This application has requested the Runtime to terminate it in an unusual way.
-Please contact the application's support team for more information.
-QWaitCondition: Destroyed while threads are still waiting
-   */
-#ifndef Q_OS_WIN
-  _warningLogModel->setParent(0);
-  _infoLogModel->setParent(0);
-  _auditLogModel->setParent(0);
-#endif
-  // LATER find a safe way to delete logmodels asynchronously without crashing log framework
 }
 
 WebConsole::~WebConsole() {
@@ -2028,9 +2009,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       QStringList paths;
       if (req.query_param("files"_ba) == "current"_ba)
-        paths = QStringList(Log::pathToLastFullestLog());
+        paths = QStringList(p6::log::pathToLastFullestLog());
       else
-        paths = Log::pathsToFullestLogs();
+        paths = p6::log::pathsToFullestLogs();
       if (paths.isEmpty()) {
         res.set_status(404);
         res.output()->write("No log file found.");

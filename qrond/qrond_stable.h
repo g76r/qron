@@ -1,4 +1,4 @@
-/* Copyright 2023-2024 Gregoire Barbier and others.
+/* Copyright 2023-2025 Gregoire Barbier and others.
  * This file is part of libpumpkin, see <http://libpumpkin.g76r.eu/>.
  * Libpumpkin is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -46,7 +46,7 @@
 #include "format/jsonformats.h"
 #include "modelview/paramsetmodel.h"
 #include "modelview/shareduiitemslogmodel.h"
-#include "log/logmodel.h"
+#include "log/logrecorditemmodel.h"
 #include "log/filelogger.h"
 #include "auth/inmemoryrulesauthorizer.h"
 #include "auth/inmemoryrulesauthorizer.h"

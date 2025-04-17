@@ -1,8 +1,12 @@
 # Since 1.16.7
+Minor improvements:
+- logaction now record a better location in the logfiles:
+  "logaction:%eventname" instead of a constant "logaction.cpp:42"
+
 Behind-the-curtain improvements:
 - replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
 - gitlabci: force git clone
-- updated libp6core
+- updated libp6core (incl. log large change)
 - updated Qt to 6.8.3 (CI and linux packaging)
 
 # From 1.16.6 to 1.16.7 (2024-01-23)

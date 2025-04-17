@@ -24,7 +24,7 @@
 #include "ui/clustersmodel.h"
 #include "modelview/paramsetmodel.h"
 #include "ui/lastoccuredtexteventsmodel.h"
-#include "log/logmodel.h"
+#include "log/logrecorditemmodel.h"
 #include "ui/taskinstancesmodel.h"
 #include "ui/tasksmodel.h"
 #include "ui/schedulereventsmodel.h"
@@ -81,7 +81,7 @@ class WebConsole : public HttpHandler, public ParamsProvider {
   TextMatrixModel *_alertChannelsModel;
   SharedUiItemsTableModel *_calendarsModel;
   QSortFilterProxyModel *_sortedCalendarsModel;
-  LogModel *_warningLogModel, *_infoLogModel, *_auditLogModel;
+  p6::log::LogRecordItemModel *_warningLogModel, *_infoLogModel, *_auditLogModel;
   ConfigsModel *_configsModel;
   ConfigHistoryModel *_configHistoryModel;
   HtmlTableView *_htmlHostsListView, *_htmlClustersListView,

@@ -1,4 +1,4 @@
-/* Copyright 2013-2023 Hallowyn and others.
+/* Copyright 2013-2025 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <time.h>
 #include "io/unixsignalmanager.h"
+#include <stdio.h>
 
 static QMutex *_instanceMutex = new QMutex;
 static Qrond *_instance = nullptr;
@@ -207,20 +208,23 @@ void Qrond::signalCaught(int signal_number) {
 }
 
 int main(int argc, char *argv[]) {
+  ::srand(time(0));
+  // on Windows, line buffering doesn't exists and full buffering is painful
+  // on Unix it's more convenient w/o buffer anyway since it's only log & debug
+  ::setbuf(stdout, 0);
+  ::setbuf(stderr, 0);
   QCoreApplication a(argc, argv);
-  Log::init();
-  Log::wrapQtLogToSamePattern();
-  Log::addConsoleLogger(Log::Debug, true);
   QThread::currentThread()->setObjectName("MainThread");
+  p6::log::init();
+  p6::log::wrapQtLogToSamePattern();
+  p6::log::addConsoleLogger(p6::log::Debug, true);
   QByteArrayList args;
   for (int i = 1; i < argc; ++i)
     args << argv[i];
   Qrond::instance()->startup(args);
   int rc = a.exec();
-  Log::info() << "qrond exiting with status " << rc;
-  QThread::usleep(100'000); // let last log entries be written
-  Log::shutdown();
-  QThread::usleep(100'000); // let last log entries be written
-  qInfo() << "qrond exiting with status" << rc;
+  p6::log::info() << "qrond exiting with status " << rc;
+  p6::log::shutdown();
+  qInfo() << "qrond exited with status" << rc;
   return rc;
 }

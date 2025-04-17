@@ -1,4 +1,4 @@
-/* Copyright 2014-2016 Hallowyn and others.
+/* Copyright 2014-2025 Hallowyn and others.
  * This file is part of qron, see <http://qron.eu/>.
  * Qron is free software: you can redistribute it and/or modify
  * it under the terms of the GNU Affero General Public License as published by
@@ -31,10 +31,10 @@ QString HtmlLogEntryItemDelegate::text(const QModelIndex &index) const {
   case 5: {
     QString severity = index.model()->index(index.row(), 4, index.parent())
         .data().toString();
-    if (severity == Log::severityToString(Log::Warning))
+    if (severity == p6::log::severity_as_text(Log::Warning))
       text.prepend("<i class=\"fa-solid fa-triangle-exclamation\"></i>&nbsp;");
-    else if (severity == Log::severityToString(Log::Error)
-             || severity == Log::severityToString(Log::Fatal))
+    else if (severity == p6::log::severity_as_text(Log::Error)
+             || severity == p6::log::severity_as_text(Log::Fatal))
       text.prepend("<i class=\"fa-solid fa-circle-minus\"></i>&nbsp;");
     break;
   }
