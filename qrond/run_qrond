@@ -1,6 +1,5 @@
 #!/bin/bash
 
-BUILD_TYPE=release
 TARGET_OS=unknown
 case $(uname) in
 Linux)
@@ -11,11 +10,28 @@ Darwin)
 ;;
 esac
 
+if [ -e ../build-qrond-$TARGET_OS/debug/qrond ]; then
+  BUILD_TYPE=debug
+else
+  BUILD_TYPE=release
+fi
+
 export LD_LIBRARY_PATH="../build-qron-$TARGET_OS/$BUILD_TYPE:../build-p6core-$TARGET_OS/$BUILD_TYPE:$LD_LIBRARY_PATH"
 export DYLD_LIBRARY_PATH="../build-qron-$TARGET_OS/$BUILD_TYPE:../build-p6core-$TARGET_OS/$BUILD_TYPE:$DYLD_LIBRARY_PATH"
+LS_COLORS=""
+GREP_COLORS=""
+GCC_COLORS=""
+LESS_TERMCAP_mb=""
+LESS_TERMCAP_md=""
+LESS_TERMCAP_me=""
+LESS_TERMCAP_se=""
+LESS_TERMCAP_so=""
+LESS_TERMCAP_ue=""
+LESS_TERMCAP_us=""
 
 echo LD_LIBRARY_PATH:$LD_LIBRARY_PATH
 
 #ldd ../build-qrond-$TARGET_OS/$BUILD_TYPE/qrond
 
+#exec gdb --args ../build-qrond-$TARGET_OS/$BUILD_TYPE/qrond "$@"
 exec ../build-qrond-$TARGET_OS/$BUILD_TYPE/qrond "$@"
