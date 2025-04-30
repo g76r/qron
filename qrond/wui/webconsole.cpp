@@ -50,8 +50,11 @@
 #define SVG_MIME_TYPE "image/svg+xml;charset=UTF-8"
 
 static PfNode nodeWithValidPattern =
-    PfNode("dummy", "dummy").setAttribute("pattern", ".*")
-    .setAttribute("dimension", "dummy");
+{ "dummy", "dummy", {
+    { "pattern", ".*" },
+    { "dimension", "dummy" },
+  }
+};
 static QRegularExpression htmlSuffixRe("\\.html$");
 static QRegularExpression pfSuffixRe("\\.pf$");
 static CsvFormatter _csvFormatter(',', "\n", '"', '\0', ' ', -1);
@@ -1303,10 +1306,10 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       }
       req.set_path("/console/task.html");
       Utf8String pfconfig;
-      auto pfoptions = PfOptions{}.setShouldIndent()
-                       .setShouldWriteContentBeforeSubnodes();
+      auto pfoptions =
+          PfOptions{}.with_indent(2).with_payload_first();
       for (auto node: task.originalPfNodes())
-        pfconfig += node.toPf(pfoptions) + "\n"_ba;
+        pfconfig += node.as_pf(pfoptions) + "\n"_ba;
       ParamSet ps;
       ps.insert("pfconfig"_u8, pfconfig);
       Utf8String last_instances;
@@ -1348,10 +1351,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       }
       if (subItem == "config.pf") {
-        return writePlainText(task.originalPfNodes().value(0).toPf(
-                                PfOptions().setShouldIndent()
-                                .setShouldWriteContentBeforeSubnodes()),
-                              req, res);
+        auto pfoptions = PfOptions().with_indent(2).with_payload_first();
+        return writePlainText(task.originalPfNodes().value(0)
+                              .as_pf(pfoptions), req, res);
       }
       if (subItem == "list.csv") {
         return writeItemAsCsv(task, req, res);
@@ -1383,10 +1385,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       req.set_path("/console/taskinstance.html");
       processingContext->prepend(&instance);
       Utf8String pfconfig;
-      auto pfoptions = PfOptions{}.setShouldIndent()
-                       .setShouldWriteContentBeforeSubnodes();
+      auto pfoptions = PfOptions().with_indent(2).with_payload_first();
       for (auto node: instance.task().originalPfNodes())
-        pfconfig += node.toPf(pfoptions) + "\n"_ba;
+        pfconfig += node.as_pf(pfoptions) + "\n"_ba;
       processingContext->overrideParamValue("pfconfig"_u8, pfconfig);
       webconsole->wuiHandler()->handleRequest(req, res, processingContext);
       processingContext->unoverrideParamValue("pfconfig"_u8);
@@ -1776,10 +1777,9 @@ ParamsProviderMerger *processingContext, int matchedLength) {
             res.output()->write("no config found with this id\n");
           } else {
             res.set_content_type("text/plain;charset=UTF-8");
-            config.originalPfNode()
-                .writePf(res.output(), PfOptions().setShouldIndent()
-                         .setShouldWriteContentBeforeSubnodes()
-                         .setShouldIgnoreComment(false));
+            auto pfoptions =
+                PfOptions().with_indent(2).with_comments().with_payload_first();
+            config.originalPfNode().write_pf(res.output(), pfoptions);
           }
         } else {
           res.set_status(500);
