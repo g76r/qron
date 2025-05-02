@@ -50,10 +50,9 @@
 #define SVG_MIME_TYPE "image/svg+xml;charset=UTF-8"
 
 static PfNode nodeWithValidPattern =
-{ "dummy", "dummy", {
-    { "pattern", ".*" },
-    { "dimension", "dummy" },
-  }
+{ "dummy", "dummy",
+  PfNode{ "pattern", ".*" },
+  PfNode{ "dimension", "dummy" },
 };
 static QRegularExpression htmlSuffixRe("\\.html$");
 static QRegularExpression pfSuffixRe("\\.pf$");
@@ -144,7 +143,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
   _sortedTaskGroupsModel->setSourceModel(_taskGroupsModel);
   _alertChannelsModel = new TextMatrixModel(this);
   _logConfigurationModel = new SharedUiItemsTableModel(
-        LogFile({ "log", { { "file", "/tmp/foobar" } } }), this);
+        LogFile({ "log", PfNode{ "file", "/tmp/foobar" } }), this);
   _calendarsModel = new SharedUiItemsTableModel(this);
   _calendarsModel->setHeaderDataFromTemplate(Calendar(PfNode("calendar")));
   _calendarsModel->setItemQualifierFilter("calendar");

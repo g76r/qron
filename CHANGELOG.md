@@ -3,6 +3,7 @@ Minor improvements:
 - logaction now record a better location in the logfiles:
   "logaction:%eventname" instead of a constant "logaction.cpp:42"
 - better handling of comments in normalized config file
+- conf parsing errors now display position in file (line, column)
 
 Behind-the-curtain improvements:
 - replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
