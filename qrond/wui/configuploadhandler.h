@@ -23,11 +23,10 @@ class ConfigUploadHandler : public UploadHttpHandler {
   ConfigRepository *_configRepository;
 
 public:
-  explicit ConfigUploadHandler(QString urlPathPrefix,
+  explicit ConfigUploadHandler(const Utf8String &urlPathPrefix,
                                int maxSimultaneousUploads, QObject *parent);
-  void processUploadedFile(HttpRequest req, HttpResponse res,
-                           ParamsProviderMerger *processingContext,
-                           QFile *file) override;
+  void processUploadedFile(HttpRequest &req, HttpResponse &res,
+                           ParamsProviderMerger &context, QFile *file) override;
   ConfigRepository *configRepository() const;
   void setConfigRepository(ConfigRepository *configRepository);
 };

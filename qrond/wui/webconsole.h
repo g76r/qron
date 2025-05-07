@@ -124,9 +124,9 @@ class WebConsole : public HttpHandler, public ParamsProvider {
 public:
   WebConsole();
   ~WebConsole();
-  bool acceptRequest(HttpRequest req) override;
-  bool handleRequest(HttpRequest req, HttpResponse res,
-                     ParamsProviderMerger *processingContext) override;
+  bool acceptRequest(HttpRequest &req) override;
+  bool handleRequest(HttpRequest &req, HttpResponse &res,
+                     ParamsProviderMerger &processingContext) override;
   void setScheduler(Scheduler *scheduler);
   void setConfigPaths(QString configFilePath, QString configRepoPath);
   void setConfigRepository(ConfigRepository *configRepository);

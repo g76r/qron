@@ -535,8 +535,7 @@ WebConsole::WebConsole() : _thread(new QThread), _scheduler(0),
 WebConsole::~WebConsole() {
 }
 
-bool WebConsole::acceptRequest(HttpRequest req) {
-  Q_UNUSED(req)
+bool WebConsole::acceptRequest(HttpRequest &) {
   return true;
 }
 
@@ -766,12 +765,12 @@ static const SharedUiItemList _noAuditInstanceIds { TaskInstance{} };
 
 static void apiAuditAndResponse(
     WebConsole *webconsole, const HttpRequest &req, HttpResponse res,
-    ParamsProviderMerger *processingContext, QString responseMessage,
+    ParamsProviderMerger &context, QString responseMessage,
     const QString &auditAction, const QString &auditTaskId = QString(),
     SharedUiItemList auditInstanceIds = _noAuditInstanceIds) {
   if (auditInstanceIds.isEmpty()) // should never happen
     auditInstanceIds = _noAuditInstanceIds;
-  QString userid = processingContext->paramUtf16("userid"_u8);
+  QString userid = context.paramUtf16("userid"_u8);
   auto referer = req.header("Referer"_u8);
   auto redirect = req.query_param("redirect"_u8, referer);
   bool disableRedirect = req.header("Prefer"_u8).toLower()
@@ -810,415 +809,382 @@ static void apiAuditAndResponse(
 // syntaxic sugar for 1-instance-may-even-be-null cases
 static void apiAuditAndResponse(
     WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, QString responseMessage,
+    ParamsProviderMerger &context, QString responseMessage,
     QString auditAction, TaskInstance instance) {
   if (instance.isNull())
-    apiAuditAndResponse(webconsole, req, res, processingContext,
+    apiAuditAndResponse(webconsole, req, res, context,
                         responseMessage, auditAction);
   else
-    apiAuditAndResponse(webconsole, req, res, processingContext,
+    apiAuditAndResponse(webconsole, req, res, context,
                         responseMessage, auditAction, instance.taskId(),
                         { instance });
 }
 
-static RadixTree<
-std::function<bool(WebConsole *, HttpRequest, HttpResponse,
-                   ParamsProviderMerger *, int matchedLength)>> _handlers {
-{ "/do/v1/tasks/request/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto taskId = req.path().mid(matchedLength);
-  ParamSet params = req.query_as_paramset();
-  // remove empty values so that fields left empty in task request ui form won't
-  // override configurated values
-  for (auto key: params.paramKeys())
-    if (params.paramRawUtf8(key).isEmpty())
-      params.erase(key);
-  // LATER drop parameters that are not defined as overridable in task config
-  // LATER should check that mandatory form fields have been set ?
-  // or are they already checked by scheduler (I think so)
-  TaskInstance instance =
-      webconsole->scheduler()->planTask(
-        taskId, params, params.paramBool("force"_u8, false),
-        params.paramNumber<quint64>("herdid"_u8, 0), {}, {}, 0, "api"_u8);
-  QString message;
-  if (!!instance)
-    message = "S:Task '"+taskId+"' submitted for execution with id "
-              +instance.id()+".";
-  else
-    message = "E:Execution request of task '"+taskId
-        +"' failed (see logs for more information).";
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId, { instance });
-  return true;
-}, true },
-{ "/do/v1/tasks/abort_instances/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto taskId = req.path().mid(matchedLength);
-  QString message;
-  auto instances =
-      webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
-  message = "S:Task instances { "+instances.join(' ')+" } aborted.";
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId, instances);
-  return true;
-}, true },
-{ "/do/v1/tasks/cancel_requests/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto taskId = req.path().mid(matchedLength);
-  QString message;
-  auto instances =
-      webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
-  message = "S:Task requests { "+instances.join(' ')+" } canceled.";
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId, instances);
-  return true;
-}, true },
-{ "/do/v1/tasks/cancel_requests_and_abort_instances/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto taskId = req.path().mid(matchedLength);
-  QString message;
-  auto instances =
-      webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
-  message = "S:Task requests { "+instances.join(' ')
-      +" } canceled and task instances { ";
-  instances = webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
-  message += instances.join(' ')+" } aborted.";
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId, instances);
-  return true;
-}, true },
-{ "/do/v1/tasks/enable_all", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto taskId = req.path().mid(matchedLength);
-  QString message;
-  webconsole->scheduler()->enableAllTasks(true);
-  message = "S:Enabled all tasks.";
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId);
-  // wait to make it less probable that the page displays before effect
-  QThread::usleep(500000);
-  return true;
-} },
-{ "/do/v1/tasks/disable_all", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto taskId = req.path().mid(matchedLength);
-  QString message;
-  webconsole->scheduler()->enableAllTasks(false);
-  message = "S:Disabled all tasks.";
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId);
-  // wait to make it less probable that the page displays before effect
-  QThread::usleep(500000);
-  return true;
-} },
-{ "/do/v1/tasks/enable/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto taskId = req.path().mid(matchedLength);
-  QString message;
-  if (webconsole->scheduler()->enableTask(taskId, true))
-    message = "S:Task '"+taskId+"' enabled.";
-  else {
-    message = "E:Task '"+taskId+"' not found.";
-    res.set_status(HttpResponse::HTTP_Not_Found);
-  }
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId);
-  return true;
-}, true },
-{ "/do/v1/tasks/disable/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  QString taskId = req.path().mid(matchedLength);
-  QString message;
-  if (webconsole->scheduler()->enableTask(taskId, false))
-    message = "S:Task '"+taskId+"' disabled.";
-  else {
-    message = "E:Task '"+taskId+"' not found.";
-    res.set_status(HttpResponse::HTTP_Not_Found);
-  }
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      taskId);
-  return true;
-}, true },
-{ "/do/v1/taskinstances/abort/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  quint64 taskInstanceId = req.path().mid(matchedLength).toLongLong();
-  QString message;
-  TaskInstance instance = webconsole->scheduler()->abortTaskInstance(taskInstanceId);
-  if (instance.isNull()) {
-    message = "E:Failed to abort task instance "
-        +QString::number(taskInstanceId)+".";
-    res.set_status(500);
-  } else {
-    message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
-  }
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/taskinstances/cancel/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  quint64 taskInstanceId = req.path().mid(matchedLength).toLongLong();
-  QString message;
-  TaskInstance instance =
-      webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
-  if (instance.isNull()) {
-    message = "E:Failed to cancel task request "
-        +QString::number(taskInstanceId)+".";
-    res.set_status(500);
-  } else {
-    message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
-  }
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      instance);
-  return true;
-}, true },
-{ "/do/v1/taskinstances/cancel_or_abort/", [](
-WebConsole *webconsole, HttpRequest req, HttpResponse res,
-ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  quint64 taskInstanceId = req.path().mid(matchedLength).toLongLong();
-  QString message;
-  TaskInstance instance =
-      webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
-  if (instance.isNull()) {
-    instance = webconsole->scheduler()->abortTaskInstance(taskInstanceId);
-    if (instance.isNull()) {
-      message = "E:Failed to cancel or abort task instance "
-          +QString::number(taskInstanceId)+".";
-      res.set_status(500);
-    } else {
-      message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
-    }
-  } else {
-    message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
-  }
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength),
-                      instance);
-  return true;
-}, true },
-{ "/do/v1/notices/post/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  QString notice = req.path().mid(matchedLength) | req.query_param("notice");
-  ParamSet params = req.query_as_paramset();
-  params.erase("notice");
-  webconsole->scheduler()->postNotice(notice, params);
-  QString message;
-  message = "S:Notice '"+notice+"' posted.";
-  apiAuditAndResponse(webconsole, req, res, processingContext, message,
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/alerts/raise/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto alertid = req.path().mid(matchedLength) | req.query_param("alertid"_u8);
-  webconsole->scheduler()->alerter()->raiseAlert(alertid);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      "S:Raised alert '"+alertid+"'.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/alerts/raise_immediately/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto alertid = req.path().mid(matchedLength) | req.query_param("alertid"_u8);
-  webconsole->scheduler()->alerter()->raiseAlertImmediately(alertid);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      "S:Raised alert '"+alertid+"' immediately.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/alerts/cancel/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto alertid = req.path().mid(matchedLength) | req.query_param("alertid"_u8);
-  webconsole->scheduler()->alerter()->cancelAlert(alertid);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      "S:Canceled alert '"+alertid+"'.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/alerts/cancel_immediately/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto alertid = req.path().mid(matchedLength) | req.query_param("alertid"_u8);
-  webconsole->scheduler()->alerter()->cancelAlertImmediately(alertid);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      "S:Canceled alert '"+alertid+"' immediately.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/alerts/emit/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto alertid = req.path().mid(matchedLength) | req.query_param("alertid"_u8);
-  webconsole->scheduler()->alerter()->emitAlert(alertid);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      "S:Emitted alert '"+alertid+"'.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/gridboards/clear/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto gridboardid = req.path().mid(matchedLength)
-                     | req.query_param("gridboardid"_u8);
-  webconsole->scheduler()->alerter()->clearGridboard(gridboardid);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      "S:Gridboard '"+gridboardid+"' cleared.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/scheduler/shutdown", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      "S:Shutdown requested.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  Qrond::instance()->asyncShutdown(0);
-  return true;
-}, true },
+using HandlerFunction = std::function<bool(WebConsole *webconsole,
+HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context,
+int matched_length)>;
 
-{ "/do/v1/configs/reload_config_file", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  bool ok = Qrond::instance()->loadConfig();
-  if (!ok)
-    res.set_status(HttpResponse::HTTP_Internal_Server_Error);
-  else
-    // wait to make it less probable that the page displays before effect
-    QThread::usleep(200'000);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      ok ? "S:Configuration reloaded."
-                         : "E:Cannot reload configuration.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/configs/activate/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto configid = req.path().mid(matchedLength)
-                  | req.query_param("configid"_u8);
-  bool ok = webconsole->configRepository()->activateConfig(configid);
-  if (!ok)
-    res.set_status(HttpResponse::HTTP_Internal_Server_Error);
-  else
-    // wait to make it less probable that the page displays before effect
-    QThread::usleep(1000000);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      ok ? "S:Configuration '"+configid+"' activated."
-                         : "E:Cannot activate configuration '"+configid+"'.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/do/v1/configs/remove/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
-  if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
-    return true;
-  auto configid = req.path().mid(matchedLength) | req.query_param("configid"_u8);
-  bool ok = webconsole->configRepository()->removeConfig(configid);
-  if (!ok)
-    res.set_status(HttpResponse::HTTP_Internal_Server_Error);
-  else
-    // wait to make it less probable that the page displays before effect
-    QThread::usleep(1000000);
-  apiAuditAndResponse(webconsole, req, res, processingContext,
-                      ok ? "S:Configuration '"+configid+"' removed."
-                         : "E:Cannot remove configuration '"+configid+"'.",
-                      req.method_name()+" "+req.path().left(matchedLength)
-                      );
-  return true;
-}, true },
-{ "/console/confirm/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
+static RadixTree<HandlerFunction> _handlers {
+  { "/do/v1/tasks/request/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto taskId = req.path().mid(ml);
+      ParamSet params = req.query_as_paramset();
+      // remove empty values so that fields left empty in task request ui form won't
+      // override configurated values
+      for (auto key: params.paramKeys())
+        if (params.paramRawUtf8(key).isEmpty())
+          params.erase(key);
+      // LATER drop parameters that are not defined as overridable in task config
+      // LATER should check that mandatory form fields have been set ?
+      // or are they already checked by scheduler (I think so)
+      TaskInstance instance =
+          webconsole->scheduler()->planTask(
+            taskId, params, params.paramBool("force"_u8, false),
+            params.paramNumber<quint64>("herdid"_u8, 0), {}, {}, 0, "api"_u8);
+      QString message;
+      if (!!instance)
+        message = "S:Task '"+taskId+"' submitted for execution with id "
+                  +instance.id()+".";
+      else
+        message = "E:Execution request of task '"+taskId
+                  +"' failed (see logs for more information).";
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId, { instance });
+      return true;
+    }, true },
+  { "/do/v1/tasks/abort_instances/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto taskId = req.path().mid(ml);
+      QString message;
+      auto instances =
+          webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
+      message = "S:Task instances { "+instances.join(' ')+" } aborted.";
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId, instances);
+      return true;
+    }, true },
+  { "/do/v1/tasks/cancel_requests/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto taskId = req.path().mid(ml);
+      QString message;
+      auto instances =
+          webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
+      message = "S:Task requests { "+instances.join(' ')+" } canceled.";
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId, instances);
+      return true;
+    }, true },
+  { "/do/v1/tasks/cancel_requests_and_abort_instances/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto taskId = req.path().mid(ml);
+      QString message;
+      auto instances =
+          webconsole->scheduler()->cancelTaskInstancesByTaskId(taskId);
+      message = "S:Task requests { "+instances.join(' ')
+                +" } canceled and task instances { ";
+      instances = webconsole->scheduler()->abortTaskInstanceByTaskId(taskId);
+      message += instances.join(' ')+" } aborted.";
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId, instances);
+      return true;
+    }, true },
+  { "/do/v1/tasks/enable_all",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto taskId = req.path().mid(ml);
+      QString message;
+      webconsole->scheduler()->enableAllTasks(true);
+      message = "S:Enabled all tasks.";
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId);
+      // wait to make it less probable that the page displays before effect
+      QThread::usleep(500000);
+      return true;
+    } },
+  { "/do/v1/tasks/disable_all",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto taskId = req.path().mid(ml);
+      QString message;
+      webconsole->scheduler()->enableAllTasks(false);
+      message = "S:Disabled all tasks.";
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId);
+      // wait to make it less probable that the page displays before effect
+      QThread::usleep(500000);
+      return true;
+    } },
+  { "/do/v1/tasks/enable/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto taskId = req.path().mid(ml);
+      QString message;
+      if (webconsole->scheduler()->enableTask(taskId, true))
+        message = "S:Task '"+taskId+"' enabled.";
+      else {
+        message = "E:Task '"+taskId+"' not found.";
+        res.set_status(HttpResponse::HTTP_Not_Found);
+      }
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId);
+      return true;
+    }, true },
+  { "/do/v1/tasks/disable/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      QString taskId = req.path().mid(ml);
+      QString message;
+      if (webconsole->scheduler()->enableTask(taskId, false))
+        message = "S:Task '"+taskId+"' disabled.";
+      else {
+        message = "E:Task '"+taskId+"' not found.";
+        res.set_status(HttpResponse::HTTP_Not_Found);
+      }
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          taskId);
+      return true;
+    }, true },
+  { "/do/v1/taskinstances/abort/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      quint64 taskInstanceId = req.path().mid(ml).toLongLong();
+      QString message;
+      TaskInstance instance = webconsole->scheduler()->abortTaskInstance(taskInstanceId);
+      if (instance.isNull()) {
+        message = "E:Failed to abort task instance "
+                  +QString::number(taskInstanceId)+".";
+        res.set_status(500);
+      } else {
+        message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
+      }
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/taskinstances/cancel/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      quint64 taskInstanceId = req.path().mid(ml).toLongLong();
+      QString message;
+      TaskInstance instance =
+          webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
+      if (instance.isNull()) {
+        message = "E:Failed to cancel task request "
+                  +QString::number(taskInstanceId)+".";
+        res.set_status(500);
+      } else {
+        message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
+      }
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          instance);
+      return true;
+    }, true },
+  { "/do/v1/taskinstances/cancel_or_abort/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      quint64 taskInstanceId = req.path().mid(ml).toLongLong();
+      QString message;
+      TaskInstance instance =
+          webconsole->scheduler()->cancelTaskInstance(taskInstanceId);
+      if (instance.isNull()) {
+        instance = webconsole->scheduler()->abortTaskInstance(taskInstanceId);
+        if (instance.isNull()) {
+          message = "E:Failed to cancel or abort task instance "
+                    +QString::number(taskInstanceId)+".";
+          res.set_status(500);
+        } else {
+          message = "S:Task instance "+QString::number(taskInstanceId)+" aborted.";
+        }
+      } else {
+        message = "S:Task request "+QString::number(taskInstanceId)+" canceled.";
+      }
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml),
+                          instance);
+      return true;
+    }, true },
+  { "/do/v1/notices/post/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      QString notice = req.path().mid(ml) | req.query_param("notice");
+      ParamSet params = req.query_as_paramset();
+      params.erase("notice");
+      webconsole->scheduler()->postNotice(notice, params);
+      QString message;
+      message = "S:Notice '"+notice+"' posted.";
+      apiAuditAndResponse(webconsole, req, res, context, message,
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/alerts/raise/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto alertid = req.path().mid(ml) | req.query_param("alertid"_u8);
+      webconsole->scheduler()->alerter()->raiseAlert(alertid);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          "S:Raised alert '"+alertid+"'.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/alerts/raise_immediately/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto alertid = req.path().mid(ml) | req.query_param("alertid"_u8);
+      webconsole->scheduler()->alerter()->raiseAlertImmediately(alertid);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          "S:Raised alert '"+alertid+"' immediately.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/alerts/cancel/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto alertid = req.path().mid(ml) | req.query_param("alertid"_u8);
+      webconsole->scheduler()->alerter()->cancelAlert(alertid);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          "S:Canceled alert '"+alertid+"'.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/alerts/cancel_immediately/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto alertid = req.path().mid(ml) | req.query_param("alertid"_u8);
+      webconsole->scheduler()->alerter()->cancelAlertImmediately(alertid);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          "S:Canceled alert '"+alertid+"' immediately.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/alerts/emit/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto alertid = req.path().mid(ml) | req.query_param("alertid"_u8);
+      webconsole->scheduler()->alerter()->emitAlert(alertid);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          "S:Emitted alert '"+alertid+"'.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/gridboards/clear/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto gridboardid = req.path().mid(ml)
+                         | req.query_param("gridboardid"_u8);
+      webconsole->scheduler()->alerter()->clearGridboard(gridboardid);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          "S:Gridboard '"+gridboardid+"' cleared.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/scheduler/shutdown",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      apiAuditAndResponse(webconsole, req, res, context,
+                          "S:Shutdown requested.",
+                          req.method_name()+" "+req.path().left(ml));
+      Qrond::instance()->asyncShutdown(0);
+      return true;
+    }, true },
+
+  { "/do/v1/configs/reload_config_file",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      bool ok = Qrond::instance()->loadConfig();
+      if (!ok)
+        res.set_status(HttpResponse::HTTP_Internal_Server_Error);
+      else
+        // wait to make it less probable that the page displays before effect
+        QThread::usleep(200'000);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          ok ? "S:Configuration reloaded."
+                             : "E:Cannot reload configuration.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/configs/activate/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto configid = req.path().mid(ml)
+                      | req.query_param("configid"_u8);
+      bool ok = webconsole->configRepository()->activateConfig(configid);
+      if (!ok)
+        res.set_status(HttpResponse::HTTP_Internal_Server_Error);
+      else
+        // wait to make it less probable that the page displays before effect
+        QThread::usleep(1000000);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          ok ? "S:Configuration '"+configid+"' activated."
+                             : "E:Cannot activate configuration '"+configid+"'.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/do/v1/configs/remove/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::POST, req, res))
+        return true;
+      auto configid = req.path().mid(ml) | req.query_param("configid"_u8);
+      bool ok = webconsole->configRepository()->removeConfig(configid);
+      if (!ok)
+        res.set_status(HttpResponse::HTTP_Internal_Server_Error);
+      else
+        // wait to make it less probable that the page displays before effect
+        QThread::usleep(1000000);
+      apiAuditAndResponse(webconsole, req, res, context,
+                          ok ? "S:Configuration '"+configid+"' removed."
+                             : "E:Cannot remove configuration '"+configid+"'.",
+                          req.method_name()+" "+req.path().left(ml));
+      return true;
+    }, true },
+  { "/console/confirm/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST,
                           req, res))
         return true;
-      auto path = req.path().mid(matchedLength);
+      auto path = req.path().mid(ml);
       auto message = req.query_param("confirm_message") | path;
       if (path.isEmpty()) {
         res.set_status(HttpResponse::HTTP_Internal_Server_Error);
         res.output()->write("Confirmation page error.\n");
         return true;
       }
-      path = processingContext->paramUtf8("!pathtoroot")+"../"+path;
+      path = context.paramUtf8("!pathtoroot")+"../"+path;
       auto referer = req.header(
-                       "Referer"_ba, processingContext->paramUtf8("!pathtoroot"_ba));
+                       "Referer"_ba, context.paramUtf8("!pathtoroot"_ba));
       message = "<div class=\"well\">"
                 "<h4 class=\"text-center\">Are you sure you want to "+message
                 +" ?</h4><p><p class=\"text-center\"><a class=\"btn btn-danger\" "
@@ -1226,21 +1192,21 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                 +PercentEvaluator::escape(referer.toPercentEncoding())
                 +"\">Yes, sure</a> <a class=\"btn\" href=\""+referer
                 +"\">Cancel</a></div>";
-      req.set_path("/console/adhoc.html");
-      req.unset_query_param("confirm_message"_u8);
-      req.set_query_param("content"_u8, message);
-      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      HttpRequest req2 = req;
+      req2.set_path("/console/adhoc.html");
+      req2.unset_query_param("confirm_message"_u8);
+      req2.set_query_param("content"_u8, message);
+      webconsole->wuiHandler()->handleRequest(req2, res, context);
       return true;
-}, true },
-{ "/console/tasks/request/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
+    }, true },
+  { "/console/tasks/request/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      auto taskId = req.path().mid(matchedLength);
+      auto taskId = req.path().mid(ml);
       auto referer = req.header(
-            "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
+                       "Referer"_ba, context.paramUtf8("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
       if (!task.isNull()) {
         // LATER requestform.html instead of adhoc.html, after finding a way to handle foreach loop
@@ -1258,47 +1224,46 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                 +"\" method=\"POST\">";
         bool errorOccured = false;
         for (const RequestFormField &rff: task.requestFormFields())
-            form.append(rff.toHtmlFormFragment(
-                            webconsole->readOnlyResourcesCache(),
-                            &errorOccured));
+          form.append(rff.toHtmlFormFragment(
+                        webconsole->readOnlyResourcesCache(),
+                        &errorOccured));
         form += "<div><p><p class=\"text-center\">"
                 "<button type=\"submit\" class=\"btn ";
         if (errorOccured)
-            form += "btn-default\" disabled><i class=\"fa-solid fa-ban\"></i> Cannot"
-                    " request task execution";
+          form += "btn-default\" disabled><i class=\"fa-solid fa-ban\"></i> Cannot"
+                  " request task execution";
         else
-            form += "btn-danger\">Request task execution";
+          form += "btn-danger\">Request task execution";
         form += "</button>\n"
                 "<a class=\"btn\" href=\""+referer+"\">Cancel</a></div>\n"
-                "</form>\n"
-                "</div>\n";
-        processingContext->overrideParamValue("content"_u8, form);
-        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-        processingContext->unoverrideParamValue("content"_u8);
+                                                   "</form>\n"
+                                                   "</div>\n";
+        context.overrideParamValue("content"_u8, form);
+        webconsole->wuiHandler()->handleRequest(req, res, context);
+        context.unoverrideParamValue("content"_u8);
         return true;
       }
       res.set_base64_session_cookie("message", "E:Task '"+taskId+"' not found.",
-                                 "/");
+                                    "/");
       res.redirect(referer);
       return true;
-}, true },
-{ "/console/tasks/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
+    }, true },
+  { "/console/tasks/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      auto elements = req.path().split_headed_list(matchedLength-1);
+      auto elements = req.path().split_headed_list(ml-1);
       auto taskId = elements.value(0);
       auto referer = req.header(
-            "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
+                       "Referer"_ba, context.paramUtf8("!pathtoroot"));
       Task task(webconsole->scheduler()->task(taskId));
       if (task.isNull()) {
         if (referer.isEmpty()) {
           res.set_status(404);
           res.output()->write("Task not found.");
         } else {
-          res.set_base64_session_cookie("message", "E:Task '"+taskId+"' not found.",
-                                     "/");
+          res.set_base64_session_cookie(
+                "message", "E:Task '"+taskId+"' not found.", "/");
           res.redirect(referer);
         }
         return true;
@@ -1328,19 +1293,18 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       }
       last_instances.chop(1);
       ps.insert("last_instances"_u8,last_instances);
-      processingContext->prepend(&task);
-      processingContext->prepend(ps);
-      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-      processingContext->pop_front();
-      processingContext->pop_front();
+      context.prepend(&task);
+      context.prepend(ps);
+      webconsole->wuiHandler()->handleRequest(req, res, context);
+      context.pop_front();
+      context.pop_front();
       return true;
-}, true },
-{ "/rest/v1/tasks/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int matchedLength) {
+    }, true },
+  { "/rest/v1/tasks/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      auto elements = req.path().split_headed_list(matchedLength-1);
+      auto elements = req.path().split_headed_list(ml-1);
       auto taskId = elements.value(0);
       auto subItem = elements.value(1);
       Task task(webconsole->scheduler()->task(taskId));
@@ -1358,16 +1322,15 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return writeItemAsCsv(task, req, res);
       }
       return false;
-}, true },
-{ "/console/taskinstances/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
+    }, true },
+  { "/console/taskinstances/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      auto elements = req.path().split_headed_list(matchedLength-1);
+      auto elements = req.path().split_headed_list(ml-1);
       auto tii = elements.value(0).toULongLong();
       auto referer = req.header(
-            "Referer"_u8, processingContext->paramUtf8("!pathtoroot"));
+                       "Referer"_u8, context.paramUtf8("!pathtoroot"));
       auto instance = webconsole->scheduler()->taskInstanceById(tii);
       if (!instance) {
         if (referer.isEmpty()) {
@@ -1382,45 +1345,42 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return true;
       }
       req.set_path("/console/taskinstance.html");
-      processingContext->prepend(&instance);
+      context.prepend(&instance);
       Utf8String pfconfig;
       auto pfoptions = PfOptions().with_indent(2).with_payload_first();
       for (auto node: instance.task().originalPfNodes())
         pfconfig += node.as_pf(pfoptions) + "\n"_ba;
-      processingContext->overrideParamValue("pfconfig"_u8, pfconfig);
-      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-      processingContext->unoverrideParamValue("pfconfig"_u8);
-      processingContext->pop_front();
+      context.overrideParamValue("pfconfig"_u8, pfconfig);
+      webconsole->wuiHandler()->handleRequest(req, res, context);
+      context.unoverrideParamValue("pfconfig"_u8);
+      context.pop_front();
       return true;
-}, true },
-{ "/console/gridboards/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
+    }, true },
+  { "/console/gridboards/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      auto gridboardId = req.path().mid(matchedLength);
+      auto gridboardId = req.path().mid(ml);
       auto referer = req.header(
-            "Referer"_ba, processingContext->paramUtf8("!pathtoroot"));
+                       "Referer"_ba, context.paramUtf8("!pathtoroot"));
       Gridboard gridboard(webconsole->scheduler()->alerter()
                           ->gridboard(gridboardId));
       if (!gridboard.isNull()) {
-        processingContext->append(&gridboard);
-        processingContext->overrideParamValue("gridboard.data",
-                                              gridboard.toHtml());
+        context.append(&gridboard);
+        context.overrideParamValue("gridboard.data", gridboard.toHtml());
         req.set_path("/console/gridboard.html");
-        webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-        processingContext->pop_back();
+        webconsole->wuiHandler()->handleRequest(req, res, context);
+        context.pop_back();
       } else {
         res.set_base64_session_cookie("message", "E:Gridboard '"+gridboardId
-                                   +"' not found.", "/");
+                                      +"' not found.", "/");
         res.redirect(referer);
       }
       return true;
-}, true },
-{ "/console/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int) {
+    }, true },
+  { "/console/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
@@ -1465,36 +1425,33 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       } else {
         if (req.path().endsWith("/console/alerts.html")) {
           auto ac = webconsole->alerterConfig();
-          processingContext->append(&ac);
-          webconsole->wuiHandler()->handleRequest(req, res, processingContext);
-          processingContext->pop_back();
+          context.append(&ac);
+          webconsole->wuiHandler()->handleRequest(req, res, context);
+          context.pop_back();
         } else
-          webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+          webconsole->wuiHandler()->handleRequest(req, res, context);
       }
       return true;
-}, true },
-{ { "/console/css/", "/console/js/", "/console/font/",
-    "/console/img/" }, [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int) {
+    }, true },
+  { { "/console/css/", "/console/js/", "/console/font/",
+      "/console/img/" },
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
       // less processing for static resources than for general /console/
       if (!enforceMethods(HttpRequest::GET|HttpRequest::POST|HttpRequest::HEAD,
                           req, res))
         return true;
-      webconsole->wuiHandler()->handleRequest(req, res, processingContext);
+      webconsole->wuiHandler()->handleRequest(req, res, context);
       return true;
-}, true },
-{ "/rest/v1/taskgroups/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    }, true },
+  { "/rest/v1/taskgroups/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->config().taskgroups().values(), req, res);
-} },
-{ "/rest/v1/taskgroups/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/taskgroups/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       // LATER handle fields comma enumeration for real
@@ -1502,18 +1459,16 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (fields == "id,onstart,onsuccess,onfailure"_ba)
         return writeHtmlView(webconsole->htmlTaskGroupsEventsView(), req, res);
       return writeHtmlView(webconsole->htmlTaskGroupsView(), req, res);
-} },
-{ "/rest/v1/tasks/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger*, int) {
+    } },
+  { "/rest/v1/tasks/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->config().tasks().values(), req, res);
-} },
-{ "/rest/v1/tasks/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger*, int) {
+    } },
+  { "/rest/v1/tasks/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       // LATER handle fields comma enumeration for real
@@ -1521,256 +1476,223 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (fields == "id,triggers,onstart,onsuccess,onfailure"_ba)
         return writeHtmlView(webconsole->htmlTasksEventsView(), req, res);
       return writeHtmlView(webconsole->htmlTasksListView(), req, res);
-} },
-{ "/rest/v1/hosts/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/hosts/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->config().hosts().values(), req, res);
-} },
-{ "/rest/v1/hosts/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/hosts/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlHostsListView(), req, res);
-} },
-{ "/rest/v1/clusters/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/clusters/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->config().clusters().values(), req, res);
-} },
-{ "/rest/v1/clusters/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/clusters/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlClustersListView(), req, res);
-} },
-{ "/rest/v1/resources/free_resources_by_host.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/resources/free_resources_by_host.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvFreeResourcesView(), req, res);
-} },
-{ "/rest/v1/resources/free_resources_by_host.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/resources/free_resources_by_host.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlFreeResourcesView(), req, res);
-} },
-{ "/rest/v1/resources/lwm_resources_by_host.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/resources/lwm_resources_by_host.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvResourcesLwmView(), req, res);
-} },
-{ "/rest/v1/resources/lwm_resources_by_host.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/resources/lwm_resources_by_host.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlResourcesLwmView(), req, res);
-} },
-{ "/rest/v1/resources/consumption_matrix.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/resources/consumption_matrix.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvResourcesConsumptionView(), req, res);
-} },
-{ "/rest/v1/resources/consumption_matrix.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/resources/consumption_matrix.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlResourcesConsumptionView(), req, res);
-} },
-{ "/rest/v1/global_params/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/global_params/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvGlobalParamsView(), req, res);
-} },
-{ "/rest/v1/global_params/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/global_params/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlGlobalParamsView(), req, res);
-} },
-{ "/rest/v1/global_vars/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/global_vars/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvGlobalVarsView(), req, res);
-} },
-{ "/rest/v1/global_vars/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/global_vars/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlGlobalVarsView(), req, res);
-} },
-{ "/rest/v1/alert_params/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alert_params/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvAlertParamsView(), req, res);
-} },
-{ "/rest/v1/alert_params/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alert_params/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlAlertParamsView(), req, res);
-} },
-{ "/rest/v1/alerts/stateful_list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts/stateful_list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvStatefulAlertsView(), req, res);
-} },
-{ "/rest/v1/alerts/stateful_list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts/stateful_list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlStatefulAlertsView(), req, res);
-} },
-{ "/rest/v1/alerts/last_emitted.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts/last_emitted.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvLastEmittedAlertsView(), req, res);
-} },
-{ "/rest/v1/alerts/last_emitted.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts/last_emitted.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlLastEmittedAlertsView(), req, res);
-} },
-{ "/rest/v1/alerts_subscriptions/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts_subscriptions/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeItemsAsCsv(webconsole->scheduler()->config().alerterConfig()
                              .alertSubscriptions(), req, res);
-} },
-{ "/rest/v1/alerts_subscriptions/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts_subscriptions/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlAlertSubscriptionsView(), req, res);
-} },
-{ "/rest/v1/alerts_settings/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts_settings/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeItemsAsCsv(webconsole->scheduler()->config().alerterConfig()
                              .alertSettings(), req, res);
-} },
-{ "/rest/v1/alerts_settings/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/alerts_settings/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlAlertSettingsView(), req, res);
-} },
-{ "/rest/v1/gridboards/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/gridboards/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->config().alerterConfig().gridboards(),
             req, res);
-} },
-{ "/rest/v1/gridboards/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/gridboards/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlGridboardsView(), req, res);
-} },
-{ "/rest/v1/gridboards/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int matchedLength) {
+    } },
+  { "/rest/v1/gridboards/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
-      auto gridboardid = req.path().mid(matchedLength);
+      auto gridboardid = req.path().mid(ml);
       if (gridboardid.endsWith(".html"))
         gridboardid.chop(5);
       Gridboard gridboard = webconsole->scheduler()->alerter()
-          ->gridboard(gridboardid);
+                            ->gridboard(gridboardid);
       res.set_content_type("text/html;charset=UTF-8");
       res.output()->write(gridboard.toHtml().toUtf8().constData());
       return true;
-}, true },
-{ "/rest/v1/configs/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    }, true },
+  { "/rest/v1/configs/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvConfigsView(), req, res);
-} },
-{ "/rest/v1/configs/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/configs/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlConfigsView(), req, res);
-} },
-{ "/rest/v1/configs/history.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/configs/history.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvConfigHistoryView(), req, res);
-} },
-{ "/rest/v1/configs/history.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/configs/history.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlConfigHistoryView(), req, res);
-} },
-{ "/rest/v1/configs/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int matchedLength) {
+    } },
+  { "/rest/v1/configs/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD|HttpRequest::POST
                           |HttpRequest::PUT, req, res))
         return true;
       if (req.method() == HttpRequest::POST
           || req.method() == HttpRequest::PUT)
-        webconsole->configUploadHandler()
-            ->handleRequest(req, res, processingContext);
+        webconsole->configUploadHandler()->handleRequest(req, res, context);
       else {
         if (webconsole->configRepository()) {
-          auto configid = req.path().mid(matchedLength);
+          auto configid = req.path().mid(ml);
           if (configid.endsWith(".pf"))
             configid.chop(3);
           SchedulerConfig config
               = (configid == "current")
-              ? webconsole->configRepository()->activeConfig()
-              : webconsole->configRepository()->config(configid);
+                ? webconsole->configRepository()->activeConfig()
+                : webconsole->configRepository()->config(configid);
           if (config.isNull()) {
             res.set_status(404);
             res.output()->write("no config found with this id\n");
@@ -1786,77 +1708,68 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         }
       }
       return true;
-}, true },
-{ "/rest/v1/logs/logfiles.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    }, true },
+  { "/rest/v1/logs/logfiles.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeItemsAsCsv(
             webconsole->scheduler()->config().logfiles(), req, res);
-} },
-{ "/rest/v1/logs/logfiles.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/logs/logfiles.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlLogFilesView(), req, res);
-} },
-{ "/rest/v1/calendars/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/calendars/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->config().namedCalendars().values(),
             req, res);
-} },
-{ "/rest/v1/calendars/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/calendars/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlCalendarsView(), req, res);
-} },
-{ "/rest/v1/taskinstances/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/taskinstances/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvTaskInstancesView(), req, res);
-} },
-{ "/rest/v1/taskinstances/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/taskinstances/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlTaskInstancesView(), req, res);
-} },
-{ "/rest/v1/taskinstances/current/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/taskinstances/current/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsCsv(
             webconsole->scheduler()->unfinishedTaskInstances().values(),
             req, res);
     } },
-{ "/rest/v1/taskinstances/current/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+  { "/rest/v1/taskinstances/current/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return sortAndWriteItemsAsHtmlTable(
             webconsole->scheduler()->unfinishedTaskInstances().values(),
             req, res);
-} },
-{ "/rest/v1/taskinstances/", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *context, int ml) {
+    } },
+  { "/rest/v1/taskinstances/",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int ml) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       auto referer =
-          req.header("Referer"_u8, context->paramUtf8("!pathtoroot"_u8));
+          req.header("Referer"_u8, context.paramUtf8("!pathtoroot"_u8));
       auto path = req.path();
       auto params = path.split_headed_list(ml-1);
       auto second = params.value(1);
@@ -1914,27 +1827,24 @@ ParamsProviderMerger *processingContext, int matchedLength) {
         return writePlainText(svg, req, res, SVG_MIME_TYPE);
       }
       res.set_base64_session_cookie("message", "E:Service '"+path // FIXME
-                                 +"' not found.", "/");
+                                    +"' not found.", "/");
       res.redirect(referer);
       return true;
-}, true },
-{ "/rest/v1/scheduler_events/list.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    }, true },
+  { "/rest/v1/scheduler_events/list.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvSchedulerEventsView(), req, res);
-} },
-{ "/rest/v1/scheduler_events/list.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/scheduler_events/list.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlSchedulerEventsView(), req, res);
-} },
-{ "/rest/v1/scheduler/stats.json", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/scheduler/stats.json",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       QJsonObject stats;
@@ -1949,61 +1859,53 @@ ParamsProviderMerger *processingContext, int matchedLength) {
       if (req.method() != HttpRequest::HEAD)
         res.output()->write(data);
       return true;
-} },
-{ "/rest/v1/notices/lastposted.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/notices/lastposted.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeCsvView(webconsole->csvLastPostedNoticesView(), req, res);
-} },
-{ "/rest/v1/notices/lastposted.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/notices/lastposted.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlLastPostedNoticesView20(), req, res);
-} },
-{ "/rest/v1/logs/last_audit_entries.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/logs/last_audit_entries.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeItemsAsCsv(webconsole->auditLogItems(), req, res);
 
-} },
-{ "/rest/v1/logs/last_info_entries.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/logs/last_info_entries.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeItemsAsCsv(webconsole->infoLogItems(), req, res);
 
-} },
-{ "/rest/v1/logs/last_info_entries.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/logs/last_info_entries.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlInfoLogView(), req, res);
-} },
-{ "/rest/v1/logs/last_warning_entries.csv", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/logs/last_warning_entries.csv",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeItemsAsCsv(webconsole->warningLogItems(), req, res);
-} },
-{ "/rest/v1/logs/last_warning_entries.html", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *, int) {
+    } },
+  { "/rest/v1/logs/last_warning_entries.html",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writeHtmlView(webconsole->htmlWarningLogView(), req, res);
-} },
-{ "/rest/v1/logs/entries.txt", [](
-    WebConsole *, HttpRequest req, HttpResponse res, ParamsProviderMerger *,
-    int) {
+    } },
+  { "/rest/v1/logs/entries.txt",
+    [](WebConsole *, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       QStringList paths;
@@ -2022,58 +1924,53 @@ ParamsProviderMerger *processingContext, int matchedLength) {
                           !regexp.isEmpty());
       }
       return true;
-} },
-{ "/rest/v1/tasks/deployment_diagram.svg", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int) {
+    } },
+  { "/rest/v1/tasks/deployment_diagram.svg",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return webconsole->tasksDeploymentDiagram()
-          ->handleRequest(req, res, processingContext);
-} },
-{ "/rest/v1/tasks/deployment_diagram.dot", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *ppm, int) {
+          ->handleRequest(req, res, context);
+    } },
+  { "/rest/v1/tasks/deployment_diagram.dot",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writePlainText(webconsole->tasksDeploymentDiagram()
-                            ->source(req, ppm), req, res,
+                            ->source(req, context), req, res,
                             GRAPHVIZ_MIME_TYPE);
-} },
-{ "/rest/v1/tasks/trigger_diagram.svg", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext, int) {
+    } },
+  { "/rest/v1/tasks/trigger_diagram.svg",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return webconsole->tasksTriggerDiagram()
-          ->handleRequest(req, res, processingContext);
-} },
-{ "/rest/v1/tasks/trigger_diagram.dot", [](
-    WebConsole *webconsole, HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *ppm, int) {
+          ->handleRequest(req, res, context);
+    } },
+  { "/rest/v1/tasks/trigger_diagram.dot",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
+
       if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
         return true;
       return writePlainText(webconsole->tasksTriggerDiagram()
-                            ->source(req, ppm), req, res,
+                            ->source(req, context), req, res,
                             GRAPHVIZ_MIME_TYPE);
-} },
-{ "/rest/v1/resources/tasks_resources_hosts_diagram.svg", [](
-                                           WebConsole *webconsole, HttpRequest req, HttpResponse res,
-                                           ParamsProviderMerger *processingContext, int) {
-   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
-     return true;
-   return webconsole->tasksResourcesHostsDiagram()
-       ->handleRequest(req, res, processingContext);
- } },
-{ "/rest/v1/resources/tasks_resources_hosts_diagram.dot", [](
-       WebConsole *webconsole, HttpRequest req, HttpResponse res,
-       ParamsProviderMerger *ppm, int) {
-   if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
-     return true;
-   return writePlainText(webconsole->tasksResourcesHostsDiagram()
-                             ->source(req, ppm), req, res,
-                         GRAPHVIZ_MIME_TYPE);
- } },
+    } },
+  { "/rest/v1/resources/tasks_resources_hosts_diagram.svg",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return webconsole->tasksResourcesHostsDiagram()
+          ->handleRequest(req, res, context);
+    } },
+  { "/rest/v1/resources/tasks_resources_hosts_diagram.dot",
+    [](WebConsole *webconsole, HttpRequest &req, HttpResponse &res, ParamsProviderMerger &context, int) STATIC_LAMBDA -> bool {
+      if (!enforceMethods(HttpRequest::GET|HttpRequest::HEAD, req, res))
+        return true;
+      return writePlainText(
+            webconsole->tasksResourcesHostsDiagram()->source(req, context),
+            req, res, GRAPHVIZ_MIME_TYPE);
+    } },
 };
 
 RadixTree<QString> _staticRedirects {
@@ -2081,18 +1978,17 @@ RadixTree<QString> _staticRedirects {
   { { "/console/", "/console/index.html"}, "overview.html" },
 };
 
-bool WebConsole::handleRequest(
-    HttpRequest req, HttpResponse res,
-    ParamsProviderMerger *processingContext) {
-  if (redirectForUrlCleanup(req, res, processingContext))
+bool WebConsole::handleRequest(HttpRequest &req, HttpResponse &res,
+                               ParamsProviderMerger &context) {
+  if (redirectForUrlCleanup(req, res, context))
     return true;
   auto path = req.path();
-  auto userid = processingContext->paramUtf8("userid"_u8);
-  processingContext->append(this);
-  processingContext->append(_scheduler->globalParams());
+  auto userid = context.paramUtf8("userid"_u8);
+  context.append(this);
+  context.append(_scheduler->globalParams());
   // compute !pathtoroot now, to allow overriding url path with html files paths
   // unrelated to the url and keep !pathtoroot ok
-  _wuiHandler->computePathToRoot(req, processingContext);
+  _wuiHandler->computePathToRoot(req, context);
   if (!_scheduler) {
     res.set_status(500);
     res.output()->write("Scheduler is not available.");
@@ -2115,7 +2011,7 @@ bool WebConsole::handleRequest(
   //_handlers.dumpContent();
   //qDebug() << "handling" << path << !!handler << matchedLength;
   if (handler) {
-    return handler(this, req, res, processingContext, matchedLength);
+    return handler(this, req, res, context, matchedLength);
   }
   res.set_status(404);
   res.output()->write("Not found.");

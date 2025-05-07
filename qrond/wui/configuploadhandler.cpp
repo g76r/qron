@@ -14,7 +14,8 @@
 #include "configuploadhandler.h"
 
 ConfigUploadHandler::ConfigUploadHandler(
-    QString urlPathPrefix, int maxSimultaneousUploads, QObject *parent)
+    const Utf8String &urlPathPrefix, int maxSimultaneousUploads,
+    QObject *parent)
   : UploadHttpHandler(urlPathPrefix, maxSimultaneousUploads, parent) {
 }
 
@@ -28,10 +29,7 @@ void ConfigUploadHandler::setConfigRepository(
 }
 
 void ConfigUploadHandler::processUploadedFile(
-    HttpRequest req, HttpResponse res, ParamsProviderMerger *processingContext,
-    QFile *file) {
-  Q_UNUSED(req)
-  Q_UNUSED(processingContext)
+    HttpRequest &, HttpResponse &res, ParamsProviderMerger &, QFile *file) {
   if (!_configRepository) {
     Log::error() << "ConfigUploadHandler::processUploadedFile called with null "
                     "ConfigRepository";
