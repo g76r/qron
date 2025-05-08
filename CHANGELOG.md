@@ -5,6 +5,9 @@ Minor improvements:
 - better handling of comments in normalized config file
 - conf parsing errors now display position in file (line, column)
 
+Bug fixes:
+- wui: fix: config history view was stalled when full
+
 Behind-the-curtain improvements:
 - replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
 - gitlabci: force git clone
