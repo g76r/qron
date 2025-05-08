@@ -216,8 +216,8 @@ int main(int argc, char *argv[]) {
   QCoreApplication a(argc, argv);
   QThread::currentThread()->setObjectName("MainThread");
   p6::log::init();
-  p6::log::wrapQtLogToSamePattern();
-  p6::log::addConsoleLogger(p6::log::Debug, true);
+  p6::log::wrap_qt_log();
+  p6::log::add_console_logger(p6::log::Debug, true);
   QByteArrayList args;
   for (int i = 1; i < argc; ++i)
     args << argv[i];

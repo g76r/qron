@@ -1,6 +1,6 @@
 # Since 1.16.7
 Minor improvements:
-- logaction now record a better location in the logfiles:
+- log action now record a better location in the logfiles:
   "logaction:%eventname" instead of a constant "logaction.cpp:42"
 - better handling of comments in normalized config file
 - conf parsing errors now display position in file (line, column)
@@ -10,9 +10,12 @@ Bug fixes:
 
 Behind-the-curtain improvements:
 - replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
-- gitlabci: force git clone
+- gitlabi-ci: force git clone
 - updated libp6core (incl. log large change and pf reengineering)
 - updated Qt to 6.8.3 (CI and linux packaging)
+- Qt's logs (qDebug() qInfo()...) redirected in log files rather than stderr
+  which enables logging with libp6core independant source code, however task
+  name and id use libp6core default: thread name and 0, e.g. "HttpWorker-25/0"
 
 # From 1.16.6 to 1.16.7 (2024-01-23)
 Minor improvements:
