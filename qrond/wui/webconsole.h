@@ -227,7 +227,7 @@ public:
   QString configRepoPath() const { return _configRepoPath; }
   ReadOnlyResourcesCache *readOnlyResourcesCache() const {
     return _readOnlyResourcesCache; }
-  QVariant paramRawValue(const Utf8String &key, const QVariant &def,
+  TypedValue paramRawValue(const Utf8String &key, const TypedValue &def,
                          const EvalContext &context) const override;
   Utf8StringSet paramKeys(const EvalContext &context) const override;
   Utf8String paramScope() const override;

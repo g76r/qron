@@ -539,7 +539,7 @@ bool WebConsole::acceptRequest(HttpRequest &) {
   return true;
 }
 
-static RadixTree<std::function<QVariant(const WebConsole *, const QString &key)>
+static RadixTree<std::function<TypedValue(const WebConsole *, const QString &key)>
                  > _serverStats {
 { "scheduler.startdate", [](const WebConsole *console, const QString &) {
   return console->scheduler()->startdate().toUTC();
@@ -630,8 +630,8 @@ static RadixTree<std::function<QVariant(const WebConsole *, const QString &key)>
 } },
 };
 
-QVariant WebConsole::paramRawValue(
-    const Utf8String &key, const QVariant &def,
+TypedValue WebConsole::paramRawValue(
+    const Utf8String &key, const TypedValue &def,
     const EvalContext &) const {
   if (!_scheduler) // should never happen
     return def;
@@ -1851,7 +1851,7 @@ static RadixTree<HandlerFunction> _handlers {
       for (auto key: _serverStats.keys()) {
         auto value = _serverStats.value(key)(webconsole, key);
         JsonFormats::recursive_insert(
-              stats, key, QJsonValue::fromVariant(value));
+              stats, key, QJsonValue::fromVariant(value.as_qvariant()));
       }
       QByteArray data = QJsonDocument(stats).toJson();
       res.set_content_type("application/json;charset=UTF-8");

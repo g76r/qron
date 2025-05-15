@@ -11,7 +11,7 @@ Bug fixes:
 Behind-the-curtain improvements:
 - replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
 - gitlabi-ci: force git clone
-- updated libp6core (incl. log large change and pf reengineering)
+- updated libp6core (incl. log large change, PF reengineering, TypedValue)
 - updated Qt to 6.8.3 (CI and linux packaging)
 - Qt's logs (qDebug() qInfo()...) redirected in log files rather than stderr
   which enables logging with libp6core independant source code, however task
