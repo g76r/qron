@@ -6,25 +6,36 @@ Minor improvements:
 - conf parsing errors now display position in file (line, column)
 
 Bug fixes:
+- fixed DST-related severe freeze: the scheduler was freezed (no taskinstance
+  starts) when computing next execution time of a cron trigger both allowing
+  sunday and forcing a start hour after the transition begin, e.g.
+  (0 0 14 * * 7) did freeze qron all the week before a sunday when the time
+  should fall back from 1 hour between 02:00 a.m. CEST and 02:00 a.m. CET
+  the bug is very likely related to Qt 6.7 change in QDateTime::setTime()
+  which introduce TransitionResolution which so called LegacyBehavior is
+  not truly the same than the legacy behavior, and the bug appeared in
+  qron 1.16.4 when we switched from Qt 6.5 to Qt 6.8
+  https://doc.qt.io/qt-6/qdatetime.html#setTime
+  https://doc.qt.io/qt-6/qdatetime.html#TransitionResolution-enum
 - wui: fix: config history view was stalled when full
 
 Behind-the-curtain improvements:
 - replaced qgetenv with qEnvironmentVariable (unicode friendly on windows)
-- gitlabi-ci: force git clone
+- gitlab-ci: force git clone
 - updated libp6core (incl. log large change, PF reengineering, TypedValue)
 - updated Qt to 6.8.3 (CI and linux packaging)
 - Qt's logs (qDebug() qInfo()...) redirected in log files rather than stderr
   which enables logging with libp6core independant source code, however task
   name and id use libp6core default: thread name and 0, e.g. "HttpWorker-25/0"
 
-# From 1.16.6 to 1.16.7 (2024-01-23)
+# From 1.16.6 to 1.16.7 (2025-01-23)
 Minor improvements:
 - wui: user url params instead of cookies for redirection
 
 Behind-the-curtain improvements:
 - updated libp6core with incompatible changes in http api
 
-# From 1.16.5 to 1.16.6 (2024-01-20)
+# From 1.16.5 to 1.16.6 (2025-01-20)
 Minor improvements:
 - webconsole: last instances history depth on task page can now be choosen
   using global param webconsole.htmltables.lastinstancesdepth (default: 10)
@@ -32,7 +43,7 @@ Minor improvements:
 Bug fixes:
 - webconsole: fixed last instances duration column on task page
 
-# From 1.16.4 to 1.16.5 (2024-01-14)
+# From 1.16.4 to 1.16.5 (2025-01-14)
 Behind-the-curtain improvements:
 - updated Qt to 6.8.1 (CI and linux packaging)
 - updated libp6core (there are fixes in the update that can remove theorical
