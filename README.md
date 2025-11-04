@@ -57,12 +57,20 @@ For instance, these commands work on linux provided a Qt 5 devkit is installed
 and in your PATH:
 
 ``` bash
-qmake
+qmake -r CONFIG+=release
 make
 ```
 
 When built on Linux, binaries can be found under "linux" directory, with a
 README file explaining how to start the daemon.
+
+The make process will also build a docker image with test config if an env
+variable DOCKER_BUILD_ENABLED=1 is set, for instance:
+
+``` bash
+qmake -r CONFIG+=release
+DOCKER_BUILD_ENABLED=1 make
+```
 
 CONTRIBUTIONS
 -------------
