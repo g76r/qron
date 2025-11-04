@@ -1,4 +1,4 @@
-# Since 1.16.7
+# From 1.16.7 to 1.16.8 (2025-10-20)
 Minor improvements:
 - log action now record a better location in the logfiles:
   "logaction:%eventname" instead of a constant "logaction.cpp:42"
